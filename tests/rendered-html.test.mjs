@@ -44,9 +44,10 @@ test("server-renders the brand guideline route", async () => {
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /The open/);
-  assert.match(html, /Growth is not a closed loop\./);
+  assert.match(html, /The human/);
+  assert.match(html, /One whole\. Never perfect\./);
   assert.match(html, /#F1EFE8/);
+  assert.match(html, /#E36B37/);
   assert.match(html, /Cormorant Garamond/);
   assert.match(html, /Space is part of the message\./);
 });

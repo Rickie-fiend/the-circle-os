@@ -4,11 +4,34 @@
   --bone: #f1efe8;
   --paper: #f8f7f3;
   --ink: #121210;
+  --bg: #0d0d0b;
+  --surface: #151511;
+  --text: #f1eee7;
+  --muted: #aaa69c;
+  --line: #34332e;
+  --panel: #050504;
+  --panel-text: #f1eee7;
+  --panel-muted: #959289;
+  --button-bg: #f1eee7;
+  --button-text: #121210;
+  --accent: #e36b37;
+  --accent-dark: #c95628;
+  --white: #fff;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #f1efe8;
+  --surface: #f8f7f3;
+  --text: #121210;
   --muted: #696861;
   --line: #d9d7d0;
-  --accent: #d85a36;
-  --accent-dark: #b94324;
-  --white: #fff;
+  --panel: #121210;
+  --panel-text: #f1efe8;
+  --panel-muted: #929089;
+  --button-bg: #121210;
+  --button-text: #fff;
+  color-scheme: light;
 }
 
 * {
@@ -22,13 +45,16 @@ html {
 
 body {
   margin: 0;
-  background: var(--bone);
-  color: var(--ink);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans), Arial, sans-serif;
   font-size: 16px;
   line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  transition:
+    background 280ms ease,
+    color 280ms ease;
 }
 
 a {
@@ -50,7 +76,7 @@ a {
 .site-header {
   align-items: center;
   backdrop-filter: blur(14px);
-  background: color-mix(in srgb, var(--bone) 82%, transparent);
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   display: flex;
   height: 68px;
@@ -73,24 +99,69 @@ a {
 }
 
 .mark {
-  background: conic-gradient(
-    var(--accent) 0 81%,
-    transparent 81% 90%,
-    var(--accent) 90%
-  );
-  border-radius: 50%;
+  border: 2px solid var(--accent);
+  border-radius: 48% 52% 47% 53% / 52% 47% 53% 48%;
   display: inline-block;
   height: 68px;
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+  position: relative;
+  transform: rotate(-4deg);
   width: 68px;
 }
 
+.mark::before,
+.mark::after,
+.guide-mark::before,
+.guide-mark::after {
+  border: 1px solid var(--accent);
+  border-radius: 53% 47% 51% 49% / 46% 54% 48% 52%;
+  content: "";
+  inset: -2px 1px 1px -1px;
+  opacity: 0.48;
+  position: absolute;
+  transform: rotate(5deg);
+}
+
+.mark::after,
+.guide-mark::after {
+  border-radius: 46% 54% 49% 51% / 55% 45% 52% 48%;
+  inset: 1px -2px -1px 1px;
+  opacity: 0.28;
+  transform: rotate(-3deg);
+}
+
 .mark-small {
+  border-width: 1.5px;
   height: 24px;
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
   width: 24px;
+}
+
+.nav-actions {
+  align-items: center;
+  display: flex;
+  gap: clamp(0.8rem, 2vw, 1.7rem);
+}
+
+.theme-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  gap: 0.48rem;
+  letter-spacing: 0.1em;
+  padding: 0.7rem 0;
+  text-transform: uppercase;
+}
+
+.theme-toggle > span {
+  background: var(--accent);
+  border-radius: 50%;
+  height: 7px;
+  width: 7px;
 }
 
 .nav-apply,
@@ -148,19 +219,24 @@ a {
 }
 
 .orbit {
-  border: 1px solid color-mix(in srgb, var(--ink) 27%, transparent);
-  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--text) 27%, transparent);
+  border-radius: 48% 52% 47% 53% / 52% 47% 53% 48%;
   inset: 0;
   position: absolute;
+  transform: rotate(-3deg);
 }
 
 .orbit-two {
+  border-radius: 53% 47% 51% 49% / 46% 54% 48% 52%;
   inset: 12%;
+  transform: rotate(6deg);
 }
 
 .orbit-three {
   border-color: var(--accent);
+  border-radius: 46% 54% 49% 51% / 55% 45% 52% 48%;
   inset: 28%;
+  transform: rotate(-8deg);
 }
 
 .orbit-dot {
@@ -309,7 +385,7 @@ a {
 }
 
 .two-column-copy .lead {
-  color: var(--ink);
+  color: var(--text);
   font-family: var(--font-display), Georgia, serif;
   font-size: clamp(1.7rem, 2.7vw, 2.55rem);
   letter-spacing: -0.025em;
@@ -331,14 +407,14 @@ a {
 }
 
 .two-column-copy .closing-line {
-  color: var(--ink);
+  color: var(--text);
   font-weight: 550;
   margin-top: 1.5rem;
 }
 
 .event-section {
-  background: var(--ink);
-  color: var(--bone);
+  background: var(--panel);
+  color: var(--panel-text);
   padding: clamp(6rem, 11vw, 11rem) clamp(1.25rem, 4vw, 4.5rem);
 }
 
@@ -349,15 +425,15 @@ a {
 }
 
 .section-label.light p {
-  color: var(--bone);
+  color: var(--panel-text);
 }
 
 .event-copy .two-column-copy p {
-  color: #aaa79e;
+  color: var(--panel-muted);
 }
 
 .event-copy .two-column-copy .lead {
-  color: var(--bone);
+  color: var(--panel-text);
 }
 
 .stats {
@@ -435,12 +511,12 @@ a {
 }
 
 .value-card strong {
-  color: var(--ink);
+  color: var(--text);
   font-weight: 550;
 }
 
 .living-section {
-  background: var(--paper);
+  background: var(--surface);
   margin: 0;
   padding-left: clamp(1.25rem, 4vw, 4.5rem);
   padding-right: clamp(1.25rem, 4vw, 4.5rem);
@@ -519,23 +595,26 @@ a {
 
 .join-ring {
   border: 1px solid color-mix(in srgb, var(--white) 42%, transparent);
-  border-radius: 50%;
+  border-radius: 48% 52% 47% 53% / 52% 47% 53% 48%;
   height: min(78vw, 710px);
   position: absolute;
+  transform: rotate(-4deg);
   width: min(78vw, 710px);
 }
 
 .join-ring::before,
 .join-ring::after {
   border: 1px solid color-mix(in srgb, var(--white) 28%, transparent);
-  border-radius: inherit;
+  border-radius: 53% 47% 51% 49% / 46% 54% 48% 52%;
   content: "";
   inset: 12%;
   position: absolute;
 }
 
 .join-ring::after {
+  border-radius: 46% 54% 49% 51% / 55% 45% 52% 48%;
   inset: 29%;
+  transform: rotate(7deg);
 }
 
 .join-content {
@@ -554,7 +633,8 @@ a {
 
 .button {
   align-items: center;
-  background: var(--ink);
+  background: var(--button-bg);
+  color: var(--button-text);
   display: inline-flex;
   font-size: 0.72rem;
   font-weight: 600;
@@ -568,7 +648,7 @@ a {
 }
 
 .button:hover {
-  background: #252521;
+  background: color-mix(in srgb, var(--button-bg) 86%, var(--accent));
   transform: translateY(-2px);
 }
 
@@ -630,8 +710,8 @@ a {
 }
 
 footer {
-  background: var(--ink);
-  color: var(--bone);
+  background: var(--panel);
+  color: var(--panel-text);
   padding: clamp(5rem, 9vw, 8rem) clamp(1.25rem, 4vw, 4.5rem) 2rem;
 }
 
@@ -668,7 +748,7 @@ footer {
 }
 
 .footer-links a:hover {
-  color: var(--bone);
+  color: var(--panel-text);
 }
 
 footer small {
@@ -679,7 +759,7 @@ footer small {
 
 /* Brand guideline */
 .brand-guide {
-  background: var(--bone);
+  background: var(--bg);
 }
 
 .brand-guide-header {
@@ -760,8 +840,8 @@ footer small {
 }
 
 .brand-dark {
-  background: var(--ink);
-  color: var(--bone);
+  background: var(--panel);
+  color: var(--panel-text);
 }
 
 .guide-number {
@@ -777,15 +857,11 @@ footer small {
 }
 
 .guide-mark {
-  background: conic-gradient(
-    var(--accent) 0 81%,
-    transparent 81% 90%,
-    var(--accent) 90%
-  );
-  border-radius: 50%;
+  border: 7px solid var(--accent);
+  border-radius: 48% 52% 47% 53% / 52% 47% 53% 48%;
   height: clamp(120px, 18vw, 240px);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 0);
+  position: relative;
+  transform: rotate(-4deg);
   width: clamp(120px, 18vw, 240px);
 }
 
@@ -817,7 +893,7 @@ footer small {
 }
 
 .brand-notes strong {
-  color: var(--bone);
+  color: var(--panel-text);
   font-weight: 550;
 }
 
@@ -848,17 +924,18 @@ footer small {
 }
 
 .swatch-ink {
-  background: var(--ink);
+  background: #0d0d0b;
   color: var(--bone);
 }
 
 .swatch-accent {
-  background: var(--accent);
+  background: #e36b37;
   color: var(--white);
 }
 
 .swatch-mist {
-  background: var(--line);
+  background: #34332e;
+  color: var(--bone);
 }
 
 .dark-notes {
@@ -870,7 +947,7 @@ footer small {
 }
 
 .dark-notes strong {
-  color: var(--ink);
+  color: var(--text);
 }
 
 .type-sample {
@@ -942,7 +1019,7 @@ footer small {
 }
 
 .layout-diagram {
-  background: var(--paper);
+  background: var(--surface);
   display: grid;
   gap: 8%;
   grid-template-columns: 18% 34% 1fr;

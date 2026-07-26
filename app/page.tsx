@@ -1,4 +1,5 @@
 import { MotionProvider } from "./motion-provider";
+import { ThemeToggle } from "./theme-toggle";
 
 const values = [
   {
@@ -140,9 +141,12 @@ export default function Home() {
           <Mark small />
           <span>THE CIRCLE</span>
         </a>
-        <a className="nav-apply" href="#join">
-          Apply Now <span aria-hidden="true">↗</span>
-        </a>
+        <div className="nav-actions">
+          <ThemeToggle />
+          <a className="nav-apply" href="#join">
+            Apply Now <span aria-hidden="true">↗</span>
+          </a>
+        </div>
       </header>
 
       <main>

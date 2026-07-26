@@ -1,8 +1,8 @@
 const palette = [
   { name: "Bone", hex: "#F1EFE8", className: "swatch-bone" },
-  { name: "Ink", hex: "#121210", className: "swatch-ink" },
-  { name: "Vermilion", hex: "#D85A36", className: "swatch-accent" },
-  { name: "Mist", hex: "#D9D7D0", className: "swatch-mist" },
+  { name: "Ink", hex: "#0D0D0B", className: "swatch-ink" },
+  { name: "Orange", hex: "#E36B37", className: "swatch-accent" },
+  { name: "Charcoal", hex: "#34332E", className: "swatch-mist" },
 ];
 
 export default function BrandGuidelines() {
@@ -18,25 +18,24 @@ export default function BrandGuidelines() {
       <section className="brand-intro">
         <p className="eyebrow">Identity System 01</p>
         <h1>
-          The open
+          The human
           <br />
           circle.
         </h1>
         <p className="brand-intro-copy">
-          A living identity for modern masculine growth—clear enough to trust,
-          open enough to evolve.
+          A living identity for modern masculine growth—complete in its unity,
+          human in its imperfection.
         </p>
       </section>
 
       <section className="brand-rule">
         <div>
           <p className="eyebrow">Brand idea</p>
-          <h2>Growth is not a closed loop.</h2>
+          <h2>One whole. Never perfect.</h2>
         </div>
         <p>
-          The open circle represents entry, exchange, and continuous growth. It
-          avoids the visual language of traditional luxury clubs: less status,
-          more substance.
+          The circle represents unity, growth, and oneness. Its hand-drawn line
+          keeps it human: imperfect, alive, and honest without losing elegance.
         </p>
       </section>
 
@@ -51,14 +50,14 @@ export default function BrandGuidelines() {
         </div>
         <div className="brand-notes">
           <p>
-            <strong>Use:</strong> open ring + wordmark whenever space allows.
+            <strong>Use:</strong> hand-drawn circle + wordmark whenever space allows.
           </p>
           <p>
             <strong>Clear space:</strong> at least one ring diameter on every side.
           </p>
           <p>
-            <strong>Never:</strong> close, stretch, decorate, or add effects to the
-            ring.
+            <strong>Never:</strong> open, perfect, stretch, decorate, or add effects
+            to the circle.
           </p>
         </div>
       </section>
@@ -75,13 +74,13 @@ export default function BrandGuidelines() {
         </div>
         <div className="brand-notes dark-notes">
           <p>
-            <strong>60%</strong> Bone — primary reading surface
+            <strong>70%</strong> Ink — default reading surface
           </p>
           <p>
-            <strong>30%</strong> Ink — type and high-contrast sections
+            <strong>20%</strong> Bone — contrast and light-theme surface
           </p>
           <p>
-            <strong>10%</strong> Vermilion — action and identity moments
+            <strong>10%</strong> Orange — action and identity moments
           </p>
         </div>
       </section>
@@ -150,7 +149,7 @@ export default function BrandGuidelines() {
 
       <footer className="brand-guide-footer">
         <p>THE CIRCLE</p>
-        <p>Simple. Honest. Alive.</p>
+        <p>Whole. Human. Alive.</p>
       </footer>
     </main>
   );

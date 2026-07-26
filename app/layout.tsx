@@ -49,6 +49,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{document.documentElement.dataset.theme=localStorage.getItem('circle-theme')==='light'?'light':'dark'}catch(e){}",
+          }}
+        />
+      </head>
       <body className={`${geist.variable} ${cormorant.variable}`}>{children}</body>
     </html>
   );
