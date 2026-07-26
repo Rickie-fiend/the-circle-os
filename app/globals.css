@@ -338,14 +338,28 @@ a {
   display: grid;
   gap: clamp(2.5rem, 5vw, 4.5rem);
   grid-template-columns: 1fr;
-  margin: 0 clamp(1.25rem, 4vw, 4.5rem);
+  margin: 0 auto;
   padding: clamp(6rem, 12vw, 12rem) 0;
+  width: min(calc(100% - 3rem), 1160px);
 }
 
 .section-label {
   align-items: flex-start;
   display: flex;
   gap: 0.8rem;
+  margin: 0 auto;
+  width: min(100%, 1120px);
+}
+
+.section-label::before {
+  border: 1.5px solid var(--accent);
+  border-radius: 48% 52% 46% 54% / 55% 44% 56% 45%;
+  content: "";
+  flex: 0 0 auto;
+  height: 14px;
+  margin-top: 0.15rem;
+  transform: rotate(-6deg);
+  width: 14px;
 }
 
 .section-label span {
@@ -358,8 +372,9 @@ a {
 }
 
 .section-content {
-  margin-left: clamp(0rem, 11vw, 10rem);
-  max-width: 1000px;
+  margin: 0 auto;
+  max-width: 1120px;
+  width: 100%;
 }
 
 .section-content > h2,
@@ -380,6 +395,53 @@ a {
   gap: clamp(3rem, 6vw, 6.5rem);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   max-width: 900px;
+}
+
+.vision-copy {
+  gap: clamp(4rem, 8vw, 8rem);
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  max-width: 1120px;
+}
+
+.vision-copy .lead {
+  font-size: clamp(1.95rem, 2.4vw, 2.35rem);
+}
+
+.why-intro {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 0 auto clamp(4rem, 8vw, 7rem);
+  max-width: 1000px;
+  text-align: center;
+}
+
+.why-stack {
+  margin: 0 auto;
+  max-width: 880px;
+  text-align: center;
+}
+
+.why-stack h2 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.4rem, 4vw, 4rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.18;
+  margin: 0;
+}
+
+.why-stack h3 {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+  font-weight: 400;
+  line-height: 1.45;
+  margin: clamp(2.5rem, 5vw, 4rem) auto 0;
+  max-width: 720px;
+  padding-top: clamp(2rem, 4vw, 3rem);
 }
 
 .two-column-copy p {
@@ -428,11 +490,56 @@ a {
   display: grid;
   gap: clamp(2.5rem, 5vw, 4.5rem);
   grid-template-columns: 1fr;
+  margin: 0 auto;
+  max-width: 1160px;
 }
 
 .event-copy {
-  margin-left: clamp(0rem, 11vw, 10rem);
+  margin: 0 auto;
   max-width: 1000px;
+  position: relative;
+  text-align: center;
+}
+
+.event-copy::before {
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  border-radius: 48% 52% 46% 54% / 55% 44% 56% 45%;
+  content: "";
+  height: 280px;
+  left: 50%;
+  opacity: 0.48;
+  pointer-events: none;
+  position: absolute;
+  top: -2.5rem;
+  transform: translateX(-50%) rotate(-6deg);
+  width: 280px;
+}
+
+.event-copy > * {
+  position: relative;
+}
+
+.event-narrative {
+  margin: 0 auto;
+  max-width: 780px;
+}
+
+.event-lead {
+  color: var(--panel-text);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.7rem, 2.6vw, 2.45rem);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.event-note {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+  margin: 2.5rem auto 0;
+  text-transform: uppercase;
 }
 
 .section-label.light p {
@@ -451,7 +558,10 @@ a {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(3, 1fr);
+  margin-left: auto;
+  margin-right: auto;
   margin-top: clamp(5rem, 11vw, 10rem);
+  max-width: 1160px;
 }
 
 .stat {
@@ -1185,6 +1295,7 @@ footer small {
   .topics-section,
   .faq-section {
     padding: 6rem 0;
+    width: min(calc(100% - 2.5rem), 1160px);
   }
 
   .section-label {
@@ -1193,7 +1304,8 @@ footer small {
 
   .section-content,
   .event-copy {
-    margin-left: 0;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .section-content > h2,
@@ -1205,6 +1317,20 @@ footer small {
 
   .two-column-copy {
     grid-template-columns: 1fr;
+  }
+
+  .vision-copy {
+    gap: 3.5rem;
+  }
+
+  .event-copy::before {
+    height: 210px;
+    width: 210px;
+  }
+
+  .living-section {
+    padding: 6rem 1.5rem;
+    width: 100%;
   }
 
   .stats {

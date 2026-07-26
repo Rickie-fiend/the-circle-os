@@ -184,7 +184,7 @@ export default function Home() {
           </div>
           <div className="section-content">
             <h2>The art of living.</h2>
-            <div className="two-column-copy">
+            <div className="two-column-copy vision-copy">
               <p className="lead">
                 Making men more conscious of what&apos;s really happening - creating
                 real growth, expanding masculine collective consciousness, and
@@ -210,18 +210,20 @@ export default function Home() {
             <p>Why We Build The Circle</p>
           </div>
           <div className="section-content">
-            <h2>We exist to be a light for younger entrepreneurs in the modern world.</h2>
-            <div className="two-column-copy">
-              <p className="lead">
+            <p className="why-intro">
+              We exist to be a light for younger entrepreneurs in the modern world.
+            </p>
+            <div className="why-stack">
+              <h2>
                 Stop learning from screens. Start living your life.
                 <br />
                 Self-education doesn&apos;t have to be lonely or boring. It should be
                 challenging and fun.
-              </p>
-              <p>
+              </h2>
+              <h3>
                 We create connections with elite minds for the next generation of
                 entrepreneurs and provide opportunities to present themselves.
-              </p>
+              </h3>
             </div>
           </div>
         </section>
@@ -234,13 +236,13 @@ export default function Home() {
             </div>
             <div className="event-copy">
               <h2>Private events like no others.</h2>
-              <div className="two-column-copy">
-                <p className="lead">
+              <div className="event-narrative">
+                <p className="event-lead">
                   We host private networking events offering global experience and
                   exclusive opportunities for members to be with entrepreneurs from
                   all over the world.
                 </p>
-                <p>
+                <p className="event-note">
                   Invite-only in-person gatherings with the most elite minds.
                 </p>
               </div>
