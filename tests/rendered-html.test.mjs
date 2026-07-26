@@ -47,6 +47,7 @@ test("server-renders the brand guideline route", async () => {
   assert.match(html, /The human/);
   assert.match(html, /One whole\. Never perfect\./);
   assert.match(html, /#F1EFE8/);
+  assert.match(html, /#191813/);
   assert.match(html, /#E36B37/);
   assert.match(html, /Cormorant Garamond/);
   assert.match(html, /Space is part of the message\./);

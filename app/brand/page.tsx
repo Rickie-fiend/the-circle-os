@@ -1,8 +1,8 @@
 const palette = [
   { name: "Bone", hex: "#F1EFE8", className: "swatch-bone" },
-  { name: "Ink", hex: "#0D0D0B", className: "swatch-ink" },
+  { name: "Ink", hex: "#191813", className: "swatch-ink" },
   { name: "Orange", hex: "#E36B37", className: "swatch-accent" },
-  { name: "Charcoal", hex: "#34332E", className: "swatch-mist" },
+  { name: "Charcoal", hex: "#403E35", className: "swatch-mist" },
 ];
 
 export default function BrandGuidelines() {
