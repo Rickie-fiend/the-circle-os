@@ -1,0 +1,16 @@
+:root {
+  --circle-bone: #f1efe8;
+  --circle-ink: #191813;
+  --circle-orange: #e36b37;
+  --circle-charcoal: #403e35;
+  --circle-surface-dark: #222119;
+  --circle-surface-light: #f8f7f3;
+  --circle-font-display: "Cormorant Garamond", Georgia, serif;
+  --circle-font-functional: "Geist", Arial, sans-serif;
+  --circle-content-max: 1120px;
+  --circle-reading-max: 65ch;
+  --circle-radius-human: 48% 52% 46% 54% / 55% 44% 56% 45%;
+  --circle-motion-duration: 700ms;
+  --circle-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
