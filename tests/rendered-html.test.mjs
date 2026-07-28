@@ -52,3 +52,34 @@ test("server-renders the brand guideline route", async () => {
   assert.match(html, /Cormorant Garamond/);
   assert.match(html, /Space is part of the message\./);
 });
+
+test("server-renders the functional Circle OS Today route", async () => {
+  const response = await render("/os");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /THE CIRCLE OS/);
+  assert.match(html, /How.{0,10}your energy\?/);
+  assert.match(html, /Put the book where you will see it tonight\./);
+  assert.match(html, /Mission/);
+  assert.match(html, /Your day, hour by hour/);
+  assert.match(html, /Add main activity/);
+  assert.match(html, /Today/);
+  assert.match(html, /Vision/);
+  assert.doesNotMatch(html, /Oscar|pond|troph(?:y|ies)|leaderboard/i);
+});
+
+test("server-renders the complete Circle OS Vision route", async () => {
+  const response = await render("/os/mirror");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /Your life in view/);
+  assert.match(html, /Pattern/);
+  assert.match(html, /Data coverage/);
+  assert.match(html, /Where it went/);
+  assert.match(html, /Your rhythm/);
+  assert.match(html, /Mood field/);
+  assert.match(html, /Becoming/);
+  assert.match(html, /There is not enough evidence to say\./);
+});

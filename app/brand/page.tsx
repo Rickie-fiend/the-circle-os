@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { circleBrand, circleFoundations } from "../brand-system";
 
 const palette = Object.entries(circleBrand.colors).map(([key, color]) => ({
@@ -9,9 +10,9 @@ export default function BrandGuidelines() {
   return (
     <main className="brand-guide">
       <header className="brand-guide-header">
-        <a href="/" className="brand-back">
+        <Link href="/" className="brand-back">
           ← Website
-        </a>
+        </Link>
         <p>The Circle / Brand System / 2026</p>
       </header>
 

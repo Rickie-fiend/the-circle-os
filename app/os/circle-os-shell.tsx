@@ -1,0 +1,560 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import {
+  ACTIVITIES,
+  CIRCLE_OS_STORAGE_KEY,
+  DAY_PERIODS,
+  MOODS,
+  createEmptyState,
+  ensureDay,
+  getDateKey,
+  getDayPeriod,
+  minutesBetween,
+  upsertCheckIn,
+  upsertTimeBlock,
+} from "./circle-os-model.js";
+
+type CheckIn = {
+  period: string;
+  energy: number | null;
+  mood: string | null;
+  createdAt: string;
+};
+
+type Mission = {
+  text: string;
+  why: string;
+  identity: string;
+  completed: boolean;
+  completedAt: string | null;
+};
+
+export type TimeBlock = {
+  id: string;
+  start: string;
+  end: string;
+  activity: string;
+  note: string;
+  title?: string;
+  moments?: string[];
+  createdAt: string;
+};
+
+type CircleDay = {
+  date: string;
+  checkIns: CheckIn[];
+  mission: Mission;
+  timeBlocks: TimeBlock[];
+};
+
+export type CircleState = {
+  version: number;
+  profile: {
+    identityFocus: string;
+  };
+  days: Record<string, CircleDay>;
+};
+
+const AWAKE_HOURS = Array.from({ length: 17 }, (_, index) => index + 7);
+
+function hourLabel(hour: number) {
+  return `${String(hour).padStart(2, "0")}:00`;
+}
+
+function freshTimeRange() {
+  const now = new Date();
+  const startHour = Math.min(22, now.getHours());
+  return {
+    start: `${String(startHour).padStart(2, "0")}:00`,
+    end: `${String(startHour + 1).padStart(2, "0")}:00`,
+  };
+}
+
+export function useCircleState() {
+  const dateKey = getDateKey();
+  const [state, setState] = useState<CircleState>(() =>
+    ensureDay(createEmptyState(), dateKey),
+  );
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        const stored = window.localStorage.getItem(CIRCLE_OS_STORAGE_KEY);
+        const parsed = stored ? JSON.parse(stored) : createEmptyState();
+        const valid =
+          parsed && parsed.version === 1 && parsed.days && parsed.profile
+            ? parsed
+            : createEmptyState();
+        setState(ensureDay(valid, getDateKey()));
+      } catch {
+        setState(ensureDay(createEmptyState(), getDateKey()));
+      } finally {
+        setReady(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    window.localStorage.setItem(CIRCLE_OS_STORAGE_KEY, JSON.stringify(state));
+  }, [ready, state]);
+
+  const today = state.days[dateKey] ?? ensureDay(state, dateKey).days[dateKey];
+
+  function updateToday(transform: (day: CircleDay) => CircleDay) {
+    setState((current) => {
+      const currentWithDay = ensureDay(current, dateKey);
+      return {
+        ...currentWithDay,
+        days: {
+          ...currentWithDay.days,
+          [dateKey]: transform(currentWithDay.days[dateKey]),
+        },
+      };
+    });
+  }
+
+  return {
+    state,
+    today,
+    ready,
+    dateKey,
+    updateToday,
+  };
+}
+
+export function OSFrame({
+  active,
+  children,
+}: {
+  active: "today" | "mirror";
+  children: ReactNode;
+}) {
+  return (
+    <div className="circle-os">
+      <div className="os-future-room-background" aria-hidden="true" />
+      <div className="os-app-shell">
+        <header className="os-header">
+          <Link className="os-wordmark" href="/" aria-label="The Circle website">
+            <span className="mark mark-small" aria-hidden="true" />
+            <span>THE CIRCLE OS</span>
+          </Link>
+          <span className="os-local-status">Private · this device</span>
+        </header>
+        <nav className="os-nav" aria-label="Circle OS">
+          <Link className={active === "today" ? "active" : ""} href="/os">
+            Today
+          </Link>
+          <Link className={active === "mirror" ? "active" : ""} href="/os/mirror">
+            Vision
+          </Link>
+        </nav>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function TodayExperience() {
+  const { today, ready, updateToday } = useCircleState();
+  const [selectedPeriod, setSelectedPeriod] = useState(() =>
+    getDayPeriod(new Date().getHours()),
+  );
+  const [dateLabel] = useState(() =>
+    new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    }),
+  );
+  const [isLogOpen, setLogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState("");
+  const initialRange = useMemo(() => freshTimeRange(), []);
+  const [start, setStart] = useState(initialRange.start);
+  const [end, setEnd] = useState(initialRange.end);
+  const [activity, setActivity] = useState(ACTIVITIES[0]);
+  const [blockTitle, setBlockTitle] = useState("");
+  const [momentsText, setMomentsText] = useState("");
+  const greeting = useMemo(() => {
+    const period = getDayPeriod(new Date().getHours());
+    if (period === "morning") return "Good morning.";
+    if (period === "midday") return "Good afternoon.";
+    if (period === "afternoon") return "Good afternoon.";
+    return "Good evening.";
+  }, []);
+
+  const selectedCheckIn = today.checkIns.find(
+    (checkIn) => checkIn.period === selectedPeriod,
+  );
+  const currentPeriod = DAY_PERIODS.find((period) => period.id === selectedPeriod);
+
+  function saveCheckIn(fields: Partial<CheckIn>) {
+    updateToday((day) =>
+      upsertCheckIn(day, {
+        period: selectedPeriod,
+        energy: selectedCheckIn?.energy ?? null,
+        mood: selectedCheckIn?.mood ?? null,
+        createdAt: new Date().toISOString(),
+        ...fields,
+      }),
+    );
+  }
+
+  function toggleMission() {
+    updateToday((day) => ({
+      ...day,
+      mission: {
+        ...day.mission,
+        completed: !day.mission.completed,
+        completedAt: day.mission.completed ? null : new Date().toISOString(),
+      },
+    }));
+  }
+
+  function resetLogForm() {
+    const range = freshTimeRange();
+    setStart(range.start);
+    setEnd(range.end);
+    setActivity(ACTIVITIES[0]);
+    setBlockTitle("");
+    setMomentsText("");
+    setEditingId(null);
+    setFormError("");
+  }
+
+  function openEdit(block: TimeBlock) {
+    setEditingId(block.id);
+    setStart(block.start);
+    setEnd(block.end);
+    setActivity(block.activity);
+    setBlockTitle(block.title ?? block.activity);
+    setMomentsText(
+      block.moments?.join("\n") ?? (block.note ? block.note : ""),
+    );
+    setFormError("");
+    setLogOpen(true);
+  }
+
+  function openHour(hour: number) {
+    const hourStart = hourLabel(hour);
+    const existing = today.timeBlocks.find((block) => block.start === hourStart);
+    if (existing) {
+      openEdit(existing);
+      return;
+    }
+
+    resetLogForm();
+    setStart(hourStart);
+    setEnd(hourLabel(hour + 1));
+    setLogOpen(true);
+  }
+
+  function saveTimeBlock(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (minutesBetween(start, end) <= 0) {
+      setFormError("The end time needs to be after the start.");
+      return;
+    }
+    if (!blockTitle.trim()) {
+      setFormError("Add the main activity for this hour.");
+      return;
+    }
+    const id =
+      editingId ??
+      (typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `block-${Date.now()}`);
+    updateToday((day) =>
+      upsertTimeBlock(day, {
+        id,
+        start,
+        end,
+        activity,
+        note: "",
+        title: blockTitle.trim(),
+        moments: momentsText
+          .split("\n")
+          .map((moment) => moment.trim())
+          .filter(Boolean),
+        createdAt:
+          day.timeBlocks.find((block) => block.id === id)?.createdAt ??
+          new Date().toISOString(),
+      }),
+    );
+    resetLogForm();
+    setLogOpen(false);
+  }
+
+  function deleteTimeBlock(id: string) {
+    updateToday((day) => ({
+      ...day,
+      timeBlocks: day.timeBlocks.filter((block) => block.id !== id),
+    }));
+    if (editingId === id) {
+      resetLogForm();
+      setLogOpen(false);
+    }
+  }
+
+  return (
+    <OSFrame active="today">
+      <main className="os-today">
+        <section className="os-checkin" aria-labelledby="checkin-question">
+          <div className="os-context-row">
+            <div>
+              <p className="os-eyebrow">{dateLabel}</p>
+              <h1>{greeting}</h1>
+            </div>
+            <p className="os-save-state" aria-live="polite">
+              {ready ? "Saved on this device" : "Opening your day…"}
+            </p>
+          </div>
+
+          <div className="os-checkin-card">
+            <p className="os-card-label">
+              Check in · {currentPeriod?.label}
+            </p>
+            <h2 id="checkin-question">How&apos;s your energy?</h2>
+
+            <div className="os-energy-scale" aria-label="Energy from one to five">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <button
+                  type="button"
+                  key={value}
+                  className={selectedCheckIn?.energy === value ? "selected" : ""}
+                  onClick={() => saveCheckIn({ energy: value })}
+                  aria-label={`Energy ${value} of 5`}
+                  aria-pressed={selectedCheckIn?.energy === value}
+                >
+                  <span>{value}</span>
+                </button>
+              ))}
+            </div>
+            <div className="os-scale-labels" aria-hidden="true">
+              <span>Low</span>
+              <span>Alive</span>
+            </div>
+
+            <div className="os-mood-row">
+              <p>Mood</p>
+              <div>
+                {MOODS.map((mood) => (
+                  <button
+                    type="button"
+                    key={mood}
+                    className={selectedCheckIn?.mood === mood ? "selected" : ""}
+                    onClick={() =>
+                      saveCheckIn({
+                        mood: selectedCheckIn?.mood === mood ? null : mood,
+                      })
+                    }
+                    aria-pressed={selectedCheckIn?.mood === mood}
+                  >
+                    {mood}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="os-period-tabs" aria-label="Choose a part of the day">
+              {DAY_PERIODS.map((period) => {
+                const recorded = today.checkIns.some(
+                  (checkIn) => checkIn.period === period.id,
+                );
+                return (
+                  <button
+                    className={period.id === selectedPeriod ? "active" : ""}
+                    type="button"
+                    key={period.id}
+                    onClick={() => setSelectedPeriod(period.id)}
+                    aria-pressed={period.id === selectedPeriod}
+                  >
+                    <span>{period.label}</span>
+                    <i className={recorded ? "recorded" : ""} aria-hidden="true" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="os-mission" aria-labelledby="mission-heading">
+          <div>
+            <p className="os-card-label">Mission</p>
+            <h2 id="mission-heading">{today.mission.text}</h2>
+            <span className="os-mission-identity">
+              Becoming: {today.mission.identity}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={today.mission.completed ? "completed" : ""}
+            onClick={toggleMission}
+          >
+            <span aria-hidden="true">{today.mission.completed ? "✓" : "○"}</span>
+            {today.mission.completed ? "Done" : "Do it"}
+          </button>
+        </section>
+
+        <section className="os-day" aria-labelledby="day-heading">
+          <div className="os-section-heading">
+            <div>
+              <p className="os-card-label">Today</p>
+              <h2 id="day-heading">Your day, hour by hour</h2>
+              <span className="os-day-hint">One main activity + small moments</span>
+            </div>
+            {isLogOpen ? (
+              <button
+                className="os-close-log"
+                type="button"
+                onClick={() => {
+                  resetLogForm();
+                  setLogOpen(false);
+                }}
+              >
+                Close
+              </button>
+            ) : null}
+          </div>
+
+          {isLogOpen ? (
+            <form className="os-log-form" onSubmit={saveTimeBlock}>
+              <p className="os-hour-being-edited">
+                {start}–{end}
+              </p>
+              <label className="os-main-activity-field">
+                <span>Main activity</span>
+                <input
+                  type="text"
+                  value={blockTitle}
+                  onChange={(event) => setBlockTitle(event.target.value)}
+                  placeholder="Walk, work, lunch…"
+                  maxLength={60}
+                  autoFocus
+                  required
+                />
+              </label>
+              <label>
+                <span>Kind of time</span>
+                <select
+                  value={activity}
+                  onChange={(event) => setActivity(event.target.value)}
+                >
+                  {ACTIVITIES.map((item) => (
+                    <option value={item} key={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="os-note-field">
+                <span>Small moments · optional, one per line</span>
+                <textarea
+                  value={momentsText}
+                  onChange={(event) => setMomentsText(event.target.value)}
+                  placeholder={"Wrote down a few thoughts\nCalled a friend"}
+                  maxLength={300}
+                  rows={3}
+                />
+              </label>
+              {formError ? <p className="os-form-error">{formError}</p> : null}
+              <button className="os-save-log" type="submit">
+                {editingId ? "Save this hour" : "Add this hour"}
+              </button>
+            </form>
+          ) : null}
+
+          <div className="os-timeline">
+            <div className="os-sleep-block">
+              <strong>00:00–07:00</strong>
+              <span>Sleep · collapsed for now</span>
+            </div>
+            {AWAKE_HOURS.map((hour) => {
+              const slotStart = hourLabel(hour);
+              const block = today.timeBlocks.find(
+                (item) => item.start === slotStart,
+              );
+              const moments =
+                block?.moments?.length
+                  ? block.moments
+                  : block?.note
+                    ? [block.note]
+                    : [];
+
+              return (
+                <article
+                  className={block ? "filled" : "empty"}
+                  key={slotStart}
+                >
+                  <div className="os-time-range">
+                    <strong>{slotStart}</strong>
+                  </div>
+                  {block ? (
+                    <>
+                      <div className="os-log-copy">
+                        <p>{block.title ?? block.activity}</p>
+                        <span className="os-time-category">{block.activity}</span>
+                        {moments.length ? (
+                          <ul>
+                            {moments.map((moment, index) => (
+                              <li key={`${block.id}-${index}`}>{moment}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                      <div className="os-log-actions">
+                        <button type="button" onClick={() => openEdit(block)}>
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTimeBlock(block.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      className="os-empty-hour"
+                      type="button"
+                      onClick={() => openHour(hour)}
+                    >
+                      Add main activity
+                      <span aria-hidden="true">+</span>
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="os-day-coverage" aria-label="Today's check-in coverage">
+            {DAY_PERIODS.map((period) => {
+              const checkIn = today.checkIns.find(
+                (item) => item.period === period.id,
+              );
+              return (
+                <div key={period.id}>
+                  <span>{period.label}</span>
+                  <strong>
+                    {checkIn?.energy ? `${checkIn.energy}/5` : "Not recorded"}
+                  </strong>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </main>
+    </OSFrame>
+  );
+}

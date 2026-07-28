@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MotionProvider } from "./motion-provider";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -143,6 +144,9 @@ export default function Home() {
         </a>
         <div className="nav-actions">
           <ThemeToggle />
+          <Link className="nav-os" href="/os">
+            Open OS
+          </Link>
           <a className="nav-apply" href="#join">
             Apply Now <span aria-hidden="true">↗</span>
           </a>

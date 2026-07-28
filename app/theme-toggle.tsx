@@ -11,7 +11,7 @@ export function ThemeToggle() {
     const saved = window.localStorage.getItem("circle-theme");
     const initial: Theme = saved === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = initial;
-    setTheme(initial);
+    queueMicrotask(() => setTheme(initial));
   }, []);
 
   function toggleTheme() {
