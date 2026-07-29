@@ -13,34 +13,35 @@ if ($status.BackendState -ne "Running") {
 $tokenPath = Join-Path $PSScriptRoot ".token"
 if (-not (Test-Path -LiteralPath $tokenPath)) {
   $bytes = New-Object byte[] 32
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+  $generator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  $generator.GetBytes($bytes)
+  $generator.Dispose()
   $newToken = [Convert]::ToBase64String($bytes).TrimEnd("=").Replace("+", "-").Replace("/", "_")
   Set-Content -LiteralPath $tokenPath -Value $newToken -NoNewline
 }
 
 $startScript = Join-Path $PSScriptRoot "start-local-ai.ps1"
-$taskAction = New-ScheduledTaskAction `
-  -Execute "powershell.exe" `
-  -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$startScript`""
-$taskTrigger = New-ScheduledTaskTrigger -AtLogOn
-$taskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable
-
-Register-ScheduledTask `
-  -TaskName "Circle OS Local AI" `
-  -Description "Runs the private Circle OS profile helper on this computer." `
-  -Action $taskAction `
-  -Trigger $taskTrigger `
-  -Settings $taskSettings `
+$runCommand = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$startScript`""
+$runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+New-ItemProperty `
+  -Path $runKey `
+  -Name "CircleOSLocalAI" `
+  -PropertyType String `
+  -Value $runCommand `
   -Force | Out-Null
 
-Start-ScheduledTask -TaskName "Circle OS Local AI"
+Start-Process `
+  -FilePath "powershell.exe" `
+  -ArgumentList "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$startScript`"" `
+  -WindowStyle Hidden
 & $tailscale serve --bg --yes http://127.0.0.1:4317 | Out-Null
 
 $dnsName = $status.Self.DNSName.TrimEnd(".")
 $token = (Get-Content -Raw -LiteralPath $tokenPath).Trim()
+Set-Clipboard -Value $token
 
 Write-Host ""
 Write-Host "Open Circle OS on your phone and tap 'Private - this device'."
 Write-Host "Address: https://$dnsName"
-Write-Host "Key: $token"
+Write-Host "The key is copied. Paste it into the Key field."
 Write-Host ""
