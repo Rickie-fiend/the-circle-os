@@ -303,11 +303,37 @@
 
 .circle-os .os-mission {
   align-items: center;
+  border-color: rgb(227 107 55 / 0.32);
+  box-shadow: inset 3px 0 #e36b37;
   display: grid;
   gap: 1rem;
   grid-template-columns: 1fr auto;
   margin-top: 0;
   padding: 17px;
+}
+
+.circle-os .os-mission.completed {
+  background:
+    linear-gradient(135deg, rgb(227 107 55 / 0.12), transparent 58%),
+    #222119;
+  border-color: rgb(227 107 55 / 0.6);
+}
+
+.circle-os .os-mission-meta {
+  align-items: center;
+  display: flex;
+  gap: 0.7rem;
+  justify-content: space-between;
+}
+
+.circle-os .os-mission-status {
+  color: rgb(241 239 232 / 0.48);
+  font-size: 0.58rem;
+  white-space: nowrap;
+}
+
+.circle-os .os-mission.completed .os-mission-status {
+  color: #e36b37;
 }
 
 .circle-os .os-mission h2 {
@@ -348,12 +374,14 @@
 }
 
 .circle-os .os-mission > button span {
-  display: none;
+  display: inline;
+  font-size: 1rem;
 }
 
 .circle-os .os-mission > button.completed {
-  background: transparent;
-  border: 1px solid #e36b37;
+  background: #f1efe8;
+  border: 1px solid #f1efe8;
+  color: #191813;
 }
 
 .circle-os .os-day {
@@ -595,16 +623,6 @@
   color: #e36b37;
   content: "+";
   margin-right: 0.35rem;
-}
-
-.circle-os .os-log-actions {
-  grid-column: 2;
-}
-
-.circle-os .os-log-actions button {
-  color: rgb(241 239 232 / 0.32);
-  min-height: 32px;
-  padding: 0.25rem 0.5rem 0.25rem 0;
 }
 
 .circle-os .os-empty-day {
@@ -1164,12 +1182,105 @@
   }
 
   .circle-os .os-context-row {
-    margin-bottom: 14px;
+    align-items: flex-start;
+    display: grid;
+    gap: 0.45rem;
+    grid-template-columns: 1fr;
+    margin: 0 2px 18px;
+  }
+
+  .circle-os .os-context-row > div {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .circle-os .os-save-state {
+    max-width: none;
+    text-align: left;
   }
 
   .circle-os .os-context-row h1,
   .circle-os .mirror-intro h1 {
-    font-size: 2.15rem;
+    font-size: clamp(2rem, 11vw, 2.45rem);
+    line-height: 1;
+  }
+
+  .circle-os .os-checkin-card {
+    border-radius: 24px;
+    padding: 20px 16px 16px;
+  }
+
+  .circle-os .os-mood-row {
+    align-items: start;
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .circle-os .os-mood-row > div {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    width: 100%;
+  }
+
+  .circle-os .os-mood-row button {
+    justify-content: center;
+    min-width: 0;
+    padding: 0.3rem 0.35rem;
+    width: 100%;
+  }
+
+  .circle-os .os-period-tabs {
+    gap: 2px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0.85rem 0 0;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .circle-os .os-period-tabs button {
+    font-size: 0.48rem;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .circle-os .os-mission {
+    align-items: stretch;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 19px 18px 18px;
+  }
+
+  .circle-os .os-mission h2 {
+    font-size: 1.2rem;
+    max-width: none;
+  }
+
+  .circle-os .os-mission > button {
+    justify-content: center;
+    min-height: 56px;
+    width: 100%;
+  }
+
+  .circle-os .os-section-heading,
+  .circle-os .os-section-heading > div {
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+  }
+
+  .circle-os .os-timeline article {
+    gap: 0.6rem;
+    grid-template-columns: 62px minmax(0, 1fr) 42px;
+  }
+
+  .circle-os .os-log-copy {
+    min-width: 0;
+  }
+
+  .circle-os .os-log-copy > button {
+    line-height: 1.25;
+    overflow-wrap: anywhere;
   }
 }
 

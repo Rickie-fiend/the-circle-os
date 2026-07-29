@@ -350,17 +350,6 @@ export function TodayExperience() {
     setMomentHour(null);
   }
 
-  function deleteTimeBlock(id: string) {
-    updateToday((day) => ({
-      ...day,
-      timeBlocks: day.timeBlocks.filter((block) => block.id !== id),
-    }));
-    if (editingId === id) {
-      resetLogForm();
-      setLogOpen(false);
-    }
-  }
-
   return (
     <OSFrame active="today">
       <main className="os-today">
@@ -443,9 +432,17 @@ export function TodayExperience() {
           </div>
         </section>
 
-        <section className="os-mission" aria-labelledby="mission-heading">
+        <section
+          className={`os-mission${today.mission.completed ? " completed" : ""}`}
+          aria-labelledby="mission-heading"
+        >
           <div>
-            <p className="os-card-label">Mission</p>
+            <div className="os-mission-meta">
+              <p className="os-card-label">Today&apos;s Mission</p>
+              <span className="os-mission-status" aria-live="polite">
+                {today.mission.completed ? "Completed today" : "Still to do"}
+              </span>
+            </div>
             <h2 id="mission-heading">{today.mission.text}</h2>
             <span className="os-mission-identity">
               Becoming: {today.mission.identity}
@@ -455,9 +452,10 @@ export function TodayExperience() {
             type="button"
             className={today.mission.completed ? "completed" : ""}
             onClick={toggleMission}
+            aria-pressed={today.mission.completed}
           >
             <span aria-hidden="true">{today.mission.completed ? "✓" : "○"}</span>
-            {today.mission.completed ? "Done" : "Do it"}
+            {today.mission.completed ? "Completed" : "Mark complete"}
           </button>
         </section>
 
@@ -524,7 +522,9 @@ export function TodayExperience() {
                         <button type="button" onClick={() => openEdit(block)}>
                           {block.title ?? block.activity}
                         </button>
-                        <span className="os-time-category">{block.activity}</span>
+                        {block.activity && block.activity !== "Life admin" ? (
+                          <span className="os-time-category">{block.activity}</span>
+                        ) : null}
                         {moments.length ? (
                           <ul>
                             {moments.map((moment, index) => (
@@ -532,15 +532,6 @@ export function TodayExperience() {
                             ))}
                           </ul>
                         ) : null}
-                      </div>
-                      <div className="os-log-actions">
-                        <button
-                          type="button"
-                          onClick={() => deleteTimeBlock(block.id)}
-                          aria-label={`Delete ${block.title ?? block.activity}`}
-                        >
-                          ×
-                        </button>
                       </div>
                     </>
                   ) : (
