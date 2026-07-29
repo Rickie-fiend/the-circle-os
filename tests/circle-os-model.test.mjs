@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   applyProfileResult,
   buildVisionAnalysis,
+  connectLocalAi,
   createEmptyState,
   createSampleState,
   getDayPeriod,
@@ -91,6 +92,36 @@ test("AI updates cannot overwrite a session the person edited", () => {
     "Time with my brother matters to me.",
   );
   assert.equal(updated.outbox.length, 0);
+});
+
+test("connecting local AI queues an older profile for its first update", () => {
+  const state = createEmptyState();
+  state.profile.vision.completedAt = "2026-07-29T00:00:00.000Z";
+
+  const connected = connectLocalAi(
+    state,
+    "https://computer.example.ts.net/",
+  );
+
+  assert.equal(connected.ai.baseUrl, "https://computer.example.ts.net");
+  assert.equal(connected.outbox.length, 1);
+  assert.equal(connected.outbox[0].reason, "connected");
+});
+
+test("reconnecting retries a profile update that failed earlier", () => {
+  const state = createEmptyState();
+  state.outbox = [
+    {
+      id: "old-update",
+      reason: "first-vision",
+      createdAt: "2026-07-29T00:00:00.000Z",
+      triedAt: "2026-07-29T00:01:00.000Z",
+    },
+  ];
+
+  const connected = connectLocalAi(state, "https://computer.example.ts.net");
+
+  assert.equal(connected.outbox[0].triedAt, undefined);
 });
 
 test("keeps time-log correction deterministic", () => {

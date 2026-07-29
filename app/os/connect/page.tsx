@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { checkLocalAi } from "../circle-os-ai";
 import { OSFrame, useCircleState } from "../circle-os-shell";
 
 export default function ConnectCircleAi() {
   const { state, ready, connectAi } = useCircleState();
+  const router = useRouter();
 
   return (
     <ConnectForm
@@ -14,6 +16,7 @@ export default function ConnectCircleAi() {
       initialAddress={state.ai.baseUrl}
       initialToken={state.ai.token}
       connectAi={connectAi}
+      onConnected={() => router.replace("/os/mirror")}
     />
   );
 }
@@ -22,10 +25,12 @@ function ConnectForm({
   initialAddress,
   initialToken,
   connectAi,
+  onConnected,
 }: {
   initialAddress: string;
   initialToken: string;
-  connectAi: (address: string, token: string) => void;
+  connectAi: (address: string, token: string) => Promise<void>;
+  onConnected: () => void;
 }) {
   const [address, setAddress] = useState(initialAddress);
   const [message, setMessage] = useState("");
@@ -37,8 +42,9 @@ function ConnectForm({
     setMessage("");
     try {
       await checkLocalAi(address, initialToken);
-      connectAi(address, initialToken);
-      setMessage("Connected.");
+      await connectAi(address, initialToken);
+      setMessage("Connected. Opening Vision…");
+      onConnected();
     } catch {
       setMessage("Could not connect. Your phone data is still safe.");
     } finally {

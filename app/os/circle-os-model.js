@@ -210,6 +210,28 @@ export function queueProfileUpdate(state, reason) {
   };
 }
 
+export function connectLocalAi(state, baseUrl, token = "") {
+  let next = {
+    ...state,
+    ai: {
+      ...state.ai,
+      baseUrl: baseUrl.trim().replace(/\/+$/, ""),
+      token,
+      status: "ready",
+      lastError: "",
+    },
+    outbox: state.outbox.map((item) => ({
+      id: item.id,
+      reason: item.reason,
+      createdAt: item.createdAt,
+    })),
+  };
+  if (state.profile.vision.completedAt && next.outbox.length === 0) {
+    next = queueProfileUpdate(next, "connected");
+  }
+  return next;
+}
+
 function cleanSession(session, fallback) {
   return {
     text:

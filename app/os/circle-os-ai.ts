@@ -34,7 +34,7 @@ export async function requestProfileUpdate(
     method: "POST",
     headers,
     body: JSON.stringify(buildAiPayload(state, reason)),
-    signal: AbortSignal.timeout(45000),
+    signal: AbortSignal.timeout(120000),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {

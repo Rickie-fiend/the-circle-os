@@ -15,6 +15,7 @@ import {
   MOODS,
   answerProfileQuestion,
   applyProfileResult,
+  connectLocalAi,
   createEmptyState,
   ensureDay,
   getDateKey,
@@ -233,22 +234,10 @@ export function useCircleState() {
     setState(transform);
   }
 
-  function connectAi(baseUrl: string, token: string) {
-    setState((current) => ({
-      ...current,
-      ai: {
-        ...current.ai,
-        baseUrl: baseUrl.trim().replace(/\/+$/, ""),
-        token,
-        status: "ready",
-        lastError: "",
-      },
-      outbox: current.outbox.map((item) => ({
-        id: item.id,
-        reason: item.reason,
-        createdAt: item.createdAt,
-      })),
-    }));
+  async function connectAi(baseUrl: string, token: string) {
+    const next = connectLocalAi(state, baseUrl, token);
+    setState(next);
+    await saveCircleState(next);
   }
 
   return {
