@@ -11,11 +11,13 @@ import {
   connectLocalAi,
   createEmptyState,
   createSampleState,
+  ensureDay,
   getDateKey,
   getDayPeriod,
   minutesBetween,
   normalizeState,
   queueSuggestion,
+  setDayLogRange,
   summarizeWeek,
   upsertTimeBlock,
 } from "../app/os/circle-os-model.js";
@@ -200,6 +202,26 @@ test("keeps time-log correction deterministic", () => {
   assert.equal(corrected.timeBlocks[0].activity, "Reading");
 });
 
+test("keeps added empty log hours after leaving Today", () => {
+  const dateKey = "2026-07-28";
+  let state = ensureDay(createEmptyState(), dateKey);
+  state = {
+    ...state,
+    days: {
+      ...state.days,
+      [dateKey]: setDayLogRange(state.days[dateKey], 6, 25),
+    },
+  };
+
+  const reopened = normalizeState(JSON.parse(JSON.stringify(state)));
+
+  assert.deepEqual(reopened.days[dateKey].logRange, {
+    startHour: 6,
+    endHour: 25,
+  });
+  assert.equal(reopened.days[dateKey].timeBlocks.length, 0);
+});
+
 test("routine answers unlock the day without becoming profile claims", () => {
   let state = createEmptyState();
   state = answerSurveyQuestion(
@@ -261,6 +283,15 @@ test("suggestions wait safely in the phone outbox", () => {
   assert.equal(state.outbox.length, 1);
   assert.equal(state.outbox[0].reason, "suggestion");
   assert.equal(state.outbox[0].message, "Let me draw how I feel.");
+});
+
+test("older saved profiles receive an empty chapter library safely", () => {
+  const oldState = createEmptyState();
+  delete oldState.chapters;
+
+  const normalized = normalizeState(oldState);
+
+  assert.deepEqual(normalized.chapters, { runs: {}, sessions: {} });
 });
 
 test("weekly Vision keeps the person's own log words", () => {

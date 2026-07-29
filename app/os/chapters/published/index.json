@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "chapters": [
+    {
+      "schemaVersion": 1,
+      "id": "log-setup",
+      "version": 1,
+      "status": "published",
+      "session": "log",
+      "theme": "dark",
+      "title": "Set your usual day.",
+      "purpose": "Choose the two times that shape the daily log.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Set your usual day.",
+          "body": "Two times unlock your daily timeline.",
+          "button": "Begin"
+        },
+        {
+          "id": "wake",
+          "type": "time",
+          "question": "When do you usually wake up?",
+          "answerKey": "routine-wake",
+          "defaultValue": "07:00",
+          "required": true
+        },
+        {
+          "id": "sleep",
+          "type": "time",
+          "question": "When do you usually go to sleep?",
+          "answerKey": "routine-sleep",
+          "defaultValue": "00:00",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

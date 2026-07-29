@@ -14,11 +14,10 @@ import {
   summarizeWeek,
 } from "../circle-os-model.js";
 import {
-  SessionIntro,
-  SwipeSession,
   useCircleState,
   type TimeBlock,
 } from "../circle-os-shell";
+import { SessionIntro, SwipeSession } from "../app-session";
 
 const ACTIVITY_COLORS = [
   "activity-focus",

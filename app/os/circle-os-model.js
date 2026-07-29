@@ -213,6 +213,10 @@ export function createEmptyState() {
       profileCase: createProfileCase(),
     },
     days: {},
+    chapters: {
+      runs: {},
+      sessions: {},
+    },
     outbox: [],
   };
 }
@@ -296,6 +300,16 @@ export function normalizeState(state) {
       },
     },
     days: state.days,
+    chapters: {
+      runs:
+        state.chapters?.runs && typeof state.chapters.runs === "object"
+          ? state.chapters.runs
+          : {},
+      sessions:
+        state.chapters?.sessions && typeof state.chapters.sessions === "object"
+          ? state.chapters.sessions
+          : {},
+    },
     outbox: Array.isArray(state.outbox) ? state.outbox : [],
   };
 }
@@ -645,6 +659,7 @@ export function createDay(dateKey) {
     checkIns: [],
     mission: { ...DEFAULT_MISSION },
     timeBlocks: [],
+    logRange: null,
   };
 }
 
@@ -684,6 +699,36 @@ export function upsertTimeBlock(day, nextBlock) {
   timeBlocks[index] = nextBlock;
   sortBlocks(timeBlocks);
   return { ...day, timeBlocks };
+}
+
+export function setDayLogRange(day, startHour, endHour) {
+  const requestedStart = Number(startHour);
+  const requestedEnd = Number(endHour);
+  const cleanStart = Math.max(
+    CIRCLE_DAY_START_HOUR,
+    Math.min(
+      CIRCLE_DAY_START_HOUR + 23,
+      Number.isFinite(requestedStart)
+        ? Math.trunc(requestedStart)
+        : CIRCLE_DAY_START_HOUR,
+    ),
+  );
+  const cleanEnd = Math.max(
+    cleanStart,
+    Math.min(
+      CIRCLE_DAY_START_HOUR + 23,
+      Number.isFinite(requestedEnd)
+        ? Math.trunc(requestedEnd)
+        : cleanStart,
+    ),
+  );
+  return {
+    ...day,
+    logRange: {
+      startHour: cleanStart,
+      endHour: cleanEnd,
+    },
+  };
 }
 
 function circleTimeValue(value) {

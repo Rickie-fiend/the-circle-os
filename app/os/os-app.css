@@ -313,6 +313,11 @@
   user-select: text;
 }
 
+.circle-os :where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid #e36b37;
+  outline-offset: 3px;
+}
+
 .circle-os .os-checkin-session {
   background: #f1efe8;
   border: 1px solid rgb(25 24 19 / 0.05);
@@ -449,6 +454,68 @@
 .circle-os .theme-orange > button,
 .circle-os .theme-dark > button {
   color: rgb(255 248 241 / 0.68);
+}
+
+.circle-os .os-chapter-card {
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  padding: 22px 20px 20px;
+}
+
+.circle-os .os-chapter-card.theme-light {
+  background: #f1efe8;
+  color: #191813;
+}
+
+.circle-os .os-chapter-card.theme-orange {
+  background: linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  color: #fff8f1;
+}
+
+.circle-os .os-chapter-card.theme-dark {
+  background: #222119;
+  color: #f1efe8;
+}
+
+.circle-os .os-chapter-card h2 {
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.58rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  margin: 1rem 0 0;
+}
+
+.circle-os .os-chapter-body {
+  color: currentcolor;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  margin: 0.85rem 0 0;
+  opacity: 0.7;
+}
+
+.circle-os .os-chapter-continue {
+  align-self: flex-end;
+  background: #191813;
+  border: 0;
+  border-radius: 14px;
+  color: #f7f4ec;
+  font-weight: 650;
+  margin-top: auto;
+  min-height: 48px;
+  padding: 0.75rem 1.15rem;
+}
+
+.circle-os .theme-dark .os-chapter-continue,
+.circle-os .theme-orange .os-chapter-continue {
+  background: #f7f4ec;
+  color: #191813;
+}
+
+.circle-os .os-chapter-continue:disabled {
+  opacity: 0.35;
 }
 
 .circle-os .os-session-wait {

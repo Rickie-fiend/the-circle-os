@@ -3,24 +3,18 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Children,
   createContext,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type FormEvent,
-  type KeyboardEvent,
-  type MouseEvent,
-  type PointerEvent,
   type ReactNode,
 } from "react";
 import {
   CIRCLE_DAY_START_HOUR,
   HABIT_QUESTIONS,
-  LOG_SETUP_QUESTIONS,
   PROFILE_QUESTIONS,
   answerProfileQuestion,
   answerSurveyQuestion,
@@ -32,6 +26,7 @@ import {
   minutesBetween,
   normalizeState,
   queueProfileUpdate,
+  setDayLogRange,
   upsertTimeBlock,
 } from "./circle-os-model.js";
 import {
@@ -40,6 +35,18 @@ import {
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
+import { SessionIntro, SwipeSession } from "./app-session";
+import { ChapterPlayer } from "./chapters/chapter-player";
+import {
+  chapterRunId,
+  createChapterRun,
+  storeChapterRun,
+} from "./chapters/chapter-model.js";
+import { getPublishedChapter } from "./chapters/registry";
+import type {
+  ChapterRun,
+  ChapterSubmission,
+} from "./chapters/chapter-types";
 
 type CheckIn = {
   period: string;
@@ -72,6 +79,10 @@ type CircleDay = {
   checkIns: CheckIn[];
   mission: Mission;
   timeBlocks: TimeBlock[];
+  logRange?: {
+    startHour: number;
+    endHour: number;
+  } | null;
 };
 
 export type CircleState = {
@@ -127,6 +138,17 @@ export type CircleState = {
     };
   };
   days: Record<string, CircleDay>;
+  chapters: {
+    runs: Record<string, ChapterRun>;
+    sessions: Record<
+      string,
+      {
+        activeRunId: string;
+        lastSeenChapterVersion: number;
+        updatedAt: string;
+      }
+    >;
+  };
   outbox: Array<{
     id: string;
     reason: string;
@@ -537,203 +559,6 @@ export function OSFrame({
   );
 }
 
-export function SwipeSession({
-  children,
-  index,
-  maxIndex,
-  onIndexChange,
-  className = "",
-  label,
-}: {
-  children: ReactNode;
-  index: number;
-  maxIndex?: number;
-  onIndexChange: (index: number) => void;
-  className?: string;
-  label: string;
-}) {
-  const apps = Children.toArray(children);
-  const lastIndex = Math.min(
-    apps.length - 1,
-    maxIndex ?? Math.max(0, apps.length - 1),
-  );
-  const pointerStart = useRef<{
-    x: number;
-    y: number;
-    pointerId: number;
-  } | null>(null);
-  const didSwipe = useRef(false);
-  const [dragX, setDragX] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const [motionDirection, setMotionDirection] = useState<
-    "none" | "next" | "previous"
-  >("none");
-
-  function move(nextIndex: number) {
-    const boundedIndex = Math.max(0, Math.min(lastIndex, nextIndex));
-    setDragX(0);
-    setDragging(false);
-    if (boundedIndex === index) return;
-    setMotionDirection(boundedIndex > index ? "next" : "previous");
-    onIndexChange(boundedIndex);
-  }
-
-  function blocksSwipe(target: EventTarget | null) {
-    return target instanceof Element
-      ? Boolean(target.closest("input, textarea, select, a"))
-      : false;
-  }
-
-  function startSwipe(event: PointerEvent<HTMLDivElement>) {
-    if (blocksSwipe(event.target)) return;
-    didSwipe.current = false;
-    pointerStart.current = {
-      x: event.clientX,
-      y: event.clientY,
-      pointerId: event.pointerId,
-    };
-  }
-
-  function continueSwipe(event: PointerEvent<HTMLDivElement>) {
-    if (!pointerStart.current) return;
-    const distanceX = event.clientX - pointerStart.current.x;
-    const distanceY = event.clientY - pointerStart.current.y;
-    if (Math.abs(distanceX) < 6 || Math.abs(distanceX) <= Math.abs(distanceY)) {
-      return;
-    }
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
-      try {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      } catch {
-        // Synthetic tests and older webviews may not expose pointer capture.
-      }
-    }
-    event.preventDefault();
-    didSwipe.current = true;
-    const movingPastStart = index === 0 && distanceX > 0;
-    const movingPastEnd = index === lastIndex && distanceX < 0;
-    const resistance = movingPastStart || movingPastEnd ? 0.16 : 0.72;
-    setDragging(true);
-    setDragX(Math.max(-96, Math.min(96, distanceX * resistance)));
-  }
-
-  function finishSwipe(event: PointerEvent<HTMLDivElement>) {
-    if (!pointerStart.current) return;
-    const distance = event.clientX - pointerStart.current.x;
-    if (event.currentTarget.hasPointerCapture(pointerStart.current.pointerId)) {
-      try {
-        event.currentTarget.releasePointerCapture(pointerStart.current.pointerId);
-      } catch {
-        // The pointer may already have been released by the browser.
-      }
-    }
-    pointerStart.current = null;
-    if (Math.abs(distance) < 48) {
-      setDragX(0);
-      setDragging(false);
-      return;
-    }
-    move(distance < 0 ? index + 1 : index - 1);
-  }
-
-  function stopClickAfterSwipe(event: MouseEvent<HTMLDivElement>) {
-    if (!didSwipe.current) return;
-    event.preventDefault();
-    event.stopPropagation();
-    didSwipe.current = false;
-  }
-
-  function useArrowKey(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "ArrowRight") {
-      event.preventDefault();
-      move(index + 1);
-    }
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      move(index - 1);
-    }
-  }
-
-  return (
-    <div
-      aria-label={label}
-      className={`os-swipe-session ${className}`.trim()}
-      onClickCapture={stopClickAfterSwipe}
-      onKeyDown={useArrowKey}
-      onPointerCancel={() => {
-        pointerStart.current = null;
-        setDragX(0);
-        setDragging(false);
-      }}
-      onPointerDown={startSwipe}
-      onPointerMove={continueSwipe}
-      onPointerUp={finishSwipe}
-      tabIndex={0}
-    >
-      <div className="os-app-window">
-        {dragging && index > 0 ? (
-          <div
-            aria-hidden="true"
-            className="os-app-page adjacent previous"
-            style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
-          >
-            {apps[index - 1]}
-          </div>
-        ) : null}
-        <div
-          className={`os-app-page current motion-${motionDirection}${
-            dragging ? " dragging" : ""
-          }`}
-          key={index}
-          style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
-        >
-          {apps[index]}
-        </div>
-        {dragging && index < lastIndex ? (
-          <div
-            aria-hidden="true"
-            className="os-app-page adjacent next"
-            style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
-          >
-            {apps[index + 1]}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-export function SessionIntro({
-  label,
-  title,
-  onBegin,
-  theme = "light",
-  detail,
-  ready = true,
-}: {
-  label: string;
-  title: string;
-  onBegin: () => void;
-  theme?: "light" | "orange" | "dark";
-  detail?: string;
-  ready?: boolean;
-}) {
-  return (
-    <div className={`os-session-intro theme-${theme}`}>
-      <p className="os-card-label">{label}</p>
-      <h2>{title}</h2>
-      {detail ? <p className="os-session-detail">{detail}</p> : null}
-      {ready ? (
-        <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
-          Swipe to begin
-        </button>
-      ) : (
-        <span className="os-session-wait">Available tomorrow morning</span>
-      )}
-    </div>
-  );
-}
-
 function SurveySlide({
   label,
   question,
@@ -893,7 +718,6 @@ export function TodayExperience() {
   const [greeting, setGreeting] = useState("Hello.");
   const [checkInApp, setCheckInApp] = useState(0);
   const [habitApp, setHabitApp] = useState(0);
-  const [logSetupApp, setLogSetupApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [seenHabitJourney, setSeenHabitJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
@@ -911,8 +735,6 @@ export function TodayExperience() {
   const [newMoment, setNewMoment] = useState("");
   const [editingMomentKey, setEditingMomentKey] = useState<string | null>(null);
   const [momentDraft, setMomentDraft] = useState("");
-  const [logHoursBefore, setLogHoursBefore] = useState(0);
-  const [logHoursAfter, setLogHoursAfter] = useState(0);
 
   useEffect(() => {
     if (
@@ -981,16 +803,10 @@ export function TodayExperience() {
     (question) =>
       !surveyAnswers.some((answer) => answer.questionId === question.id),
   );
-  const firstLogQuestionIndex = LOG_SETUP_QUESTIONS.findIndex(
-    (question) =>
-      !surveyAnswers.some((answer) => answer.questionId === question.id),
-  );
   const checkInMaxApp =
     firstProfileQuestionIndex >= 0 ? firstProfileQuestionIndex + 1 : 11;
   const habitMaxApp =
     firstHabitQuestionIndex >= 0 ? firstHabitQuestionIndex + 1 : 4;
-  const logSetupMaxApp =
-    firstLogQuestionIndex >= 0 ? firstLogQuestionIndex + 1 : 2;
   const checkInStartApp = unansweredCodexQuestion
     ? 11
     : firstProfileQuestionIndex >= 0
@@ -998,8 +814,6 @@ export function TodayExperience() {
       : 11;
   const habitStartApp =
     firstHabitQuestionIndex >= 0 ? firstHabitQuestionIndex + 1 : 4;
-  const logSetupStartApp =
-    firstLogQuestionIndex >= 0 ? firstLogQuestionIndex + 1 : 2;
   const profileBaseVersion =
     state.profile.profileCase.updatedAt || `day-${dateKey}`;
   const checkInJourneyVersion = unansweredCodexQuestion
@@ -1019,18 +833,46 @@ export function TodayExperience() {
     : seenHabitJourney === habitJourneyVersion
       ? habitApp
       : 0;
+  const defaultLogStartHour = Math.max(CIRCLE_DAY_START_HOUR, wakeHour);
+  const defaultLogEndHour = Math.min(
+    CIRCLE_DAY_START_HOUR + 23,
+    Math.min(wakeHour + 23, Math.max(wakeHour, sleepHour)),
+  );
   const logStartHour = Math.max(
     CIRCLE_DAY_START_HOUR,
-    wakeHour - logHoursBefore,
+    Math.min(defaultLogStartHour, today.logRange?.startHour ?? defaultLogStartHour),
   );
   const logEndHour = Math.min(
     CIRCLE_DAY_START_HOUR + 23,
-    Math.min(wakeHour + 23, Math.max(wakeHour, sleepHour)) + logHoursAfter,
+    Math.max(defaultLogEndHour, today.logRange?.endHour ?? defaultLogEndHour),
   );
   const visibleHours = Array.from(
     { length: Math.max(1, logEndHour - logStartHour + 1) },
     (_, index) => logStartHour + index,
   );
+  const logSetupChapter = getPublishedChapter("log-setup");
+  const logSetupRun = useMemo(() => {
+    if (!logSetupChapter) return null;
+    const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
+    if (stored) return stored;
+    const timestamp = new Date().toISOString();
+    const seedAnswers = logSetupChapter.pages.flatMap((page) => {
+      if (!page.answerKey) return [];
+      const value = surveyAnswer(surveyAnswers, page.answerKey);
+      if (!value) return [];
+      return [
+        {
+          pageId: page.id,
+          answerKey: page.answerKey,
+          value,
+          displaySnapshot: value,
+          answeredAt: timestamp,
+          changedAt: timestamp,
+        },
+      ];
+    });
+    return createChapterRun(logSetupChapter, seedAnswers);
+  }, [logSetupChapter, state.chapters.runs, surveyAnswers]);
 
   function toggleMission() {
     updateToday((day) => ({
@@ -1251,15 +1093,29 @@ export function TodayExperience() {
     setHabitApp(Math.min(4, appIndex + 1));
   }
 
-  function answerLogSetup(
-    question: SurveyQuestion,
-    answer: string,
-    appIndex: number,
+  function saveLogSetupRun(
+    nextRun: ChapterRun,
+    submission?: ChapterSubmission,
   ) {
-    updateState((current) =>
-      answerSurveyQuestion(current, question, answer, "routine"),
-    );
-    setLogSetupApp(Math.min(2, appIndex + 1));
+    if (!logSetupChapter) return;
+    updateState((current) => {
+      let next = storeChapterRun(current, nextRun, logSetupChapter.session);
+      const page = submission?.page;
+      if (page?.answerKey && submission?.value !== undefined) {
+        next = answerSurveyQuestion(
+          next,
+          {
+            id: page.answerKey,
+            text: page.question || page.title || logSetupChapter.title,
+            type: page.type,
+            target: "currentLife",
+          },
+          String(submission.value),
+          "routine",
+        );
+      }
+      return next;
+    });
   }
 
   function saveCheckInNote(event: FormEvent<HTMLFormElement>) {
@@ -1495,44 +1351,19 @@ export function TodayExperience() {
           </SwipeSession>
         </section>
 
-        {!logSetupDone ? (
+        {!logSetupDone && logSetupChapter && logSetupRun ? (
           <section
             className="os-day os-day-gated"
             aria-label="Log setup session"
           >
             <div className="os-log-gate">
-              <SwipeSession
+              <ChapterPlayer
                 className="os-log-setup-session"
-                index={logSetupApp}
+                definition={logSetupChapter}
                 label="Log setup"
-                maxIndex={logSetupMaxApp}
-                onIndexChange={setLogSetupApp}
-              >
-                <SessionIntro
-                  detail="Two times unlock your daily timeline."
-                  label="Log"
-                  theme="dark"
-                  title="Set your usual day."
-                  onBegin={() => setLogSetupApp(logSetupStartApp)}
-                />
-                {LOG_SETUP_QUESTIONS.map((question, index) => (
-                  <SurveySlide
-                    existingAnswer={surveyAnswer(surveyAnswers, question.id)}
-                    key={question.id}
-                    label="Log"
-                    question={question as SurveyQuestion}
-                    current={index + 1}
-                    total={LOG_SETUP_QUESTIONS.length}
-                    onAnswer={(answer) =>
-                      answerLogSetup(
-                        question as SurveyQuestion,
-                        answer,
-                        index + 1,
-                      )
-                    }
-                  />
-                ))}
-              </SwipeSession>
+                run={logSetupRun}
+                onRunChange={saveLogSetupRun}
+              />
             </div>
           </section>
         ) : (
@@ -1551,7 +1382,11 @@ export function TodayExperience() {
                 className="os-expand-hour"
                 type="button"
                 aria-label={`Add ${hourLabel(logStartHour - 1)} to the log`}
-                onClick={() => setLogHoursBefore((current) => current + 1)}
+                onClick={() =>
+                  updateToday((day) =>
+                    setDayLogRange(day, logStartHour - 1, logEndHour),
+                  )
+                }
               >
                 <span aria-hidden="true">+</span>
               </button>
@@ -1703,7 +1538,11 @@ export function TodayExperience() {
                 className="os-expand-hour"
                 type="button"
                 aria-label={`Add ${hourLabel(logEndHour + 1)} to the log`}
-                onClick={() => setLogHoursAfter((current) => current + 1)}
+                onClick={() =>
+                  updateToday((day) =>
+                    setDayLogRange(day, logStartHour, logEndHour + 1),
+                  )
+                }
               >
                 <span aria-hidden="true">+</span>
               </button>

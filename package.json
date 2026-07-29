@@ -12,6 +12,8 @@
     "start": "vinext start",
     "ai": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File local-ai/start-local-ai.ps1",
     "ai:phone": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File local-ai/setup-phone-ai.ps1",
+    "chapters:check": "node scripts/chapter-compiler.mjs --check",
+    "chapters:publish": "node scripts/chapter-compiler.mjs --publish",
     "test": "npm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"

@@ -65,6 +65,45 @@ test("server keeps an edited profile session when a stale phone copy returns", (
   );
 });
 
+test("server keeps the newest chapter page and answer", () => {
+  const server = createEmptyState();
+  const phone = createEmptyState();
+  server.chapters.runs["habit@1"] = {
+    runId: "habit@1",
+    chapterId: "habit",
+    chapterVersion: 1,
+    status: "in-progress",
+    currentPageId: "choice",
+    startedAt: "2026-07-30T08:00:00.000Z",
+    updatedAt: "2026-07-30T08:01:00.000Z",
+    completedAt: null,
+    answers: [],
+  };
+  phone.chapters.runs["habit@1"] = {
+    ...server.chapters.runs["habit@1"],
+    currentPageId: "plan",
+    updatedAt: "2026-07-30T08:05:00.000Z",
+    answers: [
+      {
+        pageId: "choice",
+        answerKey: "habit-choice",
+        value: "reader",
+        displaySnapshot: "Reader",
+        answeredAt: "2026-07-30T08:04:00.000Z",
+        changedAt: "2026-07-30T08:04:00.000Z",
+      },
+    ],
+  };
+
+  const merged = mergeClientState(server, phone);
+
+  assert.equal(merged.chapters.runs["habit@1"].currentPageId, "plan");
+  assert.equal(
+    merged.chapters.runs["habit@1"].answers[0].answerKey,
+    "habit-choice",
+  );
+});
+
 test("answering a profile question clears the old question", () => {
   const server = firstVision();
   server.profile.profileCase.survey.nextQuestion = {

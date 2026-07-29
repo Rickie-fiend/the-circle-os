@@ -111,6 +111,35 @@ function mergeDays(serverDays, phoneDays) {
   return days;
 }
 
+function mergeUpdatedRecords(serverRecords = {}, phoneRecords = {}) {
+  const records = { ...serverRecords };
+  for (const [key, phoneRecord] of Object.entries(phoneRecords || {})) {
+    const serverRecord = serverRecords?.[key];
+    if (
+      !serverRecord ||
+      String(phoneRecord?.updatedAt || "").localeCompare(
+        String(serverRecord?.updatedAt || ""),
+      ) >= 0
+    ) {
+      records[key] = phoneRecord;
+    }
+  }
+  return records;
+}
+
+function mergeChapters(serverChapters, phoneChapters) {
+  return {
+    runs: mergeUpdatedRecords(
+      serverChapters?.runs,
+      phoneChapters?.runs,
+    ),
+    sessions: mergeUpdatedRecords(
+      serverChapters?.sessions,
+      phoneChapters?.sessions,
+    ),
+  };
+}
+
 export function mergeClientState(serverValue, phoneValue) {
   const phone = normalizeState(phoneValue);
   if (!serverValue) {
@@ -182,6 +211,7 @@ export function mergeClientState(serverValue, phoneValue) {
       },
     },
     days: mergeDays(server.days, phone.days),
+    chapters: mergeChapters(server.chapters, phone.chapters),
     ai: {
       ...server.ai,
       baseUrl: "",

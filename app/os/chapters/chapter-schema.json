@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theonecircle.club/schemas/circle-chapter-v1.json",
+  "title": "Circle OS Chapter",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "status",
+    "session",
+    "theme",
+    "title",
+    "purpose",
+    "estimatedMinutes",
+    "pages"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "status": { "const": "published" },
+    "session": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "theme": { "enum": ["light", "orange", "dark"] },
+    "title": { "type": "string", "minLength": 1 },
+    "purpose": { "type": "string", "minLength": 1 },
+    "estimatedMinutes": { "type": "integer", "minimum": 1 },
+    "pages": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "type": {
+            "enum": [
+              "cover",
+              "info",
+              "single-choice",
+              "multi-choice",
+              "yes-no",
+              "slider",
+              "short-text",
+              "long-text",
+              "time",
+              "confirm",
+              "result",
+              "idle"
+            ]
+          },
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "question": { "type": "string" },
+          "button": { "type": "string" },
+          "answerKey": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "placeholder": { "type": "string" },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "label"],
+              "properties": {
+                "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+                "label": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "minLabel": { "type": "string" },
+          "maxLabel": { "type": "string" },
+          "defaultValue": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "number" },
+              { "type": "array", "items": { "type": "string" } }
+            ]
+          },
+          "required": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
