@@ -1,34 +1,18 @@
-# Circle OS local server
+# Circle OS profile server
 
-The phone app connects privately to this computer through Tailscale.
+The public phone app sends each person's profile and daily evidence to this
+computer. Every phone receives a private profile key.
 
 The server:
 
-1. saves the profile and daily logs in the Obsidian vault;
-2. returns to the phone immediately;
-3. lets Qwen update the Profile Case in the background;
-4. saves the finished draft and lets the phone find it later.
+1. saves each person under the Obsidian `Circle OS\Profiles` folder;
+2. keeps profile keys outside Obsidian;
+3. never runs Qwen or another model;
+4. returns the structured `Profile.md` to Vision.
 
-The Obsidian folder is:
+Codex analyzes only profiles marked `analysis_pending: true`. The nightly
+instructions live in Obsidian at:
 
-`C:\Brain\10 Projects\The Circle\Circle OS`
+`C:\Brain\10 Projects\The Circle\Circle OS\Nightly Profile Analysis.md`
 
-It contains:
-
-- `Profile.md`
-- `Days\YYYY-MM-DD.md`
-- `Rules\constitution.md`
-- `Rules\profile-case.md`
-- `State.json`
-
-The rules are read again for every AI update, so they can be changed in
-Obsidian. `State.json` is the recovery copy used by the app. It contains no
-connection key.
-
-On Windows:
-
-1. Keep Ollama and Tailscale running.
-2. Run `npm run ai:phone` once.
-3. Enter the shown address in Circle OS.
-
-The phone keeps a local copy when the computer is away and syncs later.
+Keep the computer and Codex app running for the nightly analysis.

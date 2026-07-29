@@ -41,7 +41,7 @@ function ConnectForm({
     setChecking(true);
     setMessage("");
     try {
-      await checkLocalAi(address, initialToken);
+      await checkLocalAi(address);
       await connectAi(address, initialToken);
       setMessage("Connected. Opening Vision…");
       onConnected();
@@ -56,8 +56,8 @@ function ConnectForm({
     <OSFrame active="connect">
       <main className="os-mirror os-connect">
         <section aria-labelledby="connect-title">
-          <p className="os-eyebrow">Private AI</p>
-          <h1 id="connect-title">Connect your computer.</h1>
+          <p className="os-eyebrow">Profile server</p>
+          <h1 id="connect-title">Connect Obsidian.</h1>
           <p>
             Your profile and days live in your Obsidian vault. Your phone keeps
             a copy when your computer is away.

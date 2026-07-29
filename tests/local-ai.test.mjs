@@ -1,15 +1,18 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import test from "node:test";
 
 import {
-  buildPrompt,
+  applyProfileMarkdown,
   createCircleAiServer,
-  guardProfileEvidence,
   mergeClientState,
-  normalizeModelResult,
   serializeDayMarkdown,
   serializeProfileMarkdown,
 } from "../local-ai/server.mjs";
@@ -18,55 +21,28 @@ import {
   queueProfileUpdate,
 } from "../app/os/circle-os-model.js";
 
-function response() {
-  return {
-    sessions: {
-      typicalTuesday: { text: "A calm day.", confidence: 0.7 },
-      currentLife: { text: "Not enough days yet.", confidence: 0.2 },
-      whatMatters: { text: "Close people may matter.", confidence: 0.4 },
-      gap: { text: "The gap is still unclear.", confidence: 0.2 },
-      missionStatement: { text: "I live honestly.", confidence: 0.5 },
-      personality: { text: "You are an introvert.", confidence: 0.9 },
-    },
-    nextQuestion: {
-      text: "When did you feel most like yourself this week?",
-      target: "whatMatters",
-    },
-    dailyMission: "Notice one honest moment.",
+function firstVision(name = "Sai") {
+  const state = createEmptyState();
+  state.profile.name = name;
+  state.profile.age = 27;
+  state.profile.vision = {
+    description: "A calm Tuesday with creative work and close friends.",
+    preview: "A calm Tuesday with creative work and close friends.",
+    understanding: "",
+    gap: "",
+    completedAt: "2026-07-29T08:00:00.000Z",
   };
+  state.profile.profileCase.sessions.typicalTuesday = {
+    text: state.profile.vision.description,
+    confidence: 1,
+    userEdited: true,
+    updatedAt: "2026-07-29T08:00:00.000Z",
+  };
+  return queueProfileUpdate(state, "first-vision");
 }
 
-test("keeps personality locked before six real answers", () => {
-  const result = normalizeModelResult(response(), 2);
-  assert.equal(result.sessions.personality.text, "");
-  assert.equal(result.nextQuestion.id, "profile-question-3");
-});
-
-test("unlocks the personality draft after six answers", () => {
-  const result = normalizeModelResult(response(), 6);
-  assert.match(result.sessions.personality.text, /introvert/);
-  assert.equal(result.nextQuestion, null);
-});
-
-test("profile prompt includes the phone evidence without changing it", () => {
-  const prompt = buildPrompt({
-    person: { dreamLifestyle: "I live near my friends." },
-  });
-  assert.match(prompt, /I live near my friends/);
-  assert.match(prompt, /evidence is missing/i);
-});
-
-test("no recorded life can never become invented current-life facts", () => {
-  const result = guardProfileEvidence(normalizeModelResult(response(), 0), {
-    days: {},
-  });
-  assert.match(result.sessions.currentLife.text, /not enough/i);
-  assert.match(result.sessions.gap.text, /not recorded/i);
-  assert.doesNotMatch(result.sessions.currentLife.text, /job|health|family/i);
-});
-
 test("server keeps an edited profile session when a stale phone copy returns", () => {
-  const server = createEmptyState();
+  const server = firstVision();
   server.profile.profileCase.sessions.gap = {
     text: "My own correction.",
     confidence: 1,
@@ -75,7 +51,7 @@ test("server keeps an edited profile session when a stale phone copy returns", (
   };
   const phone = structuredClone(server);
   phone.profile.profileCase.sessions.gap = {
-    text: "Older AI words.",
+    text: "Older profile words.",
     confidence: 0.4,
     userEdited: false,
     updatedAt: "2026-07-29T09:00:00.000Z",
@@ -88,8 +64,8 @@ test("server keeps an edited profile session when a stale phone copy returns", (
   );
 });
 
-test("answering a profile question clears the old question while AI works", () => {
-  const server = createEmptyState();
+test("answering a profile question clears the old question", () => {
+  const server = firstVision();
   server.profile.profileCase.survey.nextQuestion = {
     id: "profile-question-1",
     text: "Which part matters most?",
@@ -109,12 +85,8 @@ test("answering a profile question clears the old question while AI works", () =
   assert.equal(merged.profile.profileCase.survey.nextQuestion, null);
 });
 
-test("Obsidian copies keep the profile and day readable", () => {
-  const state = createEmptyState();
-  state.profile.name = "Sai";
-  state.profile.age = 30;
-  state.profile.vision.description = "A calm Tuesday.";
-  state.profile.profileCase.sessions.typicalTuesday.text = "A calm Tuesday.";
+test("Obsidian copies keep profile sections and day evidence readable", () => {
+  const state = firstVision();
   const day = {
     date: "2026-07-29",
     checkIns: [
@@ -146,64 +118,120 @@ test("Obsidian copies keep the profile and day readable", () => {
     ],
   };
 
-  assert.match(serializeProfileMarkdown(state), /A calm Tuesday\./);
+  assert.match(
+    serializeProfileMarkdown(state, { profileId: "p_1234567890abcdef" }),
+    /## Interests/,
+  );
   assert.match(serializeDayMarkdown(day), /Coffee with a friend/);
 });
 
-test("phone sync returns quickly while the server finishes AI in the background", async () => {
-  const vaultPath = mkdtempSync(join(tmpdir(), "circle-os-"));
-  const previousToken = process.env.CIRCLE_AI_TOKEN;
-  process.env.CIRCLE_AI_TOKEN = "test-token";
-  const server = createCircleAiServer({
-    vaultPath,
-    generateProfile: async () => normalizeModelResult(response(), 0),
-  });
+test("Vision reads Codex output directly from Profile.md", () => {
+  const state = firstVision();
+  const markdown = serializeProfileMarkdown(state, {
+    profileId: "p_1234567890abcdef",
+    analysisPending: false,
+    lastAnalyzed: "2026-07-29T17:10:00.000Z",
+  })
+    .replace(
+      /## Personality[\s\S]*?(?=\n\n## Today's Mission)/,
+      `## Personality
+
+<!-- user-edited: false; confidence: 0.55 -->
+
+You may prefer freedom with a gentle rhythm instead of rigid structure.`,
+    )
+    .replace(
+      /## Next Question[\s\S]*?(?=\n\n## Answers)/,
+      `## Next Question
+
+<!-- id: creative-work-1; target: interests -->
+
+When you say creative work, what are you making?`,
+    );
+
+  const updated = applyProfileMarkdown(state, markdown);
+  assert.match(
+    updated.profile.profileCase.sessions.personality.text,
+    /gentle rhythm/,
+  );
+  assert.equal(
+    updated.profile.profileCase.survey.nextQuestion.text,
+    "When you say creative work, what are you making?",
+  );
+  assert.equal(updated.profile.profileCase.status, "ready");
+});
+
+test("public phones receive separate private Obsidian profiles", async () => {
+  const vaultPath = mkdtempSync(join(tmpdir(), "circle-os-vault-"));
+  const accessPath = join(
+    mkdtempSync(join(tmpdir(), "circle-os-access-")),
+    "access.json",
+  );
+  const server = createCircleAiServer({ vaultPath, accessPath });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   const baseUrl = `http://127.0.0.1:${address.port}`;
-  const state = createEmptyState();
-  state.profile.name = "Sai";
-  state.profile.age = 30;
-  state.profile.vision = {
-    description: "A calm Tuesday.",
-    preview: "A calm Tuesday.",
-    understanding: "",
-    gap: "",
-    completedAt: "2026-07-29T08:00:00.000Z",
-  };
-  const queued = queueProfileUpdate(state, "first-vision");
 
   try {
-    const syncResponse = await fetch(`${baseUrl}/sync`, {
+    const createResponse = await fetch(`${baseUrl}/profiles`, {
       method: "POST",
-      headers: {
-        Authorization: "Bearer test-token",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ state: queued }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state: firstVision("Sai") }),
     });
-    assert.equal(syncResponse.status, 200);
-    const first = await syncResponse.json();
-    assert.equal(first.state.profile.profileCase.status, "thinking");
+    assert.equal(createResponse.status, 201);
+    const created = await createResponse.json();
+    assert.match(created.profileId, /^p_/);
+    assert.ok(created.accessKey.length > 30);
 
-    await new Promise((resolve) => setTimeout(resolve, 30));
-    const stateResponse = await fetch(`${baseUrl}/state`, {
-      headers: { Authorization: "Bearer test-token" },
+    const denied = await fetch(`${baseUrl}/profiles/${created.profileId}`, {
+      headers: { Authorization: "Bearer wrong" },
     });
-    const finished = await stateResponse.json();
-    assert.equal(finished.state.profile.profileCase.status, "ready");
-    assert.equal(
-      finished.state.profile.profileCase.sessions.typicalTuesday.text,
-      "A calm day.",
+    assert.equal(denied.status, 401);
+
+    const profileResponse = await fetch(
+      `${baseUrl}/profiles/${created.profileId}`,
+      { headers: { Authorization: `Bearer ${created.accessKey}` } },
     );
+    assert.equal(profileResponse.status, 200);
     assert.match(
-      readFileSync(join(vaultPath, "Profile.md"), "utf8"),
-      /A calm day\./,
+      readFileSync(
+        join(vaultPath, "Profiles", created.profileId, "Profile.md"),
+        "utf8",
+      ),
+      /analysis_pending: true/,
     );
+
+    const secondResponse = await fetch(`${baseUrl}/profiles`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state: firstVision("Friend") }),
+    });
+    const second = await secondResponse.json();
+    assert.notEqual(second.profileId, created.profileId);
+    assert.notEqual(second.accessKey, created.accessKey);
+
+    const firstProfilePath = join(
+      vaultPath,
+      "Profiles",
+      created.profileId,
+      "Profile.md",
+    );
+    writeFileSync(
+      firstProfilePath,
+      readFileSync(firstProfilePath, "utf8")
+        .replace("analysis_pending: true", "analysis_pending: false")
+        .replace("last_analyzed: ", "last_analyzed: 2026-07-29T17:10:00.000Z"),
+      "utf8",
+    );
+    const refreshed = await fetch(
+      `${baseUrl}/profiles/${created.profileId}`,
+      { headers: { Authorization: `Bearer ${created.accessKey}` } },
+    );
+    const refreshedProfile = await refreshed.json();
+    assert.equal(refreshedProfile.state.profile.profileCase.status, "ready");
   } finally {
     await new Promise((resolve) => server.close(resolve));
-    if (previousToken === undefined) delete process.env.CIRCLE_AI_TOKEN;
-    else process.env.CIRCLE_AI_TOKEN = previousToken;
     rmSync(vaultPath, { recursive: true, force: true });
+    rmSync(dirname(accessPath), { recursive: true, force: true });
   }
 });

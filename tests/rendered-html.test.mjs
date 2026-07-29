@@ -91,7 +91,7 @@ test("server-renders the private AI connection route", async () => {
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /Connect your computer\./);
+  assert.match(html, /Connect Obsidian\./);
   assert.match(html, />Address</);
   assert.doesNotMatch(html, />Key</);
   assert.match(html, /Your profile and days live in your Obsidian vault\./);

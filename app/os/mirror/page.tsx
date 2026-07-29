@@ -4,6 +4,7 @@ import { useState, type CSSProperties, type FormEvent } from "react";
 import {
   editProfileSession,
   minutesBetween,
+  queueProfileUpdate,
   summarizeWeek,
 } from "../circle-os-model.js";
 import {
@@ -83,16 +84,13 @@ export default function CircleOSMirror() {
             ...profile.profileCase.sessions.typicalTuesday,
             text: draft.description.trim(),
             confidence: 0.5,
+            userEdited: true,
             updatedAt: new Date().toISOString(),
           },
         },
         survey: {
           ...profile.profileCase.survey,
-          nextQuestion: {
-            id: "what-matters-1",
-            text: "Which part of that Tuesday matters most to you?",
-            target: "whatMatters",
-          },
+          nextQuestion: null,
         },
       },
     }), "first-vision");
@@ -107,7 +105,10 @@ export default function CircleOSMirror() {
   function saveSession(key: string) {
     if (!sessionDraft.trim()) return;
     updateState((current) =>
-      editProfileSession(current, key, sessionDraft),
+      queueProfileUpdate(
+        editProfileSession(current, key, sessionDraft),
+        "profile-edit",
+      ),
     );
     setEditing(null);
     setSessionDraft("");
@@ -236,6 +237,8 @@ export default function CircleOSMirror() {
           <p className="vision-ai-state" aria-live="polite">
             {profileCase.status === "thinking"
               ? "Updating…"
+              : profileCase.status === "waiting"
+                ? "Updates tonight"
               : state.ai.status === "offline"
                 ? "Computer offline"
                 : ""}
@@ -383,19 +386,18 @@ export default function CircleOSMirror() {
 
         <header className="mirror-intro analysis-intro">
           <div>
-            <p className="os-eyebrow">AI analysis</p>
-            <h1>What the pattern may mean</h1>
+            <p className="os-eyebrow">Your profile</p>
+            <h1>What Codex understands</h1>
           </div>
         </header>
 
         <section className="vision-analysis" aria-label="AI profile analysis">
           {profileSession("currentLife", "Current life")}
-          {profileSession("whatMatters", "AI analysis")}
+          {profileSession("whatMatters", "What matters")}
+          {profileSession("interests", "Interests")}
           {profileSession("gap", "The gap")}
           {profileSession("missionStatement", "Mission statement")}
-          {profileSession("personality", "Personality", {
-            locked: profileCase.survey.answers.length < 6,
-          })}
+          {profileSession("personality", "Personality")}
         </section>
       </main>
     </OSFrame>

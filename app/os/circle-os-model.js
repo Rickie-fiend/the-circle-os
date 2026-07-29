@@ -5,10 +5,13 @@ export const PROFILE_SESSION_KEYS = [
   "typicalTuesday",
   "currentLife",
   "whatMatters",
+  "interests",
   "gap",
   "missionStatement",
   "personality",
 ];
+
+export const CIRCLE_OS_SERVER_URL = "https://spectre.taild640fa.ts.net";
 
 export const DAY_PERIODS = [
   { id: "morning", label: "Morning", hours: "5–10" },
@@ -59,6 +62,9 @@ function createProfileCase() {
       whatMatters: createProfileSession(
         "This is still unclear. Your check-ins will help.",
       ),
+      interests: createProfileSession(
+        "Your interests will become clearer from your words and days.",
+      ),
       gap: createProfileSession(
         "There is not enough evidence to describe the gap yet.",
       ),
@@ -76,13 +82,16 @@ function createProfileCase() {
 
 export function createEmptyState() {
   return {
-    version: 2,
+    version: 3,
     ai: {
-      baseUrl: "",
+      baseUrl: CIRCLE_OS_SERVER_URL,
       token: "",
+      profileId: "",
       status: "not-connected",
       lastError: "",
       lastRunAt: null,
+      lastSyncedAt: null,
+      lastSyncSlot: "",
     },
     profile: {
       identityFocus: "Yourself",
@@ -150,10 +159,11 @@ export function normalizeState(state) {
   return {
     ...empty,
     ...state,
-    version: 2,
+    version: 3,
     ai: {
       ...empty.ai,
       ...state.ai,
+      baseUrl: state.ai?.baseUrl || CIRCLE_OS_SERVER_URL,
     },
     profile: {
       ...empty.profile,
@@ -241,6 +251,9 @@ export function mergeServerState(state, serverState) {
       ...remote.ai,
       baseUrl: state.ai.baseUrl,
       token: state.ai.token,
+      profileId: state.ai.profileId,
+      lastSyncedAt: state.ai.lastSyncedAt,
+      lastSyncSlot: state.ai.lastSyncSlot,
     },
   };
 }

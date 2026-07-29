@@ -1,8 +1,10 @@
+import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   renameSync,
   writeFileSync,
 } from "node:fs";
@@ -11,33 +13,39 @@ import { fileURLToPath } from "node:url";
 
 import {
   PROFILE_SESSION_KEYS,
-  applyProfileResult,
+  createDay,
+  getDateKey,
   normalizeState,
 } from "../app/os/circle-os-model.js";
 
-const root = dirname(fileURLToPath(import.meta.url));
-const schema = JSON.parse(readFileSync(join(root, "profile-schema.json"), "utf8"));
-const defaultRules = {
-  constitution: readFileSync(join(root, "rules", "constitution.md"), "utf8"),
-  profileCase: readFileSync(join(root, "rules", "profile-case.md"), "utf8"),
+const profileIdPattern = /^p_[A-Za-z0-9_-]{16}$/;
+const sessionLabels = {
+  typicalTuesday: "Typical Tuesday",
+  currentLife: "Current Life",
+  whatMatters: "What Matters",
+  interests: "Interests",
+  gap: "The Gap",
+  missionStatement: "Mission Statement",
+  personality: "Personality",
 };
-const safeQuestions = [
-  ["Which part of that Tuesday matters most to you?", "whatMatters"],
-  ["When did you last feel most like yourself?", "whatMatters"],
-  ["What drains you even when the day looks successful?", "currentLife"],
-  ["What gives you energy without forcing yourself?", "personality"],
-  ["Who do you feel most honest around?", "personality"],
-  ["What do you want more of in an ordinary week?", "missionStatement"],
-];
+const labelToSession = Object.fromEntries(
+  Object.entries(sessionLabels).map(([key, label]) => [label, key]),
+);
 
-function text(value, maximum = 1200) {
+function text(value, maximum = 10_000) {
   return typeof value === "string" ? value.trim().slice(0, maximum) : "";
 }
 
-function confidence(value) {
-  return typeof value === "number" && Number.isFinite(value)
-    ? Math.max(0, Math.min(1, value))
-    : 0;
+function hash(value) {
+  return createHash("sha256").update(String(value)).digest("hex");
+}
+
+function randomKey(bytes = 24) {
+  return randomBytes(bytes).toString("base64url");
+}
+
+function now() {
+  return new Date().toISOString();
 }
 
 function newest(left, right) {
@@ -112,6 +120,7 @@ export function mergeClientState(serverValue, phoneValue) {
         ...phone.ai,
         baseUrl: "",
         token: "",
+        profileId: "",
       },
       outbox: [],
     };
@@ -143,7 +152,6 @@ export function mergeClientState(serverValue, phoneValue) {
 
   return normalizeState({
     ...server,
-    version: Math.max(server.version, phone.version),
     profile: {
       ...server.profile,
       name: phoneHasNewerVision ? phone.profile.name : server.profile.name,
@@ -178,143 +186,204 @@ export function mergeClientState(serverValue, phoneValue) {
       ...server.ai,
       baseUrl: "",
       token: "",
+      profileId: "",
     },
     outbox: [],
   });
 }
 
-export function normalizeModelResult(value, answerCount = 0) {
-  const raw =
-    typeof value === "string"
-      ? JSON.parse(value.replace(/^```(?:json)?\s*|\s*```$/g, ""))
-      : value;
-  const sessions = Object.fromEntries(
-    PROFILE_SESSION_KEYS.map((key) => [
-      key,
-      {
-        text:
-          key === "personality" && answerCount < 6
-            ? ""
-            : text(raw?.sessions?.[key]?.text),
-        confidence: confidence(raw?.sessions?.[key]?.confidence),
-      },
-    ]),
-  );
-  const safeQuestion = safeQuestions[answerCount];
-  const nextQuestion = safeQuestion
-    ? {
-        id: `profile-question-${answerCount + 1}`,
-        text: safeQuestion[0],
-        target: safeQuestion[1],
-      }
-    : null;
+function markdownText(value, fallback = "Not enough evidence yet.") {
+  return text(value) || fallback;
+}
 
+function sessionComment(session) {
+  return `<!-- user-edited: ${Boolean(session.userEdited)}; confidence: ${Number(
+    session.confidence || 0,
+  ).toFixed(2)} -->`;
+}
+
+function profileMetadata(markdown = "") {
+  const block = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  const metadata = {};
+  if (!block) return metadata;
+  for (const line of block[1].split(/\r?\n/)) {
+    const match = line.match(/^([a-z_]+):\s*(.*)$/);
+    if (match) metadata[match[1]] = match[2].trim();
+  }
+  return metadata;
+}
+
+function markdownSections(markdown) {
+  const sections = {};
+  const matches = [...markdown.matchAll(/^## (.+)\r?\n/gm)];
+  for (let index = 0; index < matches.length; index += 1) {
+    const heading = matches[index][1].trim();
+    const start = matches[index].index + matches[index][0].length;
+    const end =
+      index + 1 < matches.length ? matches[index + 1].index : markdown.length;
+    sections[heading] = markdown.slice(start, end).trim();
+  }
+  return sections;
+}
+
+function parseSession(section, fallback) {
+  if (!section) return fallback;
+  const comment = section.match(
+    /<!--\s*user-edited:\s*(true|false);\s*confidence:\s*([0-9.]+)\s*-->/i,
+  );
   return {
-    sessions,
-    nextQuestion,
-    dailyMission:
-      text(raw?.dailyMission, 120) || "Notice one moment that feels like you.",
+    ...fallback,
+    text: text(section.replace(/<!--[\s\S]*?-->/g, "")) || fallback.text,
+    userEdited: comment ? comment[1].toLowerCase() === "true" : false,
+    confidence: comment
+      ? Math.max(0, Math.min(1, Number(comment[2]) || 0))
+      : fallback.confidence,
   };
 }
 
-export function guardProfileEvidence(result, input) {
-  const recordedDays = Object.values(input?.days || {}).filter(
-    (day) =>
-      (Array.isArray(day?.checkIns) && day.checkIns.length) ||
-      (Array.isArray(day?.timeBlocks) && day.timeBlocks.length),
-  );
-  if (recordedDays.length === 0) {
-    result.sessions.currentLife = {
-      text: "There is not enough of your real life recorded yet.",
-      confidence: 0,
-    };
-    result.sessions.gap = {
-      text:
-        "Your dream is described, but your current days are not recorded yet. " +
-        "The real gap will become clearer as you log ordinary days.",
-      confidence: 0,
-    };
-  } else if (recordedDays.length === 1) {
-    result.sessions.currentLife.confidence = Math.min(
-      result.sessions.currentLife.confidence,
-      0.3,
-    );
-    result.sessions.gap.confidence = Math.min(
-      result.sessions.gap.confidence,
-      0.25,
-    );
+export function applyProfileMarkdown(stateValue, markdown) {
+  const state = normalizeState(stateValue);
+  const metadata = profileMetadata(markdown);
+  const sections = markdownSections(markdown);
+  const sessions = { ...state.profile.profileCase.sessions };
+  for (const [label, key] of Object.entries(labelToSession)) {
+    sessions[key] = parseSession(sections[label], sessions[key]);
   }
-  return result;
+  const questionBlock = sections["Next Question"] || "";
+  const questionMeta = questionBlock.match(
+    /<!--\s*id:\s*([^;]+);\s*target:\s*([^\s]+)\s*-->/i,
+  );
+  const questionText = text(questionBlock.replace(/<!--[\s\S]*?-->/g, ""));
+  const nextQuestion =
+    questionMeta && questionText
+      ? {
+          id: text(questionMeta[1], 120),
+          target: text(questionMeta[2], 80),
+          text: questionText,
+        }
+      : null;
+  const analysisPending = metadata.analysis_pending === "true";
+  const lastAnalyzed = text(metadata.last_analyzed, 80) || null;
+  const dateKey = getDateKey();
+  const day = state.days[dateKey] || createDay(dateKey);
+  const missionText = text(sections["Today's Mission"], 160);
+
+  return normalizeState({
+    ...state,
+    ai: {
+      ...state.ai,
+      lastRunAt: lastAnalyzed,
+      status: "ready",
+    },
+    profile: {
+      ...state.profile,
+      vision: {
+        ...state.profile.vision,
+        preview: sessions.typicalTuesday.text,
+        understanding: sessions.whatMatters.text,
+        gap: sessions.gap.text,
+      },
+      profileCase: {
+        ...state.profile.profileCase,
+        status: analysisPending ? "waiting" : "ready",
+        updatedAt: lastAnalyzed || state.profile.profileCase.updatedAt,
+        sessions,
+        survey: {
+          ...state.profile.profileCase.survey,
+          nextQuestion,
+        },
+      },
+    },
+    days: {
+      ...state.days,
+      [dateKey]: {
+        ...day,
+        mission: missionText
+          ? {
+              ...day.mission,
+              text: missionText,
+              identity: "Yourself",
+            }
+          : day.mission,
+      },
+    },
+  });
 }
 
-export function buildPrompt(input) {
-  return [
-    "Update the Profile Case from this person's recorded evidence.",
-    "Do not copy user-edited session text into a different meaning.",
-    "If evidence is missing, say so plainly.",
-    JSON.stringify(input, null, 2),
-  ].join("\n\n");
+function formatAnswers(answers) {
+  if (!answers.length) return "No questions answered yet.";
+  return answers
+    .map(
+      (answer) => `### ${markdownText(answer.question, "Question")}
+
+${markdownText(answer.answer, "No answer.")}
+
+_Answered ${answer.answeredAt || "without a date"}._`,
+    )
+    .join("\n\n");
 }
 
-function markdownText(value, fallback = "Not enough evidence yet.") {
-  return text(value, 10_000) || fallback;
-}
-
-export function serializeProfileMarkdown(value) {
+export function serializeProfileMarkdown(
+  value,
+  {
+    profileId = "",
+    createdAt = now(),
+    updatedAt = now(),
+    lastAnalyzed = "",
+    analysisPending = true,
+  } = {},
+) {
   const state = normalizeState(value);
   const profile = state.profile;
   const sessions = profile.profileCase.sessions;
-  const answers = profile.profileCase.survey.answers;
-  const answerLines = answers.length
-    ? answers
-        .map(
-          (answer) =>
-            `### ${markdownText(answer.question, "Question")}\n\n${markdownText(
-              answer.answer,
-              "No answer.",
-            )}`,
-        )
-        .join("\n\n")
-    : "No questions answered yet.";
+  const question = profile.profileCase.survey.nextQuestion;
+  const dateKey = getDateKey();
+  const mission = state.days[dateKey]?.mission?.text;
+  const sessionBlocks = PROFILE_SESSION_KEYS.map((key) => {
+    const session = sessions[key];
+    return `## ${sessionLabels[key]}
+
+${sessionComment(session)}
+
+${markdownText(
+  session.text,
+  key === "personality"
+    ? "Codex has not built this draft yet."
+    : "Not enough evidence yet.",
+)}`;
+  }).join("\n\n");
+  const nextQuestion = question
+    ? `<!-- id: ${question.id}; target: ${question.target} -->
+
+${question.text}`
+    : "No question yet.";
+
   return `---
 type: circle-os-profile
-updated: ${profile.profileCase.updatedAt || new Date().toISOString()}
+profile_id: ${profileId}
+created: ${createdAt}
+updated: ${updatedAt}
+last_analyzed: ${lastAnalyzed}
+analysis_pending: ${Boolean(analysisPending)}
 ---
 
 # ${markdownText(profile.name, "Circle OS Profile")}
 
 Age: ${profile.age ?? "Not added"}
 
-## Typical Tuesday
+${sessionBlocks}
 
-${markdownText(sessions.typicalTuesday.text, profile.vision.description)}
+## Today's Mission
 
-## Current Life
+${markdownText(mission, "Notice one moment that feels like you.")}
 
-${markdownText(sessions.currentLife.text)}
+## Next Question
 
-## What Matters
+${nextQuestion}
 
-${markdownText(sessions.whatMatters.text)}
+## Answers
 
-## The Gap
-
-${markdownText(sessions.gap.text)}
-
-## Mission Statement
-
-${markdownText(sessions.missionStatement.text)}
-
-## Personality
-
-${markdownText(
-    sessions.personality.text,
-    `Answer ${Math.max(0, 6 - answers.length)} more questions to build this.`,
-  )}
-
-## Check-in Answers
-
-${answerLines}
+${formatAnswers(profile.profileCase.survey.answers)}
 `;
 }
 
@@ -377,54 +446,129 @@ function resolveVaultPath(options = {}) {
   );
 }
 
-function ensureVault(vaultPath) {
-  mkdirSync(join(vaultPath, "Days"), { recursive: true });
-  mkdirSync(join(vaultPath, "Rules"), { recursive: true });
-  const rules = [
-    ["constitution.md", defaultRules.constitution],
-    ["profile-case.md", defaultRules.profileCase],
-  ];
-  for (const [filename, content] of rules) {
-    const target = join(vaultPath, "Rules", filename);
-    if (!existsSync(target)) writeFileSync(target, content, "utf8");
-  }
-}
-
-function readState(vaultPath) {
-  const statePath = join(vaultPath, "State.json");
-  if (!existsSync(statePath)) return null;
-  return normalizeState(JSON.parse(readFileSync(statePath, "utf8")));
+function resolveAccessPath(options = {}) {
+  const localAppData =
+    process.env.LOCALAPPDATA || "C:\\Users\\Public\\AppData\\Local";
+  return (
+    options.accessPath ||
+    process.env.CIRCLE_OS_ACCESS_PATH ||
+    join(localAppData, "Circle OS", "access.json")
+  );
 }
 
 function writeAtomic(path, content) {
+  mkdirSync(dirname(path), { recursive: true });
   const temporary = `${path}.new`;
   writeFileSync(temporary, content, "utf8");
   renameSync(temporary, path);
 }
 
-function saveState(vaultPath, value) {
-  ensureVault(vaultPath);
+function readJson(path, fallback = null) {
+  if (!existsSync(path)) return fallback;
+  return JSON.parse(readFileSync(path, "utf8"));
+}
+
+function profileDirectory(vaultPath, profileId) {
+  if (!profileIdPattern.test(profileId)) throw new Error("Invalid profile.");
+  return join(vaultPath, "Profiles", profileId);
+}
+
+function readProfileState(vaultPath, profileId) {
+  const directory = profileDirectory(vaultPath, profileId);
+  const statePath = join(directory, "State.json");
+  if (!existsSync(statePath)) return null;
+  let state = normalizeState(readJson(statePath));
+  const profilePath = join(directory, "Profile.md");
+  if (existsSync(profilePath)) {
+    state = applyProfileMarkdown(
+      state,
+      readFileSync(profilePath, "utf8"),
+    );
+  }
+  return state;
+}
+
+function readExistingMetadata(vaultPath, profileId) {
+  const path = join(profileDirectory(vaultPath, profileId), "Profile.md");
+  if (!existsSync(path)) return {};
+  return profileMetadata(readFileSync(path, "utf8"));
+}
+
+function saveProfileState(
+  vaultPath,
+  profileId,
+  value,
+  { analysisPending = true } = {},
+) {
+  const directory = profileDirectory(vaultPath, profileId);
+  const metadata = readExistingMetadata(vaultPath, profileId);
   const state = normalizeState(value);
+  state.ai = {
+    ...state.ai,
+    baseUrl: "",
+    token: "",
+    profileId: "",
+  };
+  state.outbox = [];
   writeAtomic(
-    join(vaultPath, "State.json"),
+    join(directory, "State.json"),
     `${JSON.stringify(state, null, 2)}\n`,
   );
-  writeAtomic(join(vaultPath, "Profile.md"), serializeProfileMarkdown(state));
+  writeAtomic(
+    join(directory, "Profile.md"),
+    serializeProfileMarkdown(state, {
+      profileId,
+      createdAt: metadata.created || now(),
+      updatedAt: now(),
+      lastAnalyzed: metadata.last_analyzed || "",
+      analysisPending,
+    }),
+  );
+  mkdirSync(join(directory, "Days"), { recursive: true });
   for (const day of Object.values(state.days)) {
     writeAtomic(
-      join(vaultPath, "Days", `${day.date}.md`),
+      join(directory, "Days", `${day.date}.md`),
       serializeDayMarkdown(day),
     );
   }
   return state;
 }
 
-function loadSystemInstruction(vaultPath) {
-  ensureVault(vaultPath);
-  return [
-    readFileSync(join(vaultPath, "Rules", "constitution.md"), "utf8"),
-    readFileSync(join(vaultPath, "Rules", "profile-case.md"), "utf8"),
-  ].join("\n\n");
+function profileIds(vaultPath) {
+  const profilesPath = join(vaultPath, "Profiles");
+  if (!existsSync(profilesPath)) return [];
+  return readdirSync(profilesPath, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && profileIdPattern.test(entry.name))
+    .map((entry) => entry.name);
+}
+
+function writeIndex(vaultPath) {
+  const rows = profileIds(vaultPath).map((profileId) => {
+    const state = readProfileState(vaultPath, profileId);
+    const metadata = readExistingMetadata(vaultPath, profileId);
+    return `- [[Profiles/${profileId}/Profile|${state?.profile?.name || profileId}]] — ${
+      metadata.analysis_pending === "true" ? "waiting" : "ready"
+    }`;
+  });
+  writeAtomic(
+    join(vaultPath, "Profiles.md"),
+    `# Circle OS Profiles
+
+${rows.length ? rows.join("\n") : "No profiles yet."}
+`,
+  );
+}
+
+function legacyProof(value) {
+  const state = normalizeState(value);
+  return hash(
+    [
+      state.profile.name,
+      state.profile.age,
+      state.profile.vision.description,
+      state.profile.vision.completedAt,
+    ].join("|"),
+  );
 }
 
 function allowedOrigins() {
@@ -448,7 +592,6 @@ function corsHeaders(origin) {
   const headers = {
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Private-Network": "true",
     "Cache-Control": "no-store",
     "Content-Type": "application/json; charset=utf-8",
   };
@@ -464,21 +607,6 @@ function json(response, status, body, origin) {
   response.end(JSON.stringify(body));
 }
 
-function authorized(request) {
-  const token = process.env.CIRCLE_AI_TOKEN;
-  const expectedTailscaleUser =
-    process.env.CIRCLE_AI_TAILSCALE_USER?.trim().toLowerCase();
-  const tailscaleUser = String(
-    request.headers["tailscale-user-login"] || "",
-  )
-    .trim()
-    .toLowerCase();
-  return Boolean(
-    (token && request.headers.authorization === `Bearer ${token}`) ||
-      (expectedTailscaleUser && tailscaleUser === expectedTailscaleUser),
-  );
-}
-
 async function readBody(request) {
   let body = "";
   for await (const chunk of request) {
@@ -488,154 +616,65 @@ async function readBody(request) {
   return JSON.parse(body || "{}");
 }
 
-async function ollamaHealth() {
-  const baseUrl = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434")
-    .replace(/\/+$/, "");
-  const response = await fetch(`${baseUrl}/api/tags`, {
-    signal: AbortSignal.timeout(3000),
-  });
-  if (!response.ok) throw new Error("Ollama is offline.");
-  return true;
-}
-
-async function generateProfile(input, vaultPath) {
-  const baseUrl = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434")
-    .replace(/\/+$/, "");
-  const model = process.env.OLLAMA_MODEL || "qwen2.5:1.5b";
-  const response = await fetch(`${baseUrl}/api/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model,
-      stream: false,
-      format: schema,
-      messages: [
-        {
-          role: "system",
-          content: loadSystemInstruction(vaultPath),
-        },
-        { role: "user", content: buildPrompt(input) },
-      ],
-      options: {
-        temperature: 0.2,
-        num_predict: 650,
-      },
-    }),
-    signal: AbortSignal.timeout(120000),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(text(data.error) || "Ollama could not update the profile.");
-  }
-  const content = text(data.message?.content || data.response, 20_000);
-  const answerCount = Array.isArray(input?.profileCase?.survey?.answers)
-    ? input.profileCase.survey.answers.length
-    : 0;
-  return guardProfileEvidence(
-    normalizeModelResult(content, answerCount),
-    input,
-  );
+function bearer(request) {
+  const value = String(request.headers.authorization || "");
+  return value.startsWith("Bearer ") ? value.slice(7) : "";
 }
 
 export function createCircleAiServer(options = {}) {
   const vaultPath = resolveVaultPath(options);
-  const generate = options.generateProfile || generateProfile;
-  ensureVault(vaultPath);
-  let state = readState(vaultPath);
-  let profileDirty = Boolean(
-    state?.profile?.vision?.completedAt &&
-      ["waiting", "thinking"].includes(state.profile.profileCase.status),
-  );
-  let profileRunning = false;
-  let retryTimer = null;
+  const accessPath = resolveAccessPath(options);
+  const maxProfiles = Number(process.env.CIRCLE_OS_MAX_PROFILES || 25);
+  mkdirSync(join(vaultPath, "Profiles"), { recursive: true });
+  mkdirSync(dirname(accessPath), { recursive: true });
+  let access = readJson(accessPath, {});
 
-  function publicState() {
-    if (!state) return null;
+  function saveAccess() {
+    writeAtomic(accessPath, `${JSON.stringify(access, null, 2)}\n`);
+  }
+
+  function migrateLegacy() {
+    const legacyPath = join(vaultPath, "State.json");
+    if (!existsSync(legacyPath)) return;
+    const legacy = normalizeState(readJson(legacyPath));
+    if (!legacy.profile.vision.completedAt) return;
+    const proof = legacyProof(legacy);
+    const existing = Object.entries(access).find(
+      ([, value]) => value.legacyProofHash === proof,
+    );
+    if (existing) return;
+    const profileId = `p_${randomKey(12)}`;
+    saveProfileState(vaultPath, profileId, legacy, {
+      analysisPending: true,
+    });
+    access[profileId] = {
+      keyHash: "",
+      legacyProofHash: proof,
+      createdAt: now(),
+    };
+    saveAccess();
+    writeIndex(vaultPath);
+  }
+
+  function authorizedProfile(request, profileId) {
+    const key = bearer(request);
+    return Boolean(key && access[profileId]?.keyHash === hash(key));
+  }
+
+  function publicState(state) {
     return {
       ...state,
       ai: {
         ...state.ai,
         baseUrl: "",
         token: "",
+        profileId: "",
       },
       outbox: [],
     };
   }
 
-  function scheduleProfile() {
-    profileDirty = true;
-    if (state) {
-      state = saveState(vaultPath, {
-        ...state,
-        ai: { ...state.ai, status: "thinking", lastError: "" },
-        profile: {
-          ...state.profile,
-          profileCase: {
-            ...state.profile.profileCase,
-            status: "thinking",
-          },
-        },
-        outbox: [],
-      });
-    }
-    queueMicrotask(runProfileJobs);
-  }
-
-  async function runProfileJobs() {
-    if (profileRunning || !profileDirty || !state) return;
-    profileRunning = true;
-    profileDirty = false;
-    const snapshot = structuredClone(state);
-    try {
-      const result = await generate(
-        {
-          reason: "saved-life-update",
-          person: {
-            name: snapshot.profile.name,
-            age: snapshot.profile.age,
-            dreamLifestyle: snapshot.profile.vision.description,
-          },
-          profileCase: snapshot.profile.profileCase,
-          days: Object.values(snapshot.days)
-            .sort((a, b) => a.date.localeCompare(b.date))
-            .slice(-14),
-        },
-        vaultPath,
-      );
-      state = applyProfileResult(state, result, "server-profile-job");
-      state.outbox = [];
-      state = saveState(vaultPath, state);
-    } catch (error) {
-      state = saveState(vaultPath, {
-        ...state,
-        ai: {
-          ...state.ai,
-          status: "offline",
-          lastError:
-            error instanceof Error ? error.message : "Local AI is offline.",
-        },
-        profile: {
-          ...state.profile,
-          profileCase: {
-            ...state.profile.profileCase,
-            status: "waiting",
-          },
-        },
-        outbox: [],
-      });
-      if (!retryTimer) {
-        retryTimer = setTimeout(() => {
-          retryTimer = null;
-          scheduleProfile();
-        }, 30_000);
-      }
-    } finally {
-      profileRunning = false;
-      if (profileDirty) queueMicrotask(runProfileJobs);
-    }
-  }
-
-  if (profileDirty) queueMicrotask(runProfileJobs);
+  migrateLegacy();
 
   return createServer(async (request, response) => {
     const origin = request.headers.origin || "";
@@ -648,48 +687,124 @@ export function createCircleAiServer(options = {}) {
       response.end();
       return;
     }
-    if (!authorized(request)) {
-      json(response, 401, { error: "Wrong key." }, origin);
-      return;
-    }
+
     try {
       if (request.method === "GET" && request.url === "/health") {
-        await ollamaHealth();
         json(
           response,
           200,
           {
             ok: true,
-            model: process.env.OLLAMA_MODEL || "qwen2.5:1.5b",
+            analysis: "nightly-codex",
             storesData: true,
           },
           origin,
         );
         return;
       }
-      if (request.method === "GET" && request.url === "/state") {
-        json(response, 200, { state: publicState() }, origin);
-        return;
-      }
-      if (request.method === "POST" && request.url === "/sync") {
+
+      if (request.method === "POST" && request.url === "/profiles") {
         const input = await readBody(request);
-        const shouldUpdateProfile = Boolean(input?.state?.outbox?.length);
-        state = saveState(vaultPath, mergeClientState(state, input.state));
-        const profileStillWaiting =
-          state.profile.vision.completedAt &&
-          ["waiting", "thinking"].includes(state.profile.profileCase.status);
-        if (shouldUpdateProfile || profileStillWaiting) {
-          scheduleProfile();
+        const phoneState = normalizeState(input.state);
+        if (
+          !phoneState.profile.name ||
+          !phoneState.profile.age ||
+          !phoneState.profile.vision.description
+        ) {
+          json(response, 400, { error: "Finish the first Vision first." }, origin);
+          return;
         }
-        json(response, 200, { state: publicState() }, origin);
+
+        const proof = legacyProof(phoneState);
+        const legacy = Object.entries(access).find(
+          ([, value]) =>
+            value.legacyProofHash === proof && !value.keyHash,
+        );
+        let profileId;
+        if (legacy) {
+          profileId = legacy[0];
+        } else {
+          if (profileIds(vaultPath).length >= maxProfiles) {
+            json(response, 429, { error: "Profile limit reached." }, origin);
+            return;
+          }
+          profileId = `p_${randomKey(12)}`;
+          saveProfileState(vaultPath, profileId, phoneState, {
+            analysisPending: true,
+          });
+          access[profileId] = {
+            keyHash: "",
+            createdAt: now(),
+          };
+        }
+
+        const accessKey = randomKey(32);
+        access[profileId].keyHash = hash(accessKey);
+        delete access[profileId].legacyProofHash;
+        saveAccess();
+        const state = mergeClientState(
+          readProfileState(vaultPath, profileId),
+          phoneState,
+        );
+        const saved = saveProfileState(vaultPath, profileId, state, {
+          analysisPending: true,
+        });
+        writeIndex(vaultPath);
+        json(
+          response,
+          201,
+          {
+            profileId,
+            accessKey,
+            state: publicState(saved),
+          },
+          origin,
+        );
         return;
       }
-      if (request.method === "POST" && request.url === "/profile") {
-        const input = await readBody(request);
-        const result = await generate(input, vaultPath);
-        json(response, 200, result, origin);
-        return;
+
+      const profileMatch = request.url?.match(
+        /^\/profiles\/(p_[A-Za-z0-9_-]{16})(?:\/(sync))?$/,
+      );
+      if (profileMatch) {
+        const profileId = profileMatch[1];
+        if (!authorizedProfile(request, profileId)) {
+          json(response, 401, { error: "This profile key is not valid." }, origin);
+          return;
+        }
+        if (request.method === "GET" && !profileMatch[2]) {
+          const state = readProfileState(vaultPath, profileId);
+          if (!state) {
+            json(response, 404, { error: "Profile not found." }, origin);
+            return;
+          }
+          json(response, 200, { state: publicState(state) }, origin);
+          return;
+        }
+        if (request.method === "POST" && profileMatch[2] === "sync") {
+          const input = await readBody(request);
+          const current = readProfileState(vaultPath, profileId);
+          if (!current) {
+            json(response, 404, { error: "Profile not found." }, origin);
+            return;
+          }
+          const pending = Boolean(input?.state?.outbox?.length);
+          const merged = mergeClientState(current, input.state);
+          merged.profile.profileCase.status = pending
+            ? "waiting"
+            : current.profile.profileCase.status;
+          const saved = saveProfileState(vaultPath, profileId, merged, {
+            analysisPending:
+              pending ||
+              readExistingMetadata(vaultPath, profileId).analysis_pending ===
+                "true",
+          });
+          writeIndex(vaultPath);
+          json(response, 200, { state: publicState(saved) }, origin);
+          return;
+        }
       }
+
       json(response, 404, { error: "Not found." }, origin);
     } catch (error) {
       json(
@@ -697,7 +812,7 @@ export function createCircleAiServer(options = {}) {
         503,
         {
           error:
-            error instanceof Error ? error.message : "Local AI is offline.",
+            error instanceof Error ? error.message : "The profile server is offline.",
         },
         origin,
       );
@@ -707,10 +822,7 @@ export function createCircleAiServer(options = {}) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const port = Number(process.env.CIRCLE_AI_PORT || 4317);
-  if (!process.env.CIRCLE_AI_TOKEN) {
-    throw new Error("CIRCLE_AI_TOKEN is required.");
-  }
   createCircleAiServer().listen(port, "127.0.0.1", () => {
-    console.log(`Circle OS is ready on http://127.0.0.1:${port}`);
+    console.log(`Circle OS profiles are ready on http://127.0.0.1:${port}`);
   });
 }

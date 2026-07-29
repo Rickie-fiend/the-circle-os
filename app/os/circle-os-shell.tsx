@@ -73,9 +73,12 @@ export type CircleState = {
   ai: {
     baseUrl: string;
     token: string;
+    profileId: string;
     status: string;
     lastError: string;
     lastRunAt: string | null;
+    lastSyncedAt: string | null;
+    lastSyncSlot: string;
   };
   profile: {
     identityFocus: string;
@@ -167,6 +170,37 @@ function serverSignature(state: CircleState) {
   });
 }
 
+function currentSyncSlot(now = new Date()) {
+  return `${getDateKey(now)}-${now.getHours() < 12 ? "morning" : "evening"}`;
+}
+
+function applySyncResult(
+  current: CircleState,
+  result: {
+    state: CircleState;
+    profileId: string;
+    accessKey: string;
+  },
+) {
+  const next = ensureDay(
+    mergeServerState(current, result.state),
+    getDateKey(),
+  );
+  return {
+    ...next,
+    ai: {
+      ...next.ai,
+      baseUrl: current.ai.baseUrl,
+      profileId: result.profileId,
+      token: result.accessKey,
+      status: "ready",
+      lastError: "",
+      lastSyncedAt: new Date().toISOString(),
+      lastSyncSlot: currentSyncSlot(),
+    },
+  };
+}
+
 export function CircleStateProvider({ children }: { children: ReactNode }) {
   const dateKey = getDateKey();
   const [state, setState] = useState<CircleState>(() =>
@@ -222,6 +256,17 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!ready || !state.ai.baseUrl) return;
+    if (!state.profile.vision.completedAt) return;
+    const urgent = state.outbox.some((item) =>
+      ["first-vision", "question-answered", "profile-edit"].includes(
+        item.reason,
+      ),
+    );
+    const needsFirstProfile = !state.ai.profileId || !state.ai.token;
+    const scheduledSyncDue =
+      state.outbox.length > 0 &&
+      state.ai.lastSyncSlot !== currentSyncSlot();
+    if (!needsFirstProfile && !urgent && !scheduledSyncDue) return;
     const signature = serverSignature(state);
     if (signature === lastServerSignature.current) return;
     if (syncing.current) {
@@ -234,16 +279,13 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
       const sentState = stateRef.current;
       const sentSignature = serverSignature(sentState);
       void syncCircleState(sentState)
-        .then((remote) => {
+        .then((result) => {
           setState((current) => {
             if (serverSignature(current) !== sentSignature) {
               syncPending.current = true;
               return current;
             }
-            const next = ensureDay(
-              mergeServerState(current, remote),
-              getDateKey(),
-            );
+            const next = applySyncResult(current, result);
             lastServerSignature.current = serverSignature(next);
             stateRef.current = next;
             return next;
@@ -318,7 +360,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
             setSyncTick((value) => value + 1);
           }
         });
-    }, 4000);
+    }, 30_000);
     return () => window.clearInterval(timer);
   }, [ready, state.ai.baseUrl]);
 
@@ -360,8 +402,8 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
 
   async function connectAi(baseUrl: string, token: string) {
     const connected = connectLocalAi(stateRef.current, baseUrl, token);
-    const remote = await syncCircleState(connected);
-    const next = ensureDay(mergeServerState(connected, remote), getDateKey());
+    const result = await syncCircleState(connected);
+    const next = applySyncResult(connected, result);
     lastServerSignature.current = serverSignature(next);
     stateRef.current = next;
     setState(next);
@@ -411,9 +453,9 @@ export function OSFrame({
             <span className="mark mark-small" aria-hidden="true" />
             <span>THE CIRCLE OS</span>
           </Link>
-          <Link className="os-local-status" href="/os/connect">
-            {state.ai.baseUrl ? "Private · Obsidian" : "Connect computer"}
-          </Link>
+          <span className="os-local-status">
+            {state.ai.profileId ? "Saved · Obsidian" : "Saving…"}
+          </span>
         </header>
         <nav className="os-nav" aria-label="Circle OS">
           <Link className={active === "today" ? "active" : ""} href="/os">
@@ -517,7 +559,7 @@ export function TodayExperience() {
         completed: !day.mission.completed,
         completedAt: day.mission.completed ? null : new Date().toISOString(),
       },
-    }));
+    }), "mission");
   }
 
   function resetLogForm() {
