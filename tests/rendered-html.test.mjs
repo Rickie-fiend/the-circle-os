@@ -59,9 +59,11 @@ test("server-renders the functional Circle OS Today route", async () => {
 
   const html = await response.text();
   assert.match(html, /THE CIRCLE OS/);
-  assert.match(html, /How.{0,10}your energy\?/);
-  assert.match(html, /Do one small thing that feels like you\./);
-  assert.match(html, /Mission/);
+  assert.match(html, /When do you feel most like yourself\?/);
+  assert.match(html, /1.{0,30}\/.{0,30}10/);
+  assert.match(html, /What part of your life do you want to change first\?/);
+  assert.match(html, /Habit/);
+  assert.match(html, /Log/);
   assert.match(html, /Your day, hour by hour/);
   assert.match(html, /Add main activity/);
   assert.match(html, /Today/);
@@ -70,6 +72,11 @@ test("server-renders the functional Circle OS Today route", async () => {
     html,
     /Oscar|pond|troph(?:y|ies)|leaderboard|Outside|Focus|Life admin/i,
   );
+  assert.doesNotMatch(html, />Mood</);
+  assert.doesNotMatch(html, />Morning</);
+  assert.doesNotMatch(html, />Midday</);
+  assert.doesNotMatch(html, />Afternoon</);
+  assert.doesNotMatch(html, />Evening</);
 });
 
 test("server-renders the first-time Circle OS Vision setup", async () => {

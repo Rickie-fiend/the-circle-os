@@ -13,19 +13,18 @@ import {
   type ReactNode,
 } from "react";
 import {
-  DAY_PERIODS,
-  MOODS,
+  HABIT_QUESTIONS,
+  PROFILE_QUESTIONS,
   answerProfileQuestion,
+  answerSurveyQuestion,
   connectLocalAi,
   createEmptyState,
   ensureDay,
   getDateKey,
-  getDayPeriod,
   mergeServerState,
   minutesBetween,
   normalizeState,
   queueProfileUpdate,
-  upsertCheckIn,
   upsertTimeBlock,
 } from "./circle-os-model.js";
 import {
@@ -109,6 +108,7 @@ export type CircleState = {
           question: string;
           answer: string;
           target: string;
+          kind?: string;
           answeredAt: string;
         }>;
         nextQuestion: {
@@ -147,6 +147,20 @@ type CircleStateContextValue = {
 
 const CircleStateContext = createContext<CircleStateContextValue | null>(null);
 const AWAKE_HOURS = Array.from({ length: 17 }, (_, index) => index + 7);
+const RECORD_REASONS = new Set(["day-log", "mission"]);
+
+type SurveyQuestion = {
+  id: string;
+  text: string;
+  type: string;
+  options?: string[];
+  min?: number;
+  max?: number;
+  minLabel?: string;
+  maxLabel?: string;
+  placeholder?: string;
+  target: string;
+};
 
 function hourLabel(hour: number) {
   return `${String(hour).padStart(2, "0")}:00`;
@@ -171,7 +185,11 @@ function serverSignature(state: CircleState) {
 }
 
 function currentSyncSlot(now = new Date()) {
-  return `${getDateKey(now)}-${now.getHours() < 12 ? "morning" : "evening"}`;
+  return `${getDateKey(now)}-night`;
+}
+
+function isNightSyncTime(now = new Date()) {
+  return now.getHours() >= 20 || now.getHours() < 2;
 }
 
 function applySyncResult(
@@ -196,7 +214,11 @@ function applySyncResult(
       status: "ready",
       lastError: "",
       lastSyncedAt: new Date().toISOString(),
-      lastSyncSlot: currentSyncSlot(),
+      lastSyncSlot:
+        current.outbox.some((item) => RECORD_REASONS.has(item.reason)) &&
+        isNightSyncTime()
+          ? currentSyncSlot()
+          : current.ai.lastSyncSlot,
     },
   };
 }
@@ -258,13 +280,18 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     if (!ready || !state.ai.baseUrl) return;
     if (!state.profile.vision.completedAt) return;
     const urgent = state.outbox.some((item) =>
-      ["first-vision", "question-answered", "profile-edit"].includes(
-        item.reason,
-      ),
+      [
+        "first-vision",
+        "question-answered",
+        "survey-answer",
+        "habit-answer",
+        "profile-edit",
+      ].includes(item.reason),
     );
     const needsFirstProfile = !state.ai.profileId || !state.ai.token;
     const scheduledSyncDue =
-      state.outbox.length > 0 &&
+      state.outbox.some((item) => RECORD_REASONS.has(item.reason)) &&
+      isNightSyncTime() &&
       state.ai.lastSyncSlot !== currentSyncSlot();
     if (!needsFirstProfile && !urgent && !scheduledSyncDue) return;
     const signature = serverSignature(state);
@@ -314,6 +341,14 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     }, 350);
     return () => window.clearTimeout(timer);
   }, [ready, state, syncTick]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const timer = window.setInterval(() => {
+      setSyncTick((value) => value + 1);
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [ready]);
 
   useEffect(() => {
     if (!ready || !state.ai.baseUrl) return;
@@ -471,10 +506,109 @@ export function OSFrame({
   );
 }
 
+function SurveySlide({
+  label,
+  question,
+  current,
+  total,
+  onAnswer,
+}: {
+  label: string;
+  question: SurveyQuestion;
+  current: number;
+  total: number;
+  onAnswer: (answer: string) => void;
+}) {
+  const sliderStart = Math.ceil(
+    ((question.min ?? 1) + (question.max ?? 5)) / 2,
+  );
+  const [value, setValue] = useState(
+    question.type === "slider" ? String(sliderStart) : "",
+  );
+
+  const choices =
+    question.type === "yesno" ? ["Yes", "No"] : question.options ?? [];
+
+  return (
+    <div className="os-survey-card">
+      <div className="os-survey-head">
+        <p className="os-card-label">{label}</p>
+        <span aria-label={`Question ${current} of ${total}`}>
+          {current}/{total}
+        </span>
+      </div>
+      <h2>{question.text}</h2>
+
+      {choices.length ? (
+        <div
+          className={`os-survey-choices${
+            choices.length > 2 ? " many" : ""
+          }`}
+          role="group"
+          aria-label={question.text}
+        >
+          {choices.map((choice) => (
+            <button type="button" key={choice} onClick={() => onAnswer(choice)}>
+              {choice}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {question.type === "slider" ? (
+        <form
+          className="os-survey-slider"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onAnswer(value);
+          }}
+        >
+          <output>{value}</output>
+          <input
+            aria-label={question.text}
+            type="range"
+            min={question.min ?? 1}
+            max={question.max ?? 5}
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+          />
+          <div aria-hidden="true">
+            <span>{question.minLabel}</span>
+            <span>{question.maxLabel}</span>
+          </div>
+          <button type="submit">Continue</button>
+        </form>
+      ) : null}
+
+      {question.type === "text" ? (
+        <form
+          className="os-survey-text"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!value.trim()) return;
+            onAnswer(value);
+          }}
+        >
+          <input
+            aria-label={question.text}
+            autoFocus
+            maxLength={180}
+            placeholder={question.placeholder}
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+          />
+          <button type="submit" disabled={!value.trim()}>
+            Continue
+          </button>
+        </form>
+      ) : null}
+    </div>
+  );
+}
+
 export function TodayExperience() {
   const { state, today, ready, updateState, updateToday } = useCircleState();
   const router = useRouter();
-  const [selectedPeriod, setSelectedPeriod] = useState("morning");
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
   const [isLogOpen, setLogOpen] = useState(false);
@@ -487,7 +621,8 @@ export function TodayExperience() {
   const [momentsText, setMomentsText] = useState("");
   const [momentHour, setMomentHour] = useState<number | null>(null);
   const [newMoment, setNewMoment] = useState("");
-  const [profileAnswer, setProfileAnswer] = useState("");
+  const [editingMomentKey, setEditingMomentKey] = useState<string | null>(null);
+  const [momentDraft, setMomentDraft] = useState("");
   useEffect(() => {
     if (
       ready &&
@@ -510,9 +645,7 @@ export function TodayExperience() {
     queueMicrotask(() => {
       if (!active) return;
       const now = new Date();
-      const period = getDayPeriod(now.getHours());
       const name = state.profile.name.trim();
-      setSelectedPeriod(period);
       setDateLabel(
         now.toLocaleDateString("en-US", {
           weekday: "long",
@@ -520,9 +653,9 @@ export function TodayExperience() {
           day: "numeric",
         }),
       );
-      if (period === "morning") {
+      if (now.getHours() < 12) {
         setGreeting(`Good morning${name ? `, ${name}` : ""}.`);
-      } else if (period === "midday" || period === "afternoon") {
+      } else if (now.getHours() < 18) {
         setGreeting(`Good afternoon${name ? `, ${name}` : ""}.`);
       } else {
         setGreeting(`Good evening${name ? `, ${name}` : ""}.`);
@@ -533,23 +666,39 @@ export function TodayExperience() {
     };
   }, [state.profile.name]);
 
-  const selectedCheckIn = today.checkIns.find(
-    (checkIn) => checkIn.period === selectedPeriod,
+  const surveyAnswers = state.profile.profileCase.survey.answers;
+  const firstProfileQuestionIndex = PROFILE_QUESTIONS.findIndex(
+    (question) =>
+      !surveyAnswers.some((answer) => answer.questionId === question.id),
   );
-  const currentPeriod = DAY_PERIODS.find((period) => period.id === selectedPeriod);
-
-  function saveCheckIn(fields: Partial<CheckIn>) {
-    updateToday((day) =>
-      upsertCheckIn(day, {
-        period: selectedPeriod,
-        energy: selectedCheckIn?.energy ?? null,
-        mood: selectedCheckIn?.mood ?? null,
-        createdAt: new Date().toISOString(),
-        ...fields,
-      }),
-      "check-in",
-    );
-  }
+  const profileQuestion =
+    firstProfileQuestionIndex >= 0
+      ? (PROFILE_QUESTIONS[firstProfileQuestionIndex] as SurveyQuestion)
+      : null;
+  const profileAnswersDone =
+    PROFILE_QUESTIONS.length -
+    PROFILE_QUESTIONS.filter(
+      (question) =>
+        !surveyAnswers.some((answer) => answer.questionId === question.id),
+    ).length;
+  const codexQuestion = state.profile.profileCase.survey.nextQuestion;
+  const unansweredCodexQuestion =
+    codexQuestion &&
+    !surveyAnswers.some((answer) => answer.questionId === codexQuestion.id)
+      ? ({
+          ...codexQuestion,
+          type: "text",
+          placeholder: "One honest answer is enough",
+        } as SurveyQuestion)
+      : null;
+  const firstHabitQuestionIndex = HABIT_QUESTIONS.findIndex(
+    (question) =>
+      !surveyAnswers.some((answer) => answer.questionId === question.id),
+  );
+  const habitQuestion =
+    firstHabitQuestionIndex >= 0
+      ? (HABIT_QUESTIONS[firstHabitQuestionIndex] as SurveyQuestion)
+      : null;
 
   function toggleMission() {
     updateToday((day) => ({
@@ -572,6 +721,8 @@ export function TodayExperience() {
     setFormError("");
     setMomentHour(null);
     setNewMoment("");
+    setEditingMomentKey(null);
+    setMomentDraft("");
   }
 
   function openEdit(block: TimeBlock) {
@@ -606,8 +757,16 @@ export function TodayExperience() {
       setFormError("The end time needs to be after the start.");
       return;
     }
-    if (!blockTitle.trim()) {
-      setFormError("Add the main activity for this hour.");
+    const cleanTitle = String(
+      new FormData(event.currentTarget).get("mainActivity") || "",
+    ).trim();
+    const cleanMoments = momentsText
+      .split("\n")
+      .map((moment) => moment.trim())
+      .filter(Boolean);
+    if (!cleanTitle && !cleanMoments.length && !editingId) {
+      resetLogForm();
+      setLogOpen(false);
       return;
     }
     const id =
@@ -615,24 +774,26 @@ export function TodayExperience() {
       (typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `block-${Date.now()}`);
-    updateToday((day) =>
-      upsertTimeBlock(day, {
+    updateToday((day) => {
+      if (!cleanTitle && !cleanMoments.length) {
+        return {
+          ...day,
+          timeBlocks: day.timeBlocks.filter((block) => block.id !== id),
+        };
+      }
+      return upsertTimeBlock(day, {
         id,
         start,
         end,
-        activity: blockTitle.trim(),
+        activity: cleanTitle,
         note: "",
-        title: blockTitle.trim(),
-        moments: momentsText
-          .split("\n")
-          .map((moment) => moment.trim())
-          .filter(Boolean),
+        title: cleanTitle,
+        moments: cleanMoments,
         createdAt:
           day.timeBlocks.find((block) => block.id === id)?.createdAt ??
           new Date().toISOString(),
-      }),
-      "day-log",
-    );
+      });
+    }, "day-log");
     resetLogForm();
     setLogOpen(false);
   }
@@ -640,35 +801,95 @@ export function TodayExperience() {
   function addMoment(event: FormEvent<HTMLFormElement>, hour: number) {
     event.preventDefault();
     const moment = newMoment.trim();
-    if (!moment) return;
+    if (!moment) {
+      setMomentHour(null);
+      return;
+    }
     const startTime = hourLabel(hour);
-    updateToday((day) => ({
-      ...day,
-      timeBlocks: day.timeBlocks.map((block) =>
-        block.start === startTime
-          ? {
-              ...block,
-              note: "",
-              moments: [
-                ...(block.moments?.length
-                  ? block.moments
-                  : block.note
-                    ? [block.note]
-                    : []),
-                moment,
-              ],
-            }
-          : block,
-      ),
-    }), "day-log");
+    updateToday((day) => {
+      const existing = day.timeBlocks.find(
+        (block) => block.start === startTime,
+      );
+      if (!existing) {
+        return upsertTimeBlock(day, {
+          id:
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+              ? crypto.randomUUID()
+              : `block-${Date.now()}`,
+          start: startTime,
+          end: hourLabel(hour + 1),
+          activity: "",
+          note: "",
+          title: "",
+          moments: [moment],
+          createdAt: new Date().toISOString(),
+        });
+      }
+      return {
+        ...day,
+        timeBlocks: day.timeBlocks.map((block) =>
+          block.id === existing.id
+            ? {
+                ...block,
+                note: "",
+                moments: [
+                  ...(block.moments?.length
+                    ? block.moments
+                    : block.note
+                      ? [block.note]
+                      : []),
+                  moment,
+                ],
+              }
+            : block,
+        ),
+      };
+    }, "day-log");
     setNewMoment("");
     setMomentHour(null);
+  }
+
+  function editMoment(block: TimeBlock, index: number, moment: string) {
+    setEditingMomentKey(`${block.id}-${index}`);
+    setMomentDraft(moment);
+  }
+
+  function saveMoment(
+    event: FormEvent<HTMLFormElement>,
+    block: TimeBlock,
+    index: number,
+  ) {
+    event.preventDefault();
+    const cleanMoment = String(
+      new FormData(event.currentTarget).get("moment") || "",
+    ).trim();
+    updateToday((day) => {
+      const nextBlocks = day.timeBlocks
+        .map((item) => {
+          if (item.id !== block.id) return item;
+          const moments = [...(item.moments || [])];
+          if (cleanMoment) {
+            moments[index] = cleanMoment;
+          } else {
+            moments.splice(index, 1);
+          }
+          return { ...item, note: "", moments };
+        })
+        .filter(
+          (item) =>
+            Boolean((item.title || item.activity || "").trim()) ||
+            Boolean(item.moments?.length),
+        );
+      return { ...day, timeBlocks: nextBlocks };
+    }, "day-log");
+    setEditingMomentKey(null);
+    setMomentDraft("");
   }
 
   return (
     <OSFrame active="today">
       <main className="os-today">
-        <section className="os-checkin" aria-labelledby="checkin-question">
+        <section className="os-checkin" aria-label="Check-in questions">
           <div className="os-context-row">
             <div>
               <p className="os-eyebrow">{dateLabel}</p>
@@ -679,133 +900,104 @@ export function TodayExperience() {
             </p>
           </div>
 
-          <div className="os-checkin-card">
-            <p className="os-card-label">
-              Check in · {currentPeriod?.label}
-            </p>
-            <h2 id="checkin-question">How&apos;s your energy?</h2>
-
-            <div className="os-energy-scale" aria-label="Energy from one to five">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  type="button"
-                  key={value}
-                  className={selectedCheckIn?.energy === value ? "selected" : ""}
-                  onClick={() => saveCheckIn({ energy: value })}
-                  aria-label={`Energy ${value} of 5`}
-                  aria-pressed={selectedCheckIn?.energy === value}
-                >
-                  <span>{value}</span>
-                </button>
-              ))}
-            </div>
-            <div className="os-scale-labels" aria-hidden="true">
-              <span>Low</span>
-              <span>Alive</span>
-            </div>
-
-            <div className="os-mood-row">
-              <p>Mood</p>
-              <div>
-                {MOODS.map((mood) => (
-                  <button
-                    type="button"
-                    key={mood}
-                    className={selectedCheckIn?.mood === mood ? "selected" : ""}
-                    onClick={() =>
-                      saveCheckIn({
-                        mood: selectedCheckIn?.mood === mood ? null : mood,
-                      })
-                    }
-                    aria-pressed={selectedCheckIn?.mood === mood}
-                  >
-                    {mood}
-                  </button>
-                ))}
+          {profileQuestion ? (
+            <SurveySlide
+              key={profileQuestion.id}
+              label="Check-in"
+              question={profileQuestion}
+              current={firstProfileQuestionIndex + 1}
+              total={PROFILE_QUESTIONS.length}
+              onAnswer={(answer) =>
+                updateState((current) =>
+                  answerSurveyQuestion(
+                    current,
+                    profileQuestion,
+                    answer,
+                    "profile",
+                  ),
+                )
+              }
+            />
+          ) : unansweredCodexQuestion ? (
+            <SurveySlide
+              key={unansweredCodexQuestion.id}
+              label="Check-in"
+              question={unansweredCodexQuestion}
+              current={1}
+              total={1}
+              onAnswer={(answer) =>
+                updateState((current) =>
+                  answerProfileQuestion(current, answer),
+                )
+              }
+            />
+          ) : (
+            <div className="os-survey-card os-survey-complete">
+              <div className="os-survey-head">
+                <p className="os-card-label">Check-in</p>
+                <span>{profileAnswersDone}/{PROFILE_QUESTIONS.length}</span>
               </div>
+              <h2>You&apos;re done for now.</h2>
+              <p>Your answers are saved. The next question will come from what Codex still needs to understand.</p>
             </div>
-
-            <div className="os-period-tabs" aria-label="Choose a part of the day">
-              {DAY_PERIODS.map((period) => {
-                const recorded = today.checkIns.some(
-                  (checkIn) => checkIn.period === period.id,
-                );
-                return (
-                  <button
-                    className={period.id === selectedPeriod ? "active" : ""}
-                    type="button"
-                    key={period.id}
-                    onClick={() => setSelectedPeriod(period.id)}
-                    aria-pressed={period.id === selectedPeriod}
-                  >
-                    <span>{period.label}</span>
-                    <i className={recorded ? "recorded" : ""} aria-hidden="true" />
-                  </button>
-                );
-              })}
-            </div>
-
-            {state.profile.profileCase.survey.nextQuestion ? (
-              <form
-                className="os-profile-question"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!profileAnswer.trim()) return;
-                  updateState((current) =>
-                    answerProfileQuestion(current, profileAnswer),
-                  );
-                  setProfileAnswer("");
-                }}
-              >
-                <label htmlFor="profile-answer">
-                  {state.profile.profileCase.survey.nextQuestion.text}
-                </label>
-                <div>
-                  <input
-                    id="profile-answer"
-                    value={profileAnswer}
-                    onChange={(event) => setProfileAnswer(event.target.value)}
-                  />
-                  <button type="submit">Save</button>
-                </div>
-              </form>
-            ) : null}
-          </div>
+          )}
         </section>
 
-        <section
-          className={`os-mission${today.mission.completed ? " completed" : ""}`}
-          aria-labelledby="mission-heading"
-        >
-          <div>
-            <div className="os-mission-meta">
-              <p className="os-card-label">Today&apos;s Mission</p>
-              <span className="os-mission-status" aria-live="polite">
-                {today.mission.completed ? "Completed today" : "Still to do"}
+        {habitQuestion ? (
+          <section className="os-habit" aria-label="Habit questions">
+            <SurveySlide
+              key={habitQuestion.id}
+              label="Habit"
+              question={habitQuestion}
+              current={firstHabitQuestionIndex + 1}
+              total={HABIT_QUESTIONS.length}
+              onAnswer={(answer) =>
+                updateState((current) =>
+                  answerSurveyQuestion(
+                    current,
+                    habitQuestion,
+                    answer,
+                    "habit",
+                  ),
+                )
+              }
+            />
+          </section>
+        ) : (
+          <section
+            className={`os-mission${today.mission.completed ? " completed" : ""}`}
+            aria-labelledby="mission-heading"
+          >
+            <div>
+              <div className="os-mission-meta">
+                <p className="os-card-label">Habit</p>
+                <span className="os-mission-status" aria-live="polite">
+                  {today.mission.completed ? "Done today" : "Today"}
+                </span>
+              </div>
+              <h2 id="mission-heading">{today.mission.text}</h2>
+              <span className="os-mission-identity">
+                Becoming: {today.mission.identity}
               </span>
             </div>
-            <h2 id="mission-heading">{today.mission.text}</h2>
-            <span className="os-mission-identity">
-              Becoming: {today.mission.identity}
-            </span>
-          </div>
-          <button
-            type="button"
-            className={today.mission.completed ? "completed" : ""}
-            onClick={toggleMission}
-            aria-pressed={today.mission.completed}
-          >
-            <span aria-hidden="true">{today.mission.completed ? "✓" : "○"}</span>
-            {today.mission.completed ? "Completed" : "Mark complete"}
-          </button>
-        </section>
+            <button
+              type="button"
+              className={today.mission.completed ? "completed" : ""}
+              onClick={toggleMission}
+              aria-pressed={today.mission.completed}
+            >
+              <span aria-hidden="true">{today.mission.completed ? "✓" : "○"}</span>
+              {today.mission.completed ? "Done" : "Mark done"}
+            </button>
+          </section>
+        )}
 
         <section className="os-day" aria-labelledby="day-heading">
           <div className="os-section-heading">
             <div>
-              <p className="os-card-label">Today</p>
+              <p className="os-card-label">Log</p>
               <h2 id="day-heading">Your day, hour by hour</h2>
-              <span className="os-day-hint">One main activity + small moments</span>
+              <span className="os-day-hint">Tap any line to write or change it</span>
             </div>
           </div>
 
@@ -842,13 +1034,13 @@ export function TodayExperience() {
                     >
                       <input
                         type="text"
+                        name="mainActivity"
                         value={blockTitle}
                         onChange={(event) => setBlockTitle(event.target.value)}
                         placeholder="Type the main activity"
                         aria-label={`Main activity at ${slotStart}`}
                         maxLength={60}
                         autoFocus
-                        required
                       />
                       <button type="submit" aria-label="Save main activity">
                         ✓
@@ -860,13 +1052,51 @@ export function TodayExperience() {
                   ) : block ? (
                     <>
                       <div className="os-log-copy">
-                        <button type="button" onClick={() => openEdit(block)}>
-                          {block.title ?? block.activity}
+                        <button
+                          className={
+                            block.title || block.activity ? "" : "is-empty"
+                          }
+                          type="button"
+                          onClick={() => openEdit(block)}
+                        >
+                          {block.title || block.activity || "Add main activity"}
                         </button>
                         {moments.length ? (
                           <ul>
                             {moments.map((moment, index) => (
-                              <li key={`${block.id}-${index}`}>{moment}</li>
+                              <li key={`${block.id}-${index}`}>
+                                {editingMomentKey === `${block.id}-${index}` ? (
+                                  <form
+                                    className="os-edit-moment-form"
+                                    onSubmit={(event) =>
+                                      saveMoment(event, block, index)
+                                    }
+                                  >
+                                    <input
+                                      aria-label={`Edit small moment at ${slotStart}`}
+                                      autoFocus
+                                      maxLength={100}
+                                      name="moment"
+                                      value={momentDraft}
+                                      onChange={(event) =>
+                                        setMomentDraft(event.target.value)
+                                      }
+                                    />
+                                    <button type="submit" aria-label="Save small moment">
+                                      ✓
+                                    </button>
+                                  </form>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      editMoment(block, index, moment)
+                                    }
+                                  >
+                                    {moment}
+                                  </button>
+                                )}
+                              </li>
                             ))}
                           </ul>
                         ) : null}
@@ -887,10 +1117,6 @@ export function TodayExperience() {
                       type="button"
                       aria-label={`Add a small moment at ${slotStart}`}
                       onClick={() => {
-                        if (!block) {
-                          openHour(hour);
-                          return;
-                        }
                         setMomentHour(hour);
                         setNewMoment("");
                       }}
@@ -898,7 +1124,7 @@ export function TodayExperience() {
                       +
                     </button>
                   ) : null}
-                  {momentHour === hour && block ? (
+                  {momentHour === hour ? (
                     <form
                       className="os-inline-moment-form"
                       onSubmit={(event) => addMoment(event, hour)}
@@ -923,21 +1149,6 @@ export function TodayExperience() {
             })}
           </div>
 
-          <div className="os-day-coverage" aria-label="Today's check-in coverage">
-            {DAY_PERIODS.map((period) => {
-              const checkIn = today.checkIns.find(
-                (item) => item.period === period.id,
-              );
-              return (
-                <div key={period.id}>
-                  <span>{period.label}</span>
-                  <strong>
-                    {checkIn?.energy ? `${checkIn.energy}/5` : "Not recorded"}
-                  </strong>
-                </div>
-              );
-            })}
-          </div>
         </section>
       </main>
     </OSFrame>

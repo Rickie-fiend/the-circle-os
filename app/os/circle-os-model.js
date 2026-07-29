@@ -13,25 +13,113 @@ export const PROFILE_SESSION_KEYS = [
 
 export const CIRCLE_OS_SERVER_URL = "https://spectre.taild640fa.ts.net";
 
-export const DAY_PERIODS = [
-  { id: "morning", label: "Morning", hours: "5–10" },
-  { id: "midday", label: "Midday", hours: "10–14" },
-  { id: "afternoon", label: "Afternoon", hours: "14–19" },
-  { id: "evening", label: "Evening", hours: "19–5" },
+export const PROFILE_QUESTIONS = [
+  {
+    id: "profile-self",
+    text: "When do you feel most like yourself?",
+    type: "choice",
+    options: ["Alone", "With people", "Making something", "Moving"],
+    target: "personality",
+  },
+  {
+    id: "profile-own-days",
+    text: "How much do your days feel like your own?",
+    type: "slider",
+    min: 1,
+    max: 5,
+    minLabel: "Not mine",
+    maxLabel: "Fully mine",
+    target: "currentLife",
+  },
+  {
+    id: "profile-look-forward",
+    text: "Do you usually wake up with something to look forward to?",
+    type: "yesno",
+    target: "currentLife",
+  },
+  {
+    id: "profile-energy-cost",
+    text: "What takes most of your energy right now?",
+    type: "text",
+    placeholder: "Say it in your own words",
+    target: "currentLife",
+  },
+  {
+    id: "profile-needs-care",
+    text: "What part of life needs the most care?",
+    type: "choice",
+    options: ["Body", "Work", "Relationships", "Inner life"],
+    target: "gap",
+  },
+  {
+    id: "profile-connection",
+    text: "How connected do you feel to people close to you?",
+    type: "slider",
+    min: 1,
+    max: 5,
+    minLabel: "Far away",
+    maxLabel: "Very close",
+    target: "currentLife",
+  },
+  {
+    id: "profile-enjoyment-time",
+    text: "Do you make time for things you enjoy?",
+    type: "yesno",
+    target: "currentLife",
+  },
+  {
+    id: "profile-proud",
+    text: "What are you proud of in your life today?",
+    type: "text",
+    placeholder: "One honest thing is enough",
+    target: "whatMatters",
+  },
+  {
+    id: "profile-more-of",
+    text: "What do you want more of in an ordinary week?",
+    type: "text",
+    placeholder: "What would feel good to have more often?",
+    target: "whatMatters",
+  },
+  {
+    id: "profile-meaningful-week",
+    text: "What would make this week feel meaningful?",
+    type: "text",
+    placeholder: "One sentence is enough",
+    target: "missionStatement",
+  },
 ];
 
-export const ACTIVITIES = [
-  "Focus",
-  "Reading",
-  "Exercise",
-  "Outside",
-  "Social",
-  "Rest",
-  "Entertainment",
-  "Life admin",
+export const HABIT_QUESTIONS = [
+  {
+    id: "habit-area",
+    text: "What part of your life do you want to change first?",
+    type: "choice",
+    options: ["Body", "Work", "Mind", "Relationships", "Home"],
+    target: "habits",
+  },
+  {
+    id: "habit-identity",
+    text: "Who do you want to become there?",
+    type: "text",
+    placeholder: "For example: someone who keeps promises to myself",
+    target: "habits",
+  },
+  {
+    id: "habit-action",
+    text: "What small action would prove that today?",
+    type: "text",
+    placeholder: "Keep it small enough to do today",
+    target: "habits",
+  },
 ];
 
-export const MOODS = ["Clear", "Calm", "Restless", "Heavy", "Alive"];
+const DAY_PERIODS = [
+  { id: "morning", label: "Morning" },
+  { id: "midday", label: "Midday" },
+  { id: "afternoon", label: "Afternoon" },
+  { id: "evening", label: "Evening" },
+];
 
 const DEFAULT_MISSION = {
   text: "Do one small thing that feels like you.",
@@ -417,6 +505,7 @@ export function answerProfileQuestion(state, answer) {
               question: question.text,
               answer: answer.trim(),
               target: question.target,
+              kind: "codex",
               answeredAt: new Date().toISOString(),
             },
           ],
@@ -426,6 +515,71 @@ export function answerProfileQuestion(state, answer) {
     },
   };
   return queueProfileUpdate(next, "question-answered");
+}
+
+export function answerSurveyQuestion(state, question, answer, kind = "profile") {
+  const cleanAnswer = String(answer || "").trim();
+  if (!question?.id || !cleanAnswer) return state;
+  const previousAnswers = state.profile.profileCase.survey.answers.filter(
+    (item) => item.questionId !== question.id,
+  );
+  let next = {
+    ...state,
+    profile: {
+      ...state.profile,
+      profileCase: {
+        ...state.profile.profileCase,
+        survey: {
+          ...state.profile.profileCase.survey,
+          answers: [
+            ...previousAnswers,
+            {
+              questionId: question.id,
+              question: question.text,
+              answer: cleanAnswer,
+              target: question.target || "whatMatters",
+              kind,
+              answeredAt: new Date().toISOString(),
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  if (kind === "habit" && question.id === "habit-action") {
+    const identity =
+      next.profile.profileCase.survey.answers.find(
+        (item) => item.questionId === "habit-identity",
+      )?.answer || "Yourself";
+    const dateKey = getDateKey();
+    const day = next.days[dateKey] || createDay(dateKey);
+    next = {
+      ...next,
+      profile: {
+        ...next.profile,
+        identityFocus: identity,
+      },
+      days: {
+        ...next.days,
+        [dateKey]: {
+          ...day,
+          mission: {
+            ...day.mission,
+            text: cleanAnswer,
+            identity,
+            completed: false,
+            completedAt: null,
+          },
+        },
+      },
+    };
+  }
+
+  return queueProfileUpdate(
+    next,
+    kind === "habit" ? "habit-answer" : "survey-answer",
+  );
 }
 
 export function getDateKey(date = new Date()) {

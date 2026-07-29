@@ -2,16 +2,58 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  HABIT_QUESTIONS,
+  PROFILE_QUESTIONS,
   applyProfileResult,
+  answerSurveyQuestion,
   buildVisionAnalysis,
   connectLocalAi,
   createEmptyState,
   createSampleState,
+  getDateKey,
   getDayPeriod,
   normalizeState,
   summarizeWeek,
   upsertTimeBlock,
 } from "../app/os/circle-os-model.js";
+
+test("profile and habit cards save structured answers immediately", () => {
+  let state = createEmptyState();
+  state = answerSurveyQuestion(
+    state,
+    PROFILE_QUESTIONS[0],
+    "Making something",
+    "profile",
+  );
+  state = answerSurveyQuestion(
+    state,
+    HABIT_QUESTIONS[1],
+    "A person who follows through",
+    "habit",
+  );
+  state = answerSurveyQuestion(
+    state,
+    HABIT_QUESTIONS[2],
+    "Write for ten minutes",
+    "habit",
+  );
+
+  assert.equal(state.profile.profileCase.survey.answers.length, 3);
+  assert.equal(
+    state.profile.profileCase.survey.answers[0].kind,
+    "profile",
+  );
+  assert.equal(
+    state.days[getDateKey()].mission.text,
+    "Write for ten minutes",
+  );
+  assert.equal(
+    state.days[getDateKey()].mission.identity,
+    "A person who follows through",
+  );
+  assert.ok(state.outbox.some((item) => item.reason === "survey-answer"));
+  assert.ok(state.outbox.some((item) => item.reason === "habit-answer"));
+});
 
 test("maps hours into the four lightweight check-in periods", () => {
   assert.equal(getDayPeriod(7), "morning");

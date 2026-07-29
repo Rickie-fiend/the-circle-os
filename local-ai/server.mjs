@@ -318,7 +318,9 @@ function formatAnswers(answers) {
 
 ${markdownText(answer.answer, "No answer.")}
 
-_Answered ${answer.answeredAt || "without a date"}._`,
+_${answer.kind === "habit" ? "Habit" : answer.kind === "codex" ? "Codex" : "Check-in"} · Answered ${
+  answer.answeredAt || "without a date"
+}._`,
     )
     .join("\n\n");
 }
@@ -408,7 +410,7 @@ function formatTimeBlocks(day) {
         .join("");
       return `- ${block.start}-${block.end}: ${markdownText(
         block.title || block.activity,
-        "Untitled",
+        "",
       )}${moments}`;
     })
     .join("\n");

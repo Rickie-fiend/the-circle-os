@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, type CSSProperties, type FormEvent } from "react";
 import {
   editProfileSession,
@@ -36,6 +37,7 @@ function formatMinutes(minutes: number) {
 
 export default function CircleOSMirror() {
   const { state, ready, updateProfile, updateState } = useCircleState();
+  const router = useRouter();
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [sessionDraft, setSessionDraft] = useState("");
@@ -95,6 +97,7 @@ export default function CircleOSMirror() {
       },
     }), "first-vision");
     setError("");
+    router.push("/os");
   }
 
   function beginEdit(key: string) {
