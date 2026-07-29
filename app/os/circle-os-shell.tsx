@@ -301,8 +301,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     const needsFirstProfile = !state.ai.profileId || !state.ai.token;
     const scheduledSyncDue =
       state.outbox.some((item) => RECORD_REASONS.has(item.reason)) &&
-      isNightSyncTime() &&
-      state.ai.lastSyncSlot !== currentSyncSlot();
+      isNightSyncTime();
     if (!needsFirstProfile && !urgent && !scheduledSyncDue) return;
     const signature = serverSignature(state);
     if (signature === lastServerSignature.current) return;
@@ -348,7 +347,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
             setSyncTick((value) => value + 1);
           }
         });
-    }, 350);
+    }, urgent || needsFirstProfile ? 350 : 15_000);
     return () => window.clearTimeout(timer);
   }, [ready, state, syncTick]);
 
@@ -499,7 +498,9 @@ export function OSFrame({
             <span>THE CIRCLE OS</span>
           </Link>
           <span className="os-local-status">
-            {state.ai.profileId ? "Saved · Obsidian" : "Saving…"}
+            {state.ai.profileId && state.outbox.length === 0
+              ? "Saved · Obsidian"
+              : "Saving…"}
           </span>
         </header>
         <nav className="os-nav" aria-label="Circle OS">
