@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   HABIT_QUESTIONS,
+  LOG_SETUP_QUESTIONS,
   PROFILE_QUESTIONS,
   applyProfileResult,
   answerSurveyQuestion,
@@ -12,6 +13,7 @@ import {
   createSampleState,
   getDateKey,
   getDayPeriod,
+  minutesBetween,
   normalizeState,
   summarizeWeek,
   upsertTimeBlock,
@@ -195,6 +197,58 @@ test("keeps time-log correction deterministic", () => {
 
   assert.equal(corrected.timeBlocks.length, 1);
   assert.equal(corrected.timeBlocks[0].activity, "Reading");
+});
+
+test("routine answers unlock the day without becoming profile claims", () => {
+  let state = createEmptyState();
+  state = answerSurveyQuestion(
+    state,
+    LOG_SETUP_QUESTIONS[0],
+    "07:00",
+    "routine",
+  );
+  state = answerSurveyQuestion(
+    state,
+    LOG_SETUP_QUESTIONS[1],
+    "00:00",
+    "routine",
+  );
+
+  const routine = state.profile.profileCase.survey.answers.filter(
+    (answer) => answer.kind === "routine",
+  );
+
+  assert.deepEqual(
+    routine.map((answer) => answer.answer),
+    ["07:00", "00:00"],
+  );
+  assert.equal(minutesBetween("23:00", "00:00"), 60);
+});
+
+test("the editable check-in note can be changed or cleared", () => {
+  const note = {
+    id: "checkin-note",
+    prompt: "A note for later",
+    type: "text",
+  };
+  let state = createEmptyState();
+  state = answerSurveyQuestion(state, note, "Call Mum", "note");
+  state = answerSurveyQuestion(state, note, "Bring the book", "note");
+
+  assert.equal(
+    state.profile.profileCase.survey.answers.find(
+      (answer) => answer.questionId === note.id,
+    ).answer,
+    "Bring the book",
+  );
+
+  state = answerSurveyQuestion(state, note, "", "note");
+  assert.equal(
+    state.profile.profileCase.survey.answers.some(
+      (answer) => answer.questionId === note.id,
+    ),
+    false,
+  );
 });
 
 test("weekly Vision keeps the person's own log words", () => {

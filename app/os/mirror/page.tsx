@@ -1,7 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type CSSProperties, type FormEvent } from "react";
+import {
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   editProfileSession,
   minutesBetween,
@@ -10,6 +15,7 @@ import {
 } from "../circle-os-model.js";
 import {
   OSFrame,
+  SwipeSession,
   useCircleState,
   type TimeBlock,
 } from "../circle-os-shell";
@@ -35,11 +41,49 @@ function formatMinutes(minutes: number) {
   return `${hours}h ${remainder}m`;
 }
 
+function formatUpdated(value: string | null) {
+  if (!value) return "Not updated yet";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not updated yet";
+  return `Updated ${date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+}
+
+function LockedApp({
+  children,
+  locked,
+  message,
+}: {
+  children: ReactNode;
+  locked: boolean;
+  message: string;
+}) {
+  return (
+    <div className={`vision-lock${locked ? " locked" : ""}`}>
+      <div className="vision-lock-content" aria-hidden={locked}>
+        {children}
+      </div>
+      {locked ? (
+        <div className="vision-lock-message">
+          <strong>Not enough data to show.</strong>
+          <span>{message}</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function CircleOSMirror() {
-  const { state, ready, updateProfile, updateState } = useCircleState();
+  const { state, ready, dateKey, updateProfile, updateState } = useCircleState();
   const router = useRouter();
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
+  const [weekApp, setWeekApp] = useState(0);
+  const [profileApp, setProfileApp] = useState(0);
   const [sessionDraft, setSessionDraft] = useState("");
   const [draft, setDraft] = useState({
     name: "",
@@ -48,6 +92,14 @@ export default function CircleOSMirror() {
   });
   const summary = summarizeWeek(state);
   const profileCase = state.profile.profileCase;
+  const loggedPastDays = summary.days.filter(
+    (item) => item.key !== dateKey && item.day.timeBlocks.length > 0,
+  ).length;
+  const weekReady = loggedPastDays > 0;
+  const profileReady = Boolean(
+    profileCase.status === "ready" && profileCase.updatedAt,
+  );
+  const updateLabel = formatUpdated(profileCase.updatedAt);
   const setupComplete = Boolean(
     ready &&
       state.profile.name &&
@@ -161,6 +213,37 @@ export default function CircleOSMirror() {
     );
   }
 
+  function profileArticleSection(key: string, label: string) {
+    const session = profileCase.sessions[key];
+    const isEditing = editing === key;
+    return (
+      <section className="profile-article-part" key={key}>
+        <div>
+          <h2>{label}</h2>
+          <button type="button" onClick={() => beginEdit(key)}>
+            Edit
+          </button>
+        </div>
+        {isEditing ? (
+          <div className="profile-session-edit">
+            <textarea
+              aria-label={`Edit ${label}`}
+              value={sessionDraft}
+              onChange={(event) => setSessionDraft(event.target.value)}
+              rows={6}
+              autoFocus
+            />
+            <button type="button" onClick={() => saveSession(key)}>
+              Save
+            </button>
+          </div>
+        ) : (
+          <p>{session.text}</p>
+        )}
+      </section>
+    );
+  }
+
   if (!setupComplete) {
     return (
       <OSFrame active="mirror">
@@ -241,7 +324,7 @@ export default function CircleOSMirror() {
             {profileCase.status === "thinking"
               ? "Updating…"
               : profileCase.status === "waiting"
-                ? "Updates tonight"
+                ? "Updates tomorrow morning"
               : state.ai.status === "offline"
                 ? "Computer offline"
                 : ""}
@@ -261,146 +344,234 @@ export default function CircleOSMirror() {
           </div>
         </header>
 
-        <section className="mirror-summary-card" aria-labelledby="mirror-sentence">
-          <p className="os-card-label">Overview</p>
-          <h2 id="mirror-sentence">{summary.sentence}</h2>
-          <div className="week-ribbon" aria-label="Data coverage">
-            {summary.days.map((item) => (
-              <article key={item.key}>
-                <span>{item.label}</span>
-                <div aria-label={`${item.recordedPeriods} of 4 periods recorded`}>
-                  {[0, 1, 2, 3].map((period) => (
-                    <i
-                      className={period < item.recordedPeriods ? "recorded" : ""}
-                      key={period}
-                    />
+        <section className="vision-week-session" aria-label="Last seven days session">
+          <SwipeSession
+            className="vision-week-apps"
+            index={weekApp}
+            label="Last seven days apps"
+            onIndexChange={setWeekApp}
+          >
+            <LockedApp
+              locked={!weekReady}
+              message="Log today. Check tomorrow morning."
+            >
+              <article
+                className="mirror-summary-card vision-week-app"
+                aria-labelledby="mirror-sentence"
+              >
+                <p className="os-card-label">Overview</p>
+                <h2 id="mirror-sentence">{summary.sentence}</h2>
+                <div className="week-ribbon" aria-label="Data coverage">
+                  {summary.days.map((item) => (
+                    <article key={item.key}>
+                      <span>{item.label}</span>
+                      <div
+                        aria-label={`${item.recordedPeriods} of 4 periods recorded`}
+                      >
+                        {[0, 1, 2, 3].map((period) => (
+                          <i
+                            className={
+                              period < item.recordedPeriods ? "recorded" : ""
+                            }
+                            key={period}
+                          />
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                <p className="coverage-line">
+                  <strong>{summary.coverage.percent}%</strong>
+                  of the week recorded
+                </p>
+              </article>
+            </LockedApp>
+
+            <LockedApp
+              locked={!weekReady}
+              message="Log today. Check tomorrow morning."
+            >
+              <article
+                className="mirror-card mirror-time vision-week-app"
+                aria-labelledby="time-heading"
+              >
+                <div className="mirror-card-head">
+                  <div>
+                    <p className="os-card-label">Time</p>
+                    <h2 id="time-heading">Your week</h2>
+                  </div>
+                  <strong>{formatMinutes(summary.totalMinutes)}</strong>
+                </div>
+
+                <div className="time-river">
+                  {summary.days.map((item) => (
+                    <div className="time-river-day" key={item.key}>
+                      <span>{item.label}</span>
+                      <div className="time-river-track">
+                        {item.day.timeBlocks.length ? (
+                          item.day.timeBlocks.map(
+                            (block: TimeBlock, blockIndex: number) => {
+                              const minutes = minutesBetween(
+                                block.start,
+                                block.end,
+                              );
+                              return (
+                                <i
+                                  className={activityColor(blockIndex)}
+                                  key={block.id}
+                                  style={{ flexGrow: Math.max(15, minutes) }}
+                                  title={`${block.title || block.activity}: ${formatMinutes(minutes)}`}
+                                />
+                              );
+                            },
+                          )
+                        ) : (
+                          <em />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="time-allocation">
+                  {summary.time.length ? (
+                    summary.time.slice(0, 4).map((item, index) => (
+                      <div key={item.activity}>
+                        <span
+                          className={activityColor(index)}
+                          aria-hidden="true"
+                        />
+                        <p>{item.activity}</p>
+                        <strong>{formatMinutes(item.minutes)}</strong>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="mirror-empty">Nothing logged yet.</p>
+                  )}
+                </div>
+              </article>
+            </LockedApp>
+
+            <LockedApp
+              locked={!weekReady}
+              message="Log today. Check tomorrow morning."
+            >
+              <article
+                className="mirror-card mirror-energy vision-week-app"
+                aria-labelledby="energy-heading"
+              >
+                <div className="mirror-card-head">
+                  <div>
+                    <p className="os-card-label">Energy</p>
+                    <h2 id="energy-heading">Your rhythm</h2>
+                  </div>
+                </div>
+                <div className="energy-chart">
+                  {summary.energy.map((item) => (
+                    <div key={item.period}>
+                      <div className="energy-plot">
+                        {item.value ? (
+                          <i
+                            style={
+                              {
+                                "--energy-height": `${(item.value / 5) * 100}%`,
+                              } as CSSProperties
+                            }
+                          />
+                        ) : (
+                          <em>—</em>
+                        )}
+                      </div>
+                      <strong>
+                        {item.value ? item.value.toFixed(1) : "—"}
+                      </strong>
+                      <span>{item.label.slice(0, 3)}</span>
+                    </div>
                   ))}
                 </div>
               </article>
-            ))}
-          </div>
-          <p className="coverage-line">
-            <strong>{summary.coverage.percent}%</strong>
-            of the week recorded
-          </p>
-        </section>
+            </LockedApp>
 
-        <section className="mirror-card mirror-time" aria-labelledby="time-heading">
-          <div className="mirror-card-head">
-            <div>
-              <p className="os-card-label">Time</p>
-              <h2 id="time-heading">Your week</h2>
-            </div>
-            <strong>{formatMinutes(summary.totalMinutes)}</strong>
-          </div>
-
-          <div className="time-river">
-            {summary.days.map((item) => (
-              <div className="time-river-day" key={item.key}>
-                <span>{item.label}</span>
-                <div className="time-river-track">
-                  {item.day.timeBlocks.length ? (
-                    item.day.timeBlocks.map(
-                      (block: TimeBlock, blockIndex: number) => {
-                        const minutes = minutesBetween(block.start, block.end);
-                        return (
-                          <i
-                            className={activityColor(blockIndex)}
-                            key={block.id}
-                            style={{ flexGrow: Math.max(15, minutes) }}
-                            title={`${block.title || block.activity}: ${formatMinutes(minutes)}`}
-                          />
-                        );
-                      },
-                    )
-                  ) : (
-                    <em />
-                  )}
+            <LockedApp
+              locked={!weekReady}
+              message="Log today. Check tomorrow morning."
+            >
+              <article
+                className="mirror-card mirror-life vision-week-app"
+                aria-label="Recorded days"
+              >
+                <div className="mirror-life-block">
+                  <p className="os-card-label">Record</p>
+                  <h2>{loggedPastDays} days recorded</h2>
+                  <p className="mirror-record-copy">
+                    Your own words become clearer here over time.
+                  </p>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="time-allocation">
-            {summary.time.length ? (
-              summary.time.slice(0, 4).map((item, index) => (
-                <div key={item.activity}>
-                  <span className={activityColor(index)} aria-hidden="true" />
-                  <p>{item.activity}</p>
-                  <strong>{formatMinutes(item.minutes)}</strong>
-                </div>
-              ))
-            ) : (
-              <p className="mirror-empty">Nothing logged yet.</p>
-            )}
-          </div>
-        </section>
-
-        <section
-          className="mirror-card mirror-energy"
-          aria-labelledby="energy-heading"
-        >
-          <div className="mirror-card-head">
-            <div>
-              <p className="os-card-label">Energy</p>
-              <h2 id="energy-heading">Your rhythm</h2>
-            </div>
-          </div>
-          <div className="energy-chart">
-            {summary.energy.map((item) => (
-              <div key={item.period}>
-                <div className="energy-plot">
-                  {item.value ? (
-                    <i
-                      style={
-                        {
-                          "--energy-height": `${(item.value / 5) * 100}%`,
-                        } as CSSProperties
-                      }
-                    />
-                  ) : (
-                    <em>—</em>
-                  )}
-                </div>
-                <strong>{item.value ? item.value.toFixed(1) : "—"}</strong>
-                <span>{item.label.slice(0, 3)}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mirror-card mirror-life" aria-label="Mood">
-          <div className="mirror-life-block">
-            <p className="os-card-label">Mood</p>
-            <h2>Your week</h2>
-            <div className="mood-list">
-              {summary.moods.length ? (
-                summary.moods.slice(0, 5).map((item) => (
-                  <span key={item.mood}>
-                    {item.mood} <strong>{item.count}</strong>
-                  </span>
-                ))
-              ) : (
-                <span>Nothing logged yet.</span>
-              )}
-            </div>
-          </div>
+              </article>
+            </LockedApp>
+          </SwipeSession>
         </section>
 
         <header className="mirror-intro analysis-intro">
           <div>
             <p className="os-eyebrow">Your profile</p>
             <h1>What Codex understands</h1>
+            <p className="profile-updated">{updateLabel}</p>
           </div>
         </header>
 
-        <section className="vision-analysis" aria-label="AI profile analysis">
-          {profileSession("currentLife", "Current life")}
-          {profileSession("whatMatters", "What matters")}
-          {profileSession("interests", "Interests")}
-          {profileSession("gap", "The gap")}
-          {profileSession("missionStatement", "Mission statement")}
-          {profileSession("personality", "Personality")}
+        <section
+          className="vision-analysis-session"
+          aria-label="AI profile session"
+        >
+          <SwipeSession
+            className="vision-analysis-apps"
+            index={profileApp}
+            label="AI profile apps"
+            onIndexChange={setProfileApp}
+          >
+            <div className="profile-ai-intro">
+              <p className="os-card-label">Before you read</p>
+              <h2>
+                {profileReady ? "A working picture of you." : "Still learning you."}
+              </h2>
+              <p>
+                AI can be wrong. Keep what helps. Edit anything that does not
+                feel true.
+              </p>
+              <span>{profileReady ? updateLabel : "Ready after the morning update."}</span>
+              <button
+                type="button"
+                onClick={() => setProfileApp(1)}
+                aria-label="Read your profile"
+              >
+                <b aria-hidden="true">←</b>
+                Swipe left
+              </button>
+            </div>
+            <LockedApp
+              locked={!profileReady}
+              message={
+                profileCase.status === "waiting"
+                  ? "Updating. Check after 6:15 AM."
+                  : "Finish your first check-in. Check tomorrow morning."
+              }
+            >
+              <article className="profile-article">
+                <header>
+                  <p className="os-card-label">Your profile</p>
+                  <h2>What I understand so far</h2>
+                  <span>{updateLabel}</span>
+                </header>
+                {profileArticleSection("currentLife", "Current life")}
+                {profileArticleSection("whatMatters", "What matters")}
+                {profileArticleSection("interests", "Interests")}
+                {profileArticleSection("gap", "The gap")}
+                {profileArticleSection("missionStatement", "Mission statement")}
+                {profileArticleSection("personality", "Personality")}
+              </article>
+            </LockedApp>
+          </SwipeSession>
         </section>
       </main>
     </OSFrame>

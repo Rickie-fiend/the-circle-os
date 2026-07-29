@@ -318,7 +318,7 @@ function formatAnswers(answers) {
 
 ${markdownText(answer.answer, "No answer.")}
 
-_${answer.kind === "habit" ? "Habit" : answer.kind === "codex" ? "Codex" : "Check-in"} · Answered ${
+_${answer.kind === "habit" ? "Habit" : answer.kind === "codex" ? "Codex" : answer.kind === "routine" ? "Log setup" : answer.kind === "note" ? "Note" : "Check-in"} · Answered ${
   answer.answeredAt || "without a date"
 }._`,
     )

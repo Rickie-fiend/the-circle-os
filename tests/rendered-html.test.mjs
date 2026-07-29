@@ -59,13 +59,10 @@ test("server-renders the functional Circle OS Today route", async () => {
 
   const html = await response.text();
   assert.match(html, /THE CIRCLE OS/);
-  assert.match(html, /When do you feel most like yourself\?/);
-  assert.match(html, /1.{0,30}\/.{0,30}10/);
-  assert.match(html, /What part of your life do you want to change first\?/);
-  assert.match(html, /Habit/);
-  assert.match(html, /Log/);
-  assert.match(html, /Your day, hour by hour/);
-  assert.match(html, /Add main activity/);
+  assert.match(html, /A moment for you\./);
+  assert.match(html, /Choose who you are becoming\./);
+  assert.match(html, /Set your usual day\./);
+  assert.match(html, /Swipe left/);
   assert.match(html, /Today/);
   assert.match(html, /Vision/);
   assert.doesNotMatch(

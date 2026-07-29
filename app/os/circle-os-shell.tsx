@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Children,
   createContext,
   useContext,
   useEffect,
@@ -10,11 +11,14 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type KeyboardEvent,
+  type PointerEvent,
   type ReactNode,
 } from "react";
 import {
   CIRCLE_DAY_START_HOUR,
   HABIT_QUESTIONS,
+  LOG_SETUP_QUESTIONS,
   PROFILE_QUESTIONS,
   answerProfileQuestion,
   answerSurveyQuestion,
@@ -147,7 +151,6 @@ type CircleStateContextValue = {
 };
 
 const CircleStateContext = createContext<CircleStateContextValue | null>(null);
-const AWAKE_HOURS = Array.from({ length: 17 }, (_, index) => index + 7);
 const RECORD_REASONS = new Set(["day-log", "mission"]);
 
 type SurveyQuestion = {
@@ -160,11 +163,13 @@ type SurveyQuestion = {
   minLabel?: string;
   maxLabel?: string;
   placeholder?: string;
+  defaultValue?: string;
   target: string;
 };
 
 function hourLabel(hour: number) {
-  return `${String(hour).padStart(2, "0")}:00`;
+  const normalized = ((hour % 24) + 24) % 24;
+  return `${String(normalized).padStart(2, "0")}:00`;
 }
 
 function freshTimeRange() {
@@ -507,24 +512,138 @@ export function OSFrame({
   );
 }
 
+export function SwipeSession({
+  children,
+  index,
+  maxIndex,
+  onIndexChange,
+  className = "",
+  label,
+}: {
+  children: ReactNode;
+  index: number;
+  maxIndex?: number;
+  onIndexChange: (index: number) => void;
+  className?: string;
+  label: string;
+}) {
+  const apps = Children.toArray(children);
+  const lastIndex = Math.min(
+    apps.length - 1,
+    maxIndex ?? Math.max(0, apps.length - 1),
+  );
+  const pointerStart = useRef<number | null>(null);
+
+  function move(nextIndex: number) {
+    onIndexChange(Math.max(0, Math.min(lastIndex, nextIndex)));
+  }
+
+  function isInteractive(target: EventTarget | null) {
+    return target instanceof Element
+      ? Boolean(target.closest("button, input, textarea, select, a, form"))
+      : false;
+  }
+
+  function startSwipe(event: PointerEvent<HTMLDivElement>) {
+    if (isInteractive(event.target)) return;
+    pointerStart.current = event.clientX;
+  }
+
+  function finishSwipe(event: PointerEvent<HTMLDivElement>) {
+    if (pointerStart.current === null) return;
+    const distance = event.clientX - pointerStart.current;
+    pointerStart.current = null;
+    if (Math.abs(distance) < 42) return;
+    move(distance < 0 ? index + 1 : index - 1);
+  }
+
+  function useArrowKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      move(index + 1);
+    }
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      move(index - 1);
+    }
+  }
+
+  return (
+    <div
+      aria-label={label}
+      className={`os-swipe-session ${className}`.trim()}
+      onKeyDown={useArrowKey}
+      onPointerCancel={() => {
+        pointerStart.current = null;
+      }}
+      onPointerDown={startSwipe}
+      onPointerUp={finishSwipe}
+      tabIndex={0}
+    >
+      <div className="os-app-window" key={index}>
+        {apps[index]}
+      </div>
+      {apps.length > 1 ? (
+        <div className="os-app-dots" aria-hidden="true">
+          {apps.map((_, dotIndex) => (
+            <i
+              className={`${dotIndex === index ? "active" : ""}${
+                dotIndex > lastIndex ? " locked" : ""
+              }`}
+              key={dotIndex}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SessionIntro({
+  label,
+  title,
+  onBegin,
+  dark = false,
+}: {
+  label: string;
+  title: string;
+  onBegin: () => void;
+  dark?: boolean;
+}) {
+  return (
+    <div className={`os-session-intro${dark ? " dark" : ""}`}>
+      <p className="os-card-label">{label}</p>
+      <h2>{title}</h2>
+      <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
+        <span aria-hidden="true">←</span>
+        Swipe left
+      </button>
+    </div>
+  );
+}
+
 function SurveySlide({
   label,
   question,
   current,
   total,
+  existingAnswer = "",
   onAnswer,
 }: {
   label: string;
   question: SurveyQuestion;
   current: number;
   total: number;
+  existingAnswer?: string;
   onAnswer: (answer: string) => void;
 }) {
   const sliderStart = Math.ceil(
     ((question.min ?? 1) + (question.max ?? 5)) / 2,
   );
   const [value, setValue] = useState(
-    question.type === "slider" ? String(sliderStart) : "",
+    existingAnswer ||
+      question.defaultValue ||
+      (question.type === "slider" ? String(sliderStart) : ""),
   );
 
   const choices =
@@ -549,7 +668,13 @@ function SurveySlide({
           aria-label={question.text}
         >
           {choices.map((choice) => (
-            <button type="button" key={choice} onClick={() => onAnswer(choice)}>
+            <button
+              aria-pressed={existingAnswer === choice}
+              className={existingAnswer === choice ? "selected" : ""}
+              type="button"
+              key={choice}
+              onClick={() => onAnswer(choice)}
+            >
               {choice}
             </button>
           ))}
@@ -603,15 +728,60 @@ function SurveySlide({
           </button>
         </form>
       ) : null}
+
+      {question.type === "time" ? (
+        <form
+          className="os-survey-time"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!value) return;
+            onAnswer(value);
+          }}
+        >
+          <input
+            aria-label={question.text}
+            type="time"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+          />
+          <button type="submit">Continue</button>
+        </form>
+      ) : null}
     </div>
   );
+}
+
+function surveyAnswer(
+  answers: CircleState["profile"]["profileCase"]["survey"]["answers"],
+  questionId: string,
+) {
+  return answers.find((answer) => answer.questionId === questionId)?.answer ?? "";
+}
+
+function hourFromTime(value: string, fallback: number) {
+  const hour = Number(String(value).split(":")[0]);
+  return Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : fallback;
 }
 
 export function TodayExperience() {
   const { state, today, ready, updateState, updateToday } = useCircleState();
   const router = useRouter();
+  const surveyAnswers = state.profile.profileCase.survey.answers;
+  const wakeTime = surveyAnswer(surveyAnswers, "routine-wake");
+  const sleepTime = surveyAnswer(surveyAnswers, "routine-sleep");
+  const logSetupDone = Boolean(wakeTime && sleepTime);
+  const wakeHour = hourFromTime(wakeTime, 7);
+  const sleepClockHour = hourFromTime(sleepTime, 0);
+  const sleepHour =
+    sleepClockHour <= wakeHour ? sleepClockHour + 24 : sleepClockHour;
+  const checkInNote = surveyAnswer(surveyAnswers, "checkin-note");
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
+  const [checkInApp, setCheckInApp] = useState(0);
+  const [habitApp, setHabitApp] = useState(0);
+  const [logSetupApp, setLogSetupApp] = useState(0);
+  const [editingCheckInNote, setEditingCheckInNote] = useState(false);
+  const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
   const [isLogOpen, setLogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
@@ -624,6 +794,9 @@ export function TodayExperience() {
   const [newMoment, setNewMoment] = useState("");
   const [editingMomentKey, setEditingMomentKey] = useState<string | null>(null);
   const [momentDraft, setMomentDraft] = useState("");
+  const [logHoursBefore, setLogHoursBefore] = useState(0);
+  const [logHoursAfter, setLogHoursAfter] = useState(0);
+
   useEffect(() => {
     if (
       ready &&
@@ -673,21 +846,10 @@ export function TodayExperience() {
     };
   }, [state.profile.name]);
 
-  const surveyAnswers = state.profile.profileCase.survey.answers;
   const firstProfileQuestionIndex = PROFILE_QUESTIONS.findIndex(
     (question) =>
       !surveyAnswers.some((answer) => answer.questionId === question.id),
   );
-  const profileQuestion =
-    firstProfileQuestionIndex >= 0
-      ? (PROFILE_QUESTIONS[firstProfileQuestionIndex] as SurveyQuestion)
-      : null;
-  const profileAnswersDone =
-    PROFILE_QUESTIONS.length -
-    PROFILE_QUESTIONS.filter(
-      (question) =>
-        !surveyAnswers.some((answer) => answer.questionId === question.id),
-    ).length;
   const codexQuestion = state.profile.profileCase.survey.nextQuestion;
   const unansweredCodexQuestion =
     codexQuestion &&
@@ -702,10 +864,28 @@ export function TodayExperience() {
     (question) =>
       !surveyAnswers.some((answer) => answer.questionId === question.id),
   );
-  const habitQuestion =
-    firstHabitQuestionIndex >= 0
-      ? (HABIT_QUESTIONS[firstHabitQuestionIndex] as SurveyQuestion)
-      : null;
+  const firstLogQuestionIndex = LOG_SETUP_QUESTIONS.findIndex(
+    (question) =>
+      !surveyAnswers.some((answer) => answer.questionId === question.id),
+  );
+  const checkInMaxApp =
+    firstProfileQuestionIndex >= 0 ? firstProfileQuestionIndex + 1 : 11;
+  const habitMaxApp =
+    firstHabitQuestionIndex >= 0 ? firstHabitQuestionIndex + 1 : 4;
+  const logSetupMaxApp =
+    firstLogQuestionIndex >= 0 ? firstLogQuestionIndex + 1 : 2;
+  const logStartHour = Math.max(
+    CIRCLE_DAY_START_HOUR,
+    wakeHour - logHoursBefore,
+  );
+  const logEndHour = Math.min(
+    CIRCLE_DAY_START_HOUR + 23,
+    Math.min(wakeHour + 23, Math.max(wakeHour, sleepHour)) + logHoursAfter,
+  );
+  const visibleHours = Array.from(
+    { length: Math.max(1, logEndHour - logStartHour + 1) },
+    (_, index) => logStartHour + index,
+  );
 
   function toggleMission() {
     updateToday((day) => ({
@@ -744,7 +924,7 @@ export function TodayExperience() {
     setLogOpen(true);
   }
 
-  function openHour(hour: number) {
+  function openHour(hour: number, defaultTitle = "") {
     const hourStart = hourLabel(hour);
     const existing = today.timeBlocks.find((block) => block.start === hourStart);
     if (existing) {
@@ -755,6 +935,7 @@ export function TodayExperience() {
     resetLogForm();
     setStart(hourStart);
     setEnd(hourLabel(hour + 1));
+    setBlockTitle(defaultTitle);
     setLogOpen(true);
   }
 
@@ -893,6 +1074,65 @@ export function TodayExperience() {
     setMomentDraft("");
   }
 
+  function answerCheckIn(
+    question: SurveyQuestion,
+    answer: string,
+    appIndex: number,
+  ) {
+    updateState((current) =>
+      question.id === unansweredCodexQuestion?.id
+        ? answerProfileQuestion(current, answer)
+        : answerSurveyQuestion(current, question, answer, "profile"),
+    );
+    setCheckInApp(Math.min(11, appIndex + 1));
+  }
+
+  function answerHabit(
+    question: SurveyQuestion,
+    answer: string,
+    appIndex: number,
+  ) {
+    updateState((current) =>
+      answerSurveyQuestion(current, question, answer, "habit"),
+    );
+    setHabitApp(Math.min(4, appIndex + 1));
+  }
+
+  function answerLogSetup(
+    question: SurveyQuestion,
+    answer: string,
+    appIndex: number,
+  ) {
+    updateState((current) =>
+      answerSurveyQuestion(current, question, answer, "routine"),
+    );
+    setLogSetupApp(Math.min(2, appIndex + 1));
+  }
+
+  function saveCheckInNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    updateState((current) =>
+      answerSurveyQuestion(
+        current,
+        {
+          id: "checkin-note",
+          text: "Today note",
+          type: "text",
+          target: "currentLife",
+        },
+        checkInNoteDraft,
+        "note",
+      ),
+    );
+    setEditingCheckInNote(false);
+  }
+
+  function defaultTitleForHour(hour: number) {
+    if (hour === wakeHour) return "Wake up";
+    if (hour === sleepHour) return "Sleep";
+    return "";
+  }
+
   return (
     <OSFrame active="today">
       <main className="os-today">
@@ -907,98 +1147,195 @@ export function TodayExperience() {
             </p>
           </div>
 
-          {profileQuestion ? (
-            <SurveySlide
-              key={profileQuestion.id}
+          <SwipeSession
+            className="os-checkin-session"
+            index={checkInApp}
+            label="Check-in session"
+            maxIndex={checkInMaxApp}
+            onIndexChange={setCheckInApp}
+          >
+            <SessionIntro
               label="Check-in"
-              question={profileQuestion}
-              current={firstProfileQuestionIndex + 1}
-              total={PROFILE_QUESTIONS.length}
-              onAnswer={(answer) =>
-                updateState((current) =>
-                  answerSurveyQuestion(
-                    current,
-                    profileQuestion,
-                    answer,
-                    "profile",
-                  ),
-                )
-              }
+              title="A moment for you."
+              onBegin={() => setCheckInApp(1)}
             />
-          ) : unansweredCodexQuestion ? (
-            <SurveySlide
-              key={unansweredCodexQuestion.id}
-              label="Check-in"
-              question={unansweredCodexQuestion}
-              current={1}
-              total={1}
-              onAnswer={(answer) =>
-                updateState((current) =>
-                  answerProfileQuestion(current, answer),
-                )
-              }
-            />
-          ) : (
-            <div className="os-survey-card os-survey-complete">
-              <div className="os-survey-head">
-                <p className="os-card-label">Check-in</p>
-                <span>{profileAnswersDone}/{PROFILE_QUESTIONS.length}</span>
+            {PROFILE_QUESTIONS.map((question, index) => (
+              <SurveySlide
+                existingAnswer={surveyAnswer(surveyAnswers, question.id)}
+                key={question.id}
+                label="Check-in"
+                question={question as SurveyQuestion}
+                current={index + 1}
+                total={PROFILE_QUESTIONS.length}
+                onAnswer={(answer) =>
+                  answerCheckIn(question as SurveyQuestion, answer, index + 1)
+                }
+              />
+            ))}
+            {unansweredCodexQuestion ? (
+              <SurveySlide
+                existingAnswer={surveyAnswer(
+                  surveyAnswers,
+                  unansweredCodexQuestion.id,
+                )}
+                key={unansweredCodexQuestion.id}
+                label="Check-in"
+                question={unansweredCodexQuestion}
+                current={1}
+                total={1}
+                onAnswer={(answer) =>
+                  answerCheckIn(unansweredCodexQuestion, answer, 11)
+                }
+              />
+            ) : (
+              <div className="os-survey-card os-survey-complete">
+                <div className="os-survey-head">
+                  <p className="os-card-label">Check-in</p>
+                  <button
+                    className="os-note-edit"
+                    type="button"
+                    onClick={() => {
+                      setCheckInNoteDraft(checkInNote);
+                      setEditingCheckInNote(true);
+                    }}
+                  >
+                    Edit
+                  </button>
+                </div>
+                {editingCheckInNote ? (
+                  <form className="os-idle-note-form" onSubmit={saveCheckInNote}>
+                    <textarea
+                      aria-label="Edit your note"
+                      autoFocus
+                      maxLength={220}
+                      placeholder="Write a note or reminder"
+                      rows={4}
+                      value={checkInNoteDraft}
+                      onChange={(event) =>
+                        setCheckInNoteDraft(event.target.value)
+                      }
+                    />
+                    <button type="submit" aria-label="Save note">✓</button>
+                  </form>
+                ) : (
+                  <>
+                    <h2>Keep going.</h2>
+                    <p>{checkInNote || "Notice what feels like you today."}</p>
+                  </>
+                )}
               </div>
-              <h2>Keep going.</h2>
-              <p>Notice what feels like you today.</p>
-            </div>
-          )}
+            )}
+          </SwipeSession>
         </section>
 
-        {habitQuestion ? (
-          <section className="os-habit" aria-label="Habit questions">
-            <SurveySlide
-              key={habitQuestion.id}
-              label="Habit"
-              question={habitQuestion}
-              current={firstHabitQuestionIndex + 1}
-              total={HABIT_QUESTIONS.length}
-              onAnswer={(answer) =>
-                updateState((current) =>
-                  answerSurveyQuestion(
-                    current,
-                    habitQuestion,
-                    answer,
-                    "habit",
-                  ),
-                )
-              }
-            />
-          </section>
-        ) : (
-          <section
-            className={`os-mission${today.mission.completed ? " completed" : ""}`}
-            aria-labelledby="mission-heading"
+        <section className="os-habit" aria-label="Habit session">
+          <SwipeSession
+            className="os-habit-session"
+            index={habitApp}
+            label="Habit session"
+            maxIndex={habitMaxApp}
+            onIndexChange={setHabitApp}
           >
-            <div>
-              <div className="os-mission-meta">
-                <p className="os-card-label">Habit</p>
-                <span className="os-mission-status" aria-live="polite">
-                  {today.mission.completed ? "Done today" : "Today"}
+            <SessionIntro
+              dark
+              label="Habit"
+              title="Choose who you are becoming."
+              onBegin={() => setHabitApp(1)}
+            />
+            {HABIT_QUESTIONS.map((question, index) => (
+              <SurveySlide
+                existingAnswer={surveyAnswer(surveyAnswers, question.id)}
+                key={question.id}
+                label="Habit"
+                question={question as SurveyQuestion}
+                current={index + 1}
+                total={HABIT_QUESTIONS.length}
+                onAnswer={(answer) =>
+                  answerHabit(question as SurveyQuestion, answer, index + 1)
+                }
+              />
+            ))}
+            <section
+              className={`os-mission${today.mission.completed ? " completed" : ""}`}
+              aria-labelledby="mission-heading"
+            >
+              <div>
+                <div className="os-mission-meta">
+                  <p className="os-card-label">Habit</p>
+                  <span className="os-mission-status" aria-live="polite">
+                    {today.mission.completed ? "Done today" : "Today"}
+                  </span>
+                </div>
+                <h2 id="mission-heading">{today.mission.text}</h2>
+                <span className="os-mission-identity">
+                  Becoming: {today.mission.identity}
                 </span>
               </div>
-              <h2 id="mission-heading">{today.mission.text}</h2>
-              <span className="os-mission-identity">
-                Becoming: {today.mission.identity}
-              </span>
-            </div>
-            <button
-              type="button"
-              className={today.mission.completed ? "completed" : ""}
-              onClick={toggleMission}
-              aria-pressed={today.mission.completed}
-            >
-              <span aria-hidden="true">{today.mission.completed ? "✓" : "○"}</span>
-              {today.mission.completed ? "Done" : "Mark done"}
-            </button>
-          </section>
-        )}
+              <button
+                type="button"
+                className={today.mission.completed ? "completed" : ""}
+                onClick={toggleMission}
+                aria-pressed={today.mission.completed}
+              >
+                <span aria-hidden="true">
+                  {today.mission.completed ? "✓" : "○"}
+                </span>
+                {today.mission.completed ? "Done" : "Mark done"}
+              </button>
+            </section>
+          </SwipeSession>
+        </section>
 
+        {!logSetupDone ? (
+          <section
+            className="os-day os-day-gated"
+            aria-label="Log setup session"
+          >
+            <div className="os-log-locked-preview" aria-hidden="true">
+              <p className="os-card-label">Log</p>
+              <h2>Your day, hour by hour</h2>
+              {[7, 8, 9, 10].map((hour) => (
+                <div key={hour}>
+                  <strong>{hourLabel(hour)}</strong>
+                  <span>Add an activity</span>
+                </div>
+              ))}
+            </div>
+            <div className="os-log-gate">
+              <SwipeSession
+                className="os-log-setup-session"
+                index={logSetupApp}
+                label="Log setup"
+                maxIndex={logSetupMaxApp}
+                onIndexChange={setLogSetupApp}
+              >
+                <SessionIntro
+                  dark
+                  label="Log"
+                  title="Set your usual day."
+                  onBegin={() => setLogSetupApp(1)}
+                />
+                {LOG_SETUP_QUESTIONS.map((question, index) => (
+                  <SurveySlide
+                    existingAnswer={surveyAnswer(surveyAnswers, question.id)}
+                    key={question.id}
+                    label="Log"
+                    question={question as SurveyQuestion}
+                    current={index + 1}
+                    total={LOG_SETUP_QUESTIONS.length}
+                    onAnswer={(answer) =>
+                      answerLogSetup(
+                        question as SurveyQuestion,
+                        answer,
+                        index + 1,
+                      )
+                    }
+                  />
+                ))}
+              </SwipeSession>
+            </div>
+          </section>
+        ) : (
         <section className="os-day" aria-labelledby="day-heading">
           <div className="os-section-heading">
             <div>
@@ -1009,15 +1346,23 @@ export function TodayExperience() {
           </div>
 
           <div className="os-timeline">
-            <div className="os-sleep-block">
-              <strong>00:00–07:00</strong>
-              <span>Sleep · collapsed for now</span>
-            </div>
-            {AWAKE_HOURS.map((hour) => {
+            {logStartHour > CIRCLE_DAY_START_HOUR ? (
+              <button
+                className="os-expand-hour"
+                type="button"
+                onClick={() => setLogHoursBefore((current) => current + 1)}
+              >
+                <strong>{hourLabel(logStartHour - 1)}</strong>
+                <span>Add the hour before</span>
+                <b aria-hidden="true">+</b>
+              </button>
+            ) : null}
+            {visibleHours.map((hour) => {
               const slotStart = hourLabel(hour);
               const block = today.timeBlocks.find(
                 (item) => item.start === slotStart,
               );
+              const defaultTitle = defaultTitleForHour(hour);
               const editingMain = isLogOpen && start === slotStart;
               const moments =
                 block?.moments?.length
@@ -1028,8 +1373,8 @@ export function TodayExperience() {
 
               return (
                 <article
-                  className={block ? "filled" : "empty"}
-                  key={slotStart}
+                  className={block ? "filled" : defaultTitle ? "suggested" : "empty"}
+                  key={hour}
                 >
                   <div className="os-time-range">
                     <strong>{slotStart}</strong>
@@ -1113,9 +1458,9 @@ export function TodayExperience() {
                     <button
                       className="os-empty-hour"
                       type="button"
-                      onClick={() => openHour(hour)}
+                      onClick={() => openHour(hour, defaultTitle)}
                     >
-                      Add main activity
+                      {defaultTitle || "Add main activity"}
                     </button>
                   )}
                   {!editingMain ? (
@@ -1154,9 +1499,21 @@ export function TodayExperience() {
                 </article>
               );
             })}
+            {logEndHour < CIRCLE_DAY_START_HOUR + 23 ? (
+              <button
+                className="os-expand-hour"
+                type="button"
+                onClick={() => setLogHoursAfter((current) => current + 1)}
+              >
+                <strong>{hourLabel(logEndHour + 1)}</strong>
+                <span>Add the next hour</span>
+                <b aria-hidden="true">+</b>
+              </button>
+            ) : null}
           </div>
 
         </section>
+        )}
       </main>
     </OSFrame>
   );

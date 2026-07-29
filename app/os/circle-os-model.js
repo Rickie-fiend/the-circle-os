@@ -115,6 +115,23 @@ export const HABIT_QUESTIONS = [
   },
 ];
 
+export const LOG_SETUP_QUESTIONS = [
+  {
+    id: "routine-wake",
+    text: "When do you usually wake up?",
+    type: "time",
+    defaultValue: "07:00",
+    target: "currentLife",
+  },
+  {
+    id: "routine-sleep",
+    text: "When do you usually go to sleep?",
+    type: "time",
+    defaultValue: "00:00",
+    target: "currentLife",
+  },
+];
+
 const DAY_PERIODS = [
   { id: "morning", label: "Morning" },
   { id: "midday", label: "Midday" },
@@ -520,7 +537,7 @@ export function answerProfileQuestion(state, answer) {
 
 export function answerSurveyQuestion(state, question, answer, kind = "profile") {
   const cleanAnswer = String(answer || "").trim();
-  if (!question?.id || !cleanAnswer) return state;
+  if (!question?.id || (!cleanAnswer && kind !== "note")) return state;
   const previousAnswers = state.profile.profileCase.survey.answers.filter(
     (item) => item.questionId !== question.id,
   );
@@ -532,17 +549,19 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
         ...state.profile.profileCase,
         survey: {
           ...state.profile.profileCase.survey,
-          answers: [
-            ...previousAnswers,
-            {
-              questionId: question.id,
-              question: question.text,
-              answer: cleanAnswer,
-              target: question.target || "whatMatters",
-              kind,
-              answeredAt: new Date().toISOString(),
-            },
-          ],
+          answers: cleanAnswer
+            ? [
+                ...previousAnswers,
+                {
+                  questionId: question.id,
+                  question: question.text,
+                  answer: cleanAnswer,
+                  target: question.target || "whatMatters",
+                  kind,
+                  answeredAt: new Date().toISOString(),
+                },
+              ]
+            : previousAnswers,
         },
       },
     },
@@ -631,25 +650,31 @@ export function upsertCheckIn(day, nextCheckIn) {
 
 export function upsertTimeBlock(day, nextBlock) {
   const index = day.timeBlocks.findIndex((block) => block.id === nextBlock.id);
+  const sortBlocks = (blocks) =>
+    blocks.sort((a, b) => circleTimeValue(a.start) - circleTimeValue(b.start));
   if (index === -1) {
     return {
       ...day,
-      timeBlocks: [...day.timeBlocks, nextBlock].sort((a, b) =>
-        a.start.localeCompare(b.start),
-      ),
+      timeBlocks: sortBlocks([...day.timeBlocks, nextBlock]),
     };
   }
 
   const timeBlocks = [...day.timeBlocks];
   timeBlocks[index] = nextBlock;
-  timeBlocks.sort((a, b) => a.start.localeCompare(b.start));
+  sortBlocks(timeBlocks);
   return { ...day, timeBlocks };
+}
+
+function circleTimeValue(value) {
+  const [hour = 0, minute = 0] = String(value).split(":").map(Number);
+  return (hour < CIRCLE_DAY_START_HOUR ? hour + 24 : hour) * 60 + minute;
 }
 
 export function minutesBetween(start, end) {
   const [startHour, startMinute] = start.split(":").map(Number);
   const [endHour, endMinute] = end.split(":").map(Number);
-  const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+  let minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+  if (minutes < 0) minutes += 24 * 60;
   return Math.max(0, minutes);
 }
 
