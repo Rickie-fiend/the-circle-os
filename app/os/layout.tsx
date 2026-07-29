@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   description:
     "See how you want to live, how you live now, and what may help you feel like yourself.",
   manifest: "/circle-os.webmanifest",
+  icons: {
+    icon: "/brand/the-circle-mark.svg",
+    apple: "/brand/circle-os-icon-180.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

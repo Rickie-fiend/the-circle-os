@@ -62,7 +62,8 @@ test("server-renders the functional Circle OS Today route", async () => {
   assert.match(html, /A moment for you\./);
   assert.match(html, /Choose who you are becoming\./);
   assert.match(html, /Set your usual day\./);
-  assert.match(html, /Swipe left/);
+  assert.match(html, /Swipe to begin/);
+  assert.doesNotMatch(html, /os-app-dots/);
   assert.match(html, /Today/);
   assert.match(html, /Vision/);
   assert.doesNotMatch(

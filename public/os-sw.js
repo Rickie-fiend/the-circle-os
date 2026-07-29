@@ -1,4 +1,4 @@
-const CACHE = "circle-os-v1";
+const CACHE = "circle-os-v3";
 const SHELL = ["/os", "/os/mirror", "/os/connect", "/circle-os.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -31,7 +31,7 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/os")
   ) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: "no-store" })
         .then((response) => {
           const copy = response.clone();
           void caches.open(CACHE).then((cache) => cache.put(event.request, copy));

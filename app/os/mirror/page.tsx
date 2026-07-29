@@ -5,7 +5,6 @@ import {
   useState,
   type CSSProperties,
   type FormEvent,
-  type ReactNode,
 } from "react";
 import {
   editProfileSession,
@@ -15,6 +14,7 @@ import {
 } from "../circle-os-model.js";
 import {
   OSFrame,
+  SessionIntro,
   SwipeSession,
   useCircleState,
   type TimeBlock,
@@ -53,30 +53,6 @@ function formatUpdated(value: string | null) {
   })}`;
 }
 
-function LockedApp({
-  children,
-  locked,
-  message,
-}: {
-  children: ReactNode;
-  locked: boolean;
-  message: string;
-}) {
-  return (
-    <div className={`vision-lock${locked ? " locked" : ""}`}>
-      <div className="vision-lock-content" aria-hidden={locked}>
-        {children}
-      </div>
-      {locked ? (
-        <div className="vision-lock-message">
-          <strong>Not enough data to show.</strong>
-          <span>{message}</span>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export default function CircleOSMirror() {
   const { state, ready, dateKey, updateProfile, updateState } = useCircleState();
   const router = useRouter();
@@ -84,6 +60,8 @@ export default function CircleOSMirror() {
   const [editing, setEditing] = useState<string | null>(null);
   const [weekApp, setWeekApp] = useState(0);
   const [profileApp, setProfileApp] = useState(0);
+  const [seenWeekJourney, setSeenWeekJourney] = useState("");
+  const [seenProfileJourney, setSeenProfileJourney] = useState("");
   const [sessionDraft, setSessionDraft] = useState("");
   const [draft, setDraft] = useState({
     name: "",
@@ -100,6 +78,12 @@ export default function CircleOSMirror() {
     profileCase.status === "ready" && profileCase.updatedAt,
   );
   const updateLabel = formatUpdated(profileCase.updatedAt);
+  const weekJourneyVersion = `${loggedPastDays}|${summary.totalMinutes}|${summary.coverage.recorded}`;
+  const profileJourneyVersion = profileCase.updatedAt || profileCase.status;
+  const visibleWeekApp =
+    seenWeekJourney === weekJourneyVersion ? weekApp : 0;
+  const visibleProfileApp =
+    seenProfileJourney === profileJourneyVersion ? profileApp : 0;
   const setupComplete = Boolean(
     ready &&
       state.profile.name &&
@@ -347,14 +331,31 @@ export default function CircleOSMirror() {
         <section className="vision-week-session" aria-label="Last seven days session">
           <SwipeSession
             className="vision-week-apps"
-            index={weekApp}
+            index={visibleWeekApp}
             label="Last seven days apps"
-            onIndexChange={setWeekApp}
+            maxIndex={weekReady ? 4 : 0}
+            onIndexChange={(nextIndex) => {
+              if (nextIndex > 0) {
+                setSeenWeekJourney(weekJourneyVersion);
+              }
+              setWeekApp(nextIndex);
+            }}
           >
-            <LockedApp
-              locked={!weekReady}
-              message="Log today. Check tomorrow morning."
-            >
+            <SessionIntro
+              detail={
+                weekReady
+                  ? "Four views of your time, rhythm, and record."
+                  : "Log today. Your first charts unlock tomorrow morning."
+              }
+              label="Last seven days"
+              onBegin={() => {
+                setSeenWeekJourney(weekJourneyVersion);
+                setWeekApp(1);
+              }}
+              ready={weekReady}
+              theme="dark"
+              title={weekReady ? "Your week is ready." : "Your week starts here."}
+            />
               <article
                 className="mirror-summary-card vision-week-app"
                 aria-labelledby="mirror-sentence"
@@ -385,12 +386,7 @@ export default function CircleOSMirror() {
                   of the week recorded
                 </p>
               </article>
-            </LockedApp>
 
-            <LockedApp
-              locked={!weekReady}
-              message="Log today. Check tomorrow morning."
-            >
               <article
                 className="mirror-card mirror-time vision-week-app"
                 aria-labelledby="time-heading"
@@ -450,12 +446,7 @@ export default function CircleOSMirror() {
                   )}
                 </div>
               </article>
-            </LockedApp>
 
-            <LockedApp
-              locked={!weekReady}
-              message="Log today. Check tomorrow morning."
-            >
               <article
                 className="mirror-card mirror-energy vision-week-app"
                 aria-labelledby="energy-heading"
@@ -490,12 +481,7 @@ export default function CircleOSMirror() {
                   ))}
                 </div>
               </article>
-            </LockedApp>
 
-            <LockedApp
-              locked={!weekReady}
-              message="Log today. Check tomorrow morning."
-            >
               <article
                 className="mirror-card mirror-life vision-week-app"
                 aria-label="Recorded days"
@@ -508,7 +494,6 @@ export default function CircleOSMirror() {
                   </p>
                 </div>
               </article>
-            </LockedApp>
           </SwipeSession>
         </section>
 
@@ -526,9 +511,15 @@ export default function CircleOSMirror() {
         >
           <SwipeSession
             className="vision-analysis-apps"
-            index={profileApp}
+            index={visibleProfileApp}
             label="AI profile apps"
-            onIndexChange={setProfileApp}
+            maxIndex={profileReady ? 1 : 0}
+            onIndexChange={(nextIndex) => {
+              if (nextIndex > 0) {
+                setSeenProfileJourney(profileJourneyVersion);
+              }
+              setProfileApp(nextIndex);
+            }}
           >
             <div className="profile-ai-intro">
               <p className="os-card-label">Before you read</p>
@@ -540,23 +531,23 @@ export default function CircleOSMirror() {
                 feel true.
               </p>
               <span>{profileReady ? updateLabel : "Ready after the morning update."}</span>
-              <button
-                type="button"
-                onClick={() => setProfileApp(1)}
-                aria-label="Read your profile"
-              >
-                <b aria-hidden="true">←</b>
-                Swipe left
-              </button>
+              {profileReady ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSeenProfileJourney(profileJourneyVersion);
+                    setProfileApp(1);
+                  }}
+                  aria-label="Read your profile"
+                >
+                  Swipe to read
+                </button>
+              ) : (
+                <strong className="os-session-wait">
+                  Available tomorrow morning
+                </strong>
+              )}
             </div>
-            <LockedApp
-              locked={!profileReady}
-              message={
-                profileCase.status === "waiting"
-                  ? "Updating. Check after 6:15 AM."
-                  : "Finish your first check-in. Check tomorrow morning."
-              }
-            >
               <article className="profile-article">
                 <header>
                   <p className="os-card-label">Your profile</p>
@@ -570,7 +561,6 @@ export default function CircleOSMirror() {
                 {profileArticleSection("missionStatement", "Mission statement")}
                 {profileArticleSection("personality", "Personality")}
               </article>
-            </LockedApp>
           </SwipeSession>
         </section>
       </main>

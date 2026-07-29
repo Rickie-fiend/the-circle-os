@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
   type PointerEvent,
@@ -491,7 +492,7 @@ export function OSFrame({
       <div className="os-app-shell">
         <header className="os-header">
           <Link className="os-wordmark" href="/" aria-label="The Circle website">
-            <span className="mark mark-small" aria-hidden="true" />
+            <span className="os-brand-mark" aria-hidden="true" />
             <span>THE CIRCLE OS</span>
           </Link>
           <span className="os-local-status">
@@ -532,10 +533,22 @@ export function SwipeSession({
     apps.length - 1,
     maxIndex ?? Math.max(0, apps.length - 1),
   );
-  const pointerStart = useRef<number | null>(null);
+  const pointerStart = useRef<{
+    x: number;
+    y: number;
+    pointerId: number;
+  } | null>(null);
+  const motionDirection = useRef<"next" | "previous">("next");
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
 
   function move(nextIndex: number) {
-    onIndexChange(Math.max(0, Math.min(lastIndex, nextIndex)));
+    const boundedIndex = Math.max(0, Math.min(lastIndex, nextIndex));
+    setDragX(0);
+    setDragging(false);
+    if (boundedIndex === index) return;
+    motionDirection.current = boundedIndex > index ? "next" : "previous";
+    onIndexChange(boundedIndex);
   }
 
   function isInteractive(target: EventTarget | null) {
@@ -546,14 +559,42 @@ export function SwipeSession({
 
   function startSwipe(event: PointerEvent<HTMLDivElement>) {
     if (isInteractive(event.target)) return;
-    pointerStart.current = event.clientX;
+    pointerStart.current = {
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId,
+    };
+  }
+
+  function continueSwipe(event: PointerEvent<HTMLDivElement>) {
+    if (!pointerStart.current) return;
+    const distanceX = event.clientX - pointerStart.current.x;
+    const distanceY = event.clientY - pointerStart.current.y;
+    if (Math.abs(distanceX) < 6 || Math.abs(distanceX) <= Math.abs(distanceY)) {
+      return;
+    }
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    const movingPastStart = index === 0 && distanceX > 0;
+    const movingPastEnd = index === lastIndex && distanceX < 0;
+    const resistance = movingPastStart || movingPastEnd ? 0.16 : 0.72;
+    setDragging(true);
+    setDragX(Math.max(-96, Math.min(96, distanceX * resistance)));
   }
 
   function finishSwipe(event: PointerEvent<HTMLDivElement>) {
-    if (pointerStart.current === null) return;
-    const distance = event.clientX - pointerStart.current;
+    if (!pointerStart.current) return;
+    const distance = event.clientX - pointerStart.current.x;
+    if (event.currentTarget.hasPointerCapture(pointerStart.current.pointerId)) {
+      event.currentTarget.releasePointerCapture(pointerStart.current.pointerId);
+    }
     pointerStart.current = null;
-    if (Math.abs(distance) < 42) return;
+    if (Math.abs(distance) < 48) {
+      setDragX(0);
+      setDragging(false);
+      return;
+    }
     move(distance < 0 ? index + 1 : index - 1);
   }
 
@@ -575,49 +616,58 @@ export function SwipeSession({
       onKeyDown={useArrowKey}
       onPointerCancel={() => {
         pointerStart.current = null;
+        setDragX(0);
+        setDragging(false);
       }}
       onPointerDown={startSwipe}
+      onPointerMove={continueSwipe}
       onPointerUp={finishSwipe}
       tabIndex={0}
     >
-      <div className="os-app-window" key={index}>
+      <div
+        className={`os-app-window motion-${motionDirection.current}${
+          dragging ? " dragging" : ""
+        }`}
+        key={index}
+        style={
+          {
+            "--swipe-x": `${dragX}px`,
+          } as CSSProperties
+        }
+      >
         {apps[index]}
       </div>
-      {apps.length > 1 ? (
-        <div className="os-app-dots" aria-hidden="true">
-          {apps.map((_, dotIndex) => (
-            <i
-              className={`${dotIndex === index ? "active" : ""}${
-                dotIndex > lastIndex ? " locked" : ""
-              }`}
-              key={dotIndex}
-            />
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
 
-function SessionIntro({
+export function SessionIntro({
   label,
   title,
   onBegin,
-  dark = false,
+  theme = "light",
+  detail,
+  ready = true,
 }: {
   label: string;
   title: string;
   onBegin: () => void;
-  dark?: boolean;
+  theme?: "light" | "orange" | "dark";
+  detail?: string;
+  ready?: boolean;
 }) {
   return (
-    <div className={`os-session-intro${dark ? " dark" : ""}`}>
+    <div className={`os-session-intro theme-${theme}`}>
       <p className="os-card-label">{label}</p>
       <h2>{title}</h2>
-      <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
-        <span aria-hidden="true">←</span>
-        Swipe left
-      </button>
+      {detail ? <p className="os-session-detail">{detail}</p> : null}
+      {ready ? (
+        <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
+          Swipe to begin
+        </button>
+      ) : (
+        <span className="os-session-wait">Available tomorrow morning</span>
+      )}
     </div>
   );
 }
@@ -764,7 +814,8 @@ function hourFromTime(value: string, fallback: number) {
 }
 
 export function TodayExperience() {
-  const { state, today, ready, updateState, updateToday } = useCircleState();
+  const { state, today, ready, dateKey, updateState, updateToday } =
+    useCircleState();
   const router = useRouter();
   const surveyAnswers = state.profile.profileCase.survey.answers;
   const wakeTime = surveyAnswer(surveyAnswers, "routine-wake");
@@ -780,6 +831,8 @@ export function TodayExperience() {
   const [checkInApp, setCheckInApp] = useState(0);
   const [habitApp, setHabitApp] = useState(0);
   const [logSetupApp, setLogSetupApp] = useState(0);
+  const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
+  const [seenHabitJourney, setSeenHabitJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
   const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
   const [isLogOpen, setLogOpen] = useState(false);
@@ -874,6 +927,25 @@ export function TodayExperience() {
     firstHabitQuestionIndex >= 0 ? firstHabitQuestionIndex + 1 : 4;
   const logSetupMaxApp =
     firstLogQuestionIndex >= 0 ? firstLogQuestionIndex + 1 : 2;
+  const checkInStartApp = unansweredCodexQuestion
+    ? 11
+    : firstProfileQuestionIndex >= 0
+      ? firstProfileQuestionIndex + 1
+      : 11;
+  const habitStartApp =
+    firstHabitQuestionIndex >= 0 ? firstHabitQuestionIndex + 1 : 4;
+  const logSetupStartApp =
+    firstLogQuestionIndex >= 0 ? firstLogQuestionIndex + 1 : 2;
+  const profileBaseVersion =
+    state.profile.profileCase.updatedAt || `day-${dateKey}`;
+  const checkInJourneyVersion = unansweredCodexQuestion
+    ? `question-${unansweredCodexQuestion.id}`
+    : `profile-${profileBaseVersion}`;
+  const habitJourneyVersion = `${today.mission.text}|${today.mission.identity}`;
+  const visibleCheckInApp =
+    seenCheckInJourney === checkInJourneyVersion ? checkInApp : 0;
+  const visibleHabitApp =
+    seenHabitJourney === habitJourneyVersion ? habitApp : 0;
   const logStartHour = Math.max(
     CIRCLE_DAY_START_HOUR,
     wakeHour - logHoursBefore,
@@ -1079,6 +1151,9 @@ export function TodayExperience() {
     answer: string,
     appIndex: number,
   ) {
+    if (question.id === unansweredCodexQuestion?.id) {
+      setSeenCheckInJourney(`profile-${profileBaseVersion}`);
+    }
     updateState((current) =>
       question.id === unansweredCodexQuestion?.id
         ? answerProfileQuestion(current, answer)
@@ -1092,6 +1167,11 @@ export function TodayExperience() {
     answer: string,
     appIndex: number,
   ) {
+    if (question.id === "habit-action") {
+      const identity =
+        surveyAnswer(surveyAnswers, "habit-identity") || "Yourself";
+      setSeenHabitJourney(`${answer.trim()}|${identity}`);
+    }
     updateState((current) =>
       answerSurveyQuestion(current, question, answer, "habit"),
     );
@@ -1149,15 +1229,32 @@ export function TodayExperience() {
 
           <SwipeSession
             className="os-checkin-session"
-            index={checkInApp}
+            index={visibleCheckInApp}
             label="Check-in session"
             maxIndex={checkInMaxApp}
-            onIndexChange={setCheckInApp}
+            onIndexChange={(nextIndex) => {
+              if (nextIndex > 0) {
+                setSeenCheckInJourney(checkInJourneyVersion);
+              }
+              setCheckInApp(nextIndex);
+            }}
           >
             <SessionIntro
+              detail={
+                unansweredCodexQuestion
+                  ? "One new question is ready."
+                  : "A short pause to notice what feels true."
+              }
               label="Check-in"
-              title="A moment for you."
-              onBegin={() => setCheckInApp(1)}
+              title={
+                unansweredCodexQuestion
+                  ? "A new question is ready."
+                  : "A moment for you."
+              }
+              onBegin={() => {
+                setSeenCheckInJourney(checkInJourneyVersion);
+                setCheckInApp(checkInStartApp);
+              }}
             />
             {PROFILE_QUESTIONS.map((question, index) => (
               <SurveySlide
@@ -1231,16 +1328,33 @@ export function TodayExperience() {
         <section className="os-habit" aria-label="Habit session">
           <SwipeSession
             className="os-habit-session"
-            index={habitApp}
+            index={visibleHabitApp}
             label="Habit session"
             maxIndex={habitMaxApp}
-            onIndexChange={setHabitApp}
+            onIndexChange={(nextIndex) => {
+              if (nextIndex > 0) {
+                setSeenHabitJourney(habitJourneyVersion);
+              }
+              setHabitApp(nextIndex);
+            }}
           >
             <SessionIntro
-              dark
+              detail={
+                firstHabitQuestionIndex < 0
+                  ? "Your next small action is waiting."
+                  : "Choose the identity before the action."
+              }
               label="Habit"
-              title="Choose who you are becoming."
-              onBegin={() => setHabitApp(1)}
+              theme="orange"
+              title={
+                firstHabitQuestionIndex < 0
+                  ? "Your mission is ready."
+                  : "Choose who you are becoming."
+              }
+              onBegin={() => {
+                setSeenHabitJourney(habitJourneyVersion);
+                setHabitApp(habitStartApp);
+              }}
             />
             {HABIT_QUESTIONS.map((question, index) => (
               <SurveySlide
@@ -1291,16 +1405,6 @@ export function TodayExperience() {
             className="os-day os-day-gated"
             aria-label="Log setup session"
           >
-            <div className="os-log-locked-preview" aria-hidden="true">
-              <p className="os-card-label">Log</p>
-              <h2>Your day, hour by hour</h2>
-              {[7, 8, 9, 10].map((hour) => (
-                <div key={hour}>
-                  <strong>{hourLabel(hour)}</strong>
-                  <span>Add an activity</span>
-                </div>
-              ))}
-            </div>
             <div className="os-log-gate">
               <SwipeSession
                 className="os-log-setup-session"
@@ -1310,10 +1414,11 @@ export function TodayExperience() {
                 onIndexChange={setLogSetupApp}
               >
                 <SessionIntro
-                  dark
+                  detail="Two times unlock your daily timeline."
                   label="Log"
+                  theme="dark"
                   title="Set your usual day."
-                  onBegin={() => setLogSetupApp(1)}
+                  onBegin={() => setLogSetupApp(logSetupStartApp)}
                 />
                 {LOG_SETUP_QUESTIONS.map((question, index) => (
                   <SurveySlide

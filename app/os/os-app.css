@@ -55,14 +55,21 @@
 }
 
 .circle-os .os-wordmark {
+  align-items: center;
+  display: inline-flex;
   font-size: 0.66rem;
-  gap: 0.6rem;
+  font-weight: 680;
+  gap: 0.72rem;
   letter-spacing: 0.15em;
 }
 
-.circle-os .os-wordmark .mark-small {
-  height: 22px;
-  width: 22px;
+.circle-os .os-brand-mark {
+  background: url("/brand/the-circle-mark.svg") center / contain no-repeat;
+  display: block;
+  flex: 0 0 26px;
+  filter: drop-shadow(0 4px 10px rgb(227 107 55 / 0.18));
+  height: 26px;
+  width: 26px;
 }
 
 .os-local-status {
@@ -74,17 +81,17 @@
 .circle-os .os-nav {
   background: #24231d;
   border: 1px solid rgb(241 239 232 / 0.08);
-  border-radius: 16px;
+  border-radius: 18px;
   display: grid;
   gap: 4px;
   grid-template-columns: 1fr 1fr;
-  margin: 0 16px;
+  margin: 0 18px;
   padding: 4px;
 }
 
 .circle-os .os-nav a {
   align-items: center;
-  border-radius: 12px;
+  border-radius: 14px;
   color: #918e86;
   display: flex;
   font-size: 0.72rem;
@@ -108,7 +115,7 @@
 .circle-os .os-mirror {
   margin: 0;
   max-width: none;
-  padding: 18px 16px 80px;
+  padding: 20px 18px 88px;
 }
 
 .circle-os .os-eyebrow,
@@ -173,111 +180,152 @@
 
 .circle-os .os-survey-card {
   background: #f1efe8;
-  border-radius: 26px;
+  border: 1px solid rgb(25 24 19 / 0.05);
+  border-radius: 28px;
   color: #191813;
-  padding: 20px 18px 18px;
+  padding: 22px 20px 20px;
 }
 
 .circle-os .os-swipe-session {
   outline: 0;
+  overflow: hidden;
   position: relative;
   touch-action: pan-y;
 }
 
 .circle-os .os-app-window {
-  animation: os-app-arrive 180ms ease both;
+  transform: translate3d(var(--swipe-x, 0), 0, 0);
+  transition:
+    transform 240ms cubic-bezier(0.22, 0.75, 0.22, 1),
+    opacity 200ms ease;
+  will-change: transform;
 }
 
-@keyframes os-app-arrive {
+.circle-os .os-app-window.dragging {
+  opacity: 0.92;
+  transition: none;
+}
+
+.circle-os .os-app-window.motion-next:not(.dragging) {
+  animation: os-app-arrive-next 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.circle-os .os-app-window.motion-previous:not(.dragging) {
+  animation: os-app-arrive-previous 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes os-app-arrive-next {
   from {
-    opacity: 0.6;
-    transform: translateX(8px);
+    opacity: 0.58;
+    transform: translate3d(30px, 0, 0) scale(0.985);
   }
 
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
-.circle-os .os-app-dots {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  min-height: 15px;
-  padding-top: 8px;
-}
+@keyframes os-app-arrive-previous {
+  from {
+    opacity: 0.58;
+    transform: translate3d(-30px, 0, 0) scale(0.985);
+  }
 
-.circle-os .os-app-dots i {
-  background: rgb(241 239 232 / 0.18);
-  border-radius: 999px;
-  height: 4px;
-  transition: width 160ms ease, background 160ms ease;
-  width: 4px;
-}
-
-.circle-os .os-app-dots i.active {
-  background: #e36b37;
-  width: 16px;
-}
-
-.circle-os .os-app-dots i.locked {
-  opacity: 0.22;
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
 .circle-os .os-session-intro {
-  background: #f1efe8;
-  border-radius: 26px;
-  color: #191813;
-  min-height: 190px;
-  padding: 20px 18px 18px;
+  border: 1px solid transparent;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  padding: 22px 20px 20px;
 }
 
-.circle-os .os-session-intro.dark {
+.circle-os .os-session-intro.theme-light {
+  background: #f1efe8;
+  border-color: rgb(25 24 19 / 0.05);
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.08);
+  color: #191813;
+}
+
+.circle-os .os-session-intro.theme-orange {
   background:
-    linear-gradient(135deg, rgb(227 107 55 / 0.1), transparent 55%),
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
+    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  border-color: rgb(255 255 255 / 0.16);
+  box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
+  color: #fff8f1;
+}
+
+.circle-os .os-session-intro.theme-dark {
+  background:
+    radial-gradient(circle at 88% 8%, rgb(227 107 55 / 0.11), transparent 38%),
     #222119;
-  border: 1px solid rgb(227 107 55 / 0.38);
-  border-radius: 22px;
-  box-shadow: inset 3px 0 #e36b37;
+  border-color: rgb(241 239 232 / 0.1);
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.16);
   color: #f1efe8;
-  min-height: 154px;
-  padding: 17px;
 }
 
 .circle-os .os-session-intro h2 {
   font-family: var(--font-sans), Arial, sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.58rem;
+  font-weight: 650;
   letter-spacing: -0.035em;
-  line-height: 1.08;
-  margin: 1rem 0 1.35rem;
+  line-height: 1.04;
+  margin: 1rem 0 0;
+  max-width: 390px;
 }
 
-.circle-os .os-session-intro.dark h2 {
-  font-size: 1.16rem;
-  margin: 0.7rem 0 1rem;
+.circle-os .os-session-intro.theme-orange .os-card-label {
+  color: #fff8f1;
+}
+
+.circle-os .os-session-detail {
+  color: #77736a;
+  font-size: 0.72rem;
+  line-height: 1.48;
+  margin: 0.7rem 0 0;
+  max-width: 320px;
+}
+
+.circle-os .theme-orange .os-session-detail,
+.circle-os .theme-dark .os-session-detail {
+  color: rgb(255 248 241 / 0.7);
 }
 
 .circle-os .os-session-intro > button {
-  align-items: center;
   background: transparent;
   border: 0;
-  color: #77736a;
-  display: flex;
-  font-size: 0.62rem;
-  gap: 0.55rem;
-  margin-left: auto;
-  padding: 0.5rem 0;
+  color: #8a857b;
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
+  margin: auto 0 0 auto;
+  min-height: 44px;
+  padding: 0.7rem 0 0.25rem 1rem;
 }
 
-.circle-os .os-session-intro > button span {
-  color: #e36b37;
-  font-size: 1.55rem;
-  line-height: 1;
+.circle-os .theme-orange > button,
+.circle-os .theme-dark > button {
+  color: rgb(255 248 241 / 0.68);
 }
 
-.circle-os .os-session-intro.dark > button {
-  color: rgb(241 239 232 / 0.48);
+.circle-os .os-session-wait {
+  color: #8a857b;
+  display: block;
+  font-size: 0.64rem;
+  margin-top: auto;
+  padding-top: 1.2rem;
+}
+
+.circle-os .theme-orange .os-session-wait,
+.circle-os .theme-dark .os-session-wait {
+  color: rgb(255 248 241 / 0.58);
 }
 
 .circle-os .os-habit {
@@ -286,27 +334,27 @@
 
 .circle-os .os-habit .os-survey-card {
   background:
-    linear-gradient(135deg, rgb(227 107 55 / 0.1), transparent 55%),
-    #222119;
-  border: 1px solid rgb(227 107 55 / 0.38);
-  border-radius: 22px;
-  box-shadow: inset 3px 0 #e36b37;
-  color: #f1efe8;
-  padding: 17px;
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
+    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 28px;
+  box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
+  color: #fff8f1;
+  padding: 22px 20px 20px;
 }
 
 .circle-os .os-habit .os-card-label {
-  color: #e36b37;
+  color: #fff8f1;
 }
 
 .circle-os .os-habit .os-survey-head > span {
-  color: rgb(241 239 232 / 0.48);
+  color: rgb(255 248 241 / 0.68);
 }
 
 .circle-os .os-habit .os-survey-card h2 {
-  font-size: 1.16rem;
-  letter-spacing: -0.025em;
-  margin: 0.7rem 0 1rem;
+  font-size: 1.4rem;
+  letter-spacing: -0.035em;
+  margin: 1rem 0 1.25rem;
   max-width: 430px;
 }
 
@@ -315,36 +363,41 @@
 }
 
 .circle-os .os-habit .os-survey-choices button {
-  background: rgb(241 239 232 / 0.05);
-  border-color: rgb(241 239 232 / 0.14);
-  color: #f1efe8;
-  min-height: 46px;
+  background: rgb(25 24 19 / 0.13);
+  border-color: rgb(255 248 241 / 0.2);
+  color: #fff8f1;
+  min-height: 50px;
 }
 
-.circle-os .os-habit .os-survey-choices button:active {
-  background: #e36b37;
-  border-color: #e36b37;
-  color: #fff;
+.circle-os .os-habit .os-survey-choices button:active,
+.circle-os .os-habit .os-survey-choices button.selected {
+  background: #191813;
+  border-color: #191813;
+  color: #fff8f1;
 }
 
 .circle-os .os-habit .os-survey-slider > div {
-  color: rgb(241 239 232 / 0.5);
+  color: rgb(255 248 241 / 0.68);
+}
+
+.circle-os .os-habit .os-survey-slider output {
+  color: #fff8f1;
 }
 
 .circle-os .os-habit .os-survey-slider > button,
 .circle-os .os-habit .os-survey-text > button {
-  background: #e36b37;
-  border-color: #e36b37;
-  color: #fff;
+  background: #191813;
+  border-color: #191813;
+  color: #fff8f1;
 }
 
 .circle-os .os-habit .os-survey-text input {
-  border-bottom-color: rgb(241 239 232 / 0.24);
-  color: #f1efe8;
+  border-bottom-color: rgb(255 248 241 / 0.4);
+  color: #fff8f1;
 }
 
 .circle-os .os-habit .os-survey-text input::placeholder {
-  color: rgb(241 239 232 / 0.36);
+  color: rgb(255 248 241 / 0.58);
 }
 
 .circle-os .os-survey-head {
@@ -695,20 +748,25 @@
 
 .circle-os .os-mission {
   align-items: center;
-  border-color: rgb(227 107 55 / 0.32);
-  box-shadow: inset 3px 0 #e36b37;
+  background:
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
+    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  border-color: rgb(255 255 255 / 0.16);
+  border-radius: 28px;
+  box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
+  color: #fff8f1;
   display: grid;
   gap: 1rem;
   grid-template-columns: 1fr auto;
   margin-top: 0;
-  padding: 17px;
+  padding: 22px 20px;
 }
 
 .circle-os .os-mission.completed {
   background:
-    linear-gradient(135deg, rgb(227 107 55 / 0.12), transparent 58%),
-    #222119;
-  border-color: rgb(227 107 55 / 0.6);
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.2), transparent 38%),
+    linear-gradient(145deg, #d15a2a 0%, #a9401d 100%);
+  border-color: rgb(255 255 255 / 0.2);
 }
 
 .circle-os .os-mission-meta {
@@ -719,13 +777,13 @@
 }
 
 .circle-os .os-mission-status {
-  color: rgb(241 239 232 / 0.48);
+  color: rgb(255 248 241 / 0.68);
   font-size: 0.58rem;
   white-space: nowrap;
 }
 
 .circle-os .os-mission.completed .os-mission-status {
-  color: #e36b37;
+  color: #fff8f1;
 }
 
 .circle-os .os-mission h2 {
@@ -738,17 +796,17 @@
 }
 
 .circle-os .os-mission-identity {
-  color: rgb(241 239 232 / 0.56);
+  color: rgb(255 248 241 / 0.7);
   display: block;
   font-size: 0.64rem;
   margin-top: 0.5rem;
 }
 
 .circle-os .os-mission > button {
-  background: #e36b37;
+  background: #191813;
   border: 0;
   border-radius: 18px;
-  box-shadow: 0 8px 24px rgb(227 107 55 / 0.18);
+  box-shadow: 0 10px 22px rgb(90 28 8 / 0.24);
   color: #fff;
   font-size: 0.67rem;
   min-height: 62px;
@@ -761,7 +819,7 @@
 }
 
 .circle-os .os-mission > button:active {
-  box-shadow: 0 3px 10px rgb(227 107 55 / 0.2);
+  box-shadow: 0 3px 10px rgb(90 28 8 / 0.24);
   transform: scale(0.95);
 }
 
@@ -782,44 +840,41 @@
 }
 
 .circle-os .os-day-gated {
-  min-height: 360px;
+  min-height: 340px;
   overflow: hidden;
+  padding: 0;
   position: relative;
 }
 
-.circle-os .os-log-locked-preview {
-  filter: blur(7px);
-  opacity: 0.26;
-  pointer-events: none;
-}
-
-.circle-os .os-log-locked-preview h2 {
-  font-size: 1.12rem;
-  margin: 0.45rem 0 1.2rem;
-}
-
-.circle-os .os-log-locked-preview > div {
-  align-items: center;
-  border-bottom: 1px solid rgb(241 239 232 / 0.12);
-  display: grid;
-  font-size: 0.68rem;
-  grid-template-columns: 64px 1fr;
-  min-height: 58px;
-}
-
 .circle-os .os-log-gate {
-  inset: 16px;
+  inset: 0;
   position: absolute;
 }
 
-.circle-os .os-log-gate .os-survey-card,
-.circle-os .os-log-gate .os-session-intro {
+.circle-os .os-log-gate .os-swipe-session,
+.circle-os .os-log-gate .os-app-window {
+  height: 100%;
+}
+
+.circle-os .os-log-gate .os-survey-card {
   background:
-    linear-gradient(135deg, rgb(227 107 55 / 0.1), transparent 55%),
+    radial-gradient(circle at 88% 8%, rgb(227 107 55 / 0.11), transparent 38%),
     #222119;
-  border: 1px solid rgb(227 107 55 / 0.38);
-  box-shadow: inset 3px 0 #e36b37;
+  border: 0;
+  border-radius: 24px;
+  box-shadow: none;
   color: #f1efe8;
+  min-height: 340px;
+  padding: 24px 22px;
+}
+
+.circle-os .os-log-gate .os-session-intro {
+  border: 0;
+  border-radius: 24px;
+  box-shadow: none;
+  height: 100%;
+  min-height: 340px;
+  padding: 24px 22px;
 }
 
 .circle-os .os-log-gate .os-card-label {
@@ -1442,51 +1497,16 @@
 .circle-os .vision-week-app {
   margin: 0;
   min-height: 276px;
-  padding: 17px;
+  padding: 20px;
 }
 
-.circle-os .vision-lock {
-  position: relative;
+.circle-os .vision-week-apps,
+.circle-os .vision-analysis-apps {
+  border-radius: 28px;
 }
 
-.circle-os .vision-lock.locked {
+.circle-os .vision-week-apps .os-session-intro {
   min-height: 276px;
-  overflow: hidden;
-}
-
-.circle-os .vision-lock.locked .vision-lock-content {
-  filter: blur(7px);
-  opacity: 0.34;
-  pointer-events: none;
-  user-select: none;
-}
-
-.circle-os .vision-lock-message {
-  align-items: center;
-  background: rgb(25 24 19 / 0.8);
-  border: 1px solid rgb(241 239 232 / 0.12);
-  border-radius: 18px;
-  color: #f1efe8;
-  display: flex;
-  flex-direction: column;
-  inset: 50% auto auto 50%;
-  max-width: 240px;
-  padding: 1rem 1.1rem;
-  position: absolute;
-  text-align: center;
-  transform: translate(-50%, -50%);
-  width: calc(100% - 48px);
-}
-
-.circle-os .vision-lock-message strong {
-  font-size: 0.78rem;
-}
-
-.circle-os .vision-lock-message span {
-  color: rgb(241 239 232 / 0.56);
-  font-size: 0.62rem;
-  line-height: 1.45;
-  margin-top: 0.35rem;
 }
 
 .circle-os .mirror-record-copy {
@@ -1498,13 +1518,18 @@
 
 .circle-os .profile-ai-intro {
   background:
-    linear-gradient(135deg, rgb(227 107 55 / 0.12), transparent 58%),
-    #222119;
-  border: 1px solid rgb(227 107 55 / 0.32);
-  border-radius: 24px;
-  color: #f1efe8;
-  min-height: 250px;
-  padding: 22px;
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
+    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 28px;
+  box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
+  color: #fff8f1;
+  min-height: 276px;
+  padding: 24px 22px;
+}
+
+.circle-os .profile-ai-intro .os-card-label {
+  color: #fff8f1;
 }
 
 .circle-os .profile-ai-intro h2 {
@@ -1517,35 +1542,32 @@
 }
 
 .circle-os .profile-ai-intro > p:not(.os-card-label) {
-  color: rgb(241 239 232 / 0.72);
+  color: rgb(255 248 241 / 0.8);
   font-size: 0.78rem;
   line-height: 1.6;
   margin: 0;
 }
 
 .circle-os .profile-ai-intro > span {
-  color: rgb(241 239 232 / 0.46);
+  color: rgb(255 248 241 / 0.62);
   display: block;
   font-size: 0.6rem;
   margin-top: 1rem;
 }
 
 .circle-os .profile-ai-intro > button {
-  align-items: center;
   background: transparent;
   border: 0;
-  color: rgb(241 239 232 / 0.5);
-  display: flex;
+  color: rgb(255 248 241 / 0.72);
   font-size: 0.62rem;
-  gap: 0.55rem;
-  margin: 1rem 0 0 auto;
-  padding: 0.45rem 0;
+  margin: 1.2rem 0 0 auto;
+  min-height: 44px;
+  padding: 0.55rem 0;
 }
 
-.circle-os .profile-ai-intro > button b {
-  color: #e36b37;
-  font-size: 1.55rem;
-  font-weight: 500;
+.circle-os .profile-ai-intro > .os-session-wait {
+  color: rgb(255 248 241 / 0.62);
+  margin-top: 1.2rem;
 }
 
 .circle-os .profile-article {
@@ -2237,7 +2259,18 @@
 
   .circle-os .os-today,
   .circle-os .os-mirror {
-    padding: 14px 14px 56px;
+    padding: 16px 16px 64px;
+  }
+
+  .circle-os input,
+  .circle-os textarea,
+  .circle-os select {
+    font-size: 16px !important;
+  }
+
+  .circle-os .os-session-intro,
+  .circle-os .os-survey-card {
+    border-radius: 26px;
   }
 
   .circle-os .os-context-row {
@@ -2346,5 +2379,10 @@
 @media (prefers-reduced-motion: reduce) {
   .os-future-room-background::after {
     transform: none;
+  }
+
+  .circle-os .os-app-window {
+    animation: none !important;
+    transition: none;
   }
 }
