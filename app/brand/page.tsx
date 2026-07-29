@@ -185,63 +185,66 @@ export default function BrandGuidelines() {
       </section>
 
       <section className="brand-showcase brand-os">
-        <div className="guide-number">07 / The Circle OS</div>
+        <div className="guide-number">07 / Software</div>
         <div className="os-brand-heading">
           <div>
-            <p className="eyebrow">Functional expression</p>
-            <h2>A mirror, not a dashboard.</h2>
+            <p className="eyebrow">Product behavior</p>
+            <h2>Sessions hold. Apps move.</h2>
           </div>
           <p>
-            The OS should feel quieter and more functional than the public site while
-            remaining unmistakably part of The Circle.
+            Every session has one purpose. Its shell stays stable while simple app
+            pages move inside it. Finish a journey once, then live from its useful
+            idle state.
           </p>
         </div>
 
-        <div className="os-preview" aria-label="The Circle OS visual direction">
+        <div className="os-preview" aria-label="The Circle OS software themes">
           <div className="os-preview-top">
             <div className="os-mini-brand">
               <span className="os-mini-mark" aria-hidden="true" />
               <span>THE CIRCLE OS</span>
             </div>
-            <span>TODAY · MIRROR</span>
+            <span>TODAY / VISION</span>
           </div>
-          <div className="os-preview-body">
-            <p className="eyebrow">Tuesday · Morning</p>
-            <h3>How is your energy, honestly?</h3>
-            <div className="os-energy" aria-hidden="true">
-              <span>1</span>
-              <span>2</span>
-              <span>3</span>
-              <span className="active">4</span>
-              <span>5</span>
-            </div>
-            <div className="os-mirror-line">
-              <span>One small move</span>
-              <p>Read ten pages before opening another screen.</p>
-            </div>
+          <div className="os-software-stack">
+            <article className="os-software-card light">
+              <span>CHECK-IN</span>
+              <h3>Quiet and primary.</h3>
+              <p>White gives reflection the clearest space.</p>
+            </article>
+            <article className="os-software-card orange">
+              <span>HABIT</span>
+              <h3>Bold and active.</h3>
+              <p>Orange holds identity, missions, and meaningful action.</p>
+            </article>
+            <article className="os-software-card dark">
+              <span>LOG</span>
+              <h3>Deep and practical.</h3>
+              <p>Dark keeps daily evidence calm and grounded.</p>
+            </article>
           </div>
         </div>
 
         <div className="os-rules">
           <article>
             <span>01</span>
-            <h3>One action</h3>
-            <p>One dominant action at a time. Return the person to life quickly.</p>
+            <h3>Stable session</h3>
+            <p>The container stays still. Only the inner app page moves.</p>
           </article>
           <article>
             <span>02</span>
-            <h3>Evidence, not scores</h3>
-            <p>Show what happened. Never score worth, discipline, or masculinity.</p>
+            <h3>One-time journey</h3>
+            <p>Surveys end. The final idle app becomes the lasting product.</p>
           </article>
           <article>
             <span>03</span>
-            <h3>The circle has a job</h3>
-            <p>Use it for identity, check-ins, and meaningful state—not decoration.</p>
+            <h3>Tap or swipe</h3>
+            <p>A tap acts. A swipe moves. Never open the keyboard without a tap.</p>
           </article>
           <article>
             <span>04</span>
-            <h3>Orange is scarce</h3>
-            <p>Reserve it for the next action, current state, or important insight.</p>
+            <h3>Default is not data</h3>
+            <p>Suggestions stay faded until the person confirms or changes them.</p>
           </article>
         </div>
       </section>

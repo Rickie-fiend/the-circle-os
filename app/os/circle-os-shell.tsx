@@ -539,17 +539,19 @@ export function SwipeSession({
     y: number;
     pointerId: number;
   } | null>(null);
-  const motionDirection = useRef<"next" | "previous">("next");
   const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [motionDirection, setMotionDirection] = useState<"next" | "previous">(
+    "next",
+  );
 
   function move(nextIndex: number) {
     const boundedIndex = Math.max(0, Math.min(lastIndex, nextIndex));
     setDragX(0);
     setDragging(false);
     if (boundedIndex === index) return;
-    motionDirection.current = boundedIndex > index ? "next" : "previous";
+    setMotionDirection(boundedIndex > index ? "next" : "previous");
     onIndexChange(boundedIndex);
   }
 
@@ -656,7 +658,7 @@ export function SwipeSession({
           </div>
         ) : null}
         <div
-          className={`os-app-page current motion-${motionDirection.current}${
+          className={`os-app-page current motion-${motionDirection}${
             dragging ? " dragging" : ""
           }`}
           key={index}
@@ -861,6 +863,8 @@ export function TodayExperience() {
   const sleepClockHour = hourFromTime(sleepTime, 0);
   const sleepHour =
     sleepClockHour <= wakeHour ? sleepClockHour + 24 : sleepClockHour;
+  const checkInIdleTitle =
+    surveyAnswer(surveyAnswers, "checkin-idle-title") || "Keep going.";
   const checkInNote = surveyAnswer(surveyAnswers, "checkin-note");
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
@@ -870,6 +874,7 @@ export function TodayExperience() {
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [seenHabitJourney, setSeenHabitJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
+  const [checkInTitleDraft, setCheckInTitleDraft] = useState("");
   const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
   const [isLogOpen, setLogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -978,10 +983,19 @@ export function TodayExperience() {
     ? `question-${unansweredCodexQuestion.id}`
     : `profile-${profileBaseVersion}`;
   const habitJourneyVersion = `${today.mission.text}|${today.mission.identity}`;
-  const visibleCheckInApp =
-    seenCheckInJourney === checkInJourneyVersion ? checkInApp : 0;
-  const visibleHabitApp =
-    seenHabitJourney === habitJourneyVersion ? habitApp : 0;
+  const checkInSurveyComplete =
+    firstProfileQuestionIndex < 0 && !unansweredCodexQuestion;
+  const habitSurveyComplete = firstHabitQuestionIndex < 0;
+  const visibleCheckInApp = checkInSurveyComplete
+    ? checkInApp || 11
+    : seenCheckInJourney === checkInJourneyVersion
+      ? checkInApp
+      : 0;
+  const visibleHabitApp = habitSurveyComplete
+    ? habitApp || 4
+    : seenHabitJourney === habitJourneyVersion
+      ? habitApp
+      : 0;
   const logStartHour = Math.max(
     CIRCLE_DAY_START_HOUR,
     wakeHour - logHoursBefore,
@@ -1227,9 +1241,20 @@ export function TodayExperience() {
 
   function saveCheckInNote(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    updateState((current) =>
-      answerSurveyQuestion(
+    updateState((current) => {
+      const withTitle = answerSurveyQuestion(
         current,
+        {
+          id: "checkin-idle-title",
+          text: "Check-in idle title",
+          type: "text",
+          target: "currentLife",
+        },
+        checkInTitleDraft.trim() || "Keep going.",
+        "note",
+      );
+      return answerSurveyQuestion(
+        withTitle,
         {
           id: "checkin-note",
           text: "Today note",
@@ -1238,8 +1263,8 @@ export function TodayExperience() {
         },
         checkInNoteDraft,
         "note",
-      ),
-    );
+      );
+    });
     setEditingCheckInNote(false);
   }
 
@@ -1328,6 +1353,7 @@ export function TodayExperience() {
                     className="os-note-edit"
                     type="button"
                     onClick={() => {
+                      setCheckInTitleDraft(checkInIdleTitle);
                       setCheckInNoteDraft(checkInNote);
                       setEditingCheckInNote(true);
                     }}
@@ -1337,22 +1363,33 @@ export function TodayExperience() {
                 </div>
                 {editingCheckInNote ? (
                   <form className="os-idle-note-form" onSubmit={saveCheckInNote}>
-                    <textarea
-                      aria-label="Edit your note"
-                      autoFocus
-                      maxLength={220}
-                      placeholder="Write a note or reminder"
-                      rows={4}
-                      value={checkInNoteDraft}
-                      onChange={(event) =>
-                        setCheckInNoteDraft(event.target.value)
-                      }
-                    />
+                    <div className="os-idle-note-fields">
+                      <input
+                        aria-label="Edit idle title"
+                        autoFocus
+                        maxLength={54}
+                        placeholder="Keep going."
+                        value={checkInTitleDraft}
+                        onChange={(event) =>
+                          setCheckInTitleDraft(event.target.value)
+                        }
+                      />
+                      <textarea
+                        aria-label="Edit idle note"
+                        maxLength={220}
+                        placeholder="Notice what feels like you today."
+                        rows={3}
+                        value={checkInNoteDraft}
+                        onChange={(event) =>
+                          setCheckInNoteDraft(event.target.value)
+                        }
+                      />
+                    </div>
                     <button type="submit" aria-label="Save note">✓</button>
                   </form>
                 ) : (
                   <>
-                    <h2>Keep going.</h2>
+                    <h2>{checkInIdleTitle}</h2>
                     <p>{checkInNote || "Notice what feels like you today."}</p>
                   </>
                 )}

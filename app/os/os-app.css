@@ -621,17 +621,32 @@
   margin-top: 1rem;
 }
 
-.circle-os .os-idle-note-form textarea {
+.circle-os .os-idle-note-fields {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.circle-os .os-idle-note-fields input,
+.circle-os .os-idle-note-fields textarea {
   background: transparent;
   border: 0;
-  border-left: 2px solid #e36b37;
+  border-bottom: 1px solid rgb(25 24 19 / 0.18);
   color: #191813;
   font: inherit;
-  line-height: 1.5;
-  min-height: 100px;
   outline: 0;
-  padding: 0.5rem 0.75rem;
-  resize: vertical;
+  padding: 0.45rem 0;
+}
+
+.circle-os .os-idle-note-fields input {
+  font-size: 1.2rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.circle-os .os-idle-note-fields textarea {
+  line-height: 1.5;
+  min-height: 70px;
+  resize: none;
 }
 
 .circle-os .os-idle-note-form button {

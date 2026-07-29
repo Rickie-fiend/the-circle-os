@@ -1337,6 +1337,80 @@ footer small {
   padding: clamp(5rem, 10vw, 9rem) 0 3rem;
 }
 
+.os-software-stack {
+  display: grid;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 760px;
+  padding: clamp(3rem, 7vw, 6rem) 0 2rem;
+}
+
+.os-software-card {
+  border: 1px solid transparent;
+  border-radius: 28px;
+  min-height: 180px;
+  padding: 1.5rem;
+}
+
+.os-software-card > span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.os-software-card h3 {
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 2rem 0 0.75rem;
+}
+
+.os-software-card p {
+  font-size: 0.84rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.os-software-card.light {
+  background: #f1efe8;
+  color: #191813;
+}
+
+.os-software-card.light > span {
+  color: #b64c23;
+}
+
+.os-software-card.light p {
+  color: #77736a;
+}
+
+.os-software-card.orange {
+  background:
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
+    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  border-color: rgb(255 255 255 / 0.16);
+  color: #fff8f1;
+}
+
+.os-software-card.orange p,
+.os-software-card.dark p {
+  color: rgb(255 248 241 / 0.7);
+}
+
+.os-software-card.dark {
+  background:
+    radial-gradient(circle at 88% 8%, rgb(227 107 55 / 0.11), transparent 38%),
+    #222119;
+  border-color: rgb(241 239 232 / 0.1);
+  color: #f1efe8;
+}
+
+.os-software-card.dark > span {
+  color: #e36b37;
+}
+
 .os-preview-body h3 {
   font-family: var(--font-display), Georgia, serif;
   font-size: clamp(3.2rem, 7vw, 6.5rem);
