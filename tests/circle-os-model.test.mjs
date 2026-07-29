@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  applyProfileResult,
   buildVisionAnalysis,
   createEmptyState,
   createSampleState,
@@ -61,6 +62,35 @@ test("Vision analysis stays cautious when the person has not logged a day", () =
   assert.match(analysis.preview, /meaningful work/);
   assert.match(analysis.understanding, /do not know enough/i);
   assert.match(analysis.gap, /not enough evidence/i);
+});
+
+test("AI updates cannot overwrite a session the person edited", () => {
+  const state = createEmptyState();
+  state.profile.profileCase.sessions.whatMatters = {
+    text: "Time with my brother matters to me.",
+    confidence: 1,
+    userEdited: true,
+    updatedAt: "2026-07-29T00:00:00.000Z",
+  };
+  state.outbox = [{ id: "one", reason: "check-in", createdAt: "now" }];
+
+  const updated = applyProfileResult(
+    state,
+    {
+      sessions: {
+        whatMatters: { text: "Only work matters.", confidence: 0.9 },
+      },
+      nextQuestion: null,
+      dailyMission: "Call someone you love.",
+    },
+    "one",
+  );
+
+  assert.equal(
+    updated.profile.profileCase.sessions.whatMatters.text,
+    "Time with my brother matters to me.",
+  );
+  assert.equal(updated.outbox.length, 0);
 });
 
 test("keeps time-log correction deterministic", () => {

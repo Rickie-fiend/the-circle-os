@@ -1,0 +1,18 @@
+{
+  "name": "The Circle OS",
+  "short_name": "Circle OS",
+  "description": "See how you want to live, how you live now, and what may help you feel like yourself.",
+  "start_url": "/os",
+  "scope": "/os/",
+  "display": "standalone",
+  "background_color": "#191813",
+  "theme_color": "#191813",
+  "icons": [
+    {
+      "src": "/brand/the-circle-mark-bone.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

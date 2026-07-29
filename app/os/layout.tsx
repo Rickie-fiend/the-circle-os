@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
+import { CircleOSPwa } from "./pwa-register";
 import "./os-app.css";
 
 export const metadata: Metadata = {
   title: "The Circle OS — See how you live",
   description:
-    "A free lifestyle design system for one honest check-in, one meaningful move, and a clearer vision of how you live.",
+    "See how you want to live, how you live now, and what may help you feel like yourself.",
+  manifest: "/circle-os.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Circle OS",
+  },
   openGraph: {
     title: "The Circle OS — See how you live",
     description:
@@ -12,7 +19,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/os-og.png",
+        url: "/os-profile-og.png",
         width: 1536,
         height: 1024,
         alt: "The Circle OS — See how you live.",
@@ -24,7 +31,7 @@ export const metadata: Metadata = {
     title: "The Circle OS — See how you live",
     description:
       "One honest check-in. One meaningful move. A clearer vision of how you live.",
-    images: ["/os-og.png"],
+    images: ["/os-profile-og.png"],
   },
 };
 
@@ -33,5 +40,10 @@ export default function CircleOSLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <>
+      <CircleOSPwa />
+      {children}
+    </>
+  );
 }

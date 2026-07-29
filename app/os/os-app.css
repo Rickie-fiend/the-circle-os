@@ -171,6 +171,43 @@
   margin: 0.45rem 0 1.05rem;
 }
 
+.circle-os .os-profile-question {
+  border-top: 1px solid #d8d4c9;
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+}
+
+.circle-os .os-profile-question label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.circle-os .os-profile-question > div {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: 1fr auto;
+}
+
+.circle-os .os-profile-question input {
+  background: #fbfaf6;
+  border: 1px solid #d0ccc1;
+  border-radius: 10px;
+  color: #191813;
+  min-height: 42px;
+  padding: 0.6rem 0.7rem;
+}
+
+.circle-os .os-profile-question button {
+  background: #191813;
+  border: 0;
+  border-radius: 10px;
+  color: #f1efe8;
+  padding: 0.6rem 0.8rem;
+}
+
 .circle-os .os-energy-scale {
   display: grid;
   gap: 8px;
@@ -778,6 +815,91 @@
   margin: 0.8rem 0 0;
 }
 
+.circle-os .vision-ai-state {
+  color: #8d8980;
+  font-size: 0.62rem;
+  margin: 0;
+}
+
+.circle-os .vision-profile-case {
+  padding: 0 !important;
+}
+
+.circle-os .profile-session {
+  background: #222119;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 24px;
+  color: #f1efe8;
+  padding: 20px;
+}
+
+.circle-os .profile-session.feature {
+  background: #f1efe8;
+  color: #191813;
+  padding: 22px;
+}
+
+.circle-os .profile-session.feature .os-card-label {
+  color: #b64c23;
+}
+
+.circle-os .profile-session-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.circle-os .profile-session-head button {
+  background: transparent;
+  border: 0;
+  color: #e36b37;
+  font-size: 0.62rem;
+  min-height: 36px;
+  padding: 0.35rem 0;
+}
+
+.circle-os .profile-session-copy {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  margin: 0.85rem 0 0;
+  white-space: pre-wrap;
+}
+
+.circle-os .profile-session.feature .profile-session-copy {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.circle-os .profile-session-edit {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+}
+
+.circle-os .profile-session-edit textarea {
+  background: transparent;
+  border: 0;
+  border-left: 2px solid #e36b37;
+  color: inherit;
+  font: inherit;
+  line-height: 1.6;
+  min-height: 130px;
+  padding: 0.5rem 0.8rem;
+  resize: vertical;
+}
+
+.circle-os .profile-session-edit button {
+  background: #e36b37;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  justify-self: end;
+  min-height: 40px;
+  padding: 0.55rem 0.9rem;
+}
+
 .circle-os .vision-preview-card {
   background: #f1efe8;
   border-radius: 24px;
@@ -809,6 +931,7 @@
 .circle-os .vision-analysis {
   display: grid;
   gap: 12px;
+  padding: 0 !important;
 }
 
 .circle-os .vision-analysis article {
@@ -816,6 +939,79 @@
   border: 1px solid rgb(241 239 232 / 0.08);
   border-radius: 24px;
   padding: 20px;
+}
+
+.circle-os .analysis-intro {
+  margin-top: 18px;
+}
+
+.circle-os .os-connect {
+  display: block;
+}
+
+.circle-os .os-connect > section {
+  background: #f1efe8;
+  border-radius: 26px;
+  color: #191813;
+  margin: 18px auto 0;
+  max-width: 620px;
+  padding: clamp(24px, 5vw, 52px) !important;
+}
+
+.circle-os .os-connect h1 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.2rem, 7vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+  margin: 0.6rem 0 1rem;
+}
+
+.circle-os .os-connect > section > p {
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.circle-os .os-connect form,
+.circle-os .os-connect label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.circle-os .os-connect form {
+  gap: 0.9rem;
+  margin-top: 1.5rem;
+}
+
+.circle-os .os-connect label span {
+  color: #716d65;
+  font-size: 0.65rem;
+}
+
+.circle-os .os-connect input {
+  background: #fbfaf6;
+  border: 1px solid #d5d1c7;
+  border-radius: 12px;
+  color: #191813;
+  min-height: 48px;
+  padding: 0.8rem 0.9rem;
+}
+
+.circle-os .os-connect form button {
+  background: #e36b37;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  min-height: 48px;
+}
+
+.circle-os .os-connect .connect-message {
+  min-height: 1.2rem;
+}
+
+.circle-os .os-connect a {
+  color: #b64c23;
+  font-size: 0.66rem;
 }
 
 .circle-os .vision-analysis textarea {
@@ -1246,9 +1442,10 @@
   }
 
   .circle-os .vision-intro,
-  .circle-os .vision-preview-card,
+  .circle-os .vision-profile-case,
   .circle-os .vision-analysis,
-  .circle-os .mirror-week-intro {
+  .circle-os .mirror-week-intro,
+  .circle-os .analysis-intro {
     grid-column: 1 / -1;
   }
 
@@ -1267,6 +1464,10 @@
 
   .circle-os .vision-analysis {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .circle-os .vision-analysis .profile-session:last-child {
+    grid-column: 1 / -1;
   }
 
   .circle-os .mirror-intro {

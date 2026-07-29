@@ -2,20 +2,32 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
-  CIRCLE_OS_STORAGE_KEY,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import {
   DAY_PERIODS,
   MOODS,
+  answerProfileQuestion,
+  applyProfileResult,
   createEmptyState,
   ensureDay,
   getDateKey,
   getDayPeriod,
+  markProfileUpdateFailed,
   minutesBetween,
   normalizeState,
+  queueProfileUpdate,
   upsertCheckIn,
   upsertTimeBlock,
 } from "./circle-os-model.js";
+import { requestProfileUpdate } from "./circle-os-ai";
+import { loadCircleState, saveCircleState } from "./circle-os-store";
 
 type CheckIn = {
   period: string;
@@ -52,6 +64,13 @@ type CircleDay = {
 
 export type CircleState = {
   version: number;
+  ai: {
+    baseUrl: string;
+    token: string;
+    status: string;
+    lastError: string;
+    lastRunAt: string | null;
+  };
   profile: {
     identityFocus: string;
     name: string;
@@ -63,8 +82,41 @@ export type CircleState = {
       gap: string;
       completedAt: string | null;
     };
+    profileCase: {
+      status: string;
+      updatedAt: string | null;
+      sessions: Record<
+        string,
+        {
+          text: string;
+          confidence: number;
+          userEdited: boolean;
+          updatedAt: string | null;
+        }
+      >;
+      survey: {
+        answers: Array<{
+          questionId: string;
+          question: string;
+          answer: string;
+          target: string;
+          answeredAt: string;
+        }>;
+        nextQuestion: {
+          id: string;
+          text: string;
+          target: string;
+        } | null;
+      };
+    };
   };
   days: Record<string, CircleDay>;
+  outbox: Array<{
+    id: string;
+    reason: string;
+    createdAt: string;
+    triedAt?: string;
+  }>;
 };
 
 const AWAKE_HOURS = Array.from({ length: 17 }, (_, index) => index + 7);
@@ -88,21 +140,14 @@ export function useCircleState() {
     ensureDay(createEmptyState(), dateKey),
   );
   const [ready, setReady] = useState(false);
+  const aiWorking = useRef(false);
 
   useEffect(() => {
     let active = true;
-    queueMicrotask(() => {
+    void loadCircleState().then((stored) => {
       if (!active) return;
-      try {
-        const stored = window.localStorage.getItem(CIRCLE_OS_STORAGE_KEY);
-        const parsed = stored ? JSON.parse(stored) : createEmptyState();
-        const valid = normalizeState(parsed);
-        setState(ensureDay(valid, getDateKey()));
-      } catch {
-        setState(ensureDay(createEmptyState(), getDateKey()));
-      } finally {
-        setReady(true);
-      }
+      setState(ensureDay(normalizeState(stored), getDateKey()));
+      setReady(true);
     });
     return () => {
       active = false;
@@ -111,30 +156,99 @@ export function useCircleState() {
 
   useEffect(() => {
     if (!ready) return;
-    window.localStorage.setItem(CIRCLE_OS_STORAGE_KEY, JSON.stringify(state));
+    void saveCircleState(state);
+  }, [ready, state]);
+
+  useEffect(() => {
+    const next = state.outbox.find((item) => !item.triedAt);
+    if (
+      !ready ||
+      !next ||
+      !state.ai.baseUrl ||
+      !state.ai.token ||
+      aiWorking.current
+    ) {
+      return;
+    }
+
+    aiWorking.current = true;
+    setState((current) => ({
+      ...current,
+      ai: { ...current.ai, status: "thinking", lastError: "" },
+      profile: {
+        ...current.profile,
+        profileCase: { ...current.profile.profileCase, status: "thinking" },
+      },
+    }));
+    void requestProfileUpdate(state, next.reason)
+      .then((result) => {
+        setState((current) => applyProfileResult(current, result, next.id));
+      })
+      .catch((error) => {
+        setState((current) =>
+          markProfileUpdateFailed(
+            current,
+            next.id,
+            error instanceof Error ? error.message : "Local AI is offline.",
+          ),
+        );
+      })
+      .finally(() => {
+        aiWorking.current = false;
+      });
   }, [ready, state]);
 
   const today = state.days[dateKey] ?? ensureDay(state, dateKey).days[dateKey];
 
-  function updateToday(transform: (day: CircleDay) => CircleDay) {
+  function updateToday(
+    transform: (day: CircleDay) => CircleDay,
+    reason?: string,
+  ) {
     setState((current) => {
       const currentWithDay = ensureDay(current, dateKey);
-      return {
+      const next = {
         ...currentWithDay,
         days: {
           ...currentWithDay.days,
           [dateKey]: transform(currentWithDay.days[dateKey]),
         },
       };
+      return reason ? queueProfileUpdate(next, reason) : next;
     });
   }
 
   function updateProfile(
     transform: (profile: CircleState["profile"]) => CircleState["profile"],
+    reason?: string,
   ) {
+    setState((current) => {
+      const next = {
+        ...current,
+        profile: transform(current.profile),
+      };
+      return reason ? queueProfileUpdate(next, reason) : next;
+    });
+  }
+
+  function updateState(transform: (state: CircleState) => CircleState) {
+    setState(transform);
+  }
+
+  function connectAi(baseUrl: string, token: string) {
     setState((current) => ({
       ...current,
-      profile: transform(current.profile),
+      ai: {
+        ...current.ai,
+        baseUrl: baseUrl.trim().replace(/\/+$/, ""),
+        token,
+        status: "ready",
+        lastError: "",
+      },
+      outbox: current.outbox.map((item) => ({
+        id: item.id,
+        reason: item.reason,
+        createdAt: item.createdAt,
+      })),
     }));
   }
 
@@ -143,7 +257,9 @@ export function useCircleState() {
     today,
     ready,
     dateKey,
+    connectAi,
     updateProfile,
+    updateState,
     updateToday,
   };
 }
@@ -152,7 +268,7 @@ export function OSFrame({
   active,
   children,
 }: {
-  active: "today" | "mirror";
+  active: "today" | "mirror" | "connect";
   children: ReactNode;
 }) {
   return (
@@ -164,7 +280,9 @@ export function OSFrame({
             <span className="mark mark-small" aria-hidden="true" />
             <span>THE CIRCLE OS</span>
           </Link>
-          <span className="os-local-status">Private · this device</span>
+          <Link className="os-local-status" href="/os/connect">
+            Private · this device
+          </Link>
         </header>
         <nav className="os-nav" aria-label="Circle OS">
           <Link className={active === "today" ? "active" : ""} href="/os">
@@ -181,7 +299,7 @@ export function OSFrame({
 }
 
 export function TodayExperience() {
-  const { state, today, ready, updateToday } = useCircleState();
+  const { state, today, ready, updateState, updateToday } = useCircleState();
   const router = useRouter();
   const [selectedPeriod, setSelectedPeriod] = useState("morning");
   const [dateLabel, setDateLabel] = useState("");
@@ -196,6 +314,7 @@ export function TodayExperience() {
   const [momentsText, setMomentsText] = useState("");
   const [momentHour, setMomentHour] = useState<number | null>(null);
   const [newMoment, setNewMoment] = useState("");
+  const [profileAnswer, setProfileAnswer] = useState("");
   useEffect(() => {
     if (
       ready &&
@@ -255,6 +374,7 @@ export function TodayExperience() {
         createdAt: new Date().toISOString(),
         ...fields,
       }),
+      "check-in",
     );
   }
 
@@ -338,6 +458,7 @@ export function TodayExperience() {
           day.timeBlocks.find((block) => block.id === id)?.createdAt ??
           new Date().toISOString(),
       }),
+      "day-log",
     );
     resetLogForm();
     setLogOpen(false);
@@ -366,7 +487,7 @@ export function TodayExperience() {
             }
           : block,
       ),
-    }));
+    }), "day-log");
     setNewMoment("");
     setMomentHour(null);
   }
@@ -450,6 +571,32 @@ export function TodayExperience() {
                 );
               })}
             </div>
+
+            {state.profile.profileCase.survey.nextQuestion ? (
+              <form
+                className="os-profile-question"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!profileAnswer.trim()) return;
+                  updateState((current) =>
+                    answerProfileQuestion(current, profileAnswer),
+                  );
+                  setProfileAnswer("");
+                }}
+              >
+                <label htmlFor="profile-answer">
+                  {state.profile.profileCase.survey.nextQuestion.text}
+                </label>
+                <div>
+                  <input
+                    id="profile-answer"
+                    value={profileAnswer}
+                    onChange={(event) => setProfileAnswer(event.target.value)}
+                  />
+                  <button type="submit">Save</button>
+                </div>
+              </form>
+            ) : null}
           </div>
         </section>
 

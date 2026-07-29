@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties, type FormEvent } from "react";
 import {
-  buildVisionAnalysis,
+  editProfileSession,
   minutesBetween,
   summarizeWeek,
 } from "../circle-os-model.js";
@@ -34,15 +34,17 @@ function formatMinutes(minutes: number) {
 }
 
 export default function CircleOSMirror() {
-  const { state, ready, updateProfile } = useCircleState();
+  const { state, ready, updateProfile, updateState } = useCircleState();
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
+  const [sessionDraft, setSessionDraft] = useState("");
   const [draft, setDraft] = useState({
     name: "",
     age: "",
     description: "",
   });
   const summary = summarizeWeek(state);
-  const analysis = buildVisionAnalysis(state);
+  const profileCase = state.profile.profileCase;
   const setupComplete = Boolean(
     ready &&
       state.profile.name &&
@@ -72,23 +74,87 @@ export default function CircleOSMirror() {
         gap: "",
         completedAt: new Date().toISOString(),
       },
-    }));
+      profileCase: {
+        ...profile.profileCase,
+        status: "waiting",
+        sessions: {
+          ...profile.profileCase.sessions,
+          typicalTuesday: {
+            ...profile.profileCase.sessions.typicalTuesday,
+            text: draft.description.trim(),
+            confidence: 0.5,
+            updatedAt: new Date().toISOString(),
+          },
+        },
+        survey: {
+          ...profile.profileCase.survey,
+          nextQuestion: {
+            id: "what-matters-1",
+            text: "Which part of that Tuesday matters most to you?",
+            target: "whatMatters",
+          },
+        },
+      },
+    }), "first-vision");
     setError("");
   }
 
-  function saveVisionField(
-    field: "preview" | "understanding" | "gap",
-    value: string,
+  function beginEdit(key: string) {
+    setEditing(key);
+    setSessionDraft(profileCase.sessions[key].text);
+  }
+
+  function saveSession(key: string) {
+    if (!sessionDraft.trim()) return;
+    updateState((current) =>
+      editProfileSession(current, key, sessionDraft),
+    );
+    setEditing(null);
+    setSessionDraft("");
+  }
+
+  function profileSession(
+    key: string,
+    label: string,
+    options: { feature?: boolean; locked?: boolean } = {},
   ) {
-    const text = value.trim();
-    if (!text) return;
-    updateProfile((profile) => ({
-      ...profile,
-      vision: {
-        ...profile.vision,
-        [field]: text,
-      },
-    }));
+    const session = profileCase.sessions[key];
+    const isEditing = editing === key;
+    return (
+      <article
+        className={options.feature ? "profile-session feature" : "profile-session"}
+      >
+        <div className="profile-session-head">
+          <p className="os-card-label">{label}</p>
+          {!options.locked ? (
+            <button type="button" onClick={() => beginEdit(key)}>
+              Edit
+            </button>
+          ) : null}
+        </div>
+        {options.locked ? (
+          <p className="profile-session-copy">
+            Answer {Math.max(0, 6 - profileCase.survey.answers.length)} more
+            check-ins to build this.
+          </p>
+        ) : isEditing ? (
+          <div className="profile-session-edit">
+            <textarea
+              aria-label={`Edit ${label}`}
+              value={sessionDraft}
+              onChange={(event) => setSessionDraft(event.target.value)}
+              rows={6}
+              autoFocus
+            />
+            <button type="button" onClick={() => saveSession(key)}>
+              Save
+            </button>
+          </div>
+        ) : (
+          <p className="profile-session-copy">{session.text}</p>
+        )}
+      </article>
+    );
   }
 
   if (!setupComplete) {
@@ -167,16 +233,19 @@ export default function CircleOSMirror() {
               {state.profile.name}, {state.profile.age}
             </p>
           </div>
+          <p className="vision-ai-state" aria-live="polite">
+            {profileCase.status === "thinking"
+              ? "Updating…"
+              : state.ai.status === "offline"
+                ? "AI will update later"
+                : ""}
+          </p>
         </header>
 
-        <section className="vision-preview-card" aria-label="Typical Tuesday">
-          <textarea
-            aria-label="Edit your typical Tuesday"
-            defaultValue={analysis.preview}
-            key={`preview-${analysis.preview}`}
-            onBlur={(event) => saveVisionField("preview", event.target.value)}
-            rows={6}
-          />
+        <section className="vision-profile-case" aria-label="Your profile case">
+          {profileSession("typicalTuesday", "Typical Tuesday", {
+            feature: true,
+          })}
         </section>
 
         <header className="mirror-intro mirror-week-intro">
@@ -312,29 +381,21 @@ export default function CircleOSMirror() {
           </div>
         </section>
 
-        <section className="vision-analysis" aria-label="Understanding and gap">
-          <article>
-            <p className="os-card-label">How I understand you</p>
-            <textarea
-              aria-label="Edit how the app understands you"
-              defaultValue={analysis.understanding}
-              key={`understanding-${analysis.understanding}`}
-              onBlur={(event) =>
-                saveVisionField("understanding", event.target.value)
-              }
-              rows={5}
-            />
-          </article>
-          <article>
-            <p className="os-card-label">The gap</p>
-            <textarea
-              aria-label="Edit the gap"
-              defaultValue={analysis.gap}
-              key={`gap-${analysis.gap}`}
-              onBlur={(event) => saveVisionField("gap", event.target.value)}
-              rows={5}
-            />
-          </article>
+        <header className="mirror-intro analysis-intro">
+          <div>
+            <p className="os-eyebrow">AI analysis</p>
+            <h1>What the pattern may mean</h1>
+          </div>
+        </header>
+
+        <section className="vision-analysis" aria-label="AI profile analysis">
+          {profileSession("currentLife", "Current life")}
+          {profileSession("whatMatters", "AI analysis")}
+          {profileSession("gap", "The gap")}
+          {profileSession("missionStatement", "Mission statement")}
+          {profileSession("personality", "Personality", {
+            locked: profileCase.survey.answers.length < 6,
+          })}
         </section>
       </main>
     </OSFrame>

@@ -60,7 +60,7 @@ test("server-renders the functional Circle OS Today route", async () => {
   const html = await response.text();
   assert.match(html, /THE CIRCLE OS/);
   assert.match(html, /How.{0,10}your energy\?/);
-  assert.match(html, /Put the book where you will see it tonight\./);
+  assert.match(html, /Do one small thing that feels like you\./);
   assert.match(html, /Mission/);
   assert.match(html, /Your day, hour by hour/);
   assert.match(html, /Add main activity/);
@@ -84,4 +84,15 @@ test("server-renders the first-time Circle OS Vision setup", async () => {
   assert.match(html, /One paragraph is enough\./);
   assert.doesNotMatch(html, />Gender</);
   assert.match(html, /Begin/);
+});
+
+test("server-renders the private AI connection route", async () => {
+  const response = await render("/os/connect");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /Connect your computer\./);
+  assert.match(html, />Address</);
+  assert.match(html, />Key</);
+  assert.match(html, /Your profile stays on this phone\./);
 });

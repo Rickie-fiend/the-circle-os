@@ -10,6 +10,8 @@
     "build": "vinext build",
     "build:vercel": "next build",
     "start": "vinext start",
+    "ai": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File local-ai/start-local-ai.ps1",
+    "ai:phone": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File local-ai/setup-phone-ai.ps1",
     "test": "npm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"

@@ -1,4 +1,14 @@
-export const CIRCLE_OS_STORAGE_KEY = "circle-os-state-v1";
+export const CIRCLE_OS_STORAGE_KEY = "circle-os-state-v2";
+export const CIRCLE_OS_LEGACY_STORAGE_KEY = "circle-os-state-v1";
+
+export const PROFILE_SESSION_KEYS = [
+  "typicalTuesday",
+  "currentLife",
+  "whatMatters",
+  "gap",
+  "missionStatement",
+  "personality",
+];
 
 export const DAY_PERIODS = [
   { id: "morning", label: "Morning", hours: "5–10" },
@@ -21,18 +31,61 @@ export const ACTIVITIES = [
 export const MOODS = ["Clear", "Calm", "Restless", "Heavy", "Alive"];
 
 const DEFAULT_MISSION = {
-  text: "Put the book where you will see it tonight.",
-  why: "Make the next page easier to begin.",
-  identity: "Reader",
+  text: "Do one small thing that feels like you.",
+  why: "A fulfilled day does not need to look impressive.",
+  identity: "Yourself",
   completed: false,
   completedAt: null,
 };
 
+function createProfileSession(text = "", confidence = 0) {
+  return {
+    text,
+    confidence,
+    userEdited: false,
+    updatedAt: null,
+  };
+}
+
+function createProfileCase() {
+  return {
+    status: "waiting",
+    updatedAt: null,
+    sessions: {
+      typicalTuesday: createProfileSession(),
+      currentLife: createProfileSession(
+        "There is not enough of your real life recorded yet.",
+      ),
+      whatMatters: createProfileSession(
+        "This is still unclear. Your check-ins will help.",
+      ),
+      gap: createProfileSession(
+        "There is not enough evidence to describe the gap yet.",
+      ),
+      missionStatement: createProfileSession(
+        "Live in a way that feels honest, present, and like your own life.",
+      ),
+      personality: createProfileSession(),
+    },
+    survey: {
+      answers: [],
+      nextQuestion: null,
+    },
+  };
+}
+
 export function createEmptyState() {
   return {
-    version: 1,
+    version: 2,
+    ai: {
+      baseUrl: "",
+      token: "",
+      status: "not-connected",
+      lastError: "",
+      lastRunAt: null,
+    },
     profile: {
-      identityFocus: "Reader",
+      identityFocus: "Yourself",
       name: "",
       age: null,
       vision: {
@@ -42,14 +95,16 @@ export function createEmptyState() {
         gap: "",
         completedAt: null,
       },
+      profileCase: createProfileCase(),
     },
     days: {},
+    outbox: [],
   };
 }
 
 export function normalizeState(state) {
   const empty = createEmptyState();
-  if (!state || state.version !== 1 || !state.days || !state.profile) {
+  if (!state || !state.days || !state.profile) {
     return empty;
   }
 
@@ -71,8 +126,35 @@ export function normalizeState(state) {
     state.profile.vision?.description ||
     (typeof oldTuesday === "string" ? oldTuesday : oldDescription);
 
+  const storedCase = state.profile.profileCase;
+  const fallbackCase = createProfileCase();
+  const sessions = Object.fromEntries(
+    PROFILE_SESSION_KEYS.map((key) => [
+      key,
+      {
+        ...fallbackCase.sessions[key],
+        ...(storedCase?.sessions?.[key] ?? {}),
+      },
+    ]),
+  );
+  if (!sessions.typicalTuesday.text) {
+    sessions.typicalTuesday.text = state.profile.vision?.preview || description;
+  }
+  if (!sessions.whatMatters.text && state.profile.vision?.understanding) {
+    sessions.whatMatters.text = state.profile.vision.understanding;
+  }
+  if (!sessions.gap.text && state.profile.vision?.gap) {
+    sessions.gap.text = state.profile.vision.gap;
+  }
+
   return {
+    ...empty,
     ...state,
+    version: 2,
+    ai: {
+      ...empty.ai,
+      ...state.ai,
+    },
     profile: {
       ...empty.profile,
       ...state.profile,
@@ -84,8 +166,218 @@ export function normalizeState(state) {
         completedAt:
           state.profile.vision?.completedAt || oldTuesday?.completedAt || null,
       },
+      profileCase: {
+        ...fallbackCase,
+        ...storedCase,
+        sessions,
+        survey: {
+          ...fallbackCase.survey,
+          ...storedCase?.survey,
+          answers: Array.isArray(storedCase?.survey?.answers)
+            ? storedCase.survey.answers
+            : [],
+        },
+      },
+    },
+    days: state.days,
+    outbox: Array.isArray(state.outbox) ? state.outbox : [],
+  };
+}
+
+export function queueProfileUpdate(state, reason) {
+  const alreadyQueued = state.outbox.some((item) => item.reason === reason);
+  if (alreadyQueued) return state;
+  return {
+    ...state,
+    outbox: [
+      ...state.outbox,
+      {
+        id:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `ai-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        reason,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    profile: {
+      ...state.profile,
+      profileCase: {
+        ...state.profile.profileCase,
+        status: "waiting",
+      },
     },
   };
+}
+
+function cleanSession(session, fallback) {
+  return {
+    text:
+      typeof session?.text === "string" && session.text.trim()
+        ? session.text.trim()
+        : fallback.text,
+    confidence:
+      typeof session?.confidence === "number"
+        ? Math.max(0, Math.min(1, session.confidence))
+        : fallback.confidence,
+    userEdited: fallback.userEdited,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export function applyProfileResult(state, result, outboxId) {
+  const currentCase = state.profile.profileCase;
+  const incoming = result?.sessions ?? {};
+  const sessions = Object.fromEntries(
+    PROFILE_SESSION_KEYS.map((key) => {
+      const current = currentCase.sessions[key];
+      return [
+        key,
+        current.userEdited ? current : cleanSession(incoming[key], current),
+      ];
+    }),
+  );
+  const nextQuestion =
+    result?.nextQuestion &&
+    typeof result.nextQuestion.id === "string" &&
+    typeof result.nextQuestion.text === "string"
+      ? {
+          id: result.nextQuestion.id,
+          text: result.nextQuestion.text.trim(),
+          target:
+            typeof result.nextQuestion.target === "string"
+              ? result.nextQuestion.target
+              : "whatMatters",
+        }
+      : null;
+  const missionText =
+    typeof result?.dailyMission === "string" && result.dailyMission.trim()
+      ? result.dailyMission.trim()
+      : state.days[getDateKey()]?.mission?.text;
+
+  return {
+    ...state,
+    ai: {
+      ...state.ai,
+      status: "ready",
+      lastError: "",
+      lastRunAt: new Date().toISOString(),
+    },
+    profile: {
+      ...state.profile,
+      vision: {
+        ...state.profile.vision,
+        preview: sessions.typicalTuesday.text,
+        understanding: sessions.whatMatters.text,
+        gap: sessions.gap.text,
+      },
+      profileCase: {
+        ...currentCase,
+        status: "ready",
+        updatedAt: new Date().toISOString(),
+        sessions,
+        survey: {
+          ...currentCase.survey,
+          nextQuestion,
+        },
+      },
+    },
+    days: missionText
+      ? {
+          ...state.days,
+          [getDateKey()]: {
+            ...state.days[getDateKey()],
+            mission: {
+              ...state.days[getDateKey()]?.mission,
+              text: missionText,
+              identity: "Yourself",
+            },
+          },
+        }
+      : state.days,
+    outbox: state.outbox.filter((item) => item.id !== outboxId),
+  };
+}
+
+export function markProfileUpdateFailed(state, outboxId, message) {
+  return {
+    ...state,
+    ai: {
+      ...state.ai,
+      status: "offline",
+      lastError: message,
+    },
+    profile: {
+      ...state.profile,
+      profileCase: {
+        ...state.profile.profileCase,
+        status: "waiting",
+      },
+    },
+    outbox: state.outbox.map((item) =>
+      item.id === outboxId ? { ...item, triedAt: new Date().toISOString() } : item,
+    ),
+  };
+}
+
+export function editProfileSession(state, key, text) {
+  const current = state.profile.profileCase.sessions[key];
+  if (!current || !text.trim()) return state;
+  const session = {
+    ...current,
+    text: text.trim(),
+    userEdited: true,
+    confidence: 1,
+    updatedAt: new Date().toISOString(),
+  };
+  return {
+    ...state,
+    profile: {
+      ...state.profile,
+      vision: {
+        ...state.profile.vision,
+        ...(key === "typicalTuesday" ? { preview: session.text } : {}),
+        ...(key === "whatMatters" ? { understanding: session.text } : {}),
+        ...(key === "gap" ? { gap: session.text } : {}),
+      },
+      profileCase: {
+        ...state.profile.profileCase,
+        sessions: {
+          ...state.profile.profileCase.sessions,
+          [key]: session,
+        },
+      },
+    },
+  };
+}
+
+export function answerProfileQuestion(state, answer) {
+  const question = state.profile.profileCase.survey.nextQuestion;
+  if (!question || !answer.trim()) return state;
+  const next = {
+    ...state,
+    profile: {
+      ...state.profile,
+      profileCase: {
+        ...state.profile.profileCase,
+        survey: {
+          ...state.profile.profileCase.survey,
+          answers: [
+            ...state.profile.profileCase.survey.answers,
+            {
+              questionId: question.id,
+              question: question.text,
+              answer: answer.trim(),
+              target: question.target,
+              answeredAt: new Date().toISOString(),
+            },
+          ],
+          nextQuestion: null,
+        },
+      },
+    },
+  };
+  return queueProfileUpdate(next, "question-answered");
 }
 
 export function getDateKey(date = new Date()) {
