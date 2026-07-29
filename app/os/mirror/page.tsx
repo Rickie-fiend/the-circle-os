@@ -7,7 +7,11 @@ import {
   minutesBetween,
   summarizeWeek,
 } from "../circle-os-model.js";
-import { OSFrame, useCircleState } from "../circle-os-shell";
+import {
+  OSFrame,
+  useCircleState,
+  type TimeBlock,
+} from "../circle-os-shell";
 
 function formatMinutes(minutes: number) {
   const hours = Math.floor(minutes / 60);
@@ -86,7 +90,7 @@ export default function CircleOSMirror() {
                 <span>{item.label}</span>
                 <div className="time-river-track">
                   {item.day.timeBlocks.length ? (
-                    item.day.timeBlocks.map((block) => {
+                    item.day.timeBlocks.map((block: TimeBlock) => {
                       const minutes = minutesBetween(block.start, block.end);
                       return (
                         <i

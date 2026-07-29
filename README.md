@@ -1,98 +1,71 @@
-# vinext-starter
+# The Circle OS
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+The Circle OS is a free lifestyle-designing app. It helps a person record how
+they actually live, complete one meaningful identity mission, and see patterns
+between daily life and the person they want to become.
 
-## Prerequisites
+## Current product
+
+- `/os` — Today: energy, mood, mission, and an awake-day hourly timeline.
+- `/os/mirror` — Vision: evidence coverage, time, energy, mood, identity, and
+  cautious patterns.
+- `/` — The Circle website.
+- `/brand` — The Circle brand system.
+
+The Phase 1 test deliberately excludes surveys, accounts, cloud sync, Oscar,
+chat, AI, the 3D Room, community, and courses.
+
+## Current data behavior
+
+The app does not have a personal-data backend yet. Each browser stores its own
+records in `localStorage` under `circle-os-state-v1`.
+
+Consequences:
+
+- no account is required;
+- a phone and computer do not sync;
+- different testers never see each other's data;
+- clearing browser data can remove the records.
+
+See [Production architecture](docs/PRODUCTION_ARCHITECTURE.md) for the current
+runtime and the requirements for durable accounts and sync.
+
+## Local development
+
+Requirements:
 
 - Node.js `>=22.13.0`
-
-## Quick Start
+- npm
 
 ```bash
 npm install
 npm run dev
-npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+## Verification
 
-## Included Shape
-
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```bash
+npm test
+npm run lint
+npm run build:vercel
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+- `npm test` verifies the existing Vinext/Cloudflare-compatible build and
+  rendered routes.
+- `npm run build:vercel` verifies the native Next.js production build used by
+  Vercel.
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+## Deployment targets
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+- Sites/Vinext uses `npm run build`.
+- Vercel uses `npm run build:vercel` through `vercel.json`.
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+No production secrets are currently required because the online test is
+device-local.
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+## Product phases
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+1. Online lifestyle-design test: Today, Mission, hourly reality, and Vision.
+2. Foundation surveys, personal mission statement, identity and dream-life
+   gaps, durable accounts, Oscar, chat, and optional local/API AI.
+3. The living 3D Room and carefully separated Circle membership experiences.

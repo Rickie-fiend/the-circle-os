@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
-  ACTIVITIES,
   CIRCLE_OS_STORAGE_KEY,
   DAY_PERIODS,
   MOODS,
@@ -61,6 +60,22 @@ const AWAKE_HOURS = Array.from({ length: 17 }, (_, index) => index + 7);
 
 function hourLabel(hour: number) {
   return `${String(hour).padStart(2, "0")}:00`;
+}
+
+function classifyActivity(title: string) {
+  const normalized = title.toLowerCase();
+  if (/\b(read|book|study)\b/.test(normalized)) return "Reading";
+  if (/\b(walk|outside|park|nature)\b/.test(normalized)) return "Outside";
+  if (/\b(gym|run|exercise|workout|sport)\b/.test(normalized)) return "Exercise";
+  if (/\b(friend|family|call|date|social)\b/.test(normalized)) return "Social";
+  if (/\b(rest|nap|sleep|relax)\b/.test(normalized)) return "Rest";
+  if (/\b(game|movie|youtube|netflix|entertainment)\b/.test(normalized)) {
+    return "Entertainment";
+  }
+  if (/\b(work|write|code|design|create|focus|project)\b/.test(normalized)) {
+    return "Focus";
+  }
+  return "Life admin";
 }
 
 function freshTimeRange() {
@@ -181,9 +196,10 @@ export function TodayExperience() {
   const initialRange = useMemo(() => freshTimeRange(), []);
   const [start, setStart] = useState(initialRange.start);
   const [end, setEnd] = useState(initialRange.end);
-  const [activity, setActivity] = useState(ACTIVITIES[0]);
   const [blockTitle, setBlockTitle] = useState("");
   const [momentsText, setMomentsText] = useState("");
+  const [momentHour, setMomentHour] = useState<number | null>(null);
+  const [newMoment, setNewMoment] = useState("");
   const greeting = useMemo(() => {
     const period = getDayPeriod(new Date().getHours());
     if (period === "morning") return "Good morning.";
@@ -224,18 +240,18 @@ export function TodayExperience() {
     const range = freshTimeRange();
     setStart(range.start);
     setEnd(range.end);
-    setActivity(ACTIVITIES[0]);
     setBlockTitle("");
     setMomentsText("");
     setEditingId(null);
     setFormError("");
+    setMomentHour(null);
+    setNewMoment("");
   }
 
   function openEdit(block: TimeBlock) {
     setEditingId(block.id);
     setStart(block.start);
     setEnd(block.end);
-    setActivity(block.activity);
     setBlockTitle(block.title ?? block.activity);
     setMomentsText(
       block.moments?.join("\n") ?? (block.note ? block.note : ""),
@@ -278,7 +294,7 @@ export function TodayExperience() {
         id,
         start,
         end,
-        activity,
+        activity: classifyActivity(blockTitle),
         note: "",
         title: blockTitle.trim(),
         moments: momentsText
@@ -292,6 +308,34 @@ export function TodayExperience() {
     );
     resetLogForm();
     setLogOpen(false);
+  }
+
+  function addMoment(event: FormEvent<HTMLFormElement>, hour: number) {
+    event.preventDefault();
+    const moment = newMoment.trim();
+    if (!moment) return;
+    const startTime = hourLabel(hour);
+    updateToday((day) => ({
+      ...day,
+      timeBlocks: day.timeBlocks.map((block) =>
+        block.start === startTime
+          ? {
+              ...block,
+              note: "",
+              moments: [
+                ...(block.moments?.length
+                  ? block.moments
+                  : block.note
+                    ? [block.note]
+                    : []),
+                moment,
+              ],
+            }
+          : block,
+      ),
+    }));
+    setNewMoment("");
+    setMomentHour(null);
   }
 
   function deleteTimeBlock(id: string) {
@@ -412,66 +456,7 @@ export function TodayExperience() {
               <h2 id="day-heading">Your day, hour by hour</h2>
               <span className="os-day-hint">One main activity + small moments</span>
             </div>
-            {isLogOpen ? (
-              <button
-                className="os-close-log"
-                type="button"
-                onClick={() => {
-                  resetLogForm();
-                  setLogOpen(false);
-                }}
-              >
-                Close
-              </button>
-            ) : null}
           </div>
-
-          {isLogOpen ? (
-            <form className="os-log-form" onSubmit={saveTimeBlock}>
-              <p className="os-hour-being-edited">
-                {start}–{end}
-              </p>
-              <label className="os-main-activity-field">
-                <span>Main activity</span>
-                <input
-                  type="text"
-                  value={blockTitle}
-                  onChange={(event) => setBlockTitle(event.target.value)}
-                  placeholder="Walk, work, lunch…"
-                  maxLength={60}
-                  autoFocus
-                  required
-                />
-              </label>
-              <label>
-                <span>Kind of time</span>
-                <select
-                  value={activity}
-                  onChange={(event) => setActivity(event.target.value)}
-                >
-                  {ACTIVITIES.map((item) => (
-                    <option value={item} key={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="os-note-field">
-                <span>Small moments · optional, one per line</span>
-                <textarea
-                  value={momentsText}
-                  onChange={(event) => setMomentsText(event.target.value)}
-                  placeholder={"Wrote down a few thoughts\nCalled a friend"}
-                  maxLength={300}
-                  rows={3}
-                />
-              </label>
-              {formError ? <p className="os-form-error">{formError}</p> : null}
-              <button className="os-save-log" type="submit">
-                {editingId ? "Save this hour" : "Add this hour"}
-              </button>
-            </form>
-          ) : null}
 
           <div className="os-timeline">
             <div className="os-sleep-block">
@@ -483,6 +468,7 @@ export function TodayExperience() {
               const block = today.timeBlocks.find(
                 (item) => item.start === slotStart,
               );
+              const editingMain = isLogOpen && start === slotStart;
               const moments =
                 block?.moments?.length
                   ? block.moments
@@ -498,10 +484,34 @@ export function TodayExperience() {
                   <div className="os-time-range">
                     <strong>{slotStart}</strong>
                   </div>
-                  {block ? (
+                  {editingMain ? (
+                    <form
+                      className="os-inline-main-form"
+                      onSubmit={saveTimeBlock}
+                    >
+                      <input
+                        type="text"
+                        value={blockTitle}
+                        onChange={(event) => setBlockTitle(event.target.value)}
+                        placeholder="Type the main activity"
+                        aria-label={`Main activity at ${slotStart}`}
+                        maxLength={60}
+                        autoFocus
+                        required
+                      />
+                      <button type="submit" aria-label="Save main activity">
+                        ✓
+                      </button>
+                      {formError ? (
+                        <span className="os-form-error">{formError}</span>
+                      ) : null}
+                    </form>
+                  ) : block ? (
                     <>
                       <div className="os-log-copy">
-                        <p>{block.title ?? block.activity}</p>
+                        <button type="button" onClick={() => openEdit(block)}>
+                          {block.title ?? block.activity}
+                        </button>
                         <span className="os-time-category">{block.activity}</span>
                         {moments.length ? (
                           <ul>
@@ -512,14 +522,12 @@ export function TodayExperience() {
                         ) : null}
                       </div>
                       <div className="os-log-actions">
-                        <button type="button" onClick={() => openEdit(block)}>
-                          Edit
-                        </button>
                         <button
                           type="button"
                           onClick={() => deleteTimeBlock(block.id)}
+                          aria-label={`Delete ${block.title ?? block.activity}`}
                         >
-                          Delete
+                          ×
                         </button>
                       </div>
                     </>
@@ -530,9 +538,45 @@ export function TodayExperience() {
                       onClick={() => openHour(hour)}
                     >
                       Add main activity
-                      <span aria-hidden="true">+</span>
                     </button>
                   )}
+                  {!editingMain ? (
+                    <button
+                      className="os-add-moment"
+                      type="button"
+                      aria-label={`Add a small moment at ${slotStart}`}
+                      onClick={() => {
+                        if (!block) {
+                          openHour(hour);
+                          return;
+                        }
+                        setMomentHour(hour);
+                        setNewMoment("");
+                      }}
+                    >
+                      +
+                    </button>
+                  ) : null}
+                  {momentHour === hour && block ? (
+                    <form
+                      className="os-inline-moment-form"
+                      onSubmit={(event) => addMoment(event, hour)}
+                    >
+                      <span aria-hidden="true">+</span>
+                      <input
+                        type="text"
+                        value={newMoment}
+                        onChange={(event) => setNewMoment(event.target.value)}
+                        placeholder="Add a smaller moment"
+                        aria-label={`Small moment at ${slotStart}`}
+                        maxLength={100}
+                        autoFocus
+                      />
+                      <button type="submit" aria-label="Save small moment">
+                        ✓
+                      </button>
+                    </form>
+                  ) : null}
                 </article>
               );
             })}

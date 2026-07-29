@@ -329,11 +329,22 @@
 .circle-os .os-mission > button {
   background: #e36b37;
   border: 0;
-  border-radius: 14px;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgb(227 107 55 / 0.18);
   color: #fff;
   font-size: 0.67rem;
-  min-height: 48px;
-  padding: 0.65rem 0.95rem;
+  min-height: 62px;
+  min-width: 96px;
+  padding: 0.8rem 1.1rem;
+  transition:
+    transform 120ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.circle-os .os-mission > button:active {
+  box-shadow: 0 3px 10px rgb(227 107 55 / 0.2);
+  transform: scale(0.95);
 }
 
 .circle-os .os-mission > button span {
@@ -467,7 +478,7 @@
 .circle-os .os-timeline article {
   border-bottom-color: rgb(241 239 232 / 0.08);
   gap: 0.75rem;
-  grid-template-columns: 54px 1fr;
+  grid-template-columns: 54px 1fr auto;
   min-height: 70px;
   padding: 0.7rem 0;
 }
@@ -483,16 +494,80 @@
   color: rgb(241 239 232 / 0.34);
   display: flex;
   font-size: 0.64rem;
-  justify-content: space-between;
   min-height: 40px;
   padding: 0;
   text-align: left;
   width: 100%;
 }
 
-.circle-os .os-empty-hour span {
+.circle-os .os-add-moment {
+  align-self: center;
+  background: transparent;
+  border: 0;
   color: #e36b37;
   font-size: 1rem;
+  grid-column: 3;
+  grid-row: 1;
+  min-height: 42px;
+  min-width: 42px;
+  padding: 0;
+}
+
+.circle-os .os-inline-main-form,
+.circle-os .os-inline-moment-form {
+  align-items: center;
+  display: grid;
+  gap: 0.45rem;
+  grid-column: 2 / 4;
+  grid-template-columns: 1fr auto;
+  width: 100%;
+}
+
+.circle-os .os-inline-main-form input,
+.circle-os .os-inline-moment-form input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #e36b37;
+  color: #f1efe8;
+  font: inherit;
+  min-height: 42px;
+  outline: 0;
+  width: 100%;
+}
+
+.circle-os .os-inline-main-form > button,
+.circle-os .os-inline-moment-form > button {
+  background: #e36b37;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  height: 34px;
+  padding: 0;
+  width: 34px;
+}
+
+.circle-os .os-inline-main-form .os-form-error {
+  grid-column: 1 / -1;
+}
+
+.circle-os .os-inline-moment-form {
+  grid-column: 2 / 4;
+  grid-row: 3;
+  grid-template-columns: auto 1fr auto;
+  padding-bottom: 0.4rem;
+}
+
+.circle-os .os-inline-moment-form > span {
+  color: #e36b37;
+}
+
+.circle-os .os-log-copy > button {
+  background: transparent;
+  border: 0;
+  color: #f1efe8;
+  font-size: 1rem;
+  padding: 0;
+  text-align: left;
 }
 
 .circle-os .os-time-category {
@@ -527,6 +602,7 @@
 }
 
 .circle-os .os-log-actions button {
+  color: rgb(241 239 232 / 0.32);
   min-height: 32px;
   padding: 0.25rem 0.5rem 0.25rem 0;
 }
