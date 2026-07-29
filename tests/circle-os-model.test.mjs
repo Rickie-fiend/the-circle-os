@@ -15,6 +15,7 @@ import {
   getDayPeriod,
   minutesBetween,
   normalizeState,
+  queueSuggestion,
   summarizeWeek,
   upsertTimeBlock,
 } from "../app/os/circle-os-model.js";
@@ -249,6 +250,17 @@ test("the editable check-in note can be changed or cleared", () => {
     ),
     false,
   );
+});
+
+test("suggestions wait safely in the phone outbox", () => {
+  const state = queueSuggestion(
+    createEmptyState(),
+    "Let me draw how I feel.",
+  );
+
+  assert.equal(state.outbox.length, 1);
+  assert.equal(state.outbox[0].reason, "suggestion");
+  assert.equal(state.outbox[0].message, "Let me draw how I feel.");
 });
 
 test("weekly Vision keeps the person's own log words", () => {

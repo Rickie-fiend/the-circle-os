@@ -1710,6 +1710,68 @@
   white-space: pre-wrap;
 }
 
+.circle-os .vision-suggestion-session {
+  margin-top: 18px;
+  padding: 0 !important;
+}
+
+.circle-os .vision-suggestion-app {
+  background:
+    radial-gradient(circle at 88% 8%, rgb(227 107 55 / 0.1), transparent 38%),
+    #222119;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 28px;
+  color: #f1efe8;
+  padding: 22px;
+}
+
+.circle-os .vision-suggestion-app h2 {
+  font-size: 1.55rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  margin: 0.8rem 0 1.4rem;
+}
+
+.circle-os .vision-suggestion-app form {
+  display: grid;
+  gap: 12px;
+}
+
+.circle-os .vision-suggestion-app textarea {
+  background: #191813;
+  border: 1px solid rgb(241 239 232 / 0.1);
+  border-radius: 18px;
+  color: #f1efe8;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  min-height: 112px;
+  outline: 0;
+  padding: 15px;
+  resize: vertical;
+}
+
+.circle-os .vision-suggestion-app textarea:focus {
+  border-color: #e36b37;
+}
+
+.circle-os .vision-suggestion-app button {
+  background: #e36b37;
+  border: 0;
+  border-radius: 16px;
+  color: #fff8f1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-height: 48px;
+}
+
+.circle-os .vision-suggestion-saved {
+  color: rgb(241 239 232 / 0.58);
+  font-size: 0.68rem;
+  margin: 0.85rem 0 0;
+}
+
 .circle-os .os-connect {
   display: block;
 }
@@ -2210,7 +2272,8 @@
   .circle-os .vision-profile-case,
   .circle-os .vision-analysis,
   .circle-os .mirror-week-intro,
-  .circle-os .analysis-intro {
+  .circle-os .analysis-intro,
+  .circle-os .vision-suggestion-session {
     grid-column: 1 / -1;
   }
 

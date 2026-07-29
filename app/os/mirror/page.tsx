@@ -10,6 +10,7 @@ import {
   editProfileSession,
   minutesBetween,
   queueProfileUpdate,
+  queueSuggestion,
   summarizeWeek,
 } from "../circle-os-model.js";
 import {
@@ -63,6 +64,8 @@ export default function CircleOSMirror() {
   const [seenWeekJourney, setSeenWeekJourney] = useState("");
   const [seenProfileJourney, setSeenProfileJourney] = useState("");
   const [sessionDraft, setSessionDraft] = useState("");
+  const [suggestionDraft, setSuggestionDraft] = useState("");
+  const [suggestionSaved, setSuggestionSaved] = useState(false);
   const [draft, setDraft] = useState({
     name: "",
     age: "",
@@ -151,6 +154,14 @@ export default function CircleOSMirror() {
     );
     setEditing(null);
     setSessionDraft("");
+  }
+
+  function saveSuggestion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!suggestionDraft.trim()) return;
+    updateState((current) => queueSuggestion(current, suggestionDraft));
+    setSuggestionDraft("");
+    setSuggestionSaved(true);
   }
 
   function profileSession(
@@ -562,6 +573,35 @@ export default function CircleOSMirror() {
                 {profileArticleSection("personality", "Personality")}
               </article>
           </SwipeSession>
+        </section>
+
+        <section
+          className="vision-suggestion-session"
+          aria-label="Suggestion app"
+        >
+          <article className="vision-suggestion-app">
+            <p className="os-card-label">Suggestion</p>
+            <h2>What should be better?</h2>
+            <form onSubmit={saveSuggestion}>
+              <textarea
+                aria-label="Your suggestion"
+                maxLength={800}
+                placeholder="Write one idea."
+                rows={4}
+                value={suggestionDraft}
+                onChange={(event) => {
+                  setSuggestionDraft(event.target.value);
+                  setSuggestionSaved(false);
+                }}
+              />
+              <button type="submit">Send</button>
+            </form>
+            {suggestionSaved ? (
+              <p className="vision-suggestion-saved" role="status">
+                Saved. Thank you.
+              </p>
+            ) : null}
+          </article>
         </section>
       </main>
     </OSFrame>

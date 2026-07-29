@@ -19,6 +19,7 @@ import {
 import {
   createEmptyState,
   queueProfileUpdate,
+  queueSuggestion,
 } from "../app/os/circle-os-model.js";
 
 function firstVision(name = "Sai") {
@@ -229,6 +230,31 @@ test("public phones receive separate private Obsidian profiles", async () => {
     );
     const refreshedProfile = await refreshed.json();
     assert.equal(refreshedProfile.state.profile.profileCase.status, "ready");
+
+    const suggestionState = queueSuggestion(
+      refreshedProfile.state,
+      "Let me draw how I feel.",
+    );
+    const suggestionResponse = await fetch(
+      `${baseUrl}/profiles/${created.profileId}/sync`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${created.accessKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ state: suggestionState }),
+      },
+    );
+    assert.equal(suggestionResponse.status, 200);
+    assert.match(
+      readFileSync(join(vaultPath, "Suggestions.md"), "utf8"),
+      /Let me draw how I feel\./,
+    );
+    assert.match(
+      readFileSync(firstProfilePath, "utf8"),
+      /analysis_pending: false/,
+    );
   } finally {
     await new Promise((resolve) => server.close(resolve));
     rmSync(vaultPath, { recursive: true, force: true });

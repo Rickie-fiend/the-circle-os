@@ -98,6 +98,21 @@ a {
   letter-spacing: 0.18em;
 }
 
+.wordmark > a {
+  align-items: center;
+  display: inline-flex;
+}
+
+.wordmark-secret {
+  border-radius: 50%;
+  touch-action: manipulation;
+}
+
+.wordmark-secret:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
 .mark {
   border: 2px solid var(--accent);
   border-radius: 48% 52% 47% 53% / 52% 47% 53% 48%;

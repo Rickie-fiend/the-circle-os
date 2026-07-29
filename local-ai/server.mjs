@@ -561,6 +561,39 @@ ${rows.length ? rows.join("\n") : "No profiles yet."}
   );
 }
 
+function saveSuggestions(vaultPath, profileId, state, outbox = []) {
+  const suggestions = outbox.filter(
+    (item) =>
+      item?.reason === "suggestion" &&
+      text(item.id, 120) &&
+      text(item.message, 800),
+  );
+  if (!suggestions.length) return;
+
+  const path = join(vaultPath, "Suggestions.md");
+  let markdown = existsSync(path)
+    ? readFileSync(path, "utf8")
+    : `# Circle OS Suggestions
+
+Ideas sent from the Suggestion app. Review here before deciding what to build.
+`;
+  for (const item of suggestions) {
+    const id = text(item.id, 120);
+    if (markdown.includes(`<!-- suggestion-id: ${id} -->`)) continue;
+    markdown += `
+
+## ${text(item.createdAt, 80) || now()}
+
+<!-- suggestion-id: ${id} -->
+
+From: ${markdownText(state.profile.name, profileId)}
+
+${text(item.message, 800)}
+`;
+  }
+  writeAtomic(path, `${markdown.trim()}\n`);
+}
+
 function legacyProof(value) {
   const state = normalizeState(value);
   return hash(
@@ -748,6 +781,7 @@ export function createCircleAiServer(options = {}) {
           readProfileState(vaultPath, profileId),
           phoneState,
         );
+        saveSuggestions(vaultPath, profileId, state, input?.state?.outbox);
         const saved = saveProfileState(vaultPath, profileId, state, {
           analysisPending: true,
         });
@@ -790,8 +824,17 @@ export function createCircleAiServer(options = {}) {
             json(response, 404, { error: "Profile not found." }, origin);
             return;
           }
-          const pending = Boolean(input?.state?.outbox?.length);
+          const profileOutbox = Array.isArray(input?.state?.outbox)
+            ? input.state.outbox.filter((item) => item?.reason !== "suggestion")
+            : [];
+          const pending = profileOutbox.length > 0;
           const merged = mergeClientState(current, input.state);
+          saveSuggestions(
+            vaultPath,
+            profileId,
+            merged,
+            input?.state?.outbox,
+          );
           merged.profile.profileCase.status = pending
             ? "waiting"
             : current.profile.profileCase.status;

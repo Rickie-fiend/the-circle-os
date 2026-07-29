@@ -130,6 +130,7 @@ export type CircleState = {
   outbox: Array<{
     id: string;
     reason: string;
+    message?: string;
     createdAt: string;
     triedAt?: string;
   }>;
@@ -294,6 +295,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
         "survey-answer",
         "habit-answer",
         "profile-edit",
+        "suggestion",
       ].includes(item.reason),
     );
     const needsFirstProfile = !state.ai.profileId || !state.ai.token;
@@ -938,7 +940,7 @@ export function TodayExperience() {
     return () => {
       active = false;
     };
-  }, [state.profile.name]);
+  }, [dateKey, state.profile.name]);
 
   const firstProfileQuestionIndex = PROFILE_QUESTIONS.findIndex(
     (question) =>

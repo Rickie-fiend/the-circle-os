@@ -8,7 +8,8 @@ The server:
 1. saves each person under the Obsidian `Circle OS\Profiles` folder;
 2. keeps profile keys outside Obsidian;
 3. never runs Qwen or another model;
-4. returns the structured `Profile.md` to Vision.
+4. returns the structured `Profile.md` to Vision;
+5. collects every person's product suggestions in one `Suggestions.md` file.
 
 Codex analyzes only profiles marked `analysis_pending: true`. The nightly
 instructions live in Obsidian at:

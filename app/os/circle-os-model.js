@@ -326,6 +326,26 @@ export function queueProfileUpdate(state, reason) {
   };
 }
 
+export function queueSuggestion(state, value) {
+  const message = typeof value === "string" ? value.trim().slice(0, 800) : "";
+  if (!message) return state;
+  return {
+    ...state,
+    outbox: [
+      ...state.outbox,
+      {
+        id:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `suggestion-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        reason: "suggestion",
+        message,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  };
+}
+
 export function connectLocalAi(state, baseUrl, token = "") {
   let next = {
     ...state,
@@ -340,6 +360,7 @@ export function connectLocalAi(state, baseUrl, token = "") {
       id: item.id,
       reason: item.reason,
       createdAt: item.createdAt,
+      ...(item.message ? { message: item.message } : {}),
     })),
   };
   if (state.profile.vision.completedAt && next.outbox.length === 0) {
