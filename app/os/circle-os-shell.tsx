@@ -937,8 +937,8 @@ export function TodayExperience() {
                 <p className="os-card-label">Check-in</p>
                 <span>{profileAnswersDone}/{PROFILE_QUESTIONS.length}</span>
               </div>
-              <h2>You&apos;re done for now.</h2>
-              <p>Your answers are saved. The next question will come from what Codex still needs to understand.</p>
+              <h2>Keep going.</h2>
+              <p>Notice what feels like you today.</p>
             </div>
           )}
         </section>

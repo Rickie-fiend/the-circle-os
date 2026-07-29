@@ -175,7 +175,6 @@
   background: #f1efe8;
   border-radius: 26px;
   color: #191813;
-  min-height: 248px;
   padding: 20px 18px 18px;
 }
 
@@ -184,7 +183,66 @@
 }
 
 .circle-os .os-habit .os-survey-card {
-  background: #e8dfd2;
+  background:
+    linear-gradient(135deg, rgb(227 107 55 / 0.1), transparent 55%),
+    #222119;
+  border: 1px solid rgb(227 107 55 / 0.38);
+  border-radius: 22px;
+  box-shadow: inset 3px 0 #e36b37;
+  color: #f1efe8;
+  padding: 17px;
+}
+
+.circle-os .os-habit .os-card-label {
+  color: #e36b37;
+}
+
+.circle-os .os-habit .os-survey-head > span {
+  color: rgb(241 239 232 / 0.48);
+}
+
+.circle-os .os-habit .os-survey-card h2 {
+  font-size: 1.16rem;
+  letter-spacing: -0.025em;
+  margin: 0.7rem 0 1rem;
+  max-width: 430px;
+}
+
+.circle-os .os-habit .os-survey-choices {
+  gap: 8px;
+}
+
+.circle-os .os-habit .os-survey-choices button {
+  background: rgb(241 239 232 / 0.05);
+  border-color: rgb(241 239 232 / 0.14);
+  color: #f1efe8;
+  min-height: 46px;
+}
+
+.circle-os .os-habit .os-survey-choices button:active {
+  background: #e36b37;
+  border-color: #e36b37;
+  color: #fff;
+}
+
+.circle-os .os-habit .os-survey-slider > div {
+  color: rgb(241 239 232 / 0.5);
+}
+
+.circle-os .os-habit .os-survey-slider > button,
+.circle-os .os-habit .os-survey-text > button {
+  background: #e36b37;
+  border-color: #e36b37;
+  color: #fff;
+}
+
+.circle-os .os-habit .os-survey-text input {
+  border-bottom-color: rgb(241 239 232 / 0.24);
+  color: #f1efe8;
+}
+
+.circle-os .os-habit .os-survey-text input::placeholder {
+  color: rgb(241 239 232 / 0.36);
 }
 
 .circle-os .os-survey-head {
@@ -295,10 +353,6 @@
 .circle-os .os-survey-text > button:disabled {
   cursor: default;
   opacity: 0.35;
-}
-
-.circle-os .os-survey-complete {
-  min-height: 190px;
 }
 
 .circle-os .os-survey-complete > p {
