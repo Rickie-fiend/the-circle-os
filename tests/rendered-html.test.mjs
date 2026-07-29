@@ -93,6 +93,6 @@ test("server-renders the private AI connection route", async () => {
   const html = await response.text();
   assert.match(html, /Connect your computer\./);
   assert.match(html, />Address</);
-  assert.match(html, />Key</);
+  assert.doesNotMatch(html, />Key</);
   assert.match(html, /Your profile stays on this phone\./);
 });

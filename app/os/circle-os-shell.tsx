@@ -165,7 +165,6 @@ export function useCircleState() {
       !ready ||
       !next ||
       !state.ai.baseUrl ||
-      !state.ai.token ||
       aiWorking.current
     ) {
       return;

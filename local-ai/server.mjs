@@ -141,9 +141,14 @@ function json(response, status, body, origin) {
 
 function authorized(request) {
   const token = process.env.CIRCLE_AI_TOKEN;
+  const expectedTailscaleUser =
+    process.env.CIRCLE_AI_TAILSCALE_USER?.trim().toLowerCase();
+  const tailscaleUser = String(
+    request.headers["tailscale-user-login"] || "",
+  ).trim().toLowerCase();
   return Boolean(
-    token &&
-      request.headers.authorization === `Bearer ${token}`,
+    (token && request.headers.authorization === `Bearer ${token}`) ||
+      (expectedTailscaleUser && tailscaleUser === expectedTailscaleUser),
   );
 }
 

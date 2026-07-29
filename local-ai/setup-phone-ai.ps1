@@ -37,11 +37,8 @@ Start-Process `
 & $tailscale serve --bg --yes http://127.0.0.1:4317 | Out-Null
 
 $dnsName = $status.Self.DNSName.TrimEnd(".")
-$token = (Get-Content -Raw -LiteralPath $tokenPath).Trim()
-Set-Clipboard -Value $token
 
 Write-Host ""
 Write-Host "Open Circle OS on your phone and tap 'Private - this device'."
 Write-Host "Address: https://$dnsName"
-Write-Host "The key is copied. Paste it into the Key field."
 Write-Host ""

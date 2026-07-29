@@ -20,16 +20,19 @@ export async function requestProfileUpdate(
   reason: string,
 ) {
   const baseUrl = state.ai.baseUrl.trim().replace(/\/+$/, "");
-  if (!baseUrl || !state.ai.token) {
+  if (!baseUrl) {
     throw new Error("Local AI is not connected.");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (state.ai.token) {
+    headers.Authorization = `Bearer ${state.ai.token}`;
+  }
   const response = await fetch(`${baseUrl}/profile`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${state.ai.token}`,
-    },
+    headers,
     body: JSON.stringify(buildAiPayload(state, reason)),
     signal: AbortSignal.timeout(45000),
   });
@@ -44,10 +47,12 @@ export async function requestProfileUpdate(
 
 export async function checkLocalAi(baseUrl: string, token: string) {
   const cleanUrl = baseUrl.trim().replace(/\/+$/, "");
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${cleanUrl}/health`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) throw new Error("Local AI could not be reached.");

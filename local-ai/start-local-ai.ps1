@@ -13,6 +13,15 @@ if (-not (Test-Path -LiteralPath $tokenPath)) {
 $env:CIRCLE_AI_TOKEN = (Get-Content -Raw -LiteralPath $tokenPath).Trim()
 $env:OLLAMA_BASE_URL = "http://127.0.0.1:11434"
 $env:OLLAMA_MODEL = "qwen2.5:1.5b"
+$tailscale = "C:\Program Files\Tailscale\tailscale.exe"
+if (Test-Path -LiteralPath $tailscale) {
+  $status = & $tailscale status --json | ConvertFrom-Json
+  $userId = [string]$status.Self.UserID
+  $user = $status.User.PSObject.Properties[$userId]
+  if ($user) {
+    $env:CIRCLE_AI_TAILSCALE_USER = $user.Value.LoginName
+  }
+}
 
 Write-Host "Circle OS local AI is starting."
 node (Join-Path $PSScriptRoot "server.mjs")
