@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  CIRCLE_DAY_START_HOUR,
   HABIT_QUESTIONS,
   PROFILE_QUESTIONS,
   answerProfileQuestion,
@@ -189,7 +190,7 @@ function currentSyncSlot(now = new Date()) {
 }
 
 function isNightSyncTime(now = new Date()) {
-  return now.getHours() >= 20 || now.getHours() < 2;
+  return now.getHours() >= 20 || now.getHours() < CIRCLE_DAY_START_HOUR;
 }
 
 function applySyncResult(
@@ -645,15 +646,21 @@ export function TodayExperience() {
     queueMicrotask(() => {
       if (!active) return;
       const now = new Date();
+      const circleDate = new Date(now);
+      if (now.getHours() < CIRCLE_DAY_START_HOUR) {
+        circleDate.setDate(circleDate.getDate() - 1);
+      }
       const name = state.profile.name.trim();
       setDateLabel(
-        now.toLocaleDateString("en-US", {
+        circleDate.toLocaleDateString("en-US", {
           weekday: "long",
           month: "long",
           day: "numeric",
         }),
       );
-      if (now.getHours() < 12) {
+      if (now.getHours() < CIRCLE_DAY_START_HOUR) {
+        setGreeting(`Good evening${name ? `, ${name}` : ""}.`);
+      } else if (now.getHours() < 12) {
         setGreeting(`Good morning${name ? `, ${name}` : ""}.`);
       } else if (now.getHours() < 18) {
         setGreeting(`Good afternoon${name ? `, ${name}` : ""}.`);

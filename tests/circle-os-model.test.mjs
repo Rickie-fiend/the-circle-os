@@ -62,6 +62,12 @@ test("maps hours into the four lightweight check-in periods", () => {
   assert.equal(getDayPeriod(22), "evening");
 });
 
+test("keeps after-midnight reflection in the finished day until 6 AM", () => {
+  assert.equal(getDateKey(new Date(2026, 6, 30, 0, 1)), "2026-07-29");
+  assert.equal(getDateKey(new Date(2026, 6, 30, 5, 59)), "2026-07-29");
+  assert.equal(getDateKey(new Date(2026, 6, 30, 6, 0)), "2026-07-30");
+});
+
 test("keeps old device data and simplifies it into one Tuesday paragraph", () => {
   const state = normalizeState({
     version: 1,
