@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  createContext,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -14,20 +16,23 @@ import {
   DAY_PERIODS,
   MOODS,
   answerProfileQuestion,
-  applyProfileResult,
   connectLocalAi,
   createEmptyState,
   ensureDay,
   getDateKey,
   getDayPeriod,
-  markProfileUpdateFailed,
+  mergeServerState,
   minutesBetween,
   normalizeState,
   queueProfileUpdate,
   upsertCheckIn,
   upsertTimeBlock,
 } from "./circle-os-model.js";
-import { requestProfileUpdate } from "./circle-os-ai";
+import {
+  buildServerPayload,
+  readCircleState,
+  syncCircleState,
+} from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
 
 type CheckIn = {
@@ -120,6 +125,24 @@ export type CircleState = {
   }>;
 };
 
+type CircleStateContextValue = {
+  state: CircleState;
+  today: CircleDay;
+  ready: boolean;
+  dateKey: string;
+  connectAi: (baseUrl: string, token: string) => Promise<void>;
+  updateProfile: (
+    transform: (profile: CircleState["profile"]) => CircleState["profile"],
+    reason?: string,
+  ) => void;
+  updateState: (transform: (state: CircleState) => CircleState) => void;
+  updateToday: (
+    transform: (day: CircleDay) => CircleDay,
+    reason?: string,
+  ) => void;
+};
+
+const CircleStateContext = createContext<CircleStateContextValue | null>(null);
 const AWAKE_HOURS = Array.from({ length: 17 }, (_, index) => index + 7);
 
 function hourLabel(hour: number) {
@@ -135,19 +158,56 @@ function freshTimeRange() {
   };
 }
 
-export function useCircleState() {
+function serverSignature(state: CircleState) {
+  const payload = buildServerPayload(state);
+  return JSON.stringify({
+    profile: payload.profile,
+    days: payload.days,
+    outbox: payload.outbox,
+  });
+}
+
+export function CircleStateProvider({ children }: { children: ReactNode }) {
   const dateKey = getDateKey();
   const [state, setState] = useState<CircleState>(() =>
     ensureDay(createEmptyState(), dateKey),
   );
   const [ready, setReady] = useState(false);
-  const aiWorking = useRef(false);
+  const [syncTick, setSyncTick] = useState(0);
+  const stateRef = useRef(state);
+  const syncing = useRef(false);
+  const syncPending = useRef(false);
+  const lastServerSignature = useRef("");
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     let active = true;
-    void loadCircleState().then((stored) => {
+    void loadCircleState().then(async (stored) => {
+      let next = ensureDay(normalizeState(stored), getDateKey());
+      if (next.ai.baseUrl) {
+        try {
+          const remote = await readCircleState(next);
+          if (remote) {
+            next = ensureDay(mergeServerState(next, remote), getDateKey());
+            lastServerSignature.current = serverSignature(next);
+          }
+        } catch {
+          next = {
+            ...next,
+            ai: {
+              ...next.ai,
+              status: "offline",
+              lastError: "Your computer is offline.",
+            },
+          };
+        }
+      }
       if (!active) return;
-      setState(ensureDay(normalizeState(stored), getDateKey()));
+      stateRef.current = next;
+      setState(next);
       setReady(true);
     });
     return () => {
@@ -161,42 +221,106 @@ export function useCircleState() {
   }, [ready, state]);
 
   useEffect(() => {
-    const next = state.outbox.find((item) => !item.triedAt);
-    if (
-      !ready ||
-      !next ||
-      !state.ai.baseUrl ||
-      aiWorking.current
-    ) {
+    if (!ready || !state.ai.baseUrl) return;
+    const signature = serverSignature(state);
+    if (signature === lastServerSignature.current) return;
+    if (syncing.current) {
+      syncPending.current = true;
       return;
     }
 
-    aiWorking.current = true;
-    setState((current) => ({
-      ...current,
-      ai: { ...current.ai, status: "thinking", lastError: "" },
-      profile: {
-        ...current.profile,
-        profileCase: { ...current.profile.profileCase, status: "thinking" },
-      },
-    }));
-    void requestProfileUpdate(state, next.reason)
-      .then((result) => {
-        setState((current) => applyProfileResult(current, result, next.id));
-      })
-      .catch((error) => {
-        setState((current) =>
-          markProfileUpdateFailed(
-            current,
-            next.id,
-            error instanceof Error ? error.message : "Local AI is offline.",
-          ),
-        );
-      })
-      .finally(() => {
-        aiWorking.current = false;
-      });
-  }, [ready, state]);
+    const timer = window.setTimeout(() => {
+      syncing.current = true;
+      const sentState = stateRef.current;
+      const sentSignature = serverSignature(sentState);
+      void syncCircleState(sentState)
+        .then((remote) => {
+          setState((current) => {
+            if (serverSignature(current) !== sentSignature) {
+              syncPending.current = true;
+              return current;
+            }
+            const next = ensureDay(
+              mergeServerState(current, remote),
+              getDateKey(),
+            );
+            lastServerSignature.current = serverSignature(next);
+            stateRef.current = next;
+            return next;
+          });
+        })
+        .catch((error) => {
+          setState((current) => ({
+            ...current,
+            ai: {
+              ...current.ai,
+              status: "offline",
+              lastError:
+                error instanceof Error
+                  ? error.message
+                  : "Your computer is offline.",
+            },
+          }));
+        })
+        .finally(() => {
+          syncing.current = false;
+          if (syncPending.current) {
+            syncPending.current = false;
+            setSyncTick((value) => value + 1);
+          }
+        });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [ready, state, syncTick]);
+
+  useEffect(() => {
+    if (!ready || !state.ai.baseUrl) return;
+    const timer = window.setInterval(() => {
+      const current = stateRef.current;
+      if (
+        syncing.current ||
+        serverSignature(current) !== lastServerSignature.current
+      ) {
+        return;
+      }
+      syncing.current = true;
+      void readCircleState(current)
+        .then((remote) => {
+          if (!remote) return;
+          setState((latest) => {
+            if (serverSignature(latest) !== lastServerSignature.current) {
+              syncPending.current = true;
+              return latest;
+            }
+            const next = ensureDay(
+              mergeServerState(latest, remote),
+              getDateKey(),
+            );
+            lastServerSignature.current = serverSignature(next);
+            stateRef.current = next;
+            return next;
+          });
+        })
+        .catch(() => {
+          setState((latest) => ({
+            ...latest,
+            ai: {
+              ...latest.ai,
+              status: "offline",
+              lastError: "Your computer is offline.",
+            },
+          }));
+        })
+        .finally(() => {
+          syncing.current = false;
+          if (syncPending.current) {
+            syncPending.current = false;
+            setSyncTick((value) => value + 1);
+          }
+        });
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [ready, state.ai.baseUrl]);
 
   const today = state.days[dateKey] ?? ensureDay(state, dateKey).days[dateKey];
 
@@ -235,12 +359,16 @@ export function useCircleState() {
   }
 
   async function connectAi(baseUrl: string, token: string) {
-    const next = connectLocalAi(state, baseUrl, token);
+    const connected = connectLocalAi(stateRef.current, baseUrl, token);
+    const remote = await syncCircleState(connected);
+    const next = ensureDay(mergeServerState(connected, remote), getDateKey());
+    lastServerSignature.current = serverSignature(next);
+    stateRef.current = next;
     setState(next);
     await saveCircleState(next);
   }
 
-  return {
+  const value = {
     state,
     today,
     ready,
@@ -250,6 +378,20 @@ export function useCircleState() {
     updateState,
     updateToday,
   };
+
+  return (
+    <CircleStateContext.Provider value={value}>
+      {children}
+    </CircleStateContext.Provider>
+  );
+}
+
+export function useCircleState() {
+  const value = useContext(CircleStateContext);
+  if (!value) {
+    throw new Error("CircleStateProvider is missing.");
+  }
+  return value;
 }
 
 export function OSFrame({
@@ -259,6 +401,7 @@ export function OSFrame({
   active: "today" | "mirror" | "connect";
   children: ReactNode;
 }) {
+  const { state } = useCircleState();
   return (
     <div className="circle-os">
       <div className="os-future-room-background" aria-hidden="true" />
@@ -269,7 +412,7 @@ export function OSFrame({
             <span>THE CIRCLE OS</span>
           </Link>
           <Link className="os-local-status" href="/os/connect">
-            Private · this device
+            {state.ai.baseUrl ? "Private · Obsidian" : "Connect computer"}
           </Link>
         </header>
         <nav className="os-nav" aria-label="Circle OS">
@@ -490,7 +633,7 @@ export function TodayExperience() {
               <h1>{greeting}</h1>
             </div>
             <p className="os-save-state" aria-live="polite">
-              {ready ? "Saved on this device" : "Opening your day…"}
+              {ready ? "Saved" : "Opening your day…"}
             </p>
           </div>
 

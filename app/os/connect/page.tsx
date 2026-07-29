@@ -46,7 +46,7 @@ function ConnectForm({
       setMessage("Connected. Opening Vision…");
       onConnected();
     } catch {
-      setMessage("Could not connect. Your phone data is still safe.");
+      setMessage("Could not connect. Your phone copy is still safe.");
     } finally {
       setChecking(false);
     }
@@ -59,8 +59,8 @@ function ConnectForm({
           <p className="os-eyebrow">Private AI</p>
           <h1 id="connect-title">Connect your computer.</h1>
           <p>
-            Your profile stays on this phone. Your computer only reads it long
-            enough to update your Vision.
+            Your profile and days live in your Obsidian vault. Your phone keeps
+            a copy when your computer is away.
           </p>
           <form onSubmit={save}>
             <label>

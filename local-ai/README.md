@@ -1,16 +1,34 @@
-# Circle OS local AI
+# Circle OS local server
 
-This helper reads the phone's request, asks Ollama for a Profile Case update,
-returns the update, and forgets the request. It does not save user records.
+The phone app connects privately to this computer through Tailscale.
 
-Rules live in `rules/`. The response shape lives in `profile-schema.json`.
+The server:
+
+1. saves the profile and daily logs in the Obsidian vault;
+2. returns to the phone immediately;
+3. lets Qwen update the Profile Case in the background;
+4. saves the finished draft and lets the phone find it later.
+
+The Obsidian folder is:
+
+`C:\Brain\10 Projects\The Circle\Circle OS`
+
+It contains:
+
+- `Profile.md`
+- `Days\YYYY-MM-DD.md`
+- `Rules\constitution.md`
+- `Rules\profile-case.md`
+- `State.json`
+
+The rules are read again for every AI update, so they can be changed in
+Obsidian. `State.json` is the recovery copy used by the app. It contains no
+connection key.
 
 On Windows:
 
-1. Install Ollama and the `qwen2.5:1.5b` model.
-2. Install Tailscale on the computer and phone. Sign in to both.
-3. Run `npm run ai:phone` once.
-4. Enter the shown address in Circle OS.
+1. Keep Ollama and Tailscale running.
+2. Run `npm run ai:phone` once.
+3. Enter the shown address in Circle OS.
 
-The computer must be awake for AI updates. The phone app still logs normally
-when it is away and updates Vision later.
+The phone keeps a local copy when the computer is away and syncs later.

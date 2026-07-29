@@ -13,6 +13,7 @@ if (-not (Test-Path -LiteralPath $tokenPath)) {
 $env:CIRCLE_AI_TOKEN = (Get-Content -Raw -LiteralPath $tokenPath).Trim()
 $env:OLLAMA_BASE_URL = "http://127.0.0.1:11434"
 $env:OLLAMA_MODEL = "qwen2.5:1.5b"
+$env:CIRCLE_OS_VAULT_PATH = "C:\Brain\10 Projects\The Circle\Circle OS"
 $tailscale = "C:\Program Files\Tailscale\tailscale.exe"
 if (Test-Path -LiteralPath $tailscale) {
   $status = & $tailscale status --json | ConvertFrom-Json

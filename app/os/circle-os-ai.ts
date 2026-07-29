@@ -1,48 +1,58 @@
 import type { CircleState } from "./circle-os-shell";
 
-export function buildAiPayload(state: CircleState, reason: string) {
-  return {
-    reason,
-    person: {
-      name: state.profile.name,
-      age: state.profile.age,
-      dreamLifestyle: state.profile.vision.description,
-    },
-    profileCase: state.profile.profileCase,
-    days: Object.values(state.days)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(-14),
-  };
-}
-
-export async function requestProfileUpdate(
-  state: CircleState,
-  reason: string,
-) {
+function connection(state: CircleState) {
   const baseUrl = state.ai.baseUrl.trim().replace(/\/+$/, "");
-  if (!baseUrl) {
-    throw new Error("Local AI is not connected.");
-  }
-
+  if (!baseUrl) throw new Error("Your computer is not connected.");
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
   if (state.ai.token) {
     headers.Authorization = `Bearer ${state.ai.token}`;
   }
-  const response = await fetch(`${baseUrl}/profile`, {
-    method: "POST",
+  return { baseUrl, headers };
+}
+
+export function buildServerPayload(state: CircleState) {
+  return {
+    ...state,
+    ai: {
+      ...state.ai,
+      baseUrl: "",
+      token: "",
+    },
+  };
+}
+
+export async function readCircleState(state: CircleState) {
+  const { baseUrl, headers } = connection(state);
+  const response = await fetch(`${baseUrl}/state`, {
     headers,
-    body: JSON.stringify(buildAiPayload(state, reason)),
-    signal: AbortSignal.timeout(120000),
+    signal: AbortSignal.timeout(10_000),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(
-      typeof data.error === "string" ? data.error : "Local AI did not answer.",
+      typeof data.error === "string" ? data.error : "Your computer is offline.",
     );
   }
-  return data;
+  return data.state ?? null;
+}
+
+export async function syncCircleState(state: CircleState) {
+  const { baseUrl, headers } = connection(state);
+  const response = await fetch(`${baseUrl}/sync`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ state: buildServerPayload(state) }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(
+      typeof data.error === "string" ? data.error : "Your computer is offline.",
+    );
+  }
+  return data.state;
 }
 
 export async function checkLocalAi(baseUrl: string, token: string) {
@@ -55,6 +65,6 @@ export async function checkLocalAi(baseUrl: string, token: string) {
     headers,
     signal: AbortSignal.timeout(8000),
   });
-  if (!response.ok) throw new Error("Local AI could not be reached.");
+  if (!response.ok) throw new Error("Your computer could not be reached.");
   return response.json();
 }

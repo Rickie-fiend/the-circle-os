@@ -94,5 +94,5 @@ test("server-renders the private AI connection route", async () => {
   assert.match(html, /Connect your computer\./);
   assert.match(html, />Address</);
   assert.doesNotMatch(html, />Key</);
-  assert.match(html, /Your profile stays on this phone\./);
+  assert.match(html, /Your profile and days live in your Obsidian vault\./);
 });

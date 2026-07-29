@@ -232,6 +232,19 @@ export function connectLocalAi(state, baseUrl, token = "") {
   return next;
 }
 
+export function mergeServerState(state, serverState) {
+  if (!serverState) return state;
+  const remote = normalizeState(serverState);
+  return {
+    ...remote,
+    ai: {
+      ...remote.ai,
+      baseUrl: state.ai.baseUrl,
+      token: state.ai.token,
+    },
+  };
+}
+
 function cleanSession(session, fallback) {
   return {
     text:

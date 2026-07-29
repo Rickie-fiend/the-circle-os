@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CircleStateProvider } from "./circle-os-shell";
 import { CircleOSPwa } from "./pwa-register";
 import "./os-app.css";
 
@@ -41,9 +42,9 @@ export default function CircleOSLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <CircleStateProvider>
       <CircleOSPwa />
       {children}
-    </>
+    </CircleStateProvider>
   );
 }

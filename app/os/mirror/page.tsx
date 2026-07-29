@@ -237,7 +237,7 @@ export default function CircleOSMirror() {
             {profileCase.status === "thinking"
               ? "Updating…"
               : state.ai.status === "offline"
-                ? "AI will update later"
+                ? "Computer offline"
                 : ""}
           </p>
         </header>
