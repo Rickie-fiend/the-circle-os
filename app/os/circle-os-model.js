@@ -35,14 +35,11 @@ export function createEmptyState() {
       identityFocus: "Reader",
       name: "",
       age: null,
-      gender: "",
-      typicalTuesday: {
-        wakeUp: "",
-        morning: "",
-        day: "",
-        people: "",
-        evening: "",
-        feeling: "",
+      vision: {
+        description: "",
+        preview: "",
+        understanding: "",
+        gap: "",
         completedAt: null,
       },
     },
@@ -56,14 +53,36 @@ export function normalizeState(state) {
     return empty;
   }
 
+  const oldTuesday = state.profile.typicalTuesday;
+  const oldDescription =
+    oldTuesday && typeof oldTuesday === "object"
+      ? [
+          oldTuesday.wakeUp,
+          oldTuesday.morning,
+          oldTuesday.day,
+          oldTuesday.people,
+          oldTuesday.evening,
+          oldTuesday.feeling,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "";
+  const description =
+    state.profile.vision?.description ||
+    (typeof oldTuesday === "string" ? oldTuesday : oldDescription);
+
   return {
     ...state,
     profile: {
       ...empty.profile,
       ...state.profile,
-      typicalTuesday: {
-        ...empty.profile.typicalTuesday,
-        ...state.profile.typicalTuesday,
+      vision: {
+        ...empty.profile.vision,
+        ...state.profile.vision,
+        description,
+        preview: state.profile.vision?.preview || description,
+        completedAt:
+          state.profile.vision?.completedAt || oldTuesday?.completedAt || null,
       },
     },
   };
@@ -178,7 +197,8 @@ export function summarizeWeek(state, now = new Date()) {
   for (const { day } of days) {
     for (const block of day.timeBlocks) {
       const minutes = minutesBetween(block.start, block.end);
-      timeMap.set(block.activity, (timeMap.get(block.activity) ?? 0) + minutes);
+      const label = block.title || block.activity;
+      timeMap.set(label, (timeMap.get(label) ?? 0) + minutes);
     }
     for (const checkIn of day.checkIns) {
       if (typeof checkIn.energy === "number") {
@@ -257,6 +277,36 @@ export function summarizeWeek(state, now = new Date()) {
     },
     sentence,
     experiment,
+  };
+}
+
+export function buildVisionAnalysis(state, now = new Date()) {
+  const summary = summarizeWeek(state, now);
+  const vision = state.profile?.vision?.description?.trim() ?? "";
+  const logged = summary.time.slice(0, 3).map((item) => item.activity);
+
+  const preview =
+    state.profile?.vision?.preview?.trim() ||
+    vision ||
+    "Your typical Tuesday has not been described yet.";
+
+  let understanding =
+    "I do not know enough yet. Your first honest logs will help me understand how you live.";
+  let gap =
+    "There is not enough evidence yet. Log parts of your real days and the gap will become clearer.";
+
+  if (logged.length) {
+    understanding = `This week, your logs often mention ${logged.join(", ")}. This is an early reading, not a final judgment.`;
+    gap = vision
+      ? "Your Vision and your real days are now in the same place. More logged days are needed before the gap can be described honestly."
+      : "Describe your typical Tuesday so your real days have something meaningful to compare with.";
+  }
+
+  return {
+    preview,
+    understanding:
+      state.profile?.vision?.understanding?.trim() || understanding,
+    gap: state.profile?.vision?.gap?.trim() || gap,
   };
 }
 

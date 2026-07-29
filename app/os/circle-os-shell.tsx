@@ -56,14 +56,11 @@ export type CircleState = {
     identityFocus: string;
     name: string;
     age: number | null;
-    gender: string;
-    typicalTuesday: {
-      wakeUp: string;
-      morning: string;
-      day: string;
-      people: string;
-      evening: string;
-      feeling: string;
+    vision: {
+      description: string;
+      preview: string;
+      understanding: string;
+      gap: string;
       completedAt: string | null;
     };
   };
@@ -74,22 +71,6 @@ const AWAKE_HOURS = Array.from({ length: 17 }, (_, index) => index + 7);
 
 function hourLabel(hour: number) {
   return `${String(hour).padStart(2, "0")}:00`;
-}
-
-function classifyActivity(title: string) {
-  const normalized = title.toLowerCase();
-  if (/\b(read|book|study)\b/.test(normalized)) return "Reading";
-  if (/\b(walk|outside|park|nature)\b/.test(normalized)) return "Outside";
-  if (/\b(gym|run|exercise|workout|sport)\b/.test(normalized)) return "Exercise";
-  if (/\b(friend|family|call|date|social)\b/.test(normalized)) return "Social";
-  if (/\b(rest|nap|sleep|relax)\b/.test(normalized)) return "Rest";
-  if (/\b(game|movie|youtube|netflix|entertainment)\b/.test(normalized)) {
-    return "Entertainment";
-  }
-  if (/\b(work|write|code|design|create|focus|project)\b/.test(normalized)) {
-    return "Focus";
-  }
-  return "Life admin";
 }
 
 function freshTimeRange() {
@@ -218,7 +199,9 @@ export function TodayExperience() {
   useEffect(() => {
     if (
       ready &&
-      (!state.profile.name || !state.profile.age || !state.profile.gender)
+      (!state.profile.name ||
+        !state.profile.age ||
+        !state.profile.vision.completedAt)
     ) {
       router.replace("/os/mirror");
     }
@@ -226,8 +209,8 @@ export function TodayExperience() {
     ready,
     router,
     state.profile.age,
-    state.profile.gender,
     state.profile.name,
+    state.profile.vision.completedAt,
   ]);
 
   useEffect(() => {
@@ -344,7 +327,7 @@ export function TodayExperience() {
         id,
         start,
         end,
-        activity: classifyActivity(blockTitle),
+        activity: blockTitle.trim(),
         note: "",
         title: blockTitle.trim(),
         moments: momentsText
@@ -560,9 +543,6 @@ export function TodayExperience() {
                         <button type="button" onClick={() => openEdit(block)}>
                           {block.title ?? block.activity}
                         </button>
-                        {block.activity && block.activity !== "Life admin" ? (
-                          <span className="os-time-category">{block.activity}</span>
-                        ) : null}
                         {moments.length ? (
                           <ul>
                             {moments.map((moment, index) => (
