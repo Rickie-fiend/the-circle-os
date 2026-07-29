@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Children,
   createContext,
@@ -481,13 +481,17 @@ export function useCircleState() {
 }
 
 export function OSFrame({
-  active,
   children,
 }: {
-  active: "today" | "mirror" | "connect";
   children: ReactNode;
 }) {
-  const { state } = useCircleState();
+  const { state, ready } = useCircleState();
+  const pathname = usePathname();
+  const active = pathname.startsWith("/os/mirror")
+    ? "mirror"
+    : pathname.startsWith("/os/connect")
+      ? "connect"
+      : "today";
   return (
     <div className="circle-os">
       <div className="os-future-room-background" aria-hidden="true" />
@@ -503,7 +507,7 @@ export function OSFrame({
               : "Saving…"}
           </span>
         </header>
-        <nav className="os-nav" aria-label="Circle OS">
+        <nav className="os-nav" aria-label="Circle OS" data-active={active}>
           <Link className={active === "today" ? "active" : ""} href="/os">
             Today
           </Link>
@@ -511,7 +515,23 @@ export function OSFrame({
             Vision
           </Link>
         </nav>
-        {children}
+        <div
+          aria-busy={!ready}
+          className={`os-route-stage ${ready ? "is-ready" : "is-opening"}`}
+        >
+          <div
+            aria-hidden={!ready}
+            className="os-route-content"
+            key={pathname}
+          >
+            {children}
+          </div>
+          {!ready ? (
+            <div className="os-route-opening" aria-label="Opening Circle OS">
+              <span aria-hidden="true" />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -545,9 +565,9 @@ export function SwipeSession({
   const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [motionDirection, setMotionDirection] = useState<"next" | "previous">(
-    "next",
-  );
+  const [motionDirection, setMotionDirection] = useState<
+    "none" | "next" | "previous"
+  >("none");
 
   function move(nextIndex: number) {
     const boundedIndex = Math.max(0, Math.min(lastIndex, nextIndex));
@@ -1278,7 +1298,6 @@ export function TodayExperience() {
   }
 
   return (
-    <OSFrame active="today">
       <main className="os-today">
         <section className="os-checkin" aria-label="Check-in questions">
           <div className="os-context-row">
@@ -1694,6 +1713,5 @@ export function TodayExperience() {
         </section>
         )}
       </main>
-    </OSFrame>
   );
 }

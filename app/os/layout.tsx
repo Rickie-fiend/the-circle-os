@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CircleStateProvider } from "./circle-os-shell";
+import { CircleStateProvider, OSFrame } from "./circle-os-shell";
 import { CircleOSPwa } from "./pwa-register";
 import "./os-app.css";
 
@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   title: "The Circle OS — See how you live",
   description:
     "See how you want to live, how you live now, and what may help you feel like yourself.",
-  manifest: "/circle-os.webmanifest",
+  manifest: "/circle-os.webmanifest?v=4",
   icons: {
     icon: "/brand/the-circle-mark.svg",
-    apple: "/brand/circle-os-icon-180.png",
+    apple: "/brand/circle-os-icon-180.png?v=4",
   },
   appleWebApp: {
     capable: true,
@@ -48,7 +48,7 @@ export default function CircleOSLayout({
   return (
     <CircleStateProvider>
       <CircleOSPwa />
-      {children}
+      <OSFrame>{children}</OSFrame>
     </CircleStateProvider>
   );
 }

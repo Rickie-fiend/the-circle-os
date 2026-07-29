@@ -14,7 +14,6 @@ import {
   summarizeWeek,
 } from "../circle-os-model.js";
 import {
-  OSFrame,
   SessionIntro,
   SwipeSession,
   useCircleState,
@@ -241,7 +240,6 @@ export default function CircleOSMirror() {
 
   if (!setupComplete) {
     return (
-      <OSFrame active="mirror">
         <main className="os-mirror os-setup">
           <section className="vision-survey" aria-labelledby="vision-start">
             <p className="os-eyebrow">Vision</p>
@@ -300,12 +298,10 @@ export default function CircleOSMirror() {
             </form>
           </section>
         </main>
-      </OSFrame>
     );
   }
 
   return (
-    <OSFrame active="mirror">
       <main className="os-mirror">
         <header className="vision-intro">
           <div>
@@ -604,6 +600,5 @@ export default function CircleOSMirror() {
           </article>
         </section>
       </main>
-    </OSFrame>
   );
 }

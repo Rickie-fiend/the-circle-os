@@ -1,5 +1,13 @@
-const CACHE = "circle-os-v3";
-const SHELL = ["/os", "/os/mirror", "/os/connect", "/circle-os.webmanifest"];
+const CACHE = "circle-os-v4";
+const SHELL = [
+  "/os",
+  "/os/mirror",
+  "/os/connect",
+  "/circle-os.webmanifest?v=4",
+  "/brand/circle-os-icon-180.png?v=4",
+  "/brand/circle-os-icon-192.png?v=4",
+  "/brand/circle-os-icon-512.png?v=4",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));

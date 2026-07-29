@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { checkLocalAi } from "../circle-os-ai";
-import { OSFrame, useCircleState } from "../circle-os-shell";
+import { useCircleState } from "../circle-os-shell";
 
 export default function ConnectCircleAi() {
   const { state, ready, connectAi } = useCircleState();
@@ -53,7 +53,6 @@ function ConnectForm({
   }
 
   return (
-    <OSFrame active="connect">
       <main className="os-mirror os-connect">
         <section aria-labelledby="connect-title">
           <p className="os-eyebrow">Profile server</p>
@@ -83,6 +82,5 @@ function ConnectForm({
           <Link href="/os/mirror">Back to Vision</Link>
         </section>
       </main>
-    </OSFrame>
   );
 }
