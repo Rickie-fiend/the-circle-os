@@ -180,16 +180,9 @@ export function OSFrame({
 
 export function TodayExperience() {
   const { today, ready, updateToday } = useCircleState();
-  const [selectedPeriod, setSelectedPeriod] = useState(() =>
-    getDayPeriod(new Date().getHours()),
-  );
-  const [dateLabel] = useState(() =>
-    new Date().toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    }),
-  );
+  const [selectedPeriod, setSelectedPeriod] = useState("morning");
+  const [dateLabel, setDateLabel] = useState("");
+  const [greeting, setGreeting] = useState("Hello.");
   const [isLogOpen, setLogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
@@ -200,12 +193,31 @@ export function TodayExperience() {
   const [momentsText, setMomentsText] = useState("");
   const [momentHour, setMomentHour] = useState<number | null>(null);
   const [newMoment, setNewMoment] = useState("");
-  const greeting = useMemo(() => {
-    const period = getDayPeriod(new Date().getHours());
-    if (period === "morning") return "Good morning.";
-    if (period === "midday") return "Good afternoon.";
-    if (period === "afternoon") return "Good afternoon.";
-    return "Good evening.";
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const now = new Date();
+      const period = getDayPeriod(now.getHours());
+      setSelectedPeriod(period);
+      setDateLabel(
+        now.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        }),
+      );
+      if (period === "morning") {
+        setGreeting("Good morning.");
+      } else if (period === "midday" || period === "afternoon") {
+        setGreeting("Good afternoon.");
+      } else {
+        setGreeting("Good evening.");
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const selectedCheckIn = today.checkIns.find(
