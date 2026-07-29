@@ -191,27 +191,92 @@
   overflow: hidden;
   position: relative;
   touch-action: pan-y;
+  user-select: none;
 }
 
 .circle-os .os-app-window {
+  border-radius: inherit;
+  overflow: hidden;
+  position: relative;
+}
+
+.circle-os .os-app-page {
   transform: translate3d(var(--swipe-x, 0), 0, 0);
   transition:
     transform 240ms cubic-bezier(0.22, 0.75, 0.22, 1),
-    opacity 200ms ease;
+    opacity 180ms ease;
   will-change: transform;
 }
 
-.circle-os .os-app-window.dragging {
-  opacity: 0.92;
+.circle-os .os-app-page.dragging,
+.circle-os .os-app-page.adjacent {
   transition: none;
 }
 
-.circle-os .os-app-window.motion-next:not(.dragging) {
+.circle-os .os-app-page.adjacent {
+  inset: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 100%;
+}
+
+.circle-os .os-app-page.adjacent.previous {
+  transform: translate3d(calc(-100% + var(--swipe-x, 0px)), 0, 0);
+}
+
+.circle-os .os-app-page.adjacent.next {
+  transform: translate3d(calc(100% + var(--swipe-x, 0px)), 0, 0);
+}
+
+.circle-os .os-app-page.motion-next:not(.dragging) {
   animation: os-app-arrive-next 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.circle-os .os-app-window.motion-previous:not(.dragging) {
+.circle-os .os-app-page.motion-previous:not(.dragging) {
   animation: os-app-arrive-previous 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.circle-os .os-swipe-session input,
+.circle-os .os-swipe-session textarea,
+.circle-os .os-swipe-session select {
+  user-select: text;
+}
+
+.circle-os .os-checkin-session {
+  background: #f1efe8;
+  border: 1px solid rgb(25 24 19 / 0.05);
+  border-radius: 28px;
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.08);
+}
+
+.circle-os .os-habit-session {
+  background:
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
+    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 28px;
+  box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
+}
+
+.circle-os .os-log-setup-session {
+  background:
+    radial-gradient(circle at 88% 8%, rgb(227 107 55 / 0.11), transparent 38%),
+    #222119;
+  border: 1px solid rgb(241 239 232 / 0.1);
+  border-radius: 24px;
+}
+
+.circle-os .os-checkin-session .os-app-page > .os-session-intro,
+.circle-os .os-checkin-session .os-app-page > .os-survey-card,
+.circle-os .os-habit-session .os-app-page > .os-session-intro,
+.circle-os .os-habit-session .os-app-page > .os-survey-card,
+.circle-os .os-habit-session .os-app-page > .os-mission,
+.circle-os .os-log-setup-session .os-app-page > .os-session-intro,
+.circle-os .os-log-setup-session .os-app-page > .os-survey-card {
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 @keyframes os-app-arrive-next {
@@ -856,6 +921,10 @@
   height: 100%;
 }
 
+.circle-os .os-log-gate .os-app-page.current {
+  height: 100%;
+}
+
 .circle-os .os-log-gate .os-survey-card {
   background:
     radial-gradient(circle at 88% 8%, rgb(227 107 55 / 0.11), transparent 38%),
@@ -999,29 +1068,23 @@
 .circle-os .os-expand-hour {
   align-items: center;
   background: transparent;
-  border: 0;
-  border-bottom: 1px solid rgb(241 239 232 / 0.08);
-  color: rgb(241 239 232 / 0.42);
-  display: grid;
-  font-size: 0.62rem;
-  gap: 0.75rem;
-  grid-template-columns: 54px 1fr auto;
-  min-height: 48px;
+  border: 1px dashed rgb(241 239 232 / 0.11);
+  border-radius: 18px;
+  color: rgb(227 107 55 / 0.72);
+  display: flex;
+  font-size: 1.55rem;
+  font-weight: 350;
+  justify-content: center;
+  margin: 10px 0;
+  min-height: 66px;
   padding: 0;
-  text-align: left;
+  text-align: center;
   width: 100%;
 }
 
-.circle-os .os-expand-hour strong {
-  color: rgb(241 239 232 / 0.68);
-  font-weight: 550;
-}
-
-.circle-os .os-expand-hour b {
-  color: #e36b37;
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0 0.8rem;
+.circle-os .os-expand-hour:active {
+  background: rgb(227 107 55 / 0.08);
+  border-color: rgb(227 107 55 / 0.34);
 }
 
 .circle-os .os-timeline article {
@@ -1037,13 +1100,7 @@
 }
 
 .circle-os .os-timeline article.suggested {
-  min-height: 56px;
-}
-
-.circle-os .os-timeline article.suggested .os-empty-hour {
-  color: #f1efe8;
-  font-size: 0.74rem;
-  font-weight: 620;
+  min-height: 52px;
 }
 
 .circle-os .os-empty-hour {
@@ -2269,7 +2326,9 @@
   }
 
   .circle-os .os-session-intro,
-  .circle-os .os-survey-card {
+  .circle-os .os-survey-card,
+  .circle-os .os-checkin-session,
+  .circle-os .os-habit-session {
     border-radius: 26px;
   }
 
@@ -2381,7 +2440,7 @@
     transform: none;
   }
 
-  .circle-os .os-app-window {
+  .circle-os .os-app-page {
     animation: none !important;
     transition: none;
   }

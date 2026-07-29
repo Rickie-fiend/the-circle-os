@@ -13,6 +13,7 @@ import {
   type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent,
   type ReactNode,
 } from "react";
@@ -539,6 +540,7 @@ export function SwipeSession({
     pointerId: number;
   } | null>(null);
   const motionDirection = useRef<"next" | "previous">("next");
+  const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
 
@@ -551,14 +553,15 @@ export function SwipeSession({
     onIndexChange(boundedIndex);
   }
 
-  function isInteractive(target: EventTarget | null) {
+  function blocksSwipe(target: EventTarget | null) {
     return target instanceof Element
-      ? Boolean(target.closest("button, input, textarea, select, a, form"))
+      ? Boolean(target.closest("input, textarea, select, a"))
       : false;
   }
 
   function startSwipe(event: PointerEvent<HTMLDivElement>) {
-    if (isInteractive(event.target)) return;
+    if (blocksSwipe(event.target)) return;
+    didSwipe.current = false;
     pointerStart.current = {
       x: event.clientX,
       y: event.clientY,
@@ -574,8 +577,14 @@ export function SwipeSession({
       return;
     }
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.setPointerCapture(event.pointerId);
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Synthetic tests and older webviews may not expose pointer capture.
+      }
     }
+    event.preventDefault();
+    didSwipe.current = true;
     const movingPastStart = index === 0 && distanceX > 0;
     const movingPastEnd = index === lastIndex && distanceX < 0;
     const resistance = movingPastStart || movingPastEnd ? 0.16 : 0.72;
@@ -587,7 +596,11 @@ export function SwipeSession({
     if (!pointerStart.current) return;
     const distance = event.clientX - pointerStart.current.x;
     if (event.currentTarget.hasPointerCapture(pointerStart.current.pointerId)) {
-      event.currentTarget.releasePointerCapture(pointerStart.current.pointerId);
+      try {
+        event.currentTarget.releasePointerCapture(pointerStart.current.pointerId);
+      } catch {
+        // The pointer may already have been released by the browser.
+      }
     }
     pointerStart.current = null;
     if (Math.abs(distance) < 48) {
@@ -596,6 +609,13 @@ export function SwipeSession({
       return;
     }
     move(distance < 0 ? index + 1 : index - 1);
+  }
+
+  function stopClickAfterSwipe(event: MouseEvent<HTMLDivElement>) {
+    if (!didSwipe.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    didSwipe.current = false;
   }
 
   function useArrowKey(event: KeyboardEvent<HTMLDivElement>) {
@@ -613,6 +633,7 @@ export function SwipeSession({
     <div
       aria-label={label}
       className={`os-swipe-session ${className}`.trim()}
+      onClickCapture={stopClickAfterSwipe}
       onKeyDown={useArrowKey}
       onPointerCancel={() => {
         pointerStart.current = null;
@@ -624,18 +645,34 @@ export function SwipeSession({
       onPointerUp={finishSwipe}
       tabIndex={0}
     >
-      <div
-        className={`os-app-window motion-${motionDirection.current}${
-          dragging ? " dragging" : ""
-        }`}
-        key={index}
-        style={
-          {
-            "--swipe-x": `${dragX}px`,
-          } as CSSProperties
-        }
-      >
-        {apps[index]}
+      <div className="os-app-window">
+        {dragging && index > 0 ? (
+          <div
+            aria-hidden="true"
+            className="os-app-page adjacent previous"
+            style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
+          >
+            {apps[index - 1]}
+          </div>
+        ) : null}
+        <div
+          className={`os-app-page current motion-${motionDirection.current}${
+            dragging ? " dragging" : ""
+          }`}
+          key={index}
+          style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
+        >
+          {apps[index]}
+        </div>
+        {dragging && index < lastIndex ? (
+          <div
+            aria-hidden="true"
+            className="os-app-page adjacent next"
+            style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
+          >
+            {apps[index + 1]}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -767,7 +804,6 @@ function SurveySlide({
         >
           <input
             aria-label={question.text}
-            autoFocus
             maxLength={180}
             placeholder={question.placeholder}
             value={value}
@@ -1455,11 +1491,10 @@ export function TodayExperience() {
               <button
                 className="os-expand-hour"
                 type="button"
+                aria-label={`Add ${hourLabel(logStartHour - 1)} to the log`}
                 onClick={() => setLogHoursBefore((current) => current + 1)}
               >
-                <strong>{hourLabel(logStartHour - 1)}</strong>
-                <span>Add the hour before</span>
-                <b aria-hidden="true">+</b>
+                <span aria-hidden="true">+</span>
               </button>
             ) : null}
             {visibleHours.map((hour) => {
@@ -1608,11 +1643,10 @@ export function TodayExperience() {
               <button
                 className="os-expand-hour"
                 type="button"
+                aria-label={`Add ${hourLabel(logEndHour + 1)} to the log`}
                 onClick={() => setLogHoursAfter((current) => current + 1)}
               >
-                <strong>{hourLabel(logEndHour + 1)}</strong>
-                <span>Add the next hour</span>
-                <b aria-hidden="true">+</b>
+                <span aria-hidden="true">+</span>
               </button>
             ) : null}
           </div>
