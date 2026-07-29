@@ -5,6 +5,7 @@ import {
   createEmptyState,
   createSampleState,
   getDayPeriod,
+  normalizeState,
   summarizeWeek,
   upsertTimeBlock,
 } from "../app/os/circle-os-model.js";
@@ -14,6 +15,20 @@ test("maps hours into the four lightweight check-in periods", () => {
   assert.equal(getDayPeriod(12), "midday");
   assert.equal(getDayPeriod(17), "afternoon");
   assert.equal(getDayPeriod(22), "evening");
+});
+
+test("keeps old device data and adds the first-time Vision fields", () => {
+  const state = normalizeState({
+    version: 1,
+    profile: { identityFocus: "Reader" },
+    days: {},
+  });
+
+  assert.equal(state.profile.name, "");
+  assert.equal(state.profile.age, null);
+  assert.equal(state.profile.gender, "");
+  assert.equal(state.profile.typicalTuesday.wakeUp, "");
+  assert.equal(state.profile.typicalTuesday.completedAt, null);
 });
 
 test("keeps time-log correction deterministic", () => {

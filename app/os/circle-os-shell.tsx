@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
   CIRCLE_OS_STORAGE_KEY,
@@ -11,6 +12,7 @@ import {
   getDateKey,
   getDayPeriod,
   minutesBetween,
+  normalizeState,
   upsertCheckIn,
   upsertTimeBlock,
 } from "./circle-os-model.js";
@@ -52,6 +54,18 @@ export type CircleState = {
   version: number;
   profile: {
     identityFocus: string;
+    name: string;
+    age: number | null;
+    gender: string;
+    typicalTuesday: {
+      wakeUp: string;
+      morning: string;
+      day: string;
+      people: string;
+      evening: string;
+      feeling: string;
+      completedAt: string | null;
+    };
   };
   days: Record<string, CircleDay>;
 };
@@ -101,10 +115,7 @@ export function useCircleState() {
       try {
         const stored = window.localStorage.getItem(CIRCLE_OS_STORAGE_KEY);
         const parsed = stored ? JSON.parse(stored) : createEmptyState();
-        const valid =
-          parsed && parsed.version === 1 && parsed.days && parsed.profile
-            ? parsed
-            : createEmptyState();
+        const valid = normalizeState(parsed);
         setState(ensureDay(valid, getDateKey()));
       } catch {
         setState(ensureDay(createEmptyState(), getDateKey()));
@@ -137,11 +148,21 @@ export function useCircleState() {
     });
   }
 
+  function updateProfile(
+    transform: (profile: CircleState["profile"]) => CircleState["profile"],
+  ) {
+    setState((current) => ({
+      ...current,
+      profile: transform(current.profile),
+    }));
+  }
+
   return {
     state,
     today,
     ready,
     dateKey,
+    updateProfile,
     updateToday,
   };
 }
@@ -179,7 +200,8 @@ export function OSFrame({
 }
 
 export function TodayExperience() {
-  const { today, ready, updateToday } = useCircleState();
+  const { state, today, ready, updateToday } = useCircleState();
+  const router = useRouter();
   const [selectedPeriod, setSelectedPeriod] = useState("morning");
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
@@ -194,11 +216,27 @@ export function TodayExperience() {
   const [momentHour, setMomentHour] = useState<number | null>(null);
   const [newMoment, setNewMoment] = useState("");
   useEffect(() => {
+    if (
+      ready &&
+      (!state.profile.name || !state.profile.age || !state.profile.gender)
+    ) {
+      router.replace("/os/mirror");
+    }
+  }, [
+    ready,
+    router,
+    state.profile.age,
+    state.profile.gender,
+    state.profile.name,
+  ]);
+
+  useEffect(() => {
     let active = true;
     queueMicrotask(() => {
       if (!active) return;
       const now = new Date();
       const period = getDayPeriod(now.getHours());
+      const name = state.profile.name.trim();
       setSelectedPeriod(period);
       setDateLabel(
         now.toLocaleDateString("en-US", {
@@ -208,17 +246,17 @@ export function TodayExperience() {
         }),
       );
       if (period === "morning") {
-        setGreeting("Good morning.");
+        setGreeting(`Good morning${name ? `, ${name}` : ""}.`);
       } else if (period === "midday" || period === "afternoon") {
-        setGreeting("Good afternoon.");
+        setGreeting(`Good afternoon${name ? `, ${name}` : ""}.`);
       } else {
-        setGreeting("Good evening.");
+        setGreeting(`Good evening${name ? `, ${name}` : ""}.`);
       }
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [state.profile.name]);
 
   const selectedCheckIn = today.checkIns.find(
     (checkIn) => checkIn.period === selectedPeriod,

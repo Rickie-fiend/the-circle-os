@@ -69,17 +69,15 @@ test("server-renders the functional Circle OS Today route", async () => {
   assert.doesNotMatch(html, /Oscar|pond|troph(?:y|ies)|leaderboard/i);
 });
 
-test("server-renders the complete Circle OS Vision route", async () => {
+test("server-renders the first-time Circle OS Vision setup", async () => {
   const response = await render("/os/mirror");
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /Your life in view/);
-  assert.match(html, /Pattern/);
-  assert.match(html, /Data coverage/);
-  assert.match(html, /Where it went/);
-  assert.match(html, /Your rhythm/);
-  assert.match(html, /Mood field/);
-  assert.match(html, /Becoming/);
-  assert.match(html, /There is not enough evidence to say\./);
+  assert.match(html, /First time/);
+  assert.match(html, /Tell us about you\./);
+  assert.match(html, />Name</);
+  assert.match(html, />Age</);
+  assert.match(html, />Gender</);
+  assert.match(html, /Continue/);
 });

@@ -33,8 +33,39 @@ export function createEmptyState() {
     version: 1,
     profile: {
       identityFocus: "Reader",
+      name: "",
+      age: null,
+      gender: "",
+      typicalTuesday: {
+        wakeUp: "",
+        morning: "",
+        day: "",
+        people: "",
+        evening: "",
+        feeling: "",
+        completedAt: null,
+      },
     },
     days: {},
+  };
+}
+
+export function normalizeState(state) {
+  const empty = createEmptyState();
+  if (!state || state.version !== 1 || !state.days || !state.profile) {
+    return empty;
+  }
+
+  return {
+    ...state,
+    profile: {
+      ...empty.profile,
+      ...state.profile,
+      typicalTuesday: {
+        ...empty.profile.typicalTuesday,
+        ...state.profile.typicalTuesday,
+      },
+    },
   };
 }
 
