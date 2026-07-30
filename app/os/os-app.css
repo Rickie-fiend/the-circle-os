@@ -285,7 +285,8 @@
   will-change: transform;
 }
 
-.circle-os .os-app-page.dragging {
+.circle-os .os-app-page.dragging,
+.circle-os .os-app-page.committing {
   transition: none;
 }
 

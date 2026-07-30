@@ -60,10 +60,12 @@ export function SwipeSession({
   const windowRef = useRef<HTMLDivElement | null>(null);
   const currentPageRef = useRef<HTMLDivElement | null>(null);
   const settleTimer = useRef<number | null>(null);
+  const commitFrame = useRef<number | null>(null);
   const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [settling, setSettling] = useState(false);
+  const [committing, setCommitting] = useState(false);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
 
   useLayoutEffect(() => {
@@ -91,6 +93,9 @@ export function SwipeSession({
       if (settleTimer.current) {
         window.clearTimeout(settleTimer.current);
       }
+      if (commitFrame.current) {
+        window.cancelAnimationFrame(commitFrame.current);
+      }
     },
     [],
   );
@@ -115,7 +120,7 @@ export function SwipeSession({
   }
 
   function startSwipe(event: PointerEvent<HTMLDivElement>) {
-    if (settling || blocksSwipe(event.target)) return;
+    if (settling || committing || blocksSwipe(event.target)) return;
     didSwipe.current = false;
     pointerStart.current = {
       x: event.clientX,
@@ -177,10 +182,19 @@ export function SwipeSession({
     setSettling(true);
     setDragX(distance < 0 ? -width : width);
     settleTimer.current = window.setTimeout(() => {
+      // The adjacent page is already in its final visual position. Promote it
+      // without replaying the horizontal transition on the reused current node.
+      setCommitting(true);
       onIndexChange(targetIndex);
       setDragX(0);
       setSettling(false);
       settleTimer.current = null;
+      commitFrame.current = window.requestAnimationFrame(() => {
+        commitFrame.current = window.requestAnimationFrame(() => {
+          setCommitting(false);
+          commitFrame.current = null;
+        });
+      });
     }, 250);
   }
 
@@ -214,9 +228,14 @@ export function SwipeSession({
           window.clearTimeout(settleTimer.current);
           settleTimer.current = null;
         }
+        if (commitFrame.current) {
+          window.cancelAnimationFrame(commitFrame.current);
+          commitFrame.current = null;
+        }
         setDragX(0);
         setDragging(false);
         setSettling(false);
+        setCommitting(false);
       }}
       onPointerDown={startSwipe}
       onPointerMove={continueSwipe}
@@ -248,7 +267,9 @@ export function SwipeSession({
           </div>
         ) : null}
         <div
-          className={`os-app-page current${dragging ? " dragging" : ""}`}
+          className={`os-app-page current${
+            dragging ? " dragging" : ""
+          }${committing ? " committing" : ""}`}
           ref={currentPageRef}
           style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
         >

@@ -36,6 +36,8 @@ Used for charts, weekly views, and other things worth reading again.
 - The outer session frame stays still.
 - Only the inner page follows the finger.
 - A swipe completes inside the clipped frame before state changes.
+- The incoming page is promoted in place after the swipe. Its horizontal
+  entrance never replays during the state change.
 - When pages have different heights, the frame keeps its old height until the
   swipe completes, then eases to the new page height.
 - A tap never becomes a swipe.
