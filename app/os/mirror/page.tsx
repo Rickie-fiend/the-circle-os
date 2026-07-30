@@ -546,7 +546,7 @@ export default function CircleOSMirror() {
         <header className="mirror-intro analysis-intro">
           <div>
             <p className="os-eyebrow">Your profile</p>
-            <h1>What Codex understands</h1>
+            <h1>What Athena understands</h1>
             <p className="profile-updated">{updateLabel}</p>
           </div>
         </header>
