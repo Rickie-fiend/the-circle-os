@@ -638,6 +638,25 @@
   transform: translate3d(0, -10px, 0);
 }
 
+.circle-os .os-extra-mission.leaving .os-mission-text-edit {
+  color: #191813;
+  text-decoration: line-through;
+  text-decoration-color: #191813;
+  text-decoration-thickness: 2px;
+}
+
+.circle-os .os-repeated-habits {
+  border-top: 2px solid #191813;
+  display: grid;
+  gap: 0;
+  margin-top: 1.5rem;
+}
+
+.circle-os .os-repeated-habit {
+  border-bottom: 1px solid rgb(25 24 19 / 0.35);
+  padding-bottom: 1.35rem;
+}
+
 .circle-os .os-extra-mission-copy {
   font-size: 1.85rem !important;
   min-height: 1.15em;
@@ -674,8 +693,21 @@
   line-height: 1;
 }
 
+.circle-os .os-new-habit {
+  background: #191813;
+  border: 0;
+  border-radius: 999px;
+  color: #fff8f1;
+  font-size: 0.66rem;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0.4rem 0.78rem;
+}
+
 .circle-os .os-habit-record {
-  background: linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background:
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
+    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
   color: #fff8f1;
   display: grid;
   gap: 0.85rem;
@@ -693,12 +725,16 @@
 }
 
 .circle-os .os-habit-record h2 {
+  color: #fff8f1;
   font-size: 2rem;
+  font-weight: 750;
   letter-spacing: -0.045em;
 }
 
 .circle-os .os-habit-record-summary {
-  color: rgb(255 248 241 / 0.74);
+  color: #191813;
+  font-size: 0.95rem;
+  font-weight: 750;
 }
 
 .circle-os .os-habit-record-list {
@@ -1648,6 +1684,41 @@
   grid-template-columns: 54px 1fr auto;
   min-height: 70px;
   padding: 0.7rem 0;
+  position: relative;
+}
+
+.circle-os .os-current-time {
+  animation: os-current-time-float 2.8s ease-in-out infinite;
+  background: #e36b37;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  height: 12px;
+  left: -14px;
+  pointer-events: none;
+  position: absolute;
+  transform: translateY(-50%);
+  width: 8px;
+  z-index: 2;
+}
+
+.circle-os .os-current-time::after {
+  background: #e36b37;
+  content: "";
+  height: 1px;
+  left: 8px;
+  position: absolute;
+  top: 50%;
+  width: 20px;
+}
+
+@keyframes os-current-time-float {
+  0%,
+  100% {
+    margin-top: -1px;
+  }
+
+  50% {
+    margin-top: 2px;
+  }
 }
 
 .circle-os .os-timeline article.empty {
