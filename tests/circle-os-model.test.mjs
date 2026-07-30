@@ -424,6 +424,27 @@ test("older saved days receive a safe list for additional missions", () => {
   assert.deepEqual(normalizeState(state).days["2026-07-30"].missions, []);
 });
 
+test("an unfinished legacy New mission becomes an empty task placeholder", () => {
+  const state = createEmptyState();
+  const dateKey = "2026-07-30";
+  state.days[dateKey] = {
+    ...ensureDay(state, dateKey).days[dateKey],
+    missions: [
+      {
+        id: "legacy-placeholder",
+        text: "New mission",
+        completed: false,
+        completedAt: null,
+        createdAt: "2026-07-30T12:00:00.000Z",
+      },
+    ],
+  };
+
+  const normalized = normalizeState(state);
+
+  assert.equal(normalized.days[dateKey].missions[0].text, "");
+});
+
 test("an app stays on its saved page until a new version arrives", () => {
   let state = createEmptyState();
   state = setAppSessionIndex(state, "vision-profile", "update-1", 1);

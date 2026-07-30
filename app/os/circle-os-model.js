@@ -277,7 +277,15 @@ export function normalizeState(state) {
           ...DEFAULT_MISSION,
           ...(day?.mission || {}),
         },
-        missions: Array.isArray(day?.missions) ? day.missions : [],
+        missions: Array.isArray(day?.missions)
+          ? day.missions.map((mission) =>
+              mission?.kind !== "habit" &&
+              !mission?.completed &&
+              mission?.text === "New mission"
+                ? { ...mission, text: "" }
+                : mission,
+            )
+          : [],
         checkIns: Array.isArray(day?.checkIns) ? day.checkIns : [],
         timeBlocks: Array.isArray(day?.timeBlocks) ? day.timeBlocks : [],
       },
