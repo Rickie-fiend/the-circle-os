@@ -493,6 +493,23 @@ function formatTimeBlocks(day) {
     .join("\n");
 }
 
+function formatMissions(day) {
+  const missions = [
+    ...(day.mission ? [day.mission] : []),
+    ...(day.missions || []),
+  ].filter((mission) => mission?.text);
+  if (!missions.length) return "No mission yet.";
+  return missions
+    .map(
+      (mission) =>
+        `- [${mission.completed ? "x" : " "}] ${markdownText(
+          mission.text,
+          "Untitled mission",
+        )}`,
+    )
+    .join("\n");
+}
+
 export function serializeDayMarkdown(day) {
   return `---
 type: circle-os-day
@@ -507,9 +524,7 @@ ${formatCheckIns(day)}
 
 ## Mission
 
-${markdownText(day.mission?.text, "No mission yet.")}
-
-${day.mission?.completed ? "Completed." : "Not completed."}
+${formatMissions(day)}
 
 ## Day
 

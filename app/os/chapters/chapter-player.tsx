@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { SessionIntro, SwipeSession } from "../app-session";
 import {
   advanceChapterRun,
@@ -41,6 +41,9 @@ function ChapterPageView({
   onIdleAction,
   idleActionLabel,
   idleActionDisabled,
+  idleHeaderAction,
+  idleBody,
+  idleContent,
 }: {
   chapter: ChapterDefinition;
   page: ChapterPage;
@@ -51,6 +54,9 @@ function ChapterPageView({
   onIdleAction?: (page: ChapterPage, run: ChapterRun) => void;
   idleActionLabel?: string;
   idleActionDisabled?: boolean;
+  idleHeaderAction?: ReactNode;
+  idleBody?: ReactNode;
+  idleContent?: ReactNode;
 }) {
   const answer = page.answerKey
     ? findChapterAnswer(run, page.answerKey)
@@ -105,12 +111,18 @@ function ChapterPageView({
       >
         <div className="os-survey-head">
           <p className="os-card-label">{chapter.session}</p>
-          {!isCompletionPage && page.type !== "idle" ? (
+          {page.type === "idle" ? (
+            idleHeaderAction
+          ) : !isCompletionPage ? (
             <span>{current}/{total}</span>
           ) : null}
         </div>
         <h2>{title}</h2>
-        {body ? <p className="os-chapter-body">{body}</p> : null}
+        {page.type === "idle" && idleBody !== undefined
+          ? idleBody
+          : body
+            ? <p className="os-chapter-body">{body}</p>
+            : null}
         {page.type !== "idle" && page.type !== "info" ? (
           <button
             className="os-chapter-continue"
@@ -130,6 +142,7 @@ function ChapterPageView({
             {idleActionLabel || page.button}
           </button>
         ) : null}
+        {page.type === "idle" ? idleContent : null}
       </div>
     );
   }
@@ -276,6 +289,9 @@ export function ChapterPlayer({
   onIdleAction,
   idleActionLabel,
   idleActionDisabled = false,
+  idleHeaderAction,
+  idleBody,
+  idleContent,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -285,6 +301,9 @@ export function ChapterPlayer({
   onIdleAction?: (page: ChapterPage, run: ChapterRun) => void;
   idleActionLabel?: string;
   idleActionDisabled?: boolean;
+  idleHeaderAction?: ReactNode;
+  idleBody?: ReactNode;
+  idleContent?: ReactNode;
 }) {
   const currentIndex = Math.max(
     0,
@@ -354,6 +373,9 @@ export function ChapterPlayer({
           onIdleAction={onIdleAction}
           idleActionLabel={idleActionLabel}
           idleActionDisabled={idleActionDisabled}
+          idleHeaderAction={idleHeaderAction}
+          idleBody={idleBody}
+          idleContent={idleContent}
           onComplete={(submission) =>
             onRunChange(
               advanceChapterRun(definition, run, submission),

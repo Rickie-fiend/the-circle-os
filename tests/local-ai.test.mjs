@@ -163,6 +163,15 @@ test("Obsidian copies keep profile sections and day evidence readable", () => {
       completed: true,
       completedAt: "2026-07-29T09:00:00.000Z",
     },
+    missions: [
+      {
+        id: "mission-two",
+        text: "Call my sister",
+        completed: false,
+        completedAt: null,
+        createdAt: "2026-07-29T10:00:00.000Z",
+      },
+    ],
     timeBlocks: [
       {
         id: "one",
@@ -182,6 +191,7 @@ test("Obsidian copies keep profile sections and day evidence readable", () => {
     /## Interests/,
   );
   assert.match(serializeDayMarkdown(day), /Coffee with a friend/);
+  assert.match(serializeDayMarkdown(day), /- \[ \] Call my sister/);
 });
 
 test("chapter answers remain readable in the Obsidian profile", () => {

@@ -27,6 +27,12 @@ export function renderChapterTemplate(
   run: ChapterRun,
 ): string;
 
+export function selectHourlyChapter(
+  chapters: ChapterDefinition[],
+  runs: Record<string, ChapterRun>,
+  nowValue?: Date | string | number,
+): ChapterDefinition | undefined;
+
 export function moveChapterRun(
   chapter: ChapterDefinition,
   run: ChapterRun,

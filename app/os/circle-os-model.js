@@ -266,6 +266,22 @@ export function normalizeState(state) {
   if (!sessions.gap.text && state.profile.vision?.gap) {
     sessions.gap.text = state.profile.vision.gap;
   }
+  const days = Object.fromEntries(
+    Object.entries(state.days).map(([dateKey, day]) => [
+      dateKey,
+      {
+        ...createDay(dateKey),
+        ...day,
+        mission: {
+          ...DEFAULT_MISSION,
+          ...(day?.mission || {}),
+        },
+        missions: Array.isArray(day?.missions) ? day.missions : [],
+        checkIns: Array.isArray(day?.checkIns) ? day.checkIns : [],
+        timeBlocks: Array.isArray(day?.timeBlocks) ? day.timeBlocks : [],
+      },
+    ]),
+  );
 
   return {
     ...empty,
@@ -300,7 +316,7 @@ export function normalizeState(state) {
         },
       },
     },
-    days: state.days,
+    days,
     chapters: {
       runs:
         state.chapters?.runs && typeof state.chapters.runs === "object"
@@ -426,6 +442,9 @@ export function mergeServerState(state, serverState) {
         completed: Boolean(localDay.mission?.completed),
         completedAt: localDay.mission?.completedAt || null,
       },
+      missions: localDay.missions?.length
+        ? localDay.missions
+        : remoteDay.missions ?? [],
       checkIns: localDay.checkIns ?? remoteDay.checkIns ?? [],
       timeBlocks: localDay.timeBlocks ?? remoteDay.timeBlocks ?? [],
       logRange: localDay.logRange ?? remoteDay.logRange ?? null,
@@ -810,6 +829,7 @@ export function createDay(dateKey) {
     date: dateKey,
     checkIns: [],
     mission: { ...DEFAULT_MISSION },
+    missions: [],
     timeBlocks: [],
     logRange: null,
   };
@@ -970,10 +990,11 @@ export function summarizeWeek(state, now = new Date()) {
   const moods = [...moodMap.entries()]
     .map(([mood, count]) => ({ mood, count }))
     .sort((a, b) => b.count - a.count);
-  const missionDays = days.filter(({ day }) => day.mission);
-  const completedMissions = missionDays.filter(
-    ({ day }) => day.mission?.completed,
-  );
+  const missions = days.flatMap(({ day }) => [
+    ...(day.mission ? [day.mission] : []),
+    ...(day.missions || []),
+  ]);
+  const completedMissions = missions.filter((mission) => mission.completed);
   const readingBlocks = days.flatMap(({ day }) =>
     day.timeBlocks.filter((block) => block.activity === "Reading"),
   );
@@ -1008,7 +1029,7 @@ export function summarizeWeek(state, now = new Date()) {
     moods,
     missions: {
       completed: completedMissions.length,
-      available: missionDays.length,
+      available: missions.length,
     },
     identity: {
       focus: state.profile?.identityFocus ?? "Reader",

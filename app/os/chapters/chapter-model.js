@@ -73,6 +73,47 @@ export function renderChapterTemplate(value, run) {
   );
 }
 
+function chapterHourKey(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+    String(date.getHours()).padStart(2, "0"),
+  ].join("-");
+}
+
+export function selectHourlyChapter(chapters, runs, nowValue = new Date()) {
+  const ordered = [...chapters].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  );
+  if (!ordered.length) return undefined;
+  const completed = ordered
+    .map((chapter) => ({
+      chapter,
+      run: runs[chapterRunId(chapter)],
+    }))
+    .filter(({ run }) => run?.status === "completed" && run.completedAt)
+    .sort(({ run: left }, { run: right }) =>
+      String(right.completedAt).localeCompare(String(left.completedAt)),
+    );
+  const latest = completed[0];
+  if (
+    latest &&
+    chapterHourKey(latest.run.completedAt) === chapterHourKey(nowValue)
+  ) {
+    return latest.chapter;
+  }
+  return (
+    ordered.find(
+      (chapter) => runs[chapterRunId(chapter)]?.status !== "completed",
+    ) ||
+    latest?.chapter ||
+    ordered.at(-1)
+  );
+}
+
 export function moveChapterRun(chapter, run, pageId) {
   const nextIndex = chapter.pages.findIndex((page) => page.id === pageId);
   if (nextIndex < 0) return run;

@@ -43,9 +43,13 @@ import {
   chapterAnswerText,
   createChapterRun,
   renderChapterTemplate,
+  selectHourlyChapter,
   storeChapterRun,
 } from "./chapters/chapter-model.js";
-import { getPublishedChapter } from "./chapters/registry";
+import {
+  getPublishedChapter,
+  publishedChapters,
+} from "./chapters/registry";
 import type {
   ChapterRun,
   ChapterSubmission,
@@ -66,6 +70,14 @@ type Mission = {
   completedAt: string | null;
 };
 
+type ExtraMission = {
+  id: string;
+  text: string;
+  completed: boolean;
+  completedAt: string | null;
+  createdAt: string;
+};
+
 export type TimeBlock = {
   id: string;
   start: string;
@@ -81,12 +93,18 @@ type CircleDay = {
   date: string;
   checkIns: CheckIn[];
   mission: Mission;
+  missions?: ExtraMission[];
   timeBlocks: TimeBlock[];
   logRange?: {
     startHour: number;
     endHour: number;
   } | null;
 };
+
+const PROFILE_SPARK_CHAPTERS = publishedChapters.filter((chapter) =>
+  chapter.id.startsWith("profile-spark-"),
+);
+const PROFILE_SPARK_OPENED_AT = Date.now();
 
 export type CircleState = {
   version: number;
@@ -734,11 +752,18 @@ export function TodayExperience() {
   const checkInNote = surveyAnswer(surveyAnswers, "checkin-note");
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
+  const [profileSparkClock, setProfileSparkClock] = useState(
+    PROFILE_SPARK_OPENED_AT,
+  );
   const [checkInApp, setCheckInApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
   const [checkInTitleDraft, setCheckInTitleDraft] = useState("");
   const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
+  const [addingMission, setAddingMission] = useState(false);
+  const [missionDraft, setMissionDraft] = useState("");
+  const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
+  const [editingMissionDraft, setEditingMissionDraft] = useState("");
   const [isLogOpen, setLogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
@@ -801,6 +826,14 @@ export function TodayExperience() {
     };
   }, [dateKey, state.profile.name]);
 
+  useEffect(() => {
+    const timer = window.setInterval(
+      () => setProfileSparkClock(Date.now()),
+      60_000,
+    );
+    return () => window.clearInterval(timer);
+  }, []);
+
   const firstProfileQuestionIndex = PROFILE_QUESTIONS.findIndex(
     (question) =>
       !surveyAnswers.some((answer) => answer.questionId === question.id),
@@ -842,6 +875,18 @@ export function TodayExperience() {
     : seenCheckInJourney === checkInJourneyVersion
       ? checkInApp
       : 0;
+  const profileSparkChapter = selectHourlyChapter(
+    PROFILE_SPARK_CHAPTERS,
+    state.chapters.runs,
+    profileSparkClock,
+  );
+  const profileSparkRun = useMemo(() => {
+    if (!profileSparkChapter) return null;
+    return (
+      state.chapters.runs[chapterRunId(profileSparkChapter)] ||
+      createChapterRun(profileSparkChapter)
+    );
+  }, [profileSparkChapter, state.chapters.runs]);
   const defaultLogStartHour = Math.max(CIRCLE_DAY_START_HOUR, wakeHour);
   const defaultLogEndHour = Math.min(
     CIRCLE_DAY_START_HOUR + 23,
@@ -868,6 +913,15 @@ export function TodayExperience() {
       createChapterRun(habitBuildingChapter)
     );
   }, [habitBuildingChapter, state.chapters.runs]);
+  const habitAction = habitBuildingRun
+    ? chapterAnswerText(habitBuildingRun, "habit-action")
+    : "";
+  const habitTimePlace = habitBuildingRun
+    ? chapterAnswerText(habitBuildingRun, "habit-time-place")
+    : "";
+  const habitIdentity = habitBuildingRun
+    ? chapterAnswerText(habitBuildingRun, "habit-identity")
+    : "";
   const logSetupRun = useMemo(() => {
     if (!logSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
@@ -903,6 +957,71 @@ export function TodayExperience() {
         completedAt: day.mission.completed ? null : new Date().toISOString(),
       },
     }), "mission");
+  }
+
+  function addExtraMission(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = missionDraft.trim();
+    if (!text) return;
+    const timestamp = new Date().toISOString();
+    updateToday(
+      (day) => ({
+        ...day,
+        missions: [
+          ...(day.missions || []),
+          {
+            id:
+              typeof crypto !== "undefined" && "randomUUID" in crypto
+                ? crypto.randomUUID()
+                : `mission-${Date.now()}`,
+            text,
+            completed: false,
+            completedAt: null,
+            createdAt: timestamp,
+          },
+        ],
+      }),
+      "mission",
+    );
+    setMissionDraft("");
+    setAddingMission(false);
+  }
+
+  function saveExtraMission(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = editingMissionDraft.trim();
+    if (!editingMissionId || !text) return;
+    updateToday(
+      (day) => ({
+        ...day,
+        missions: (day.missions || []).map((mission) =>
+          mission.id === editingMissionId ? { ...mission, text } : mission,
+        ),
+      }),
+      "mission",
+    );
+    setEditingMissionId(null);
+    setEditingMissionDraft("");
+  }
+
+  function toggleExtraMission(id: string) {
+    updateToday(
+      (day) => ({
+        ...day,
+        missions: (day.missions || []).map((mission) =>
+          mission.id === id
+            ? {
+                ...mission,
+                completed: !mission.completed,
+                completedAt: mission.completed
+                  ? null
+                  : new Date().toISOString(),
+              }
+            : mission,
+        ),
+      }),
+      "mission",
+    );
   }
 
   function resetLogForm() {
@@ -1113,6 +1232,25 @@ export function TodayExperience() {
     setCheckInApp(checkInIdleApp);
   }
 
+  function saveProfileSparkRun(nextRun: ChapterRun) {
+    if (!profileSparkChapter) return;
+    updateState((current) => {
+      const previousRun = current.chapters.runs[nextRun.runId];
+      let next = storeChapterRun(
+        current,
+        nextRun,
+        profileSparkChapter.session,
+      );
+      if (
+        nextRun.status === "completed" &&
+        previousRun?.status !== "completed"
+      ) {
+        next = queueProfileUpdate(next, "survey-answer");
+      }
+      return next;
+    });
+  }
+
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
     updateState((current) => {
@@ -1231,6 +1369,15 @@ export function TodayExperience() {
             </p>
           </div>
 
+          {checkInConfirmed && profileSparkChapter && profileSparkRun ? (
+            <ChapterPlayer
+              className="os-checkin-session"
+              definition={profileSparkChapter}
+              label="Check-in chapter"
+              run={profileSparkRun}
+              onRunChange={saveProfileSparkRun}
+            />
+          ) : (
           <SwipeSession
             availableIndices={
               checkInConfirmed
@@ -1378,6 +1525,7 @@ export function TodayExperience() {
                 )}
             </div>
           </SwipeSession>
+          )}
         </section>
 
         {habitBuildingChapter && habitBuildingRun ? (
@@ -1385,6 +1533,98 @@ export function TodayExperience() {
             <ChapterPlayer
               className="os-habit-session"
               definition={habitBuildingChapter}
+              idleBody={
+                <div className="os-habit-glance">
+                  <strong>{habitAction}</strong>
+                  <span>{habitTimePlace}</span>
+                  <p>
+                    Becoming <strong>{habitIdentity}</strong>
+                  </p>
+                </div>
+              }
+              idleContent={
+                addingMission || (today.missions || []).length ? (
+                  <div className="os-extra-missions">
+                    {addingMission ? (
+                      <form
+                        className="os-extra-mission-form"
+                        onSubmit={addExtraMission}
+                      >
+                        <input
+                          aria-label="New mission"
+                          autoFocus
+                          maxLength={180}
+                          placeholder="What else do you want to do?"
+                          value={missionDraft}
+                          onChange={(event) => setMissionDraft(event.target.value)}
+                        />
+                        <button type="submit" disabled={!missionDraft.trim()}>
+                          Save
+                        </button>
+                      </form>
+                    ) : null}
+                    {(today.missions || []).map((mission) => (
+                      <article
+                        className={`os-extra-mission${
+                          mission.completed ? " completed" : ""
+                        }`}
+                        key={mission.id}
+                      >
+                        {editingMissionId === mission.id ? (
+                          <form onSubmit={saveExtraMission}>
+                            <input
+                              aria-label="Edit mission"
+                              autoFocus
+                              maxLength={180}
+                              value={editingMissionDraft}
+                              onChange={(event) =>
+                                setEditingMissionDraft(event.target.value)
+                              }
+                            />
+                            <button
+                              type="submit"
+                              disabled={!editingMissionDraft.trim()}
+                            >
+                              Save
+                            </button>
+                          </form>
+                        ) : (
+                          <button
+                            className="os-extra-mission-copy"
+                            type="button"
+                            onClick={() => {
+                              setEditingMissionId(mission.id);
+                              setEditingMissionDraft(mission.text);
+                            }}
+                          >
+                            {mission.text}
+                          </button>
+                        )}
+                        <button
+                          className="os-extra-mission-done"
+                          type="button"
+                          aria-pressed={mission.completed}
+                          onClick={() => toggleExtraMission(mission.id)}
+                        >
+                          {mission.completed ? "Done" : "Mark done"}
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                ) : null
+              }
+              idleHeaderAction={
+                <button
+                  className="os-add-mission"
+                  type="button"
+                  onClick={() => {
+                    setAddingMission((value) => !value);
+                    setMissionDraft("");
+                  }}
+                >
+                  {addingMission ? "Cancel" : "+ Add mission"}
+                </button>
+              }
               idleActionDisabled={today.mission.completed}
               idleActionLabel={today.mission.completed ? "Done today" : undefined}
               label="Habit chapter"

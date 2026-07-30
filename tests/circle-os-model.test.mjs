@@ -362,6 +362,24 @@ test("older saved profiles receive an empty chapter library safely", () => {
   assert.deepEqual(normalized.appSessions, {});
 });
 
+test("older saved days receive a safe list for additional missions", () => {
+  const state = createEmptyState();
+  state.days["2026-07-30"] = {
+    date: "2026-07-30",
+    checkIns: [],
+    mission: {
+      text: "One thing",
+      why: "",
+      identity: "Yourself",
+      completed: false,
+      completedAt: null,
+    },
+    timeBlocks: [],
+  };
+
+  assert.deepEqual(normalizeState(state).days["2026-07-30"].missions, []);
+});
+
 test("an app stays on its saved page until a new version arrives", () => {
   let state = createEmptyState();
   state = setAppSessionIndex(state, "vision-profile", "update-1", 1);

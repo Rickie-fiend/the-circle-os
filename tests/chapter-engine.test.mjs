@@ -8,6 +8,7 @@ import {
   findChapterAnswer,
   moveChapterRun,
   renderChapterTemplate,
+  selectHourlyChapter,
   storeChapterRun,
 } from "../app/os/chapters/chapter-model.js";
 import {
@@ -116,6 +117,34 @@ test("chapter pages can repeat a person's saved answers", () => {
       run,
     ),
     "I will Walk for ten minutes so I can become A person who cares for my body.",
+  );
+});
+
+test("hourly chapters wait until a later hour before offering the next set", () => {
+  const first = { ...logSetup, id: "profile-spark-01", version: 1 };
+  const second = { ...logSetup, id: "profile-spark-02", version: 1 };
+  const completed = {
+    ...createChapterRun(first),
+    status: "completed",
+    completedAt: "2026-07-30T10:15:00.000Z",
+  };
+  const runs = { [chapterRunId(first)]: completed };
+
+  assert.equal(
+    selectHourlyChapter(
+      [first, second],
+      runs,
+      new Date("2026-07-30T10:45:00.000Z"),
+    ).id,
+    first.id,
+  );
+  assert.equal(
+    selectHourlyChapter(
+      [first, second],
+      runs,
+      new Date("2026-07-30T11:00:00.000Z"),
+    ).id,
+    second.id,
   );
 });
 

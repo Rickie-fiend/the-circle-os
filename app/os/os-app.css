@@ -540,8 +540,12 @@
   background: #191813;
   color: #fff8f1;
   font-size: 0.74rem;
-  margin-top: auto;
+  margin-top: 1.25rem;
   width: 100%;
+}
+
+.circle-os .os-habit .os-chapter-idle {
+  padding: 22px;
 }
 
 .circle-os .os-habit .os-chapter-idle h2 {
@@ -553,13 +557,110 @@
   text-transform: uppercase;
 }
 
-.circle-os .os-habit .os-chapter-idle .os-chapter-body {
-  font-size: clamp(1.38rem, 5.5vw, 1.85rem);
-  font-weight: 720;
+.circle-os .os-add-mission {
+  background: rgb(255 248 241 / 0.12);
+  border: 1px solid rgb(255 248 241 / 0.24);
+  border-radius: 999px;
+  color: #fff8f1;
+  font-size: 0.64rem;
+  min-height: 34px;
+  padding: 0.45rem 0.72rem;
+}
+
+.circle-os .os-habit-glance {
+  display: grid;
+  gap: 0.72rem;
+  margin-top: 0.95rem;
+}
+
+.circle-os .os-habit-glance > strong {
+  color: #fff8f1;
+  font-size: clamp(1.55rem, 6vw, 2rem);
+  font-weight: 740;
   letter-spacing: -0.04em;
-  line-height: 1.08;
-  margin-top: 1rem;
-  opacity: 1;
+  line-height: 1.02;
+}
+
+.circle-os .os-habit-glance > span {
+  color: rgb(255 248 241 / 0.76);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.circle-os .os-habit-glance > p {
+  background: #f7f4ec;
+  border-radius: 14px;
+  color: #191813;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+}
+
+.circle-os .os-extra-missions {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.8rem;
+}
+
+.circle-os .os-extra-mission,
+.circle-os .os-extra-mission-form {
+  background: rgb(25 24 19 / 0.16);
+  border: 1px solid rgb(255 248 241 / 0.18);
+  border-radius: 16px;
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem;
+}
+
+.circle-os .os-extra-mission.completed {
+  opacity: 0.62;
+}
+
+.circle-os .os-extra-mission form,
+.circle-os .os-extra-mission-form {
+  grid-template-columns: 1fr auto;
+}
+
+.circle-os .os-extra-mission input,
+.circle-os .os-extra-mission-form input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgb(255 248 241 / 0.32);
+  border-radius: 0;
+  color: #fff8f1;
+  font-size: 1rem;
+  min-width: 0;
+  padding: 0.55rem 0;
+}
+
+.circle-os .os-extra-mission form button,
+.circle-os .os-extra-mission-form button,
+.circle-os .os-extra-mission-done {
+  background: #f7f4ec;
+  border: 0;
+  border-radius: 11px;
+  color: #191813;
+  font-size: 0.65rem;
+  min-height: 38px;
+  padding: 0.55rem 0.72rem;
+}
+
+.circle-os .os-extra-mission-copy {
+  background: transparent;
+  border: 0;
+  color: #fff8f1;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.25;
+  padding: 0;
+  text-align: left;
+}
+
+.circle-os .os-extra-mission-done {
+  background: #191813;
+  color: #fff8f1;
+  width: 100%;
 }
 
 .circle-os .os-session-wait {
@@ -1292,14 +1393,14 @@
   align-items: center;
   background: transparent;
   border: 1px dashed rgb(241 239 232 / 0.11);
-  border-radius: 18px;
+  border-radius: 14px;
   color: rgb(227 107 55 / 0.72);
   display: flex;
-  font-size: 1.55rem;
+  font-size: 1.2rem;
   font-weight: 350;
   justify-content: center;
-  margin: 10px 0;
-  min-height: 66px;
+  margin: 8px 0;
+  min-height: 42px;
   padding: 0;
   text-align: center;
   width: 100%;

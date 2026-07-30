@@ -213,6 +213,550 @@
           "body": "Your log is ready."
         }
       ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-01",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Psst... your day has a rhythm.",
+      "purpose": "Learn when the person feels most natural and what changes their energy.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Psst... your day has a rhythm.",
+          "body": "Three small answers may show when life feels easiest.",
+          "button": "Begin"
+        },
+        {
+          "id": "natural-time",
+          "options": [
+            {
+              "id": "morning",
+              "label": "Morning"
+            },
+            {
+              "id": "daytime",
+              "label": "Daytime"
+            },
+            {
+              "id": "evening",
+              "label": "Evening"
+            },
+            {
+              "id": "late-night",
+              "label": "Late night"
+            }
+          ],
+          "type": "single-choice",
+          "question": "What part of the day feels most natural to you?",
+          "answerKey": "spark-rhythm-natural-time",
+          "required": true
+        },
+        {
+          "id": "energy-giver",
+          "type": "short-text",
+          "question": "What usually gives you energy?",
+          "answerKey": "spark-rhythm-energy-giver",
+          "placeholder": "One real example is enough.",
+          "required": true
+        },
+        {
+          "id": "energy-return",
+          "type": "short-text",
+          "question": "What helps you feel like yourself again when energy falls?",
+          "answerKey": "spark-rhythm-energy-return",
+          "placeholder": "A person, place, action, or quiet moment.",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your rhythm is a little clearer.",
+          "body": "You can go back and change anything. Continue when these answers feel true.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Three answers saved.",
+          "body": "Athena has a clearer picture of your natural rhythm."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-02",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What if your attention tells a story?",
+      "purpose": "Learn what holds and breaks the person's attention.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What if your attention tells a story?",
+          "body": "Three quick answers can show what pulls you in and away.",
+          "button": "Begin"
+        },
+        {
+          "id": "lose-time",
+          "type": "short-text",
+          "question": "What can make you lose track of time?",
+          "answerKey": "spark-attention-lose-time",
+          "placeholder": "Something you can stay with for a long time.",
+          "required": true
+        },
+        {
+          "id": "attention-breaker",
+          "type": "short-text",
+          "question": "What pulls your attention away most often?",
+          "answerKey": "spark-attention-breaker",
+          "placeholder": "Say what really happens.",
+          "required": true
+        },
+        {
+          "id": "focus-setting",
+          "options": [
+            {
+              "id": "quiet",
+              "label": "Somewhere quiet"
+            },
+            {
+              "id": "lively",
+              "label": "Somewhere lively"
+            },
+            {
+              "id": "people",
+              "label": "Near other people"
+            },
+            {
+              "id": "changing",
+              "label": "It changes"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Where is it easiest for you to focus?",
+          "answerKey": "spark-attention-setting",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your attention left three clues.",
+          "body": "Go back if one answer needs changing. Continue when it feels right.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Three answers saved.",
+          "body": "Athena can now compare what holds your attention with how your days look."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-03",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Psst... people change our energy.",
+      "purpose": "Learn how connection, honesty, and support feel to the person.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Psst... people change our energy.",
+          "body": "Three answers can make your social side easier to understand.",
+          "button": "Begin"
+        },
+        {
+          "id": "after-people",
+          "options": [
+            {
+              "id": "fuller",
+              "label": "More alive"
+            },
+            {
+              "id": "tired",
+              "label": "Tired"
+            },
+            {
+              "id": "calm",
+              "label": "Calm"
+            },
+            {
+              "id": "depends",
+              "label": "It depends who"
+            }
+          ],
+          "type": "single-choice",
+          "question": "How do you usually feel after being with people?",
+          "answerKey": "spark-people-after",
+          "required": true
+        },
+        {
+          "id": "honest-person",
+          "type": "short-text",
+          "question": "What kind of person makes it easy to be honest?",
+          "answerKey": "spark-people-honest",
+          "placeholder": "Describe the kind of person, not their name.",
+          "required": true
+        },
+        {
+          "id": "support",
+          "type": "short-text",
+          "question": "When life feels hard, what kind of support actually helps?",
+          "answerKey": "spark-people-support",
+          "placeholder": "Listening, advice, space, help, or something else.",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your way of connecting is clearer.",
+          "body": "Review your answers once. Continue when they feel true.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Three answers saved.",
+          "body": "Athena knows a little more about the connection that helps you."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-04",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What if your space changes who you can be?",
+      "purpose": "Learn which surroundings settle or disturb the person.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What if your space changes who you can be?",
+          "body": "Three small answers can show where you feel most at ease.",
+          "button": "Begin"
+        },
+        {
+          "id": "settled-place",
+          "type": "short-text",
+          "question": "Where do you feel most settled?",
+          "answerKey": "spark-space-settled",
+          "placeholder": "A room, place, or kind of setting.",
+          "required": true
+        },
+        {
+          "id": "space-friction",
+          "type": "short-text",
+          "question": "What in your space bothers you more than it should?",
+          "answerKey": "spark-space-friction",
+          "placeholder": "Noise, mess, people, light, or something else.",
+          "required": true
+        },
+        {
+          "id": "inside-outside",
+          "options": [
+            {
+              "id": "inside",
+              "label": "Inside"
+            },
+            {
+              "id": "outside",
+              "label": "Outside"
+            },
+            {
+              "id": "moving",
+              "label": "Moving between places"
+            },
+            {
+              "id": "depends",
+              "label": "It depends"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Where do you feel more awake?",
+          "answerKey": "spark-space-awake",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your surroundings matter.",
+          "body": "Go back if needed. Continue when this feels like your real life.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Three answers saved.",
+          "body": "Athena can now notice how your surroundings may shape your days."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-05",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Psst... how do you like to choose?",
+      "purpose": "Learn how the person balances plans, freedom, and inner trust.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Psst... how do you like to choose?",
+          "body": "Three answers may show what makes a choice feel like yours.",
+          "button": "Begin"
+        },
+        {
+          "id": "plan-freedom",
+          "options": [
+            {
+              "id": "clear-plan",
+              "label": "A clear plan"
+            },
+            {
+              "id": "open-time",
+              "label": "Open time"
+            },
+            {
+              "id": "both",
+              "label": "A little of both"
+            },
+            {
+              "id": "changing",
+              "label": "It changes each day"
+            }
+          ],
+          "type": "single-choice",
+          "question": "What helps you feel better in a normal day?",
+          "answerKey": "spark-choice-plan-freedom",
+          "required": true
+        },
+        {
+          "id": "waiting-choice",
+          "type": "short-text",
+          "question": "What choice has been sitting in your mind lately?",
+          "answerKey": "spark-choice-waiting",
+          "placeholder": "Keep it as simple as you want.",
+          "required": true
+        },
+        {
+          "id": "right-choice",
+          "type": "short-text",
+          "question": "How do you know when a choice feels right?",
+          "answerKey": "spark-choice-right",
+          "placeholder": "What do you notice in yourself?",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your way of choosing is clearer.",
+          "body": "Read the answers once. Continue when they feel honest.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Three answers saved.",
+          "body": "Athena can now be more careful when asking about plans and freedom."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-06",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What if rest is more than doing nothing?",
+      "purpose": "Learn what truly rests and delights the person.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What if rest is more than doing nothing?",
+          "body": "Three answers can show what actually brings you back.",
+          "button": "Begin"
+        },
+        {
+          "id": "real-rest",
+          "type": "short-text",
+          "question": "What leaves you feeling truly rested?",
+          "answerKey": "spark-rest-real",
+          "placeholder": "Think of what works, not what should work.",
+          "required": true
+        },
+        {
+          "id": "missed-fun",
+          "type": "short-text",
+          "question": "What kind of fun do you miss?",
+          "answerKey": "spark-rest-fun",
+          "placeholder": "Something simple counts.",
+          "required": true
+        },
+        {
+          "id": "rest-ease",
+          "type": "slider",
+          "question": "How easy is it for you to rest without feeling guilty?",
+          "answerKey": "spark-rest-ease",
+          "min": 1,
+          "max": 5,
+          "minLabel": "Very hard",
+          "maxLabel": "Very easy",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Rest means something specific to you.",
+          "body": "Change an answer if needed. Continue when it feels true.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Three answers saved.",
+          "body": "Athena can now tell the difference between empty time and real rest."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-07",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Psst... what makes a day worth it?",
+      "purpose": "Learn which ordinary moments give the person's life meaning.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Psst... what makes a day worth it?",
+          "body": "Three answers can show what matters beneath goals and plans.",
+          "button": "Begin"
+        },
+        {
+          "id": "worthwhile-moment",
+          "type": "short-text",
+          "question": "What small moment can make a whole day feel worthwhile?",
+          "answerKey": "spark-meaning-moment",
+          "placeholder": "An ordinary moment is enough.",
+          "required": true
+        },
+        {
+          "id": "unseen-pride",
+          "type": "short-text",
+          "question": "What makes you proud even when nobody sees it?",
+          "answerKey": "spark-meaning-pride",
+          "placeholder": "Something quiet still counts.",
+          "required": true
+        },
+        {
+          "id": "protect",
+          "type": "short-text",
+          "question": "What do you want to protect from getting crowded out?",
+          "answerKey": "spark-meaning-protect",
+          "placeholder": "A person, practice, feeling, or part of yourself.",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "These answers point toward what matters.",
+          "body": "Go back if needed. Continue when they sound like you.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Three answers saved.",
+          "body": "Athena has better evidence about what makes life feel worthwhile to you."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-08",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What if you are already changing?",
+      "purpose": "Learn what the person wants to learn and which signs of growth already exist.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What if you are already changing?",
+          "body": "Three answers can show where growth is already alive.",
+          "button": "Begin"
+        },
+        {
+          "id": "learning",
+          "type": "short-text",
+          "question": "What are you curious to learn right now?",
+          "answerKey": "spark-growth-learning",
+          "placeholder": "It does not need to be useful.",
+          "required": true
+        },
+        {
+          "id": "wanted-change",
+          "type": "short-text",
+          "question": "What change would help you feel more like yourself?",
+          "answerKey": "spark-growth-change",
+          "placeholder": "One clear change is enough.",
+          "required": true
+        },
+        {
+          "id": "existing-sign",
+          "type": "short-text",
+          "question": "What small sign shows that change may have already started?",
+          "answerKey": "spark-growth-sign",
+          "placeholder": "Look for evidence, not perfection.",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Growth is easier to see now.",
+          "body": "Review the answers. Continue when they feel honest.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Three answers saved.",
+          "body": "Athena can now look for growth without making up a story."
+        }
+      ]
     }
   ]
 }
