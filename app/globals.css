@@ -103,12 +103,19 @@ a {
   display: inline-flex;
 }
 
+.wordmark-switch {
+  border-radius: 999px;
+  gap: 0.7rem;
+  touch-action: manipulation;
+}
+
 .wordmark-secret {
   border-radius: 50%;
   touch-action: manipulation;
 }
 
-.wordmark-secret:focus-visible {
+.wordmark-secret:focus-visible,
+.wordmark-switch:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
 }

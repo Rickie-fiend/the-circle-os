@@ -557,7 +557,7 @@ export function OSFrame({
         <header className="os-header">
           <Link className="os-wordmark" href="/" aria-label="The Circle website">
             <span className="os-brand-mark" aria-hidden="true" />
-            <span>THE CIRCLE OS</span>
+            <span>CIRCLE OS</span>
           </Link>
           <span className="os-local-status">
             {state.ai.profileId && state.outbox.length === 0

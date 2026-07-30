@@ -58,7 +58,7 @@ test("server-renders the functional Circle OS Today route", async () => {
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /THE CIRCLE OS/);
+  assert.match(html, /CIRCLE OS/);
   assert.match(html, /A moment for you\./);
   assert.match(html, /Let&#x27;s set up your first habit\./);
   assert.match(html, /Set your usual day\./);

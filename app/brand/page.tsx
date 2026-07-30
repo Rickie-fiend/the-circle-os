@@ -202,7 +202,7 @@ export default function BrandGuidelines() {
           <div className="os-preview-top">
             <div className="os-mini-brand">
               <span className="os-mini-mark" aria-hidden="true" />
-              <span>THE CIRCLE OS</span>
+              <span>CIRCLE OS</span>
             </div>
             <span>TODAY / VISION</span>
           </div>
@@ -245,6 +245,11 @@ export default function BrandGuidelines() {
             <span>04</span>
             <h3>Default is not data</h3>
             <p>Suggestions stay faded until the person confirms or changes them.</p>
+          </article>
+          <article>
+            <span>05</span>
+            <h3>Guided learning</h3>
+            <p>Teach one small idea, let the person try it, then leave a useful app.</p>
           </article>
         </div>
       </section>

@@ -138,18 +138,14 @@ export default function Home() {
   return (
     <MotionProvider>
       <header className="site-header">
-        <div className="wordmark">
-          <Link
-            className="wordmark-secret"
-            href="/os"
-            aria-label="Return to The Circle OS"
-          >
-            <Mark small />
-          </Link>
-          <a href="#top" aria-label="The Circle — home">
-            THE CIRCLE
-          </a>
-        </div>
+        <Link
+          className="wordmark wordmark-switch"
+          href="/os"
+          aria-label="Open Circle OS"
+        >
+          <Mark small />
+          <span>THE CIRCLE</span>
+        </Link>
         <div className="nav-actions">
           <ThemeToggle />
           <Link className="nav-os" href="/os">
