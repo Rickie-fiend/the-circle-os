@@ -33,6 +33,7 @@ import {
 import {
   buildServerPayload,
   readCircleState,
+  recoverCircleProfile,
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
@@ -193,6 +194,7 @@ type CircleStateContextValue = {
   ready: boolean;
   dateKey: string;
   connectAi: (baseUrl: string, token: string) => Promise<void>;
+  recoverProfile: (profileId: string) => Promise<void>;
   updateProfile: (
     transform: (profile: CircleState["profile"]) => CircleState["profile"],
     reason?: string,
@@ -512,12 +514,35 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     await saveCircleState(next);
   }
 
+  async function recoverProfile(profileId: string) {
+    const current = stateRef.current;
+    const result = await recoverCircleProfile(current.ai.baseUrl, profileId);
+    const restored = ensureDay(normalizeState(result.state), getDateKey());
+    const next = {
+      ...restored,
+      ai: {
+        ...restored.ai,
+        baseUrl: current.ai.baseUrl,
+        profileId: result.profileId,
+        token: result.accessKey,
+        status: "ready",
+        lastError: "",
+        lastSyncedAt: new Date().toISOString(),
+      },
+    };
+    lastServerSignature.current = serverSignature(next);
+    stateRef.current = next;
+    setState(next);
+    await saveCircleState(next);
+  }
+
   const value = {
     state,
     today,
     ready,
     dateKey,
     connectAi,
+    recoverProfile,
     updateProfile,
     updateState,
     updateToday,

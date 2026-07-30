@@ -148,9 +148,6 @@ export default function Home() {
         </Link>
         <div className="nav-actions">
           <ThemeToggle />
-          <Link className="nav-os" href="/os">
-            Open OS
-          </Link>
           <a className="nav-apply" href="#join">
             Apply Now <span aria-hidden="true">↗</span>
           </a>

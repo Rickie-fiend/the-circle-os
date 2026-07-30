@@ -56,13 +56,21 @@ function formatUpdated(value: string | null) {
 }
 
 export default function CircleOSMirror() {
-  const { state, ready, dateKey, updateProfile, updateState } = useCircleState();
+  const {
+    state,
+    ready,
+    dateKey,
+    recoverProfile,
+    updateProfile,
+    updateState,
+  } = useCircleState();
   const router = useRouter();
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [sessionDraft, setSessionDraft] = useState("");
   const [suggestionDraft, setSuggestionDraft] = useState("");
   const [suggestionSaved, setSuggestionSaved] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const [draft, setDraft] = useState({
     name: "",
     age: "",
@@ -116,8 +124,26 @@ export default function CircleOSMirror() {
       state.profile.vision.completedAt,
   );
 
-  function saveFirstVision(event: FormEvent<HTMLFormElement>) {
+  async function saveFirstVision(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const recoveryCode = draft.name.trim();
+    if (/^p_[A-Za-z0-9_-]{16}$/.test(recoveryCode)) {
+      setRecovering(true);
+      setError("");
+      try {
+        await recoverProfile(recoveryCode);
+        router.push("/os");
+      } catch (recoveryError) {
+        setError(
+          recoveryError instanceof Error
+            ? recoveryError.message
+            : "That recovery code was not found.",
+        );
+      } finally {
+        setRecovering(false);
+      }
+      return;
+    }
     const age = Number(draft.age);
     if (!draft.name.trim() || !draft.description.trim()) {
       setError("Please answer all three.");
@@ -317,7 +343,9 @@ export default function CircleOSMirror() {
                 </small>
               </label>
               {error ? <p className="vision-error">{error}</p> : null}
-              <button type="submit">Begin</button>
+              <button type="submit" disabled={recovering}>
+                {recovering ? "Recovering..." : "Begin"}
+              </button>
             </form>
           </section>
         </main>

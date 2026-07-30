@@ -3,6 +3,12 @@
 The public phone app sends each person's profile and daily evidence to this
 computer. Every phone receives a private profile key.
 
+The profile folder name is also the recovery code. On a fresh phone, paste a
+code such as `p_1234567890abcdef` into the first Name field and press Begin.
+The saved profile is restored and the new phone receives a fresh private key.
+Keep the recovery code private: anyone who has it can restore that profile, and
+recovery disconnects the old phone.
+
 The server:
 
 1. saves each person under the Obsidian `Circle OS\Profiles` folder;

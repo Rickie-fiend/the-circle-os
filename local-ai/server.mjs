@@ -891,6 +891,46 @@ export function createCircleAiServer(options = {}) {
         return;
       }
 
+      if (request.method === "POST" && request.url === "/profiles/recover") {
+        const input = await readBody(request);
+        const profileId =
+          typeof input.profileId === "string" ? input.profileId.trim() : "";
+        if (!profileIdPattern.test(profileId)) {
+          json(
+            response,
+            400,
+            { error: "That recovery code is not valid." },
+            origin,
+          );
+          return;
+        }
+        const state = readProfileState(vaultPath, profileId);
+        if (!state || !access[profileId]) {
+          json(
+            response,
+            404,
+            { error: "That recovery code was not found." },
+            origin,
+          );
+          return;
+        }
+        const accessKey = randomKey(32);
+        access[profileId].keyHash = hash(accessKey);
+        access[profileId].recoveredAt = now();
+        saveAccess();
+        json(
+          response,
+          200,
+          {
+            profileId,
+            accessKey,
+            state: publicState(state),
+          },
+          origin,
+        );
+        return;
+      }
+
       const profileMatch = request.url?.match(
         /^\/profiles\/(p_[A-Za-z0-9_-]{16})(?:\/(sync))?$/,
       );

@@ -320,6 +320,30 @@ test("public phones receive separate private Obsidian profiles", async () => {
       /analysis_pending: true/,
     );
 
+    const recoveryResponse = await fetch(`${baseUrl}/profiles/recover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profileId: created.profileId }),
+    });
+    assert.equal(recoveryResponse.status, 200);
+    const recovered = await recoveryResponse.json();
+    assert.equal(recovered.profileId, created.profileId);
+    assert.equal(recovered.state.profile.name, "Sai");
+    assert.notEqual(recovered.accessKey, created.accessKey);
+
+    const retiredKey = await fetch(
+      `${baseUrl}/profiles/${created.profileId}`,
+      { headers: { Authorization: `Bearer ${created.accessKey}` } },
+    );
+    assert.equal(retiredKey.status, 401);
+
+    const recoveredProfile = await fetch(
+      `${baseUrl}/profiles/${created.profileId}`,
+      { headers: { Authorization: `Bearer ${recovered.accessKey}` } },
+    );
+    assert.equal(recoveredProfile.status, 200);
+    created.accessKey = recovered.accessKey;
+
     const secondResponse = await fetch(`${baseUrl}/profiles`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

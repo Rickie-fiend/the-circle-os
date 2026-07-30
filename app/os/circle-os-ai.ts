@@ -69,6 +69,33 @@ export async function syncCircleState(state: CircleState) {
   };
 }
 
+export async function recoverCircleProfile(
+  address: string,
+  profileId: string,
+) {
+  const cleanUrl = address.trim().replace(/\/+$/, "");
+  if (!cleanUrl) throw new Error("The Circle server is not connected.");
+  const response = await fetch(`${cleanUrl}/profiles/recover`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profileId: profileId.trim() }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(
+      typeof data.error === "string"
+        ? data.error
+        : "That recovery code was not found.",
+    );
+  }
+  return {
+    state: data.state as CircleState,
+    profileId: data.profileId as string,
+    accessKey: data.accessKey as string,
+  };
+}
+
 export async function checkLocalAi(address: string) {
   const cleanUrl = address.trim().replace(/\/+$/, "");
   const response = await fetch(`${cleanUrl}/health`, {
