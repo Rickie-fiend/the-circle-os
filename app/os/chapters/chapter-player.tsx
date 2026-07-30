@@ -300,6 +300,7 @@ export function ChapterPlayer({
   idleAppIndex = 0,
   onIdleAppIndexChange,
   backApp,
+  onBackAppShown,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -317,6 +318,7 @@ export function ChapterPlayer({
   idleAppIndex?: number;
   onIdleAppIndexChange?: (index: number) => void;
   backApp?: ReactNode;
+  onBackAppShown?: () => void;
 }) {
   const [showingBackApp, setShowingBackApp] = useState(false);
   const currentIndex = Math.max(
@@ -436,6 +438,7 @@ export function ChapterPlayer({
         onIndexChange={(index) => {
           if (index === 0) {
             setShowingBackApp(true);
+            onBackAppShown?.();
             return;
           }
           setShowingBackApp(false);

@@ -52,6 +52,7 @@ import {
   publishedChapters,
 } from "./chapters/registry";
 import type {
+  ChapterDefinition,
   ChapterRun,
   ChapterSubmission,
 } from "./chapters/chapter-types";
@@ -942,6 +943,23 @@ export function TodayExperience() {
     (liveNow.getMinutes() * 60 + liveNow.getSeconds()) / 3600;
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
+  const repeatHabitChapter = useMemo<ChapterDefinition | null>(() => {
+    if (!habitBuildingChapter) return null;
+    const reusablePageIds = new Set([
+      "habit",
+      "time-place",
+      "identity",
+      "complete",
+      "idle",
+    ]);
+    return {
+      ...habitBuildingChapter,
+      id: "habit-repeat",
+      pages: habitBuildingChapter.pages.filter((page) =>
+        reusablePageIds.has(page.id),
+      ),
+    };
+  }, [habitBuildingChapter]);
   const habitBuildingRun = useMemo(() => {
     if (!habitBuildingChapter) return null;
     return (
@@ -949,6 +967,17 @@ export function TodayExperience() {
       createChapterRun(habitBuildingChapter)
     );
   }, [habitBuildingChapter, state.chapters.runs]);
+  const repeatHabitRun = useMemo(() => {
+    if (!repeatHabitChapter) return null;
+    return (
+      state.chapters.runs[chapterRunId(repeatHabitChapter)] ||
+      createChapterRun(repeatHabitChapter)
+    );
+  }, [repeatHabitChapter, state.chapters.runs]);
+  const activeHabitChapter = addingHabit
+    ? repeatHabitChapter || habitBuildingChapter
+    : habitBuildingChapter;
+  const activeHabitRun = addingHabit ? repeatHabitRun : habitBuildingRun;
   const habitAppVersion = "habit-record-v1";
   const habitAppIndex = appSessionIndex(
     state,
@@ -1096,13 +1125,13 @@ export function TodayExperience() {
   }
 
   function beginNewHabit() {
-    if (!habitBuildingChapter) return;
+    if (!repeatHabitChapter) return;
     setAddingHabit(true);
     updateState((current) =>
       storeChapterRun(
         current,
-        createChapterRun(habitBuildingChapter),
-        habitBuildingChapter.session,
+        createChapterRun(repeatHabitChapter),
+        repeatHabitChapter.session,
       ),
     );
   }
@@ -1682,11 +1711,12 @@ export function TodayExperience() {
           )}
         </section>
 
-        {habitBuildingChapter && habitBuildingRun ? (
+        {activeHabitChapter && activeHabitRun ? (
           <section className="os-habit" aria-label="Habit session">
             <ChapterPlayer
               className="os-habit-session"
-              definition={habitBuildingChapter}
+              definition={activeHabitChapter}
+              key={activeHabitChapter.id}
               idleBody={
                 <textarea
                   aria-label="Edit habit mission"
@@ -1844,11 +1874,15 @@ export function TodayExperience() {
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={saveHabitAppIndex}
               label="Habit chapter"
-              run={habitBuildingRun}
+              run={activeHabitRun}
+              backApp={
+                addingHabit ? <div aria-hidden="true" className="os-habit-cancel-page" /> : undefined
+              }
+              onBackAppShown={addingHabit ? () => setAddingHabit(false) : undefined}
               onIdleAction={toggleMission}
               onRunChange={saveHabitBuildingRun}
             />
-            {habitBuildingRun.status === "completed" && habitAppIndex === 0 ? (
+            {!addingHabit && habitBuildingRun.status === "completed" && habitAppIndex === 0 ? (
               <button
                 className="os-add-habit-row"
                 type="button"
