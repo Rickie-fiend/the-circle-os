@@ -757,6 +757,234 @@
           "body": "Athena can now look for growth without making up a story."
         }
       ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-09",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Psst... did today give you something good?",
+      "purpose": "Help the person notice small gratitude and what could make the rest of today kinder.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Psst... did today give you something good?",
+          "body": "Three small answers can help you notice it.",
+          "button": "Begin"
+        },
+        {
+          "id": "grateful",
+          "type": "short-text",
+          "question": "What are you grateful for today, even if it is small?",
+          "answerKey": "spark-small-good-grateful",
+          "placeholder": "A person, moment, place, or thing.",
+          "required": false
+        },
+        {
+          "id": "awake",
+          "type": "short-text",
+          "question": "When did you feel most awake today?",
+          "answerKey": "spark-small-good-awake",
+          "placeholder": "One real moment is enough.",
+          "required": true
+        },
+        {
+          "id": "kinder",
+          "type": "short-text",
+          "question": "What would make the rest of today feel kinder?",
+          "answerKey": "spark-small-good-kinder",
+          "placeholder": "Keep it small.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You noticed a little more.",
+          "body": "Go back if you want. Continue when this feels honest.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Today's small good is saved.",
+          "body": "You can let the answer be enough."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-10",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What if one small moment mattered?",
+      "purpose": "Help the person notice surprise, energy cost, and a moment worth remembering.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What if one small moment mattered?",
+          "body": "Let's look at what stood out today.",
+          "button": "Begin"
+        },
+        {
+          "id": "surprise",
+          "type": "short-text",
+          "question": "What surprised you today?",
+          "answerKey": "spark-stood-out-surprise",
+          "placeholder": "You can skip this one.",
+          "required": false
+        },
+        {
+          "id": "energy",
+          "type": "short-text",
+          "question": "What took more energy than you expected?",
+          "answerKey": "spark-stood-out-energy",
+          "placeholder": "One thing is enough.",
+          "required": true
+        },
+        {
+          "id": "remember",
+          "type": "short-text",
+          "question": "What do you want to remember from today?",
+          "answerKey": "spark-stood-out-remember",
+          "placeholder": "A moment, thought, or feeling.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Today has a clearer shape.",
+          "body": "Go back if you want. Continue when this feels true.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "What stood out is saved.",
+          "body": "Athena can use the pattern without filling in the blanks."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-11",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Before the day moves on...",
+      "purpose": "Help the person notice support, what their body needs, and one kind next step.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Before the day moves on...",
+          "body": "Take one quiet minute to listen in.",
+          "button": "Begin"
+        },
+        {
+          "id": "person",
+          "type": "short-text",
+          "question": "Did anyone make today a little better? How?",
+          "answerKey": "spark-listen-person",
+          "placeholder": "You can skip this one.",
+          "required": false
+        },
+        {
+          "id": "body",
+          "type": "short-text",
+          "question": "What is your body asking for right now?",
+          "answerKey": "spark-listen-body",
+          "placeholder": "Rest, food, movement, quiet, or something else.",
+          "required": true
+        },
+        {
+          "id": "kindness",
+          "type": "short-text",
+          "question": "What small kindness could you give yourself tonight?",
+          "answerKey": "spark-listen-kindness",
+          "placeholder": "Make it easy to do.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You listened to yourself.",
+          "body": "Go back if you want. Continue when the answers feel right.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "One kind thought is saved.",
+          "body": "It does not have to become a rule."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "profile-spark-12",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What should tomorrow carry?",
+      "purpose": "Help the person choose what to repeat, release, and quietly hope for tomorrow.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What should tomorrow carry?",
+          "body": "Keep what helps. Leave what does not.",
+          "button": "Begin"
+        },
+        {
+          "id": "repeat",
+          "type": "short-text",
+          "question": "What part of today would you gladly repeat?",
+          "answerKey": "spark-carry-repeat",
+          "placeholder": "You can skip this one.",
+          "required": false
+        },
+        {
+          "id": "release",
+          "type": "short-text",
+          "question": "What do you want to leave behind when today ends?",
+          "answerKey": "spark-carry-release",
+          "placeholder": "One honest thing is enough.",
+          "required": true
+        },
+        {
+          "id": "hope",
+          "type": "short-text",
+          "question": "What is one quiet hope for tomorrow?",
+          "answerKey": "spark-carry-hope",
+          "placeholder": "It can be very small.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Tomorrow has a little more room.",
+          "body": "Go back if you want. Continue when this feels honest.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Your thought for tomorrow is saved.",
+          "body": "You do not need to solve the whole day now."
+        }
+      ]
     }
   ]
 }
