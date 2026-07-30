@@ -2,6 +2,7 @@
 
 import {
   Children,
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -18,6 +19,8 @@ export function SwipeSession({
   onIndexChange,
   className = "",
   label,
+  availableIndices,
+  frameHeight,
 }: {
   children: ReactNode;
   index: number;
@@ -25,30 +28,60 @@ export function SwipeSession({
   onIndexChange: (index: number) => void;
   className?: string;
   label: string;
+  availableIndices?: number[];
+  frameHeight?: CSSProperties["height"];
 }) {
   const apps = Children.toArray(children);
-  const lastIndex = Math.min(
+  const lastIndex = Math.max(0, Math.min(
     apps.length - 1,
     maxIndex ?? Math.max(0, apps.length - 1),
-  );
+  ));
+  const allowedIndices = (
+    availableIndices?.length
+      ? availableIndices
+      : Array.from({ length: lastIndex + 1 }, (_, itemIndex) => itemIndex)
+  )
+    .filter(
+      (itemIndex, position, values) =>
+        itemIndex >= 0 &&
+        itemIndex <= lastIndex &&
+        values.indexOf(itemIndex) === position,
+    )
+    .sort((left, right) => left - right);
+  const currentPosition = Math.max(0, allowedIndices.indexOf(index));
+  const previousIndex = allowedIndices[currentPosition - 1];
+  const nextIndex = allowedIndices[currentPosition + 1];
   const pointerStart = useRef<{
     x: number;
     y: number;
     pointerId: number;
   } | null>(null);
+  const windowRef = useRef<HTMLDivElement | null>(null);
+  const settleTimer = useRef<number | null>(null);
   const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [motionDirection, setMotionDirection] = useState<
-    "none" | "next" | "previous"
-  >("none");
+  const [settling, setSettling] = useState(false);
 
-  function move(nextIndex: number) {
-    const boundedIndex = Math.max(0, Math.min(lastIndex, nextIndex));
+  useEffect(
+    () => () => {
+      if (settleTimer.current) {
+        window.clearTimeout(settleTimer.current);
+      }
+    },
+    [],
+  );
+
+  function moveToPosition(nextPosition: number) {
+    const boundedPosition = Math.max(
+      0,
+      Math.min(allowedIndices.length - 1, nextPosition),
+    );
+    const boundedIndex = allowedIndices[boundedPosition];
     setDragX(0);
     setDragging(false);
+    setSettling(false);
     if (boundedIndex === index) return;
-    setMotionDirection(boundedIndex > index ? "next" : "previous");
     onIndexChange(boundedIndex);
   }
 
@@ -59,7 +92,7 @@ export function SwipeSession({
   }
 
   function startSwipe(event: PointerEvent<HTMLDivElement>) {
-    if (blocksSwipe(event.target)) return;
+    if (settling || blocksSwipe(event.target)) return;
     didSwipe.current = false;
     pointerStart.current = {
       x: event.clientX,
@@ -84,11 +117,14 @@ export function SwipeSession({
     }
     event.preventDefault();
     didSwipe.current = true;
-    const movingPastStart = index === 0 && distanceX > 0;
-    const movingPastEnd = index === lastIndex && distanceX < 0;
+    const movingPastStart = previousIndex === undefined && distanceX > 0;
+    const movingPastEnd = nextIndex === undefined && distanceX < 0;
     const resistance = movingPastStart || movingPastEnd ? 0.16 : 0.72;
+    const width = windowRef.current?.clientWidth || 320;
     setDragging(true);
-    setDragX(Math.max(-96, Math.min(96, distanceX * resistance)));
+    setDragX(
+      Math.max(-width * 0.92, Math.min(width * 0.92, distanceX * resistance)),
+    );
   }
 
   function finishSwipe(event: PointerEvent<HTMLDivElement>) {
@@ -107,7 +143,22 @@ export function SwipeSession({
       setDragging(false);
       return;
     }
-    move(distance < 0 ? index + 1 : index - 1);
+    const targetIndex = distance < 0 ? nextIndex : previousIndex;
+    if (targetIndex === undefined) {
+      setDragX(0);
+      setDragging(false);
+      return;
+    }
+    const width = windowRef.current?.clientWidth || 320;
+    setDragging(false);
+    setSettling(true);
+    setDragX(distance < 0 ? -width : width);
+    settleTimer.current = window.setTimeout(() => {
+      onIndexChange(targetIndex);
+      setDragX(0);
+      setSettling(false);
+      settleTimer.current = null;
+    }, 250);
   }
 
   function stopClickAfterSwipe(event: MouseEvent<HTMLDivElement>) {
@@ -120,11 +171,11 @@ export function SwipeSession({
   function useArrowKey(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      move(index + 1);
+      moveToPosition(currentPosition + 1);
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      move(index - 1);
+      moveToPosition(currentPosition - 1);
     }
   }
 
@@ -136,40 +187,50 @@ export function SwipeSession({
       onKeyDown={useArrowKey}
       onPointerCancel={() => {
         pointerStart.current = null;
+        if (settleTimer.current) {
+          window.clearTimeout(settleTimer.current);
+          settleTimer.current = null;
+        }
         setDragX(0);
         setDragging(false);
+        setSettling(false);
       }}
       onPointerDown={startSwipe}
       onPointerMove={continueSwipe}
       onPointerUp={finishSwipe}
       tabIndex={0}
     >
-      <div className="os-app-window">
-        {dragging && index > 0 ? (
+      <div
+        className={`os-app-window${frameHeight ? " fixed-height" : ""}`}
+        ref={windowRef}
+        style={frameHeight ? { height: frameHeight } : undefined}
+      >
+        {(dragging || settling) && previousIndex !== undefined ? (
           <div
             aria-hidden="true"
-            className="os-app-page adjacent previous"
+            className={`os-app-page adjacent previous${
+              dragging ? " dragging" : ""
+            }`}
             style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
           >
-            {apps[index - 1]}
+            {apps[previousIndex]}
           </div>
         ) : null}
         <div
-          className={`os-app-page current motion-${motionDirection}${
-            dragging ? " dragging" : ""
-          }`}
-          key={index}
+          className={`os-app-page current${dragging ? " dragging" : ""}`}
           style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
         >
           {apps[index]}
         </div>
-        {dragging && index < lastIndex ? (
+        {(dragging || settling) && nextIndex !== undefined ? (
           <div
             aria-hidden="true"
-            className="os-app-page adjacent next"
+            className={`os-app-page adjacent next${
+              dragging ? " dragging" : ""
+            }`}
             style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
           >
-            {apps[index + 1]}
+            {apps[nextIndex]}
           </div>
         ) : null}
       </div>

@@ -149,6 +149,14 @@ export type CircleState = {
       }
     >;
   };
+  appSessions: Record<
+    string,
+    {
+      version: string;
+      index: number;
+      updatedAt: string;
+    }
+  >;
   outbox: Array<{
     id: string;
     reason: string;
@@ -211,6 +219,7 @@ function serverSignature(state: CircleState) {
   return JSON.stringify({
     profile: payload.profile,
     days: payload.days,
+    chapters: payload.chapters,
     outbox: payload.outbox,
   });
 }
@@ -316,6 +325,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
         "question-answered",
         "survey-answer",
         "habit-answer",
+        "chapter-progress",
         "profile-edit",
         "suggestion",
       ].includes(item.reason),
@@ -1167,6 +1177,11 @@ export function TodayExperience() {
           </div>
 
           <SwipeSession
+            availableIndices={
+              checkInSurveyComplete
+                ? [11]
+                : [0, checkInStartApp]
+            }
             className="os-checkin-session"
             index={visibleCheckInApp}
             label="Check-in session"
@@ -1278,6 +1293,11 @@ export function TodayExperience() {
 
         <section className="os-habit" aria-label="Habit session">
           <SwipeSession
+            availableIndices={
+              habitSurveyComplete
+                ? [4]
+                : [0, habitStartApp]
+            }
             className="os-habit-session"
             index={visibleHabitApp}
             label="Habit session"

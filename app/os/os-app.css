@@ -261,6 +261,17 @@
   position: relative;
 }
 
+.circle-os .os-app-window.fixed-height .os-app-page {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.circle-os .os-app-window.fixed-height .os-app-page > * {
+  box-sizing: border-box;
+  min-height: 100%;
+}
+
 .circle-os .os-app-page {
   transform: translate3d(var(--swipe-x, 0), 0, 0);
   transition:
@@ -269,8 +280,7 @@
   will-change: transform;
 }
 
-.circle-os .os-app-page.dragging,
-.circle-os .os-app-page.adjacent {
+.circle-os .os-app-page.dragging {
   transition: none;
 }
 
@@ -287,14 +297,6 @@
 
 .circle-os .os-app-page.adjacent.next {
   transform: translate3d(calc(100% + var(--swipe-x, 0px)), 0, 0);
-}
-
-.circle-os .os-app-page.motion-next:not(.dragging) {
-  animation: os-app-arrive-next 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-.circle-os .os-app-page.motion-previous:not(.dragging) {
-  animation: os-app-arrive-previous 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @keyframes os-route-arrive {
@@ -353,30 +355,6 @@
   border-color: transparent;
   border-radius: 0;
   box-shadow: none;
-}
-
-@keyframes os-app-arrive-next {
-  from {
-    opacity: 0.58;
-    transform: translate3d(30px, 0, 0) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes os-app-arrive-previous {
-  from {
-    opacity: 0.58;
-    transform: translate3d(-30px, 0, 0) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
 }
 
 .circle-os .os-session-intro {
@@ -1713,6 +1691,23 @@
 .circle-os .vision-week-apps,
 .circle-os .vision-analysis-apps {
   border-radius: 28px;
+}
+
+.circle-os .vision-week-apps {
+  background: #191813;
+  border: 1px solid rgb(241 239 232 / 0.1);
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.16);
+}
+
+.circle-os .vision-week-apps .os-app-window {
+  border-radius: 27px;
+}
+
+.circle-os .vision-week-apps .vision-week-app,
+.circle-os .vision-week-apps .os-session-intro {
+  border-radius: 27px;
+  height: 100%;
+  margin: 0;
 }
 
 .circle-os .vision-week-apps .os-session-intro {

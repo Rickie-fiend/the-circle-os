@@ -287,6 +287,11 @@ export function ChapterPlayer({
 
   return (
     <SwipeSession
+      availableIndices={
+        maxIndex > currentIndex
+          ? [currentIndex, maxIndex]
+          : [currentIndex]
+      }
       className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
       index={currentIndex}
       label={label}

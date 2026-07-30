@@ -217,6 +217,7 @@ export function createEmptyState() {
       runs: {},
       sessions: {},
     },
+    appSessions: {},
     outbox: [],
   };
 }
@@ -310,6 +311,10 @@ export function normalizeState(state) {
           ? state.chapters.sessions
           : {},
     },
+    appSessions:
+      state.appSessions && typeof state.appSessions === "object"
+        ? state.appSessions
+        : {},
     outbox: Array.isArray(state.outbox) ? state.outbox : [],
   };
 }
@@ -388,6 +393,10 @@ export function mergeServerState(state, serverState) {
   const remote = normalizeState(serverState);
   return {
     ...remote,
+    appSessions: {
+      ...remote.appSessions,
+      ...state.appSessions,
+    },
     ai: {
       ...remote.ai,
       baseUrl: state.ai.baseUrl,
@@ -395,6 +404,37 @@ export function mergeServerState(state, serverState) {
       profileId: state.ai.profileId,
       lastSyncedAt: state.ai.lastSyncedAt,
       lastSyncSlot: state.ai.lastSyncSlot,
+    },
+  };
+}
+
+export function appSessionIndex(
+  state,
+  sessionId,
+  version,
+  fallbackIndex = 0,
+) {
+  const session = state.appSessions?.[sessionId];
+  return session?.version === version &&
+    Number.isInteger(session.index) &&
+    session.index >= 0
+    ? session.index
+    : fallbackIndex;
+}
+
+export function setAppSessionIndex(state, sessionId, version, index) {
+  if (!sessionId || !version || !Number.isInteger(index) || index < 0) {
+    return state;
+  }
+  return {
+    ...state,
+    appSessions: {
+      ...state.appSessions,
+      [sessionId]: {
+        version,
+        index,
+        updatedAt: new Date().toISOString(),
+      },
     },
   };
 }

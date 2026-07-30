@@ -80,6 +80,7 @@ export function advanceChapterRun(
     const answer = {
       pageId: page.id,
       answerKey: page.answerKey,
+      questionSnapshot: page.question || page.title || page.answerKey,
       value,
       displaySnapshot: String(displaySnapshot || value),
       answeredAt: previous?.answeredAt || timestamp,
@@ -105,6 +106,15 @@ export function advanceChapterRun(
 }
 
 export function storeChapterRun(state, run, session) {
+  const progressItem = {
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `chapter-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    reason: "chapter-progress",
+    message: run.runId,
+    createdAt: new Date().toISOString(),
+  };
   return {
     ...state,
     chapters: {
@@ -122,5 +132,12 @@ export function storeChapterRun(state, run, session) {
         },
       },
     },
+    outbox: [
+      ...(state.outbox || []).filter(
+        (item) =>
+          item.reason !== "chapter-progress" || item.message !== run.runId,
+      ),
+      progressItem,
+    ],
   };
 }

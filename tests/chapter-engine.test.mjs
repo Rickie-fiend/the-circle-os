@@ -58,12 +58,14 @@ test("chapter progress is stored without replacing the rest of Circle state", ()
   const state = {
     profile: { name: "Sai" },
     chapters: { runs: {}, sessions: {} },
+    outbox: [],
   };
   const next = storeChapterRun(state, run, logSetup.session);
 
   assert.equal(next.profile.name, "Sai");
   assert.equal(next.chapters.runs[chapterRunId(logSetup)], run);
   assert.equal(next.chapters.sessions.log.activeRunId, "log-setup@1");
+  assert.equal(next.outbox[0].reason, "chapter-progress");
 });
 
 test("the Markdown authoring format compiles into a validated chapter", () => {

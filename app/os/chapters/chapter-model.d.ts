@@ -34,6 +34,12 @@ export function storeChapterRun<T extends {
     runs: Record<string, ChapterRun>;
     sessions: Record<string, unknown>;
   };
+  outbox: Array<{
+    id: string;
+    reason: string;
+    message?: string;
+    createdAt: string;
+  }>;
 }>(
   state: T,
   run: ChapterRun,

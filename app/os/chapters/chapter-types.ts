@@ -55,6 +55,7 @@ export type ChapterAnswerValue = string | number | string[] | boolean;
 export type ChapterAnswer = {
   pageId: string;
   answerKey: string;
+  questionSnapshot?: string;
   value: ChapterAnswerValue;
   displaySnapshot: string;
   answeredAt: string;

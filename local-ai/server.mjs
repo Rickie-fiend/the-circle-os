@@ -212,6 +212,10 @@ export function mergeClientState(serverValue, phoneValue) {
     },
     days: mergeDays(server.days, phone.days),
     chapters: mergeChapters(server.chapters, phone.chapters),
+    appSessions: mergeUpdatedRecords(
+      server.appSessions,
+      phone.appSessions,
+    ),
     ai: {
       ...server.ai,
       baseUrl: "",
@@ -296,7 +300,13 @@ export function applyProfileMarkdown(stateValue, markdown) {
   const lastAnalyzed = text(metadata.last_analyzed, 80) || null;
   const dateKey = getDateKey();
   const day = state.days[dateKey] || createDay(dateKey);
-  const missionText = text(sections["Today's Mission"], 160);
+  const missionText = text(
+    String(sections["Today's Mission"] || "").replace(
+      /<!--[\s\S]*?-->/g,
+      "",
+    ),
+    160,
+  );
 
   return normalizeState({
     ...state,
@@ -341,7 +351,7 @@ export function applyProfileMarkdown(stateValue, markdown) {
 }
 
 function formatAnswers(answers) {
-  if (!answers.length) return "No questions answered yet.";
+  if (!answers.length) return "";
   return answers
     .map(
       (answer) => `### ${markdownText(answer.question, "Question")}
@@ -353,6 +363,43 @@ _${answer.kind === "habit" ? "Habit" : answer.kind === "codex" ? "Codex" : answe
 }._`,
     )
     .join("\n\n");
+}
+
+function formatChapterAnswers(chapters, profileAnswers = []) {
+  const knownAnswers = new Set(
+    profileAnswers.map((answer) => answer.questionId),
+  );
+  const runs = Object.values(chapters?.runs || {});
+  const lines = runs.flatMap((run) =>
+    (run.answers || [])
+      .filter((answer) => !knownAnswers.has(answer.answerKey))
+      .map(
+        (answer) =>
+          `### ${markdownText(
+            answer.questionSnapshot || answer.answerKey,
+            "Chapter answer",
+          )}
+
+${markdownText(answer.displaySnapshot || answer.value, "No answer.")}
+
+_${markdownText(run.chapterId, "Chapter")} ${run.chapterVersion} · Answered ${
+            answer.answeredAt || "earlier"
+          }._`,
+      ),
+  );
+  return lines.length ? lines.join("\n\n") : "";
+}
+
+function formatAllAnswers(state) {
+  const profileAnswers = state.profile.profileCase.survey.answers;
+  return (
+    [
+      formatAnswers(profileAnswers),
+      formatChapterAnswers(state.chapters, profileAnswers),
+    ]
+      .filter(Boolean)
+      .join("\n\n") || "No questions answered yet."
+  );
 }
 
 export function serializeProfileMarkdown(
@@ -415,7 +462,7 @@ ${nextQuestion}
 
 ## Answers
 
-${formatAnswers(profile.profileCase.survey.answers)}
+${formatAllAnswers(state)}
 `;
 }
 
@@ -855,7 +902,11 @@ export function createCircleAiServer(options = {}) {
             return;
           }
           const profileOutbox = Array.isArray(input?.state?.outbox)
-            ? input.state.outbox.filter((item) => item?.reason !== "suggestion")
+            ? input.state.outbox.filter(
+                (item) =>
+                  item?.reason !== "suggestion" &&
+                  item?.reason !== "chapter-progress",
+              )
             : [];
           const pending = profileOutbox.length > 0;
           const merged = mergeClientState(current, input.state);

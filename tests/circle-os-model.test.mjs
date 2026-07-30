@@ -5,6 +5,7 @@ import {
   HABIT_QUESTIONS,
   LOG_SETUP_QUESTIONS,
   PROFILE_QUESTIONS,
+  appSessionIndex,
   applyProfileResult,
   answerSurveyQuestion,
   buildVisionAnalysis,
@@ -18,6 +19,7 @@ import {
   normalizeState,
   queueSuggestion,
   setDayLogRange,
+  setAppSessionIndex,
   summarizeWeek,
   upsertTimeBlock,
 } from "../app/os/circle-os-model.js";
@@ -292,6 +294,23 @@ test("older saved profiles receive an empty chapter library safely", () => {
   const normalized = normalizeState(oldState);
 
   assert.deepEqual(normalized.chapters, { runs: {}, sessions: {} });
+  assert.deepEqual(normalized.appSessions, {});
+});
+
+test("an app stays on its saved page until a new version arrives", () => {
+  let state = createEmptyState();
+  state = setAppSessionIndex(state, "vision-profile", "update-1", 1);
+
+  const reopened = normalizeState(JSON.parse(JSON.stringify(state)));
+
+  assert.equal(
+    appSessionIndex(reopened, "vision-profile", "update-1", 0),
+    1,
+  );
+  assert.equal(
+    appSessionIndex(reopened, "vision-profile", "update-2", 0),
+    0,
+  );
 });
 
 test("weekly Vision keeps the person's own log words", () => {

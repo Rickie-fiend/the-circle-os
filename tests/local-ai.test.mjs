@@ -104,6 +104,25 @@ test("server keeps the newest chapter page and answer", () => {
   );
 });
 
+test("server keeps the newest app page without reviving an old cover", () => {
+  const server = createEmptyState();
+  const phone = createEmptyState();
+  server.appSessions["vision-profile"] = {
+    version: "update-1",
+    index: 0,
+    updatedAt: "2026-07-30T08:00:00.000Z",
+  };
+  phone.appSessions["vision-profile"] = {
+    version: "update-1",
+    index: 1,
+    updatedAt: "2026-07-30T08:05:00.000Z",
+  };
+
+  const merged = mergeClientState(server, phone);
+
+  assert.equal(merged.appSessions["vision-profile"].index, 1);
+});
+
 test("answering a profile question clears the old question", () => {
   const server = firstVision();
   server.profile.profileCase.survey.nextQuestion = {
@@ -165,6 +184,38 @@ test("Obsidian copies keep profile sections and day evidence readable", () => {
   assert.match(serializeDayMarkdown(day), /Coffee with a friend/);
 });
 
+test("chapter answers remain readable in the Obsidian profile", () => {
+  const state = firstVision();
+  state.chapters.runs["habit@1"] = {
+    runId: "habit@1",
+    chapterId: "habit",
+    chapterVersion: 1,
+    status: "completed",
+    currentPageId: "idle",
+    startedAt: "2026-07-30T08:00:00.000Z",
+    updatedAt: "2026-07-30T08:05:00.000Z",
+    completedAt: "2026-07-30T08:05:00.000Z",
+    answers: [
+      {
+        pageId: "identity",
+        answerKey: "habit-identity-v1",
+        questionSnapshot: "Who are you becoming?",
+        value: "reader",
+        displaySnapshot: "A reader",
+        answeredAt: "2026-07-30T08:03:00.000Z",
+        changedAt: "2026-07-30T08:03:00.000Z",
+      },
+    ],
+  };
+
+  const markdown = serializeProfileMarkdown(state, {
+    profileId: "p_1234567890abcdef",
+  });
+
+  assert.match(markdown, /Who are you becoming\?/);
+  assert.match(markdown, /A reader/);
+});
+
 test("Vision reads Codex output directly from Profile.md", () => {
   const state = firstVision();
   const markdown = serializeProfileMarkdown(state, {
@@ -199,6 +250,24 @@ When you say creative work, what are you making?`,
     "When you say creative work, what are you making?",
   );
   assert.equal(updated.profile.profileCase.status, "ready");
+});
+
+test("profile mission comments never appear inside the app mission", () => {
+  const state = firstVision();
+  const markdown = serializeProfileMarkdown(state, {
+    profileId: "p_1234567890abcdef",
+    analysisPending: false,
+    lastAnalyzed: "2026-07-30T08:00:00.000Z",
+  });
+  const withMissionComment = markdown.replace(
+    "## Today's Mission\n\n",
+    "## Today's Mission\n\n<!-- user-edited: false; confidence: 0.80 -->\n\n",
+  );
+
+  const updated = applyProfileMarkdown(state, withMissionComment);
+  const today = updated.days[Object.keys(updated.days).sort().at(-1)];
+
+  assert.doesNotMatch(today.mission.text, /user-edited|<!--/);
 });
 
 test("public phones receive separate private Obsidian profiles", async () => {

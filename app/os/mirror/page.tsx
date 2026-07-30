@@ -7,10 +7,12 @@ import {
   type FormEvent,
 } from "react";
 import {
+  appSessionIndex,
   editProfileSession,
   minutesBetween,
   queueProfileUpdate,
   queueSuggestion,
+  setAppSessionIndex,
   summarizeWeek,
 } from "../circle-os-model.js";
 import {
@@ -57,10 +59,6 @@ export default function CircleOSMirror() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
-  const [weekApp, setWeekApp] = useState(0);
-  const [profileApp, setProfileApp] = useState(0);
-  const [seenWeekJourney, setSeenWeekJourney] = useState("");
-  const [seenProfileJourney, setSeenProfileJourney] = useState("");
   const [sessionDraft, setSessionDraft] = useState("");
   const [suggestionDraft, setSuggestionDraft] = useState("");
   const [suggestionSaved, setSuggestionSaved] = useState(false);
@@ -71,20 +69,47 @@ export default function CircleOSMirror() {
   });
   const summary = summarizeWeek(state);
   const profileCase = state.profile.profileCase;
-  const loggedPastDays = summary.days.filter(
-    (item) => item.key !== dateKey && item.day.timeBlocks.length > 0,
+  const pastDays = summary.days.filter((item) => item.key !== dateKey);
+  const loggedPastDays = pastDays.filter(
+    (item) => item.day.timeBlocks.length > 0,
+  ).length;
+  const pastMinutes = pastDays.reduce(
+    (total: number, item: (typeof pastDays)[number]) =>
+      total +
+      item.day.timeBlocks.reduce(
+        (dayTotal: number, block: TimeBlock) =>
+          dayTotal + minutesBetween(block.start, block.end),
+        0,
+      ),
+    0,
+  );
+  const pastCheckIns = pastDays.reduce(
+    (total: number, item: (typeof pastDays)[number]) =>
+      total + item.day.checkIns.length,
+    0,
+  );
+  const pastMissionWins = pastDays.filter(
+    (item) => item.day.mission?.completed,
   ).length;
   const weekReady = loggedPastDays > 0;
   const profileReady = Boolean(
     profileCase.status === "ready" && profileCase.updatedAt,
   );
   const updateLabel = formatUpdated(profileCase.updatedAt);
-  const weekJourneyVersion = `${loggedPastDays}|${summary.totalMinutes}|${summary.coverage.recorded}`;
+  const weekJourneyVersion = `${loggedPastDays}|${pastMinutes}|${pastCheckIns}|${pastMissionWins}`;
   const profileJourneyVersion = profileCase.updatedAt || profileCase.status;
-  const visibleWeekApp =
-    seenWeekJourney === weekJourneyVersion ? weekApp : 0;
-  const visibleProfileApp =
-    seenProfileJourney === profileJourneyVersion ? profileApp : 0;
+  const visibleWeekApp = appSessionIndex(
+    state,
+    "vision-week",
+    weekJourneyVersion,
+    0,
+  );
+  const visibleProfileApp = appSessionIndex(
+    state,
+    "vision-profile",
+    profileJourneyVersion,
+    0,
+  );
   const setupComplete = Boolean(
     ready &&
       state.profile.name &&
@@ -336,16 +361,26 @@ export default function CircleOSMirror() {
 
         <section className="vision-week-session" aria-label="Last seven days session">
           <SwipeSession
+            availableIndices={
+              visibleWeekApp === 0
+                ? [0, 1]
+                : [1, 2, 3, 4]
+            }
             className="vision-week-apps"
+            frameHeight="360px"
             index={visibleWeekApp}
             label="Last seven days apps"
             maxIndex={weekReady ? 4 : 0}
-            onIndexChange={(nextIndex) => {
-              if (nextIndex > 0) {
-                setSeenWeekJourney(weekJourneyVersion);
-              }
-              setWeekApp(nextIndex);
-            }}
+            onIndexChange={(nextIndex) =>
+              updateState((current) =>
+                setAppSessionIndex(
+                  current,
+                  "vision-week",
+                  weekJourneyVersion,
+                  nextIndex,
+                ),
+              )
+            }
           >
             <SessionIntro
               detail={
@@ -355,8 +390,14 @@ export default function CircleOSMirror() {
               }
               label="Last seven days"
               onBegin={() => {
-                setSeenWeekJourney(weekJourneyVersion);
-                setWeekApp(1);
+                updateState((current) =>
+                  setAppSessionIndex(
+                    current,
+                    "vision-week",
+                    weekJourneyVersion,
+                    1,
+                  ),
+                );
               }}
               ready={weekReady}
               theme="dark"
@@ -516,16 +557,23 @@ export default function CircleOSMirror() {
           aria-label="AI profile session"
         >
           <SwipeSession
+            availableIndices={
+              visibleProfileApp === 0 ? [0, 1] : [1]
+            }
             className="vision-analysis-apps"
             index={visibleProfileApp}
             label="AI profile apps"
             maxIndex={profileReady ? 1 : 0}
-            onIndexChange={(nextIndex) => {
-              if (nextIndex > 0) {
-                setSeenProfileJourney(profileJourneyVersion);
-              }
-              setProfileApp(nextIndex);
-            }}
+            onIndexChange={(nextIndex) =>
+              updateState((current) =>
+                setAppSessionIndex(
+                  current,
+                  "vision-profile",
+                  profileJourneyVersion,
+                  nextIndex,
+                ),
+              )
+            }
           >
             <div className="profile-ai-intro">
               <p className="os-card-label">Before you read</p>
@@ -541,8 +589,14 @@ export default function CircleOSMirror() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSeenProfileJourney(profileJourneyVersion);
-                    setProfileApp(1);
+                    updateState((current) =>
+                      setAppSessionIndex(
+                        current,
+                        "vision-profile",
+                        profileJourneyVersion,
+                        1,
+                      ),
+                    );
                   }}
                   aria-label="Read your profile"
                 >
