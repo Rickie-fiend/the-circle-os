@@ -296,6 +296,9 @@ export function ChapterPlayer({
   idleHeaderAction,
   idleBody,
   idleContent,
+  idleApps = [],
+  idleAppIndex = 0,
+  onIdleAppIndexChange,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -309,6 +312,9 @@ export function ChapterPlayer({
   idleHeaderAction?: ReactNode;
   idleBody?: ReactNode;
   idleContent?: ReactNode;
+  idleApps?: ReactNode[];
+  idleAppIndex?: number;
+  onIdleAppIndexChange?: (index: number) => void;
 }) {
   const currentIndex = Math.max(
     0,
@@ -347,6 +353,40 @@ export function ChapterPlayer({
       page.type !== "idle" &&
       !COMPLETION_TYPES.has(page.type),
   );
+
+  if (run.status === "completed" && idleApps.length) {
+    const idlePage = definition.pages[idleIndex >= 0 ? idleIndex : currentIndex];
+    const apps = [
+      <ChapterPageView
+        chapter={definition}
+        current={Math.max(1, countedPages.findIndex((item) => item.id === idlePage.id) + 1)}
+        key={idlePage.id}
+        page={idlePage}
+        run={run}
+        total={Math.max(1, countedPages.length)}
+        onComplete={() => undefined}
+        onIdleAction={onIdleAction}
+        idleActionLabel={idleActionLabel}
+        idleActionDisabled={idleActionDisabled}
+        idleActionPressed={idleActionPressed}
+        idleHeaderAction={idleHeaderAction}
+        idleBody={idleBody}
+        idleContent={idleContent}
+      />,
+      ...idleApps,
+    ];
+    return (
+      <SwipeSession
+        availableIndices={apps.map((_, index) => index)}
+        className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
+        index={Math.max(0, Math.min(apps.length - 1, idleAppIndex))}
+        label={label}
+        onIndexChange={(index) => onIdleAppIndexChange?.(index)}
+      >
+        {apps}
+      </SwipeSession>
+    );
+  }
 
   function changeIndex(nextIndex: number) {
     const nextPage = definition.pages[nextIndex];

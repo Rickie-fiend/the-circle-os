@@ -789,6 +789,7 @@ export function TodayExperience() {
   const [primaryMissionDraft, setPrimaryMissionDraft] = useState("");
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
   const [editingMissionDraft, setEditingMissionDraft] = useState("");
+  const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [isLogOpen, setLogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
@@ -938,6 +939,25 @@ export function TodayExperience() {
       createChapterRun(habitBuildingChapter)
     );
   }, [habitBuildingChapter, state.chapters.runs]);
+  const habitAppVersion = "habit-record-v1";
+  const habitAppIndex = appSessionIndex(
+    state,
+    "today-habit",
+    habitAppVersion,
+    0,
+  );
+  const oneTimeTasks = (today.missions || []).filter(
+    (mission) =>
+      !mission.completed || leavingMissionIds.includes(mission.id),
+  );
+  const completedHabitRecords = [
+    ...(today.mission.completed
+      ? [{ id: "repeat", text: today.mission.text, kind: "Habit" }]
+      : []),
+    ...(today.missions || [])
+      .filter((mission) => mission.completed)
+      .map((mission) => ({ id: mission.id, text: mission.text, kind: "Task" })),
+  ];
   const logSetupRun = useMemo(() => {
     if (!logSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
@@ -1040,6 +1060,8 @@ export function TodayExperience() {
   }
 
   function toggleExtraMission(id: string) {
+    const isCompleting = !today.missions?.find((mission) => mission.id === id)
+      ?.completed;
     updateToday(
       (day) => ({
         ...day,
@@ -1056,6 +1078,18 @@ export function TodayExperience() {
         ),
       }),
       "mission",
+    );
+    if (isCompleting) {
+      setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
+      window.setTimeout(() => {
+        setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
+      }, 420);
+    }
+  }
+
+  function saveHabitAppIndex(index: number) {
+    updateState((current) =>
+      setAppSessionIndex(current, "today-habit", habitAppVersion, index),
     );
   }
 
@@ -1588,13 +1622,13 @@ export function TodayExperience() {
                 />
               }
               idleContent={
-                (today.missions || []).length ? (
-                  <div className="os-extra-missions">
-                    {(today.missions || []).map((mission) => (
+                oneTimeTasks.length ? (
+                  <div className="os-one-time-tasks">
+                    {oneTimeTasks.map((mission) => (
                       <article
                         className={`os-extra-mission${
                           mission.completed ? " completed" : ""
-                        }`}
+                        }${leavingMissionIds.includes(mission.id) ? " leaving" : ""}`}
                         key={mission.id}
                       >
                         <textarea
@@ -1634,21 +1668,50 @@ export function TodayExperience() {
                 ) : null
               }
               idleHeaderAction={
-                <button
-                  className="os-add-mission"
-                  type="button"
-                  onClick={addExtraMission}
-                >
-                  Add mission
-                </button>
+                undefined
               }
-              idleActionLabel={today.mission.completed ? "Completed" : undefined}
+              idleActionLabel={
+                today.mission.completed ? "1 day streak ✦" : undefined
+              }
               idleActionPressed={today.mission.completed}
+              idleApps={[
+                <div className="os-habit-record" key="habit-record">
+                  <p className="os-card-label">Habit record</p>
+                  <h2>Today, so far.</h2>
+                  <p className="os-habit-record-summary">
+                    {completedHabitRecords.length
+                      ? `${completedHabitRecords.length} completed today.`
+                      : "Nothing completed yet."}
+                  </p>
+                  {completedHabitRecords.length ? (
+                    <div className="os-habit-record-list">
+                      {completedHabitRecords.map((record) => (
+                        <div className="os-habit-record-row" key={record.id}>
+                          <span>{record.kind}</span>
+                          <p>{record.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>,
+              ]}
+              idleAppIndex={habitAppIndex}
+              onIdleAppIndexChange={saveHabitAppIndex}
               label="Habit chapter"
               run={habitBuildingRun}
               onIdleAction={toggleMission}
               onRunChange={saveHabitBuildingRun}
             />
+            {habitBuildingRun.status === "completed" && habitAppIndex === 0 ? (
+              <button
+                className="os-add-habit-row"
+                type="button"
+                onClick={addExtraMission}
+              >
+                <span aria-hidden="true">+</span>
+                Add task
+              </button>
+            ) : null}
           </section>
         ) : null}
 

@@ -569,17 +569,6 @@
   text-transform: uppercase;
 }
 
-.circle-os .os-add-mission {
-  background: #191813;
-  border: 1px solid #191813;
-  border-radius: 999px;
-  color: #fff8f1;
-  font-size: 0.66rem;
-  font-weight: 650;
-  min-height: 36px;
-  padding: 0.5rem 0.82rem;
-}
-
 .circle-os .os-chapter-idle .os-primary-mission-copy,
 .circle-os .os-chapter-idle .os-extra-mission-copy {
   appearance: none;
@@ -615,21 +604,35 @@
   margin: 1rem 0 0;
 }
 
-.circle-os .os-extra-missions {
+.circle-os .os-one-time-tasks {
+  border-top: 2px solid #191813;
   display: grid;
-  margin-top: 1.25rem;
-  overflow: hidden;
+  gap: 0;
+  margin-top: 1.5rem;
 }
 
 .circle-os .os-extra-mission {
-  border-top: 1px solid rgb(255 248 241 / 0.25);
   display: grid;
   gap: 1rem;
-  padding: 1.25rem 0 0;
+  max-height: 520px;
+  padding: 1.35rem 0 0;
+  transition:
+    max-height 360ms ease,
+    opacity 300ms ease,
+    padding 360ms ease,
+    transform 360ms ease;
 }
 
 .circle-os .os-extra-mission.completed {
   opacity: 1;
+}
+
+.circle-os .os-extra-mission.leaving {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding-top: 0;
+  transform: translate3d(0, -10px, 0);
 }
 
 .circle-os .os-extra-mission-copy {
@@ -643,6 +646,81 @@
 
 .circle-os .os-extra-mission-done {
   margin-top: 0;
+}
+
+.circle-os .os-add-habit-row {
+  align-items: center;
+  background: transparent;
+  border: 1px dashed rgb(255 248 241 / 0.42);
+  border-radius: 16px;
+  color: rgb(255 248 241 / 0.72);
+  display: flex;
+  font-size: 0.72rem;
+  font-weight: 650;
+  gap: 0.55rem;
+  justify-content: center;
+  margin-top: 0.7rem;
+  min-height: 44px;
+  width: 100%;
+}
+
+.circle-os .os-add-habit-row span {
+  color: #fff8f1;
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.circle-os .os-habit-record {
+  color: #fff8f1;
+  display: grid;
+  gap: 0.85rem;
+  min-height: 250px;
+  padding: 24px;
+}
+
+.circle-os .os-habit-record .os-card-label {
+  color: rgb(255 248 241 / 0.68);
+}
+
+.circle-os .os-habit-record h2,
+.circle-os .os-habit-record p {
+  margin: 0;
+}
+
+.circle-os .os-habit-record h2 {
+  font-size: 2rem;
+  letter-spacing: -0.045em;
+}
+
+.circle-os .os-habit-record-summary {
+  color: rgb(255 248 241 / 0.72);
+}
+
+.circle-os .os-habit-record-list {
+  border-top: 1px solid rgb(255 248 241 / 0.25);
+  display: grid;
+}
+
+.circle-os .os-habit-record-row {
+  border-bottom: 1px solid rgb(255 248 241 / 0.16);
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem 0;
+}
+
+.circle-os .os-habit-record-row span {
+  color: rgb(255 248 241 / 0.58);
+  font-size: 0.64rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.circle-os .os-habit-record-row p {
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.35;
 }
 
 .circle-os .os-habit .os-chapter-idle-action[aria-pressed="true"],
