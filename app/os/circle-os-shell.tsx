@@ -1882,7 +1882,7 @@ export function TodayExperience() {
               onIdleAction={toggleMission}
               onRunChange={saveHabitBuildingRun}
             />
-            {!addingHabit && habitBuildingRun.status === "completed" && habitAppIndex === 0 ? (
+            {!addingHabit && habitBuildingRun?.status === "completed" && habitAppIndex === 0 ? (
               <button
                 className="os-add-habit-row"
                 type="button"
