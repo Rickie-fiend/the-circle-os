@@ -104,8 +104,15 @@ type CircleDay = {
   } | null;
 };
 
-const PROFILE_SPARK_CHAPTERS = publishedChapters.filter((chapter) =>
-  chapter.id.startsWith("athena-checkin-"),
+const PROFILE_SPARK_CHAPTERS = Object.values(
+  publishedChapters
+    .filter((chapter) => chapter.id.startsWith("athena-checkin-"))
+    .reduce<Record<string, ChapterDefinition>>((latest, chapter) => {
+      if (!latest[chapter.id] || latest[chapter.id].version < chapter.version) {
+        latest[chapter.id] = chapter;
+      }
+      return latest;
+    }, {}),
 );
 const PROFILE_SPARK_OPENED_AT = Date.now();
 
@@ -1116,6 +1123,7 @@ export function TodayExperience() {
   }
 
   function changePrimaryMission(text: string) {
+    if (!text.trim()) return;
     updateToday(
       (day) => ({
         ...day,
@@ -1177,7 +1185,9 @@ export function TodayExperience() {
       setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
       window.setTimeout(() => {
         setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-      }, 620);
+      }, 1800);
+    } else if (mission?.kind !== "habit") {
+      setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
     }
   }
 
@@ -1652,6 +1662,9 @@ export function TodayExperience() {
               startOnBackApp={Boolean(profileSparkRun.deferredAt)}
               onBackAppHidden={resumeProfileSparkRun}
               onBackAppShown={deferProfileSparkRun}
+              onLongPress={() =>
+                setProfileSparkClock((current) => current + 3_600_000)
+              }
               onRunChange={saveProfileSparkRun}
             />
           ) : (
@@ -1677,6 +1690,11 @@ export function TodayExperience() {
             className="os-checkin-session"
             index={visibleCheckInApp}
             label="Check-in session"
+            onLongPress={
+              checkInConfirmed
+                ? () => setProfileSparkClock((current) => current + 3_600_000)
+                : undefined
+            }
             maxIndex={
               checkInConfirmed
                 ? checkInIdleApp
@@ -1815,6 +1833,11 @@ export function TodayExperience() {
                   rows={3}
                   value={today.mission.text}
                   onChange={(event) => changePrimaryMission(event.target.value)}
+                  onBlur={(event) => {
+                    if (!event.currentTarget.value.trim()) {
+                      changePrimaryMission(today.mission.text);
+                    }
+                  }}
                 />
               }
               idleContent={
@@ -1948,6 +1971,11 @@ export function TodayExperience() {
                                 onChange={(event) =>
                                   changePrimaryMission(event.target.value)
                                 }
+                                onBlur={(event) => {
+                                  if (!event.currentTarget.value.trim()) {
+                                    changePrimaryMission(today.mission.text);
+                                  }
+                                }}
                               />
                             </div>
                           ) : null}

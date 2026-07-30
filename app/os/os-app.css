@@ -626,12 +626,19 @@
   opacity: 1;
 }
 
+.circle-os .os-extra-mission.completed .os-mission-text-edit {
+  color: #191813;
+  text-decoration: line-through;
+  text-decoration-color: #191813;
+  text-decoration-thickness: 2px;
+}
+
 .circle-os .os-extra-mission.leaving {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
   padding-top: 0;
-  transform: translate3d(0, -10px, 0);
+  transform: translate3d(0, -6px, 0);
 }
 
 .circle-os .os-extra-mission.leaving .os-mission-text-edit {

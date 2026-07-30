@@ -96,6 +96,14 @@ export function selectHourlyChapter(chapters, runs, nowValue = new Date()) {
     (chapter) => !runs[chapterRunId(chapter)]?.dismissedAt,
   );
   if (!eligible.length) return undefined;
+  const active = eligible.filter((chapter) => {
+    const run = runs[chapterRunId(chapter)];
+    return run?.status === "in-progress";
+  });
+  const freshActive = active.find(
+    (chapter) => !(runs[chapterRunId(chapter)]?.deferCount || 0),
+  );
+  if (freshActive) return freshActive;
   const completed = eligible
     .map((chapter) => ({
       chapter,
@@ -117,6 +125,7 @@ export function selectHourlyChapter(chapters, runs, nowValue = new Date()) {
       const run = runs[chapterRunId(chapter)];
       return run?.status !== "completed" && !(run?.deferCount || 0);
     }) ||
+    active[0] ||
     eligible.find(
       (chapter) => runs[chapterRunId(chapter)]?.status !== "completed",
     ) ||

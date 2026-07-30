@@ -23,6 +23,7 @@ export function SwipeSession({
   label,
   availableIndices,
   frameHeight,
+  onLongPress,
 }: {
   children: ReactNode;
   index: number;
@@ -32,6 +33,7 @@ export function SwipeSession({
   label: string;
   availableIndices?: number[];
   frameHeight?: CSSProperties["height"];
+  onLongPress?: () => void;
 }) {
   const apps = Children.toArray(children);
   const lastIndex = Math.max(0, Math.min(
@@ -69,6 +71,8 @@ export function SwipeSession({
   const commitFrame = useRef<number | null>(null);
   const wheelTimer = useRef<number | null>(null);
   const wheelDistance = useRef(0);
+  const longPressTimer = useRef<number | null>(null);
+  const longPressed = useRef(false);
   const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -110,6 +114,9 @@ export function SwipeSession({
       }
       if (wheelTimer.current) {
         window.clearTimeout(wheelTimer.current);
+      }
+      if (longPressTimer.current) {
+        window.clearTimeout(longPressTimer.current);
       }
     },
     [],
@@ -156,12 +163,24 @@ export function SwipeSession({
       y: event.clientY,
       pointerId: event.pointerId,
     };
+    longPressed.current = false;
+    if (onLongPress) {
+      longPressTimer.current = window.setTimeout(() => {
+        longPressed.current = true;
+        longPressTimer.current = null;
+        onLongPress();
+      }, 620);
+    }
   }
 
   function continueSwipe(event: PointerEvent<HTMLDivElement>) {
     if (!pointerStart.current) return;
     const distanceX = event.clientX - pointerStart.current.x;
     const distanceY = event.clientY - pointerStart.current.y;
+    if (Math.abs(distanceX) > 8 || Math.abs(distanceY) > 8) {
+      if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
     if (Math.abs(distanceX) < 6 || Math.abs(distanceX) <= Math.abs(distanceY)) {
       return;
     }
@@ -195,6 +214,13 @@ export function SwipeSession({
       }
     }
     pointerStart.current = null;
+    if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
+    longPressTimer.current = null;
+    if (longPressed.current) {
+      setDragX(0);
+      setDragging(false);
+      return;
+    }
     if (Math.abs(distance) < 48) {
       setDragX(0);
       setDragging(false);
@@ -229,10 +255,11 @@ export function SwipeSession({
   }
 
   function stopClickAfterSwipe(event: MouseEvent<HTMLDivElement>) {
-    if (!didSwipe.current) return;
+    if (!didSwipe.current && !longPressed.current) return;
     event.preventDefault();
     event.stopPropagation();
     didSwipe.current = false;
+    longPressed.current = false;
   }
 
   function useArrowKey(event: KeyboardEvent<HTMLDivElement>) {
@@ -313,6 +340,10 @@ export function SwipeSession({
         if (wheelTimer.current) {
           window.clearTimeout(wheelTimer.current);
           wheelTimer.current = null;
+        }
+        if (longPressTimer.current) {
+          window.clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
         }
         wheelDistance.current = 0;
         setShowingBlockedCue(false);

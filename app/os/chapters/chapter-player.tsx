@@ -125,7 +125,7 @@ function ChapterPageView({
           : body
             ? <p className="os-chapter-body">{body}</p>
             : null}
-        {page.type !== "idle" && page.type !== "info" ? (
+        {page.type !== "idle" && page.type !== "info" && !isCompletionPage ? (
           <button
             className="os-chapter-continue"
             type="button"
@@ -303,6 +303,7 @@ export function ChapterPlayer({
   onBackAppShown,
   onBackAppHidden,
   startOnBackApp = false,
+  onLongPress,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -323,6 +324,7 @@ export function ChapterPlayer({
   onBackAppShown?: () => void;
   onBackAppHidden?: () => void;
   startOnBackApp?: boolean;
+  onLongPress?: () => void;
 }) {
   const [showingBackApp, setShowingBackApp] = useState(startOnBackApp);
   const currentIndex = Math.max(
@@ -355,7 +357,12 @@ export function ChapterPlayer({
   const availableIndices =
     run.status === "completed"
       ? [idleIndex >= 0 ? idleIndex : currentIndex]
-      : Array.from({ length: reviewMaxIndex + 1 }, (_, index) => index);
+      : [
+          ...Array.from({ length: reviewMaxIndex + 1 }, (_, index) => index),
+          ...(COMPLETION_TYPES.has(currentPage.type) && idleIndex >= 0
+            ? [idleIndex]
+            : []),
+        ];
   const countedPages = definition.pages.filter(
     (page) =>
       page.type !== "cover" &&
@@ -390,6 +397,7 @@ export function ChapterPlayer({
         className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
         index={Math.max(0, Math.min(apps.length - 1, idleAppIndex))}
         label={label}
+        onLongPress={onLongPress}
         onIndexChange={(index) => onIdleAppIndexChange?.(index)}
       >
         {apps}
@@ -400,6 +408,13 @@ export function ChapterPlayer({
   function changeIndex(nextIndex: number) {
     const nextPage = definition.pages[nextIndex];
     if (!nextPage) return;
+    if (
+      nextPage.type === "idle" &&
+      COMPLETION_TYPES.has(currentPage.type)
+    ) {
+      onRunChange(advanceChapterRun(definition, run, { page: currentPage }));
+      return;
+    }
     if (nextIndex <= furthestIndex) {
       onRunChange(moveChapterRun(definition, run, nextPage.id));
       return;
@@ -438,6 +453,7 @@ export function ChapterPlayer({
         className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
         index={showingBackApp ? 0 : currentIndex + 1}
         label={label}
+        onLongPress={onLongPress}
         maxIndex={stackedAvailableIndices.at(-1) ?? currentIndex + 1}
         onIndexChange={(index) => {
           if (index === 0) {
@@ -465,6 +481,7 @@ export function ChapterPlayer({
       className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
       index={currentIndex}
       label={label}
+      onLongPress={onLongPress}
       maxIndex={availableIndices.at(-1) ?? currentIndex}
       onIndexChange={changeIndex}
     >

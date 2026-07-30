@@ -70,6 +70,69 @@
     },
     {
       "schemaVersion": 1,
+      "id": "athena-checkin-color",
+      "version": 2,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What color is today?",
+      "purpose": "Give the person a playful way to notice the feeling of today.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What color is today?"
+        },
+        {
+          "id": "color",
+          "options": [
+            {
+              "id": "yellow",
+              "label": "Yellow"
+            },
+            {
+              "id": "blue",
+              "label": "Blue"
+            },
+            {
+              "id": "red",
+              "label": "Red"
+            },
+            {
+              "id": "green",
+              "label": "Green"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Pick a color.",
+          "answerKey": "color-today",
+          "required": true
+        },
+        {
+          "id": "words",
+          "type": "short-text",
+          "question": "Why this color?",
+          "answerKey": "color-why",
+          "placeholder": "A few words.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Today has a color.",
+          "body": "Swipe when you are ready."
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Your color today.",
+          "body": "{{color-why}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "athena-checkin-happy",
       "version": 1,
       "status": "published",
@@ -137,6 +200,55 @@
     },
     {
       "schemaVersion": 1,
+      "id": "athena-checkin-happy",
+      "version": 2,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "How does today feel?",
+      "purpose": "Help the person name the feeling of today and one reason for it.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "How does today feel?"
+        },
+        {
+          "id": "level",
+          "type": "slider",
+          "question": "Pick a number for today.",
+          "answerKey": "happy-level",
+          "min": 1,
+          "max": 5,
+          "minLabel": "Low",
+          "maxLabel": "Good",
+          "required": true
+        },
+        {
+          "id": "why",
+          "type": "short-text",
+          "question": "Why this number?",
+          "answerKey": "happy-why",
+          "placeholder": "A few words.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You noticed today.",
+          "body": "Swipe when you are ready."
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Your note for today.",
+          "body": "{{happy-why}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "athena-checkin-hard",
       "version": 1,
       "status": "published",
@@ -190,6 +302,69 @@
           "title": "You named it.",
           "body": "You do not need to fix it now.",
           "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "One hard thing.",
+          "body": "{{hard-why}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "athena-checkin-hard",
+      "version": 2,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What was hard?",
+      "purpose": "Help the person name one hard part of the day without blame.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What was hard?"
+        },
+        {
+          "id": "place",
+          "options": [
+            {
+              "id": "work",
+              "label": "Work"
+            },
+            {
+              "id": "people",
+              "label": "People"
+            },
+            {
+              "id": "body",
+              "label": "My body"
+            },
+            {
+              "id": "thoughts",
+              "label": "My thoughts"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Where did it feel hard?",
+          "answerKey": "hard-place",
+          "required": true
+        },
+        {
+          "id": "words",
+          "type": "short-text",
+          "question": "What happened?",
+          "answerKey": "hard-why",
+          "placeholder": "A few words.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You named it.",
+          "body": "Swipe when you are ready."
         },
         {
           "id": "idle",
@@ -265,6 +440,69 @@
     },
     {
       "schemaVersion": 1,
+      "id": "athena-checkin-miss",
+      "version": 2,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What do you care about?",
+      "purpose": "Help the person notice something that matters in their real life.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What do you care about?"
+        },
+        {
+          "id": "kind",
+          "options": [
+            {
+              "id": "person",
+              "label": "A person"
+            },
+            {
+              "id": "place",
+              "label": "A place"
+            },
+            {
+              "id": "thing",
+              "label": "A thing"
+            },
+            {
+              "id": "time",
+              "label": "A time"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Pick one.",
+          "answerKey": "miss-kind",
+          "required": true
+        },
+        {
+          "id": "words",
+          "type": "short-text",
+          "question": "What is it?",
+          "answerKey": "miss-thing",
+          "placeholder": "One real thing.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You found something real.",
+          "body": "Swipe when you are ready."
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Something you care about.",
+          "body": "{{miss-thing}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "athena-checkin-time",
       "version": 1,
       "status": "published",
@@ -323,6 +561,69 @@
           "id": "idle",
           "type": "idle",
           "title": "Your time note.",
+          "body": "{{time-spend}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "athena-checkin-time",
+      "version": 2,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What do you want from today?",
+      "purpose": "Help the person name one way they want today to feel.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What do you want from today?"
+        },
+        {
+          "id": "pick",
+          "options": [
+            {
+              "id": "make",
+              "label": "Make"
+            },
+            {
+              "id": "move",
+              "label": "Move"
+            },
+            {
+              "id": "people",
+              "label": "People"
+            },
+            {
+              "id": "rest",
+              "label": "Rest"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Pick one.",
+          "answerKey": "time-good-thing",
+          "required": true
+        },
+        {
+          "id": "words",
+          "type": "short-text",
+          "question": "What would that look like?",
+          "answerKey": "time-spend",
+          "placeholder": "One small thing.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You picked something real.",
+          "body": "Swipe when you are ready."
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Your note for today.",
           "body": "{{time-spend}}"
         }
       ]
