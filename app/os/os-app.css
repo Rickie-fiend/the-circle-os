@@ -543,11 +543,11 @@
   align-self: stretch;
   background: #191813;
   border: 0;
-  border-radius: 14px;
+  border-radius: 16px;
   color: #fff8f1;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 650;
-  min-height: 58px;
+  min-height: 56px;
   padding: 0.8rem 1rem;
   width: 100%;
 }
@@ -557,7 +557,7 @@
 }
 
 .circle-os .os-habit .os-chapter-idle {
-  padding: 22px;
+  padding: 24px;
 }
 
 .circle-os .os-habit .os-chapter-idle h2 {
@@ -588,7 +588,7 @@
   color: #fff8f1;
   cursor: text;
   display: block;
-  font-size: clamp(1.45rem, 5.8vw, 1.9rem);
+  font-size: 1.85rem;
   font-weight: 720;
   letter-spacing: -0.04em;
   line-height: 1.08;
@@ -599,7 +599,10 @@
 }
 
 .circle-os .os-mission-text-edit {
+  field-sizing: content;
   font-family: inherit;
+  min-height: 1.15em;
+  overflow: hidden;
   resize: none;
 }
 
@@ -630,8 +633,8 @@
 }
 
 .circle-os .os-extra-mission-copy {
-  font-size: clamp(1.15rem, 4.5vw, 1.45rem) !important;
-  min-height: 2.4em;
+  font-size: 1.85rem !important;
+  min-height: 1.15em;
 }
 
 .circle-os .os-extra-mission-copy::placeholder {
@@ -646,6 +649,19 @@
 .circle-os .os-extra-mission-done[aria-pressed="true"] {
   background: #fff8f1;
   color: #191813;
+}
+
+.circle-os .os-mission-text-edit.completed {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: rgb(255 248 241 / 0.72);
+}
+
+@media (max-width: 430px) {
+  .circle-os .os-chapter-idle .os-primary-mission-copy,
+  .circle-os .os-chapter-idle .os-extra-mission-copy {
+    font-size: 1.68rem !important;
+  }
 }
 
 @keyframes os-required-nudge {

@@ -785,8 +785,6 @@ export function TodayExperience() {
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
   const [checkInTitleDraft, setCheckInTitleDraft] = useState("");
   const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
-  const [addingMission, setAddingMission] = useState(false);
-  const [missionDraft, setMissionDraft] = useState("");
   const [editingPrimaryMission, setEditingPrimaryMission] = useState(false);
   const [primaryMissionDraft, setPrimaryMissionDraft] = useState("");
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
@@ -977,9 +975,7 @@ export function TodayExperience() {
     }), "mission");
   }
 
-  function addExtraMission(value = missionDraft) {
-    const text = value.trim();
-    if (!text) return;
+  function addExtraMission() {
     const timestamp = new Date().toISOString();
     updateToday(
       (day) => ({
@@ -991,7 +987,7 @@ export function TodayExperience() {
               typeof crypto !== "undefined" && "randomUUID" in crypto
                 ? crypto.randomUUID()
                 : `mission-${Date.now()}`,
-            text,
+            text: "New mission",
             completed: false,
             completedAt: null,
             createdAt: timestamp,
@@ -1000,8 +996,6 @@ export function TodayExperience() {
       }),
       "mission",
     );
-    setMissionDraft("");
-    setAddingMission(false);
   }
 
   function savePrimaryMission(value = primaryMissionDraft) {
@@ -1575,7 +1569,9 @@ export function TodayExperience() {
               idleBody={
                 <textarea
                   aria-label="Edit habit mission"
-                  className="os-primary-mission-copy os-mission-text-edit"
+                  className={`os-primary-mission-copy os-mission-text-edit${
+                    today.mission.completed ? " completed" : ""
+                  }`}
                   maxLength={240}
                   rows={3}
                   value={
@@ -1592,27 +1588,8 @@ export function TodayExperience() {
                 />
               }
               idleContent={
-                addingMission || (today.missions || []).length ? (
+                (today.missions || []).length ? (
                   <div className="os-extra-missions">
-                    {addingMission ? (
-                      <article className="os-extra-mission os-extra-mission-new">
-                        <textarea
-                          aria-label="New mission"
-                          autoFocus
-                          className="os-extra-mission-copy os-mission-text-edit"
-                          maxLength={240}
-                          placeholder="My mission"
-                          rows={2}
-                          value={missionDraft}
-                          onChange={(event) => setMissionDraft(event.target.value)}
-                          onBlur={(event) => {
-                            const text = event.currentTarget.value;
-                            if (text.trim()) addExtraMission(text);
-                            else setAddingMission(false);
-                          }}
-                        />
-                      </article>
-                    ) : null}
                     {(today.missions || []).map((mission) => (
                       <article
                         className={`os-extra-mission${
@@ -1622,9 +1599,11 @@ export function TodayExperience() {
                       >
                         <textarea
                           aria-label={`Edit mission: ${mission.text}`}
-                          className="os-extra-mission-copy os-mission-text-edit"
+                          className={`os-extra-mission-copy os-mission-text-edit${
+                            mission.completed ? " completed" : ""
+                          }`}
                           maxLength={240}
-                          rows={2}
+                          rows={1}
                           value={
                             editingMissionId === mission.id
                               ? editingMissionDraft
@@ -1647,7 +1626,7 @@ export function TodayExperience() {
                           aria-pressed={mission.completed}
                           onClick={() => toggleExtraMission(mission.id)}
                         >
-                          {mission.completed ? "Done" : "Mark done"}
+                          {mission.completed ? "Completed" : "Mark done"}
                         </button>
                       </article>
                     ))}
@@ -1658,15 +1637,12 @@ export function TodayExperience() {
                 <button
                   className="os-add-mission"
                   type="button"
-                  onClick={() => {
-                    setAddingMission((value) => !value);
-                    setMissionDraft("");
-                  }}
+                  onClick={addExtraMission}
                 >
-                  {addingMission ? "Cancel" : "Add mission"}
+                  Add mission
                 </button>
               }
-              idleActionLabel={today.mission.completed ? "Done today" : undefined}
+              idleActionLabel={today.mission.completed ? "Completed" : undefined}
               idleActionPressed={today.mission.completed}
               label="Habit chapter"
               run={habitBuildingRun}
