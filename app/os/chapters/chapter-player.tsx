@@ -41,6 +41,7 @@ function ChapterPageView({
   onIdleAction,
   idleActionLabel,
   idleActionDisabled,
+  idleActionPressed,
   idleHeaderAction,
   idleBody,
   idleContent,
@@ -54,6 +55,7 @@ function ChapterPageView({
   onIdleAction?: (page: ChapterPage, run: ChapterRun) => void;
   idleActionLabel?: string;
   idleActionDisabled?: boolean;
+  idleActionPressed?: boolean;
   idleHeaderAction?: ReactNode;
   idleBody?: ReactNode;
   idleContent?: ReactNode;
@@ -136,6 +138,7 @@ function ChapterPageView({
           <button
             className="os-chapter-continue os-chapter-idle-action"
             type="button"
+            aria-pressed={idleActionPressed}
             disabled={idleActionDisabled}
             onClick={() => onIdleAction(page, run)}
           >
@@ -289,6 +292,7 @@ export function ChapterPlayer({
   onIdleAction,
   idleActionLabel,
   idleActionDisabled = false,
+  idleActionPressed = false,
   idleHeaderAction,
   idleBody,
   idleContent,
@@ -301,6 +305,7 @@ export function ChapterPlayer({
   onIdleAction?: (page: ChapterPage, run: ChapterRun) => void;
   idleActionLabel?: string;
   idleActionDisabled?: boolean;
+  idleActionPressed?: boolean;
   idleHeaderAction?: ReactNode;
   idleBody?: ReactNode;
   idleContent?: ReactNode;
@@ -380,6 +385,7 @@ export function ChapterPlayer({
           onIdleAction={onIdleAction}
           idleActionLabel={idleActionLabel}
           idleActionDisabled={idleActionDisabled}
+          idleActionPressed={idleActionPressed}
           idleHeaderAction={idleHeaderAction}
           idleBody={idleBody}
           idleContent={idleContent}

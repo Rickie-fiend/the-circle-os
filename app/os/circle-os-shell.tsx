@@ -1405,7 +1405,7 @@ export function TodayExperience() {
             </p>
           </div>
 
-          {checkInConfirmed && profileSparkChapter && profileSparkRun ? (
+          {checkInConfirmed && profileSparkChapter && profileSparkRun && profileSparkRun.status !== "completed" ? (
             <ChapterPlayer
               className="os-checkin-session"
               definition={profileSparkChapter}
@@ -1692,8 +1692,8 @@ export function TodayExperience() {
                   {addingMission ? "Cancel" : "Add mission"}
                 </button>
               }
-              idleActionDisabled={today.mission.completed}
               idleActionLabel={today.mission.completed ? "Done today" : undefined}
+              idleActionPressed={today.mission.completed}
               label="Habit chapter"
               run={habitBuildingRun}
               onIdleAction={toggleMission}
