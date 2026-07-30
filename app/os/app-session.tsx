@@ -22,7 +22,6 @@ export function SwipeSession({
   label,
   availableIndices,
   frameHeight,
-  blockedForward = false,
 }: {
   children: ReactNode;
   index: number;
@@ -32,7 +31,6 @@ export function SwipeSession({
   label: string;
   availableIndices?: number[];
   frameHeight?: CSSProperties["height"];
-  blockedForward?: boolean;
 }) {
   const apps = Children.toArray(children);
   const lastIndex = Math.max(0, Math.min(
@@ -111,8 +109,7 @@ export function SwipeSession({
     [],
   );
 
-  function showBlockedForwardCue() {
-    if (!blockedForward) return;
+  function showBoundaryCue() {
     if (blockedTimer.current) {
       window.clearTimeout(blockedTimer.current);
     }
@@ -201,7 +198,7 @@ export function SwipeSession({
     if (targetIndex === undefined) {
       setDragX(0);
       setDragging(false);
-      if (distance < 0) showBlockedForwardCue();
+      showBoundaryCue();
       return;
     }
     const width = windowRef.current?.clientWidth || 320;
@@ -236,13 +233,17 @@ export function SwipeSession({
     if (event.key === "ArrowRight") {
       event.preventDefault();
       if (nextIndex === undefined) {
-        showBlockedForwardCue();
+        showBoundaryCue();
         return;
       }
       moveToPosition(currentPosition + 1);
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
+      if (previousIndex === undefined) {
+        showBoundaryCue();
+        return;
+      }
       moveToPosition(currentPosition - 1);
     }
   }

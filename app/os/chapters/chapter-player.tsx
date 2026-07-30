@@ -299,6 +299,7 @@ export function ChapterPlayer({
   idleApps = [],
   idleAppIndex = 0,
   onIdleAppIndexChange,
+  backApp,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -315,7 +316,9 @@ export function ChapterPlayer({
   idleApps?: ReactNode[];
   idleAppIndex?: number;
   onIdleAppIndexChange?: (index: number) => void;
+  backApp?: ReactNode;
 }) {
+  const [showingBackApp, setShowingBackApp] = useState(false);
   const currentIndex = Math.max(
     0,
     definition.pages.findIndex((page) => page.id === run.currentPageId),
@@ -398,13 +401,54 @@ export function ChapterPlayer({
     onRunChange(advanceChapterRun(definition, run, { page: currentPage }));
   }
 
+  if (run.status !== "completed" && backApp) {
+    const stackedApps = [backApp, ...definition.pages.map((page) => (
+      <ChapterPageView
+        chapter={definition}
+        current={Math.max(1, countedPages.findIndex((item) => item.id === page.id) + 1)}
+        key={page.id}
+        page={page}
+        run={run}
+        total={Math.max(1, countedPages.length)}
+        onIdleAction={onIdleAction}
+        idleActionLabel={idleActionLabel}
+        idleActionDisabled={idleActionDisabled}
+        idleActionPressed={idleActionPressed}
+        idleHeaderAction={idleHeaderAction}
+        idleBody={idleBody}
+        idleContent={idleContent}
+        onComplete={(submission) =>
+          onRunChange(
+            advanceChapterRun(definition, run, submission),
+            submission,
+          )
+        }
+      />
+    ))];
+    const stackedAvailableIndices = [0, ...availableIndices.map((item) => item + 1)];
+    return (
+      <SwipeSession
+        availableIndices={stackedAvailableIndices}
+        className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
+        index={showingBackApp ? 0 : currentIndex + 1}
+        label={label}
+        maxIndex={stackedAvailableIndices.at(-1) ?? currentIndex + 1}
+        onIndexChange={(index) => {
+          if (index === 0) {
+            setShowingBackApp(true);
+            return;
+          }
+          setShowingBackApp(false);
+          changeIndex(index - 1);
+        }}
+      >
+        {stackedApps}
+      </SwipeSession>
+    );
+  }
+
   return (
     <SwipeSession
-      blockedForward={
-        run.status !== "completed" &&
-        currentAnswerRequired &&
-        !currentAnswered
-      }
       availableIndices={
         availableIndices
       }

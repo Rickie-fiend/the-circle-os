@@ -1467,6 +1467,53 @@ export function TodayExperience() {
     return "";
   }
 
+  function checkInIdleCard() {
+    return (
+      <div className="os-survey-card os-survey-complete">
+        <div className="os-survey-head">
+          <p className="os-card-label">Check-in</p>
+        </div>
+        {editingCheckInNote ? (
+          <form className="os-idle-note-form" onSubmit={saveCheckInNote}>
+            <div className="os-idle-note-fields">
+              <input
+                aria-label="Edit idle title"
+                autoFocus
+                maxLength={54}
+                placeholder="Keep going."
+                value={checkInTitleDraft}
+                onChange={(event) => setCheckInTitleDraft(event.target.value)}
+              />
+              <textarea
+                aria-label="Edit idle note"
+                maxLength={220}
+                placeholder="Notice what feels like you today."
+                rows={3}
+                value={checkInNoteDraft}
+                onChange={(event) => setCheckInNoteDraft(event.target.value)}
+              />
+            </div>
+            <button type="submit" aria-label="Save note">âœ“</button>
+          </form>
+        ) : (
+          <button
+            aria-label="Edit check-in note"
+            className="os-idle-note-display"
+            type="button"
+            onClick={() => {
+              setCheckInTitleDraft(checkInIdleTitle);
+              setCheckInNoteDraft(checkInNote);
+              setEditingCheckInNote(true);
+            }}
+          >
+            <h2>{checkInIdleTitle}</h2>
+            <p>{checkInNote || "Notice what feels like you today."}</p>
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
       <main className="os-today">
         <section className="os-checkin" aria-label="Check-in questions">
@@ -1487,6 +1534,7 @@ export function TodayExperience() {
               key={profileSparkChapter.id}
               label="Check-in chapter"
               run={profileSparkRun}
+              backApp={checkInIdleCard()}
               onRunChange={saveProfileSparkRun}
             />
           ) : (

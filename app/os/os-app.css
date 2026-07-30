@@ -875,21 +875,19 @@
   }
 }
 
-@keyframes os-required-ring {
-  0%,
-  100% {
-    box-shadow: inherit;
-  }
-
-  45% {
-    box-shadow:
-      0 0 0 2px rgb(255 248 241 / 0.72),
-      0 16px 34px rgb(129 45 16 / 0.24);
-  }
+.circle-os .os-swipe-session.required-nudge > .os-app-window {
+  isolation: isolate;
 }
 
-.circle-os .os-swipe-session.required-nudge > .os-app-window {
-  animation: os-required-ring 520ms ease;
+.circle-os .os-swipe-session.required-nudge > .os-app-window::after {
+  animation: os-required-nudge 420ms cubic-bezier(0.22, 0.82, 0.22, 1);
+  border: 2px solid #e36b37;
+  border-radius: inherit;
+  content: "";
+  inset: 2px;
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
 }
 
 .circle-os .os-chapter-idle :where(button) {
