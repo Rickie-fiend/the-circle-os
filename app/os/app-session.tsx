@@ -11,6 +11,7 @@ import {
   type MouseEvent,
   type PointerEvent,
   type ReactNode,
+  type WheelEvent,
 } from "react";
 
 export function SwipeSession({
@@ -66,6 +67,8 @@ export function SwipeSession({
   const settleTimer = useRef<number | null>(null);
   const blockedTimer = useRef<number | null>(null);
   const commitFrame = useRef<number | null>(null);
+  const wheelTimer = useRef<number | null>(null);
+  const wheelDistance = useRef(0);
   const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -104,6 +107,9 @@ export function SwipeSession({
       }
       if (blockedTimer.current) {
         window.clearTimeout(blockedTimer.current);
+      }
+      if (wheelTimer.current) {
+        window.clearTimeout(wheelTimer.current);
       }
     },
     [],
@@ -248,6 +254,39 @@ export function SwipeSession({
     }
   }
 
+  function useTrackpadSwipe(event: WheelEvent<HTMLDivElement>) {
+    if (
+      settling ||
+      committing ||
+      event.ctrlKey ||
+      blocksSwipe(event.target) ||
+      Math.abs(event.deltaX) <= Math.abs(event.deltaY)
+    ) {
+      return;
+    }
+    event.preventDefault();
+    wheelDistance.current += event.deltaX;
+    if (wheelTimer.current) window.clearTimeout(wheelTimer.current);
+    wheelTimer.current = window.setTimeout(() => {
+      wheelDistance.current = 0;
+      wheelTimer.current = null;
+    }, 160);
+    if (Math.abs(wheelDistance.current) < 48) return;
+
+    const movingForward = wheelDistance.current > 0;
+    wheelDistance.current = 0;
+    if (wheelTimer.current) {
+      window.clearTimeout(wheelTimer.current);
+      wheelTimer.current = null;
+    }
+    const targetIndex = movingForward ? nextIndex : previousIndex;
+    if (targetIndex === undefined) {
+      showBoundaryCue();
+      return;
+    }
+    moveToPosition(currentPosition + (movingForward ? 1 : -1));
+  }
+
   return (
     <div
       aria-label={label}
@@ -256,6 +295,7 @@ export function SwipeSession({
       }`.trim()}
       onClickCapture={stopClickAfterSwipe}
       onKeyDown={useArrowKey}
+      onWheel={useTrackpadSwipe}
       onPointerCancel={() => {
         pointerStart.current = null;
         if (settleTimer.current) {
@@ -270,6 +310,11 @@ export function SwipeSession({
           window.clearTimeout(blockedTimer.current);
           blockedTimer.current = null;
         }
+        if (wheelTimer.current) {
+          window.clearTimeout(wheelTimer.current);
+          wheelTimer.current = null;
+        }
+        wheelDistance.current = 0;
         setShowingBlockedCue(false);
         setDragX(0);
         setDragging(false);

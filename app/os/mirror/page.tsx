@@ -637,6 +637,9 @@ export default function CircleOSMirror() {
               <h2>
                 {profileReady ? "A reading of you." : "Your reading begins tomorrow."}
               </h2>
+              {profileReady ? (
+                <span className="athena-reader-begin">Swipe to begin</span>
+              ) : null}
             </div>
               {profileReaderApp("Your days", "The life you are living.", [
                 ["currentLife", "Current life"],

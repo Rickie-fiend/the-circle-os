@@ -1033,11 +1033,16 @@ export function TodayExperience() {
       mission.kind !== "habit" &&
       (!mission.completed || leavingMissionIds.includes(mission.id)),
   );
+  const completedHabitRecords = (today.missions || []).filter(
+    (mission) => mission.completed && mission.kind === "habit",
+  );
   const completedTaskRecords = (today.missions || []).filter(
-    (mission) => mission.completed,
+    (mission) => mission.completed && mission.kind !== "habit",
   );
   const completedHabitCount =
-    (today.mission.completed ? 1 : 0) + completedTaskRecords.length;
+    (today.mission.completed ? 1 : 0) +
+    completedHabitRecords.length +
+    completedTaskRecords.length;
   const logSetupRun = useMemo(() => {
     if (!logSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
@@ -1856,9 +1861,7 @@ export function TodayExperience() {
                   New habit
                 </button>
               }
-              idleActionLabel={
-                today.mission.completed ? "1 day streak ✦" : undefined
-              }
+              idleActionLabel={today.mission.completed ? "Completed" : undefined}
               idleActionPressed={today.mission.completed}
               idleApps={[
                 <div className="os-habit-record" key="habit-record">
@@ -1871,24 +1874,44 @@ export function TodayExperience() {
                   </p>
                   {completedHabitCount ? (
                     <div className="os-habit-record-list">
-                      {today.mission.completed ? (
-                        <div className="os-habit-record-row" key="repeat">
-                          <span>Habit</span>
-                          <textarea
-                            aria-label="Edit completed habit"
-                            className="os-habit-record-edit"
-                            maxLength={240}
-                            rows={1}
-                            value={today.mission.text}
-                            onChange={(event) =>
-                              changePrimaryMission(event.target.value)
-                            }
-                          />
-                        </div>
+                      {today.mission.completed || completedHabitRecords.length ? (
+                        <section className="os-habit-record-group">
+                          <span className="os-habit-record-group-label">Habit</span>
+                          {today.mission.completed ? (
+                            <div className="os-habit-record-row" key="repeat">
+                              <textarea
+                                aria-label="Edit completed habit"
+                                className="os-habit-record-edit"
+                                maxLength={240}
+                                rows={1}
+                                value={today.mission.text}
+                                onChange={(event) =>
+                                  changePrimaryMission(event.target.value)
+                                }
+                              />
+                            </div>
+                          ) : null}
+                          {completedHabitRecords.map((mission) => (
+                            <div className="os-habit-record-row" key={mission.id}>
+                              <textarea
+                                aria-label={`Edit completed habit: ${mission.text}`}
+                                className="os-habit-record-edit"
+                                maxLength={240}
+                                rows={1}
+                                value={mission.text}
+                                onChange={(event) =>
+                                  changeExtraMission(mission.id, event.target.value)
+                                }
+                              />
+                            </div>
+                          ))}
+                        </section>
                       ) : null}
-                      {completedTaskRecords.map((mission) => (
-                        <div className="os-habit-record-row" key={mission.id}>
-                          <span>{mission.kind === "habit" ? "Habit" : "Task"}</span>
+                      {completedTaskRecords.length ? (
+                        <section className="os-habit-record-group">
+                          <span className="os-habit-record-group-label">Task</span>
+                          {completedTaskRecords.map((mission) => (
+                            <div className="os-habit-record-row" key={mission.id}>
                           <textarea
                             aria-label={`Edit completed task: ${mission.text}`}
                             className="os-habit-record-edit"
@@ -1905,8 +1928,10 @@ export function TodayExperience() {
                               )
                             }
                           />
-                        </div>
-                      ))}
+                            </div>
+                          ))}
+                        </section>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>,

@@ -735,6 +735,17 @@
   display: grid;
 }
 
+.circle-os .os-habit-record-group {
+  border-bottom: 1px solid rgb(25 24 19 / 0.28);
+  display: grid;
+  gap: 0;
+  padding: 0.85rem 0 0.2rem;
+}
+
+.circle-os .os-habit-record-group:last-child {
+  border-bottom: 0;
+}
+
 .circle-os .os-habit-record-row {
   border-bottom: 1px solid rgb(25 24 19 / 0.28);
   display: grid;
@@ -742,7 +753,7 @@
   padding: 0.9rem 0;
 }
 
-.circle-os .os-habit-record-row span {
+.circle-os .os-habit-record-group-label {
   background: #191813;
   border-radius: 999px;
   color: #fff8f1;
@@ -2237,6 +2248,13 @@
 
 .circle-os .athena-reader-cover h2 {
   max-width: 10ch;
+}
+
+.circle-os .athena-reader-begin {
+  color: rgb(255 248 241 / 0.72);
+  font-size: 0.68rem;
+  margin-top: auto;
+  text-align: right;
 }
 
 .circle-os .athena-reader-cover > .os-session-wait {
