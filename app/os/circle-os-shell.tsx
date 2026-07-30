@@ -87,43 +87,55 @@ function InlineMissionEditor({
   className,
   completed = false,
   onCommit,
+  onDraftChange,
   value,
 }: {
   ariaLabel: string;
   className: string;
   completed?: boolean;
   onCommit: (text: string) => void;
+  onDraftChange?: (text: string) => void;
   value: string;
 }) {
-  const editorRef = useRef<HTMLDivElement | null>(null);
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const editingRef = useRef(false);
+  const [draft, setDraft] = useState(value);
+
+  useLayoutEffect(() => {
+    if (editingRef.current) return;
+    setDraft((current) => (current === value ? current : value));
+  }, [value]);
 
   useLayoutEffect(() => {
     const editor = editorRef.current;
-    if (!editor || editingRef.current || editor.innerText === value) return;
-    editor.innerText = value;
-  }, [value]);
+    if (!editor) return;
+    editor.style.height = "auto";
+    editor.style.height = `${editor.scrollHeight}px`;
+  }, [draft]);
 
   return (
-    <div
+    <textarea
       aria-label={ariaLabel}
-      aria-multiline="true"
       className={`${className}${completed ? " completed" : ""}`}
-      contentEditable
+      maxLength={240}
       ref={editorRef}
-      role="textbox"
+      rows={1}
       spellCheck
-      suppressContentEditableWarning
+      value={draft}
+      onChange={(event) => {
+        const next = event.currentTarget.value;
+        setDraft(next);
+        if (next.trim()) onDraftChange?.(next);
+      }}
       onBlur={() => {
         editingRef.current = false;
-        const editor = editorRef.current;
-        if (!editor) return;
-        const text = editor.innerText.replace(/\u00a0/g, " ").trim();
+        const text = draft.replace(/\u00a0/g, " ").trim();
         if (!text) {
-          editor.innerText = value;
+          setDraft(value);
           return;
         }
-        if (text !== value) onCommit(text);
+        setDraft(text);
+        onCommit(text);
       }}
       onFocus={() => {
         editingRef.current = true;
@@ -1187,14 +1199,28 @@ export function TodayExperience() {
     );
   }
 
-  function changePrimaryMission(text: string) {
-    if (!text || text === today.mission.text) return;
+  function changePrimaryMissionDraft(text: string) {
+    if (!text.trim()) return;
     updateToday(
       (day) => ({
         ...day,
         mission: {
           ...day.mission,
           text,
+        },
+      }),
+    );
+  }
+
+  function commitPrimaryMission(text: string) {
+    const normalized = text.trim();
+    if (!normalized) return;
+    updateToday(
+      (day) => ({
+        ...day,
+        mission: {
+          ...day.mission,
+          text: normalized,
         },
       }),
       "mission",
@@ -1256,12 +1282,12 @@ export function TodayExperience() {
       setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
       const fade = window.setTimeout(() => {
         setFadingMissionIds((ids) => [...new Set([...ids, id])]);
-      }, 850);
+      }, 1_800);
       const remove = window.setTimeout(() => {
         setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
         setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
         delete taskExitTimers.current[id];
-      }, 2300);
+      }, 3_800);
       taskExitTimers.current[id] = { fade, remove };
     } else if (mission?.kind !== "habit") {
       setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
@@ -1925,7 +1951,8 @@ export function TodayExperience() {
                   ariaLabel="Edit habit mission"
                   className="os-primary-mission-copy os-mission-text-edit"
                   completed={today.mission.completed}
-                  onCommit={changePrimaryMission}
+                  onCommit={commitPrimaryMission}
+                  onDraftChange={changePrimaryMissionDraft}
                   value={
                     today.mission.text
                   }
@@ -2056,7 +2083,8 @@ export function TodayExperience() {
                               <InlineMissionEditor
                                 ariaLabel="Edit completed habit"
                                 className="os-habit-record-edit"
-                                onCommit={changePrimaryMission}
+                                onCommit={commitPrimaryMission}
+                                onDraftChange={changePrimaryMissionDraft}
                                 value={today.mission.text}
                               />
                             </div>

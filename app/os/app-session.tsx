@@ -64,6 +64,7 @@ export function SwipeSession({
     y: number;
     pointerId: number;
   } | null>(null);
+  const sessionRef = useRef<HTMLDivElement | null>(null);
   const windowRef = useRef<HTMLDivElement | null>(null);
   const currentPageRef = useRef<HTMLDivElement | null>(null);
   const settleTimer = useRef<number | null>(null);
@@ -80,6 +81,66 @@ export function SwipeSession({
   const [committing, setCommitting] = useState(false);
   const [showingBlockedCue, setShowingBlockedCue] = useState(false);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
+  const longPressCallback = useRef(onLongPress);
+
+  useEffect(() => {
+    longPressCallback.current = onLongPress;
+  }, [onLongPress]);
+
+  useEffect(() => {
+    const session = sessionRef.current;
+    if (!session || !onLongPress) return;
+
+    let start: { x: number; y: number } | null = null;
+    let timer: number | null = null;
+
+    const clear = () => {
+      start = null;
+      if (timer) window.clearTimeout(timer);
+      timer = null;
+    };
+    const startHold = (event: globalThis.TouchEvent) => {
+      if (event.touches.length !== 1) return;
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("input, textarea, select, a, [contenteditable='true']")
+      ) {
+        return;
+      }
+      const touch = event.touches[0];
+      start = { x: touch.clientX, y: touch.clientY };
+      longPressed.current = false;
+      timer = window.setTimeout(() => {
+        timer = null;
+        longPressed.current = true;
+        if ("vibrate" in navigator) navigator.vibrate(12);
+        longPressCallback.current?.();
+      }, 520);
+    };
+    const moveHold = (event: globalThis.TouchEvent) => {
+      if (!start || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      if (
+        Math.abs(touch.clientX - start.x) > 22 ||
+        Math.abs(touch.clientY - start.y) > 22
+      ) {
+        clear();
+      }
+    };
+
+    session.addEventListener("touchstart", startHold, { passive: true });
+    session.addEventListener("touchmove", moveHold, { passive: true });
+    session.addEventListener("touchend", clear, { passive: true });
+    session.addEventListener("touchcancel", clear, { passive: true });
+    return () => {
+      clear();
+      session.removeEventListener("touchstart", startHold);
+      session.removeEventListener("touchmove", moveHold);
+      session.removeEventListener("touchend", clear);
+      session.removeEventListener("touchcancel", clear);
+    };
+  }, [onLongPress]);
 
   useLayoutEffect(() => {
     if (frameHeight || !currentPageRef.current) return;
@@ -168,7 +229,7 @@ export function SwipeSession({
       pointerId: event.pointerId,
     };
     longPressed.current = false;
-    if (onLongPress) {
+    if (onLongPress && event.pointerType !== "touch") {
       if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
         try {
           event.currentTarget.setPointerCapture(event.pointerId);
@@ -332,6 +393,7 @@ export function SwipeSession({
       className={`os-swipe-session ${className}${
         showingBlockedCue ? " required-nudge" : ""
       }`.trim()}
+      ref={sessionRef}
       onClickCapture={stopClickAfterSwipe}
       onContextMenu={(event) => {
         if (onLongPress) event.preventDefault();

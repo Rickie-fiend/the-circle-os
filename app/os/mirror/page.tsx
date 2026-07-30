@@ -20,7 +20,7 @@ import {
   useCircleState,
   type TimeBlock,
 } from "../circle-os-shell";
-import { SessionIntro, SwipeSession } from "../app-session";
+import { SwipeSession } from "../app-session";
 
 const ACTIVITY_COLORS = [
   "activity-focus",
@@ -144,13 +144,26 @@ export default function CircleOSMirror() {
   const weekReady = Boolean(
     loggedPastDays || summary.coverage.recorded || summary.missions.available,
   );
+  const topWeekActivity = summary.time[0]?.activity?.trim();
+  const weekObservation =
+    topWeekActivity
+      ? `“${topWeekActivity}” took the most time you logged.`
+      : weekReady
+        ? "Your week is starting to show a pattern."
+        : "Your week starts here.";
   const profileReady = hasReadableProfileCase(profileCase);
   const updateLabel = formatUpdated(profileCase.updatedAt);
   const gapReading = gapVisualReading(
     profileCase.sessions.gap.text,
     loggedPastDays,
   );
-  const weekJourneyVersion = `${loggedPastDays}|${pastMinutes}|${pastCheckIns}|${pastMissionWins}`;
+  const weekJourneyVersion = [
+    "week-observation-cover-v1",
+    loggedPastDays,
+    pastMinutes,
+    pastCheckIns,
+    pastMissionWins,
+  ].join("|");
   const profileJourneyVersion = profileCase.updatedAt || profileCase.status;
   const lifeJourneyVersion = [
     "vision-cover-v1",
@@ -523,27 +536,11 @@ export default function CircleOSMirror() {
               )
             }
           >
-            <SessionIntro
-              detail={
-                weekReady
-                  ? "Four views of your time, rhythm, and record."
-                  : "Log today. Your first charts unlock tomorrow morning."
-              }
-              label="Last seven days"
-              onBegin={() => {
-                updateState((current) =>
-                  setAppSessionIndex(
-                    current,
-                    "vision-week",
-                    weekJourneyVersion,
-                    1,
-                  ),
-                );
-              }}
-              ready={weekReady}
-              theme="dark"
-              title={weekReady ? "Your week is ready." : "Your week starts here."}
-            />
+            <div className="vision-week-cover">
+              <p className="os-card-label">Last seven days</p>
+              <h2>{weekObservation}</h2>
+              <span>{weekReady ? "Swipe to see" : "Check tomorrow morning"}</span>
+            </div>
               <article
                 className="mirror-summary-card vision-week-app"
                 aria-labelledby="mirror-sentence"
