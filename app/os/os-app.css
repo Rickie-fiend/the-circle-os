@@ -538,13 +538,22 @@
   opacity: 0.35;
 }
 
-.circle-os .os-habit .os-chapter-idle-action {
+.circle-os .os-habit .os-chapter-idle-action,
+.circle-os .os-extra-mission-done {
   align-self: stretch;
   background: #191813;
+  border: 0;
+  border-radius: 14px;
   color: #fff8f1;
   font-size: 0.74rem;
-  margin-top: 1.25rem;
+  font-weight: 650;
+  min-height: 58px;
+  padding: 0.8rem 1rem;
   width: 100%;
+}
+
+.circle-os .os-habit .os-chapter-idle-action {
+  margin-top: 1.25rem;
 }
 
 .circle-os .os-habit .os-chapter-idle {
@@ -571,23 +580,26 @@
   padding: 0.5rem 0.82rem;
 }
 
-.circle-os .os-primary-mission-copy {
+.circle-os .os-primary-mission-copy,
+.circle-os .os-extra-mission-copy {
   appearance: none;
   background: transparent;
   border: 0;
   color: #fff8f1;
   cursor: text;
   display: block;
-  color: #fff8f1;
   font-size: clamp(1.45rem, 5.8vw, 1.9rem);
   font-weight: 720;
   letter-spacing: -0.04em;
+  line-height: 1.08;
   padding: 0;
   text-align: left;
-  line-height: 1.08;
-  margin: 1rem 0 0;
   opacity: 1;
   width: 100%;
+}
+
+.circle-os .os-primary-mission-copy {
+  margin: 1rem 0 0;
 }
 
 .circle-os .os-primary-mission-edit {
@@ -624,15 +636,15 @@
 
 .circle-os .os-extra-missions {
   display: grid;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   overflow: hidden;
 }
 
 .circle-os .os-extra-mission {
   border-top: 1px solid rgb(255 248 241 / 0.25);
   display: grid;
-  gap: 0.8rem;
-  padding: 1rem 0 0;
+  gap: 1rem;
+  padding: 1.25rem 0 0;
 }
 
 .circle-os .os-extra-mission.completed {
@@ -661,8 +673,7 @@
   color: rgb(255 248 241 / 0.56);
 }
 
-.circle-os .os-extra-mission-save,
-.circle-os .os-extra-mission-done {
+.circle-os .os-extra-mission-save {
   background: #191813;
   border: 0;
   border-radius: 14px;
@@ -678,25 +689,8 @@
   opacity: 0.38;
 }
 
-.circle-os .os-extra-mission-copy {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  color: #fff8f1;
-  cursor: text;
-  display: block;
-  font-size: 1.08rem;
-  font-weight: 680;
-  letter-spacing: -0.025em;
-  line-height: 1.3;
-  margin: 0;
-  padding: 0;
-  text-align: left;
-  width: 100%;
-}
-
 .circle-os .os-extra-mission-done {
-  margin-top: 0.15rem;
+  margin-top: 0;
 }
 
 @keyframes os-required-nudge {
