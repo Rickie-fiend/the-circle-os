@@ -1042,6 +1042,13 @@ export function TodayExperience() {
   function saveExtraMission(id: string, value = editingMissionDraft) {
     const text = value.trim();
     if (!text) {
+      updateToday(
+        (day) => ({
+          ...day,
+          missions: (day.missions || []).filter((mission) => mission.id !== id),
+        }),
+        "mission",
+      );
       setEditingMissionId(null);
       setEditingMissionDraft("");
       return;
@@ -1440,8 +1447,9 @@ export function TodayExperience() {
 
           {checkInConfirmed && profileSparkChapter && profileSparkRun && profileSparkRun.status !== "completed" ? (
             <ChapterPlayer
-              className="os-checkin-session"
+              className="os-checkin-session os-checkin-refresh"
               definition={profileSparkChapter}
+              key={profileSparkChapter.id}
               label="Check-in chapter"
               run={profileSparkRun}
               onRunChange={saveProfileSparkRun}
@@ -1484,6 +1492,7 @@ export function TodayExperience() {
             }}
           >
             <SessionIntro
+              refreshKey={checkInJourneyVersion}
               detail={
                 unansweredCodexQuestion
                   ? "One new question is ready."

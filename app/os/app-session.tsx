@@ -141,7 +141,7 @@ export function SwipeSession({
 
   function blocksSwipe(target: EventTarget | null) {
     return target instanceof Element
-      ? Boolean(target.closest("input, textarea, select, a"))
+      ? Boolean(target.closest("input, select, a"))
       : false;
   }
 
@@ -336,6 +336,7 @@ export function SessionIntro({
   theme = "light",
   detail,
   ready = true,
+  refreshKey,
 }: {
   label: string;
   title: string;
@@ -343,12 +344,33 @@ export function SessionIntro({
   theme?: "light" | "orange" | "dark";
   detail?: string;
   ready?: boolean;
+  refreshKey?: string;
 }) {
+  const lastRefreshKey = useRef(refreshKey);
+  const [display, setDisplay] = useState({ title, detail });
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (!refreshKey || refreshKey === lastRefreshKey.current) {
+      setDisplay({ title, detail });
+      return;
+    }
+    lastRefreshKey.current = refreshKey;
+    setRefreshing(true);
+    const timer = window.setTimeout(() => {
+      setDisplay({ title, detail });
+      setRefreshing(false);
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [detail, refreshKey, title]);
+
   return (
-    <div className={`os-session-intro theme-${theme}`}>
+    <div className={`os-session-intro theme-${theme}${
+      refreshing ? " is-refreshing" : ""
+    }`}>
       <p className="os-card-label">{label}</p>
-      <h2>{title}</h2>
-      {detail ? <p className="os-session-detail">{detail}</p> : null}
+      <h2>{display.title}</h2>
+      {display.detail ? <p className="os-session-detail">{display.detail}</p> : null}
       {ready ? (
         <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
           Swipe to begin
