@@ -114,7 +114,7 @@ Required: true
 ## Page: complete
 Type: confirm
 Title: You completed this chapter.
-Button: OK
+Button: Continue
 
 ## Page: idle
 Type: idle

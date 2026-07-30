@@ -37,7 +37,8 @@ export function SwipeSession({
     apps.length - 1,
     maxIndex ?? Math.max(0, apps.length - 1),
   ));
-  const allowedIndices = (
+  const activeIndex = Math.max(0, Math.min(lastIndex, index));
+  const configuredIndices = (
     availableIndices?.length
       ? availableIndices
       : Array.from({ length: lastIndex + 1 }, (_, itemIndex) => itemIndex)
@@ -49,7 +50,10 @@ export function SwipeSession({
         values.indexOf(itemIndex) === position,
     )
     .sort((left, right) => left - right);
-  const currentPosition = Math.max(0, allowedIndices.indexOf(index));
+  const allowedIndices = configuredIndices.includes(activeIndex)
+    ? configuredIndices
+    : [...configuredIndices, activeIndex].sort((left, right) => left - right);
+  const currentPosition = allowedIndices.indexOf(activeIndex);
   const previousIndex = allowedIndices[currentPosition - 1];
   const nextIndex = allowedIndices[currentPosition + 1];
   const pointerStart = useRef<{
@@ -86,7 +90,7 @@ export function SwipeSession({
     const observer = new ResizeObserver(measure);
     observer.observe(page);
     return () => observer.disconnect();
-  }, [frameHeight, index]);
+  }, [activeIndex, frameHeight]);
 
   useEffect(
     () => () => {
@@ -109,7 +113,7 @@ export function SwipeSession({
     setDragX(0);
     setDragging(false);
     setSettling(false);
-    if (boundedIndex === index) return;
+    if (boundedIndex === activeIndex) return;
     onIndexChange(boundedIndex);
   }
 
@@ -147,7 +151,7 @@ export function SwipeSession({
     didSwipe.current = true;
     const movingPastStart = previousIndex === undefined && distanceX > 0;
     const movingPastEnd = nextIndex === undefined && distanceX < 0;
-    const resistance = movingPastStart || movingPastEnd ? 0.16 : 0.72;
+    const resistance = movingPastStart || movingPastEnd ? 0 : 0.72;
     const width = windowRef.current?.clientWidth || 320;
     setDragging(true);
     setDragX(
@@ -273,7 +277,7 @@ export function SwipeSession({
           ref={currentPageRef}
           style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
         >
-          {apps[index]}
+          {apps[activeIndex]}
         </div>
         {(dragging || settling) && nextIndex !== undefined ? (
           <div

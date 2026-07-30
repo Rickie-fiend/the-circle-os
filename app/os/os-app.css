@@ -1111,24 +1111,15 @@
 }
 
 .circle-os .os-day-gated {
-  min-height: 340px;
-  overflow: hidden;
+  background: transparent;
+  border: 0;
+  min-height: 0;
+  overflow: visible;
   padding: 0;
-  position: relative;
 }
 
 .circle-os .os-log-gate {
-  inset: 0;
-  position: absolute;
-}
-
-.circle-os .os-log-gate .os-swipe-session,
-.circle-os .os-log-gate .os-app-window {
-  height: 100%;
-}
-
-.circle-os .os-log-gate .os-app-page.current {
-  height: 100%;
+  position: relative;
 }
 
 .circle-os .os-log-gate .os-survey-card {
@@ -1139,7 +1130,7 @@
   border-radius: 24px;
   box-shadow: none;
   color: #f1efe8;
-  min-height: 340px;
+  min-height: 250px;
   padding: 24px 22px;
 }
 
@@ -1147,8 +1138,7 @@
   border: 0;
   border-radius: 24px;
   box-shadow: none;
-  height: 100%;
-  min-height: 340px;
+  min-height: 250px;
   padding: 24px 22px;
 }
 

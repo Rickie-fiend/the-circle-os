@@ -103,7 +103,7 @@ function ChapterPageView({
             type="button"
             onClick={() => onComplete({ page })}
           >
-            {page.button || (isCompletionPage ? "OK" : "Continue")}
+            {page.button || "Continue"}
           </button>
         ) : null}
       </div>

@@ -1318,11 +1318,11 @@ export function TodayExperience() {
               <p className="os-card-label">Check-in</p>
               <h2>You completed this chapter.</h2>
               <p>
-                Go back if you want to change an answer. Press OK when it feels
-                right.
+                Go back if you want to change an answer. Press Continue when it
+                feels right.
               </p>
               <button type="button" onClick={confirmCheckInChapter}>
-                OK
+                Continue
               </button>
             </div>
             <div className="os-survey-card os-survey-complete">
@@ -1443,11 +1443,11 @@ export function TodayExperience() {
               <p className="os-card-label">Habit</p>
               <h2>You completed this chapter.</h2>
               <p>
-                Go back if you want to change an answer. Press OK when your
-                mission feels right.
+                Go back if you want to change an answer. Press Continue when
+                your mission feels right.
               </p>
               <button type="button" onClick={confirmHabitChapter}>
-                OK
+                Continue
               </button>
             </div>
             <section

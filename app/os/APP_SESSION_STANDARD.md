@@ -40,6 +40,10 @@ Used for charts, weekly views, and other things worth reading again.
   rounded outer corners, borders, or shadows.
 - Only the inner page follows the finger.
 - A swipe completes inside the clipped frame before state changes.
+- The active page is always kept in the navigation map while permissions or
+  saved progress change. It never falls back to the cover by position.
+- The cover has a hard right boundary. Pulling right cannot reveal an older
+  page or idle app.
 - The incoming page is promoted in place after the swipe. Its horizontal
   entrance never replays during the state change.
 - When pages have different heights, the frame keeps its old height until the
