@@ -787,6 +787,8 @@ export function TodayExperience() {
   const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
   const [addingMission, setAddingMission] = useState(false);
   const [missionDraft, setMissionDraft] = useState("");
+  const [editingPrimaryMission, setEditingPrimaryMission] = useState(false);
+  const [primaryMissionDraft, setPrimaryMissionDraft] = useState("");
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
   const [editingMissionDraft, setEditingMissionDraft] = useState("");
   const [isLogOpen, setLogOpen] = useState(false);
@@ -1001,6 +1003,24 @@ export function TodayExperience() {
     );
     setMissionDraft("");
     setAddingMission(false);
+  }
+
+  function savePrimaryMission(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = primaryMissionDraft.trim();
+    if (!text) return;
+    updateToday(
+      (day) => ({
+        ...day,
+        mission: {
+          ...day.mission,
+          text,
+        },
+      }),
+      "mission",
+    );
+    setEditingPrimaryMission(false);
+    setPrimaryMissionDraft("");
   }
 
   function saveExtraMission(event: FormEvent<HTMLFormElement>) {
@@ -1495,17 +1515,6 @@ export function TodayExperience() {
             <div className="os-survey-card os-survey-complete">
                 <div className="os-survey-head">
                   <p className="os-card-label">Check-in</p>
-                  <button
-                    className="os-note-edit"
-                    type="button"
-                    onClick={() => {
-                      setCheckInTitleDraft(checkInIdleTitle);
-                      setCheckInNoteDraft(checkInNote);
-                      setEditingCheckInNote(true);
-                    }}
-                  >
-                    Edit
-                  </button>
                 </div>
                 {editingCheckInNote ? (
                   <form className="os-idle-note-form" onSubmit={saveCheckInNote}>
@@ -1534,10 +1543,19 @@ export function TodayExperience() {
                     <button type="submit" aria-label="Save note">✓</button>
                   </form>
                 ) : (
-                  <>
+                  <button
+                    className="os-idle-note-display"
+                    type="button"
+                    onClick={() => {
+                      setCheckInTitleDraft(checkInIdleTitle);
+                      setCheckInNoteDraft(checkInNote);
+                      setEditingCheckInNote(true);
+                    }}
+                    aria-label="Edit check-in note"
+                  >
                     <h2>{checkInIdleTitle}</h2>
                     <p>{checkInNote || "Notice what feels like you today."}</p>
-                  </>
+                  </button>
                 )}
             </div>
           </SwipeSession>
@@ -1549,14 +1567,44 @@ export function TodayExperience() {
             <ChapterPlayer
               className="os-habit-session"
               definition={habitBuildingChapter}
+              idleBody={
+                editingPrimaryMission ? (
+                  <form
+                    className="os-primary-mission-edit"
+                    onSubmit={savePrimaryMission}
+                  >
+                    <textarea
+                      aria-label="Edit habit mission"
+                      autoFocus
+                      maxLength={240}
+                      rows={4}
+                      value={primaryMissionDraft}
+                      onChange={(event) =>
+                        setPrimaryMissionDraft(event.target.value)
+                      }
+                    />
+                    <button type="submit" disabled={!primaryMissionDraft.trim()}>
+                      Save mission
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    className="os-primary-mission-copy"
+                    type="button"
+                    onClick={() => {
+                      setPrimaryMissionDraft(today.mission.text);
+                      setEditingPrimaryMission(true);
+                    }}
+                  >
+                    {today.mission.text}
+                  </button>
+                )
+              }
               idleContent={
                 addingMission || (today.missions || []).length ? (
                   <div className="os-extra-missions">
                     {addingMission ? (
                       <article className="os-extra-mission editing">
-                        <div className="os-extra-mission-head">
-                          <p className="os-card-label">New mission</p>
-                        </div>
                         <form onSubmit={addExtraMission}>
                           <textarea
                             aria-label="New mission"
@@ -1586,21 +1634,6 @@ export function TodayExperience() {
                         }`}
                         key={mission.id}
                       >
-                        <div className="os-extra-mission-head">
-                          <p className="os-card-label">Mission</p>
-                          {editingMissionId !== mission.id ? (
-                            <button
-                              className="os-extra-mission-edit"
-                              type="button"
-                              onClick={() => {
-                                setEditingMissionId(mission.id);
-                                setEditingMissionDraft(mission.text);
-                              }}
-                            >
-                              Edit
-                            </button>
-                          ) : null}
-                        </div>
                         {editingMissionId === mission.id ? (
                           <form onSubmit={saveExtraMission}>
                             <textarea
@@ -1622,9 +1655,17 @@ export function TodayExperience() {
                             </button>
                           </form>
                         ) : (
-                          <p className="os-extra-mission-copy">
+                          <button
+                            className="os-extra-mission-copy"
+                            type="button"
+                            aria-label={`Edit mission: ${mission.text}`}
+                            onClick={() => {
+                              setEditingMissionId(mission.id);
+                              setEditingMissionDraft(mission.text);
+                            }}
+                          >
                             {mission.text}
-                          </p>
+                          </button>
                         )}
                         <button
                           className="os-extra-mission-done"
