@@ -256,9 +256,22 @@
 }
 
 .circle-os .os-app-window {
+  background: inherit;
   border-radius: inherit;
+  isolation: isolate;
   overflow: hidden;
   position: relative;
+}
+
+.circle-os
+  .os-swipe-session
+  > .os-app-window
+  > .os-app-page
+  > :first-child {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
 }
 
 .circle-os .os-app-window.fluid-height {
@@ -395,6 +408,26 @@
   border-color: rgb(241 239 232 / 0.1);
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.16);
   color: #f1efe8;
+}
+
+.circle-os .os-chapter-session {
+  border-radius: 28px;
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.14);
+}
+
+.circle-os .os-chapter-session.theme-light {
+  background: #f1efe8;
+  border: 1px solid rgb(25 24 19 / 0.05);
+}
+
+.circle-os .os-chapter-session.theme-orange {
+  background: linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  border: 1px solid rgb(255 255 255 / 0.16);
+}
+
+.circle-os .os-chapter-session.theme-dark {
+  background: #222119;
+  border: 1px solid rgb(241 239 232 / 0.1);
 }
 
 .circle-os .os-session-intro h2 {
@@ -1699,6 +1732,12 @@
   border-radius: 28px;
 }
 
+.circle-os .vision-analysis-apps {
+  background: #222119;
+  border: 1px solid rgb(241 239 232 / 0.1);
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.16);
+}
+
 .circle-os .vision-week-apps {
   background: #191813;
   border: 1px solid rgb(241 239 232 / 0.1);
@@ -1711,9 +1750,7 @@
 
 .circle-os .vision-week-apps .vision-week-app,
 .circle-os .vision-week-apps .os-session-intro {
-  border-radius: 27px;
   height: 100%;
-  margin: 0;
 }
 
 .circle-os .vision-week-apps .os-session-intro {

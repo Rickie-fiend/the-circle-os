@@ -5,8 +5,8 @@
 ```text
 Route
   Session: the stable place
-    App frame: never moves
-      App page: moves inside the frame
+    App window: owns radius, border, edge color, and shadow
+      App page: a flat sheet that moves inside the window
 ```
 
 ## Two app behaviors
@@ -34,6 +34,8 @@ Used for charts, weekly views, and other things worth reading again.
 ## Interaction
 
 - The outer session frame stays still.
+- The window is one uninterrupted shape. Moving pages never carry their own
+  rounded outer corners, borders, or shadows.
 - Only the inner page follows the finger.
 - A swipe completes inside the clipped frame before state changes.
 - The incoming page is promoted in place after the swipe. Its horizontal
