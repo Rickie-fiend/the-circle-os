@@ -950,14 +950,11 @@ export function TodayExperience() {
     (mission) =>
       !mission.completed || leavingMissionIds.includes(mission.id),
   );
-  const completedHabitRecords = [
-    ...(today.mission.completed
-      ? [{ id: "repeat", text: today.mission.text, kind: "Habit" }]
-      : []),
-    ...(today.missions || [])
-      .filter((mission) => mission.completed)
-      .map((mission) => ({ id: mission.id, text: mission.text, kind: "Task" })),
-  ];
+  const completedTaskRecords = (today.missions || []).filter(
+    (mission) => mission.completed,
+  );
+  const completedHabitCount =
+    (today.mission.completed ? 1 : 0) + completedTaskRecords.length;
   const logSetupRun = useMemo(() => {
     if (!logSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
@@ -1688,16 +1685,62 @@ export function TodayExperience() {
                   <p className="os-card-label">Habit record</p>
                   <h2>Today, so far.</h2>
                   <p className="os-habit-record-summary">
-                    {completedHabitRecords.length
-                      ? `${completedHabitRecords.length} completed today.`
+                    {completedHabitCount
+                      ? `${completedHabitCount} completed today.`
                       : "Nothing completed yet."}
                   </p>
-                  {completedHabitRecords.length ? (
+                  {completedHabitCount ? (
                     <div className="os-habit-record-list">
-                      {completedHabitRecords.map((record) => (
-                        <div className="os-habit-record-row" key={record.id}>
-                          <span>{record.kind}</span>
-                          <p>{record.text}</p>
+                      {today.mission.completed ? (
+                        <div className="os-habit-record-row" key="repeat">
+                          <span>Habit</span>
+                          <textarea
+                            aria-label="Edit completed habit"
+                            className="os-habit-record-edit"
+                            maxLength={240}
+                            rows={1}
+                            value={
+                              editingPrimaryMission
+                                ? primaryMissionDraft
+                                : today.mission.text
+                            }
+                            onFocus={() => {
+                              setPrimaryMissionDraft(today.mission.text);
+                              setEditingPrimaryMission(true);
+                            }}
+                            onChange={(event) =>
+                              setPrimaryMissionDraft(event.target.value)
+                            }
+                            onBlur={(event) =>
+                              savePrimaryMission(event.currentTarget.value)
+                            }
+                          />
+                        </div>
+                      ) : null}
+                      {completedTaskRecords.map((mission) => (
+                        <div className="os-habit-record-row" key={mission.id}>
+                          <span>Task</span>
+                          <textarea
+                            aria-label={`Edit completed task: ${mission.text}`}
+                            className="os-habit-record-edit"
+                            maxLength={240}
+                            rows={1}
+                            value={
+                              editingMissionId === mission.id
+                                ? editingMissionDraft
+                                : mission.text
+                            }
+                            onFocus={() => {
+                              setEditingMissionId(mission.id);
+                              setEditingMissionDraft(mission.text);
+                            }}
+                            onChange={(event) =>
+                              setEditingMissionDraft(event.target.value)
+                            }
+                            onBlur={(event) =>
+                              saveExtraMission(mission.id, event.currentTarget.value)
+                            }
+                          />
                         </div>
                       ))}
                     </div>
