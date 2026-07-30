@@ -141,7 +141,7 @@ export function SwipeSession({
 
   function blocksSwipe(target: EventTarget | null) {
     return target instanceof Element
-      ? Boolean(target.closest("input, select, a"))
+      ? Boolean(target.closest("input, textarea, select, button, a, [contenteditable='true']"))
       : false;
   }
 

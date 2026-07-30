@@ -193,10 +193,20 @@ export default function CircleOSMirror() {
   }
 
   function saveSession(key: string) {
-    if (!sessionDraft.trim()) return;
+    const nextText = sessionDraft.trim();
+    if (!nextText) {
+      setEditing(null);
+      setSessionDraft("");
+      return;
+    }
+    if (nextText === profileCase.sessions[key].text) {
+      setEditing(null);
+      setSessionDraft("");
+      return;
+    }
     updateState((current) =>
       queueProfileUpdate(
-        editProfileSession(current, key, sessionDraft),
+        editProfileSession(current, key, nextText),
         "profile-edit",
       ),
     );
@@ -225,11 +235,6 @@ export default function CircleOSMirror() {
       >
         <div className="profile-session-head">
           <p className="os-card-label">{label}</p>
-          {!options.locked ? (
-            <button type="button" onClick={() => beginEdit(key)}>
-              Edit
-            </button>
-          ) : null}
         </div>
         {options.locked ? (
           <p className="profile-session-copy">
@@ -240,17 +245,22 @@ export default function CircleOSMirror() {
           <div className="profile-session-edit">
             <textarea
               aria-label={`Edit ${label}`}
-              value={sessionDraft}
-              onChange={(event) => setSessionDraft(event.target.value)}
-              rows={6}
-              autoFocus
-            />
-            <button type="button" onClick={() => saveSession(key)}>
-              Save
-            </button>
+            value={sessionDraft}
+            onChange={(event) => setSessionDraft(event.target.value)}
+            onBlur={() => saveSession(key)}
+            rows={6}
+            autoFocus
+          />
           </div>
         ) : (
-          <p className="profile-session-copy">{session.text}</p>
+          <button
+            aria-label={`Edit ${label}`}
+            className="profile-session-copy"
+            type="button"
+            onClick={() => beginEdit(key)}
+          >
+            {session.text}
+          </button>
         )}
       </article>
     );
@@ -263,25 +273,26 @@ export default function CircleOSMirror() {
       <section className="profile-article-part" key={key}>
         <div>
           <h2>{label}</h2>
-          <button type="button" onClick={() => beginEdit(key)}>
-            Edit
-          </button>
         </div>
         {isEditing ? (
           <div className="profile-session-edit">
             <textarea
               aria-label={`Edit ${label}`}
-              value={sessionDraft}
-              onChange={(event) => setSessionDraft(event.target.value)}
-              rows={6}
-              autoFocus
-            />
-            <button type="button" onClick={() => saveSession(key)}>
-              Save
-            </button>
+            value={sessionDraft}
+            onChange={(event) => setSessionDraft(event.target.value)}
+            onBlur={() => saveSession(key)}
+            rows={6}
+            autoFocus
+          />
           </div>
         ) : (
-          <p>{session.text}</p>
+          <button
+            aria-label={`Edit ${label}`}
+            type="button"
+            onClick={() => beginEdit(key)}
+          >
+            {session.text}
+          </button>
         )}
       </section>
     );
@@ -624,37 +635,10 @@ export default function CircleOSMirror() {
             }
           >
             <div className="athena-reader-cover">
-              <p className="os-card-label">Athena's reading</p>
+              <p className="os-card-label">Athena</p>
               <h2>
-                {profileReady ? "Here is what I see." : "Still learning you."}
+                {profileReady ? "A reading of you." : "Your reading begins tomorrow."}
               </h2>
-              <p>
-                A working picture from your words and days. Keep what feels
-                true. Change what does not.
-              </p>
-              <span>{profileReady ? updateLabel : "Ready after the morning update."}</span>
-              {profileReady ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateState((current) =>
-                      setAppSessionIndex(
-                        current,
-                        "vision-profile",
-                        profileJourneyVersion,
-                        1,
-                      ),
-                    );
-                  }}
-                  aria-label="Read Athena's profile"
-                >
-                  Read
-                </button>
-              ) : (
-                <strong className="os-session-wait">
-                  Available tomorrow morning
-                </strong>
-              )}
             </div>
               {profileReaderApp("Your days", "The life you are living.", [
                 ["currentLife", "Current life"],

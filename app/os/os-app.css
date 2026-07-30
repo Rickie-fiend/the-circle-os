@@ -2014,6 +2014,15 @@
 }
 
 .circle-os .profile-session-copy {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: text;
+  display: block;
+  font-family: inherit;
+  padding: 0;
+  text-align: left;
+  width: 100%;
   font-size: 0.9rem;
   line-height: 1.65;
   margin: 0.85rem 0 0;
@@ -2025,6 +2034,12 @@
   font-size: 1.35rem;
   font-weight: 500;
   line-height: 1.45;
+}
+
+.circle-os .profile-session-copy:focus-visible,
+.circle-os .athena-reader-app .profile-article-part > button:focus-visible {
+  outline: 2px solid #e36b37;
+  outline-offset: 5px;
 }
 
 .circle-os .profile-session-edit {
@@ -2166,41 +2181,29 @@
 
 .circle-os .athena-reader-cover h2,
 .circle-os .athena-reader-app > header h2 {
-  font-family: var(--font-display), Georgia, serif;
-  font-size: clamp(2.05rem, 8vw, 3rem);
-  font-weight: 500;
-  letter-spacing: -0.045em;
+  color: #fff8f1;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  font-weight: 750;
+  letter-spacing: -0.06em;
   line-height: 0.98;
-  margin: 0.85rem 0 1.1rem;
+  margin: 0.85rem 0 0;
 }
 
-.circle-os .athena-reader-cover > p:not(.os-card-label) {
-  color: rgb(255 248 241 / 0.8);
-  font-size: 0.88rem;
-  line-height: 1.6;
-  margin: 0;
-  max-width: 30ch;
-}
-
-.circle-os .athena-reader-cover > span,
 .circle-os .athena-reader-app > header > span {
-  color: rgb(255 248 241 / 0.62);
+  color: rgb(25 24 19 / 0.7);
   display: block;
   font-size: 0.6rem;
-  margin-top: 1rem;
+  margin-top: 0.9rem;
 }
 
-.circle-os .athena-reader-cover > button {
-  align-self: start;
-  background: #191813;
-  border: 0;
-  border-radius: 999px;
-  color: #fff8f1;
-  font-size: 0.72rem;
-  font-weight: 650;
-  margin-top: auto;
-  min-height: 46px;
-  padding: 0.55rem 1rem;
+.circle-os .athena-reader-cover {
+  align-content: start;
+  display: grid;
+}
+
+.circle-os .athena-reader-cover h2 {
+  max-width: 10ch;
 }
 
 .circle-os .athena-reader-cover > .os-session-wait {
@@ -2241,21 +2244,21 @@
   text-transform: uppercase;
 }
 
-.circle-os .athena-reader-app .profile-article-part > div:first-child > button {
+.circle-os .athena-reader-app .profile-article-part > button {
   background: transparent;
   border: 0;
-  color: #191813;
-  font-size: 0.6rem;
-  padding: 0.4rem 0;
-}
-
-.circle-os .athena-reader-app .profile-article-part > p {
-  color: rgb(241 239 232 / 0.82);
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 1.12rem;
+  color: #fff8f1;
+  cursor: text;
+  display: block;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.06rem;
+  font-weight: 560;
   line-height: 1.58;
   margin: 0.8rem 0 0;
+  padding: 0;
+  text-align: left;
   white-space: pre-wrap;
+  width: 100%;
 }
 
 .circle-os .vision-suggestion-session {
