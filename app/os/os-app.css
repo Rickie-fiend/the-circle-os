@@ -580,8 +580,8 @@
   padding: 0.5rem 0.82rem;
 }
 
-.circle-os .os-primary-mission-copy,
-.circle-os .os-extra-mission-copy {
+.circle-os .os-chapter-idle .os-primary-mission-copy,
+.circle-os .os-chapter-idle .os-extra-mission-copy {
   appearance: none;
   background: transparent;
   border: 0;
