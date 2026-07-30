@@ -100,7 +100,9 @@ function ChapterPageView({
   const isQuietPage = ["info", "confirm", "result", "idle"].includes(page.type);
   if (isQuietPage) {
     return (
-      <div className={`os-chapter-card theme-${chapter.theme}`}>
+      <div
+        className={`os-chapter-card os-chapter-${page.type} theme-${chapter.theme}`}
+      >
         <div className="os-survey-head">
           <p className="os-card-label">{chapter.session}</p>
           {!isCompletionPage && page.type !== "idle" ? (
@@ -109,7 +111,7 @@ function ChapterPageView({
         </div>
         <h2>{title}</h2>
         {body ? <p className="os-chapter-body">{body}</p> : null}
-        {page.type !== "idle" ? (
+        {page.type !== "idle" && page.type !== "info" ? (
           <button
             className="os-chapter-continue"
             type="button"
