@@ -57,6 +57,22 @@ export function findChapterAnswer(run, answerKey) {
   return run.answers.find((answer) => answer.answerKey === answerKey);
 }
 
+export function chapterAnswerText(run, answerKey) {
+  const answer = findChapterAnswer(run, answerKey);
+  if (!answer) return "";
+  if (answer.displaySnapshot) return answer.displaySnapshot;
+  return Array.isArray(answer.value)
+    ? answer.value.join(", ")
+    : String(answer.value ?? "");
+}
+
+export function renderChapterTemplate(value, run) {
+  return String(value || "").replace(
+    /\{\{([a-z0-9-]+)\}\}/gi,
+    (_, answerKey) => chapterAnswerText(run, answerKey),
+  );
+}
+
 export function moveChapterRun(chapter, run, pageId) {
   const nextIndex = chapter.pages.findIndex((page) => page.id === pageId);
   if (nextIndex < 0) return run;

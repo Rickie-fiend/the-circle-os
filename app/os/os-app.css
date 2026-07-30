@@ -535,6 +535,15 @@
   opacity: 0.35;
 }
 
+.circle-os .os-habit .os-chapter-idle-action {
+  align-self: stretch;
+  background: #191813;
+  color: #fff8f1;
+  font-size: 0.74rem;
+  margin-top: auto;
+  width: 100%;
+}
+
 .circle-os .os-session-wait {
   color: #8a857b;
   display: block;

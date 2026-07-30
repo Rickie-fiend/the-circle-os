@@ -6,6 +6,7 @@ import {
   advanceChapterRun,
   findChapterAnswer,
   moveChapterRun,
+  renderChapterTemplate,
 } from "./chapter-model.js";
 import type {
   ChapterAnswerValue,
@@ -37,6 +38,9 @@ function ChapterPageView({
   current,
   total,
   onComplete,
+  onIdleAction,
+  idleActionLabel,
+  idleActionDisabled,
 }: {
   chapter: ChapterDefinition;
   page: ChapterPage;
@@ -44,6 +48,9 @@ function ChapterPageView({
   current: number;
   total: number;
   onComplete: (submission: ChapterSubmission) => void;
+  onIdleAction?: (page: ChapterPage, run: ChapterRun) => void;
+  idleActionLabel?: string;
+  idleActionDisabled?: boolean;
 }) {
   const answer = page.answerKey
     ? findChapterAnswer(run, page.answerKey)
@@ -59,6 +66,11 @@ function ChapterPageView({
           { id: "no", label: "No" },
         ]
       : page.options ?? [];
+  const title = renderChapterTemplate(
+    page.title || page.question || chapter.title,
+    run,
+  );
+  const body = renderChapterTemplate(page.body, run);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,10 +87,10 @@ function ChapterPageView({
   if (page.type === "cover") {
     return (
       <SessionIntro
-        detail={page.body}
+        detail={body}
         label={chapter.session}
         theme={chapter.theme}
-        title={page.title || chapter.title}
+        title={title}
         onBegin={() => onComplete({ page })}
       />
     );
@@ -95,8 +107,8 @@ function ChapterPageView({
             <span>{current}/{total}</span>
           ) : null}
         </div>
-        <h2>{page.title || chapter.title}</h2>
-        {page.body ? <p className="os-chapter-body">{page.body}</p> : null}
+        <h2>{title}</h2>
+        {body ? <p className="os-chapter-body">{body}</p> : null}
         {page.type !== "idle" ? (
           <button
             className="os-chapter-continue"
@@ -104,6 +116,16 @@ function ChapterPageView({
             onClick={() => onComplete({ page })}
           >
             {page.button || "Continue"}
+          </button>
+        ) : null}
+        {page.type === "idle" && page.button && onIdleAction ? (
+          <button
+            className="os-chapter-continue os-chapter-idle-action"
+            type="button"
+            disabled={idleActionDisabled}
+            onClick={() => onIdleAction(page, run)}
+          >
+            {idleActionLabel || page.button}
           </button>
         ) : null}
       </div>
@@ -118,8 +140,8 @@ function ChapterPageView({
           {current}/{total}
         </span>
       </div>
-      <h2>{page.question || page.title}</h2>
-      {page.body ? <p className="os-chapter-body">{page.body}</p> : null}
+      <h2>{title}</h2>
+      {body ? <p className="os-chapter-body">{body}</p> : null}
 
       {choices.length ? (
         <div
@@ -249,12 +271,18 @@ export function ChapterPlayer({
   label,
   className = "",
   onRunChange,
+  onIdleAction,
+  idleActionLabel,
+  idleActionDisabled = false,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
   label: string;
   className?: string;
   onRunChange: (run: ChapterRun, submission?: ChapterSubmission) => void;
+  onIdleAction?: (page: ChapterPage, run: ChapterRun) => void;
+  idleActionLabel?: string;
+  idleActionDisabled?: boolean;
 }) {
   const currentIndex = Math.max(
     0,
@@ -321,6 +349,9 @@ export function ChapterPlayer({
           page={page}
           run={run}
           total={Math.max(1, countedPages.length)}
+          onIdleAction={onIdleAction}
+          idleActionLabel={idleActionLabel}
+          idleActionDisabled={idleActionDisabled}
           onComplete={(submission) =>
             onRunChange(
               advanceChapterRun(definition, run, submission),

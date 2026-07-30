@@ -17,6 +17,16 @@ export function findChapterAnswer(
   answerKey: string,
 ): ChapterAnswer | undefined;
 
+export function chapterAnswerText(
+  run: ChapterRun,
+  answerKey: string,
+): string;
+
+export function renderChapterTemplate(
+  value: string | undefined,
+  run: ChapterRun,
+): string;
+
 export function moveChapterRun(
   chapter: ChapterDefinition,
   run: ChapterRun,

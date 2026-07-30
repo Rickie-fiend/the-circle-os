@@ -14,7 +14,6 @@ import {
 } from "react";
 import {
   CIRCLE_DAY_START_HOUR,
-  HABIT_QUESTIONS,
   PROFILE_QUESTIONS,
   appSessionIndex,
   answerProfileQuestion,
@@ -41,7 +40,9 @@ import { SessionIntro, SwipeSession } from "./app-session";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   chapterRunId,
+  chapterAnswerText,
   createChapterRun,
+  renderChapterTemplate,
   storeChapterRun,
 } from "./chapters/chapter-model.js";
 import { getPublishedChapter } from "./chapters/registry";
@@ -734,9 +735,7 @@ export function TodayExperience() {
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
   const [checkInApp, setCheckInApp] = useState(0);
-  const [habitApp, setHabitApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
-  const [seenHabitJourney, setSeenHabitJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
   const [checkInTitleDraft, setCheckInTitleDraft] = useState("");
   const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
@@ -816,57 +815,32 @@ export function TodayExperience() {
           placeholder: "One honest answer is enough",
         } as SurveyQuestion)
       : null;
-  const firstHabitQuestionIndex = HABIT_QUESTIONS.findIndex(
-    (question) =>
-      !surveyAnswers.some((answer) => answer.questionId === question.id),
-  );
   const checkInCompletionApp = 12;
   const checkInIdleApp = 13;
-  const habitCompletionApp = 4;
-  const habitIdleApp = 5;
   const checkInStartApp = unansweredCodexQuestion
     ? 11
     : firstProfileQuestionIndex >= 0
       ? firstProfileQuestionIndex + 1
       : 11;
-  const habitStartApp =
-    firstHabitQuestionIndex >= 0 ? firstHabitQuestionIndex + 1 : 4;
   const checkInJourneyVersion = unansweredCodexQuestion
     ? `question-${unansweredCodexQuestion.id}`
     : "profile-foundation-v1";
-  const habitJourneyVersion = `${today.mission.text}|${today.mission.identity}`;
   const checkInSurveyComplete =
     firstProfileQuestionIndex < 0 && !unansweredCodexQuestion;
-  const habitSurveyComplete = firstHabitQuestionIndex < 0;
   const savedCheckInApp = appSessionIndex(
     state,
     "today-checkin",
     checkInJourneyVersion,
     0,
   );
-  const savedHabitApp = appSessionIndex(
-    state,
-    "today-habit",
-    habitJourneyVersion,
-    0,
-  );
   const checkInConfirmed =
     checkInSurveyComplete && savedCheckInApp === checkInIdleApp;
-  const habitConfirmed =
-    habitSurveyComplete && savedHabitApp === habitIdleApp;
   const visibleCheckInApp = checkInConfirmed
     ? checkInIdleApp
     : checkInSurveyComplete
       ? checkInApp || checkInCompletionApp
     : seenCheckInJourney === checkInJourneyVersion
       ? checkInApp
-      : 0;
-  const visibleHabitApp = habitConfirmed
-    ? habitIdleApp
-    : habitSurveyComplete
-      ? habitApp || habitCompletionApp
-    : seenHabitJourney === habitJourneyVersion
-      ? habitApp
       : 0;
   const defaultLogStartHour = Math.max(CIRCLE_DAY_START_HOUR, wakeHour);
   const defaultLogEndHour = Math.min(
@@ -886,6 +860,14 @@ export function TodayExperience() {
     (_, index) => logStartHour + index,
   );
   const logSetupChapter = getPublishedChapter("log-setup");
+  const habitBuildingChapter = getPublishedChapter("habit-building");
+  const habitBuildingRun = useMemo(() => {
+    if (!habitBuildingChapter) return null;
+    return (
+      state.chapters.runs[chapterRunId(habitBuildingChapter)] ||
+      createChapterRun(habitBuildingChapter)
+    );
+  }, [habitBuildingChapter, state.chapters.runs]);
   const logSetupRun = useMemo(() => {
     if (!logSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
@@ -1119,22 +1101,6 @@ export function TodayExperience() {
     );
   }
 
-  function answerHabit(
-    question: SurveyQuestion,
-    answer: string,
-    appIndex: number,
-  ) {
-    if (question.id === "habit-action") {
-      const identity =
-        surveyAnswer(surveyAnswers, "habit-identity") || "Yourself";
-      setSeenHabitJourney(`${answer.trim()}|${identity}`);
-    }
-    updateState((current) =>
-      answerSurveyQuestion(current, question, answer, "habit"),
-    );
-    setHabitApp(Math.min(habitCompletionApp, appIndex + 1));
-  }
-
   function confirmCheckInChapter() {
     updateState((current) =>
       setAppSessionIndex(
@@ -1147,16 +1113,49 @@ export function TodayExperience() {
     setCheckInApp(checkInIdleApp);
   }
 
-  function confirmHabitChapter() {
-    updateState((current) =>
-      setAppSessionIndex(
+  function saveHabitBuildingRun(nextRun: ChapterRun) {
+    if (!habitBuildingChapter) return;
+    updateState((current) => {
+      const previousRun = current.chapters.runs[nextRun.runId];
+      let next = storeChapterRun(
         current,
-        "today-habit",
-        habitJourneyVersion,
-        habitIdleApp,
-      ),
-    );
-    setHabitApp(habitIdleApp);
+        nextRun,
+        habitBuildingChapter.session,
+      );
+      if (
+        nextRun.status === "completed" &&
+        previousRun?.status !== "completed"
+      ) {
+        const idlePage = habitBuildingChapter.pages.find(
+          (page) => page.type === "idle",
+        );
+        const missionText = renderChapterTemplate(
+          idlePage?.body || habitBuildingChapter.title,
+          nextRun,
+        );
+        const identity =
+          chapterAnswerText(nextRun, "habit-identity") || "Yourself";
+        next = ensureDay(next, dateKey);
+        next = {
+          ...next,
+          days: {
+            ...next.days,
+            [dateKey]: {
+              ...next.days[dateKey],
+              mission: {
+                text: missionText,
+                why: "",
+                identity,
+                completed: false,
+                completedAt: null,
+              },
+            },
+          },
+        };
+        next = queueProfileUpdate(next, "habit-answer");
+      }
+      return next;
+    });
   }
 
   function saveLogSetupRun(
@@ -1381,110 +1380,20 @@ export function TodayExperience() {
           </SwipeSession>
         </section>
 
-        <section className="os-habit" aria-label="Habit session">
-          <SwipeSession
-            availableIndices={
-              habitConfirmed
-                ? [habitIdleApp]
-                : habitSurveyComplete
-                  ? Array.from(
-                      { length: habitCompletionApp + 1 },
-                      (_, index) => index,
-                    )
-                  : Array.from(
-                      { length: habitStartApp + 1 },
-                      (_, index) => index,
-                    )
-            }
-            className="os-habit-session"
-            index={visibleHabitApp}
-            label="Habit session"
-            maxIndex={
-              habitConfirmed
-                ? habitIdleApp
-                : habitSurveyComplete
-                  ? habitCompletionApp
-                  : habitStartApp
-            }
-            onIndexChange={(nextIndex) => {
-              if (nextIndex > 0) {
-                setSeenHabitJourney(habitJourneyVersion);
-              }
-              setHabitApp(nextIndex);
-            }}
-          >
-            <SessionIntro
-              detail={
-                firstHabitQuestionIndex < 0
-                  ? "Your next small action is waiting."
-                  : "Choose the identity before the action."
-              }
-              label="Habit"
-              theme="orange"
-              title={
-                firstHabitQuestionIndex < 0
-                  ? "Your mission is ready."
-                  : "Choose who you are becoming."
-              }
-              onBegin={() => {
-                setSeenHabitJourney(habitJourneyVersion);
-                setHabitApp(habitStartApp);
-              }}
+        {habitBuildingChapter && habitBuildingRun ? (
+          <section className="os-habit" aria-label="Habit session">
+            <ChapterPlayer
+              className="os-habit-session"
+              definition={habitBuildingChapter}
+              idleActionDisabled={today.mission.completed}
+              idleActionLabel={today.mission.completed ? "Done today" : undefined}
+              label="Habit chapter"
+              run={habitBuildingRun}
+              onIdleAction={toggleMission}
+              onRunChange={saveHabitBuildingRun}
             />
-            {HABIT_QUESTIONS.map((question, index) => (
-              <SurveySlide
-                existingAnswer={surveyAnswer(surveyAnswers, question.id)}
-                key={question.id}
-                label="Habit"
-                question={question as SurveyQuestion}
-                current={index + 1}
-                total={HABIT_QUESTIONS.length}
-                onAnswer={(answer) =>
-                  answerHabit(question as SurveyQuestion, answer, index + 1)
-                }
-              />
-            ))}
-            <div className="os-survey-card os-chapter-completion">
-              <p className="os-card-label">Habit</p>
-              <h2>You completed this chapter.</h2>
-              <p>
-                Go back if you want to change an answer. Press Continue when
-                your mission feels right.
-              </p>
-              <button type="button" onClick={confirmHabitChapter}>
-                Continue
-              </button>
-            </div>
-            <section
-              className={`os-mission${today.mission.completed ? " completed" : ""}`}
-              aria-labelledby="mission-heading"
-            >
-              <div>
-                <div className="os-mission-meta">
-                  <p className="os-card-label">Habit</p>
-                  <span className="os-mission-status" aria-live="polite">
-                    {today.mission.completed ? "Done today" : "Today"}
-                  </span>
-                </div>
-                <h2 id="mission-heading">{today.mission.text}</h2>
-                <span className="os-mission-identity">
-                  Becoming: {today.mission.identity}
-                </span>
-              </div>
-              <button
-                type="button"
-                className={today.mission.completed ? "completed" : ""}
-                onClick={toggleMission}
-                aria-pressed={today.mission.completed}
-              >
-                <span aria-hidden="true">
-                  {today.mission.completed ? "✓" : "○"}
-                </span>
-                {today.mission.completed ? "Done" : "Mark done"}
-              </button>
-            </section>
-          </SwipeSession>
-        </section>
+          </section>
+        ) : null}
 
         {!logSetupDone && logSetupChapter && logSetupRun ? (
           <section

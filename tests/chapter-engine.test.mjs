@@ -7,6 +7,7 @@ import {
   createChapterRun,
   findChapterAnswer,
   moveChapterRun,
+  renderChapterTemplate,
   storeChapterRun,
 } from "../app/os/chapters/chapter-model.js";
 import {
@@ -84,6 +85,38 @@ test("chapter progress is stored without replacing the rest of Circle state", ()
   assert.equal(next.chapters.runs[chapterRunId(logSetup)], run);
   assert.equal(next.chapters.sessions.log.activeRunId, chapterRunId(logSetup));
   assert.equal(next.outbox[0].reason, "chapter-progress");
+});
+
+test("chapter pages can repeat a person's saved answers", () => {
+  const run = {
+    ...createChapterRun(logSetup),
+    answers: [
+      {
+        pageId: "habit",
+        answerKey: "habit-action",
+        value: "walk for ten minutes",
+        displaySnapshot: "Walk for ten minutes",
+        answeredAt: "2026-07-30T00:00:00.000Z",
+        changedAt: "2026-07-30T00:00:00.000Z",
+      },
+      {
+        pageId: "identity",
+        answerKey: "habit-identity",
+        value: "a person who cares for my body",
+        displaySnapshot: "A person who cares for my body",
+        answeredAt: "2026-07-30T00:00:00.000Z",
+        changedAt: "2026-07-30T00:00:00.000Z",
+      },
+    ],
+  };
+
+  assert.equal(
+    renderChapterTemplate(
+      "I will {{habit-action}} so I can become {{habit-identity}}.",
+      run,
+    ),
+    "I will Walk for ten minutes so I can become A person who cares for my body.",
+  );
 });
 
 test("the Markdown authoring format compiles into a validated chapter", () => {

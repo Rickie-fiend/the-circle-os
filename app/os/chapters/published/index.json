@@ -3,6 +3,85 @@
   "chapters": [
     {
       "schemaVersion": 1,
+      "id": "habit-building",
+      "version": 1,
+      "status": "published",
+      "session": "habit",
+      "theme": "orange",
+      "title": "Let's set up your first habit.",
+      "purpose": "Turn one small action into a clear identity-based habit mission.",
+      "estimatedMinutes": 3,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Let's set up your first habit.",
+          "body": "A small, easy mission can lead to a powerful change.",
+          "button": "Begin"
+        },
+        {
+          "id": "habit-secret",
+          "type": "info",
+          "title": "A strong habit needs three things.",
+          "body": "An action, a time and place, and most of all, an identity. You are not only building a habit. You are becoming the person you want to be.",
+          "button": "Continue"
+        },
+        {
+          "id": "make-it-small",
+          "type": "info",
+          "title": "Make it easy enough to begin now.",
+          "body": "1. Name the habit. 2. Make it specific. 3. Tie it to who you want to become.",
+          "button": "Continue"
+        },
+        {
+          "id": "simple-promise",
+          "type": "info",
+          "title": "Use this simple promise.",
+          "body": "I will [habit], [time and place], so I can become [the kind of person I want to be]. Example: I will meditate for five minutes when I wake up so I can become a mindful person.",
+          "button": "Continue"
+        },
+        {
+          "id": "habit",
+          "type": "short-text",
+          "question": "What small habit will you do?",
+          "answerKey": "habit-action",
+          "placeholder": "Meditate for five minutes",
+          "required": true
+        },
+        {
+          "id": "time-place",
+          "type": "short-text",
+          "question": "When and where will you do it?",
+          "answerKey": "habit-time-place",
+          "placeholder": "When I wake up, beside my bed",
+          "required": true
+        },
+        {
+          "id": "identity",
+          "type": "short-text",
+          "question": "Who will this help you become?",
+          "answerKey": "habit-identity",
+          "placeholder": "A mindful person",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your first habit is ready.",
+          "body": "I will {{habit-action}}, {{habit-time-place}}, so I can become {{habit-identity}}. Read it once. Does it feel exciting and easy to keep?",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Your habit today.",
+          "body": "I will {{habit-action}}, {{habit-time-place}}, so I can become {{habit-identity}}.",
+          "button": "Mark done"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "log-setup",
       "version": 1,
       "status": "published",
