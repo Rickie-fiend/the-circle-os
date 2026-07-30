@@ -105,7 +105,7 @@ type CircleDay = {
 };
 
 const PROFILE_SPARK_CHAPTERS = publishedChapters.filter((chapter) =>
-  chapter.id.startsWith("profile-spark-"),
+  chapter.id.startsWith("athena-checkin-"),
 );
 const PROFILE_SPARK_OPENED_AT = Date.now();
 
@@ -1043,6 +1043,18 @@ export function TodayExperience() {
     (today.mission.completed ? 1 : 0) +
     completedHabitRecords.length +
     completedTaskRecords.length;
+  const habitTrackerDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+    const key = getDateKey(date);
+    const day = state.days[key];
+    return {
+      key,
+      label: date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1),
+      completed: Boolean(day?.mission?.completed),
+    };
+  });
   const logSetupRun = useMemo(() => {
     if (!logSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
@@ -1414,6 +1426,37 @@ export function TodayExperience() {
     });
   }
 
+  function deferProfileSparkRun() {
+    if (!profileSparkRun) return;
+    updateState((current) =>
+      storeChapterRun(
+        current,
+        {
+          ...profileSparkRun,
+          deferCount: (profileSparkRun.deferCount || 0) + 1,
+          deferredAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        "check-in",
+      ),
+    );
+  }
+
+  function resumeProfileSparkRun() {
+    if (!profileSparkRun?.deferredAt) return;
+    updateState((current) =>
+      storeChapterRun(
+        current,
+        {
+          ...profileSparkRun,
+          deferredAt: null,
+          updatedAt: new Date().toISOString(),
+        },
+        "check-in",
+      ),
+    );
+  }
+
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
     const isNewHabit = addingHabit;
@@ -1596,9 +1639,6 @@ export function TodayExperience() {
               <p className="os-eyebrow">{dateLabel}</p>
               <h1>{greeting}</h1>
             </div>
-            <p className="os-save-state" aria-live="polite">
-              {ready ? "Saved" : "Opening your day…"}
-            </p>
           </div>
 
           {checkInConfirmed && profileSparkChapter && profileSparkRun && profileSparkRun.status !== "completed" ? (
@@ -1609,6 +1649,9 @@ export function TodayExperience() {
               label="Check-in chapter"
               run={profileSparkRun}
               backApp={checkInIdleCard()}
+              startOnBackApp={Boolean(profileSparkRun.deferredAt)}
+              onBackAppHidden={resumeProfileSparkRun}
+              onBackAppShown={deferProfileSparkRun}
               onRunChange={saveProfileSparkRun}
             />
           ) : (
@@ -1864,6 +1907,23 @@ export function TodayExperience() {
               idleActionLabel={today.mission.completed ? "Completed" : undefined}
               idleActionPressed={today.mission.completed}
               idleApps={[
+                <div className="os-habit-record os-habit-tracker" key="habit-tracker">
+                  <p className="os-card-label">Habit tracker</p>
+                  <h2>Your week.</h2>
+                  <p className="os-habit-record-summary">
+                    {habitTrackerDays.some((day) => day.completed)
+                      ? "Your main habit, as recorded."
+                      : "No habit wins recorded yet."}
+                  </p>
+                  <div className="os-habit-tracker-days" aria-label="Main habit this week">
+                    {habitTrackerDays.map((day) => (
+                      <div key={day.key}>
+                        <span>{day.label}</span>
+                        <i className={day.completed ? "done" : ""} />
+                      </div>
+                    ))}
+                  </div>
+                </div>,
                 <div className="os-habit-record" key="habit-record">
                   <p className="os-card-label">Habit record</p>
                   <h2>Today, so far.</h2>

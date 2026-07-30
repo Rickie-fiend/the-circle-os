@@ -100,7 +100,9 @@ export default function CircleOSMirror() {
   const pastMissionWins = pastDays.filter(
     (item) => item.day.mission?.completed,
   ).length;
-  const weekReady = loggedPastDays > 0;
+  const weekReady = Boolean(
+    loggedPastDays || summary.coverage.recorded || summary.missions.available,
+  );
   const profileReady = hasReadableProfileCase(profileCase);
   const updateLabel = formatUpdated(profileCase.updatedAt);
   const weekJourneyVersion = `${loggedPastDays}|${pastMinutes}|${pastCheckIns}|${pastMissionWins}`;
@@ -387,19 +389,7 @@ export default function CircleOSMirror() {
           <div>
             <p className="os-eyebrow">Vision</p>
             <h1>The life you want.</h1>
-            <p className="vision-profile">
-              {state.profile.name}, {state.profile.age}
-            </p>
           </div>
-          <p className="vision-ai-state" aria-live="polite">
-            {profileCase.status === "thinking"
-              ? "Updating…"
-              : profileCase.status === "waiting"
-                ? "Updates tomorrow morning"
-              : state.ai.status === "offline"
-                ? "Computer offline"
-                : ""}
-          </p>
         </header>
 
         <section className="vision-profile-case" aria-label="Your profile case">
@@ -635,7 +625,7 @@ export default function CircleOSMirror() {
             <div className="athena-reader-cover">
               <p className="os-card-label">Athena</p>
               <h2>
-                {profileReady ? "A reading of you." : "Your reading begins tomorrow."}
+                {profileReady ? "What Athena sees." : "Athena is still learning."}
               </h2>
               {profileReady ? (
                 <span className="athena-reader-begin">Swipe to begin</span>

@@ -72,6 +72,9 @@ export type ChapterRun = {
   startedAt: string | null;
   updatedAt: string;
   completedAt: string | null;
+  deferCount?: number;
+  deferredAt?: string | null;
+  dismissedAt?: string | null;
   answers: ChapterAnswer[];
 };
 

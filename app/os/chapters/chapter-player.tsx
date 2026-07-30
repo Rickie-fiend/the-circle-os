@@ -301,6 +301,8 @@ export function ChapterPlayer({
   onIdleAppIndexChange,
   backApp,
   onBackAppShown,
+  onBackAppHidden,
+  startOnBackApp = false,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -319,8 +321,10 @@ export function ChapterPlayer({
   onIdleAppIndexChange?: (index: number) => void;
   backApp?: ReactNode;
   onBackAppShown?: () => void;
+  onBackAppHidden?: () => void;
+  startOnBackApp?: boolean;
 }) {
-  const [showingBackApp, setShowingBackApp] = useState(false);
+  const [showingBackApp, setShowingBackApp] = useState(startOnBackApp);
   const currentIndex = Math.max(
     0,
     definition.pages.findIndex((page) => page.id === run.currentPageId),
@@ -437,10 +441,13 @@ export function ChapterPlayer({
         maxIndex={stackedAvailableIndices.at(-1) ?? currentIndex + 1}
         onIndexChange={(index) => {
           if (index === 0) {
-            setShowingBackApp(true);
-            onBackAppShown?.();
+            if (!showingBackApp) {
+              setShowingBackApp(true);
+              onBackAppShown?.();
+            }
             return;
           }
+          if (showingBackApp) onBackAppHidden?.();
           setShowingBackApp(false);
           changeIndex(index - 1);
         }}

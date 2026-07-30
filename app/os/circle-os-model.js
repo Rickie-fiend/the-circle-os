@@ -1000,19 +1000,16 @@ export function summarizeWeek(state, now = new Date()) {
   );
 
   let sentence = "There is not enough evidence to say.";
-  let experiment = "Record one honest part of today. Nothing more.";
+  let experiment = "";
   if (recorded >= 4 || totalMinutes >= 180) {
     const top = time[0];
     if (top) {
       sentence = `${top.activity} held the largest share of the time you recorded this week.`;
-      experiment =
-        top.activity === "Reading"
-          ? "Leave the next book cue visible before the day gets busy."
-          : "Protect one small reading window before your most crowded part of the day.";
+      experiment = "";
     } else {
       sentence =
         "Your check-ins show more of your inner rhythm than where your hours went.";
-      experiment = "Add one time block after your next check-in.";
+      experiment = "";
     }
   }
 

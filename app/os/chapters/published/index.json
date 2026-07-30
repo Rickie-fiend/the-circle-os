@@ -3,6 +3,332 @@
   "chapters": [
     {
       "schemaVersion": 1,
+      "id": "athena-checkin-color",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Pick a color for today.",
+      "purpose": "Give the person a playful way to notice the feeling of today.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Pick a color for today."
+        },
+        {
+          "id": "color",
+          "options": [
+            {
+              "id": "yellow",
+              "label": "Yellow"
+            },
+            {
+              "id": "blue",
+              "label": "Blue"
+            },
+            {
+              "id": "red",
+              "label": "Red"
+            },
+            {
+              "id": "green",
+              "label": "Green"
+            }
+          ],
+          "type": "single-choice",
+          "question": "What color feels like today?",
+          "answerKey": "color-today",
+          "required": true
+        },
+        {
+          "id": "full",
+          "type": "slider",
+          "question": "How full does today feel?",
+          "answerKey": "color-full",
+          "min": 1,
+          "max": 5,
+          "minLabel": "Empty",
+          "maxLabel": "Full",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Today has a color.",
+          "body": "There is no right answer.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Your color today.",
+          "body": "{{color-today}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "athena-checkin-happy",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Are you happy today?",
+      "purpose": "Help the person notice how today feels and one reason why.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Are you happy today?"
+        },
+        {
+          "id": "level",
+          "type": "slider",
+          "question": "How happy do you feel right now?",
+          "answerKey": "happy-level",
+          "min": 1,
+          "max": 5,
+          "minLabel": "Not much",
+          "maxLabel": "A lot",
+          "required": true
+        },
+        {
+          "id": "smile",
+          "options": [
+            {
+              "id": "people",
+              "label": "People"
+            },
+            {
+              "id": "something-i-did",
+              "label": "Something I did"
+            },
+            {
+              "id": "quiet-time",
+              "label": "Quiet time"
+            },
+            {
+              "id": "nothing-yet",
+              "label": "Nothing yet"
+            }
+          ],
+          "type": "single-choice",
+          "question": "What made you smile today?",
+          "answerKey": "happy-smile",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You noticed today.",
+          "body": "That is enough for now.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "A small note about today.",
+          "body": "Your answer is saved."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "athena-checkin-hard",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What felt hard today?",
+      "purpose": "Help the person notice one hard part of the day without blame.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What felt hard today?"
+        },
+        {
+          "id": "place",
+          "options": [
+            {
+              "id": "work",
+              "label": "Work"
+            },
+            {
+              "id": "people",
+              "label": "People"
+            },
+            {
+              "id": "body",
+              "label": "My body"
+            },
+            {
+              "id": "thoughts",
+              "label": "My thoughts"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Where was it hard?",
+          "answerKey": "hard-place",
+          "required": true
+        },
+        {
+          "id": "why",
+          "type": "short-text",
+          "question": "What made it hard?",
+          "answerKey": "hard-why",
+          "placeholder": "A few words are enough.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You named it.",
+          "body": "You do not need to fix it now.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "One hard thing.",
+          "body": "{{hard-why}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "athena-checkin-miss",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What would you miss?",
+      "purpose": "Help the person notice what matters in their real life.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What would you miss?"
+        },
+        {
+          "id": "thing",
+          "type": "short-text",
+          "question": "If one good thing was gone tomorrow, what would you miss?",
+          "answerKey": "miss-thing",
+          "placeholder": "A person, place, or small thing.",
+          "required": true
+        },
+        {
+          "id": "reason",
+          "options": [
+            {
+              "id": "love",
+              "label": "I love it"
+            },
+            {
+              "id": "calm",
+              "label": "It helps me feel calm"
+            },
+            {
+              "id": "fun",
+              "label": "It is fun"
+            },
+            {
+              "id": "mine",
+              "label": "It feels like me"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Why does it matter?",
+          "answerKey": "miss-reason",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You found something real.",
+          "body": "Keep it close in your own way.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Something you care about.",
+          "body": "{{miss-thing}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "athena-checkin-time",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Your time is yours.",
+      "purpose": "Help the person name one good way to spend today.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Your time is yours."
+        },
+        {
+          "id": "good-thing",
+          "options": [
+            {
+              "id": "make",
+              "label": "Make something"
+            },
+            {
+              "id": "move",
+              "label": "Move my body"
+            },
+            {
+              "id": "people",
+              "label": "Be with people"
+            },
+            {
+              "id": "rest",
+              "label": "Rest"
+            }
+          ],
+          "type": "single-choice",
+          "question": "What good thing do you want to do today?",
+          "answerKey": "time-good-thing",
+          "required": true
+        },
+        {
+          "id": "spend-time",
+          "type": "short-text",
+          "question": "How do you want to spend your time today?",
+          "answerKey": "time-spend",
+          "placeholder": "One small thing.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You picked a direction.",
+          "body": "It can be small.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Your time note.",
+          "body": "{{time-spend}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "habit-building",
       "version": 1,
       "status": "published",

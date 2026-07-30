@@ -49,6 +49,9 @@ export function createChapterRun(chapter, seedAnswers = []) {
     startedAt: answers.length ? timestamp : null,
     updatedAt: timestamp,
     completedAt: null,
+    deferCount: 0,
+    deferredAt: null,
+    dismissedAt: null,
     answers,
   };
 }
@@ -89,7 +92,11 @@ export function selectHourlyChapter(chapters, runs, nowValue = new Date()) {
     left.id.localeCompare(right.id),
   );
   if (!ordered.length) return undefined;
-  const completed = ordered
+  const eligible = ordered.filter(
+    (chapter) => !runs[chapterRunId(chapter)]?.dismissedAt,
+  );
+  if (!eligible.length) return undefined;
+  const completed = eligible
     .map((chapter) => ({
       chapter,
       run: runs[chapterRunId(chapter)],
@@ -106,11 +113,15 @@ export function selectHourlyChapter(chapters, runs, nowValue = new Date()) {
     return latest.chapter;
   }
   return (
-    ordered.find(
+    eligible.find((chapter) => {
+      const run = runs[chapterRunId(chapter)];
+      return run?.status !== "completed" && !(run?.deferCount || 0);
+    }) ||
+    eligible.find(
       (chapter) => runs[chapterRunId(chapter)]?.status !== "completed",
     ) ||
     latest?.chapter ||
-    ordered.at(-1)
+    eligible.at(-1)
   );
 }
 

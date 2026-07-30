@@ -819,6 +819,41 @@
   animation-delay: 80ms;
 }
 
+.circle-os .os-habit-tracker-days {
+  border-top: 2px solid #191813;
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(7, 1fr);
+  padding-top: 1rem;
+}
+
+.circle-os .os-habit-tracker-days > div {
+  align-items: center;
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+}
+
+.circle-os .os-habit-tracker-days span {
+  color: #191813;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.circle-os .os-habit-tracker-days i {
+  background: rgb(255 248 241 / 0.35);
+  border: 1px solid rgb(25 24 19 / 0.35);
+  border-radius: 999px;
+  display: block;
+  height: 24px;
+  width: 24px;
+}
+
+.circle-os .os-habit-tracker-days i.done {
+  background: #191813;
+  border-color: #191813;
+}
+
 .circle-os .os-session-intro {
   transition:
     opacity 180ms ease,
@@ -2242,8 +2277,8 @@
 }
 
 .circle-os .athena-reader-cover {
-  align-content: start;
   display: grid;
+  grid-template-rows: auto 1fr auto;
 }
 
 .circle-os .athena-reader-cover h2 {
@@ -2251,9 +2286,10 @@
 }
 
 .circle-os .athena-reader-begin {
+  align-self: end;
   color: rgb(255 248 241 / 0.72);
   font-size: 0.68rem;
-  margin-top: auto;
+  margin: 0 0 0.35rem;
   text-align: right;
 }
 
