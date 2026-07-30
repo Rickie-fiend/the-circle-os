@@ -977,9 +977,8 @@ export function TodayExperience() {
     }), "mission");
   }
 
-  function addExtraMission(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const text = missionDraft.trim();
+  function addExtraMission(value = missionDraft) {
+    const text = value.trim();
     if (!text) return;
     const timestamp = new Date().toISOString();
     updateToday(
@@ -1005,10 +1004,13 @@ export function TodayExperience() {
     setAddingMission(false);
   }
 
-  function savePrimaryMission(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const text = primaryMissionDraft.trim();
-    if (!text) return;
+  function savePrimaryMission(value = primaryMissionDraft) {
+    const text = value.trim();
+    if (!text) {
+      setEditingPrimaryMission(false);
+      setPrimaryMissionDraft("");
+      return;
+    }
     updateToday(
       (day) => ({
         ...day,
@@ -1023,15 +1025,18 @@ export function TodayExperience() {
     setPrimaryMissionDraft("");
   }
 
-  function saveExtraMission(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const text = editingMissionDraft.trim();
-    if (!editingMissionId || !text) return;
+  function saveExtraMission(id: string, value = editingMissionDraft) {
+    const text = value.trim();
+    if (!text) {
+      setEditingMissionId(null);
+      setEditingMissionDraft("");
+      return;
+    }
     updateToday(
       (day) => ({
         ...day,
         missions: (day.missions || []).map((mission) =>
-          mission.id === editingMissionId ? { ...mission, text } : mission,
+          mission.id === id ? { ...mission, text } : mission,
         ),
       }),
       "mission",
@@ -1568,63 +1573,44 @@ export function TodayExperience() {
               className="os-habit-session"
               definition={habitBuildingChapter}
               idleBody={
-                editingPrimaryMission ? (
-                  <form
-                    className="os-primary-mission-edit"
-                    onSubmit={savePrimaryMission}
-                  >
-                    <textarea
-                      aria-label="Edit habit mission"
-                      autoFocus
-                      maxLength={240}
-                      rows={4}
-                      value={primaryMissionDraft}
-                      onChange={(event) =>
-                        setPrimaryMissionDraft(event.target.value)
-                      }
-                    />
-                    <button type="submit" disabled={!primaryMissionDraft.trim()}>
-                      Save mission
-                    </button>
-                  </form>
-                ) : (
-                  <button
-                    className="os-primary-mission-copy"
-                    type="button"
-                    onClick={() => {
-                      setPrimaryMissionDraft(today.mission.text);
-                      setEditingPrimaryMission(true);
-                    }}
-                  >
-                    {today.mission.text}
-                  </button>
-                )
+                <textarea
+                  aria-label="Edit habit mission"
+                  className="os-primary-mission-copy os-mission-text-edit"
+                  maxLength={240}
+                  rows={3}
+                  value={
+                    editingPrimaryMission
+                      ? primaryMissionDraft
+                      : today.mission.text
+                  }
+                  onFocus={() => {
+                    setPrimaryMissionDraft(today.mission.text);
+                    setEditingPrimaryMission(true);
+                  }}
+                  onChange={(event) => setPrimaryMissionDraft(event.target.value)}
+                  onBlur={(event) => savePrimaryMission(event.currentTarget.value)}
+                />
               }
               idleContent={
                 addingMission || (today.missions || []).length ? (
                   <div className="os-extra-missions">
                     {addingMission ? (
-                      <article className="os-extra-mission editing">
-                        <form onSubmit={addExtraMission}>
-                          <textarea
-                            aria-label="New mission"
-                            autoFocus
-                            maxLength={240}
-                            placeholder="Write one small mission."
-                            rows={3}
-                            value={missionDraft}
-                            onChange={(event) =>
-                              setMissionDraft(event.target.value)
-                            }
-                          />
-                          <button
-                            className="os-extra-mission-save"
-                            type="submit"
-                            disabled={!missionDraft.trim()}
-                          >
-                            Save mission
-                          </button>
-                        </form>
+                      <article className="os-extra-mission os-extra-mission-new">
+                        <textarea
+                          aria-label="New mission"
+                          autoFocus
+                          className="os-extra-mission-copy os-mission-text-edit"
+                          maxLength={240}
+                          placeholder="My mission"
+                          rows={2}
+                          value={missionDraft}
+                          onChange={(event) => setMissionDraft(event.target.value)}
+                          onBlur={(event) => {
+                            const text = event.currentTarget.value;
+                            if (text.trim()) addExtraMission(text);
+                            else setAddingMission(false);
+                          }}
+                        />
                       </article>
                     ) : null}
                     {(today.missions || []).map((mission) => (
@@ -1634,39 +1620,27 @@ export function TodayExperience() {
                         }`}
                         key={mission.id}
                       >
-                        {editingMissionId === mission.id ? (
-                          <form onSubmit={saveExtraMission}>
-                            <textarea
-                              aria-label="Edit mission"
-                              autoFocus
-                              maxLength={240}
-                              rows={3}
-                              value={editingMissionDraft}
-                              onChange={(event) =>
-                                setEditingMissionDraft(event.target.value)
-                              }
-                            />
-                            <button
-                              type="submit"
-                              disabled={!editingMissionDraft.trim()}
-                              className="os-extra-mission-save"
-                            >
-                              Save mission
-                            </button>
-                          </form>
-                        ) : (
-                          <button
-                            className="os-extra-mission-copy"
-                            type="button"
-                            aria-label={`Edit mission: ${mission.text}`}
-                            onClick={() => {
-                              setEditingMissionId(mission.id);
-                              setEditingMissionDraft(mission.text);
-                            }}
-                          >
-                            {mission.text}
-                          </button>
-                        )}
+                        <textarea
+                          aria-label={`Edit mission: ${mission.text}`}
+                          className="os-extra-mission-copy os-mission-text-edit"
+                          maxLength={240}
+                          rows={2}
+                          value={
+                            editingMissionId === mission.id
+                              ? editingMissionDraft
+                              : mission.text
+                          }
+                          onFocus={() => {
+                            setEditingMissionId(mission.id);
+                            setEditingMissionDraft(mission.text);
+                          }}
+                          onChange={(event) =>
+                            setEditingMissionDraft(event.target.value)
+                          }
+                          onBlur={(event) =>
+                            saveExtraMission(mission.id, event.currentTarget.value)
+                          }
+                        />
                         <button
                           className="os-extra-mission-done"
                           type="button"

@@ -598,40 +598,18 @@
   width: 100%;
 }
 
+.circle-os .os-mission-text-edit {
+  font-family: inherit;
+  resize: none;
+}
+
+.circle-os .os-mission-text-edit:focus {
+  outline: 1px solid rgb(255 248 241 / 0.45);
+  outline-offset: 6px;
+}
+
 .circle-os .os-primary-mission-copy {
   margin: 1rem 0 0;
-}
-
-.circle-os .os-primary-mission-edit {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.circle-os .os-primary-mission-edit textarea {
-  background: rgb(25 24 19 / 0.14);
-  border: 1px solid rgb(255 248 241 / 0.38);
-  border-radius: 16px;
-  color: #fff8f1;
-  font: inherit;
-  font-size: 1.15rem;
-  font-weight: 650;
-  letter-spacing: -0.025em;
-  line-height: 1.3;
-  padding: 0.85rem;
-  resize: vertical;
-  width: 100%;
-}
-
-.circle-os .os-primary-mission-edit button {
-  background: #191813;
-  border: 0;
-  border-radius: 14px;
-  color: #fff8f1;
-  font-size: 0.7rem;
-  font-weight: 650;
-  min-height: 48px;
-  width: 100%;
 }
 
 .circle-os .os-extra-missions {
@@ -648,45 +626,16 @@
 }
 
 .circle-os .os-extra-mission.completed {
-  opacity: 0.62;
+  opacity: 1;
 }
 
-.circle-os .os-extra-mission form {
-  display: grid;
-  gap: 0.8rem;
+.circle-os .os-extra-mission-copy {
+  font-size: clamp(1.15rem, 4.5vw, 1.45rem) !important;
+  min-height: 2.4em;
 }
 
-.circle-os .os-extra-mission textarea {
-  background: rgb(255 248 241 / 0.1);
-  border: 1px solid rgb(255 248 241 / 0.24);
-  border-radius: 14px;
-  color: #fff8f1;
-  font-size: 1rem;
-  line-height: 1.45;
-  min-width: 0;
-  padding: 0.85rem;
-  resize: vertical;
-  width: 100%;
-}
-
-.circle-os .os-extra-mission textarea::placeholder {
+.circle-os .os-extra-mission-copy::placeholder {
   color: rgb(255 248 241 / 0.56);
-}
-
-.circle-os .os-extra-mission-save {
-  background: #191813;
-  border: 0;
-  border-radius: 14px;
-  color: #fff8f1;
-  font-size: 0.68rem;
-  font-weight: 650;
-  min-height: 48px;
-  padding: 0.7rem 0.85rem;
-  width: 100%;
-}
-
-.circle-os .os-extra-mission-save:disabled {
-  opacity: 0.38;
 }
 
 .circle-os .os-extra-mission-done {
