@@ -15,6 +15,8 @@ import {
   ensureDay,
   getDateKey,
   getDayPeriod,
+  hasReadableProfileCase,
+  mergeServerState,
   minutesBetween,
   normalizeState,
   queueSuggestion,
@@ -224,6 +226,69 @@ test("keeps added empty log hours after leaving Today", () => {
   assert.equal(reopened.days[dateKey].timeBlocks.length, 0);
 });
 
+test("reopening keeps newer phone logs when the server day is older", () => {
+  const phone = createEmptyState();
+  const server = createEmptyState();
+  const dateKey = "2026-07-30";
+  phone.days[dateKey] = {
+    ...ensureDay(phone, dateKey).days[dateKey],
+    timeBlocks: [
+      {
+        id: "recent-phone-log",
+        start: "21:00",
+        end: "22:00",
+        activity: "Talked with a friend",
+        title: "Talked with a friend",
+        note: "",
+        moments: [],
+        createdAt: "2026-07-30T21:00:00.000Z",
+      },
+    ],
+  };
+  phone.outbox = [
+    {
+      id: "pending-log",
+      reason: "day-log",
+      createdAt: "2026-07-30T21:01:00.000Z",
+    },
+  ];
+  server.days[dateKey] = ensureDay(server, dateKey).days[dateKey];
+
+  const reopened = mergeServerState(phone, server);
+
+  assert.equal(
+    reopened.days[dateKey].timeBlocks[0].title,
+    "Talked with a friend",
+  );
+  assert.equal(reopened.outbox[0].id, "pending-log");
+});
+
+test("a pending Athena update keeps the last readable profile", () => {
+  const phone = createEmptyState();
+  const server = createEmptyState();
+  phone.profile.profileCase.updatedAt = "2026-07-30T06:15:00.000Z";
+  phone.profile.profileCase.sessions.currentLife = {
+    text: "You made time for creative work yesterday.",
+    confidence: 0.7,
+    userEdited: false,
+    updatedAt: "2026-07-30T06:15:00.000Z",
+  };
+  server.profile.profileCase = structuredClone(phone.profile.profileCase);
+  server.profile.profileCase.status = "waiting";
+
+  const refreshed = mergeServerState(phone, server);
+
+  assert.equal(refreshed.profile.profileCase.status, "waiting");
+  assert.equal(
+    refreshed.profile.profileCase.sessions.currentLife.text,
+    "You made time for creative work yesterday.",
+  );
+  assert.equal(
+    refreshed.profile.profileCase.updatedAt,
+    "2026-07-30T06:15:00.000Z",
+  );
+});
+
 test("routine answers unlock the day without becoming profile claims", () => {
   let state = createEmptyState();
   state = answerSurveyQuestion(
@@ -311,6 +376,16 @@ test("an app stays on its saved page until a new version arrives", () => {
     appSessionIndex(reopened, "vision-profile", "update-2", 0),
     0,
   );
+});
+
+test("a pending update does not hide the last readable profile", () => {
+  const state = createEmptyState();
+  assert.equal(hasReadableProfileCase(state.profile.profileCase), false);
+
+  state.profile.profileCase.status = "waiting";
+  state.profile.profileCase.updatedAt = "2026-07-30T06:15:00.000Z";
+
+  assert.equal(hasReadableProfileCase(state.profile.profileCase), true);
 });
 
 test("weekly Vision keeps the person's own log words", () => {

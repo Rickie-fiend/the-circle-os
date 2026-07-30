@@ -9,6 +9,7 @@ import {
 import {
   appSessionIndex,
   editProfileSession,
+  hasReadableProfileCase,
   minutesBetween,
   queueProfileUpdate,
   queueSuggestion,
@@ -92,9 +93,7 @@ export default function CircleOSMirror() {
     (item) => item.day.mission?.completed,
   ).length;
   const weekReady = loggedPastDays > 0;
-  const profileReady = Boolean(
-    profileCase.status === "ready" && profileCase.updatedAt,
-  );
+  const profileReady = hasReadableProfileCase(profileCase);
   const updateLabel = formatUpdated(profileCase.updatedAt);
   const weekJourneyVersion = `${loggedPastDays}|${pastMinutes}|${pastCheckIns}|${pastMissionWins}`;
   const profileJourneyVersion = profileCase.updatedAt || profileCase.status;
@@ -600,7 +599,7 @@ export default function CircleOSMirror() {
                   }}
                   aria-label="Read your profile"
                 >
-                  Swipe to read
+                  Read your profile
                 </button>
               ) : (
                 <strong className="os-session-wait">

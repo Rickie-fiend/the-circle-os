@@ -391,19 +391,124 @@ export function connectLocalAi(state, baseUrl, token = "") {
 export function mergeServerState(state, serverState) {
   if (!serverState) return state;
   const remote = normalizeState(serverState);
+  const local = normalizeState(state);
+  const answers = new Map();
+  for (const answer of [
+    ...remote.profile.profileCase.survey.answers,
+    ...local.profile.profileCase.survey.answers,
+  ]) {
+    if (!answer?.questionId) continue;
+    const existing = answers.get(answer.questionId);
+    if (
+      !existing ||
+      String(answer.answeredAt || "").localeCompare(
+        String(existing.answeredAt || ""),
+      ) >= 0
+    ) {
+      answers.set(answer.questionId, answer);
+    }
+  }
+  const days = { ...remote.days };
+  for (const [dateKey, localDay] of Object.entries(local.days)) {
+    const remoteDay = remote.days[dateKey];
+    if (!remoteDay) {
+      days[dateKey] = localDay;
+      continue;
+    }
+    days[dateKey] = {
+      ...remoteDay,
+      ...localDay,
+      mission: {
+        ...localDay.mission,
+        text: remoteDay.mission?.text || localDay.mission?.text,
+        why: remoteDay.mission?.why || localDay.mission?.why,
+        identity: remoteDay.mission?.identity || localDay.mission?.identity,
+        completed: Boolean(localDay.mission?.completed),
+        completedAt: localDay.mission?.completedAt || null,
+      },
+      checkIns: localDay.checkIns ?? remoteDay.checkIns ?? [],
+      timeBlocks: localDay.timeBlocks ?? remoteDay.timeBlocks ?? [],
+      logRange: localDay.logRange ?? remoteDay.logRange ?? null,
+    };
+  }
+  const sessions = Object.fromEntries(
+    PROFILE_SESSION_KEYS.map((key) => {
+      const remoteSession = remote.profile.profileCase.sessions[key];
+      const localSession = local.profile.profileCase.sessions[key];
+      const comparedAt = String(localSession.updatedAt || "").localeCompare(
+        String(remoteSession.updatedAt || ""),
+      );
+      const keepLocal =
+        Boolean(localSession.text) &&
+        (!remoteSession.text ||
+          comparedAt > 0 ||
+          (localSession.userEdited && comparedAt >= 0));
+      return [key, keepLocal ? localSession : remoteSession];
+    }),
+  );
+  const nextQuestion = remote.profile.profileCase.survey.nextQuestion;
+  const answeredRemoteQuestion = nextQuestion
+    ? answers.has(nextQuestion.id)
+    : false;
+  const mergeUpdatedRecords = (remoteRecords = {}, localRecords = {}) => {
+    const records = { ...remoteRecords };
+    for (const [key, localRecord] of Object.entries(localRecords)) {
+      const remoteRecord = remoteRecords[key];
+      if (
+        !remoteRecord ||
+        String(localRecord?.updatedAt || "").localeCompare(
+          String(remoteRecord?.updatedAt || ""),
+        ) >= 0
+      ) {
+        records[key] = localRecord;
+      }
+    }
+    return records;
+  };
+  const outbox = new Map();
+  for (const item of [...remote.outbox, ...local.outbox]) {
+    if (item?.id) outbox.set(item.id, item);
+  }
   return {
     ...remote,
+    profile: {
+      ...remote.profile,
+      profileCase: {
+        ...remote.profile.profileCase,
+        sessions,
+        survey: {
+          ...remote.profile.profileCase.survey,
+          answers: [...answers.values()],
+          nextQuestion: answeredRemoteQuestion
+            ? local.profile.profileCase.survey.nextQuestion
+            : nextQuestion ??
+              local.profile.profileCase.survey.nextQuestion,
+        },
+      },
+    },
+    days,
+    chapters: {
+      runs: mergeUpdatedRecords(
+        remote.chapters.runs,
+        local.chapters.runs,
+      ),
+      sessions: mergeUpdatedRecords(
+        remote.chapters.sessions,
+        local.chapters.sessions,
+      ),
+    },
     appSessions: {
       ...remote.appSessions,
-      ...state.appSessions,
+      ...mergeUpdatedRecords(remote.appSessions, local.appSessions),
     },
+    outbox: [...outbox.values()],
     ai: {
       ...remote.ai,
-      baseUrl: state.ai.baseUrl,
-      token: state.ai.token,
-      profileId: state.ai.profileId,
-      lastSyncedAt: state.ai.lastSyncedAt,
-      lastSyncSlot: state.ai.lastSyncSlot,
+      baseUrl: local.ai.baseUrl,
+      token: local.ai.token,
+      profileId: local.ai.profileId,
+      lastSyncedAt: local.ai.lastSyncedAt,
+      lastSyncSlot: local.ai.lastSyncSlot,
     },
   };
 }
@@ -420,6 +525,13 @@ export function appSessionIndex(
     session.index >= 0
     ? session.index
     : fallbackIndex;
+}
+
+export function hasReadableProfileCase(profileCase) {
+  return Boolean(
+    typeof profileCase?.updatedAt === "string" &&
+      profileCase.updatedAt.trim(),
+  );
 }
 
 export function setAppSessionIndex(state, sessionId, version, index) {

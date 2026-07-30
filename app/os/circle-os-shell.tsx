@@ -230,8 +230,9 @@ function currentSyncSlot(now = new Date()) {
   return `${getDateKey(now)}-night`;
 }
 
-function isNightSyncTime(now = new Date()) {
-  return now.getHours() >= 20 || now.getHours() < CIRCLE_DAY_START_HOUR;
+function isAthenaSyncTime(now = new Date()) {
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  return minutes >= 20 * 60 || minutes < 6 * 60 + 15;
 }
 
 function applySyncResult(
@@ -258,7 +259,7 @@ function applySyncResult(
       lastSyncedAt: new Date().toISOString(),
       lastSyncSlot:
         current.outbox.some((item) => RECORD_REASONS.has(item.reason)) &&
-        isNightSyncTime()
+        isAthenaSyncTime()
           ? currentSyncSlot()
           : current.ai.lastSyncSlot,
     },
@@ -290,7 +291,9 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
           const remote = await readCircleState(next);
           if (remote) {
             next = ensureDay(mergeServerState(next, remote), getDateKey());
-            lastServerSignature.current = serverSignature(next);
+            lastServerSignature.current = serverSignature(
+              normalizeState(remote),
+            );
           }
         } catch {
           next = {
@@ -335,7 +338,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     const needsFirstProfile = !state.ai.profileId || !state.ai.token;
     const scheduledSyncDue =
       state.outbox.some((item) => RECORD_REASONS.has(item.reason)) &&
-      isNightSyncTime();
+      isAthenaSyncTime();
     if (!needsFirstProfile && !urgent && !scheduledSyncDue) return;
     const signature = serverSignature(state);
     if (signature === lastServerSignature.current) return;
@@ -416,7 +419,9 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
               mergeServerState(latest, remote),
               getDateKey(),
             );
-            lastServerSignature.current = serverSignature(next);
+            lastServerSignature.current = serverSignature(
+              normalizeState(remote),
+            );
             stateRef.current = next;
             return next;
           });
