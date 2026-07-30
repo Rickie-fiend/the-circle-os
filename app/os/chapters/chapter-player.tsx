@@ -319,9 +319,11 @@ export function ChapterPlayer({
   const currentAnswered = Boolean(
     currentPage.answerKey && findChapterAnswer(run, currentPage.answerKey),
   );
+  const currentAnswerRequired =
+    INPUT_TYPES.has(currentPage.type) && Boolean(currentPage.required);
   const canMoveForward =
     run.status === "completed" ||
-    !INPUT_TYPES.has(currentPage.type) ||
+    !currentAnswerRequired ||
     currentAnswered;
   const idleIndex = definition.pages.findIndex((page) => page.type === "idle");
   const lastDraftIndex =
@@ -353,6 +355,11 @@ export function ChapterPlayer({
 
   return (
     <SwipeSession
+      blockedForward={
+        run.status !== "completed" &&
+        currentAnswerRequired &&
+        !currentAnswered
+      }
       availableIndices={
         availableIndices
       }

@@ -22,6 +22,7 @@ export function SwipeSession({
   label,
   availableIndices,
   frameHeight,
+  blockedForward = false,
 }: {
   children: ReactNode;
   index: number;
@@ -31,6 +32,7 @@ export function SwipeSession({
   label: string;
   availableIndices?: number[];
   frameHeight?: CSSProperties["height"];
+  blockedForward?: boolean;
 }) {
   const apps = Children.toArray(children);
   const lastIndex = Math.max(0, Math.min(
@@ -64,12 +66,14 @@ export function SwipeSession({
   const windowRef = useRef<HTMLDivElement | null>(null);
   const currentPageRef = useRef<HTMLDivElement | null>(null);
   const settleTimer = useRef<number | null>(null);
+  const blockedTimer = useRef<number | null>(null);
   const commitFrame = useRef<number | null>(null);
   const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [settling, setSettling] = useState(false);
   const [committing, setCommitting] = useState(false);
+  const [showingBlockedCue, setShowingBlockedCue] = useState(false);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
 
   useLayoutEffect(() => {
@@ -100,9 +104,27 @@ export function SwipeSession({
       if (commitFrame.current) {
         window.cancelAnimationFrame(commitFrame.current);
       }
+      if (blockedTimer.current) {
+        window.clearTimeout(blockedTimer.current);
+      }
     },
     [],
   );
+
+  function showBlockedForwardCue() {
+    if (!blockedForward) return;
+    if (blockedTimer.current) {
+      window.clearTimeout(blockedTimer.current);
+    }
+    setShowingBlockedCue(false);
+    window.requestAnimationFrame(() => {
+      setShowingBlockedCue(true);
+      blockedTimer.current = window.setTimeout(() => {
+        setShowingBlockedCue(false);
+        blockedTimer.current = null;
+      }, 520);
+    });
+  }
 
   function moveToPosition(nextPosition: number) {
     const boundedPosition = Math.max(
@@ -179,6 +201,7 @@ export function SwipeSession({
     if (targetIndex === undefined) {
       setDragX(0);
       setDragging(false);
+      if (distance < 0) showBlockedForwardCue();
       return;
     }
     const width = windowRef.current?.clientWidth || 320;
@@ -212,6 +235,10 @@ export function SwipeSession({
   function useArrowKey(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === "ArrowRight") {
       event.preventDefault();
+      if (nextIndex === undefined) {
+        showBlockedForwardCue();
+        return;
+      }
       moveToPosition(currentPosition + 1);
     }
     if (event.key === "ArrowLeft") {
@@ -223,7 +250,9 @@ export function SwipeSession({
   return (
     <div
       aria-label={label}
-      className={`os-swipe-session ${className}`.trim()}
+      className={`os-swipe-session ${className}${
+        showingBlockedCue ? " required-nudge" : ""
+      }`.trim()}
       onClickCapture={stopClickAfterSwipe}
       onKeyDown={useArrowKey}
       onPointerCancel={() => {
@@ -236,6 +265,11 @@ export function SwipeSession({
           window.cancelAnimationFrame(commitFrame.current);
           commitFrame.current = null;
         }
+        if (blockedTimer.current) {
+          window.clearTimeout(blockedTimer.current);
+          blockedTimer.current = null;
+        }
+        setShowingBlockedCue(false);
         setDragX(0);
         setDragging(false);
         setSettling(false);
