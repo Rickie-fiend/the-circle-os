@@ -16,10 +16,12 @@ Route
 Used for questions, teaching, setup, and habit creation.
 
 - A new chapter or server question begins with one cover.
-- Pages move forward only.
-- After an answer is saved, that input page is retired.
-- After completion, only the useful idle app remains.
-- Old input pages never become a history carousel.
+- Answered pages remain available while the chapter is an open draft.
+- Before confirmation, the person may move backward and edit any answer.
+- The last question leads to a separate completion page.
+- Only pressing the completion button closes the chapter.
+- After confirmation, the draft pages retire and only the useful idle app
+  remains.
 - A new immutable chapter version creates a new journey and cover.
 
 ### Library

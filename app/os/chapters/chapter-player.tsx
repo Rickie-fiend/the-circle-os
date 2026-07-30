@@ -24,6 +24,7 @@ const INPUT_TYPES = new Set([
   "long-text",
   "time",
 ]);
+const COMPLETION_TYPES = new Set(["confirm", "result"]);
 
 function displayValue(value: ChapterAnswerValue) {
   return Array.isArray(value) ? value.join(", ") : String(value);
@@ -83,13 +84,16 @@ function ChapterPageView({
     );
   }
 
+  const isCompletionPage = COMPLETION_TYPES.has(page.type);
   const isQuietPage = ["info", "confirm", "result", "idle"].includes(page.type);
   if (isQuietPage) {
     return (
       <div className={`os-chapter-card theme-${chapter.theme}`}>
         <div className="os-survey-head">
           <p className="os-card-label">{chapter.session}</p>
-          {page.type !== "idle" ? <span>{current}/{total}</span> : null}
+          {!isCompletionPage && page.type !== "idle" ? (
+            <span>{current}/{total}</span>
+          ) : null}
         </div>
         <h2>{page.title || chapter.title}</h2>
         {page.body ? <p className="os-chapter-body">{page.body}</p> : null}
@@ -99,7 +103,7 @@ function ChapterPageView({
             type="button"
             onClick={() => onComplete({ page })}
           >
-            {page.button || "Continue"}
+            {page.button || (isCompletionPage ? "OK" : "Continue")}
           </button>
         ) : null}
       </div>
@@ -257,6 +261,12 @@ export function ChapterPlayer({
     definition.pages.findIndex((page) => page.id === run.currentPageId),
   );
   const currentPage = definition.pages[currentIndex];
+  const furthestIndex = Math.max(
+    currentIndex,
+    definition.pages.findIndex(
+      (page) => page.id === (run.furthestPageId || run.currentPageId),
+    ),
+  );
   const currentAnswered = Boolean(
     currentPage.answerKey && findChapterAnswer(run, currentPage.answerKey),
   );
@@ -264,21 +274,28 @@ export function ChapterPlayer({
     run.status === "completed" ||
     !INPUT_TYPES.has(currentPage.type) ||
     currentAnswered;
-  const maxIndex =
+  const idleIndex = definition.pages.findIndex((page) => page.type === "idle");
+  const lastDraftIndex =
+    idleIndex >= 0 ? idleIndex - 1 : definition.pages.length - 1;
+  const reviewMaxIndex = Math.min(
+    lastDraftIndex,
+    Math.max(furthestIndex, currentIndex + (canMoveForward ? 1 : 0)),
+  );
+  const availableIndices =
     run.status === "completed"
-      ? definition.pages.length - 1
-      : Math.min(
-          definition.pages.length - 1,
-          currentIndex + (canMoveForward ? 1 : 0),
-        );
+      ? [idleIndex >= 0 ? idleIndex : currentIndex]
+      : Array.from({ length: reviewMaxIndex + 1 }, (_, index) => index);
   const countedPages = definition.pages.filter(
-    (page) => page.type !== "cover" && page.type !== "idle",
+    (page) =>
+      page.type !== "cover" &&
+      page.type !== "idle" &&
+      !COMPLETION_TYPES.has(page.type),
   );
 
   function changeIndex(nextIndex: number) {
     const nextPage = definition.pages[nextIndex];
     if (!nextPage) return;
-    if (nextIndex < currentIndex || currentAnswered) {
+    if (nextIndex <= furthestIndex) {
       onRunChange(moveChapterRun(definition, run, nextPage.id));
       return;
     }
@@ -288,14 +305,12 @@ export function ChapterPlayer({
   return (
     <SwipeSession
       availableIndices={
-        maxIndex > currentIndex
-          ? [currentIndex, maxIndex]
-          : [currentIndex]
+        availableIndices
       }
       className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
       index={currentIndex}
       label={label}
-      maxIndex={maxIndex}
+      maxIndex={availableIndices.at(-1) ?? currentIndex}
       onIndexChange={changeIndex}
     >
       {definition.pages.map((page) => (

@@ -7,6 +7,7 @@ const INPUT_PAGE_TYPES = new Set([
   "long-text",
   "time",
 ]);
+const COMPLETION_PAGE_TYPES = new Set(["confirm", "result"]);
 
 export function chapterRunId(chapter) {
   return `${chapter.id}@${chapter.version}`;
@@ -32,22 +33,22 @@ export function createChapterRun(chapter, seedAnswers = []) {
       page.answerKey &&
       !answers.some((answer) => answer.answerKey === page.answerKey),
   );
-  const currentPage =
-    firstUnanswered ||
-    chapter.pages.find((page) => page.type === "idle") ||
-    chapter.pages.at(-1);
-  const complete = !firstUnanswered && answers.length > 0;
+  const currentPage = answers.length
+    ? firstUnanswered ||
+      chapter.pages.find((page) => COMPLETION_PAGE_TYPES.has(page.type)) ||
+      chapter.pages.at(-1)
+    : chapter.pages[0];
 
   return {
     runId: chapterRunId(chapter),
     chapterId: chapter.id,
     chapterVersion: chapter.version,
-    status: complete ? "completed" : "not-started",
-    currentPageId:
-      complete || answers.length ? currentPage.id : chapter.pages[0].id,
+    status: answers.length ? "in-progress" : "not-started",
+    currentPageId: currentPage.id,
+    furthestPageId: currentPage.id,
     startedAt: answers.length ? timestamp : null,
     updatedAt: timestamp,
-    completedAt: complete ? timestamp : null,
+    completedAt: null,
     answers,
   };
 }
@@ -57,10 +58,18 @@ export function findChapterAnswer(run, answerKey) {
 }
 
 export function moveChapterRun(chapter, run, pageId) {
-  if (!chapter.pages.some((page) => page.id === pageId)) return run;
+  const nextIndex = chapter.pages.findIndex((page) => page.id === pageId);
+  if (nextIndex < 0) return run;
+  const furthestIndex = Math.max(
+    chapter.pages.findIndex(
+      (page) => page.id === (run.furthestPageId || run.currentPageId),
+    ),
+    chapter.pages.findIndex((page) => page.id === run.currentPageId),
+  );
   return {
     ...run,
     currentPageId: pageId,
+    furthestPageId: chapter.pages[Math.max(furthestIndex, nextIndex)].id,
     updatedAt: now(),
   };
 }
@@ -93,11 +102,21 @@ export function advanceChapterRun(
   }
 
   const nextPage = chapter.pages[pageIndex + 1];
-  const completed = !nextPage || nextPage.type === "idle";
+  const completed = COMPLETION_PAGE_TYPES.has(page.type)
+    ? !nextPage || nextPage.type === "idle"
+    : !nextPage;
+  const nextCurrentPage = nextPage || page;
+  const furthestIndex = Math.max(
+    chapter.pages.findIndex(
+      (item) => item.id === (run.furthestPageId || run.currentPageId),
+    ),
+    chapter.pages.findIndex((item) => item.id === nextCurrentPage.id),
+  );
   return {
     ...run,
     status: completed ? "completed" : "in-progress",
-    currentPageId: nextPage?.id || page.id,
+    currentPageId: nextCurrentPage.id,
+    furthestPageId: chapter.pages[furthestIndex].id,
     startedAt: run.startedAt || timestamp,
     updatedAt: timestamp,
     completedAt: completed ? run.completedAt || timestamp : null,

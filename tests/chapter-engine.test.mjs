@@ -6,6 +6,7 @@ import {
   chapterRunId,
   createChapterRun,
   findChapterAnswer,
+  moveChapterRun,
   storeChapterRun,
 } from "../app/os/chapters/chapter-model.js";
 import {
@@ -20,13 +21,13 @@ const published = JSON.parse(
     "utf8",
   ),
 );
-const logSetup = published.chapters.find(
-  (chapter) => chapter.id === "log-setup" && chapter.version === 1,
-);
+const logSetup = published.chapters
+  .filter((chapter) => chapter.id === "log-setup")
+  .sort((left, right) => right.version - left.version)[0];
 
 test("a chapter starts at its cover and saves progress one page at a time", () => {
   let run = createChapterRun(logSetup);
-  assert.equal(run.runId, "log-setup@1");
+  assert.equal(run.runId, chapterRunId(logSetup));
   assert.equal(run.currentPageId, "cover");
   assert.equal(run.status, "not-started");
 
@@ -48,9 +49,26 @@ test("a chapter starts at its cover and saves progress one page at a time", () =
     value: "00:30",
     displaySnapshot: "00:30",
   });
+  assert.equal(run.currentPageId, "complete");
+  assert.equal(run.status, "in-progress");
+  assert.equal(run.completedAt, null);
+  assert.equal(findChapterAnswer(run, "routine-sleep").value, "00:30");
+
+  run = moveChapterRun(logSetup, run, "wake");
+  run = advanceChapterRun(logSetup, run, {
+    page: logSetup.pages[1],
+    value: "09:00",
+    displaySnapshot: "09:00",
+  });
+  assert.equal(findChapterAnswer(run, "routine-wake").value, "09:00");
+  assert.equal(run.furthestPageId, "complete");
+  assert.equal(run.status, "in-progress");
+
+  run = moveChapterRun(logSetup, run, "complete");
+  run = advanceChapterRun(logSetup, run, { page: logSetup.pages[3] });
+  assert.equal(run.currentPageId, "idle");
   assert.equal(run.status, "completed");
   assert.ok(run.completedAt);
-  assert.equal(findChapterAnswer(run, "routine-sleep").value, "00:30");
 });
 
 test("chapter progress is stored without replacing the rest of Circle state", () => {
@@ -64,7 +82,7 @@ test("chapter progress is stored without replacing the rest of Circle state", ()
 
   assert.equal(next.profile.name, "Sai");
   assert.equal(next.chapters.runs[chapterRunId(logSetup)], run);
-  assert.equal(next.chapters.sessions.log.activeRunId, "log-setup@1");
+  assert.equal(next.chapters.sessions.log.activeRunId, chapterRunId(logSetup));
   assert.equal(next.outbox[0].reason, "chapter-progress");
 });
 
@@ -92,6 +110,15 @@ Answer: morning-feeling
 Min: 1
 Max: 5
 Required: true
+
+## Page: complete
+Type: confirm
+Title: You completed this chapter.
+Button: OK
+
+## Page: idle
+Type: idle
+Title: Keep going.
 `;
   const chapter = validateChapter(
     parseChapterMarkdown(source, "morning-check.md"),
@@ -103,11 +130,11 @@ Required: true
 });
 
 test("published chapter versions are preserved and cannot be silently changed", () => {
-  const nextVersion = { ...logSetup, version: 2 };
+  const nextVersion = { ...logSetup, version: logSetup.version + 1 };
   const library = mergePublishedChapters([logSetup], [nextVersion]);
 
-  assert.equal(chapterRunId(logSetup), "log-setup@1");
-  assert.equal(chapterRunId(nextVersion), "log-setup@2");
+  assert.equal(chapterRunId(logSetup), `log-setup@${logSetup.version}`);
+  assert.equal(chapterRunId(nextVersion), `log-setup@${logSetup.version + 1}`);
   assert.equal(library.length, 2);
   assert.throws(
     () =>

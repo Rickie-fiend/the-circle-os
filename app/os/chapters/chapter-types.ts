@@ -68,6 +68,7 @@ export type ChapterRun = {
   chapterVersion: number;
   status: "not-started" | "in-progress" | "completed";
   currentPageId: string;
+  furthestPageId: string;
   startedAt: string | null;
   updatedAt: string;
   completedAt: string | null;

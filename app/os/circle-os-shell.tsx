@@ -16,6 +16,7 @@ import {
   CIRCLE_DAY_START_HOUR,
   HABIT_QUESTIONS,
   PROFILE_QUESTIONS,
+  appSessionIndex,
   answerProfileQuestion,
   answerSurveyQuestion,
   connectLocalAi,
@@ -26,6 +27,7 @@ import {
   minutesBetween,
   normalizeState,
   queueProfileUpdate,
+  setAppSessionIndex,
   setDayLogRange,
   upsertTimeBlock,
 } from "./circle-os-model.js";
@@ -716,7 +718,7 @@ export function TodayExperience() {
   const surveyAnswers = state.profile.profileCase.survey.answers;
   const wakeTime = surveyAnswer(surveyAnswers, "routine-wake");
   const sleepTime = surveyAnswer(surveyAnswers, "routine-sleep");
-  const logSetupDone = Boolean(wakeTime && sleepTime);
+  const routineTimesKnown = Boolean(wakeTime && sleepTime);
   const wakeHour = hourFromTime(wakeTime, 7);
   const sleepClockHour = hourFromTime(sleepTime, 0);
   const sleepHour =
@@ -813,10 +815,10 @@ export function TodayExperience() {
     (question) =>
       !surveyAnswers.some((answer) => answer.questionId === question.id),
   );
-  const checkInMaxApp =
-    firstProfileQuestionIndex >= 0 ? firstProfileQuestionIndex + 1 : 11;
-  const habitMaxApp =
-    firstHabitQuestionIndex >= 0 ? firstHabitQuestionIndex + 1 : 4;
+  const checkInCompletionApp = 12;
+  const checkInIdleApp = 13;
+  const habitCompletionApp = 4;
+  const habitIdleApp = 5;
   const checkInStartApp = unansweredCodexQuestion
     ? 11
     : firstProfileQuestionIndex >= 0
@@ -824,22 +826,40 @@ export function TodayExperience() {
       : 11;
   const habitStartApp =
     firstHabitQuestionIndex >= 0 ? firstHabitQuestionIndex + 1 : 4;
-  const profileBaseVersion =
-    state.profile.profileCase.updatedAt || `day-${dateKey}`;
   const checkInJourneyVersion = unansweredCodexQuestion
     ? `question-${unansweredCodexQuestion.id}`
-    : `profile-${profileBaseVersion}`;
+    : "profile-foundation-v1";
   const habitJourneyVersion = `${today.mission.text}|${today.mission.identity}`;
   const checkInSurveyComplete =
     firstProfileQuestionIndex < 0 && !unansweredCodexQuestion;
   const habitSurveyComplete = firstHabitQuestionIndex < 0;
-  const visibleCheckInApp = checkInSurveyComplete
-    ? checkInApp || 11
+  const savedCheckInApp = appSessionIndex(
+    state,
+    "today-checkin",
+    checkInJourneyVersion,
+    0,
+  );
+  const savedHabitApp = appSessionIndex(
+    state,
+    "today-habit",
+    habitJourneyVersion,
+    0,
+  );
+  const checkInConfirmed =
+    checkInSurveyComplete && savedCheckInApp === checkInIdleApp;
+  const habitConfirmed =
+    habitSurveyComplete && savedHabitApp === habitIdleApp;
+  const visibleCheckInApp = checkInConfirmed
+    ? checkInIdleApp
+    : checkInSurveyComplete
+      ? checkInApp || checkInCompletionApp
     : seenCheckInJourney === checkInJourneyVersion
       ? checkInApp
       : 0;
-  const visibleHabitApp = habitSurveyComplete
-    ? habitApp || 4
+  const visibleHabitApp = habitConfirmed
+    ? habitIdleApp
+    : habitSurveyComplete
+      ? habitApp || habitCompletionApp
     : seenHabitJourney === habitJourneyVersion
       ? habitApp
       : 0;
@@ -883,6 +903,9 @@ export function TodayExperience() {
     });
     return createChapterRun(logSetupChapter, seedAnswers);
   }, [logSetupChapter, state.chapters.runs, surveyAnswers]);
+  const logSetupDone = logSetupRun
+    ? logSetupRun.status === "completed"
+    : routineTimesKnown;
 
   function toggleMission() {
     updateToday((day) => ({
@@ -1077,14 +1100,18 @@ export function TodayExperience() {
     appIndex: number,
   ) {
     if (question.id === unansweredCodexQuestion?.id) {
-      setSeenCheckInJourney(`profile-${profileBaseVersion}`);
+      setSeenCheckInJourney("profile-foundation-v1");
     }
     updateState((current) =>
       question.id === unansweredCodexQuestion?.id
         ? answerProfileQuestion(current, answer)
         : answerSurveyQuestion(current, question, answer, "profile"),
     );
-    setCheckInApp(Math.min(11, appIndex + 1));
+    setCheckInApp(
+      appIndex >= PROFILE_QUESTIONS.length
+        ? checkInCompletionApp
+        : appIndex + 1,
+    );
   }
 
   function answerHabit(
@@ -1100,7 +1127,31 @@ export function TodayExperience() {
     updateState((current) =>
       answerSurveyQuestion(current, question, answer, "habit"),
     );
-    setHabitApp(Math.min(4, appIndex + 1));
+    setHabitApp(Math.min(habitCompletionApp, appIndex + 1));
+  }
+
+  function confirmCheckInChapter() {
+    updateState((current) =>
+      setAppSessionIndex(
+        current,
+        "today-checkin",
+        checkInJourneyVersion,
+        checkInIdleApp,
+      ),
+    );
+    setCheckInApp(checkInIdleApp);
+  }
+
+  function confirmHabitChapter() {
+    updateState((current) =>
+      setAppSessionIndex(
+        current,
+        "today-habit",
+        habitJourneyVersion,
+        habitIdleApp,
+      ),
+    );
+    setHabitApp(habitIdleApp);
   }
 
   function saveLogSetupRun(
@@ -1178,14 +1229,33 @@ export function TodayExperience() {
 
           <SwipeSession
             availableIndices={
-              checkInSurveyComplete
-                ? [11]
-                : [0, checkInStartApp]
+              checkInConfirmed
+                ? [checkInIdleApp]
+                : checkInSurveyComplete
+                  ? [
+                      ...Array.from(
+                        { length: PROFILE_QUESTIONS.length + 1 },
+                        (_, index) => index,
+                      ),
+                      checkInCompletionApp,
+                    ]
+                  : unansweredCodexQuestion
+                    ? [0, 11]
+                    : Array.from(
+                        { length: checkInStartApp + 1 },
+                        (_, index) => index,
+                      )
             }
             className="os-checkin-session"
             index={visibleCheckInApp}
             label="Check-in session"
-            maxIndex={checkInMaxApp}
+            maxIndex={
+              checkInConfirmed
+                ? checkInIdleApp
+                : checkInSurveyComplete
+                  ? checkInCompletionApp
+                  : checkInStartApp
+            }
             onIndexChange={(nextIndex) => {
               if (nextIndex > 0) {
                 setSeenCheckInJourney(checkInJourneyVersion);
@@ -1239,7 +1309,23 @@ export function TodayExperience() {
                 }
               />
             ) : (
-              <div className="os-survey-card os-survey-complete">
+              <div
+                aria-hidden="true"
+                className="os-survey-card os-survey-placeholder"
+              />
+            )}
+            <div className="os-survey-card os-chapter-completion">
+              <p className="os-card-label">Check-in</p>
+              <h2>You completed this chapter.</h2>
+              <p>
+                Go back if you want to change an answer. Press OK when it feels
+                right.
+              </p>
+              <button type="button" onClick={confirmCheckInChapter}>
+                OK
+              </button>
+            </div>
+            <div className="os-survey-card os-survey-complete">
                 <div className="os-survey-head">
                   <p className="os-card-label">Check-in</p>
                   <button
@@ -1286,22 +1372,35 @@ export function TodayExperience() {
                     <p>{checkInNote || "Notice what feels like you today."}</p>
                   </>
                 )}
-              </div>
-            )}
+            </div>
           </SwipeSession>
         </section>
 
         <section className="os-habit" aria-label="Habit session">
           <SwipeSession
             availableIndices={
-              habitSurveyComplete
-                ? [4]
-                : [0, habitStartApp]
+              habitConfirmed
+                ? [habitIdleApp]
+                : habitSurveyComplete
+                  ? Array.from(
+                      { length: habitCompletionApp + 1 },
+                      (_, index) => index,
+                    )
+                  : Array.from(
+                      { length: habitStartApp + 1 },
+                      (_, index) => index,
+                    )
             }
             className="os-habit-session"
             index={visibleHabitApp}
             label="Habit session"
-            maxIndex={habitMaxApp}
+            maxIndex={
+              habitConfirmed
+                ? habitIdleApp
+                : habitSurveyComplete
+                  ? habitCompletionApp
+                  : habitStartApp
+            }
             onIndexChange={(nextIndex) => {
               if (nextIndex > 0) {
                 setSeenHabitJourney(habitJourneyVersion);
@@ -1340,6 +1439,17 @@ export function TodayExperience() {
                 }
               />
             ))}
+            <div className="os-survey-card os-chapter-completion">
+              <p className="os-card-label">Habit</p>
+              <h2>You completed this chapter.</h2>
+              <p>
+                Go back if you want to change an answer. Press OK when your
+                mission feels right.
+              </p>
+              <button type="button" onClick={confirmHabitChapter}>
+                OK
+              </button>
+            </div>
             <section
               className={`os-mission${today.mission.completed ? " completed" : ""}`}
               aria-labelledby="mission-heading"

@@ -759,6 +759,42 @@
   max-width: 420px;
 }
 
+.circle-os .os-chapter-completion {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+}
+
+.circle-os .os-chapter-completion > p:not(.os-card-label) {
+  color: #77736a;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  margin: -0.55rem 0 0;
+  max-width: 420px;
+}
+
+.circle-os .os-chapter-completion > button {
+  align-self: flex-end;
+  background: #191813;
+  border: 0;
+  border-radius: 14px;
+  color: #f1efe8;
+  font-weight: 650;
+  margin-top: auto;
+  min-height: 48px;
+  min-width: 112px;
+  padding: 0.75rem 1.15rem;
+}
+
+.circle-os .os-habit .os-chapter-completion > p:not(.os-card-label) {
+  color: rgb(255 248 241 / 0.72);
+}
+
+.circle-os .os-habit .os-chapter-completion > button {
+  background: #f7f4ec;
+  color: #191813;
+}
+
 .circle-os .os-note-edit {
   background: transparent;
   border: 0;
