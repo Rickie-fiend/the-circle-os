@@ -308,7 +308,6 @@ export default function CircleOSMirror() {
         <header>
           <p className="os-card-label">{label}</p>
           <h2>{title}</h2>
-          <span>{updateLabel}</span>
         </header>
         <div className="athena-reader-copy">
           {keys.map(([key, heading]) => profileArticleSection(key, heading))}
@@ -605,7 +604,6 @@ export default function CircleOSMirror() {
           <div>
             <p className="os-eyebrow">Athena</p>
             <h1>A reading of you</h1>
-            <p className="profile-updated">{updateLabel}</p>
           </div>
         </header>
 

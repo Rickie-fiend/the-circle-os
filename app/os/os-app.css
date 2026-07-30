@@ -350,9 +350,7 @@
 }
 
 .circle-os .os-habit-session {
-  background:
-    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
-    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   border: 1px solid rgb(255 255 255 / 0.16);
   border-radius: 28px;
   box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
@@ -396,9 +394,7 @@
 }
 
 .circle-os .os-session-intro.theme-orange {
-  background:
-    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
-    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   border-color: rgb(255 255 255 / 0.16);
   box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
   color: #fff8f1;
@@ -424,7 +420,7 @@
 }
 
 .circle-os .os-chapter-session.theme-orange {
-  background: linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   border: 1px solid rgb(255 255 255 / 0.16);
 }
 
@@ -490,7 +486,7 @@
 }
 
 .circle-os .os-chapter-card.theme-orange {
-  background: linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   color: #fff8f1;
 }
 
@@ -705,9 +701,7 @@
 }
 
 .circle-os .os-habit-record {
-  background:
-    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
-    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   color: #fff8f1;
   display: grid;
   gap: 0.85rem;
@@ -895,9 +889,7 @@
 }
 
 .circle-os .os-swipe-session.required-nudge > .os-app-window {
-  animation:
-    os-required-nudge 420ms cubic-bezier(0.22, 0.82, 0.22, 1),
-    os-required-ring 520ms ease;
+  animation: os-required-ring 520ms ease;
 }
 
 .circle-os .os-chapter-idle :where(button) {
@@ -929,9 +921,7 @@
 }
 
 .circle-os .os-habit .os-survey-card {
-  background:
-    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
-    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   border: 1px solid rgb(255 255 255 / 0.16);
   border-radius: 28px;
   box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
@@ -1414,9 +1404,7 @@
 
 .circle-os .os-mission {
   align-items: center;
-  background:
-    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
-    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   border-color: rgb(255 255 255 / 0.16);
   border-radius: 28px;
   box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
@@ -1429,9 +1417,7 @@
 }
 
 .circle-os .os-mission.completed {
-  background:
-    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.2), transparent 38%),
-    linear-gradient(145deg, #d15a2a 0%, #a9401d 100%);
+  background: #df642d;
   border-color: rgb(255 255 255 / 0.2);
 }
 
@@ -2204,7 +2190,7 @@
 }
 
 .circle-os .vision-analysis-apps {
-  background: linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   border: 1px solid rgb(255 248 241 / 0.2);
   box-shadow: 0 18px 38px rgb(105 35 12 / 0.25);
 }
@@ -2237,9 +2223,7 @@
 
 .circle-os .athena-reader-cover,
 .circle-os .athena-reader-app {
-  background:
-    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.18), transparent 34%),
-    linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  background: #df642d;
   color: #fff8f1;
   min-height: 330px;
   padding: 26px 24px;
@@ -2310,6 +2294,7 @@
 .circle-os .athena-reader-app .profile-article-part h2 {
   color: #191813;
   font-size: 0.62rem;
+  font-weight: 750;
   letter-spacing: 0.12em;
   margin: 0;
   text-transform: uppercase;
