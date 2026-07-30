@@ -82,6 +82,7 @@ export function SwipeSession({
   const [showingBlockedCue, setShowingBlockedCue] = useState(false);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   const longPressCallback = useRef(onLongPress);
+  const longPressEnabled = Boolean(onLongPress);
 
   useEffect(() => {
     longPressCallback.current = onLongPress;
@@ -89,7 +90,7 @@ export function SwipeSession({
 
   useEffect(() => {
     const session = sessionRef.current;
-    if (!session || !onLongPress) return;
+    if (!session || !longPressEnabled) return;
 
     let start: { x: number; y: number } | null = null;
     let timer: number | null = null;
@@ -140,7 +141,7 @@ export function SwipeSession({
       session.removeEventListener("touchend", clear);
       session.removeEventListener("touchcancel", clear);
     };
-  }, [onLongPress]);
+  }, [longPressEnabled]);
 
   useLayoutEffect(() => {
     if (frameHeight || !currentPageRef.current) return;

@@ -71,6 +71,7 @@ type Mission = {
   identity: string;
   completed: boolean;
   completedAt: string | null;
+  updatedAt: string | null;
 };
 
 type ExtraMission = {
@@ -855,6 +856,7 @@ export function TodayExperience() {
   const [profileSparkClock, setProfileSparkClock] = useState(
     PROFILE_SPARK_OPENED_AT,
   );
+  const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const [checkInApp, setCheckInApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
@@ -992,11 +994,15 @@ export function TodayExperience() {
     : seenCheckInJourney === checkInJourneyVersion
       ? checkInApp
       : 0;
-  const profileSparkChapter = selectHourlyChapter(
+  const scheduledProfileSparkChapter = selectHourlyChapter(
     PROFILE_SPARK_CHAPTERS,
     state.chapters.runs,
     profileSparkClock,
   );
+  const profileSparkChapter =
+    PROFILE_SPARK_CHAPTERS.find(
+      (chapter) => chapter.id === forcedProfileSparkId,
+    ) || scheduledProfileSparkChapter;
   const profileSparkRun = useMemo(() => {
     if (!profileSparkChapter) return null;
     return (
@@ -1166,12 +1172,14 @@ export function TodayExperience() {
     : routineTimesKnown;
 
   function toggleMission() {
+    const updatedAt = new Date().toISOString();
     updateToday((day) => ({
       ...day,
       mission: {
         ...day.mission,
         completed: !day.mission.completed,
-        completedAt: day.mission.completed ? null : new Date().toISOString(),
+        completedAt: day.mission.completed ? null : updatedAt,
+        updatedAt,
       },
     }), "mission");
   }
@@ -1188,25 +1196,26 @@ export function TodayExperience() {
               typeof crypto !== "undefined" && "randomUUID" in crypto
                 ? crypto.randomUUID()
                 : `mission-${Date.now()}`,
-            text: "New mission",
+            text: "",
             completed: false,
             completedAt: null,
             createdAt: timestamp,
           },
         ],
       }),
-      "mission",
     );
   }
 
   function changePrimaryMissionDraft(text: string) {
     if (!text.trim()) return;
+    const updatedAt = new Date().toISOString();
     updateToday(
       (day) => ({
         ...day,
         mission: {
           ...day.mission,
           text,
+          updatedAt,
         },
       }),
     );
@@ -1215,12 +1224,14 @@ export function TodayExperience() {
   function commitPrimaryMission(text: string) {
     const normalized = text.trim();
     if (!normalized) return;
+    const updatedAt = new Date().toISOString();
     updateToday(
       (day) => ({
         ...day,
         mission: {
           ...day.mission,
           text: normalized,
+          updatedAt,
         },
       }),
       "mission",
@@ -1254,12 +1265,30 @@ export function TodayExperience() {
 
   function toggleExtraMission(id: string) {
     const mission = today.missions?.find((item) => item.id === id);
+    if (!mission) return;
     const isCompleting = !mission?.completed;
     const existingTimers = taskExitTimers.current[id];
     if (existingTimers) {
       window.clearTimeout(existingTimers.fade);
       window.clearTimeout(existingTimers.remove);
       delete taskExitTimers.current[id];
+    }
+    if (mission.kind !== "habit" && !mission.text.trim()) {
+      setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
+      const fade = window.setTimeout(() => {
+        setFadingMissionIds((ids) => [...new Set([...ids, id])]);
+      }, 300);
+      const remove = window.setTimeout(() => {
+        updateToday((day) => ({
+          ...day,
+          missions: (day.missions || []).filter((item) => item.id !== id),
+        }));
+        setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
+        setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
+        delete taskExitTimers.current[id];
+      }, 1_500);
+      taskExitTimers.current[id] = { fade, remove };
+      return;
     }
     updateToday(
       (day) => ({
@@ -1587,6 +1616,21 @@ export function TodayExperience() {
         ),
       );
     }
+    const nextChapter =
+      PROFILE_SPARK_CHAPTERS.find((chapter) => {
+        const run = state.chapters.runs[chapterRunId(chapter)];
+        return (
+          chapter.id !== profileSparkChapter?.id &&
+          run?.status !== "completed" &&
+          !run?.dismissedAt
+        );
+      }) ||
+      PROFILE_SPARK_CHAPTERS.find(
+        (chapter) => chapter.id !== profileSparkChapter?.id,
+      );
+    if (nextChapter) {
+      setForcedProfileSparkId(nextChapter.id);
+    }
     setProfileSparkClock((current) =>
       Math.max(current, Date.now()) + 3_600_000,
     );
@@ -1649,6 +1693,7 @@ export function TodayExperience() {
                     identity,
                     completed: false,
                     completedAt: null,
+                    updatedAt: new Date().toISOString(),
                   },
                 },
           },
@@ -2009,11 +2054,12 @@ export function TodayExperience() {
                         key={mission.id}
                       >
                         <textarea
-                          aria-label={`Edit mission: ${mission.text}`}
+                          aria-label={`Edit mission: ${mission.text || "New mission"}`}
                           className={`os-extra-mission-copy os-mission-text-edit${
                             mission.completed ? " completed" : ""
                           }`}
                           maxLength={240}
+                          placeholder="New mission"
                           rows={1}
                           value={mission.text}
                           onChange={(event) =>

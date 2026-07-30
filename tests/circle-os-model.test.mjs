@@ -263,6 +263,50 @@ test("reopening keeps newer phone logs when the server day is older", () => {
   assert.equal(reopened.outbox[0].id, "pending-log");
 });
 
+test("reopening keeps a newer habit edit made on the phone", () => {
+  const phone = createEmptyState();
+  const server = createEmptyState();
+  const dateKey = "2026-07-30";
+  phone.days[dateKey] = ensureDay(phone, dateKey).days[dateKey];
+  server.days[dateKey] = ensureDay(server, dateKey).days[dateKey];
+  phone.days[dateKey].mission = {
+    ...phone.days[dateKey].mission,
+    text: "Walk after lunch.",
+    updatedAt: "2026-07-30T12:05:00.000Z",
+  };
+  server.days[dateKey].mission = {
+    ...server.days[dateKey].mission,
+    text: "Old server habit.",
+    updatedAt: "2026-07-30T12:00:00.000Z",
+  };
+
+  const reopened = mergeServerState(phone, server);
+
+  assert.equal(reopened.days[dateKey].mission.text, "Walk after lunch.");
+});
+
+test("reopening accepts a newer habit edit from the server", () => {
+  const phone = createEmptyState();
+  const server = createEmptyState();
+  const dateKey = "2026-07-30";
+  phone.days[dateKey] = ensureDay(phone, dateKey).days[dateKey];
+  server.days[dateKey] = ensureDay(server, dateKey).days[dateKey];
+  phone.days[dateKey].mission = {
+    ...phone.days[dateKey].mission,
+    text: "Old phone habit.",
+    updatedAt: "2026-07-30T12:00:00.000Z",
+  };
+  server.days[dateKey].mission = {
+    ...server.days[dateKey].mission,
+    text: "Read after dinner.",
+    updatedAt: "2026-07-30T12:05:00.000Z",
+  };
+
+  const reopened = mergeServerState(phone, server);
+
+  assert.equal(reopened.days[dateKey].mission.text, "Read after dinner.");
+});
+
 test("a pending Athena update keeps the last readable profile", () => {
   const phone = createEmptyState();
   const server = createEmptyState();

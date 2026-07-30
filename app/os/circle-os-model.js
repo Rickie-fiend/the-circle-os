@@ -145,6 +145,7 @@ const DEFAULT_MISSION = {
   identity: "Yourself",
   completed: false,
   completedAt: null,
+  updatedAt: null,
 };
 
 function createProfileSession(text = "", confidence = 0) {
@@ -431,17 +432,19 @@ export function mergeServerState(state, serverState) {
       days[dateKey] = localDay;
       continue;
     }
+    const localMission = localDay.mission || {};
+    const remoteMission = remoteDay.mission || {};
+    const localMissionIsNewest =
+      !remoteMission.updatedAt ||
+      String(localMission.updatedAt || "").localeCompare(
+        String(remoteMission.updatedAt || ""),
+      ) >= 0;
     days[dateKey] = {
       ...remoteDay,
       ...localDay,
-      mission: {
-        ...localDay.mission,
-        text: remoteDay.mission?.text || localDay.mission?.text,
-        why: remoteDay.mission?.why || localDay.mission?.why,
-        identity: remoteDay.mission?.identity || localDay.mission?.identity,
-        completed: Boolean(localDay.mission?.completed),
-        completedAt: localDay.mission?.completedAt || null,
-      },
+      mission: localMissionIsNewest
+        ? { ...remoteMission, ...localMission }
+        : { ...localMission, ...remoteMission },
       missions: localDay.missions?.length
         ? localDay.missions
         : remoteDay.missions ?? [],
@@ -651,6 +654,7 @@ export function applyProfileResult(state, result, outboxId) {
               ...state.days[getDateKey()]?.mission,
               text: missionText,
               identity: "Yourself",
+              updatedAt: new Date().toISOString(),
             },
           },
         }
@@ -796,6 +800,7 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
             identity,
             completed: false,
             completedAt: null,
+            updatedAt: new Date().toISOString(),
           },
         },
       },
