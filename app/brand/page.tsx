@@ -118,13 +118,13 @@ export default function BrandGuidelines() {
         <div className="type-rules">
           <article>
             <h3>{circleBrand.typography.display}</h3>
-            <p>Meaningful headlines, reflections, and moments of pause.</p>
-            <p>Use sentence case. Give it room. Never use it for dense interface text.</p>
+            <p>Outer editorial headlines, reflections, and moments of pause.</p>
+            <p>Give it room. Never use it inside an app or for interface text.</p>
           </article>
           <article>
             <h3>{circleBrand.typography.functional}</h3>
-            <p>Body copy, navigation, controls, data, labels, and functional text.</p>
-            <p>Use regular weight for reading and medium weight for clear emphasis.</p>
+            <p>Every app interior, plus body copy, navigation, controls, data, and labels.</p>
+            <p>One app uses one font. Use regular weight to read and bold weight to act.</p>
           </article>
         </div>
       </section>

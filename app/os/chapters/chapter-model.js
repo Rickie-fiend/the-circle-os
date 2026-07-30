@@ -100,6 +100,16 @@ export function selectHourlyChapter(chapters, runs, nowValue = new Date()) {
     const run = runs[chapterRunId(chapter)];
     return run?.status === "in-progress";
   });
+  const deferredThisHour = active.find((chapter) => {
+    const run = runs[chapterRunId(chapter)];
+    return (
+      run?.deferredAt &&
+      chapterHourKey(run.deferredAt) === chapterHourKey(nowValue)
+    );
+  });
+  // "Later" should hold the idle app in place for this hour. Without this,
+  // another untouched chapter replaces the cover as soon as it is deferred.
+  if (deferredThisHour) return deferredThisHour;
   const freshActive = active.find(
     (chapter) => !(runs[chapterRunId(chapter)]?.deferCount || 0),
   );

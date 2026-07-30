@@ -107,6 +107,16 @@ export default function CircleOSMirror() {
   const updateLabel = formatUpdated(profileCase.updatedAt);
   const weekJourneyVersion = `${loggedPastDays}|${pastMinutes}|${pastCheckIns}|${pastMissionWins}`;
   const profileJourneyVersion = profileCase.updatedAt || profileCase.status;
+  const lifeJourneyVersion = [
+    profileCase.sessions.typicalTuesday.updatedAt,
+    profileCase.sessions.missionStatement.updatedAt,
+  ].join("|");
+  const visibleLifeApp = appSessionIndex(
+    state,
+    "vision-life",
+    lifeJourneyVersion,
+    0,
+  );
   const visibleWeekApp = appSessionIndex(
     state,
     "vision-week",
@@ -227,12 +237,18 @@ export default function CircleOSMirror() {
   function profileSession(
     key: string,
     label: string,
-    options: { feature?: boolean; locked?: boolean } = {},
+    options: {
+      feature?: boolean;
+      locked?: boolean;
+      placeholder?: string;
+    } = {},
   ) {
     const session = profileCase.sessions[key];
     const isEditing = editing === key;
+    const displayedText = session.text.trim() || options.placeholder || "Tap to write.";
     return (
       <article
+        key={key}
         className={options.feature ? "profile-session feature" : "profile-session"}
       >
         <div className="profile-session-head">
@@ -261,7 +277,7 @@ export default function CircleOSMirror() {
             type="button"
             onClick={() => beginEdit(key)}
           >
-            {session.text}
+            {displayedText}
           </button>
         )}
       </article>
@@ -392,10 +408,32 @@ export default function CircleOSMirror() {
           </div>
         </header>
 
-        <section className="vision-profile-case" aria-label="Your profile case">
-          {profileSession("typicalTuesday", "Typical Tuesday", {
-            feature: true,
-          })}
+        <section className="vision-profile-case" aria-label="The life you want">
+          <SwipeSession
+            availableIndices={[0, 1]}
+            className="vision-life-apps"
+            index={visibleLifeApp}
+            label="The life you want apps"
+            maxIndex={1}
+            onIndexChange={(nextIndex) =>
+              updateState((current) =>
+                setAppSessionIndex(
+                  current,
+                  "vision-life",
+                  lifeJourneyVersion,
+                  nextIndex,
+                ),
+              )
+            }
+          >
+            {profileSession("typicalTuesday", "Typical Tuesday", {
+              feature: true,
+            })}
+            {profileSession("missionStatement", "Mission Statement", {
+              feature: true,
+              placeholder: "Tap to write your mission.",
+            })}
+          </SwipeSession>
         </section>
 
         <header className="mirror-intro mirror-week-intro">
@@ -594,6 +632,7 @@ export default function CircleOSMirror() {
           <div>
             <p className="os-eyebrow">Athena</p>
             <h1>A reading of you</h1>
+            <p className="profile-updated">{updateLabel}</p>
           </div>
         </header>
 
@@ -625,7 +664,9 @@ export default function CircleOSMirror() {
             <div className="athena-reader-cover">
               <p className="os-card-label">Athena</p>
               <h2>
-                {profileReady ? "What Athena sees." : "Athena is still learning."}
+                {profileReady
+                  ? "You have changed."
+                  : "Athena is still learning."}
               </h2>
               {profileReady ? (
                 <span className="athena-reader-begin">Swipe to begin</span>

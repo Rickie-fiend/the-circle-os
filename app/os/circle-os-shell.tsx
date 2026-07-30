@@ -798,6 +798,10 @@ export function TodayExperience() {
   const [checkInTitleDraft, setCheckInTitleDraft] = useState("");
   const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
   const [addingHabit, setAddingHabit] = useState(false);
+  const [editingPrimaryMission, setEditingPrimaryMission] = useState(false);
+  const [primaryMissionDraft, setPrimaryMissionDraft] = useState(
+    today.mission.text,
+  );
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [isLogOpen, setLogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -811,6 +815,12 @@ export function TodayExperience() {
   const [newMoment, setNewMoment] = useState("");
   const [editingMomentKey, setEditingMomentKey] = useState<string | null>(null);
   const [momentDraft, setMomentDraft] = useState("");
+
+  useEffect(() => {
+    if (!editingPrimaryMission) {
+      setPrimaryMissionDraft(today.mission.text);
+    }
+  }, [editingPrimaryMission, today.mission.text]);
 
   useEffect(() => {
     if (
@@ -1122,8 +1132,14 @@ export function TodayExperience() {
     );
   }
 
-  function changePrimaryMission(text: string) {
-    if (!text.trim()) return;
+  function commitPrimaryMission() {
+    const text = primaryMissionDraft.trim();
+    setEditingPrimaryMission(false);
+    if (!text) {
+      setPrimaryMissionDraft(today.mission.text);
+      return;
+    }
+    if (text === today.mission.text) return;
     updateToday(
       (day) => ({
         ...day,
@@ -1134,6 +1150,7 @@ export function TodayExperience() {
       }),
       "mission",
     );
+    setPrimaryMissionDraft(text);
   }
 
   function changeExtraMission(id: string, text: string) {
@@ -1831,13 +1848,15 @@ export function TodayExperience() {
                   }`}
                   maxLength={240}
                   rows={3}
-                  value={today.mission.text}
-                  onChange={(event) => changePrimaryMission(event.target.value)}
-                  onBlur={(event) => {
-                    if (!event.currentTarget.value.trim()) {
-                      changePrimaryMission(today.mission.text);
-                    }
+                  value={primaryMissionDraft}
+                  onFocus={() => {
+                    setPrimaryMissionDraft(today.mission.text);
+                    setEditingPrimaryMission(true);
                   }}
+                  onChange={(event) =>
+                    setPrimaryMissionDraft(event.target.value)
+                  }
+                  onBlur={commitPrimaryMission}
                 />
               }
               idleContent={
@@ -1967,15 +1986,15 @@ export function TodayExperience() {
                                 className="os-habit-record-edit"
                                 maxLength={240}
                                 rows={1}
-                                value={today.mission.text}
-                                onChange={(event) =>
-                                  changePrimaryMission(event.target.value)
-                                }
-                                onBlur={(event) => {
-                                  if (!event.currentTarget.value.trim()) {
-                                    changePrimaryMission(today.mission.text);
-                                  }
+                                value={primaryMissionDraft}
+                                onFocus={() => {
+                                  setPrimaryMissionDraft(today.mission.text);
+                                  setEditingPrimaryMission(true);
                                 }}
+                                onChange={(event) =>
+                                  setPrimaryMissionDraft(event.target.value)
+                                }
+                                onBlur={commitPrimaryMission}
                               />
                             </div>
                           ) : null}

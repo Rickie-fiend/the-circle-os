@@ -168,6 +168,26 @@ test("a deferred optional chapter lets a fresh chapter appear first", () => {
   );
 });
 
+test("a deferred optional chapter stays on its idle app for the current hour", () => {
+  const later = { ...logSetup, id: "athena-checkin-a-later", version: 1 };
+  const fresh = { ...logSetup, id: "athena-checkin-z-fresh", version: 1 };
+  const deferred = {
+    ...createChapterRun(later),
+    status: "in-progress",
+    deferCount: 1,
+    deferredAt: "2026-07-30T10:20:00.000Z",
+  };
+
+  assert.equal(
+    selectHourlyChapter(
+      [later, fresh],
+      { [chapterRunId(later)]: deferred },
+      new Date("2026-07-30T10:45:00.000Z"),
+    ).id,
+    later.id,
+  );
+});
+
 test("the Markdown authoring format compiles into a validated chapter", () => {
   const source = `---
 id: morning-check

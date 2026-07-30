@@ -2062,6 +2062,10 @@
   padding: 0 !important;
 }
 
+.circle-os .vision-life-apps {
+  border-radius: 24px;
+}
+
 .circle-os .profile-updated {
   color: #8d8980;
   font-size: 0.6rem;
@@ -2118,10 +2122,11 @@
 }
 
 .circle-os .profile-session.feature .profile-session-copy {
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 1.35rem;
-  font-weight: 500;
-  line-height: 1.45;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.08rem;
+  font-weight: 560;
+  letter-spacing: -0.018em;
+  line-height: 1.55;
 }
 
 .circle-os .profile-session-copy:focus-visible,
@@ -2141,7 +2146,9 @@
   border: 0;
   border-left: 2px solid #e36b37;
   color: inherit;
-  font: inherit;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.08rem;
+  font-weight: 520;
   line-height: 1.6;
   min-height: 130px;
   padding: 0.5rem 0.8rem;
@@ -2170,10 +2177,10 @@
   background: transparent;
   border: 0;
   color: inherit;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 1.3rem;
-  font-weight: 500;
-  line-height: 1.45;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.08rem;
+  font-weight: 520;
+  line-height: 1.55;
   min-height: 180px;
   outline: 0;
   resize: vertical;
@@ -2527,11 +2534,11 @@
 }
 
 .mirror-summary-card > h2 {
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 1.75rem;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+  line-height: 1.14;
   margin: 0.6rem 0 1.2rem;
 }
 
@@ -2607,9 +2614,9 @@
 
 .mirror-card-head > strong {
   color: #e36b37;
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-sans), Arial, sans-serif;
   font-size: 1.7rem;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .circle-os .time-river {
@@ -2751,9 +2758,9 @@
 .identity-compact strong {
   color: #e36b37;
   display: block;
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-sans), Arial, sans-serif;
   font-size: 2.2rem;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -2764,9 +2771,9 @@
 }
 
 .circle-os .mirror-next h2 {
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 680;
   letter-spacing: -0.025em;
   line-height: 1.05;
   margin: 0.5rem 0 0;
