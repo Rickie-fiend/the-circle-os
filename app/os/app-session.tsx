@@ -3,6 +3,7 @@
 import {
   Children,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -57,11 +58,33 @@ export function SwipeSession({
     pointerId: number;
   } | null>(null);
   const windowRef = useRef<HTMLDivElement | null>(null);
+  const currentPageRef = useRef<HTMLDivElement | null>(null);
   const settleTimer = useRef<number | null>(null);
   const didSwipe = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [settling, setSettling] = useState(false);
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (frameHeight || !currentPageRef.current) return;
+
+    const page = currentPageRef.current;
+    const measure = () => {
+      const nextHeight = Math.ceil(page.scrollHeight);
+      if (nextHeight <= 0) return;
+      setContentHeight((currentHeight) =>
+        currentHeight === nextHeight ? currentHeight : nextHeight,
+      );
+    };
+
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(page);
+    return () => observer.disconnect();
+  }, [frameHeight, index]);
 
   useEffect(
     () => () => {
@@ -201,9 +224,17 @@ export function SwipeSession({
       tabIndex={0}
     >
       <div
-        className={`os-app-window${frameHeight ? " fixed-height" : ""}`}
+        className={`os-app-window${
+          frameHeight ? " fixed-height" : " fluid-height"
+        }`}
         ref={windowRef}
-        style={frameHeight ? { height: frameHeight } : undefined}
+        style={
+          frameHeight
+            ? { height: frameHeight }
+            : contentHeight
+              ? { height: `${contentHeight}px` }
+              : undefined
+        }
       >
         {(dragging || settling) && previousIndex !== undefined ? (
           <div
@@ -218,6 +249,7 @@ export function SwipeSession({
         ) : null}
         <div
           className={`os-app-page current${dragging ? " dragging" : ""}`}
+          ref={currentPageRef}
           style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
         >
           {apps[index]}

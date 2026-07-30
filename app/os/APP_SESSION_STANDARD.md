@@ -36,6 +36,8 @@ Used for charts, weekly views, and other things worth reading again.
 - The outer session frame stays still.
 - Only the inner page follows the finger.
 - A swipe completes inside the clipped frame before state changes.
+- When pages have different heights, the frame keeps its old height until the
+  swipe completes, then eases to the new page height.
 - A tap never becomes a swipe.
 - Text fields never focus because of a swipe.
 - Every swipe also has a button or keyboard path.
@@ -49,6 +51,8 @@ Used for charts, weekly views, and other things worth reading again.
   pages share a theme.
 - Fixed-height chart sessions scroll inside themselves when needed. They never
   push the whole route while changing pages.
+- Fluid-height sessions use the shared frame resize. Reduced-motion settings
+  make the resize immediate.
 
 ## State
 
@@ -56,4 +60,3 @@ Used for charts, weekly views, and other things worth reading again.
 - Library position is stored by session id and data version.
 - A matching version restores the saved page.
 - A new version returns to page zero.
-
