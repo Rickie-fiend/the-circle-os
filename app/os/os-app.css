@@ -642,15 +642,14 @@
 }
 
 .circle-os .os-repeated-habits {
-  border-top: 2px solid #191813;
   display: grid;
   gap: 0;
-  margin-top: 1.5rem;
+  margin-top: 1.1rem;
 }
 
 .circle-os .os-repeated-habit {
-  border-bottom: 1px solid rgb(25 24 19 / 0.35);
-  padding-bottom: 1.35rem;
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .circle-os .os-extra-mission-copy {
@@ -1629,6 +1628,7 @@
 .circle-os .os-timeline {
   border: 0;
   margin-top: 0.9rem;
+  position: relative;
 }
 
 .circle-os .os-expand-hour {

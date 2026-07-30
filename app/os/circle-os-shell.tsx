@@ -780,6 +780,8 @@ export function TodayExperience() {
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
   const [liveNow, setLiveNow] = useState(() => new Date());
+  const [liveMarkerTop, setLiveMarkerTop] = useState<number | null>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
   const [profileSparkClock, setProfileSparkClock] = useState(
     PROFILE_SPARK_OPENED_AT,
   );
@@ -941,6 +943,44 @@ export function TodayExperience() {
       : liveNow.getHours();
   const liveHourProgress =
     (liveNow.getMinutes() * 60 + liveNow.getSeconds()) / 3600;
+
+  useEffect(() => {
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+
+    const updateMarker = () => {
+      const current = timeline.querySelector<HTMLElement>(
+        `[data-log-hour="${liveClockHour}"] .os-time-range`,
+      );
+      const next = timeline.querySelector<HTMLElement>(
+        `[data-log-hour="${liveClockHour + 1}"] .os-time-range`,
+      );
+      if (!current || !next) {
+        setLiveMarkerTop(null);
+        return;
+      }
+      const timelineRect = timeline.getBoundingClientRect();
+      const currentRect = current.getBoundingClientRect();
+      const nextRect = next.getBoundingClientRect();
+      const currentCenter =
+        currentRect.top - timelineRect.top + timeline.scrollTop + currentRect.height / 2;
+      const nextCenter =
+        nextRect.top - timelineRect.top + timeline.scrollTop + nextRect.height / 2;
+      setLiveMarkerTop(
+        currentCenter + (nextCenter - currentCenter) * liveHourProgress,
+      );
+    };
+
+    updateMarker();
+    const observer = new ResizeObserver(updateMarker);
+    observer.observe(timeline);
+    window.addEventListener("resize", updateMarker);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateMarker);
+    };
+  }, [liveClockHour, liveHourProgress, logEndHour, logStartHour]);
+
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
   const repeatHabitChapter = useMemo<ChapterDefinition | null>(() => {
@@ -1920,7 +1960,14 @@ export function TodayExperience() {
             </div>
           </div>
 
-          <div className="os-timeline">
+          <div className="os-timeline" ref={timelineRef}>
+            {liveMarkerTop !== null ? (
+              <span
+                aria-label="Current time"
+                className="os-current-time"
+                style={{ top: `${liveMarkerTop}px` }}
+              />
+            ) : null}
             {logStartHour > CIRCLE_DAY_START_HOUR ? (
               <button
                 className="os-expand-hour"
@@ -1955,15 +2002,9 @@ export function TodayExperience() {
                   className={`${
                     block ? "filled" : defaultTitle ? "suggested" : "empty"
                   }${isCurrentHour ? " is-current-hour" : ""}`}
+                  data-log-hour={hour}
                   key={hour}
                 >
-                  {isCurrentHour ? (
-                    <span
-                      aria-label="Current time"
-                      className="os-current-time"
-                      style={{ top: `${liveHourProgress * 100}%` }}
-                    />
-                  ) : null}
                   <div className="os-time-range">
                     <strong>{slotStart}</strong>
                   </div>
