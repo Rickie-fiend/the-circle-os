@@ -151,7 +151,11 @@ export function SwipeSession({
 
   function blocksSwipe(target: EventTarget | null) {
     return target instanceof Element
-      ? Boolean(target.closest("input, select, a, [contenteditable='true']"))
+      ? Boolean(
+          target.closest(
+            "input, textarea, select, a, [contenteditable='true']",
+          ),
+        )
       : false;
   }
 
@@ -321,6 +325,9 @@ export function SwipeSession({
         showingBlockedCue ? " required-nudge" : ""
       }`.trim()}
       onClickCapture={stopClickAfterSwipe}
+      onContextMenu={(event) => {
+        if (onLongPress) event.preventDefault();
+      }}
       onKeyDown={useArrowKey}
       onWheel={useTrackpadSwipe}
       onPointerCancel={() => {

@@ -55,6 +55,47 @@ function formatUpdated(value: string | null) {
   })}`;
 }
 
+type GapVisualMode = "unclear" | "close" | "mixed" | "far";
+
+function gapVisualReading(text: string, recordedDays: number) {
+  const normalized = text.toLowerCase();
+  if (
+    !recordedDays ||
+    /not enough|too early|cannot say|unclear|more logged days|still learning/.test(
+      normalized,
+    )
+  ) {
+    return {
+      mode: "unclear" as GapVisualMode,
+      label: "Still taking shape.",
+    };
+  }
+
+  const soundsClose =
+    /close|match|align|already|overlap|same place|fits/.test(normalized);
+  const soundsFar =
+    /far|apart|wide|different|missing|rarely|not match|does not/.test(
+      normalized,
+    );
+
+  if (soundsClose && !soundsFar) {
+    return {
+      mode: "close" as GapVisualMode,
+      label: "Some parts seem close.",
+    };
+  }
+  if (soundsFar && !soundsClose) {
+    return {
+      mode: "far" as GapVisualMode,
+      label: "Some parts seem far.",
+    };
+  }
+  return {
+    mode: "mixed" as GapVisualMode,
+    label: "Some parts meet. Some do not.",
+  };
+}
+
 export default function CircleOSMirror() {
   const {
     state,
@@ -105,6 +146,10 @@ export default function CircleOSMirror() {
   );
   const profileReady = hasReadableProfileCase(profileCase);
   const updateLabel = formatUpdated(profileCase.updatedAt);
+  const gapReading = gapVisualReading(
+    profileCase.sessions.gap.text,
+    loggedPastDays,
+  );
   const weekJourneyVersion = `${loggedPastDays}|${pastMinutes}|${pastCheckIns}|${pastMissionWins}`;
   const profileJourneyVersion = profileCase.updatedAt || profileCase.status;
   const lifeJourneyVersion = [
@@ -127,6 +172,12 @@ export default function CircleOSMirror() {
     state,
     "vision-profile",
     profileJourneyVersion,
+    0,
+  );
+  const visibleGapApp = appSessionIndex(
+    state,
+    "vision-gap",
+    `${profileJourneyVersion}|${loggedPastDays}`,
     0,
   );
   const setupComplete = Boolean(
@@ -484,7 +535,7 @@ export default function CircleOSMirror() {
                 );
               }}
               ready={weekReady}
-              theme="light"
+              theme="dark"
               title={weekReady ? "Your week is ready." : "Your week starts here."}
             />
               <article
@@ -643,13 +694,13 @@ export default function CircleOSMirror() {
           <SwipeSession
             availableIndices={
               profileReady
-                ? [0, 1, 2, 3, 4]
+                ? [0, 1, 2, 3]
                 : [0]
             }
             className="vision-analysis-apps athena-reader-session"
             index={visibleProfileApp}
             label="Athena reading apps"
-            maxIndex={profileReady ? 4 : 0}
+            maxIndex={profileReady ? 3 : 0}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -682,10 +733,64 @@ export default function CircleOSMirror() {
               {profileReaderApp("Your shape", "How you may move through life.", [
                 ["personality", "Personality"],
               ])}
-              {profileReaderApp("The space", "What life may be asking for.", [
-                ["gap", "The gap"],
-                ["missionStatement", "Mission statement"],
-              ])}
+          </SwipeSession>
+        </section>
+
+        <header className="mirror-intro gap-intro">
+          <div>
+            <p className="os-eyebrow">The gap</p>
+            <h1>What sits between</h1>
+          </div>
+        </header>
+
+        <section className="vision-gap-session" aria-label="The gap session">
+          <SwipeSession
+            availableIndices={[0, 1, 2]}
+            className="vision-gap-apps"
+            index={visibleGapApp}
+            label="The gap apps"
+            maxIndex={2}
+            onIndexChange={(nextIndex) =>
+              updateState((current) =>
+                setAppSessionIndex(
+                  current,
+                  "vision-gap",
+                  `${profileJourneyVersion}|${loggedPastDays}`,
+                  nextIndex,
+                ),
+              )
+            }
+          >
+            <div className="gap-cover">
+              <p className="os-card-label">The gap</p>
+              <h2>Some parts meet. Some do not.</h2>
+              <span>Swipe to see</span>
+            </div>
+
+            <article className={`gap-visual-app is-${gapReading.mode}`}>
+              <div className="gap-visual-head">
+                <p className="os-card-label">Rough view</p>
+                <span>Not a score</span>
+              </div>
+              <div
+                className="gap-orbits"
+                aria-label={`Athena's rough view: ${gapReading.label}`}
+              >
+                <div className="gap-orbit gap-orbit-wanted">
+                  <span>Life you want</span>
+                </div>
+                <div className="gap-orbit gap-orbit-lived">
+                  <span>Life now</span>
+                </div>
+              </div>
+              <h2>{gapReading.label}</h2>
+              <p>Athena is making a rough guess from the days you recorded.</p>
+            </article>
+
+            {profileSession("gap", "Athena's rough reading", {
+              feature: true,
+              placeholder: "There is not enough evidence to say yet.",
+            })}
           </SwipeSession>
         </section>
 

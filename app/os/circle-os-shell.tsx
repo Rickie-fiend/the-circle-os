@@ -817,12 +817,6 @@ export function TodayExperience() {
   const [momentDraft, setMomentDraft] = useState("");
 
   useEffect(() => {
-    if (!editingPrimaryMission) {
-      setPrimaryMissionDraft(today.mission.text);
-    }
-  }, [editingPrimaryMission, today.mission.text]);
-
-  useEffect(() => {
     if (
       ready &&
       (!state.profile.name ||
@@ -1484,6 +1478,27 @@ export function TodayExperience() {
     );
   }
 
+  function refreshProfileSpark() {
+    const refreshedAt = new Date().toISOString();
+    if (profileSparkRun?.status === "in-progress") {
+      updateState((current) =>
+        storeChapterRun(
+          current,
+          {
+            ...profileSparkRun,
+            deferCount: (profileSparkRun.deferCount || 0) + 1,
+            deferredAt: refreshedAt,
+            updatedAt: refreshedAt,
+          },
+          "check-in",
+        ),
+      );
+    }
+    setProfileSparkClock((current) =>
+      Math.max(current, Date.now()) + 3_600_000,
+    );
+  }
+
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
     const isNewHabit = addingHabit;
@@ -1679,9 +1694,7 @@ export function TodayExperience() {
               startOnBackApp={Boolean(profileSparkRun.deferredAt)}
               onBackAppHidden={resumeProfileSparkRun}
               onBackAppShown={deferProfileSparkRun}
-              onLongPress={() =>
-                setProfileSparkClock((current) => current + 3_600_000)
-              }
+              onLongPress={refreshProfileSpark}
               onRunChange={saveProfileSparkRun}
             />
           ) : (
@@ -1709,7 +1722,7 @@ export function TodayExperience() {
             label="Check-in session"
             onLongPress={
               checkInConfirmed
-                ? () => setProfileSparkClock((current) => current + 3_600_000)
+                ? refreshProfileSpark
                 : undefined
             }
             maxIndex={
@@ -1848,7 +1861,11 @@ export function TodayExperience() {
                   }`}
                   maxLength={240}
                   rows={3}
-                  value={primaryMissionDraft}
+                  value={
+                    editingPrimaryMission
+                      ? primaryMissionDraft
+                      : today.mission.text
+                  }
                   onFocus={() => {
                     setPrimaryMissionDraft(today.mission.text);
                     setEditingPrimaryMission(true);
@@ -1986,7 +2003,11 @@ export function TodayExperience() {
                                 className="os-habit-record-edit"
                                 maxLength={240}
                                 rows={1}
-                                value={primaryMissionDraft}
+                                value={
+                                  editingPrimaryMission
+                                    ? primaryMissionDraft
+                                    : today.mission.text
+                                }
                                 onFocus={() => {
                                   setPrimaryMissionDraft(today.mission.text);
                                   setEditingPrimaryMission(true);
@@ -2088,7 +2109,6 @@ export function TodayExperience() {
             <div>
               <p className="os-card-label">Log</p>
               <h2 id="day-heading">Your day, hour by hour</h2>
-              <span className="os-day-hint">Tap any line to write or change it</span>
             </div>
           </div>
 
