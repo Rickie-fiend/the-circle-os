@@ -287,6 +287,25 @@ export default function CircleOSMirror() {
     );
   }
 
+  function profileReaderApp(
+    label: string,
+    title: string,
+    keys: Array<[string, string]>,
+  ) {
+    return (
+      <article className="athena-reader-app" key={label}>
+        <header>
+          <p className="os-card-label">{label}</p>
+          <h2>{title}</h2>
+          <span>{updateLabel}</span>
+        </header>
+        <div className="athena-reader-copy">
+          {keys.map(([key, heading]) => profileArticleSection(key, heading))}
+        </div>
+      </article>
+    );
+  }
+
   if (!setupComplete) {
     return (
         <main className="os-mirror os-setup">
@@ -357,7 +376,7 @@ export default function CircleOSMirror() {
         <header className="vision-intro">
           <div>
             <p className="os-eyebrow">Vision</p>
-            <h1>Your typical Tuesday</h1>
+            <h1>The life you want.</h1>
             <p className="vision-profile">
               {state.profile.name}, {state.profile.age}
             </p>
@@ -427,7 +446,7 @@ export default function CircleOSMirror() {
                 );
               }}
               ready={weekReady}
-              theme="dark"
+              theme="light"
               title={weekReady ? "Your week is ready." : "Your week starts here."}
             />
               <article
@@ -573,8 +592,8 @@ export default function CircleOSMirror() {
 
         <header className="mirror-intro analysis-intro">
           <div>
-            <p className="os-eyebrow">Your profile</p>
-            <h1>What Athena understands</h1>
+            <p className="os-eyebrow">Athena</p>
+            <h1>A reading of you</h1>
             <p className="profile-updated">{updateLabel}</p>
           </div>
         </header>
@@ -585,12 +604,14 @@ export default function CircleOSMirror() {
         >
           <SwipeSession
             availableIndices={
-              visibleProfileApp === 0 ? [0, 1] : [1]
+              profileReady
+                ? [0, 1, 2, 3, 4]
+                : [0]
             }
-            className="vision-analysis-apps"
+            className="vision-analysis-apps athena-reader-session"
             index={visibleProfileApp}
-            label="AI profile apps"
-            maxIndex={profileReady ? 1 : 0}
+            label="Athena reading apps"
+            maxIndex={profileReady ? 4 : 0}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -602,14 +623,14 @@ export default function CircleOSMirror() {
               )
             }
           >
-            <div className="profile-ai-intro">
-              <p className="os-card-label">Before you read</p>
+            <div className="athena-reader-cover">
+              <p className="os-card-label">Athena's reading</p>
               <h2>
-                {profileReady ? "A working picture of you." : "Still learning you."}
+                {profileReady ? "Here is what I see." : "Still learning you."}
               </h2>
               <p>
-                AI can be wrong. Keep what helps. Edit anything that does not
-                feel true.
+                A working picture from your words and days. Keep what feels
+                true. Change what does not.
               </p>
               <span>{profileReady ? updateLabel : "Ready after the morning update."}</span>
               {profileReady ? (
@@ -625,9 +646,9 @@ export default function CircleOSMirror() {
                       ),
                     );
                   }}
-                  aria-label="Read your profile"
+                  aria-label="Read Athena's profile"
                 >
-                  Read your profile
+                  Read
                 </button>
               ) : (
                 <strong className="os-session-wait">
@@ -635,19 +656,20 @@ export default function CircleOSMirror() {
                 </strong>
               )}
             </div>
-              <article className="profile-article">
-                <header>
-                  <p className="os-card-label">Your profile</p>
-                  <h2>What I understand so far</h2>
-                  <span>{updateLabel}</span>
-                </header>
-                {profileArticleSection("currentLife", "Current life")}
-                {profileArticleSection("whatMatters", "What matters")}
-                {profileArticleSection("interests", "Interests")}
-                {profileArticleSection("gap", "The gap")}
-                {profileArticleSection("missionStatement", "Mission statement")}
-                {profileArticleSection("personality", "Personality")}
-              </article>
+              {profileReaderApp("Your days", "The life you are living.", [
+                ["currentLife", "Current life"],
+              ])}
+              {profileReaderApp("What feels alive", "What matters to you.", [
+                ["whatMatters", "What matters"],
+                ["interests", "Interests"],
+              ])}
+              {profileReaderApp("Your shape", "How you may move through life.", [
+                ["personality", "Personality"],
+              ])}
+              {profileReaderApp("The space", "What life may be asking for.", [
+                ["gap", "The gap"],
+                ["missionStatement", "Mission statement"],
+              ])}
           </SwipeSession>
         </section>
 

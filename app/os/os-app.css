@@ -2118,14 +2118,14 @@
 }
 
 .circle-os .vision-analysis-apps {
-  background: #222119;
-  border: 1px solid rgb(241 239 232 / 0.1);
-  box-shadow: 0 16px 34px rgb(0 0 0 / 0.16);
+  background: linear-gradient(145deg, #e36b37 0%, #c65225 100%);
+  border: 1px solid rgb(255 248 241 / 0.2);
+  box-shadow: 0 18px 38px rgb(105 35 12 / 0.25);
 }
 
 .circle-os .vision-week-apps {
-  background: #191813;
-  border: 1px solid rgb(241 239 232 / 0.1);
+  background: #f1efe8;
+  border: 1px solid rgb(25 24 19 / 0.1);
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.16);
 }
 
@@ -2149,120 +2149,107 @@
   margin: 1rem 0 0;
 }
 
-.circle-os .profile-ai-intro {
+.circle-os .athena-reader-cover,
+.circle-os .athena-reader-app {
   background:
-    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.16), transparent 36%),
+    radial-gradient(circle at 88% 8%, rgb(255 255 255 / 0.18), transparent 34%),
     linear-gradient(145deg, #e36b37 0%, #c65225 100%);
-  border: 1px solid rgb(255 255 255 / 0.16);
-  border-radius: 28px;
-  box-shadow: 0 16px 34px rgb(129 45 16 / 0.22);
   color: #fff8f1;
-  min-height: 276px;
-  padding: 24px 22px;
+  min-height: 330px;
+  padding: 26px 24px;
 }
 
-.circle-os .profile-ai-intro .os-card-label {
-  color: #fff8f1;
+.circle-os .athena-reader-cover .os-card-label,
+.circle-os .athena-reader-app .os-card-label {
+  color: #191813;
 }
 
-.circle-os .profile-ai-intro h2 {
+.circle-os .athena-reader-cover h2,
+.circle-os .athena-reader-app > header h2 {
   font-family: var(--font-display), Georgia, serif;
-  font-size: 1.75rem;
+  font-size: clamp(2.05rem, 8vw, 3rem);
   font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  margin: 0.75rem 0 1rem;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  margin: 0.85rem 0 1.1rem;
 }
 
-.circle-os .profile-ai-intro > p:not(.os-card-label) {
+.circle-os .athena-reader-cover > p:not(.os-card-label) {
   color: rgb(255 248 241 / 0.8);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   line-height: 1.6;
   margin: 0;
+  max-width: 30ch;
 }
 
-.circle-os .profile-ai-intro > span {
+.circle-os .athena-reader-cover > span,
+.circle-os .athena-reader-app > header > span {
   color: rgb(255 248 241 / 0.62);
   display: block;
   font-size: 0.6rem;
   margin-top: 1rem;
 }
 
-.circle-os .profile-ai-intro > button {
-  background: transparent;
+.circle-os .athena-reader-cover > button {
+  align-self: start;
+  background: #191813;
   border: 0;
-  color: rgb(255 248 241 / 0.72);
-  font-size: 0.62rem;
-  margin: 1.2rem 0 0 auto;
-  min-height: 44px;
-  padding: 0.55rem 0;
+  border-radius: 999px;
+  color: #fff8f1;
+  font-size: 0.72rem;
+  font-weight: 650;
+  margin-top: auto;
+  min-height: 46px;
+  padding: 0.55rem 1rem;
 }
 
-.circle-os .profile-ai-intro > .os-session-wait {
+.circle-os .athena-reader-cover > .os-session-wait {
   color: rgb(255 248 241 / 0.62);
   margin-top: 1.2rem;
 }
 
-.circle-os .profile-article {
-  background: #222119;
-  border: 1px solid rgb(241 239 232 / 0.08);
-  border-radius: 24px;
-  color: #f1efe8;
-  padding: 22px;
+.circle-os .athena-reader-app > header {
+  border-bottom: 2px solid #191813;
+  padding-bottom: 1.2rem;
 }
 
-.circle-os .profile-article > header {
-  border-bottom: 1px solid rgb(241 239 232 / 0.1);
-  padding-bottom: 1.3rem;
+.circle-os .athena-reader-copy {
+  display: grid;
 }
 
-.circle-os .profile-article > header h2 {
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 1.75rem;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  margin: 0.7rem 0 0.6rem;
+.circle-os .athena-reader-app .profile-article-part {
+  border-bottom: 1px solid rgb(25 24 19 / 0.34);
+  padding: 1.35rem 0;
 }
 
-.circle-os .profile-article > header span {
-  color: rgb(241 239 232 / 0.46);
-  font-size: 0.6rem;
-}
-
-.circle-os .profile-article-part {
-  border-bottom: 1px solid rgb(241 239 232 / 0.08);
-  padding: 1.45rem 0;
-}
-
-.circle-os .profile-article-part:last-child {
+.circle-os .athena-reader-app .profile-article-part:last-child {
   border-bottom: 0;
   padding-bottom: 0;
 }
 
-.circle-os .profile-article-part > div:first-child {
+.circle-os .athena-reader-app .profile-article-part > div:first-child {
   align-items: center;
   display: flex;
   justify-content: space-between;
 }
 
-.circle-os .profile-article-part h2 {
-  color: #e36b37;
+.circle-os .athena-reader-app .profile-article-part h2 {
+  color: #191813;
   font-size: 0.62rem;
   letter-spacing: 0.12em;
   margin: 0;
   text-transform: uppercase;
 }
 
-.circle-os .profile-article-part > div:first-child > button {
+.circle-os .athena-reader-app .profile-article-part > div:first-child > button {
   background: transparent;
   border: 0;
-  color: #e36b37;
+  color: #191813;
   font-size: 0.6rem;
   padding: 0.4rem 0;
 }
 
-.circle-os .profile-article-part > p {
+.circle-os .athena-reader-app .profile-article-part > p {
   color: rgb(241 239 232 / 0.82);
   font-family: var(--font-display), Georgia, serif;
   font-size: 1.12rem;

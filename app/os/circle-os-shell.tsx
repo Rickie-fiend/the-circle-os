@@ -1490,11 +1490,6 @@ export function TodayExperience() {
           >
             <SessionIntro
               refreshKey={checkInJourneyVersion}
-              detail={
-                unansweredCodexQuestion
-                  ? "One new question is ready."
-                  : "A short pause to notice what feels true."
-              }
               label="Check-in"
               title={
                 unansweredCodexQuestion
