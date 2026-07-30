@@ -153,6 +153,7 @@ export default function CircleOSMirror() {
   const weekJourneyVersion = `${loggedPastDays}|${pastMinutes}|${pastCheckIns}|${pastMissionWins}`;
   const profileJourneyVersion = profileCase.updatedAt || profileCase.status;
   const lifeJourneyVersion = [
+    "vision-cover-v1",
     profileCase.sessions.typicalTuesday.updatedAt,
     profileCase.sessions.missionStatement.updatedAt,
   ].join("|");
@@ -461,11 +462,11 @@ export default function CircleOSMirror() {
 
         <section className="vision-profile-case" aria-label="The life you want">
           <SwipeSession
-            availableIndices={[0, 1]}
+            availableIndices={[0, 1, 2]}
             className="vision-life-apps"
             index={visibleLifeApp}
             label="The life you want apps"
-            maxIndex={1}
+            maxIndex={2}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -477,6 +478,11 @@ export default function CircleOSMirror() {
               )
             }
           >
+            <div className="vision-life-cover">
+              <p className="os-card-label">Vision</p>
+              <h2>The life you want.</h2>
+              <span>Swipe to see</span>
+            </div>
             {profileSession("typicalTuesday", "Typical Tuesday", {
               feature: true,
             })}

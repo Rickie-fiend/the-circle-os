@@ -6,6 +6,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -80,6 +81,56 @@ type ExtraMission = {
   createdAt: string;
   kind?: "habit" | "task";
 };
+
+function InlineMissionEditor({
+  ariaLabel,
+  className,
+  completed = false,
+  onCommit,
+  value,
+}: {
+  ariaLabel: string;
+  className: string;
+  completed?: boolean;
+  onCommit: (text: string) => void;
+  value: string;
+}) {
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const editingRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || editingRef.current || editor.innerText === value) return;
+    editor.innerText = value;
+  }, [value]);
+
+  return (
+    <div
+      aria-label={ariaLabel}
+      aria-multiline="true"
+      className={`${className}${completed ? " completed" : ""}`}
+      contentEditable
+      ref={editorRef}
+      role="textbox"
+      spellCheck
+      suppressContentEditableWarning
+      onBlur={() => {
+        editingRef.current = false;
+        const editor = editorRef.current;
+        if (!editor) return;
+        const text = editor.innerText.replace(/\u00a0/g, " ").trim();
+        if (!text) {
+          editor.innerText = value;
+          return;
+        }
+        if (text !== value) onCommit(text);
+      }}
+      onFocus={() => {
+        editingRef.current = true;
+      }}
+    />
+  );
+}
 
 export type TimeBlock = {
   id: string;
@@ -798,11 +849,11 @@ export function TodayExperience() {
   const [checkInTitleDraft, setCheckInTitleDraft] = useState("");
   const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
   const [addingHabit, setAddingHabit] = useState(false);
-  const [editingPrimaryMission, setEditingPrimaryMission] = useState(false);
-  const [primaryMissionDraft, setPrimaryMissionDraft] = useState(
-    today.mission.text,
-  );
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
+  const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
+  const taskExitTimers = useRef<
+    Record<string, { fade: number; remove: number }>
+  >({});
   const [isLogOpen, setLogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
@@ -815,6 +866,16 @@ export function TodayExperience() {
   const [newMoment, setNewMoment] = useState("");
   const [editingMomentKey, setEditingMomentKey] = useState<string | null>(null);
   const [momentDraft, setMomentDraft] = useState("");
+
+  useEffect(
+    () => () => {
+      Object.values(taskExitTimers.current).forEach(({ fade, remove }) => {
+        window.clearTimeout(fade);
+        window.clearTimeout(remove);
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (
@@ -1126,14 +1187,8 @@ export function TodayExperience() {
     );
   }
 
-  function commitPrimaryMission() {
-    const text = primaryMissionDraft.trim();
-    setEditingPrimaryMission(false);
-    if (!text) {
-      setPrimaryMissionDraft(today.mission.text);
-      return;
-    }
-    if (text === today.mission.text) return;
+  function changePrimaryMission(text: string) {
+    if (!text || text === today.mission.text) return;
     updateToday(
       (day) => ({
         ...day,
@@ -1144,7 +1199,6 @@ export function TodayExperience() {
       }),
       "mission",
     );
-    setPrimaryMissionDraft(text);
   }
 
   function changeExtraMission(id: string, text: string) {
@@ -1175,6 +1229,12 @@ export function TodayExperience() {
   function toggleExtraMission(id: string) {
     const mission = today.missions?.find((item) => item.id === id);
     const isCompleting = !mission?.completed;
+    const existingTimers = taskExitTimers.current[id];
+    if (existingTimers) {
+      window.clearTimeout(existingTimers.fade);
+      window.clearTimeout(existingTimers.remove);
+      delete taskExitTimers.current[id];
+    }
     updateToday(
       (day) => ({
         ...day,
@@ -1194,11 +1254,18 @@ export function TodayExperience() {
     );
     if (isCompleting && mission?.kind !== "habit") {
       setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
-      window.setTimeout(() => {
+      const fade = window.setTimeout(() => {
+        setFadingMissionIds((ids) => [...new Set([...ids, id])]);
+      }, 850);
+      const remove = window.setTimeout(() => {
         setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-      }, 1800);
+        setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
+        delete taskExitTimers.current[id];
+      }, 2300);
+      taskExitTimers.current[id] = { fade, remove };
     } else if (mission?.kind !== "habit") {
       setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
+      setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
     }
   }
 
@@ -1854,26 +1921,14 @@ export function TodayExperience() {
               definition={activeHabitChapter}
               key={activeHabitChapter.id}
               idleBody={
-                <textarea
-                  aria-label="Edit habit mission"
-                  className={`os-primary-mission-copy os-mission-text-edit${
-                    today.mission.completed ? " completed" : ""
-                  }`}
-                  maxLength={240}
-                  rows={3}
+                <InlineMissionEditor
+                  ariaLabel="Edit habit mission"
+                  className="os-primary-mission-copy os-mission-text-edit"
+                  completed={today.mission.completed}
+                  onCommit={changePrimaryMission}
                   value={
-                    editingPrimaryMission
-                      ? primaryMissionDraft
-                      : today.mission.text
+                    today.mission.text
                   }
-                  onFocus={() => {
-                    setPrimaryMissionDraft(today.mission.text);
-                    setEditingPrimaryMission(true);
-                  }}
-                  onChange={(event) =>
-                    setPrimaryMissionDraft(event.target.value)
-                  }
-                  onBlur={commitPrimaryMission}
                 />
               }
               idleContent={
@@ -1923,7 +1978,7 @@ export function TodayExperience() {
                       <article
                         className={`os-extra-mission${
                           mission.completed ? " completed" : ""
-                        }${leavingMissionIds.includes(mission.id) ? " leaving" : ""}`}
+                        }${fadingMissionIds.includes(mission.id) ? " leaving" : ""}`}
                         key={mission.id}
                       >
                         <textarea
@@ -1998,24 +2053,11 @@ export function TodayExperience() {
                           <span className="os-habit-record-group-label">Habit</span>
                           {today.mission.completed ? (
                             <div className="os-habit-record-row" key="repeat">
-                              <textarea
-                                aria-label="Edit completed habit"
+                              <InlineMissionEditor
+                                ariaLabel="Edit completed habit"
                                 className="os-habit-record-edit"
-                                maxLength={240}
-                                rows={1}
-                                value={
-                                  editingPrimaryMission
-                                    ? primaryMissionDraft
-                                    : today.mission.text
-                                }
-                                onFocus={() => {
-                                  setPrimaryMissionDraft(today.mission.text);
-                                  setEditingPrimaryMission(true);
-                                }}
-                                onChange={(event) =>
-                                  setPrimaryMissionDraft(event.target.value)
-                                }
-                                onBlur={commitPrimaryMission}
+                                onCommit={changePrimaryMission}
+                                value={today.mission.text}
                               />
                             </div>
                           ) : null}

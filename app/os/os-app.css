@@ -589,15 +589,16 @@
   font-family: inherit;
   min-height: 1.15em;
   overflow: hidden;
+  overflow-wrap: anywhere;
   resize: none;
   transition:
     color 260ms ease,
     text-decoration-color 260ms ease;
+  white-space: pre-wrap;
 }
 
 .circle-os .os-mission-text-edit:focus {
-  outline: 1px solid rgb(255 248 241 / 0.45);
-  outline-offset: 6px;
+  outline: 0;
 }
 
 .circle-os .os-primary-mission-copy {
@@ -617,10 +618,10 @@
   max-height: 520px;
   padding: 1.35rem 0 0;
   transition:
-    max-height 360ms ease,
-    opacity 300ms ease,
-    padding 360ms ease,
-    transform 360ms ease;
+    max-height 1100ms cubic-bezier(0.22, 0.82, 0.22, 1),
+    opacity 1000ms ease,
+    padding 1100ms cubic-bezier(0.22, 0.82, 0.22, 1),
+    transform 1100ms cubic-bezier(0.22, 0.82, 0.22, 1);
 }
 
 .circle-os .os-extra-mission.completed {
@@ -639,7 +640,7 @@
   opacity: 0;
   overflow: hidden;
   padding-top: 0;
-  transform: translate3d(0, -6px, 0);
+  transform: translate3d(0, -3px, 0);
 }
 
 .circle-os .os-extra-mission.leaving .os-mission-text-edit {
@@ -793,8 +794,10 @@
   line-height: 1.35;
   min-height: 1.35em;
   overflow: hidden;
+  overflow-wrap: anywhere;
   padding: 0;
   resize: none;
+  white-space: pre-wrap;
   width: 100%;
 }
 
@@ -2066,13 +2069,13 @@
 .circle-os .vision-life-apps {
   background: #f1efe8;
   border: 1px solid rgb(25 24 19 / 0.08);
-  border-radius: 24px;
+  border-radius: 28px;
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.12);
 }
 
 .circle-os .vision-life-apps .os-app-window {
   background: #f1efe8;
-  border-radius: 23px;
+  border-radius: 27px;
 }
 
 .circle-os .vision-life-apps .os-app-page {
@@ -2082,6 +2085,37 @@
 .circle-os .vision-life-apps .profile-session.feature {
   box-sizing: border-box;
   min-height: 100%;
+}
+
+.circle-os .vision-life-cover {
+  background: #f1efe8;
+  box-sizing: border-box;
+  color: #191813;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 330px;
+  padding: 26px 24px;
+}
+
+.circle-os .vision-life-cover .os-card-label {
+  color: #b64c23;
+}
+
+.circle-os .vision-life-cover h2 {
+  align-self: center;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(2rem, 8vw, 2.7rem);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  margin: 0;
+  max-width: 12ch;
+}
+
+.circle-os .vision-life-cover > span {
+  color: #77736a;
+  font-size: 0.68rem;
+  text-align: right;
 }
 
 .circle-os .profile-updated {
@@ -2341,14 +2375,16 @@
 }
 
 .circle-os .athena-reader-cover h2 {
-  max-width: 10ch;
+  align-self: center;
+  margin: 0;
+  max-width: 12ch;
 }
 
 .circle-os .athena-reader-begin {
   align-self: end;
   color: rgb(255 248 241 / 0.72);
   font-size: 0.68rem;
-  margin: 0 0 0.35rem;
+  margin: 0;
   text-align: right;
 }
 

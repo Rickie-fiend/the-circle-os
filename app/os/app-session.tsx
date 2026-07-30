@@ -169,11 +169,19 @@ export function SwipeSession({
     };
     longPressed.current = false;
     if (onLongPress) {
+      if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // Pointer capture is an enhancement, not a requirement.
+        }
+      }
       longPressTimer.current = window.setTimeout(() => {
         longPressed.current = true;
         longPressTimer.current = null;
+        if ("vibrate" in navigator) navigator.vibrate(12);
         onLongPress();
-      }, 620);
+      }, 480);
     }
   }
 
@@ -181,7 +189,7 @@ export function SwipeSession({
     if (!pointerStart.current) return;
     const distanceX = event.clientX - pointerStart.current.x;
     const distanceY = event.clientY - pointerStart.current.y;
-    if (Math.abs(distanceX) > 8 || Math.abs(distanceY) > 8) {
+    if (Math.abs(distanceX) > 18 || Math.abs(distanceY) > 18) {
       if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
