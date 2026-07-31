@@ -2138,7 +2138,11 @@ export function TodayExperience() {
                 />
               }
               idleContent={
-                <>
+                <div
+                  className={`os-habit-sub-body${
+                    extraHabits.length || oneTimeTasks.length ? " has-items" : ""
+                  }`}
+                >
                   {extraHabits.length ? (
                     <div className="os-repeated-habits">
                       {extraHabits.map((mission) => (
@@ -2218,7 +2222,7 @@ export function TodayExperience() {
                       ))}
                     </div>
                   ) : null}
-                </>
+                </div>
               }
               idleHeaderAction={
                 <button className="os-new-habit" type="button" onClick={beginNewHabit}>

@@ -642,6 +642,7 @@ export function PageLayout({
   children,
   className = "",
   footer,
+  heading,
   headerLeft,
   headerRight,
   theme = "light",
@@ -650,6 +651,7 @@ export function PageLayout({
   children: ReactNode;
   className?: string;
   footer?: ReactNode;
+  heading?: ReactNode;
   headerLeft?: ReactNode;
   headerRight?: ReactNode;
   theme?: "light" | "orange" | "dark";
@@ -666,6 +668,7 @@ export function PageLayout({
         <div className="os-page-header-left">{headerLeft}</div>
         <div className="os-page-header-right">{headerRight}</div>
       </div>
+      <div className="os-page-heading">{heading}</div>
       <div className="os-page-body">{children}</div>
       <div className="os-page-footer">
         {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
@@ -679,12 +682,14 @@ export function InfoPage({
   className = "",
   footer,
   header,
+  heading,
   theme = "light",
 }: {
   children: ReactNode;
   className?: string;
   footer?: ReactNode;
   header?: ReactNode;
+  heading?: ReactNode;
   theme?: "light" | "orange" | "dark";
 }) {
   return (
@@ -692,6 +697,7 @@ export function InfoPage({
       className={`os-info-page ${className}`.trim()}
       footer={footer}
       headerLeft={header}
+      heading={heading}
       theme={theme}
       variant="app"
     >

@@ -128,7 +128,6 @@ function ChapterPageView({
     const isIdle = page.type === "idle";
     const mainContent = isIdle ? (
       <>
-        <h2>{title}</h2>
         {idleBody !== undefined
           ? idleBody
           : body
@@ -164,6 +163,7 @@ function ChapterPageView({
       <PageLayout
         className={`os-chapter-card os-chapter-${page.type} theme-${chapter.theme}`}
         footer={isIdle ? idleFooter : quietFooter}
+        heading={isIdle ? <h2>{title}</h2> : undefined}
         headerLeft={isIdle ? <p className="os-card-label">{chapter.session}</p> : undefined}
         headerRight={isIdle ? idleHeaderAction : !isCompletionPage ? progress : undefined}
         theme={chapter.theme}

@@ -1,5 +1,5 @@
 .circle-os {
-  --os-app-box-min-height: clamp(330px, 72vw, 430px);
+  --os-app-box-min-height: clamp(310px, 64vw, 390px);
   align-items: flex-start;
   background: #0f0f0d;
   display: flex;
@@ -701,10 +701,9 @@
 }
 
 .circle-os .os-one-time-tasks {
-  border-top: 2px solid #191813;
   display: grid;
   gap: 0;
-  margin-top: 1.5rem;
+  margin-top: 0;
 }
 
 .circle-os .os-extra-mission {
@@ -3729,11 +3728,11 @@
   }
 }
 
-/* Shared App Box anatomy: Header / Main Body / Sub Body / Footer. */
+/* Shared App Box anatomy: Header / Heading / Main Body / Sub Body / Footer. */
 .circle-os .os-page-layout {
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   min-height: var(--os-app-box-min-height);
   padding: 24px;
 }
@@ -3764,6 +3763,20 @@
   font-weight: 700;
 }
 
+.circle-os .os-page-heading {
+  min-width: 0;
+  padding-top: 0.9rem;
+  width: 100%;
+}
+
+.circle-os .os-page-heading:empty {
+  display: none;
+}
+
+.circle-os .os-page-heading > * {
+  margin: 0;
+}
+
 .circle-os .theme-orange .os-page-header-right > span,
 .circle-os .theme-dark .os-page-header-right > span {
   color: rgb(255 248 241 / 0.72);
@@ -3784,7 +3797,10 @@
 }
 
 .circle-os .os-page-main {
-  align-self: end;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .circle-os .os-page-sub {
@@ -3801,7 +3817,7 @@
 }
 
 .circle-os .os-cover-page .os-page-header {
-  visibility: hidden;
+  display: none;
 }
 
 .circle-os .os-cover-page .os-page-footer {
@@ -3816,6 +3832,14 @@
   height: 100%;
   margin: 0;
   width: 100%;
+}
+
+.circle-os .os-cover-page .os-info-page-main,
+.circle-os .os-info-page .os-inline-checkin-note .os-info-page-main {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .circle-os .os-page-layout.os-chapter-card,
@@ -3905,23 +3929,42 @@
   border-bottom-color: rgb(255 248 241 / 0.38);
 }
 
-.circle-os .os-habit .os-chapter-idle .os-page-main {
-  align-self: start;
+.circle-os .os-habit .os-chapter-idle .os-page-heading h2 {
+  color: rgb(255 248 241 / 0.72);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.11em;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .circle-os .os-habit .os-chapter-idle .os-page-sub {
-  padding-top: 1.35rem;
+  padding-top: 0;
 }
 
 .circle-os .os-habit .os-chapter-idle .os-page-footer {
-  border-top: 1px solid rgb(25 24 19 / 0.48);
-  margin-top: 1.35rem;
+  border-top: 0;
+  margin-top: 0;
+  min-height: 42px;
+  padding-top: 0.65rem;
+}
+
+.circle-os .os-habit-sub-body {
+  min-width: 0;
+  width: 100%;
+}
+
+.circle-os .os-habit-sub-body.has-items {
+  border-top: 1px solid rgb(25 24 19 / 0.72);
+  padding-top: 1rem;
 }
 
 .circle-os .os-habit .os-chapter-idle .os-add-habit-row {
   background: transparent;
   border-color: rgb(25 24 19 / 0.7);
   color: #191813;
+  min-height: 42px;
+  padding-block: 0.55rem;
 }
 
 .circle-os .os-habit .os-chapter-idle .os-add-habit-row span {
