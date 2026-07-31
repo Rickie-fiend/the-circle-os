@@ -1,4 +1,29 @@
-# Circle OS App Session Standard
+# Circle OS App Box and Page Standard
+
+## Terms
+
+- **App Box**: the stable, rounded container. It owns the theme, clipping,
+  border, radius, shadow, minimum size, and height transition.
+- **Page**: one swipeable visual inside an App Box. Pages never own a second
+  outer card.
+- **Info Page**: the shared solid-background page template. Gestures, update
+  reveals, and head-shake feedback move its text layer while the App Box stays
+  still.
+- **Cover Page**: an Info Page with a main line, optional sub line, and one
+  `Swipe to begin` cue. It is never editable.
+- **Note Page**: an editable Info Page with an app action label, main line, and
+  optional sub line. It has no swipe cue.
+- **Thoughts Page**: an Info Page for free writing with one black Save or Send
+  action.
+- **Blog Page**: a reading page with title, divider, and short paragraph
+  sections. Athena Reading is the reference implementation.
+
+## App Box size
+
+- The default App Box is a soft square or near-square.
+- A fluid App Box may grow for its content and ease back down, but never below
+  the shared default minimum.
+- The App Box does not jump when adjacent Pages have different heights.
 
 ## Structure
 
@@ -69,6 +94,9 @@ Used for charts, weekly views, and other things worth reading again.
   push the whole route while changing pages.
 - Fluid-height sessions use the shared frame resize. Reduced-motion settings
   make the resize immediate.
+- All app interiors use Geist. Cormorant remains an outer editorial typeface.
+- Pages of the same type reuse one component and typography scale. Do not make
+  a one-off Cover, Note, Thoughts, or Blog visual inside a feature.
 
 ## State
 

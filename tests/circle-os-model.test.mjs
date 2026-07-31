@@ -385,6 +385,28 @@ test("the editable check-in note can be changed or cleared", () => {
   );
 });
 
+test("a free thought becomes profile evidence", () => {
+  const thought = {
+    id: "thought-1",
+    text: "A thought I wanted to keep",
+    type: "text",
+    target: "currentLife",
+  };
+  const state = answerSurveyQuestion(
+    createEmptyState(),
+    thought,
+    "I felt peaceful on the walk.",
+    "thought",
+  );
+  const saved = state.profile.profileCase.survey.answers.find(
+    (answer) => answer.questionId === thought.id,
+  );
+
+  assert.equal(saved.answer, "I felt peaceful on the walk.");
+  assert.equal(saved.kind, "thought");
+  assert.equal(saved.target, "currentLife");
+});
+
 test("a cleared check-in subtitle stays clear after server merge", () => {
   const note = {
     id: "checkin-note",

@@ -38,7 +38,7 @@ import {
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
-import { SessionIntro, SwipeSession } from "./app-session";
+import { InfoPage, SessionIntro, SwipeSession } from "./app-session";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   chapterRunId,
@@ -938,9 +938,8 @@ export function TodayExperience() {
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
-  const [editingCheckInNote, setEditingCheckInNote] = useState(false);
-  const [checkInTitleDraft, setCheckInTitleDraft] = useState("");
-  const [checkInNoteDraft, setCheckInNoteDraft] = useState("");
+  const [thoughtDraft, setThoughtDraft] = useState("");
+  const [thoughtSent, setThoughtSent] = useState(false);
   const [addingHabit, setAddingHabit] = useState(false);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
@@ -1060,6 +1059,7 @@ export function TodayExperience() {
       : null;
   const checkInCompletionApp = 12;
   const checkInIdleApp = 13;
+  const checkInThoughtsApp = 14;
   const checkInStartApp = unansweredCodexQuestion
     ? 11
     : firstProfileQuestionIndex >= 0
@@ -1077,9 +1077,9 @@ export function TodayExperience() {
     0,
   );
   const checkInConfirmed =
-    checkInSurveyComplete && savedCheckInApp === checkInIdleApp;
+    checkInSurveyComplete && savedCheckInApp >= checkInIdleApp;
   const visibleCheckInApp = checkInConfirmed
-    ? checkInIdleApp
+    ? Math.max(checkInIdleApp, checkInApp || savedCheckInApp)
     : checkInSurveyComplete
       ? checkInApp || checkInCompletionApp
     : seenCheckInJourney === checkInJourneyVersion
@@ -1885,13 +1885,27 @@ export function TodayExperience() {
     });
   }
 
-  function saveCheckInNote(event: FormEvent<HTMLFormElement>) {
+  function sendThought(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    commitCheckInNote(
-      checkInTitleDraft.trim() || "Keep going.",
-      checkInNoteDraft,
+    const thought = thoughtDraft.trim();
+    if (!thought) return;
+    const createdAt = new Date();
+    updateState((current) =>
+      answerSurveyQuestion(
+        current,
+        {
+          id: `thought-${createdAt.getTime()}`,
+          text: "A thought I wanted to keep",
+          type: "text",
+          target: "currentLife",
+        },
+        thought,
+        "thought",
+      ),
     );
-    setEditingCheckInNote(false);
+    setThoughtDraft("");
+    setThoughtSent(true);
+    window.setTimeout(() => setThoughtSent(false), 1400);
   }
 
   function defaultTitleForHour(hour: number) {
@@ -1902,8 +1916,9 @@ export function TodayExperience() {
 
   function checkInIdleCard() {
     return (
-      <div className="os-survey-card os-survey-complete">
-        <div className="os-survey-head">
+      <InfoPage
+        className="os-note-page os-survey-card os-survey-complete"
+        label={
           <button
             aria-label="Load a check-in"
             className="os-card-label os-checkin-refresh-label"
@@ -1912,37 +1927,49 @@ export function TodayExperience() {
           >
             Check-in
           </button>
-        </div>
-        {editingCheckInNote ? (
-          <form className="os-idle-note-form" onSubmit={saveCheckInNote}>
-            <div className="os-idle-note-fields">
-              <input
-                aria-label="Edit idle title"
-                autoFocus
-                maxLength={54}
-                placeholder="Keep going."
-                value={checkInTitleDraft}
-                onChange={(event) => setCheckInTitleDraft(event.target.value)}
-              />
-              <textarea
-                aria-label="Edit idle note"
-                maxLength={220}
-                placeholder="Notice what feels like you today."
-                rows={3}
-                value={checkInNoteDraft}
-                onChange={(event) => setCheckInNoteDraft(event.target.value)}
-              />
-            </div>
-            <button type="submit" aria-label="Save note">âœ“</button>
-          </form>
-        ) : (
-          <InlineCheckInEditor
-            note={checkInNote}
-            onCommit={commitCheckInNote}
-            title={checkInIdleTitle}
+        }
+      >
+        <InlineCheckInEditor
+          note={checkInNote}
+          onCommit={commitCheckInNote}
+          title={checkInIdleTitle}
+        />
+      </InfoPage>
+    );
+  }
+
+  function checkInThoughtsCard() {
+    return (
+      <InfoPage
+        className="os-thoughts-page os-survey-card"
+        label={<p className="os-card-label">Thoughts</p>}
+        footer={
+          <button
+            className="os-thoughts-send"
+            disabled={!thoughtDraft.trim()}
+            form="check-in-thought-form"
+            type="submit"
+          >
+            {thoughtSent ? "Sent" : "Send"}
+          </button>
+        }
+      >
+        <form
+          className="os-thoughts-form"
+          id="check-in-thought-form"
+          onSubmit={sendThought}
+        >
+          <textarea
+            aria-label="Write a thought"
+            maxLength={800}
+            onChange={(event) => setThoughtDraft(event.currentTarget.value)}
+            placeholder="What are your thoughts?"
+            rows={5}
+            value={thoughtDraft}
           />
-        )}
-      </div>
+          <p>Write down anything.</p>
+        </form>
+      </InfoPage>
     );
   }
 
@@ -1976,7 +2003,7 @@ export function TodayExperience() {
           <SwipeSession
             availableIndices={
               checkInConfirmed
-                ? [checkInIdleApp]
+                ? [checkInIdleApp, checkInThoughtsApp]
                 : checkInSurveyComplete
                   ? [
                       ...Array.from(
@@ -2001,7 +2028,7 @@ export function TodayExperience() {
             label="Check-in session"
             maxIndex={
               checkInConfirmed
-                ? checkInIdleApp
+                ? checkInThoughtsApp
                 : checkInSurveyComplete
                   ? checkInCompletionApp
                   : checkInStartApp
@@ -2011,6 +2038,16 @@ export function TodayExperience() {
                 setSeenCheckInJourney(checkInJourneyVersion);
               }
               setCheckInApp(nextIndex);
+              if (checkInConfirmed) {
+                updateState((current) =>
+                  setAppSessionIndex(
+                    current,
+                    "today-checkin",
+                    checkInJourneyVersion,
+                    nextIndex,
+                  ),
+                );
+              }
             }}
           >
             <SessionIntro
@@ -2071,51 +2108,8 @@ export function TodayExperience() {
                 Continue
               </button>
             </div>
-            <div className="os-survey-card os-survey-complete">
-                <div className="os-survey-head">
-                  <button
-                    aria-label="Load a check-in"
-                    className="os-card-label os-checkin-refresh-label"
-                    type="button"
-                    onClick={revealProfileSpark}
-                  >
-                    Check-in
-                  </button>
-                </div>
-                {editingCheckInNote ? (
-                  <form className="os-idle-note-form" onSubmit={saveCheckInNote}>
-                    <div className="os-idle-note-fields">
-                      <input
-                        aria-label="Edit idle title"
-                        autoFocus
-                        maxLength={54}
-                        placeholder="Keep going."
-                        value={checkInTitleDraft}
-                        onChange={(event) =>
-                          setCheckInTitleDraft(event.target.value)
-                        }
-                      />
-                      <textarea
-                        aria-label="Edit idle note"
-                        maxLength={220}
-                        placeholder="Notice what feels like you today."
-                        rows={3}
-                        value={checkInNoteDraft}
-                        onChange={(event) =>
-                          setCheckInNoteDraft(event.target.value)
-                        }
-                      />
-                    </div>
-                    <button type="submit" aria-label="Save note">✓</button>
-                  </form>
-                ) : (
-                  <InlineCheckInEditor
-                    note={checkInNote}
-                    onCommit={commitCheckInNote}
-                    title={checkInIdleTitle}
-                  />
-                )}
-            </div>
+            {checkInIdleCard()}
+            {checkInThoughtsCard()}
           </SwipeSession>
           )}
         </section>

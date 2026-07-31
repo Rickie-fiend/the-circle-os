@@ -1,4 +1,5 @@
 .circle-os {
+  --os-app-box-min-height: clamp(360px, 84vw, 500px);
   align-items: flex-start;
   background: #0f0f0d;
   display: flex;
@@ -279,8 +280,14 @@
 }
 
 .circle-os .os-app-window.fluid-height {
+  min-height: var(--os-app-box-min-height);
   transition: height 440ms cubic-bezier(0.22, 0.82, 0.22, 1);
   will-change: height;
+}
+
+.circle-os .os-app-window.fluid-height .os-app-page > :first-child {
+  box-sizing: border-box;
+  min-height: var(--os-app-box-min-height);
 }
 
 .circle-os .os-app-window.fixed-height .os-app-page {
@@ -353,7 +360,7 @@
 .circle-os .os-checkin-session .os-app-page > .os-session-intro,
 .circle-os .os-checkin-session .os-app-page > .os-survey-card {
   box-sizing: border-box;
-  min-height: 330px;
+  min-height: var(--os-app-box-min-height);
   padding: 26px 24px;
 }
 
@@ -712,10 +719,10 @@
 
 .circle-os .os-add-habit-row {
   align-items: center;
-  background: transparent;
-  border: 1px dashed rgb(255 248 241 / 0.42);
+  background: rgb(223 100 45 / 0.08);
+  border: 2px dotted #df642d;
   border-radius: 16px;
-  color: rgb(255 248 241 / 0.72);
+  color: #e36b37;
   display: flex;
   font-size: 0.72rem;
   font-weight: 650;
@@ -727,7 +734,7 @@
 }
 
 .circle-os .os-add-habit-row span {
-  color: #fff8f1;
+  color: #e36b37;
   font-size: 1.25rem;
   font-weight: 400;
   line-height: 1;
@@ -1456,6 +1463,61 @@
   font-size: 0.72rem;
   line-height: 1.48;
   max-width: 34ch;
+}
+
+.circle-os .os-info-page-spacer {
+  min-height: 1.1rem;
+}
+
+.circle-os .os-thoughts-form {
+  align-self: center;
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  width: 100%;
+}
+
+.circle-os .os-thoughts-form textarea {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: #191813;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(2rem, 8vw, 2.7rem);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  min-height: 3.1em;
+  outline: 0;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+
+.circle-os .os-thoughts-form textarea::placeholder {
+  color: #191813;
+  opacity: 1;
+}
+
+.circle-os .os-thoughts-form p {
+  color: #77736a;
+  font-size: 0.72rem;
+  margin: 0;
+}
+
+.circle-os .os-thoughts-send {
+  background: #191813;
+  border: 0;
+  border-radius: 15px;
+  color: #fff8f1;
+  font-weight: 700;
+  min-height: 56px;
+  width: 100%;
+}
+
+.circle-os .os-thoughts-send:disabled {
+  cursor: default;
+  opacity: 0.32;
 }
 
 .circle-os .os-profile-question {

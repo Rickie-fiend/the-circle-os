@@ -612,21 +612,44 @@ export function SessionIntro({
   }, [detail, refreshKey, title]);
 
   return (
-    <div className={`os-session-intro theme-${theme}${
-      refreshing ? " is-refreshing" : ""
-    }`}>
-      <p className="os-card-label">{label}</p>
-      <div className="os-session-intro-copy">
-        <h2>{display.title}</h2>
-        {display.detail ? <p className="os-session-detail">{display.detail}</p> : null}
-      </div>
-      {ready ? (
+    <InfoPage
+      className={refreshing ? "is-refreshing" : ""}
+      label={<p className="os-card-label">{label}</p>}
+      theme={theme}
+      footer={ready ? (
         <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
           Swipe to begin
         </button>
       ) : (
         <span className="os-session-wait">Available tomorrow morning</span>
       )}
+    >
+      <div className="os-session-intro-copy">
+        <h2>{display.title}</h2>
+        {display.detail ? <p className="os-session-detail">{display.detail}</p> : null}
+      </div>
+    </InfoPage>
+  );
+}
+
+export function InfoPage({
+  children,
+  className = "",
+  footer,
+  label,
+  theme = "light",
+}: {
+  children: ReactNode;
+  className?: string;
+  footer?: ReactNode;
+  label: ReactNode;
+  theme?: "light" | "orange" | "dark";
+}) {
+  return (
+    <div className={`os-info-page os-session-intro theme-${theme} ${className}`.trim()}>
+      {label}
+      {children}
+      {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
     </div>
   );
 }
