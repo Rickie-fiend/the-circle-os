@@ -14,6 +14,8 @@ import {
   type WheelEvent,
 } from "react";
 
+const seenAttentionKeys = new Set<string>();
+
 export function SwipeSession({
   children,
   index,
@@ -24,6 +26,7 @@ export function SwipeSession({
   availableIndices,
   frameHeight,
   onLongPress,
+  attentionKey,
 }: {
   children: ReactNode;
   index: number;
@@ -34,6 +37,7 @@ export function SwipeSession({
   availableIndices?: number[];
   frameHeight?: CSSProperties["height"];
   onLongPress?: () => void;
+  attentionKey?: string;
 }) {
   const apps = Children.toArray(children);
   const lastIndex = Math.max(0, Math.min(
@@ -80,6 +84,7 @@ export function SwipeSession({
   const [settling, setSettling] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [showingBlockedCue, setShowingBlockedCue] = useState(false);
+  const [showingAttention, setShowingAttention] = useState(false);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   const longPressCallback = useRef(onLongPress);
   const longPressEnabled = Boolean(onLongPress);
@@ -87,6 +92,39 @@ export function SwipeSession({
   useEffect(() => {
     longPressCallback.current = onLongPress;
   }, [onLongPress]);
+
+  useEffect(() => {
+    const session = sessionRef.current;
+    if (!session || !attentionKey || seenAttentionKeys.has(attentionKey)) return;
+
+    let timer: number | null = null;
+    const reveal = () => {
+      seenAttentionKeys.add(attentionKey);
+      setShowingAttention(true);
+      timer = window.setTimeout(() => setShowingAttention(false), 1400);
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      reveal();
+      return () => {
+        if (timer) window.clearTimeout(timer);
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        observer.disconnect();
+        reveal();
+      },
+      { threshold: 0.45 },
+    );
+    observer.observe(session);
+    return () => {
+      observer.disconnect();
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [attentionKey]);
 
   useEffect(() => {
     const session = sessionRef.current;
@@ -438,7 +476,7 @@ export function SwipeSession({
       <div
         className={`os-app-window${
           frameHeight ? " fixed-height" : " fluid-height"
-        }`}
+        }${showingAttention ? " update-arrival" : ""}`}
         ref={windowRef}
         style={
           frameHeight
@@ -524,8 +562,10 @@ export function SessionIntro({
       refreshing ? " is-refreshing" : ""
     }`}>
       <p className="os-card-label">{label}</p>
-      <h2>{display.title}</h2>
-      {display.detail ? <p className="os-session-detail">{display.detail}</p> : null}
+      <div className="os-session-intro-copy">
+        <h2>{display.title}</h2>
+        {display.detail ? <p className="os-session-detail">{display.detail}</p> : null}
+      </div>
       {ready ? (
         <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
           Swipe to begin

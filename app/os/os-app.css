@@ -357,6 +357,35 @@
   padding: 26px 24px;
 }
 
+.circle-os .os-checkin-session .os-session-intro,
+.circle-os .os-checkin-session .os-survey-complete {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.circle-os .os-checkin-session .os-session-intro-copy,
+.circle-os .os-checkin-session .os-inline-checkin-note {
+  align-self: center;
+  margin: 0;
+}
+
+.circle-os .os-checkin-session .os-session-intro-copy h2 {
+  font-size: clamp(2rem, 8vw, 2.7rem);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  margin: 0;
+  max-width: 12ch;
+}
+
+.circle-os .os-checkin-refresh-label {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
 .circle-os .os-habit-session {
   background: #df642d;
   border: 1px solid rgb(255 255 255 / 0.16);
@@ -813,30 +842,6 @@
   outline-offset: 5px;
 }
 
-@keyframes os-habit-record-arrive {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 10px, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.circle-os .os-habit-record > * {
-  animation: os-habit-record-arrive 360ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
-}
-
-.circle-os .os-habit-record > :nth-child(2) {
-  animation-delay: 40ms;
-}
-
-.circle-os .os-habit-record > :nth-child(3) {
-  animation-delay: 80ms;
-}
-
 .circle-os .os-habit-tracker-days {
   border-top: 2px solid #191813;
   display: grid;
@@ -883,20 +888,29 @@
   transform: translate3d(0, 10px, 0) scale(0.985);
 }
 
-@keyframes os-checkin-cover-arrival {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 14px, 0) scale(0.985);
+@keyframes os-update-arrival {
+  0% {
+    filter: blur(8px);
+    opacity: 0.08;
+    transform: scale(0.965);
   }
 
-  to {
+  46% {
+    filter: blur(1px);
+    opacity: 0.82;
+    transform: scale(1.006);
+  }
+
+  100% {
+    filter: blur(0);
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: scale(1);
   }
 }
 
-.circle-os .os-checkin-refresh > .os-app-window {
-  animation: os-checkin-cover-arrival 520ms cubic-bezier(0.22, 0.82, 0.22, 1);
+.circle-os .os-app-window.update-arrival {
+  animation: os-update-arrival 1200ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+  transform-origin: center;
 }
 
 .circle-os .os-habit .os-chapter-idle-action[aria-pressed="true"],
@@ -2226,6 +2240,19 @@
   font-weight: 560;
   letter-spacing: -0.018em;
   line-height: 1.55;
+}
+
+.circle-os textarea.profile-session-inline {
+  appearance: none;
+  border: 0;
+  field-sizing: content;
+  min-height: 1.55em;
+  overflow: hidden;
+  resize: none;
+}
+
+.circle-os textarea.profile-session-inline:focus-visible {
+  outline: 0;
 }
 
 .circle-os .profile-session-copy:focus-visible,

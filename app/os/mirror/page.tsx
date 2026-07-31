@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import {
+  useLayoutEffect,
+  useRef,
   useState,
   type CSSProperties,
   type FormEvent,
@@ -53,6 +55,59 @@ function formatUpdated(value: string | null) {
     hour: "numeric",
     minute: "2-digit",
   })}`;
+}
+
+function InlineProfileSessionEditor({
+  label,
+  onCommit,
+  placeholder,
+  value,
+}: {
+  label: string;
+  onCommit: (text: string) => void;
+  placeholder: string;
+  value: string;
+}) {
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
+  const editingRef = useRef(false);
+  const [draft, setDraft] = useState(value);
+
+  useLayoutEffect(() => {
+    if (!editingRef.current) setDraft(value);
+  }, [value]);
+
+  useLayoutEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.style.height = "auto";
+    editor.style.height = `${editor.scrollHeight}px`;
+  }, [draft]);
+
+  return (
+    <textarea
+      aria-label={`Edit ${label}`}
+      className="profile-session-copy profile-session-inline"
+      maxLength={1600}
+      placeholder={placeholder}
+      ref={editorRef}
+      rows={1}
+      value={draft}
+      onBlur={() => {
+        editingRef.current = false;
+        const next = draft.trim();
+        if (!next) {
+          setDraft(value);
+          return;
+        }
+        setDraft(next);
+        if (next !== value) onCommit(next);
+      }}
+      onChange={(event) => setDraft(event.currentTarget.value)}
+      onFocus={() => {
+        editingRef.current = true;
+      }}
+    />
+  );
 }
 
 type GapVisualMode = "unclear" | "close" | "mixed" | "far";
@@ -144,13 +199,27 @@ export default function CircleOSMirror() {
   const weekReady = Boolean(
     loggedPastDays || summary.coverage.recorded || summary.missions.available,
   );
-  const topWeekActivity = summary.time[0]?.activity?.trim();
+  const recentTimelineActivities = pastDays
+    .flatMap((item) => item.day.timeBlocks)
+    .map((block) => (block.title || block.activity || "").trim())
+    .filter(
+      (activity, index, activities) =>
+        activity &&
+        activities.findIndex(
+          (item) => item.toLowerCase() === activity.toLowerCase(),
+        ) === index,
+    )
+    .slice(0, 6);
   const weekObservation =
-    topWeekActivity
-      ? `“${topWeekActivity}” took the most time you logged.`
-      : weekReady
-        ? "Your week is starting to show a pattern."
-        : "Your week starts here.";
+    recentTimelineActivities.length > 1
+      ? `Your recent days moved through ${recentTimelineActivities
+          .slice(0, -1)
+          .join(", ")}, and ${recentTimelineActivities.at(-1)}.`
+      : recentTimelineActivities.length === 1
+        ? `Your recent days included ${recentTimelineActivities[0]}.`
+        : weekReady
+          ? "Your week is starting to show a pattern."
+          : "Your week starts here.";
   const profileReady = hasReadableProfileCase(profileCase);
   const updateLabel = formatUpdated(profileCase.updatedAt);
   const gapReading = gapVisualReading(
@@ -291,6 +360,15 @@ export default function CircleOSMirror() {
     setSessionDraft("");
   }
 
+  function commitProfileSession(key: string, nextText: string) {
+    updateState((current) =>
+      queueProfileUpdate(
+        editProfileSession(current, key, nextText),
+        "profile-edit",
+      ),
+    );
+  }
+
   function saveSuggestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!suggestionDraft.trim()) return;
@@ -309,8 +387,6 @@ export default function CircleOSMirror() {
     } = {},
   ) {
     const session = profileCase.sessions[key];
-    const isEditing = editing === key;
-    const displayedText = session.text.trim() || options.placeholder || "Tap to write.";
     return (
       <article
         key={key}
@@ -324,26 +400,13 @@ export default function CircleOSMirror() {
             Answer {Math.max(0, 6 - profileCase.survey.answers.length)} more
             check-ins to build this.
           </p>
-        ) : isEditing ? (
-          <div className="profile-session-edit">
-            <textarea
-              aria-label={`Edit ${label}`}
-            value={sessionDraft}
-            onChange={(event) => setSessionDraft(event.target.value)}
-            onBlur={() => saveSession(key)}
-            rows={6}
-            autoFocus
-          />
-          </div>
         ) : (
-          <button
-            aria-label={`Edit ${label}`}
-            className="profile-session-copy"
-            type="button"
-            onClick={() => beginEdit(key)}
-          >
-            {displayedText}
-          </button>
+          <InlineProfileSessionEditor
+            label={label}
+            onCommit={(text) => commitProfileSession(key, text)}
+            placeholder={options.placeholder || "Tap to write."}
+            value={session.text}
+          />
         )}
       </article>
     );
@@ -475,6 +538,7 @@ export default function CircleOSMirror() {
 
         <section className="vision-profile-case" aria-label="The life you want">
           <SwipeSession
+            attentionKey={`vision-life:${lifeJourneyVersion}`}
             availableIndices={[0, 1, 2]}
             className="vision-life-apps"
             index={visibleLifeApp}
@@ -515,6 +579,7 @@ export default function CircleOSMirror() {
 
         <section className="vision-week-session" aria-label="Last seven days session">
           <SwipeSession
+            attentionKey={`vision-week:${weekJourneyVersion}`}
             availableIndices={
               visibleWeekApp === 0
                 ? [0, 1]
@@ -695,6 +760,7 @@ export default function CircleOSMirror() {
           aria-label="AI profile session"
         >
           <SwipeSession
+            attentionKey={`athena:${profileJourneyVersion}`}
             availableIndices={
               profileReady
                 ? [0, 1, 2, 3]
@@ -748,6 +814,7 @@ export default function CircleOSMirror() {
 
         <section className="vision-gap-session" aria-label="The gap session">
           <SwipeSession
+            attentionKey={`vision-gap:${profileJourneyVersion}:${loggedPastDays}`}
             availableIndices={[0, 1, 2]}
             className="vision-gap-apps"
             index={visibleGapApp}

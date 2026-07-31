@@ -60,6 +60,9 @@ function ChapterPageView({
   idleBody?: ReactNode;
   idleContent?: ReactNode;
 }) {
+  const required =
+    Boolean(page.required) ||
+    (chapter.session === "check-in" && INPUT_TYPES.has(page.type));
   const answer = page.answerKey
     ? findChapterAnswer(run, page.answerKey)
     : undefined;
@@ -84,7 +87,7 @@ function ChapterPageView({
     event.preventDefault();
     const empty =
       value === "" || (Array.isArray(value) && value.length === 0);
-    if (page.required && empty) return;
+    if (required && empty) return;
     onComplete({
       page,
       value,
@@ -205,7 +208,7 @@ function ChapterPageView({
         <button
           className="os-chapter-continue"
           type="button"
-          disabled={page.required && (!Array.isArray(value) || !value.length)}
+          disabled={required && (!Array.isArray(value) || !value.length)}
           onClick={() =>
             onComplete({
               page,
@@ -259,7 +262,7 @@ function ChapterPageView({
           )}
           <button
             type="submit"
-            disabled={page.required && !String(value).trim()}
+            disabled={required && !String(value).trim()}
           >
             {page.button || "Continue"}
           </button>
@@ -274,7 +277,7 @@ function ChapterPageView({
             value={String(value)}
             onChange={(event) => setValue(event.target.value)}
           />
-          <button type="submit" disabled={page.required && !value}>
+          <button type="submit" disabled={required && !value}>
             {page.button || "Continue"}
           </button>
         </form>
@@ -304,6 +307,7 @@ export function ChapterPlayer({
   onBackAppHidden,
   startOnBackApp = false,
   onLongPress,
+  attentionKey,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -325,6 +329,7 @@ export function ChapterPlayer({
   onBackAppHidden?: () => void;
   startOnBackApp?: boolean;
   onLongPress?: () => void;
+  attentionKey?: string;
 }) {
   const [showingBackApp, setShowingBackApp] = useState(startOnBackApp);
   const currentIndex = Math.max(
@@ -342,7 +347,8 @@ export function ChapterPlayer({
     currentPage.answerKey && findChapterAnswer(run, currentPage.answerKey),
   );
   const currentAnswerRequired =
-    INPUT_TYPES.has(currentPage.type) && Boolean(currentPage.required);
+    INPUT_TYPES.has(currentPage.type) &&
+    (definition.session === "check-in" || Boolean(currentPage.required));
   const canMoveForward =
     run.status === "completed" ||
     !currentAnswerRequired ||
@@ -393,6 +399,7 @@ export function ChapterPlayer({
     ];
     return (
       <SwipeSession
+        attentionKey={attentionKey}
         availableIndices={apps.map((_, index) => index)}
         className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
         index={Math.max(0, Math.min(apps.length - 1, idleAppIndex))}
@@ -449,6 +456,7 @@ export function ChapterPlayer({
     const stackedAvailableIndices = [0, ...availableIndices.map((item) => item + 1)];
     return (
       <SwipeSession
+        attentionKey={attentionKey}
         availableIndices={stackedAvailableIndices}
         className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
         index={showingBackApp ? 0 : currentIndex + 1}
@@ -475,6 +483,7 @@ export function ChapterPlayer({
 
   return (
     <SwipeSession
+      attentionKey={attentionKey}
       availableIndices={
         availableIndices
       }

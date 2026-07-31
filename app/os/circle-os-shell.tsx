@@ -208,7 +208,7 @@ function InlineCheckInEditor({
         onFocus={() => {
           editingRef.current = true;
         }}
-        placeholder="Notice what feels like you today."
+        placeholder=""
         ref={noteRef}
         rows={1}
         value={noteDraft}
@@ -929,6 +929,7 @@ export function TodayExperience() {
     PROFILE_SPARK_OPENED_AT,
   );
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
+  const [checkInAttention, setCheckInAttention] = useState(0);
   const [checkInApp, setCheckInApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
@@ -1703,9 +1704,20 @@ export function TodayExperience() {
     if (nextChapter) {
       setForcedProfileSparkId(nextChapter.id);
     }
+    setCheckInAttention((current) => current + 1);
     setProfileSparkClock((current) =>
       Math.max(current, Date.now()) + 3_600_000,
     );
+  }
+
+  function recallProfileSpark() {
+    if (!profileSparkRun?.deferredAt) {
+      refreshProfileSpark();
+      return;
+    }
+    setForcedProfileSparkId(profileSparkChapter?.id || "");
+    resumeProfileSparkRun();
+    setCheckInAttention((current) => current + 1);
   }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
@@ -1847,7 +1859,14 @@ export function TodayExperience() {
     return (
       <div className="os-survey-card os-survey-complete">
         <div className="os-survey-head">
-          <p className="os-card-label">Check-in</p>
+          <button
+            aria-label="Load a check-in"
+            className="os-card-label os-checkin-refresh-label"
+            type="button"
+            onClick={recallProfileSpark}
+          >
+            Check-in
+          </button>
         </div>
         {editingCheckInNote ? (
           <form className="os-idle-note-form" onSubmit={saveCheckInNote}>
@@ -1892,18 +1911,20 @@ export function TodayExperience() {
             </div>
           </div>
 
-          {checkInConfirmed && profileSparkChapter && profileSparkRun && profileSparkRun.status !== "completed" ? (
+          {checkInConfirmed &&
+          profileSparkChapter &&
+          profileSparkRun &&
+          profileSparkRun.status !== "completed" &&
+          !profileSparkRun.deferredAt ? (
             <ChapterPlayer
-              className="os-checkin-session os-checkin-refresh"
+              attentionKey={`check-in:${profileSparkChapter.id}:${profileSparkChapter.version}:${checkInAttention}`}
+              className="os-checkin-session"
               definition={profileSparkChapter}
               key={profileSparkChapter.id}
               label="Check-in chapter"
               run={profileSparkRun}
               backApp={checkInIdleCard()}
-              startOnBackApp={Boolean(profileSparkRun.deferredAt)}
-              onBackAppHidden={resumeProfileSparkRun}
               onBackAppShown={deferProfileSparkRun}
-              onLongPress={refreshProfileSpark}
               onRunChange={saveProfileSparkRun}
             />
           ) : (
@@ -1929,11 +1950,6 @@ export function TodayExperience() {
             className="os-checkin-session"
             index={visibleCheckInApp}
             label="Check-in session"
-            onLongPress={
-              checkInConfirmed
-                ? refreshProfileSpark
-                : undefined
-            }
             maxIndex={
               checkInConfirmed
                 ? checkInIdleApp
@@ -2008,7 +2024,14 @@ export function TodayExperience() {
             </div>
             <div className="os-survey-card os-survey-complete">
                 <div className="os-survey-head">
-                  <p className="os-card-label">Check-in</p>
+                  <button
+                    aria-label="Load a check-in"
+                    className="os-card-label os-checkin-refresh-label"
+                    type="button"
+                    onClick={recallProfileSpark}
+                  >
+                    Check-in
+                  </button>
                 </div>
                 {editingCheckInNote ? (
                   <form className="os-idle-note-form" onSubmit={saveCheckInNote}>
