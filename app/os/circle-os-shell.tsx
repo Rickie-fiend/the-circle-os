@@ -145,6 +145,78 @@ function InlineMissionEditor({
   );
 }
 
+function InlineCheckInEditor({
+  note,
+  onCommit,
+  title,
+}: {
+  note: string;
+  onCommit: (title: string, note: string) => void;
+  title: string;
+}) {
+  const titleRef = useRef<HTMLTextAreaElement | null>(null);
+  const noteRef = useRef<HTMLTextAreaElement | null>(null);
+  const editingRef = useRef(false);
+  const [titleDraft, setTitleDraft] = useState(title);
+  const [noteDraft, setNoteDraft] = useState(note);
+
+  useLayoutEffect(() => {
+    if (editingRef.current) return;
+    setTitleDraft(title);
+    setNoteDraft(note);
+  }, [note, title]);
+
+  useLayoutEffect(() => {
+    for (const editor of [titleRef.current, noteRef.current]) {
+      if (!editor) continue;
+      editor.style.height = "auto";
+      editor.style.height = `${editor.scrollHeight}px`;
+    }
+  }, [noteDraft, titleDraft]);
+
+  function commit() {
+    editingRef.current = false;
+    const nextTitle = titleDraft.trim() || "Keep going.";
+    const nextNote = noteDraft.trim();
+    setTitleDraft(nextTitle);
+    setNoteDraft(nextNote);
+    onCommit(nextTitle, nextNote);
+  }
+
+  return (
+    <div className="os-inline-checkin-note">
+      <textarea
+        aria-label="Edit idle title"
+        className="os-inline-checkin-title"
+        maxLength={54}
+        onBlur={commit}
+        onChange={(event) => setTitleDraft(event.currentTarget.value)}
+        onFocus={() => {
+          editingRef.current = true;
+        }}
+        placeholder="Keep going."
+        ref={titleRef}
+        rows={1}
+        value={titleDraft}
+      />
+      <textarea
+        aria-label="Edit idle note"
+        className="os-inline-checkin-copy"
+        maxLength={220}
+        onBlur={commit}
+        onChange={(event) => setNoteDraft(event.currentTarget.value)}
+        onFocus={() => {
+          editingRef.current = true;
+        }}
+        placeholder="Notice what feels like you today."
+        ref={noteRef}
+        rows={1}
+        value={noteDraft}
+      />
+    </div>
+  );
+}
+
 export type TimeBlock = {
   id: string;
   start: string;
@@ -1729,8 +1801,7 @@ export function TodayExperience() {
     });
   }
 
-  function saveCheckInNote(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function commitCheckInNote(title: string, note: string) {
     updateState((current) => {
       const withTitle = answerSurveyQuestion(
         current,
@@ -1740,7 +1811,7 @@ export function TodayExperience() {
           type: "text",
           target: "currentLife",
         },
-        checkInTitleDraft.trim() || "Keep going.",
+        title,
         "note",
       );
       return answerSurveyQuestion(
@@ -1751,10 +1822,18 @@ export function TodayExperience() {
           type: "text",
           target: "currentLife",
         },
-        checkInNoteDraft,
+        note,
         "note",
       );
     });
+  }
+
+  function saveCheckInNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    commitCheckInNote(
+      checkInTitleDraft.trim() || "Keep going.",
+      checkInNoteDraft,
+    );
     setEditingCheckInNote(false);
   }
 
@@ -1793,19 +1872,11 @@ export function TodayExperience() {
             <button type="submit" aria-label="Save note">âœ“</button>
           </form>
         ) : (
-          <button
-            aria-label="Edit check-in note"
-            className="os-idle-note-display"
-            type="button"
-            onClick={() => {
-              setCheckInTitleDraft(checkInIdleTitle);
-              setCheckInNoteDraft(checkInNote);
-              setEditingCheckInNote(true);
-            }}
-          >
-            <h2>{checkInIdleTitle}</h2>
-            <p>{checkInNote || "Notice what feels like you today."}</p>
-          </button>
+          <InlineCheckInEditor
+            note={checkInNote}
+            onCommit={commitCheckInNote}
+            title={checkInIdleTitle}
+          />
         )}
       </div>
     );
@@ -1966,19 +2037,11 @@ export function TodayExperience() {
                     <button type="submit" aria-label="Save note">✓</button>
                   </form>
                 ) : (
-                  <button
-                    className="os-idle-note-display"
-                    type="button"
-                    onClick={() => {
-                      setCheckInTitleDraft(checkInIdleTitle);
-                      setCheckInNoteDraft(checkInNote);
-                      setEditingCheckInNote(true);
-                    }}
-                    aria-label="Edit check-in note"
-                  >
-                    <h2>{checkInIdleTitle}</h2>
-                    <p>{checkInNote || "Notice what feels like you today."}</p>
-                  </button>
+                  <InlineCheckInEditor
+                    note={checkInNote}
+                    onCommit={commitCheckInNote}
+                    title={checkInIdleTitle}
+                  />
                 )}
             </div>
           </SwipeSession>

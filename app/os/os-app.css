@@ -350,6 +350,13 @@
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.08);
 }
 
+.circle-os .os-checkin-session .os-app-page > .os-session-intro,
+.circle-os .os-checkin-session .os-app-page > .os-survey-card {
+  box-sizing: border-box;
+  min-height: 330px;
+  padding: 26px 24px;
+}
+
 .circle-os .os-habit-session {
   background: #df642d;
   border: 1px solid rgb(255 255 255 / 0.16);
@@ -1278,6 +1285,46 @@
   height: 38px;
   padding: 0;
   width: 38px;
+}
+
+.circle-os .os-inline-checkin-note {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.circle-os .os-inline-checkin-title,
+.circle-os .os-inline-checkin-copy {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: #191813;
+  cursor: text;
+  font: inherit;
+  overflow: hidden;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+
+.circle-os .os-inline-checkin-title:focus,
+.circle-os .os-inline-checkin-copy:focus {
+  outline: 0;
+}
+
+.circle-os .os-inline-checkin-title {
+  font-size: 1.58rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.circle-os .os-inline-checkin-copy {
+  color: #77736a;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  min-height: 1.55em;
 }
 
 .circle-os .os-profile-question {
@@ -3303,6 +3350,14 @@
   .circle-os textarea,
   .circle-os select {
     font-size: 16px !important;
+  }
+
+  .circle-os textarea.os-inline-checkin-title {
+    font-size: 1.58rem !important;
+  }
+
+  .circle-os textarea.os-inline-checkin-copy {
+    font-size: 1rem !important;
   }
 
   .circle-os .os-session-intro,

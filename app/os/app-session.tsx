@@ -105,7 +105,7 @@ export function SwipeSession({
       const target = event.target;
       if (
         target instanceof Element &&
-        target.closest("input, textarea, select, a, [contenteditable='true']")
+        target.closest("select, a, [contenteditable='true']")
       ) {
         return;
       }
@@ -114,6 +114,7 @@ export function SwipeSession({
       longPressed.current = false;
       timer = window.setTimeout(() => {
         timer = null;
+        if (longPressed.current) return;
         longPressed.current = true;
         if ("vibrate" in navigator) navigator.vibrate(12);
         longPressCallback.current?.();
@@ -212,13 +213,11 @@ export function SwipeSession({
   }
 
   function blocksSwipe(target: EventTarget | null) {
-    return target instanceof Element
-      ? Boolean(
-          target.closest(
-            "input, textarea, select, a, [contenteditable='true']",
-          ),
-        )
-      : false;
+    if (!(target instanceof Element)) return false;
+    if (target.closest("select, a, [contenteditable='true']")) return true;
+    const input = target.closest("input");
+    if (!(input instanceof HTMLInputElement)) return false;
+    return !["text", "search", "email", "tel", "url"].includes(input.type);
   }
 
   function startSwipe(event: PointerEvent<HTMLDivElement>) {
@@ -230,7 +229,7 @@ export function SwipeSession({
       pointerId: event.pointerId,
     };
     longPressed.current = false;
-    if (onLongPress && event.pointerType !== "touch") {
+    if (onLongPress) {
       if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
         try {
           event.currentTarget.setPointerCapture(event.pointerId);
@@ -239,6 +238,7 @@ export function SwipeSession({
         }
       }
       longPressTimer.current = window.setTimeout(() => {
+        if (longPressed.current) return;
         longPressed.current = true;
         longPressTimer.current = null;
         if ("vibrate" in navigator) navigator.vibrate(12);
