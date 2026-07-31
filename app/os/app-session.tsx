@@ -101,7 +101,7 @@ export function SwipeSession({
     const reveal = () => {
       seenAttentionKeys.add(attentionKey);
       setShowingAttention(true);
-      timer = window.setTimeout(() => setShowingAttention(false), 1400);
+      timer = window.setTimeout(() => setShowingAttention(false), 3000);
     };
 
     if (typeof IntersectionObserver === "undefined") {
@@ -156,7 +156,7 @@ export function SwipeSession({
         longPressed.current = true;
         if ("vibrate" in navigator) navigator.vibrate(12);
         longPressCallback.current?.();
-      }, 520);
+      }, 960);
     };
     const moveHold = (event: globalThis.TouchEvent) => {
       if (!start || event.touches.length !== 1) return;
@@ -233,7 +233,7 @@ export function SwipeSession({
       blockedTimer.current = window.setTimeout(() => {
         setShowingBlockedCue(false);
         blockedTimer.current = null;
-      }, 520);
+      }, 960);
     });
   }
 
@@ -281,7 +281,7 @@ export function SwipeSession({
         longPressTimer.current = null;
         if ("vibrate" in navigator) navigator.vibrate(12);
         onLongPress();
-      }, 480);
+      }, 960);
     }
   }
 
@@ -363,7 +363,7 @@ export function SwipeSession({
           commitFrame.current = null;
         });
       });
-    }, 250);
+    }, 620);
   }
 
   function stopClickAfterSwipe(event: MouseEvent<HTMLDivElement>) {
@@ -409,7 +409,7 @@ export function SwipeSession({
     wheelTimer.current = window.setTimeout(() => {
       wheelDistance.current = 0;
       wheelTimer.current = null;
-    }, 160);
+    }, 420);
     if (Math.abs(wheelDistance.current) < 48) return;
 
     const movingForward = wheelDistance.current > 0;
@@ -553,7 +553,7 @@ export function SessionIntro({
     const timer = window.setTimeout(() => {
       setDisplay({ title, detail });
       setRefreshing(false);
-    }, 180);
+    }, 600);
     return () => window.clearTimeout(timer);
   }, [detail, refreshKey, title]);
 

@@ -9,6 +9,7 @@ import {
   moveChapterRun,
   renderChapterTemplate,
   selectHourlyChapter,
+  selectManualChapter,
   storeChapterRun,
 } from "../app/os/chapters/chapter-model.js";
 import {
@@ -145,6 +146,32 @@ test("hourly chapters wait until a later hour before offering the next set", () 
       new Date("2026-07-30T11:00:00.000Z"),
     ).id,
     second.id,
+  );
+});
+
+test("the Check-in label always finds a chapter journey", () => {
+  const first = { ...logSetup, id: "profile-spark-01", version: 1 };
+  const second = { ...logSetup, id: "profile-spark-02", version: 1 };
+  const completedRuns = {
+    [chapterRunId(first)]: {
+      ...createChapterRun(first),
+      status: "completed",
+      completedAt: "2026-07-30T10:15:00.000Z",
+    },
+    [chapterRunId(second)]: {
+      ...createChapterRun(second),
+      status: "completed",
+      completedAt: "2026-07-30T11:15:00.000Z",
+    },
+  };
+
+  assert.deepEqual(
+    selectManualChapter([first, second], completedRuns, first.id),
+    { chapter: second, repeat: true },
+  );
+  assert.deepEqual(
+    selectManualChapter([first, second], {}, first.id),
+    { chapter: second, repeat: false },
   );
 });
 

@@ -33,6 +33,17 @@ export function selectHourlyChapter(
   nowValue?: Date | string | number,
 ): ChapterDefinition | undefined;
 
+export function selectManualChapter(
+  chapters: ChapterDefinition[],
+  runs: Record<string, ChapterRun>,
+  currentChapterId?: string,
+):
+  | {
+      chapter: ChapterDefinition;
+      repeat: boolean;
+    }
+  | undefined;
+
 export function moveChapterRun(
   chapter: ChapterDefinition,
   run: ChapterRun,

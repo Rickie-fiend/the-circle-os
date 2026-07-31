@@ -144,6 +144,22 @@ export function selectHourlyChapter(chapters, runs, nowValue = new Date()) {
   );
 }
 
+export function selectManualChapter(chapters, runs, currentChapterId = "") {
+  const next = chapters.find((chapter) => {
+    const run = runs[chapterRunId(chapter)];
+    return (
+      chapter.id !== currentChapterId &&
+      run?.status !== "completed" &&
+      !run?.dismissedAt
+    );
+  });
+  if (next) return { chapter: next, repeat: false };
+
+  const repeat =
+    chapters.find((chapter) => chapter.id !== currentChapterId) || chapters[0];
+  return repeat ? { chapter: repeat, repeat: true } : undefined;
+}
+
 export function moveChapterRun(chapter, run, pageId) {
   const nextIndex = chapter.pages.findIndex((page) => page.id === pageId);
   if (nextIndex < 0) return run;

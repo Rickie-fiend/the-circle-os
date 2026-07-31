@@ -46,6 +46,7 @@ import {
   createChapterRun,
   renderChapterTemplate,
   selectHourlyChapter,
+  selectManualChapter,
   storeChapterRun,
 } from "./chapters/chapter-model.js";
 import {
@@ -929,6 +930,7 @@ export function TodayExperience() {
     PROFILE_SPARK_OPENED_AT,
   );
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
+  const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
   const [checkInAttention, setCheckInAttention] = useState(0);
   const [checkInRefreshing, setCheckInRefreshing] = useState(false);
   const checkInRefreshTimer = useRef<number | null>(null);
@@ -1089,11 +1091,27 @@ export function TodayExperience() {
     ) || scheduledProfileSparkChapter;
   const profileSparkRun = useMemo(() => {
     if (!profileSparkChapter) return null;
+    if (
+      manualProfileSparkRunId.startsWith(
+        `${chapterRunId(profileSparkChapter)}:manual:`,
+      )
+    ) {
+      return (
+        state.chapters.runs[manualProfileSparkRunId] || {
+          ...createChapterRun(profileSparkChapter),
+          runId: manualProfileSparkRunId,
+        }
+      );
+    }
     return (
       state.chapters.runs[chapterRunId(profileSparkChapter)] ||
       createChapterRun(profileSparkChapter)
     );
-  }, [profileSparkChapter, state.chapters.runs]);
+  }, [
+    manualProfileSparkRunId,
+    profileSparkChapter,
+    state.chapters.runs,
+  ]);
   const defaultLogStartHour = Math.max(CIRCLE_DAY_START_HOUR, wakeHour);
   const defaultLogEndHour = Math.min(
     CIRCLE_DAY_START_HOUR + 23,
@@ -1700,20 +1718,20 @@ export function TodayExperience() {
         ),
       );
     }
-    const nextChapter =
-      PROFILE_SPARK_CHAPTERS.find((chapter) => {
-        const run = state.chapters.runs[chapterRunId(chapter)];
-        return (
-          chapter.id !== profileSparkChapter?.id &&
-          run?.status !== "completed" &&
-          !run?.dismissedAt
-        );
-      }) ||
-      PROFILE_SPARK_CHAPTERS.find(
-        (chapter) => chapter.id !== profileSparkChapter?.id,
+    const selection = selectManualChapter(
+      PROFILE_SPARK_CHAPTERS,
+      state.chapters.runs,
+      profileSparkChapter?.id,
+    );
+    if (!selection) return;
+    if (!selection.repeat) {
+      setManualProfileSparkRunId("");
+      setForcedProfileSparkId(selection.chapter.id);
+    } else {
+      setForcedProfileSparkId(selection.chapter.id);
+      setManualProfileSparkRunId(
+        `${chapterRunId(selection.chapter)}:manual:${Date.now()}`,
       );
-    if (nextChapter) {
-      setForcedProfileSparkId(nextChapter.id);
     }
     setCheckInAttention((current) => current + 1);
     setProfileSparkClock((current) =>
@@ -1738,7 +1756,7 @@ export function TodayExperience() {
       recallProfileSpark();
       setCheckInRefreshing(false);
       checkInRefreshTimer.current = null;
-    }, 420);
+    }, 960);
   }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
@@ -1941,7 +1959,7 @@ export function TodayExperience() {
               attentionKey={`check-in:${profileSparkChapter.id}:${profileSparkChapter.version}:${checkInAttention}`}
               className="os-checkin-session"
               definition={profileSparkChapter}
-              key={profileSparkChapter.id}
+              key={profileSparkRun.runId}
               label="Check-in chapter"
               run={profileSparkRun}
               backApp={checkInIdleCard()}

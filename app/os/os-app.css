@@ -99,7 +99,7 @@
   inset: 4px auto 4px 4px;
   position: absolute;
   transform: translate3d(0, 0, 0);
-  transition: transform 280ms cubic-bezier(0.22, 0.78, 0.22, 1);
+  transition: transform 760ms cubic-bezier(0.16, 0.78, 0.2, 1);
   width: calc((100% - 12px) / 2);
   z-index: 0;
 }
@@ -124,7 +124,7 @@
   min-height: 42px;
   position: relative;
   text-transform: none;
-  transition: color 220ms ease;
+  transition: color 560ms ease;
   z-index: 1;
 }
 
@@ -153,7 +153,7 @@
 }
 
 .circle-os .os-route-stage.is-ready .os-route-content {
-  animation: os-route-arrive 180ms ease-out both;
+  animation: os-route-arrive 560ms ease-out both;
 }
 
 .circle-os .os-route-opening {
@@ -279,7 +279,7 @@
 }
 
 .circle-os .os-app-window.fluid-height {
-  transition: height 440ms cubic-bezier(0.22, 0.82, 0.22, 1);
+  transition: height 1100ms cubic-bezier(0.16, 0.78, 0.2, 1);
   will-change: height;
 }
 
@@ -297,8 +297,8 @@
 .circle-os .os-app-page {
   transform: translate3d(var(--swipe-x, 0), 0, 0);
   transition:
-    transform 240ms cubic-bezier(0.22, 0.75, 0.22, 1),
-    opacity 180ms ease;
+    transform 600ms cubic-bezier(0.16, 0.78, 0.2, 1),
+    opacity 480ms ease;
   will-change: transform;
 }
 
@@ -628,8 +628,8 @@
   overflow-wrap: anywhere;
   resize: none;
   transition:
-    color 260ms ease,
-    text-decoration-color 260ms ease;
+    color 700ms ease,
+    text-decoration-color 700ms ease;
   white-space: pre-wrap;
 }
 
@@ -879,8 +879,8 @@
 
 .circle-os .os-session-intro {
   transition:
-    opacity 180ms ease,
-    transform 180ms cubic-bezier(0.22, 0.82, 0.22, 1);
+    opacity 600ms ease,
+    transform 600ms cubic-bezier(0.16, 0.78, 0.2, 1);
 }
 
 .circle-os .os-session-intro.is-refreshing {
@@ -926,15 +926,15 @@
 }
 
 .circle-os .os-app-window.update-arrival {
-  animation: os-update-surface-arrival 1260ms ease-out both;
+  animation: os-update-surface-arrival 2800ms ease-out both;
 }
 
 .circle-os .os-app-window.update-arrival .os-app-page.current > * > * {
-  animation: os-update-copy-arrival 1260ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+  animation: os-update-copy-arrival 2800ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
 }
 
 .circle-os .os-swipe-session.update-exit .os-app-window {
-  animation: os-update-page-exit 380ms ease-in both;
+  animation: os-update-page-exit 900ms ease-in both;
   pointer-events: none;
 }
 
@@ -978,16 +978,16 @@
 }
 
 .circle-os .os-swipe-session.required-nudge .os-app-page.current {
-  animation: os-required-nudge 420ms cubic-bezier(0.22, 0.82, 0.22, 1);
+  animation: os-required-nudge 900ms cubic-bezier(0.16, 0.78, 0.2, 1);
   backface-visibility: hidden;
   will-change: transform;
 }
 
 .circle-os .os-chapter-idle :where(button) {
   transition:
-    transform 180ms cubic-bezier(0.22, 0.82, 0.22, 1),
-    opacity 180ms ease,
-    background-color 180ms ease;
+    transform 520ms cubic-bezier(0.16, 0.78, 0.2, 1),
+    opacity 520ms ease,
+    background-color 520ms ease;
 }
 
 .circle-os .os-chapter-idle :where(button):active {
@@ -1610,9 +1610,9 @@
   min-width: 96px;
   padding: 0.8rem 1.1rem;
   transition:
-    transform 120ms ease,
-    box-shadow 180ms ease,
-    background 180ms ease;
+    transform 340ms ease,
+    box-shadow 480ms ease,
+    background 480ms ease;
 }
 
 .circle-os .os-mission > button:active {
@@ -2689,7 +2689,7 @@
 .circle-os .gap-orbit-lived {
   background: rgb(227 107 55 / 0.22);
   left: 48%;
-  transition: left 440ms cubic-bezier(0.22, 0.82, 0.22, 1);
+  transition: left 1100ms cubic-bezier(0.16, 0.78, 0.2, 1);
 }
 
 .circle-os .is-close .gap-orbit-lived {
