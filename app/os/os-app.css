@@ -370,6 +370,40 @@
   grid-template-rows: auto 1fr auto;
 }
 
+.circle-os .os-info-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.circle-os .os-info-page-label {
+  align-items: flex-start;
+  display: flex;
+  justify-content: flex-start;
+  min-height: 1rem;
+  width: 100%;
+}
+
+.circle-os .os-info-page-label > :is(p, button) {
+  margin: 0;
+}
+
+.circle-os .os-info-page-body {
+  align-self: center;
+  min-width: 0;
+  width: 100%;
+}
+
+.circle-os .os-info-page-footer {
+  align-self: end;
+  min-width: 0;
+  width: 100%;
+}
+
+.circle-os .os-cover-page .os-info-page-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .circle-os .os-checkin-session .os-session-intro-copy,
 .circle-os .os-checkin-session .os-inline-checkin-note {
   align-self: center;
@@ -389,8 +423,16 @@
   appearance: none;
   background: transparent;
   border: 0;
+  color: #e36b37;
   cursor: pointer;
+  font-size: 0.59rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  line-height: 1;
+  margin: 0;
+  min-height: 0;
   padding: 0;
+  text-transform: uppercase;
 }
 
 .circle-os .os-habit-session {
@@ -500,7 +542,7 @@
   color: rgb(255 248 241 / 0.7);
 }
 
-.circle-os .os-session-intro > button {
+.circle-os .os-cover-page .os-info-page-footer > button {
   background: transparent;
   border: 0;
   color: #8a857b;
@@ -511,8 +553,8 @@
   padding: 0.7rem 0 0.25rem 1rem;
 }
 
-.circle-os .theme-orange > button,
-.circle-os .theme-dark > button {
+.circle-os .theme-orange.os-cover-page .os-info-page-footer > button,
+.circle-os .theme-dark.os-cover-page .os-info-page-footer > button {
   color: rgb(255 248 241 / 0.68);
 }
 
@@ -1466,13 +1508,12 @@
 }
 
 .circle-os .os-info-page-spacer {
+  display: block;
   min-height: 1.1rem;
 }
 
 .circle-os .os-thoughts-form {
-  align-self: center;
-  display: grid;
-  gap: 0.55rem;
+  display: block;
   margin: 0;
   width: 100%;
 }
@@ -1495,14 +1536,8 @@
 }
 
 .circle-os .os-thoughts-form textarea::placeholder {
-  color: #191813;
+  color: rgb(25 24 19 / 0.42);
   opacity: 1;
-}
-
-.circle-os .os-thoughts-form p {
-  color: #77736a;
-  font-size: 0.72rem;
-  margin: 0;
 }
 
 .circle-os .os-thoughts-send {
@@ -1517,7 +1552,7 @@
 
 .circle-os .os-thoughts-send:disabled {
   cursor: default;
-  opacity: 0.32;
+  opacity: 1;
 }
 
 .circle-os .os-profile-question {
@@ -3558,8 +3593,13 @@
     font-size: 16px !important;
   }
 
-  .circle-os textarea.os-inline-checkin-title {
-    font-size: 1.58rem !important;
+  .circle-os .os-info-page textarea.os-inline-checkin-title,
+  .circle-os .os-info-page .os-thoughts-form textarea {
+    font-size: clamp(2rem, 9vw, 2.7rem) !important;
+  }
+
+  .circle-os .os-info-page .os-session-detail {
+    font-size: 1rem;
   }
 
   .circle-os textarea.os-inline-checkin-copy {

@@ -1964,10 +1964,9 @@ export function TodayExperience() {
             maxLength={800}
             onChange={(event) => setThoughtDraft(event.currentTarget.value)}
             placeholder="What are your thoughts?"
-            rows={5}
+            rows={3}
             value={thoughtDraft}
           />
-          <p>Write down anything.</p>
         </form>
       </InfoPage>
     );

@@ -17,6 +17,8 @@
   action.
 - **Blog Page**: a reading page with title, divider, and short paragraph
   sections. Athena Reading is the reference implementation.
+- **App Label**: the small upper-left name shown only when a Page is itself an
+  app surface. A non-app Page omits it.
 
 ## App Box size
 
@@ -97,6 +99,9 @@ Used for charts, weekly views, and other things worth reading again.
 - All app interiors use Geist. Cormorant remains an outer editorial typeface.
 - Pages of the same type reuse one component and typography scale. Do not make
   a one-off Cover, Note, Thoughts, or Blog visual inside a feature.
+- Every Info Page keeps three anchors: App Label, centered content, and bottom
+  action. Empty optional text does not move those anchors.
+- Full-width actions use the same black button language across apps.
 
 ## State
 

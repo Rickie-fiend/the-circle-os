@@ -613,7 +613,7 @@ export function SessionIntro({
 
   return (
     <InfoPage
-      className={refreshing ? "is-refreshing" : ""}
+      className={`os-cover-page${refreshing ? " is-refreshing" : ""}`}
       label={<p className="os-card-label">{label}</p>}
       theme={theme}
       footer={ready ? (
@@ -642,14 +642,16 @@ export function InfoPage({
   children: ReactNode;
   className?: string;
   footer?: ReactNode;
-  label: ReactNode;
+  label?: ReactNode;
   theme?: "light" | "orange" | "dark";
 }) {
   return (
     <div className={`os-info-page os-session-intro theme-${theme} ${className}`.trim()}>
-      {label}
-      {children}
-      {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
+      {label ? <div className="os-info-page-label">{label}</div> : null}
+      <div className="os-info-page-body">{children}</div>
+      <div className="os-info-page-footer">
+        {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
+      </div>
     </div>
   );
 }
