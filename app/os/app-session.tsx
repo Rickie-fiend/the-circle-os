@@ -653,11 +653,11 @@ export function InfoPage({
 }) {
   return (
     <div className={`os-info-page os-session-intro theme-${theme} ${className}`.trim()}>
-      <header className="os-info-page-header">{header}</header>
+      <div className="os-info-page-header">{header}</div>
       <div className="os-info-page-body">{children}</div>
-      <footer className="os-info-page-footer">
+      <div className="os-info-page-footer">
         {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
-      </footer>
+      </div>
     </div>
   );
 }
