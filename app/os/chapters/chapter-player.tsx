@@ -522,6 +522,7 @@ export function ChapterPlayer({
     return (
       <SwipeSession
         attentionKey={attentionKey}
+        attentionIndex={1}
         availableIndices={stackedAvailableIndices}
         className={sessionClassName}
         index={showingBackApp ? 0 : currentIndex + 1}

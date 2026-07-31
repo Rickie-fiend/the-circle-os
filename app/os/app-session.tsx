@@ -27,6 +27,7 @@ export function SwipeSession({
   frameHeight,
   onLongPress,
   attentionKey,
+  attentionIndex = 0,
 }: {
   children: ReactNode;
   index: number;
@@ -38,6 +39,7 @@ export function SwipeSession({
   frameHeight?: CSSProperties["height"];
   onLongPress?: () => void;
   attentionKey?: string;
+  attentionIndex?: number;
 }) {
   const apps = Children.toArray(children);
   const lastIndex = Math.max(0, Math.min(
@@ -74,6 +76,9 @@ export function SwipeSession({
   const settleTimer = useRef<number | null>(null);
   const blockedTimer = useRef<number | null>(null);
   const commitFrame = useRef<number | null>(null);
+  const externalMotionTimer = useRef<number | null>(null);
+  const previousActiveIndex = useRef(activeIndex);
+  const internalCommit = useRef(false);
   const wheelTimer = useRef<number | null>(null);
   const wheelDistance = useRef(0);
   const longPressTimer = useRef<number | null>(null);
@@ -84,9 +89,10 @@ export function SwipeSession({
   const [settling, setSettling] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [showingBlockedCue, setShowingBlockedCue] = useState(false);
+  const [externalMotion, setExternalMotion] = useState("");
   const attentionIsNew = Boolean(
     attentionKey &&
-    activeIndex === 0 &&
+    activeIndex === attentionIndex &&
     !seenAttentionKeys.has(attentionKey),
   );
   const [showingAttentionKey, setShowingAttentionKey] = useState("");
@@ -105,7 +111,7 @@ export function SwipeSession({
     if (
       !session ||
       !attentionKey ||
-      activeIndex !== 0 ||
+      activeIndex !== attentionIndex ||
       seenAttentionKeys.has(attentionKey)
     ) {
       return;
@@ -138,7 +144,23 @@ export function SwipeSession({
       observer.disconnect();
       if (timer) window.clearTimeout(timer);
     };
-  }, [activeIndex, attentionKey]);
+  }, [activeIndex, attentionIndex, attentionKey]);
+
+  useLayoutEffect(() => {
+    const previousIndex = previousActiveIndex.current;
+    if (previousIndex === activeIndex) return;
+    previousActiveIndex.current = activeIndex;
+    if (internalCommit.current) {
+      internalCommit.current = false;
+      return;
+    }
+    if (externalMotionTimer.current) window.clearTimeout(externalMotionTimer.current);
+    setExternalMotion(activeIndex > previousIndex ? "motion-next" : "motion-previous");
+    externalMotionTimer.current = window.setTimeout(() => {
+      setExternalMotion("");
+      externalMotionTimer.current = null;
+    }, 300);
+  }, [activeIndex]);
 
   useEffect(() => {
     const session = sessionRef.current;
@@ -223,6 +245,9 @@ export function SwipeSession({
       }
       if (commitFrame.current) {
         window.cancelAnimationFrame(commitFrame.current);
+      }
+      if (externalMotionTimer.current) {
+        window.clearTimeout(externalMotionTimer.current);
       }
       if (blockedTimer.current) {
         window.clearTimeout(blockedTimer.current);
@@ -375,6 +400,7 @@ export function SwipeSession({
       // The adjacent page is already in its final visual position. Promote it
       // without replaying the horizontal transition on the reused current node.
       setCommitting(true);
+      internalCommit.current = true;
       onIndexChange(targetIndex);
       setDragX(0);
       setSettling(false);
@@ -526,7 +552,9 @@ export function SwipeSession({
         <div
           className={`os-app-page current${
             dragging ? " dragging" : ""
-          }${committing ? " committing" : ""}`}
+          }${committing ? " committing" : ""}${
+            externalMotion ? ` ${externalMotion}` : ""
+          }`}
           ref={currentPageRef}
           style={{ "--swipe-x": `${dragX}px` } as CSSProperties}
         >
