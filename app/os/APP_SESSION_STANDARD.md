@@ -124,9 +124,13 @@ Used for charts, weekly views, and other things worth reading again.
   optional text does not move those anchors.
 - Main Body content is centered inside its larger two-part space. Sub Body
   follows beneath it and may grow for real content.
+- On Cover, Note, and Thoughts Info Pages, Main and Sub read as one centered
+  text group rather than floating near the top of the App Box.
 - Habit App Pages place `Your habit today` in Heading, the main habit in Main
   Body, added habits and tasks in Sub Body, and Add task in Footer. The divider
   appears only when Sub Body has an item.
+- When Habit has no Sub Body items, that empty region collapses so the main
+  action meets the Add task Footer without a dead gap.
 - Full-width actions use the same black button language across apps.
 - Text answers use editable typography, not a separate form-box visual. The App
   Box grows for a paragraph; the text does not shrink.

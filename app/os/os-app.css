@@ -3827,15 +3827,38 @@
 .circle-os .os-cover-page .os-session-intro-copy,
 .circle-os .os-info-page .os-inline-checkin-note,
 .circle-os .os-info-page .os-thoughts-form {
-  display: grid;
-  grid-template-rows: minmax(min-content, 2fr) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  justify-content: center;
   margin: 0;
   width: 100%;
 }
 
+.circle-os .os-cover-page .os-session-intro-copy,
+.circle-os .os-info-page .os-inline-checkin-note {
+  gap: 0.7rem;
+}
+
+.circle-os .os-info-page .os-page-body {
+  align-items: center;
+  display: flex;
+}
+
 .circle-os .os-cover-page .os-info-page-main,
 .circle-os .os-info-page .os-inline-checkin-note .os-info-page-main {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.circle-os .os-info-page .os-inline-checkin-note .os-info-page-sub {
+  margin: 0;
+  padding: 0;
+}
+
+.circle-os .os-info-page .os-thoughts-form .os-info-page-main {
   align-items: flex-start;
   display: flex;
   flex-direction: column;
@@ -3940,6 +3963,18 @@
 
 .circle-os .os-habit .os-chapter-idle .os-page-sub {
   padding-top: 0;
+}
+
+.circle-os .os-habit .os-chapter-idle .os-page-main {
+  justify-content: flex-end;
+}
+
+.circle-os .os-habit .os-chapter-idle .os-page-body:has(.os-habit-sub-body:not(.has-items)) {
+  grid-template-rows: minmax(0, 1fr) 0;
+}
+
+.circle-os .os-habit .os-chapter-idle .os-page-sub:has(.os-habit-sub-body:not(.has-items)) {
+  display: none;
 }
 
 .circle-os .os-habit .os-chapter-idle .os-page-footer {
