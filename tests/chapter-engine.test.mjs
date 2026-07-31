@@ -149,7 +149,7 @@ test("hourly chapters wait until a later hour before offering the next set", () 
   );
 });
 
-test("the Check-in label always finds a chapter journey", () => {
+test("the Check-in label finds unfinished journeys without repeating completed ones", () => {
   const first = { ...logSetup, id: "profile-spark-01", version: 1 };
   const second = { ...logSetup, id: "profile-spark-02", version: 1 };
   const completedRuns = {
@@ -165,9 +165,9 @@ test("the Check-in label always finds a chapter journey", () => {
     },
   };
 
-  assert.deepEqual(
+  assert.equal(
     selectManualChapter([first, second], completedRuns, first.id),
-    { chapter: second, repeat: true },
+    undefined,
   );
   assert.deepEqual(
     selectManualChapter([first, second], {}, first.id),

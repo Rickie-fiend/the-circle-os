@@ -145,33 +145,28 @@ export function selectHourlyChapter(chapters, runs, nowValue = new Date()) {
 }
 
 export function selectManualChapter(chapters, runs, currentChapterId = "") {
+  const isUnfinished = (chapter) => {
+    const run = runs[chapterRunId(chapter)];
+    return run?.status !== "completed" && !run?.dismissedAt;
+  };
   const next = chapters.find((chapter) => {
     const run = runs[chapterRunId(chapter)];
-    return (
-      chapter.id !== currentChapterId &&
-      run?.status !== "completed" &&
-      !run?.deferredAt &&
-      !run?.dismissedAt
-    );
+    return chapter.id !== currentChapterId && isUnfinished(chapter) && !run?.deferredAt;
   });
   if (next) return { chapter: next, repeat: false };
 
-  const repeat =
-    chapters.find((chapter) => {
-      const run = runs[chapterRunId(chapter)];
-      return (
-        chapter.id !== currentChapterId &&
-        !run?.deferredAt &&
-        !run?.dismissedAt
-      );
-    }) ||
-    chapters.find(
-      (chapter) =>
-        chapter.id !== currentChapterId &&
-        !runs[chapterRunId(chapter)]?.dismissedAt,
-    ) ||
-    chapters[0];
-  return repeat ? { chapter: repeat, repeat: true } : undefined;
+  const later = chapters.find(
+    (chapter) =>
+      chapter.id !== currentChapterId &&
+      isUnfinished(chapter) &&
+      runs[chapterRunId(chapter)]?.deferredAt,
+  );
+  if (later) return { chapter: later, repeat: false };
+
+  const current = chapters.find(
+    (chapter) => chapter.id === currentChapterId && isUnfinished(chapter),
+  );
+  return current ? { chapter: current, repeat: false } : undefined;
 }
 
 export function moveChapterRun(chapter, run, pageId) {

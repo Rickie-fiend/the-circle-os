@@ -115,7 +115,7 @@ export function SwipeSession({
     const reveal = () => {
       seenAttentionKeys.add(attentionKey);
       setShowingAttentionKey(attentionKey);
-      timer = window.setTimeout(() => setShowingAttentionKey(""), 3000);
+      timer = window.setTimeout(() => setShowingAttentionKey(""), 2400);
     };
 
     if (typeof IntersectionObserver === "undefined") {

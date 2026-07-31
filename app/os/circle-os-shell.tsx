@@ -933,7 +933,9 @@ export function TodayExperience() {
   const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
   const [checkInAttention, setCheckInAttention] = useState(0);
   const [checkInRefreshing, setCheckInRefreshing] = useState(false);
+  const [checkInIdleEntering, setCheckInIdleEntering] = useState(false);
   const checkInRefreshTimer = useRef<number | null>(null);
+  const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
@@ -972,6 +974,9 @@ export function TodayExperience() {
     () => () => {
       if (checkInRefreshTimer.current) {
         window.clearTimeout(checkInRefreshTimer.current);
+      }
+      if (checkInIdleTimer.current) {
+        window.clearTimeout(checkInIdleTimer.current);
       }
     },
     [],
@@ -1654,6 +1659,16 @@ export function TodayExperience() {
 
   function saveProfileSparkRun(nextRun: ChapterRun) {
     if (!profileSparkChapter) return;
+    const completedNow =
+      nextRun.status === "completed" && profileSparkRun?.status !== "completed";
+    if (completedNow) {
+      setCheckInIdleEntering(true);
+      if (checkInIdleTimer.current) window.clearTimeout(checkInIdleTimer.current);
+      checkInIdleTimer.current = window.setTimeout(() => {
+        setCheckInIdleEntering(false);
+        checkInIdleTimer.current = null;
+      }, 1100);
+    }
     updateState((current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(
@@ -1708,28 +1723,44 @@ export function TodayExperience() {
       state.chapters.runs,
       profileSparkChapter?.id,
     );
-    if (!selection) return;
-    if (!selection.repeat) {
-      setManualProfileSparkRunId("");
-      setForcedProfileSparkId(selection.chapter.id);
-    } else {
-      setForcedProfileSparkId(selection.chapter.id);
-      setManualProfileSparkRunId(
-        `${chapterRunId(selection.chapter)}:manual:${Date.now()}`,
+    if (!selection) return false;
+    const selectedRun = state.chapters.runs[chapterRunId(selection.chapter)];
+    if (selectedRun?.deferredAt) {
+      updateState((current) =>
+        storeChapterRun(
+          current,
+          {
+            ...selectedRun,
+            deferredAt: null,
+            updatedAt: refreshedAt,
+          },
+          "check-in",
+        ),
       );
     }
+    setManualProfileSparkRunId("");
+    setForcedProfileSparkId(selection.chapter.id);
     setCheckInAttention((current) => current + 1);
     setProfileSparkClock((current) =>
       Math.max(current, Date.now()) + 3_600_000,
     );
+    return true;
   }
 
   function revealProfileSpark() {
     if (checkInRefreshing) return;
     setCheckInRefreshing(true);
     checkInRefreshTimer.current = window.setTimeout(() => {
-      refreshProfileSpark();
+      const loaded = refreshProfileSpark();
       setCheckInRefreshing(false);
+      if (!loaded) {
+        setCheckInIdleEntering(true);
+        if (checkInIdleTimer.current) window.clearTimeout(checkInIdleTimer.current);
+        checkInIdleTimer.current = window.setTimeout(() => {
+          setCheckInIdleEntering(false);
+          checkInIdleTimer.current = null;
+        }, 1100);
+      }
       checkInRefreshTimer.current = null;
     }, 900);
   }
@@ -1963,6 +1994,8 @@ export function TodayExperience() {
             }
             className={`os-checkin-session${
               checkInRefreshing ? " update-exit" : ""
+            }${
+              checkInIdleEntering ? " idle-arrival" : ""
             }`}
             index={visibleCheckInApp}
             label="Check-in session"

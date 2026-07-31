@@ -889,27 +889,36 @@
 }
 
 @keyframes os-update-surface-arrival {
-  0% {
+  from {
     opacity: 0;
+    transform: translate3d(0, 4px, 0) scale(0.996);
   }
 
-  42% {
+  to {
     opacity: 1;
-  }
-
-  100% {
-    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 @keyframes os-update-copy-arrival {
-  0%,
-  42% {
+  from {
     opacity: 0;
-    transform: translate3d(0, 10px, 0);
+    transform: translate3d(0, 8px, 0);
   }
 
-  100% {
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes os-idle-page-arrival {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+
+  to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
   }
@@ -941,12 +950,25 @@
 }
 
 .circle-os .os-app-window.update-arrival {
-  animation: os-update-surface-arrival 2800ms ease-out both;
+  animation: os-update-surface-arrival 950ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
   pointer-events: none;
 }
 
 .circle-os .os-app-window.update-arrival .os-app-page.current > * > * {
-  animation: os-update-copy-arrival 2800ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+  opacity: 0;
+  animation: os-update-copy-arrival 720ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+}
+
+.circle-os .os-app-window.update-arrival .os-app-page.current > * > :nth-child(1) {
+  animation-delay: 260ms;
+}
+
+.circle-os .os-app-window.update-arrival .os-app-page.current > * > :nth-child(2) {
+  animation-delay: 620ms;
+}
+
+.circle-os .os-app-window.update-arrival .os-app-page.current > * > :nth-child(3) {
+  animation-delay: 1180ms;
 }
 
 .circle-os .os-swipe-session.update-exit .os-app-window {
@@ -956,6 +978,11 @@
 
 .circle-os .os-swipe-session.completion-exit .os-app-window {
   animation: os-completion-exit 700ms ease-in-out both;
+  pointer-events: none;
+}
+
+.circle-os .os-swipe-session.idle-arrival .os-app-window {
+  animation: os-idle-page-arrival 1000ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
   pointer-events: none;
 }
 
