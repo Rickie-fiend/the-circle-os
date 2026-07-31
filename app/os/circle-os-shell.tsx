@@ -243,7 +243,7 @@ type CircleDay = {
 
 const PROFILE_SPARK_CHAPTERS = Object.values(
   publishedChapters
-    .filter((chapter) => chapter.id.startsWith("athena-checkin-"))
+    .filter((chapter) => chapter.session === "check-in")
     .reduce<Record<string, ChapterDefinition>>((latest, chapter) => {
       if (!latest[chapter.id] || latest[chapter.id].version < chapter.version) {
         latest[chapter.id] = chapter;
