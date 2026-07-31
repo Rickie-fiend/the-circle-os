@@ -47,6 +47,8 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - A fluid App Box may grow for its content and ease back down, but never below
   the shared default minimum.
 - The App Box does not jump when adjacent Pages have different heights.
+- Adding rows to an idle App does not stretch its App Box. Overflowing Sub Body
+  content scrolls inside the box while the Footer stays fixed.
 
 ## Structure
 

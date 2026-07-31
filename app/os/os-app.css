@@ -3969,6 +3969,30 @@
   justify-content: flex-end;
 }
 
+/* Adding tasks changes the Habit app's contents, not the App Box itself. */
+.circle-os .os-habit .os-app-page > .os-chapter-idle {
+  height: var(--os-app-box-min-height);
+  overflow: hidden;
+}
+
+.circle-os .os-habit .os-chapter-idle .os-page-body,
+.circle-os .os-habit .os-chapter-idle .os-page-main,
+.circle-os .os-habit .os-chapter-idle .os-page-sub {
+  min-height: 0;
+}
+
+.circle-os .os-habit .os-chapter-idle .os-page-sub {
+  align-self: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+}
+
+.circle-os .os-habit .os-chapter-idle .os-page-sub::-webkit-scrollbar {
+  display: none;
+}
+
 .circle-os .os-habit .os-chapter-idle .os-page-body:has(.os-habit-sub-body:not(.has-items)) {
   grid-template-rows: minmax(0, 1fr) 0;
 }
