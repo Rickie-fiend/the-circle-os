@@ -1687,21 +1687,6 @@ export function TodayExperience() {
     );
   }
 
-  function resumeProfileSparkRun() {
-    if (!profileSparkRun?.deferredAt) return;
-    updateState((current) =>
-      storeChapterRun(
-        current,
-        {
-          ...profileSparkRun,
-          deferredAt: null,
-          updatedAt: new Date().toISOString(),
-        },
-        "check-in",
-      ),
-    );
-  }
-
   function refreshProfileSpark() {
     const refreshedAt = new Date().toISOString();
     if (profileSparkRun?.status === "in-progress") {
@@ -1739,24 +1724,14 @@ export function TodayExperience() {
     );
   }
 
-  function recallProfileSpark() {
-    if (!profileSparkRun?.deferredAt) {
-      refreshProfileSpark();
-      return;
-    }
-    setForcedProfileSparkId(profileSparkChapter?.id || "");
-    resumeProfileSparkRun();
-    setCheckInAttention((current) => current + 1);
-  }
-
   function revealProfileSpark() {
     if (checkInRefreshing) return;
     setCheckInRefreshing(true);
     checkInRefreshTimer.current = window.setTimeout(() => {
-      recallProfileSpark();
+      refreshProfileSpark();
       setCheckInRefreshing(false);
       checkInRefreshTimer.current = null;
-    }, 960);
+    }, 900);
   }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {

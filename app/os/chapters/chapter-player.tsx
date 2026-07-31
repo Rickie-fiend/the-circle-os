@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { SessionIntro, SwipeSession } from "../app-session";
 import {
   advanceChapterRun,
@@ -332,6 +339,11 @@ export function ChapterPlayer({
   attentionKey?: string;
 }) {
   const [showingBackApp, setShowingBackApp] = useState(startOnBackApp);
+  const [leavingCompletionKey, setLeavingCompletionKey] = useState("");
+  const runChangeRef = useRef(onRunChange);
+  useEffect(() => {
+    runChangeRef.current = onRunChange;
+  }, [onRunChange]);
   const currentIndex = Math.max(
     0,
     definition.pages.findIndex((page) => page.id === run.currentPageId),
@@ -375,6 +387,46 @@ export function ChapterPlayer({
       page.type !== "idle" &&
       !COMPLETION_TYPES.has(page.type),
   );
+  const isCompletionPage = COMPLETION_TYPES.has(currentPage.type);
+  const completionKey = `${run.runId}:${currentPage.id}:${run.updatedAt}`;
+  const completionLeaving = leavingCompletionKey === completionKey;
+
+  useEffect(() => {
+    if (
+      definition.session !== "check-in" ||
+      run.status === "completed" ||
+      !isCompletionPage
+    ) {
+      return;
+    }
+
+    let finishTimer: number | null = null;
+    const pauseTimer = window.setTimeout(() => {
+      setLeavingCompletionKey(completionKey);
+      finishTimer = window.setTimeout(() => {
+        runChangeRef.current(
+          advanceChapterRun(definition, run, { page: currentPage }),
+        );
+      }, 700);
+    }, 2400);
+
+    return () => {
+      window.clearTimeout(pauseTimer);
+      if (finishTimer) window.clearTimeout(finishTimer);
+    };
+  }, [
+    currentPage,
+    completionKey,
+    definition,
+    isCompletionPage,
+    run,
+    run.status,
+  ]);
+
+  const sessionClassName =
+    `os-chapter-session theme-${definition.theme} ${className}${
+      completionLeaving ? " completion-exit" : ""
+    }`.trim();
 
   if (run.status === "completed" && idleApps.length) {
     const idlePage = definition.pages[idleIndex >= 0 ? idleIndex : currentIndex];
@@ -401,7 +453,7 @@ export function ChapterPlayer({
       <SwipeSession
         attentionKey={attentionKey}
         availableIndices={apps.map((_, index) => index)}
-        className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
+        className={sessionClassName}
         index={Math.max(0, Math.min(apps.length - 1, idleAppIndex))}
         label={label}
         onLongPress={onLongPress}
@@ -430,7 +482,9 @@ export function ChapterPlayer({
   }
 
   if (run.status !== "completed" && backApp) {
-    const stackedApps = [backApp, ...definition.pages.map((page) => (
+    const stackedApps = [
+      <Fragment key="idle-before">{backApp}</Fragment>,
+      ...definition.pages.map((page) => (
       <ChapterPageView
         chapter={definition}
         current={Math.max(1, countedPages.findIndex((item) => item.id === page.id) + 1)}
@@ -452,18 +506,35 @@ export function ChapterPlayer({
           )
         }
       />
-    ))];
-    const stackedAvailableIndices = [0, ...availableIndices.map((item) => item + 1)];
+      )),
+      ...(isCompletionPage
+        ? [<Fragment key="idle-after">{backApp}</Fragment>]
+        : []),
+    ];
+    const completionIdleIndex = stackedApps.length - 1;
+    const stackedAvailableIndices = [
+      0,
+      ...availableIndices
+        .filter((item) => item !== idleIndex)
+        .map((item) => item + 1),
+      ...(isCompletionPage ? [completionIdleIndex] : []),
+    ];
     return (
       <SwipeSession
         attentionKey={attentionKey}
         availableIndices={stackedAvailableIndices}
-        className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
+        className={sessionClassName}
         index={showingBackApp ? 0 : currentIndex + 1}
         label={label}
         onLongPress={onLongPress}
         maxIndex={stackedAvailableIndices.at(-1) ?? currentIndex + 1}
         onIndexChange={(index) => {
+          if (isCompletionPage && index === completionIdleIndex) {
+            onRunChange(
+              advanceChapterRun(definition, run, { page: currentPage }),
+            );
+            return;
+          }
           if (index === 0) {
             if (!showingBackApp) {
               setShowingBackApp(true);
@@ -487,7 +558,7 @@ export function ChapterPlayer({
       availableIndices={
         availableIndices
       }
-      className={`os-chapter-session theme-${definition.theme} ${className}`.trim()}
+      className={sessionClassName}
       index={currentIndex}
       label={label}
       onLongPress={onLongPress}

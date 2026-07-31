@@ -150,13 +150,27 @@ export function selectManualChapter(chapters, runs, currentChapterId = "") {
     return (
       chapter.id !== currentChapterId &&
       run?.status !== "completed" &&
+      !run?.deferredAt &&
       !run?.dismissedAt
     );
   });
   if (next) return { chapter: next, repeat: false };
 
   const repeat =
-    chapters.find((chapter) => chapter.id !== currentChapterId) || chapters[0];
+    chapters.find((chapter) => {
+      const run = runs[chapterRunId(chapter)];
+      return (
+        chapter.id !== currentChapterId &&
+        !run?.deferredAt &&
+        !run?.dismissedAt
+      );
+    }) ||
+    chapters.find(
+      (chapter) =>
+        chapter.id !== currentChapterId &&
+        !runs[chapterRunId(chapter)]?.dismissedAt,
+    ) ||
+    chapters[0];
   return repeat ? { chapter: repeat, repeat: true } : undefined;
 }
 

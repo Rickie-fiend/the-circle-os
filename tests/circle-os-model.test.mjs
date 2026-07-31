@@ -378,10 +378,39 @@ test("the editable check-in note can be changed or cleared", () => {
 
   state = answerSurveyQuestion(state, note, "", "note");
   assert.equal(
-    state.profile.profileCase.survey.answers.some(
+    state.profile.profileCase.survey.answers.find(
       (answer) => answer.questionId === note.id,
-    ),
-    false,
+    ).answer,
+    "",
+  );
+});
+
+test("a cleared check-in subtitle stays clear after server merge", () => {
+  const note = {
+    id: "checkin-note",
+    prompt: "A note for later",
+    type: "text",
+  };
+  const remote = answerSurveyQuestion(
+    createEmptyState(),
+    note,
+    "Notice what feels like you today.",
+    "note",
+  );
+  const local = answerSurveyQuestion(remote, note, "", "note");
+  const localAnswer = local.profile.profileCase.survey.answers.find(
+    (answer) => answer.questionId === note.id,
+  );
+  localAnswer.answeredAt = "2026-07-31T12:00:00.000Z";
+  remote.profile.profileCase.survey.answers[0].answeredAt =
+    "2026-07-31T11:00:00.000Z";
+
+  const merged = mergeServerState(local, remote);
+  assert.equal(
+    merged.profile.profileCase.survey.answers.find(
+      (answer) => answer.questionId === note.id,
+    ).answer,
+    "",
   );
 });
 

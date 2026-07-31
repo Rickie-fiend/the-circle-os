@@ -767,7 +767,7 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
         ...state.profile.profileCase,
         survey: {
           ...state.profile.profileCase.survey,
-          answers: cleanAnswer
+          answers: cleanAnswer || kind === "note"
             ? [
                 ...previousAnswers,
                 {

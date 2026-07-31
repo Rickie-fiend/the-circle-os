@@ -19,10 +19,14 @@ Used for questions, teaching, setup, and habit creation.
 - Answered pages remain available while the chapter is an open draft.
 - Before confirmation, the person may move backward and edit any answer.
 - The last question leads to a separate completion page.
-- Only pressing the completion button closes the chapter.
-- After confirmation, the draft pages retire and only the useful idle app
+- A short Check-in completion may leave by one final left swipe or by a quiet
+  timed fade. It returns to the real idle app without a confirmation button.
+- After completion, the draft pages retire and only the useful idle app
   remains.
 - A new immutable chapter version creates a new journey and cover.
+- Only a genuinely new cover receives the staged update reveal. Its solid
+  surface appears before its words, and the cover cannot be swiped until that
+  reveal is complete.
 
 ### Library
 
@@ -40,10 +44,12 @@ Used for charts, weekly views, and other things worth reading again.
   rounded outer corners, borders, or shadows.
 - Only the inner page follows the finger.
 - A swipe completes inside the clipped frame before state changes.
+- Ordinary page travel stays quick enough for consecutive swipes. Ceremonial
+  update motion never slows browsing through an existing app stack.
 - The active page is always kept in the navigation map while permissions or
   saved progress change. It never falls back to the cover by position.
-- The cover has a hard right boundary. Pulling right cannot reveal an older
-  page or idle app.
+- A required first-use cover has a hard right boundary. An optional Check-in
+  cover may swipe right into its idle app to mean `Later`.
 - The incoming page is promoted in place after the swipe. Its horizontal
   entrance never replays during the state change.
 - When pages have different heights, the frame keeps its old height until the

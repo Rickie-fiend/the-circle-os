@@ -84,7 +84,14 @@ export function SwipeSession({
   const [settling, setSettling] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [showingBlockedCue, setShowingBlockedCue] = useState(false);
-  const [showingAttention, setShowingAttention] = useState(false);
+  const attentionIsNew = Boolean(
+    attentionKey &&
+    activeIndex === 0 &&
+    !seenAttentionKeys.has(attentionKey),
+  );
+  const [showingAttentionKey, setShowingAttentionKey] = useState("");
+  const attentionShowing = showingAttentionKey === attentionKey;
+  const attentionArmed = attentionIsNew && !attentionShowing;
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   const longPressCallback = useRef(onLongPress);
   const longPressEnabled = Boolean(onLongPress);
@@ -95,13 +102,20 @@ export function SwipeSession({
 
   useEffect(() => {
     const session = sessionRef.current;
-    if (!session || !attentionKey || seenAttentionKeys.has(attentionKey)) return;
+    if (
+      !session ||
+      !attentionKey ||
+      activeIndex !== 0 ||
+      seenAttentionKeys.has(attentionKey)
+    ) {
+      return;
+    }
 
     let timer: number | null = null;
     const reveal = () => {
       seenAttentionKeys.add(attentionKey);
-      setShowingAttention(true);
-      timer = window.setTimeout(() => setShowingAttention(false), 3000);
+      setShowingAttentionKey(attentionKey);
+      timer = window.setTimeout(() => setShowingAttentionKey(""), 3000);
     };
 
     if (typeof IntersectionObserver === "undefined") {
@@ -124,7 +138,7 @@ export function SwipeSession({
       observer.disconnect();
       if (timer) window.clearTimeout(timer);
     };
-  }, [attentionKey]);
+  }, [activeIndex, attentionKey]);
 
   useEffect(() => {
     const session = sessionRef.current;
@@ -259,7 +273,15 @@ export function SwipeSession({
   }
 
   function startSwipe(event: PointerEvent<HTMLDivElement>) {
-    if (settling || committing || blocksSwipe(event.target)) return;
+    if (
+      attentionArmed ||
+      attentionShowing ||
+      settling ||
+      committing ||
+      blocksSwipe(event.target)
+    ) {
+      return;
+    }
     didSwipe.current = false;
     pointerStart.current = {
       x: event.clientX,
@@ -363,7 +385,7 @@ export function SwipeSession({
           commitFrame.current = null;
         });
       });
-    }, 620);
+    }, 250);
   }
 
   function stopClickAfterSwipe(event: MouseEvent<HTMLDivElement>) {
@@ -397,6 +419,8 @@ export function SwipeSession({
     if (
       settling ||
       committing ||
+      attentionArmed ||
+      attentionShowing ||
       event.ctrlKey ||
       blocksSwipe(event.target) ||
       Math.abs(event.deltaX) <= Math.abs(event.deltaY)
@@ -409,7 +433,7 @@ export function SwipeSession({
     wheelTimer.current = window.setTimeout(() => {
       wheelDistance.current = 0;
       wheelTimer.current = null;
-    }, 420);
+    }, 160);
     if (Math.abs(wheelDistance.current) < 48) return;
 
     const movingForward = wheelDistance.current > 0;
@@ -476,7 +500,9 @@ export function SwipeSession({
       <div
         className={`os-app-window${
           frameHeight ? " fixed-height" : " fluid-height"
-        }${showingAttention ? " update-arrival" : ""}`}
+        }${attentionArmed ? " update-armed" : ""}${
+          attentionShowing ? " update-arrival" : ""
+        }`}
         ref={windowRef}
         style={
           frameHeight

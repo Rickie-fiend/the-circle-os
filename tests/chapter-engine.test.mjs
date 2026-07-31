@@ -175,6 +175,26 @@ test("the Check-in label always finds a chapter journey", () => {
   );
 });
 
+test("manual Check-in rotates past a Later chapter", () => {
+  const current = { ...logSetup, id: "profile-spark-current", version: 1 };
+  const later = { ...logSetup, id: "profile-spark-later", version: 1 };
+  const fresh = { ...logSetup, id: "profile-spark-fresh", version: 1 };
+  const deferred = {
+    ...createChapterRun(later),
+    status: "in-progress",
+    deferredAt: "2026-07-31T12:00:00.000Z",
+  };
+
+  assert.deepEqual(
+    selectManualChapter(
+      [current, later, fresh],
+      { [chapterRunId(later)]: deferred },
+      current.id,
+    ),
+    { chapter: fresh, repeat: false },
+  );
+});
+
 test("a deferred optional chapter lets a fresh chapter appear first", () => {
   const later = { ...logSetup, id: "athena-checkin-a-later", version: 1 };
   const fresh = { ...logSetup, id: "athena-checkin-z-fresh", version: 1 };
