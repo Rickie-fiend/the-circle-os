@@ -614,7 +614,7 @@ export function SessionIntro({
   return (
     <InfoPage
       className={`os-cover-page${refreshing ? " is-refreshing" : ""}`}
-      label={<p className="os-card-label">{label}</p>}
+      header={<p className="os-card-label">{label}</p>}
       theme={theme}
       footer={ready ? (
         <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
@@ -625,8 +625,14 @@ export function SessionIntro({
       )}
     >
       <div className="os-session-intro-copy">
-        <h2>{display.title}</h2>
-        {display.detail ? <p className="os-session-detail">{display.detail}</p> : null}
+        <div className="os-info-page-main">
+          <h2>{display.title}</h2>
+        </div>
+        {display.detail ? (
+          <div className="os-info-page-sub">
+            <p className="os-session-detail">{display.detail}</p>
+          </div>
+        ) : null}
       </div>
     </InfoPage>
   );
@@ -636,22 +642,22 @@ export function InfoPage({
   children,
   className = "",
   footer,
-  label,
+  header,
   theme = "light",
 }: {
   children: ReactNode;
   className?: string;
   footer?: ReactNode;
-  label?: ReactNode;
+  header?: ReactNode;
   theme?: "light" | "orange" | "dark";
 }) {
   return (
     <div className={`os-info-page os-session-intro theme-${theme} ${className}`.trim()}>
-      {label ? <div className="os-info-page-label">{label}</div> : null}
+      <header className="os-info-page-header">{header}</header>
       <div className="os-info-page-body">{children}</div>
-      <div className="os-info-page-footer">
+      <footer className="os-info-page-footer">
         {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
-      </div>
+      </footer>
     </div>
   );
 }

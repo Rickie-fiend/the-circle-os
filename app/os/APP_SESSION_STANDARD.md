@@ -20,6 +20,16 @@
 - **App Label**: the small upper-left name shown only when a Page is itself an
   app surface. A non-app Page omits it.
 
+## Info Page anatomy
+
+1. **Header** stays at the top. It holds the App Label or an app action such as
+   `Check-in`. It may be visually empty on a non-app Page.
+2. **Body** stays in the middle and has two parts:
+   - **Main** is the large title, prompt, or primary editable thought.
+   - **Sub** is the smaller supporting line and may be empty.
+3. **Footer** stays at the bottom. It holds `Swipe to begin`, a full-width
+   action, a status, or an empty spacer.
+
 ## App Box size
 
 - The default App Box is a soft square or near-square.
@@ -99,8 +109,8 @@ Used for charts, weekly views, and other things worth reading again.
 - All app interiors use Geist. Cormorant remains an outer editorial typeface.
 - Pages of the same type reuse one component and typography scale. Do not make
   a one-off Cover, Note, Thoughts, or Blog visual inside a feature.
-- Every Info Page keeps three anchors: App Label, centered content, and bottom
-  action. Empty optional text does not move those anchors.
+- Every Info Page keeps three anchors: Header, Body, and Footer. Empty optional
+  text does not move those anchors.
 - Full-width actions use the same black button language across apps.
 
 ## State

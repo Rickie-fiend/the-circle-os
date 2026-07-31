@@ -186,34 +186,38 @@ function InlineCheckInEditor({
 
   return (
     <div className="os-inline-checkin-note">
-      <textarea
-        aria-label="Edit idle title"
-        className="os-inline-checkin-title"
-        maxLength={54}
-        onBlur={commit}
-        onChange={(event) => setTitleDraft(event.currentTarget.value)}
-        onFocus={() => {
-          editingRef.current = true;
-        }}
-        placeholder="Keep going."
-        ref={titleRef}
-        rows={1}
-        value={titleDraft}
-      />
-      <textarea
-        aria-label="Edit idle note"
-        className="os-inline-checkin-copy"
-        maxLength={220}
-        onBlur={commit}
-        onChange={(event) => setNoteDraft(event.currentTarget.value)}
-        onFocus={() => {
-          editingRef.current = true;
-        }}
-        placeholder=""
-        ref={noteRef}
-        rows={1}
-        value={noteDraft}
-      />
+      <div className="os-info-page-main">
+        <textarea
+          aria-label="Edit idle title"
+          className="os-inline-checkin-title"
+          maxLength={54}
+          onBlur={commit}
+          onChange={(event) => setTitleDraft(event.currentTarget.value)}
+          onFocus={() => {
+            editingRef.current = true;
+          }}
+          placeholder="Keep going."
+          ref={titleRef}
+          rows={1}
+          value={titleDraft}
+        />
+      </div>
+      <div className="os-info-page-sub">
+        <textarea
+          aria-label="Edit idle note"
+          className="os-inline-checkin-copy"
+          maxLength={220}
+          onBlur={commit}
+          onChange={(event) => setNoteDraft(event.currentTarget.value)}
+          onFocus={() => {
+            editingRef.current = true;
+          }}
+          placeholder=""
+          ref={noteRef}
+          rows={1}
+          value={noteDraft}
+        />
+      </div>
     </div>
   );
 }
@@ -1918,7 +1922,7 @@ export function TodayExperience() {
     return (
       <InfoPage
         className="os-note-page os-survey-card os-survey-complete"
-        label={
+        header={
           <button
             aria-label="Load a check-in"
             className="os-card-label os-checkin-refresh-label"
@@ -1942,7 +1946,7 @@ export function TodayExperience() {
     return (
       <InfoPage
         className="os-thoughts-page os-survey-card"
-        label={<p className="os-card-label">Thoughts</p>}
+        header={<p className="os-card-label">Thoughts</p>}
         footer={
           <button
             className="os-thoughts-send"
@@ -1959,14 +1963,16 @@ export function TodayExperience() {
           id="check-in-thought-form"
           onSubmit={sendThought}
         >
-          <textarea
-            aria-label="Write a thought"
-            maxLength={800}
-            onChange={(event) => setThoughtDraft(event.currentTarget.value)}
-            placeholder="What are your thoughts?"
-            rows={3}
-            value={thoughtDraft}
-          />
+          <div className="os-info-page-main">
+            <textarea
+              aria-label="Write a thought"
+              maxLength={800}
+              onChange={(event) => setThoughtDraft(event.currentTarget.value)}
+              placeholder="What are your thoughts?"
+              rows={3}
+              value={thoughtDraft}
+            />
+          </div>
         </form>
       </InfoPage>
     );
