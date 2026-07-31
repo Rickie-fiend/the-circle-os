@@ -930,6 +930,8 @@ export function TodayExperience() {
   );
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const [checkInAttention, setCheckInAttention] = useState(0);
+  const [checkInRefreshing, setCheckInRefreshing] = useState(false);
+  const checkInRefreshTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [editingCheckInNote, setEditingCheckInNote] = useState(false);
@@ -960,6 +962,15 @@ export function TodayExperience() {
         window.clearTimeout(fade);
         window.clearTimeout(remove);
       });
+    },
+    [],
+  );
+
+  useEffect(
+    () => () => {
+      if (checkInRefreshTimer.current) {
+        window.clearTimeout(checkInRefreshTimer.current);
+      }
     },
     [],
   );
@@ -1720,6 +1731,16 @@ export function TodayExperience() {
     setCheckInAttention((current) => current + 1);
   }
 
+  function revealProfileSpark() {
+    if (checkInRefreshing) return;
+    setCheckInRefreshing(true);
+    checkInRefreshTimer.current = window.setTimeout(() => {
+      recallProfileSpark();
+      setCheckInRefreshing(false);
+      checkInRefreshTimer.current = null;
+    }, 420);
+  }
+
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
     const isNewHabit = addingHabit;
@@ -1863,7 +1884,7 @@ export function TodayExperience() {
             aria-label="Load a check-in"
             className="os-card-label os-checkin-refresh-label"
             type="button"
-            onClick={recallProfileSpark}
+            onClick={revealProfileSpark}
           >
             Check-in
           </button>
@@ -1947,7 +1968,9 @@ export function TodayExperience() {
                         (_, index) => index,
                       )
             }
-            className="os-checkin-session"
+            className={`os-checkin-session${
+              checkInRefreshing ? " update-exit" : ""
+            }`}
             index={visibleCheckInApp}
             label="Check-in session"
             maxIndex={
@@ -2028,7 +2051,7 @@ export function TodayExperience() {
                     aria-label="Load a check-in"
                     className="os-card-label os-checkin-refresh-label"
                     type="button"
-                    onClick={recallProfileSpark}
+                    onClick={revealProfileSpark}
                   >
                     Check-in
                   </button>
