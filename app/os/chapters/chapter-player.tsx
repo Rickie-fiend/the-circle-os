@@ -8,7 +8,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { SessionIntro, SwipeSession } from "../app-session";
+import { PageLayout, SessionIntro, SwipeSession } from "../app-session";
 import {
   advanceChapterRun,
   findChapterAnswer,
@@ -52,6 +52,7 @@ function ChapterPageView({
   idleHeaderAction,
   idleBody,
   idleContent,
+  idleFooter,
 }: {
   chapter: ChapterDefinition;
   page: ChapterPage;
@@ -66,6 +67,7 @@ function ChapterPageView({
   idleHeaderAction?: ReactNode;
   idleBody?: ReactNode;
   idleContent?: ReactNode;
+  idleFooter?: ReactNode;
 }) {
   const required =
     Boolean(page.required) ||
@@ -89,6 +91,12 @@ function ChapterPageView({
     run,
   );
   const body = renderChapterTemplate(page.body, run);
+  const formId = `chapter-${chapter.id}-${page.id}`.replace(/[^a-zA-Z0-9_-]/g, "-");
+  const progress = (
+    <span aria-label={`Page ${current} of ${total}`}>
+      {current}/{total}
+    </span>
+  );
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -117,34 +125,16 @@ function ChapterPageView({
   const isCompletionPage = COMPLETION_TYPES.has(page.type);
   const isQuietPage = ["info", "confirm", "result", "idle"].includes(page.type);
   if (isQuietPage) {
-    return (
-      <div
-        className={`os-chapter-card os-chapter-${page.type} theme-${chapter.theme}`}
-      >
-        <div className="os-survey-head">
-          <p className="os-card-label">{chapter.session}</p>
-          {page.type === "idle" ? (
-            idleHeaderAction
-          ) : !isCompletionPage ? (
-            <span>{current}/{total}</span>
-          ) : null}
-        </div>
+    const isIdle = page.type === "idle";
+    const mainContent = isIdle ? (
+      <>
         <h2>{title}</h2>
-        {page.type === "idle" && idleBody !== undefined
+        {idleBody !== undefined
           ? idleBody
           : body
             ? <p className="os-chapter-body">{body}</p>
             : null}
-        {page.type !== "idle" && page.type !== "info" && !isCompletionPage ? (
-          <button
-            className="os-chapter-continue"
-            type="button"
-            onClick={() => onComplete({ page })}
-          >
-            {page.button || "Continue"}
-          </button>
-        ) : null}
-        {page.type === "idle" && page.button && onIdleAction ? (
+        {page.button && onIdleAction ? (
           <button
             className="os-chapter-continue os-chapter-idle-action"
             type="button"
@@ -155,23 +145,51 @@ function ChapterPageView({
             {idleActionLabel || page.button}
           </button>
         ) : null}
-        {page.type === "idle" ? idleContent : null}
-      </div>
+      </>
+    ) : (
+      <h2>{title}</h2>
+    );
+    const quietFooter =
+      !isIdle && page.type !== "info" && !isCompletionPage ? (
+        <button
+          className="os-chapter-continue os-page-primary-action"
+          type="button"
+          onClick={() => onComplete({ page })}
+        >
+          {page.button || "Continue"}
+        </button>
+      ) : undefined;
+
+    return (
+      <PageLayout
+        className={`os-chapter-card os-chapter-${page.type} theme-${chapter.theme}`}
+        footer={isIdle ? idleFooter : quietFooter}
+        headerLeft={isIdle ? <p className="os-card-label">{chapter.session}</p> : undefined}
+        headerRight={isIdle ? idleHeaderAction : !isCompletionPage ? progress : undefined}
+        theme={chapter.theme}
+        variant={isIdle ? "app" : "chapter"}
+      >
+        <div className="os-page-main">
+          {mainContent}
+        </div>
+        <div className="os-page-sub">
+          {isIdle
+            ? idleContent
+            : body
+              ? <p className="os-chapter-body">{body}</p>
+              : null}
+        </div>
+      </PageLayout>
     );
   }
 
-  return (
-    <div className={`os-survey-card os-chapter-card theme-${chapter.theme}`}>
-      <div className="os-survey-head">
-        <p className="os-card-label">{chapter.session}</p>
-        <span aria-label={`Page ${current} of ${total}`}>
-          {current}/{total}
-        </span>
-      </div>
-      <h2>{title}</h2>
-      {body ? <p className="os-chapter-body">{body}</p> : null}
+  let subContent: ReactNode = body ? <p className="os-chapter-body">{body}</p> : null;
+  let footer: ReactNode;
 
-      {choices.length ? (
+  if (choices.length) {
+    subContent = (
+      <>
+        {subContent}
         <div
           className={`os-survey-choices${choices.length > 2 ? " many" : ""}`}
           role="group"
@@ -209,11 +227,12 @@ function ChapterPageView({
             );
           })}
         </div>
-      ) : null}
-
-      {page.type === "multi-choice" ? (
+      </>
+    );
+    if (page.type === "multi-choice") {
+      footer = (
         <button
-          className="os-chapter-continue"
+          className="os-chapter-continue os-page-primary-action"
           type="button"
           disabled={required && (!Array.isArray(value) || !value.length)}
           onClick={() =>
@@ -226,70 +245,100 @@ function ChapterPageView({
         >
           {page.button || "Continue"}
         </button>
-      ) : null}
+      );
+    }
+  }
 
-      {page.type === "slider" ? (
-        <form className="os-survey-slider" onSubmit={submit}>
-          <output>{String(value)}</output>
-          <input
-            aria-label={page.question || page.title}
-            max={page.max ?? 5}
-            min={page.min ?? 1}
-            type="range"
-            value={String(value)}
-            onChange={(event) => setValue(Number(event.target.value))}
-          />
-          <div aria-hidden="true">
-            <span>{page.minLabel}</span>
-            <span>{page.maxLabel}</span>
-          </div>
-          <button type="submit">{page.button || "Continue"}</button>
-        </form>
-      ) : null}
+  if (page.type === "slider") {
+    subContent = (
+      <form className="os-survey-slider" id={formId} onSubmit={submit}>
+        {subContent}
+        <output>{String(value)}</output>
+        <input
+          aria-label={page.question || page.title}
+          max={page.max ?? 5}
+          min={page.min ?? 1}
+          type="range"
+          value={String(value)}
+          onChange={(event) => setValue(Number(event.target.value))}
+        />
+        <div aria-hidden="true">
+          <span>{page.minLabel}</span>
+          <span>{page.maxLabel}</span>
+        </div>
+      </form>
+    );
+    footer = (
+      <button className="os-chapter-continue os-page-primary-action" form={formId} type="submit">
+        {page.button || "Continue"}
+      </button>
+    );
+  }
 
-      {page.type === "short-text" || page.type === "long-text" ? (
-        <form className="os-survey-text" onSubmit={submit}>
-          {page.type === "long-text" ? (
-            <textarea
-              aria-label={page.question || page.title}
-              maxLength={1200}
-              placeholder={page.placeholder}
-              rows={5}
-              value={String(value)}
-              onChange={(event) => setValue(event.target.value)}
-            />
-          ) : (
-            <input
-              aria-label={page.question || page.title}
-              maxLength={180}
-              placeholder={page.placeholder}
-              value={String(value)}
-              onChange={(event) => setValue(event.target.value)}
-            />
-          )}
-          <button
-            type="submit"
-            disabled={required && !String(value).trim()}
-          >
-            {page.button || "Continue"}
-          </button>
-        </form>
-      ) : null}
+  if (page.type === "short-text" || page.type === "long-text") {
+    subContent = (
+      <form className="os-survey-text" id={formId} onSubmit={submit}>
+        {subContent}
+        <textarea
+          aria-label={page.question || page.title}
+          className="os-chapter-text-input"
+          maxLength={page.type === "long-text" ? 1200 : 180}
+          placeholder={page.placeholder}
+          rows={page.type === "long-text" ? 4 : 1}
+          value={String(value)}
+          onChange={(event) => setValue(event.target.value)}
+        />
+      </form>
+    );
+    footer = (
+      <button
+        className="os-chapter-continue os-page-primary-action"
+        disabled={required && !String(value).trim()}
+        form={formId}
+        type="submit"
+      >
+        {page.button || "Continue"}
+      </button>
+    );
+  }
 
-      {page.type === "time" ? (
-        <form className="os-survey-time" onSubmit={submit}>
-          <input
-            aria-label={page.question || page.title}
-            type="time"
-            value={String(value)}
-            onChange={(event) => setValue(event.target.value)}
-          />
-          <button type="submit" disabled={required && !value}>
-            {page.button || "Continue"}
-          </button>
-        </form>
-      ) : null}
-    </div>
+  if (page.type === "time") {
+    subContent = (
+      <form className="os-survey-time" id={formId} onSubmit={submit}>
+        {subContent}
+        <input
+          aria-label={page.question || page.title}
+          type="time"
+          value={String(value)}
+          onChange={(event) => setValue(event.target.value)}
+        />
+      </form>
+    );
+    footer = (
+      <button
+        className="os-chapter-continue os-page-primary-action"
+        disabled={required && !value}
+        form={formId}
+        type="submit"
+      >
+        {page.button || "Continue"}
+      </button>
+    );
+  }
+
+  return (
+    <PageLayout
+      className={`os-survey-card os-chapter-card theme-${chapter.theme}`}
+      footer={footer}
+      headerRight={progress}
+      theme={chapter.theme}
+      variant="chapter"
+    >
+      <div className="os-page-main">
+        <h2>{title}</h2>
+      </div>
+      <div className="os-page-sub">{subContent}</div>
+    </PageLayout>
   );
 }
 
@@ -306,6 +355,7 @@ export function ChapterPlayer({
   idleHeaderAction,
   idleBody,
   idleContent,
+  idleFooter,
   idleApps = [],
   idleAppIndex = 0,
   onIdleAppIndexChange,
@@ -328,6 +378,7 @@ export function ChapterPlayer({
   idleHeaderAction?: ReactNode;
   idleBody?: ReactNode;
   idleContent?: ReactNode;
+  idleFooter?: ReactNode;
   idleApps?: ReactNode[];
   idleAppIndex?: number;
   onIdleAppIndexChange?: (index: number) => void;
@@ -446,6 +497,7 @@ export function ChapterPlayer({
         idleHeaderAction={idleHeaderAction}
         idleBody={idleBody}
         idleContent={idleContent}
+        idleFooter={idleFooter}
       />,
       ...idleApps,
     ];
@@ -499,6 +551,7 @@ export function ChapterPlayer({
         idleHeaderAction={idleHeaderAction}
         idleBody={idleBody}
         idleContent={idleContent}
+        idleFooter={idleFooter}
         onComplete={(submission) =>
           onRunChange(
             advanceChapterRun(definition, run, submission),
@@ -581,6 +634,7 @@ export function ChapterPlayer({
           idleHeaderAction={idleHeaderAction}
           idleBody={idleBody}
           idleContent={idleContent}
+          idleFooter={idleFooter}
           onComplete={(submission) =>
             onRunChange(
               advanceChapterRun(definition, run, submission),

@@ -612,10 +612,10 @@ export function SessionIntro({
   }, [detail, refreshKey, title]);
 
   return (
-    <InfoPage
+    <PageLayout
       className={`os-cover-page${refreshing ? " is-refreshing" : ""}`}
-      header={<p className="os-card-label">{label}</p>}
       theme={theme}
+      variant="cover"
       footer={ready ? (
         <button type="button" onClick={onBegin} aria-label={`Begin ${label}`}>
           Swipe to begin
@@ -634,7 +634,43 @@ export function SessionIntro({
           </div>
         ) : null}
       </div>
-    </InfoPage>
+    </PageLayout>
+  );
+}
+
+export function PageLayout({
+  children,
+  className = "",
+  footer,
+  headerLeft,
+  headerRight,
+  theme = "light",
+  variant = "app",
+}: {
+  children: ReactNode;
+  className?: string;
+  footer?: ReactNode;
+  headerLeft?: ReactNode;
+  headerRight?: ReactNode;
+  theme?: "light" | "orange" | "dark";
+  variant?: "app" | "chapter" | "cover";
+}) {
+  const variantClass =
+    variant === "app" ? "os-app-content-page" : `os-${variant}-page`;
+
+  return (
+    <div
+      className={`os-page-layout ${variantClass} os-session-intro theme-${theme} ${className}`.trim()}
+    >
+      <div className="os-page-header">
+        <div className="os-page-header-left">{headerLeft}</div>
+        <div className="os-page-header-right">{headerRight}</div>
+      </div>
+      <div className="os-page-body">{children}</div>
+      <div className="os-page-footer">
+        {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
+      </div>
+    </div>
   );
 }
 
@@ -652,12 +688,14 @@ export function InfoPage({
   theme?: "light" | "orange" | "dark";
 }) {
   return (
-    <div className={`os-info-page os-session-intro theme-${theme} ${className}`.trim()}>
-      <div className="os-info-page-header">{header}</div>
-      <div className="os-info-page-body">{children}</div>
-      <div className="os-info-page-footer">
-        {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
-      </div>
-    </div>
+    <PageLayout
+      className={`os-info-page ${className}`.trim()}
+      footer={footer}
+      headerLeft={header}
+      theme={theme}
+      variant="app"
+    >
+      {children}
+    </PageLayout>
   );
 }

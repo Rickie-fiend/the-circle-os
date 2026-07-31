@@ -2225,6 +2225,18 @@ export function TodayExperience() {
                   New habit
                 </button>
               }
+              idleFooter={
+                !addingHabit && habitBuildingRun?.status === "completed" && habitAppIndex === 0 ? (
+                  <button
+                    className="os-add-habit-row"
+                    type="button"
+                    onClick={addExtraMission}
+                  >
+                    <span aria-hidden="true">+</span>
+                    Add task
+                  </button>
+                ) : undefined
+              }
               idleActionLabel={today.mission.completed ? "Completed" : undefined}
               idleActionPressed={today.mission.completed}
               idleApps={[
@@ -2325,16 +2337,6 @@ export function TodayExperience() {
               onIdleAction={toggleMission}
               onRunChange={saveHabitBuildingRun}
             />
-            {!addingHabit && habitBuildingRun?.status === "completed" && habitAppIndex === 0 ? (
-              <button
-                className="os-add-habit-row"
-                type="button"
-                onClick={addExtraMission}
-              >
-                <span aria-hidden="true">+</span>
-                Add task
-              </button>
-            ) : null}
           </section>
         ) : null}
 

@@ -20,19 +20,28 @@
 - **App Label**: the small upper-left name shown only when a Page is itself an
   app surface. A non-app Page omits it.
 
-## Info Page anatomy
+## Page anatomy
 
-1. **Header** stays at the top. It holds the App Label or an app action such as
-   `Check-in`. It may be visually empty on a non-app Page.
+Every Cover, Chapter, and App Page uses the same four regions.
+
+1. **Header** stays at the top.
+   - App Page: left App Label; optional right app action.
+   - Chapter Page: no left label; right progress only.
+   - Cover Page: empty. A Cover never shows an App Label.
 2. **Body** stays in the middle and has two parts:
-   - **Main** is the large title, prompt, or primary editable thought.
-   - **Sub** is the smaller supporting line and may be empty.
-3. **Footer** stays at the bottom. It holds `Swipe to begin`, a full-width
-   action, a status, or an empty spacer.
+   - **Main Body** receives about two parts of the available body space. It is
+     the large bold prompt, primary thought, or main habit.
+   - **Sub Body** receives about one part. It holds an optional subtitle,
+     typography input, choices, sliders, or added tasks. It may expand without
+     shrinking the type.
+3. **Footer** stays at the bottom.
+   - Cover Page: right-aligned `Swipe to begin` or `Swipe to see` cue.
+   - Chapter Page: full-width Continue or Confirm actions, stacked if needed.
+   - App Page: the app's lasting action, such as Add task.
 
 ## App Box size
 
-- The default App Box is a soft square or near-square.
+- The default App Box is a compact rounded rectangle.
 - A fluid App Box may grow for its content and ease back down, but never below
   the shared default minimum.
 - The App Box does not jump when adjacent Pages have different heights.
@@ -109,9 +118,11 @@ Used for charts, weekly views, and other things worth reading again.
 - All app interiors use Geist. Cormorant remains an outer editorial typeface.
 - Pages of the same type reuse one component and typography scale. Do not make
   a one-off Cover, Note, Thoughts, or Blog visual inside a feature.
-- Every Info Page keeps three anchors: Header, Body, and Footer. Empty optional
-  text does not move those anchors.
+- Every Page keeps Header, Main Body, Sub Body, and Footer. Empty optional text
+  does not move those anchors.
 - Full-width actions use the same black button language across apps.
+- Text answers use editable typography, not a separate form-box visual. The App
+  Box grows for a paragraph; the text does not shrink.
 
 ## State
 
