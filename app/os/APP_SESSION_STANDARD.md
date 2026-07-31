@@ -49,6 +49,8 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - The App Box does not jump when adjacent Pages have different heights.
 - Adding rows to an idle App does not stretch its App Box. Overflowing Sub Body
   content scrolls inside the box while the Footer stays fixed.
+- A content-heavy App may define a slightly larger stable minimum so its Main
+  action and Footer never collide on a narrow phone.
 
 ## Structure
 
@@ -128,6 +130,8 @@ Used for charts, weekly views, and other things worth reading again.
   follows beneath it and may grow for real content.
 - On Cover, Note, and Thoughts Info Pages, Main and Sub read as one centered
   text group rather than floating near the top of the App Box.
+- A Note Page keeps its Main text on the same center anchor as a Cover Page.
+  Optional Sub text begins beneath that anchor without pushing the Main text up.
 - Habit App Pages place `Your habit today` in Heading, the main habit in Main
   Body, added habits and tasks in Sub Body, and Add task in Footer. The divider
   appears only when Sub Body has an item.
