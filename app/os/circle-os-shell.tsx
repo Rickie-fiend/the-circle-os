@@ -1123,6 +1123,7 @@ export function TodayExperience() {
   const [thoughtTransition, setThoughtTransition] = useState<
     "idle" | "clicked" | "paused" | "exiting"
   >("idle");
+  const [thoughtModeRefreshing, setThoughtModeRefreshing] = useState(false);
   const [thoughtRefreshKey, setThoughtRefreshKey] = useState("");
   const [thoughtLabelVisible, setThoughtLabelVisible] = useState(false);
   const [holdThoughtsAfterSend, setHoldThoughtsAfterSend] = useState(false);
@@ -1138,6 +1139,7 @@ export function TodayExperience() {
   const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
   const thoughtLabelTimer = useRef<number | null>(null);
   const thoughtResetTimer = useRef<number | null>(null);
+  const thoughtModeTimer = useRef<number | null>(null);
   const [addingHabit, setAddingHabit] = useState(false);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
@@ -1180,6 +1182,9 @@ export function TodayExperience() {
       }
       if (thoughtLabelTimer.current) {
         window.clearTimeout(thoughtLabelTimer.current);
+      }
+      if (thoughtModeTimer.current) {
+        window.clearTimeout(thoughtModeTimer.current);
       }
     },
     [],
@@ -2158,12 +2163,8 @@ export function TodayExperience() {
   }
 
   function openDeepThoughts() {
-    if (thoughtMode === "deep") {
-      pauseDeepWriting();
-      setThoughtMode("regular");
-      concealThoughtButton();
-      return;
-    }
+    if (thoughtModeRefreshing || thoughtTransition !== "idle") return;
+    const nextMode = thoughtMode === "deep" ? "regular" : "deep";
     const answers = state.profile.profileCase.survey.answers;
     const athenaPrompt = state.profile.profileCase.deepThoughtPrompt;
     const athenaAnswered = Boolean(
@@ -2175,11 +2176,28 @@ export function TodayExperience() {
     const prompt = athenaPrompt?.dateKey === dateKey && !athenaAnswered
       ? athenaPrompt
       : createLocalDeepThoughtPrompt(state, dateKey, deepAnswersToday);
-    setDeepThoughtPrompt(prompt);
-    setDeepFollowUpUsed(false);
-    resetDeepWritingClock();
-    setThoughtMode("deep");
+    pauseDeepWriting();
     concealThoughtButton();
+    setThoughtModeRefreshing(true);
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (thoughtModeTimer.current) window.clearTimeout(thoughtModeTimer.current);
+    thoughtModeTimer.current = window.setTimeout(() => {
+      if (nextMode === "deep") {
+        setDeepThoughtPrompt(prompt);
+        setDeepFollowUpUsed(false);
+        resetDeepWritingClock();
+      } else {
+        setDeepThoughtPrompt(null);
+        setDeepFollowUpUsed(false);
+      }
+      setThoughtMode(nextMode);
+      setThoughtLabelVisible(reducedMotion);
+      setThoughtRefreshKey(`thought-mode:${nextMode}:${Date.now()}`);
+      setThoughtModeRefreshing(false);
+      thoughtModeTimer.current = null;
+    }, reducedMotion ? 40 : 900);
   }
 
   function sendThought(event: FormEvent<HTMLFormElement>) {
@@ -2446,6 +2464,8 @@ export function TodayExperience() {
               checkInIdleEntering ? " idle-arrival" : ""
             }${
               thoughtTransition === "exiting" ? " update-exit" : ""
+            }${
+              thoughtModeRefreshing ? " update-exit" : ""
             }`}
             index={visibleCheckInApp}
             label="Check-in session"

@@ -99,6 +99,9 @@ Used for charts, weekly views, and other things worth reading again.
 - A swipe completes inside the clipped frame before state changes.
 - Ordinary page travel stays quick enough for consecutive swipes. Ceremonial
   update motion never slows browsing through an existing app stack.
+- An in-place app mode change uses that same ceremonial update transition:
+  the current Page fades, the stable surface settles, then the new Page copy
+  arrives. Thoughts to Deep Thoughts is the reference behavior.
 - The active page is always kept in the navigation map while permissions or
   saved progress change. It never falls back to the cover by position.
 - A required first-use cover has a hard right boundary. An optional Check-in
@@ -139,6 +142,8 @@ Used for charts, weekly views, and other things worth reading again.
 - Habit App Pages place `Your habit today` in Heading, the main habit in Main
   Body, added habits and tasks in Sub Body, and Add task in Footer. The divider
   appears only when Sub Body has an item.
+- Repeated habits form one continuous Sub Body stack. Each added habit uses one
+  quiet divider and one row rhythm; it never creates a nested card or double gap.
 - When Habit has no Sub Body items, that empty region collapses so the main
   action meets the Add task Footer without a dead gap.
 - Full-width actions use the same black button language across apps.

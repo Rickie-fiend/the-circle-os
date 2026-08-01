@@ -84,6 +84,8 @@ Session
 - Real added rows may extend a fluid App Box without colliding with the Footer.
   Habit tasks stay visible in one continuous Sub Body rather than an inner
   scrolling panel.
+- Repeated habits use that same continuous stack: one quiet divider and one row
+  rhythm per habit, with no nested card or doubled spacing.
 - Empty optional regions collapse cleanly and leave no dead gap.
 
 ## Page types
@@ -137,6 +139,8 @@ Session
 - Everyday page travel should respond quickly enough for consecutive swipes.
 - A new cover reveal is ceremonial: old page fades, solid surface settles, then
   text appears in sequence.
+- In-place app mode changes reuse that reveal instead of swapping instantly.
+  Thoughts to Deep Thoughts is the reference transition.
 - Only newly updated content receives that reveal. Returning to a known Page
   must not replay entrance animation.
 - Frame height eases only after a Page transition finishes.
