@@ -4442,6 +4442,13 @@
   resize: none;
 }
 
+/* Keep the first writing baseline where the two-line prompt began. A short
+   answer must not collapse the editor and jump down when focus or typing
+   replaces the placeholder; longer answers can still grow naturally. */
+.circle-os .os-info-page .os-thoughts-form textarea.os-regular-thought-input {
+  min-height: 1.96em;
+}
+
 .circle-os .os-page-layout.os-chapter-card,
 .circle-os .os-page-layout.os-survey-card {
   display: grid;
