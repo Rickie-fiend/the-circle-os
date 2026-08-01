@@ -17,6 +17,7 @@ export type ButtonLifecycleEvent =
   | "release"
   | "succeed"
   | "success-complete"
+  | "preview-reset"
   | "exit-complete";
 
 export const BUTTON_STYLE_IDS: readonly ButtonStyleId[];
