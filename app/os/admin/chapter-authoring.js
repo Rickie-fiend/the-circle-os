@@ -23,6 +23,15 @@ export const CHAPTER_CLASSIFICATIONS = [
   "Information",
 ];
 
+export const FIRST_USE_APP_SPACES = [
+  "check-in",
+  "habit",
+  "log",
+  "thoughts",
+  "vision",
+  "reflection",
+];
+
 export function chapterSlug(value = "") {
   return String(value)
     .toLowerCase()
@@ -111,6 +120,141 @@ export function createChapterDraft(now = new Date().toISOString()) {
       ],
     },
   };
+}
+
+const FIRST_USE_STARTERS = {
+  "check-in": {
+    title: "Your first check-in",
+    purpose: "Help a new person pause, name how today feels, and choose what matters now.",
+    theme: "light",
+    estimatedMinutes: 2,
+    pages: [
+      { type: "cover", id: "cover", title: "Take one quiet moment.", body: "Notice how today feels before it moves on." },
+      { type: "slider", id: "energy", question: "How much energy do you have?", answerKey: "first-energy", min: 1, max: 5, minLabel: "Low", maxLabel: "High", required: true },
+      { type: "single-choice", id: "feeling", question: "How does today feel?", answerKey: "first-feeling", options: [{ id: "light", label: "Light" }, { id: "steady", label: "Steady" }, { id: "heavy", label: "Heavy" }], required: true },
+      { type: "short-text", id: "focus", question: "What matters most right now?", answerKey: "first-focus", placeholder: "One honest thing", required: true },
+      { type: "result", id: "complete", title: "You checked in.", body: "You can meet the day from where you really are." },
+      { type: "idle", id: "idle", title: "Today, right now", body: "{{first-focus}}" },
+    ],
+  },
+  habit: {
+    title: "Build your first habit",
+    purpose: "Turn one meaningful action into a small habit with a clear cue.",
+    theme: "orange",
+    estimatedMinutes: 3,
+    pages: [
+      { type: "cover", id: "cover", title: "Start with one small promise.", body: "Choose something that helps you feel like yourself." },
+      { type: "short-text", id: "action", question: "What small action do you want to repeat?", answerKey: "habit-action", placeholder: "Walk for ten minutes", required: true },
+      { type: "short-text", id: "cue", question: "When or where will you do it?", answerKey: "habit-cue", placeholder: "After breakfast", required: true },
+      { type: "short-text", id: "meaning", question: "Why does this matter to you?", answerKey: "habit-meaning", placeholder: "It helps me...", required: true },
+      { type: "result", id: "complete", title: "Your habit is ready.", body: "I will {{habit-action}} {{habit-cue}}." },
+      { type: "idle", id: "idle", title: "Your habit", body: "{{habit-action}}", button: "Mark done" },
+    ],
+  },
+  log: {
+    title: "Set up your day log",
+    purpose: "Set the useful edges of a new person's ordinary day log.",
+    theme: "dark",
+    estimatedMinutes: 2,
+    pages: [
+      { type: "cover", id: "cover", title: "Make the log fit your life.", body: "Start with the hours your day normally holds." },
+      { type: "time", id: "wake", question: "When do you usually wake up?", answerKey: "usual-wake", required: true },
+      { type: "time", id: "sleep", question: "When do you usually go to sleep?", answerKey: "usual-sleep", required: true },
+      { type: "result", id: "complete", title: "Your day is ready to notice.", body: "The log can grow when real life needs more room." },
+      { type: "idle", id: "idle", title: "Your day log", body: "Add what really happened, one hour at a time." },
+    ],
+  },
+  thoughts: {
+    title: "Meet your Thoughts app",
+    purpose: "Show a new person that one free thought can become useful evidence without becoming a task.",
+    theme: "dark",
+    estimatedMinutes: 2,
+    pages: [
+      { type: "cover", id: "cover", title: "Some things just need somewhere to land.", body: "Thoughts keeps one honest sentence without turning it into homework." },
+      { type: "info", id: "privacy", title: "Write what is true now.", body: "A thought becomes part of your private life record. You can keep it short." },
+      { type: "long-text", id: "first-thought", question: "What is on your mind?", answerKey: "first-thought", placeholder: "Write freely", required: true },
+      { type: "result", id: "complete", title: "Your thought has a place.", body: "You do not need to solve it right now." },
+      { type: "idle", id: "idle", title: "Thoughts", body: "Write what you do not want to lose." },
+    ],
+  },
+  vision: {
+    title: "Begin your Vision",
+    purpose: "Help a new person describe one ordinary day in the life they want without forcing certainty.",
+    theme: "light",
+    estimatedMinutes: 4,
+    pages: [
+      { type: "cover", id: "cover", title: "Picture an ordinary Tuesday.", body: "Not a perfect day. A day that feels like your life." },
+      { type: "long-text", id: "tuesday", question: "What happens from morning to night?", answerKey: "typical-tuesday", placeholder: "I wake up...", required: true },
+      { type: "short-text", id: "sign", question: "What small part of that life matters most?", answerKey: "vision-sign", placeholder: "One clear sign", required: true },
+      { type: "result", id: "complete", title: "Your Vision has a beginning.", body: "It can change as your real life gives you more evidence." },
+      { type: "idle", id: "idle", title: "One sign of your life", body: "{{vision-sign}}" },
+    ],
+  },
+  reflection: {
+    title: "Your first reflection",
+    purpose: "Help a new person close the day with one hard thing, one good thing, and no judgment.",
+    theme: "light",
+    estimatedMinutes: 3,
+    pages: [
+      { type: "cover", id: "cover", title: "Let the finished day be honest.", body: "You only need to notice what was here." },
+      { type: "single-choice", id: "shape", question: "How did today feel overall?", answerKey: "day-shape", options: [{ id: "light", label: "Light" }, { id: "mixed", label: "Mixed" }, { id: "heavy", label: "Heavy" }], required: true },
+      { type: "short-text", id: "hard", question: "What felt hard today?", answerKey: "day-hard", placeholder: "One honest thing", required: true },
+      { type: "short-text", id: "good", question: "What good thing happened?", answerKey: "day-good", placeholder: "Even something small", required: true },
+      { type: "result", id: "complete", title: "Today can rest now.", body: "Both the hard thing and the good thing belong to the day." },
+      { type: "idle", id: "idle", title: "Today, remembered", body: "Good: {{day-good}}" },
+    ],
+  },
+};
+
+export function createFirstUseChapterDraft(appSpace, now = new Date().toISOString()) {
+  const starter = FIRST_USE_STARTERS[appSpace];
+  if (!starter) throw new Error(`Unknown first-use app space: ${appSpace}`);
+  const draft = createChapterDraft(now);
+  draft.draftId = `starter-${appSpace}-${Date.now()}`;
+  draft.category = "First Time Use";
+  draft.classification = "Foundation";
+  draft.tags = ["first-time-use", appSpace];
+  draft.appSpaces = [appSpace];
+  draft.chapter = {
+    schemaVersion: 1,
+    id: `first-${appSpace}`,
+    version: 1,
+    status: "published",
+    session: appSpace,
+    theme: starter.theme,
+    title: starter.title,
+    purpose: starter.purpose,
+    estimatedMinutes: starter.estimatedMinutes,
+    pages: starter.pages.map((page, index) => ({
+      ...createChapterPage(page.type, index),
+      ...structuredClone(page),
+    })),
+  };
+  return draft;
+}
+
+export function chapterDefinitionToDraft(chapter, now = new Date().toISOString()) {
+  const foundation = ["habit-building", "log-setup"].includes(chapter.id);
+  return {
+    draftId: `published-${chapter.id}-v${chapter.version}`,
+    workflowStatus: "published",
+    category: foundation ? "First Time Use" : "Published Library",
+    classification: foundation ? "Foundation" : chapter.id.startsWith("profile-spark-") ? "Short" : "Reflection",
+    tags: [chapter.session, chapter.id],
+    appSpaces: [chapter.session],
+    authorNotes: [],
+    updatedAt: now,
+    chapter: structuredClone(chapter),
+  };
+}
+
+export function createNextVersionDraft(source, now = new Date().toISOString()) {
+  const copy = structuredClone(source);
+  copy.draftId = `draft-${source.chapter.id}-v${source.chapter.version + 1}-${Date.now()}`;
+  copy.workflowStatus = "draft";
+  copy.updatedAt = now;
+  copy.chapter.version = source.chapter.version + 1;
+  return copy;
 }
 
 export function duplicateChapterDraft(source, now = new Date().toISOString()) {

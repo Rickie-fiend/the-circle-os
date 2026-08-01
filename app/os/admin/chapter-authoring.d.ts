@@ -15,9 +15,13 @@ export type ChapterDraft = {
 
 export const CHAPTER_PAGE_TYPES: ChapterPageType[];
 export const CHAPTER_CLASSIFICATIONS: ChapterDraft["classification"][];
+export const FIRST_USE_APP_SPACES: string[];
 export function chapterSlug(value?: string): string;
 export function createChapterPage(type: ChapterPageType, index?: number): ChapterPage;
 export function createChapterDraft(now?: string): ChapterDraft;
+export function createFirstUseChapterDraft(appSpace: string, now?: string): ChapterDraft;
+export function chapterDefinitionToDraft(chapter: ChapterDefinition, now?: string): ChapterDraft;
+export function createNextVersionDraft(source: ChapterDraft, now?: string): ChapterDraft;
 export function duplicateChapterDraft(source: ChapterDraft, now?: string): ChapterDraft;
 export function validateChapterDraft(draft: ChapterDraft): string[];
 export function chapterDraftToMarkdown(draft: ChapterDraft): string;

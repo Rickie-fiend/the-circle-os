@@ -328,7 +328,7 @@ function ChapterPageView({
 
   return (
     <PageLayout
-      className={`os-survey-card os-chapter-card theme-${chapter.theme}`}
+      className={`os-survey-card os-chapter-card os-chapter-${page.type} theme-${chapter.theme}`}
       footer={footer}
       headerRight={progress}
       theme={chapter.theme}
@@ -365,6 +365,7 @@ export function ChapterPlayer({
   startOnBackApp = false,
   onLongPress,
   attentionKey,
+  previewMode = false,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -388,6 +389,7 @@ export function ChapterPlayer({
   startOnBackApp?: boolean;
   onLongPress?: () => void;
   attentionKey?: string;
+  previewMode?: boolean;
 }) {
   const [showingBackApp, setShowingBackApp] = useState(startOnBackApp);
   const [leavingCompletionKey, setLeavingCompletionKey] = useState("");
@@ -423,8 +425,9 @@ export function ChapterPlayer({
     lastDraftIndex,
     Math.max(furthestIndex, currentIndex + (canMoveForward ? 1 : 0)),
   );
-  const availableIndices =
-    run.status === "completed"
+  const availableIndices = previewMode
+    ? definition.pages.map((_, index) => index)
+    : run.status === "completed"
       ? [idleIndex >= 0 ? idleIndex : currentIndex]
       : [
           ...Array.from({ length: reviewMaxIndex + 1 }, (_, index) => index),
@@ -445,6 +448,7 @@ export function ChapterPlayer({
   useEffect(() => {
     if (
       definition.session !== "check-in" ||
+      previewMode ||
       run.status === "completed" ||
       !isCompletionPage
     ) {
@@ -472,6 +476,7 @@ export function ChapterPlayer({
     isCompletionPage,
     run,
     run.status,
+    previewMode,
   ]);
 
   const sessionClassName =
@@ -479,7 +484,7 @@ export function ChapterPlayer({
       completionLeaving ? " completion-exit" : ""
     }`.trim();
 
-  if (run.status === "completed" && idleApps.length) {
+  if (!previewMode && run.status === "completed" && idleApps.length) {
     const idlePage = definition.pages[idleIndex >= 0 ? idleIndex : currentIndex];
     const apps = [
       <ChapterPageView
@@ -519,6 +524,15 @@ export function ChapterPlayer({
   function changeIndex(nextIndex: number) {
     const nextPage = definition.pages[nextIndex];
     if (!nextPage) return;
+    if (previewMode) {
+      onRunChange({
+        ...run,
+        currentPageId: nextPage.id,
+        furthestPageId: nextPage.id,
+        updatedAt: new Date().toISOString(),
+      });
+      return;
+    }
     if (
       nextPage.type === "idle" &&
       COMPLETION_TYPES.has(currentPage.type)
