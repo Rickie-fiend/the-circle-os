@@ -47,8 +47,9 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - A fluid App Box may grow for its content and ease back down, but never below
   the shared default minimum.
 - The App Box does not jump when adjacent Pages have different heights.
-- Adding rows to an idle App does not stretch its App Box. Overflowing Sub Body
-  content scrolls inside the box while the Footer stays fixed.
+- Real added rows may extend a fluid App Box while the Footer remains below
+  them. Habit tasks stay visible in one continuous Sub Body; they do not move
+  into an inner scrolling panel.
 - A content-heavy App may define a slightly larger stable minimum so its Main
   action and Footer never collide on a narrow phone.
 
@@ -126,10 +127,13 @@ Used for charts, weekly views, and other things worth reading again.
   a one-off Cover, Note, Thoughts, or Blog visual inside a feature.
 - Every Page keeps Header, Heading, Main Body, Sub Body, and Footer. Empty
   optional text does not move those anchors.
-- Main Body content is centered inside its larger two-part space. Sub Body
-  follows beneath it and may grow for real content.
+- Main Body content anchors to the lower edge of its larger two-part space.
+  Sub Body follows directly beneath it and may grow for real content.
 - On Cover, Note, and Thoughts Info Pages, Main and Sub read as one centered
   text group rather than floating near the top of the App Box.
+- Cover Main text, Note Main text, and the Thoughts placeholder use one shared
+  typography token and center anchor. They remain left-aligned inside that
+  centered group.
 - A Note Page keeps its Main text on the same center anchor as a Cover Page.
   Optional Sub text begins beneath that anchor without pushing the Main text up.
 - Habit App Pages place `Your habit today` in Heading, the main habit in Main
@@ -138,8 +142,12 @@ Used for charts, weekly views, and other things worth reading again.
 - When Habit has no Sub Body items, that empty region collapses so the main
   action meets the Add task Footer without a dead gap.
 - Full-width actions use the same black button language across apps.
-- Text answers use editable typography, not a separate form-box visual. The App
-  Box grows for a paragraph; the text does not shrink.
+- Text answers use borderless editable typography, not a separate form-box or
+  underline visual. The App Box grows for a paragraph; the text does not shrink.
+- Choice, slider, and short-answer Chapter Pages remain at the default App Box
+  height. Empty form geometry must never make a short page taller.
+- Note, Thoughts, short Chapter, and empty Habit Pages all use the same default
+  App Box height. Only real added content may request a larger stable height.
 
 ## State
 

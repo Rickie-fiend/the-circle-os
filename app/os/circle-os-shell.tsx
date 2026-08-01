@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
 import {
@@ -713,6 +714,105 @@ export function useCircleState() {
   return value;
 }
 
+type RouteView = {
+  pathname: string;
+  children: ReactNode;
+};
+
+function RouteCrossfade({
+  pathname,
+  children,
+}: RouteView) {
+  const currentViewRef = useRef<RouteView>({ pathname, children });
+  const clearOutgoingTimer = useRef<number | null>(null);
+  const routeFrame = useRef<number | null>(null);
+  const [currentView, setCurrentView] = useState<RouteView>(() => ({
+    pathname,
+    children,
+  }));
+  const [outgoingView, setOutgoingView] = useState<RouteView | null>(null);
+
+  useLayoutEffect(() => {
+    const previousView = currentViewRef.current;
+
+    if (routeFrame.current !== null) {
+      window.cancelAnimationFrame(routeFrame.current);
+      routeFrame.current = null;
+    }
+
+    if (previousView.pathname === pathname) {
+      if (previousView.children !== children) {
+        const updatedView = { pathname, children };
+        currentViewRef.current = updatedView;
+        routeFrame.current = window.requestAnimationFrame(() => {
+          setCurrentView(updatedView);
+          routeFrame.current = null;
+        });
+      }
+      return;
+    }
+
+    const nextView = { pathname, children };
+    currentViewRef.current = nextView;
+
+    if (document.documentElement.dataset.osRouteTransition === "native") {
+      routeFrame.current = window.requestAnimationFrame(() => {
+        setOutgoingView(null);
+        setCurrentView(nextView);
+        routeFrame.current = null;
+      });
+      return;
+    }
+
+    routeFrame.current = window.requestAnimationFrame(() => {
+      setOutgoingView(previousView);
+      setCurrentView(nextView);
+      routeFrame.current = null;
+    });
+
+    if (clearOutgoingTimer.current !== null) {
+      window.clearTimeout(clearOutgoingTimer.current);
+    }
+    clearOutgoingTimer.current = window.setTimeout(() => {
+      setOutgoingView(null);
+      clearOutgoingTimer.current = null;
+    }, 680);
+  }, [children, pathname]);
+
+  useEffect(() => {
+    return () => {
+      if (clearOutgoingTimer.current !== null) {
+        window.clearTimeout(clearOutgoingTimer.current);
+      }
+      if (routeFrame.current !== null) {
+        window.cancelAnimationFrame(routeFrame.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      className={`os-route-content${outgoingView ? " is-transitioning" : ""}`}
+    >
+      {outgoingView ? (
+        <div
+          aria-hidden="true"
+          className="os-route-layer is-outgoing"
+          key={`outgoing-${outgoingView.pathname}`}
+        >
+          {outgoingView.children}
+        </div>
+      ) : null}
+      <div
+        className={`os-route-layer is-current${outgoingView ? " is-incoming" : ""}`}
+        key={currentView.pathname}
+      >
+        {currentView.children}
+      </div>
+    </div>
+  );
+}
+
 export function OSFrame({
   children,
 }: {
@@ -720,11 +820,49 @@ export function OSFrame({
 }) {
   const { state, ready } = useCircleState();
   const pathname = usePathname();
+  const router = useRouter();
   const active = pathname.startsWith("/os/mirror")
     ? "mirror"
     : pathname.startsWith("/os/connect")
       ? "connect"
       : "today";
+
+  function moveToRoute(
+    event: ReactMouseEvent<HTMLAnchorElement>,
+    nextPathname: string,
+  ) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      pathname === nextPathname
+    ) {
+      return;
+    }
+
+    const transitionDocument = document as Document & {
+      startViewTransition?: (
+        update: () => Promise<void> | void,
+      ) => { finished: Promise<void> };
+    };
+
+    if (!transitionDocument.startViewTransition) {
+      return;
+    }
+
+    event.preventDefault();
+    document.documentElement.dataset.osRouteTransition = "native";
+    const transition = transitionDocument.startViewTransition(() => {
+      router.push(nextPathname);
+    });
+    transition.finished.finally(() => {
+      delete document.documentElement.dataset.osRouteTransition;
+    });
+  }
+
   return (
     <div className="circle-os">
       <div className="os-future-room-background" aria-hidden="true" />
@@ -741,10 +879,18 @@ export function OSFrame({
           </span>
         </header>
         <nav className="os-nav" aria-label="Circle OS" data-active={active}>
-          <Link className={active === "today" ? "active" : ""} href="/os">
+          <Link
+            className={active === "today" ? "active" : ""}
+            href="/os"
+            onClick={(event) => moveToRoute(event, "/os")}
+          >
             Today
           </Link>
-          <Link className={active === "mirror" ? "active" : ""} href="/os/mirror">
+          <Link
+            className={active === "mirror" ? "active" : ""}
+            href="/os/mirror"
+            onClick={(event) => moveToRoute(event, "/os/mirror")}
+          >
             Vision
           </Link>
         </nav>
@@ -752,12 +898,8 @@ export function OSFrame({
           aria-busy={!ready}
           className={`os-route-stage ${ready ? "is-ready" : "is-opening"}`}
         >
-          <div
-            aria-hidden={!ready}
-            className="os-route-content"
-            key={pathname}
-          >
-            {children}
+          <div aria-hidden={!ready}>
+            <RouteCrossfade pathname={pathname}>{children}</RouteCrossfade>
           </div>
           {!ready ? (
             <div className="os-route-opening" aria-label="Opening Circle OS">
@@ -1229,10 +1371,17 @@ export function TodayExperience() {
   const extraHabits = (today.missions || []).filter(
     (mission) => mission.kind === "habit",
   );
-  const oneTimeTasks = (today.missions || []).filter(
+  const oneTimeTaskCandidates = (today.missions || []).filter(
     (mission) =>
       mission.kind !== "habit" &&
       (!mission.completed || leavingMissionIds.includes(mission.id)),
+  );
+  const firstBlankTaskId = oneTimeTaskCandidates.find(
+    (mission) => !mission.completed && !mission.text.trim(),
+  )?.id;
+  const oneTimeTasks = oneTimeTaskCandidates.filter(
+    (mission) =>
+      mission.completed || mission.text.trim() || mission.id === firstBlankTaskId,
   );
   const completedHabitRecords = (today.missions || []).filter(
     (mission) => mission.completed && mission.kind === "habit",
@@ -1296,24 +1445,46 @@ export function TodayExperience() {
   }
 
   function addExtraMission() {
+    if (
+      (today.missions || []).some(
+        (mission) =>
+          mission.kind !== "habit" &&
+          !mission.completed &&
+          !mission.text.trim(),
+      )
+    ) {
+      return;
+    }
     const timestamp = new Date().toISOString();
     updateToday(
-      (day) => ({
-        ...day,
-        missions: [
-          ...(day.missions || []),
-          {
-            id:
-              typeof crypto !== "undefined" && "randomUUID" in crypto
-                ? crypto.randomUUID()
-                : `mission-${Date.now()}`,
-            text: "",
-            completed: false,
-            completedAt: null,
-            createdAt: timestamp,
-          },
-        ],
-      }),
+      (day) => {
+        if (
+          (day.missions || []).some(
+            (mission) =>
+              mission.kind !== "habit" &&
+              !mission.completed &&
+              !mission.text.trim(),
+          )
+        ) {
+          return day;
+        }
+        return {
+          ...day,
+          missions: [
+            ...(day.missions || []),
+            {
+              id:
+                typeof crypto !== "undefined" && "randomUUID" in crypto
+                  ? crypto.randomUUID()
+                  : `mission-${Date.now()}`,
+              text: "",
+              completed: false,
+              completedAt: null,
+              createdAt: timestamp,
+            },
+          ],
+        };
+      },
     );
   }
 
@@ -1969,7 +2140,7 @@ export function TodayExperience() {
               maxLength={800}
               onChange={(event) => setThoughtDraft(event.currentTarget.value)}
               placeholder="What are your thoughts?"
-              rows={3}
+              rows={1}
               value={thoughtDraft}
             />
           </div>

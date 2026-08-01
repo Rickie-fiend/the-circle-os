@@ -1,0 +1,163 @@
+# Circle Design Guide
+
+This is the short repository guide for The Circle website and Circle OS. The
+canonical durable documents remain:
+
+- `C:\Brain\10 Projects\The Circle\BRAND_SYSTEM.md`
+- `C:\Brain\10 Projects\The Circle\CIRCLE_OS_BRAND_APPLICATION.md`
+- `C:\Brain\10 Projects\The Circle\Circle OS\App Box and Page Standard.md`
+
+The live human-readable brand guide is `/brand`. The code tokens live in
+`app/brand-system.ts`; Circle OS behavior details live in
+`app/os/APP_SESSION_STANDARD.md`.
+
+## Core idea
+
+**Whole. Human. Alive.**
+
+The interface should feel like a calm editorial object that happens to be
+useful. It is a mirror, not a dashboard. It should help a person notice life,
+not pressure them to optimize it.
+
+## Foundations
+
+- **Awareness:** show what is actually happening.
+- **Presence:** make today's life feel worth noticing now.
+- **Contribution:** invite honest input instead of extraction.
+- **Living culture:** keep the system adaptable and human.
+
+## Color
+
+| Token | Value | Use |
+| --- | --- | --- |
+| Bone | `#F1EFE8` | reading, openness, calm primary pages |
+| Ink | `#191813` | foundation, type, focused depth |
+| Orange | `#E36B37` | identity, action, living attention |
+| Charcoal | `#403E35` | structure, dividers, secondary text |
+
+Use solid surfaces. Avoid gradients and decorative color noise. The three App
+Box themes are Light, Orange, and Dark. Theme changes must preserve the same
+geometry and hierarchy.
+
+## Type
+
+- **Geist:** all app labels, prompts, inputs, buttons, data, and functional UI.
+- **Cormorant Garamond:** outer editorial headings only, such as section or
+  route titles.
+- Main app text is bold, direct, and easy to read.
+- Supporting text is short and quieter, but never faint enough to feel broken.
+- Do not shrink type to fit content. Let the body grow or scroll.
+- Write at a fourth-grade reading level whenever possible.
+
+## Layout
+
+- Mobile first, with 24px as the normal phone gutter.
+- Prefer centered containers and stable editorial alignment.
+- Desktop may use a two-column layout with a calm 2:1 visual weight when the
+  content benefits from it.
+- Respect the rule of thirds in composition without drawing a visible grid.
+- Minimum touch target: 44px.
+- Avoid nested cards. One visual surface should read as one object.
+
+## App Box
+
+An **App Box** is the stable rounded frame. A **Page** is the sheet that moves
+inside it.
+
+```text
+Session
+  App Box
+    Header
+    Heading
+    Body
+      Main Body (about 2 parts)
+      Sub Body (about 1 part)
+    Footer
+```
+
+- The App Box owns radius, clipping, border, shadow, theme, and height change.
+- Pages never add a second outer card.
+- The App Box starts as a compact rounded rectangle and never contracts below
+  the shared default size.
+- Main content anchors to the lower edge of its larger two-part Main Body.
+  Optional Sub Body content begins directly beneath it.
+- Real added rows may extend a fluid App Box without colliding with the Footer.
+  Habit tasks stay visible in one continuous Sub Body rather than an inner
+  scrolling panel.
+- Empty optional regions collapse cleanly and leave no dead gap.
+
+## Page types
+
+### Cover Page
+
+- No header labels.
+- One main hook.
+- One optional short subtitle.
+- Footer cue: `Swipe to begin` or `Swipe to see`.
+- Never editable.
+- Main text uses the shared Info Page type token and center anchor. It looks
+  identical to the Main text on Note and Thoughts Pages.
+
+### Chapter Page
+
+- Header has progress on the right only.
+- Main Body contains one question or lesson.
+- Sub Body contains one interaction: choice, slider, short input, or paragraph.
+- Footer contains the full-width Continue or Confirm action.
+- A choice, slider, or short answer stays at the default App Box height. Grow
+  only for real content such as a paragraph, never for empty form space.
+- Note, Thoughts, short Chapter, and empty Habit Pages share that same default
+  App Box height. A feature does not invent its own empty-state height.
+- Short and paragraph answers are borderless editable typography. Do not draw
+  a field box or underline around the answer.
+
+### Note Page
+
+- Header shows the app label or app action.
+- Main and optional Sub text use the same center anchor as a Cover Page.
+- Text can be edited directly with its display typography.
+- No separate edit box and no Save-message step.
+
+### Thoughts Page
+
+- Uses the Info Page geometry.
+- Inviting editable typography in the body.
+- Its placeholder uses the same size, weight, line-height, and center anchor as
+  Cover and Note Main text.
+- One full-width black Send action in the Footer.
+
+### Blog Page
+
+- Title, divider, and short paragraph sections.
+- Athena Reading is the reference.
+- Reading rhythm matters more than packing information into one viewport.
+
+## Motion
+
+- Everyday page travel should respond quickly enough for consecutive swipes.
+- A new cover reveal is ceremonial: old page fades, solid surface settles, then
+  text appears in sequence.
+- Only newly updated content receives that reveal. Returning to a known Page
+  must not replay entrance animation.
+- Frame height eases only after a Page transition finishes.
+- Required-input feedback uses a brief, clear head shake of the text layer.
+- Respect reduced-motion preferences.
+- The page moves; the App Box does not.
+
+## Content and AI
+
+- Ask one thing at a time.
+- Prefer one tap, one slide, or one clear text response per Page.
+- Do not repeat the same question in different words.
+- Athena observes evidence, expresses uncertainty, and helps the user notice a
+  gap. Athena does not give life advice.
+- Oscar may be playful later, but must not blur truth or consent.
+- Weekly views show real recorded life. AI interpretation belongs in Athena,
+  clearly separated from observed data.
+
+## Taste skills
+
+Project-local design skills live in `.agents/skills/`. Use them for critique,
+reference generation, and craft checks. Circle's own identity and the App Box
+standard always win when a generic skill recommends a conflicting layout,
+typeface, motion pattern, or interaction.
