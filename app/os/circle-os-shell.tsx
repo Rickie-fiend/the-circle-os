@@ -828,6 +828,8 @@ export function OSFrame({
   const router = useRouter();
   const active = pathname.startsWith("/os/mirror")
     ? "mirror"
+    : pathname.startsWith("/os/admin")
+      ? "admin"
     : pathname.startsWith("/os/connect")
       ? "connect"
       : "today";
@@ -897,6 +899,13 @@ export function OSFrame({
             onClick={(event) => moveToRoute(event, "/os/mirror")}
           >
             Vision
+          </Link>
+          <Link
+            className={active === "admin" ? "active" : ""}
+            href="/os/admin"
+            onClick={(event) => moveToRoute(event, "/os/admin")}
+          >
+            Admin
           </Link>
         </nav>
         <div
@@ -2793,6 +2802,11 @@ export function TodayExperience() {
 
         </section>
         )}
+        <Link className="os-temporary-admin-link" href="/os/admin">
+          <span>Temporary test access</span>
+          <strong>Open Chapter Admin</strong>
+          <span aria-hidden="true">→</span>
+        </Link>
       </main>
   );
 }

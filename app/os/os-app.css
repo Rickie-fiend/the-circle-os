@@ -85,7 +85,7 @@
   border-radius: 18px;
   display: grid;
   gap: 4px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   isolation: isolate;
   margin: 0 18px;
   overflow: hidden;
@@ -101,12 +101,16 @@
   position: absolute;
   transform: translate3d(0, 0, 0);
   transition: transform 760ms cubic-bezier(0.16, 0.78, 0.2, 1);
-  width: calc((100% - 12px) / 2);
+  width: calc((100% - 16px) / 3);
   z-index: 0;
 }
 
 .circle-os .os-nav[data-active="mirror"]::before {
   transform: translate3d(calc(100% + 4px), 0, 0);
+}
+
+.circle-os .os-nav[data-active="admin"]::before {
+  transform: translate3d(calc(200% + 8px), 0, 0);
 }
 
 .circle-os .os-nav[data-active="connect"]::before {
@@ -4516,6 +4520,424 @@
 .circle-os .theme-orange .os-chapter-text-input,
 .circle-os .theme-dark .os-chapter-text-input {
   color: inherit;
+}
+
+/* Admin authoring is mobile-first: one editing column, thumb-sized controls,
+   and the real Chapter Player as its preview surface. */
+.circle-os .os-admin {
+  color: #f1efe8;
+  padding: 26px 18px 72px;
+}
+
+.circle-os .os-admin button,
+.circle-os .os-admin input,
+.circle-os .os-admin select,
+.circle-os .os-admin textarea {
+  font: inherit;
+}
+
+.circle-os .os-admin button {
+  min-height: 44px;
+}
+
+.circle-os .os-admin-head,
+.circle-os .os-admin-section-head {
+  align-items: flex-end;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.circle-os .os-admin-head p,
+.circle-os .os-admin-section-head p {
+  color: #e36b37;
+  font-size: 0.64rem;
+  font-weight: 720;
+  letter-spacing: 0.13em;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.circle-os .os-admin-head h1,
+.circle-os .os-admin-section-head h2 {
+  font-family: var(--font-sans), Arial, sans-serif;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin: 0;
+}
+
+.circle-os .os-admin-head h1 {
+  font-size: clamp(2rem, 9vw, 2.75rem);
+}
+
+.circle-os .os-admin-head > span {
+  color: #8d8980;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  max-width: 9ch;
+  text-align: right;
+}
+
+.circle-os .os-admin-views {
+  background: #24231d;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 24px 0;
+  padding: 4px;
+}
+
+.circle-os .os-admin-views button {
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: #918e86;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.circle-os .os-admin-views button[aria-selected="true"] {
+  background: #f1efe8;
+  color: #191813;
+}
+
+.circle-os .os-admin-section-head h2 {
+  font-size: 1.5rem;
+}
+
+.circle-os .os-admin-section-head > button,
+.circle-os .os-admin-actions button,
+.circle-os .os-admin-page-actions button,
+.circle-os .os-admin-options > button,
+.circle-os .os-admin-notes > button,
+.circle-os .os-admin-preview .os-admin-section-head button {
+  background: #e36b37;
+  border: 0;
+  border-radius: 12px;
+  color: #fff8f1;
+  font-size: 0.68rem;
+  font-weight: 720;
+  padding: 0.65rem 0.85rem;
+}
+
+.circle-os .os-admin-draft-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.circle-os .os-admin-draft-list article {
+  background: #24231d;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.circle-os .os-admin-draft-open {
+  align-items: flex-start;
+  background: transparent;
+  border: 0;
+  color: #f1efe8;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 18px;
+  text-align: left;
+  width: 100%;
+}
+
+.circle-os .os-admin-draft-open span,
+.circle-os .os-admin-draft-open small {
+  color: #918e86;
+  font-size: 0.65rem;
+}
+
+.circle-os .os-admin-draft-open strong {
+  font-size: 1.12rem;
+  letter-spacing: -0.025em;
+}
+
+.circle-os .os-admin-draft-list article > div {
+  border-top: 1px solid rgb(241 239 232 / 0.08);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.circle-os .os-admin-draft-list article > div button {
+  background: transparent;
+  border: 0;
+  color: #aaa69c;
+  font-size: 0.66rem;
+}
+
+.circle-os .os-admin-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 12px;
+}
+
+.circle-os .os-admin-actions button:last-child {
+  grid-column: 1 / -1;
+}
+
+.circle-os .os-admin-actions button:disabled,
+.circle-os .os-admin-page-actions button:disabled {
+  opacity: 0.35;
+}
+
+.circle-os .os-admin-panel {
+  background: #24231d;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 18px;
+  margin: 12px 0;
+  padding: 16px;
+}
+
+.circle-os .os-admin-panel summary {
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 720;
+  list-style: none;
+  padding: 0.25rem 0;
+}
+
+.circle-os .os-admin-panel summary::after {
+  color: #918e86;
+  content: "+";
+  float: right;
+}
+
+.circle-os .os-admin-panel[open] summary::after {
+  content: "−";
+}
+
+.circle-os .os-admin-fields {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.circle-os .os-admin-field {
+  display: grid;
+  gap: 7px;
+}
+
+.circle-os .os-admin-field > span {
+  color: #aaa69c;
+  font-size: 0.62rem;
+  font-weight: 650;
+}
+
+.circle-os .os-admin-field input,
+.circle-os .os-admin-field select,
+.circle-os .os-admin-field textarea,
+.circle-os .os-admin-options input,
+.circle-os .os-admin-notes textarea {
+  background: #191813;
+  border: 1px solid rgb(241 239 232 / 0.11);
+  border-radius: 12px;
+  color: #f1efe8;
+  min-height: 46px;
+  padding: 0.75rem;
+  resize: vertical;
+  width: 100%;
+}
+
+.circle-os .os-admin-field textarea {
+  line-height: 1.35;
+}
+
+.circle-os .os-admin-page-strip {
+  display: flex;
+  gap: 8px;
+  margin: 16px -18px;
+  overflow-x: auto;
+  padding: 2px 18px 8px;
+  scrollbar-width: none;
+}
+
+.circle-os .os-admin-page-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.circle-os .os-admin-page-strip button {
+  background: #24231d;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 12px;
+  color: #aaa69c;
+  flex: 0 0 auto;
+  font-size: 0.64rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.circle-os .os-admin-page-strip button span {
+  color: #6f6b63;
+  display: block;
+  font-size: 0.54rem;
+  margin-bottom: 0.15rem;
+}
+
+.circle-os .os-admin-page-strip button.active {
+  background: #f1efe8;
+  border-color: #f1efe8;
+  color: #191813;
+}
+
+.circle-os .os-admin-page-strip button.add {
+  border-color: rgb(227 107 55 / 0.6);
+  color: #e36b37;
+}
+
+.circle-os .os-admin-icon-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.circle-os .os-admin-icon-actions button {
+  background: #191813;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 10px;
+  color: #f1efe8;
+  min-width: 44px;
+}
+
+.circle-os .os-admin-options,
+.circle-os .os-admin-notes {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.circle-os .os-admin-options h3 {
+  font-size: 0.72rem;
+  margin: 0 0 0.25rem;
+}
+
+.circle-os .os-admin-options > div {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 0.8fr 1.4fr 44px;
+}
+
+.circle-os .os-admin-options > div button,
+.circle-os .os-admin-notes label button {
+  background: transparent;
+  border: 1px solid rgb(241 239 232 / 0.1);
+  border-radius: 10px;
+  color: #aaa69c;
+}
+
+.circle-os .os-admin-page-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 18px;
+}
+
+.circle-os .os-admin-page-actions button:last-child {
+  background: #191813;
+  color: #aaa69c;
+}
+
+.circle-os .os-admin-notes label {
+  align-items: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 24px 1fr;
+}
+
+.circle-os .os-admin-notes label button {
+  grid-column: 2;
+}
+
+.circle-os .os-admin-errors,
+.circle-os .os-admin-valid {
+  border-radius: 14px;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  margin: 12px 0;
+  padding: 14px;
+}
+
+.circle-os .os-admin-errors {
+  background: rgb(227 107 55 / 0.12);
+  border: 1px solid rgb(227 107 55 / 0.3);
+}
+
+.circle-os .os-admin-errors ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.circle-os .os-admin-valid {
+  background: rgb(241 239 232 / 0.06);
+  color: #aaa69c;
+}
+
+.circle-os .os-admin-preview-note {
+  color: #918e86;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  margin: 14px 0 18px;
+}
+
+.circle-os .os-admin-preview .os-chapter-session {
+  margin: 0;
+  width: 100%;
+}
+
+.circle-os .os-admin-loading {
+  color: #918e86;
+  font-size: 0.72rem;
+  padding: 2rem 0;
+}
+
+.circle-os .os-temporary-admin-link {
+  align-items: center;
+  background: #24231d;
+  border: 1px dashed rgb(227 107 55 / 0.55);
+  border-radius: 18px;
+  color: #f1efe8;
+  display: grid;
+  gap: 0.3rem 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 0 18px 72px;
+  min-height: 74px;
+  padding: 14px 16px;
+}
+
+.circle-os .os-temporary-admin-link span:first-child {
+  color: #e36b37;
+  font-size: 0.56rem;
+  font-weight: 720;
+  grid-column: 1;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.circle-os .os-temporary-admin-link strong {
+  font-size: 0.82rem;
+  grid-column: 1;
+}
+
+.circle-os .os-temporary-admin-link span:last-child {
+  color: #e36b37;
+  font-size: 1.1rem;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+@media (min-width: 430px) {
+  .circle-os .os-admin-fields.two {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .circle-os .os-admin-fields.two .os-admin-field:has(textarea) {
+    grid-column: 1 / -1;
+  }
 }
 
 .circle-os .os-habit .os-chapter-idle .os-page-heading h2 {
