@@ -4449,6 +4449,41 @@
   padding: 2rem 0;
 }
 
+.circle-os .os-temporary-admin-link {
+  align-items: center;
+  background: #24231d;
+  border: 1px dashed rgb(227 107 55 / 0.55);
+  border-radius: 18px;
+  color: #f1efe8;
+  display: grid;
+  gap: 0.3rem 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 0 18px 72px;
+  min-height: 74px;
+  padding: 14px 16px;
+}
+
+.circle-os .os-temporary-admin-link span:first-child {
+  color: #e36b37;
+  font-size: 0.56rem;
+  font-weight: 720;
+  grid-column: 1;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.circle-os .os-temporary-admin-link strong {
+  font-size: 0.82rem;
+  grid-column: 1;
+}
+
+.circle-os .os-temporary-admin-link span:last-child {
+  color: #e36b37;
+  font-size: 1.1rem;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
 @media (min-width: 430px) {
   .circle-os .os-admin-fields.two {
     grid-template-columns: 1fr 1fr;

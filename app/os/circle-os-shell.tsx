@@ -2734,6 +2734,11 @@ export function TodayExperience() {
 
         </section>
         )}
+        <Link className="os-temporary-admin-link" href="/os/admin">
+          <span>Temporary test access</span>
+          <strong>Open Chapter Admin</strong>
+          <span aria-hidden="true">→</span>
+        </Link>
       </main>
   );
 }
