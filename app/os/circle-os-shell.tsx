@@ -40,6 +40,11 @@ import {
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
 import { InfoPage, SessionIntro, SwipeSession } from "./app-session";
+import { CreativeButton } from "./button-engine";
+import {
+  revealButtonStyle,
+  type ButtonStyleId,
+} from "./button-engine-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   chapterRunId,
@@ -1095,6 +1100,17 @@ export function TodayExperience() {
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [thoughtDraft, setThoughtDraft] = useState("");
   const [thoughtSent, setThoughtSent] = useState(false);
+  const [thoughtTransition, setThoughtTransition] = useState<
+    "idle" | "sending" | "resetting"
+  >("idle");
+  const [thoughtButtonVisible, setThoughtButtonVisible] = useState(false);
+  const [thoughtButtonStyle, setThoughtButtonStyle] =
+    useState<ButtonStyleId | null>(null);
+  const thoughtButtonQueue = useRef<ButtonStyleId[]>([]);
+  const previousThoughtButtonStyle = useRef<ButtonStyleId | null>(null);
+  const thoughtSubmissionLocked = useRef(false);
+  const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const thoughtResetTimer = useRef<number | null>(null);
   const [addingHabit, setAddingHabit] = useState(false);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
@@ -1131,6 +1147,9 @@ export function TodayExperience() {
       }
       if (checkInIdleTimer.current) {
         window.clearTimeout(checkInIdleTimer.current);
+      }
+      if (thoughtResetTimer.current) {
+        window.clearTimeout(thoughtResetTimer.current);
       }
     },
     [],
@@ -2072,7 +2091,8 @@ export function TodayExperience() {
   function sendThought(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const thought = thoughtDraft.trim();
-    if (!thought) return;
+    if (!thought || thoughtSubmissionLocked.current) return;
+    thoughtSubmissionLocked.current = true;
     const createdAt = new Date();
     updateState((current) =>
       answerSurveyQuestion(
@@ -2087,9 +2107,44 @@ export function TodayExperience() {
         "thought",
       ),
     );
-    setThoughtDraft("");
     setThoughtSent(true);
-    window.setTimeout(() => setThoughtSent(false), 1400);
+    setThoughtTransition("sending");
+  }
+
+  function revealThoughtButton() {
+    if (thoughtButtonVisible || thoughtSent) return;
+    const next = revealButtonStyle(
+      thoughtButtonStyle,
+      thoughtButtonQueue.current,
+      previousThoughtButtonStyle.current,
+    );
+    thoughtButtonQueue.current = next.queue;
+    setThoughtButtonStyle(next.styleId);
+    setThoughtButtonVisible(true);
+  }
+
+  function concealThoughtButton() {
+    if (thoughtSent) return;
+    setThoughtButtonVisible(false);
+    thoughtTextareaRef.current?.blur();
+  }
+
+  function finishThoughtButtonAnimation() {
+    previousThoughtButtonStyle.current = thoughtButtonStyle;
+    setThoughtButtonVisible(false);
+    setThoughtButtonStyle(null);
+    setThoughtDraft("");
+    setThoughtSent(false);
+    setThoughtTransition("resetting");
+    thoughtSubmissionLocked.current = false;
+    thoughtTextareaRef.current?.blur();
+    if (thoughtResetTimer.current) {
+      window.clearTimeout(thoughtResetTimer.current);
+    }
+    thoughtResetTimer.current = window.setTimeout(() => {
+      setThoughtTransition("idle");
+      thoughtResetTimer.current = null;
+    }, 560);
   }
 
   function defaultTitleForHour(hour: number) {
@@ -2125,17 +2180,25 @@ export function TodayExperience() {
   function checkInThoughtsCard() {
     return (
       <InfoPage
-        className="os-thoughts-page os-survey-card"
+        className={`os-thoughts-page os-survey-card is-${thoughtTransition}`}
         header={<p className="os-card-label">Thoughts</p>}
         footer={
-          <button
-            className="os-thoughts-send"
-            disabled={!thoughtDraft.trim()}
-            form="check-in-thought-form"
-            type="submit"
-          >
-            {thoughtSent ? "Sent" : "Send"}
-          </button>
+          <div className="os-creative-button-slot">
+            {thoughtButtonVisible ? (
+              <CreativeButton
+                disabled={!thoughtDraft.trim() || thoughtSent}
+                form="check-in-thought-form"
+                onAnimationComplete={finishThoughtButtonAnimation}
+                styleId={thoughtButtonStyle || "fallback"}
+                type="submit"
+              >
+                {thoughtSent ? "Sent" : "Send"}
+              </CreativeButton>
+            ) : null}
+            <span aria-live="polite" className="os-visually-hidden" role="status">
+              {thoughtSent ? "Thought sent" : ""}
+            </span>
+          </div>
         }
       >
         <form
@@ -2148,7 +2211,9 @@ export function TodayExperience() {
               aria-label="Write a thought"
               maxLength={800}
               onChange={(event) => setThoughtDraft(event.currentTarget.value)}
+              onFocus={revealThoughtButton}
               placeholder="What are your thoughts?"
+              ref={thoughtTextareaRef}
               rows={1}
               value={thoughtDraft}
             />
@@ -2219,6 +2284,9 @@ export function TodayExperience() {
                   : checkInStartApp
             }
             onIndexChange={(nextIndex) => {
+              if (nextIndex !== checkInThoughtsApp) {
+                concealThoughtButton();
+              }
               if (nextIndex > 0) {
                 setSeenCheckInJourney(checkInJourneyVersion);
               }
