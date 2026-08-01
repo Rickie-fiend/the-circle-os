@@ -1301,7 +1301,7 @@ export function TodayExperience() {
     thoughtLabelTimer.current = window.setTimeout(() => {
       setThoughtLabelVisible(true);
       thoughtLabelTimer.current = null;
-    }, reducedMotion ? 0 : 520);
+    }, reducedMotion ? 0 : 760);
     return () => {
       if (thoughtLabelTimer.current) {
         window.clearTimeout(thoughtLabelTimer.current);
@@ -2457,9 +2457,9 @@ export function TodayExperience() {
                   : checkInStartApp
             }
             onIndexChange={(nextIndex) => {
+              setThoughtLabelVisible(false);
               if (nextIndex !== checkInThoughtsApp) {
                 concealThoughtButton();
-                setThoughtLabelVisible(false);
                 setHoldThoughtsAfterSend(false);
               }
               if (nextIndex > 0) {
