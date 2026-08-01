@@ -85,7 +85,7 @@
   border-radius: 18px;
   display: grid;
   gap: 4px;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   isolation: isolate;
   margin: 0 18px;
   overflow: hidden;
@@ -100,17 +100,13 @@
   inset: 4px auto 4px 4px;
   position: absolute;
   transform: translate3d(0, 0, 0);
-  transition: transform 760ms cubic-bezier(0.16, 0.78, 0.2, 1);
-  width: calc((100% - 16px) / 3);
+  transition: transform 260ms cubic-bezier(0.22, 0.8, 0.2, 1);
+  width: calc((100% - 12px) / 2);
   z-index: 0;
 }
 
 .circle-os .os-nav[data-active="mirror"]::before {
   transform: translate3d(calc(100% + 4px), 0, 0);
-}
-
-.circle-os .os-nav[data-active="admin"]::before {
-  transform: translate3d(calc(200% + 8px), 0, 0);
 }
 
 .circle-os .os-nav[data-active="connect"]::before {
@@ -129,7 +125,7 @@
   min-height: 42px;
   position: relative;
   text-transform: none;
-  transition: color 560ms ease;
+  transition: color 220ms ease;
   z-index: 1;
 }
 
@@ -160,7 +156,7 @@
 }
 
 .circle-os .os-route-stage.is-ready > div > .os-route-content {
-  animation: os-route-arrive 560ms ease-out both;
+  animation: os-route-arrive 220ms ease-out both;
 }
 
 .circle-os .os-route-layer {
@@ -173,7 +169,7 @@
 }
 
 .circle-os .os-route-layer.is-outgoing {
-  animation: os-route-leave 640ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+  animation: os-route-leave 260ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
   inset: 0;
   pointer-events: none;
   position: absolute;
@@ -181,7 +177,7 @@
 }
 
 .circle-os .os-route-layer.is-incoming {
-  animation: os-route-enter 640ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+  animation: os-route-enter 260ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
 }
 
 ::view-transition-old(root),
@@ -191,17 +187,17 @@
 }
 
 ::view-transition-group(circle-os-route) {
-  animation-duration: 640ms;
-  animation-timing-function: cubic-bezier(0.16, 0.78, 0.2, 1);
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.22, 0.8, 0.2, 1);
 }
 
 ::view-transition-old(circle-os-route) {
-  animation: os-route-leave 640ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+  animation: os-route-leave 260ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
   mix-blend-mode: normal;
 }
 
 ::view-transition-new(circle-os-route) {
-  animation: os-route-enter 640ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+  animation: os-route-enter 260ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
   mix-blend-mode: normal;
 }
 
@@ -4899,8 +4895,41 @@
 
 .circle-os .os-admin-draft-list {
   display: grid;
-  gap: 10px;
+  gap: 22px;
   margin-top: 18px;
+}
+
+.circle-os .os-admin-library-group,
+.circle-os .os-admin-library-group-items {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.circle-os .os-admin-library-group-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.circle-os .os-admin-library-group-head h3 {
+  color: #f1efe8;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.circle-os .os-admin-library-group-head span {
+  align-items: center;
+  background: #e36b37;
+  border-radius: 999px;
+  color: #fff8f1;
+  display: inline-flex;
+  font-size: 0.58rem;
+  font-weight: 750;
+  justify-content: center;
+  min-height: 24px;
+  min-width: 24px;
 }
 
 .circle-os .os-admin-draft-list article {
@@ -5309,6 +5338,49 @@
   opacity: 1;
 }
 
+.circle-os .os-button-reward-backdrop.static-preview.active {
+  animation: none !important;
+  opacity: 1;
+}
+
+.circle-os .os-button-reward-backdrop.static-preview.reward-default {
+  background: radial-gradient(circle at 72% 26%, rgb(227 107 55 / 0.24), transparent 54%);
+}
+
+.circle-os .os-button-reward-backdrop.static-preview.reward-ink-burst i {
+  animation: none !important;
+  opacity: 0.16;
+  transform: translate(var(--reward-x), var(--reward-y)) scale(2.2);
+}
+
+.circle-os .os-button-reward-backdrop.static-preview.reward-soft-clay i {
+  animation: none !important;
+  opacity: 0.58;
+}
+
+.circle-os .os-button-reward-backdrop.static-preview.reward-liquid-capsule {
+  animation: none !important;
+  clip-path: circle(145% at 12% 88%) !important;
+  opacity: 0.2;
+}
+
+.circle-os .os-admin-library,
+.circle-os .os-admin-workshop,
+.circle-os .os-button-studio {
+  animation: os-admin-view-arrive 180ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
+}
+
+@keyframes os-admin-view-arrive {
+  from {
+    opacity: 0.72;
+    transform: translate3d(0, 4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 .circle-os .os-button-reward-backdrop i {
   display: block;
   position: absolute;
@@ -5537,40 +5609,6 @@
   padding: 2rem 0;
 }
 
-.circle-os .os-temporary-admin-link {
-  align-items: center;
-  background: #24231d;
-  border: 1px dashed rgb(227 107 55 / 0.55);
-  border-radius: 18px;
-  color: #f1efe8;
-  display: grid;
-  gap: 0.3rem 0.75rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-  margin: 0 18px 72px;
-  min-height: 74px;
-  padding: 14px 16px;
-}
-
-.circle-os .os-temporary-admin-link span:first-child {
-  color: #e36b37;
-  font-size: 0.56rem;
-  font-weight: 720;
-  grid-column: 1;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.circle-os .os-temporary-admin-link strong {
-  font-size: 0.82rem;
-  grid-column: 1;
-}
-
-.circle-os .os-temporary-admin-link span:last-child {
-  color: #e36b37;
-  font-size: 1.1rem;
-  grid-column: 2;
-  grid-row: 1 / span 2;
-}
 
 @media (min-width: 430px) {
   .circle-os .os-admin-fields.two {

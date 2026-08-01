@@ -158,5 +158,18 @@ Used for charts, weekly views, and other things worth reading again.
 
 - Journey progress is stored by chapter id and immutable version.
 - Library position is stored by session id and data version.
+
+## Admin previews and access
+
+- Chapter Workshop and Button Studio render the production App Box and Page
+  anatomy. The bounded parent owns width; content can grow only downward.
+- Choice options stack one full-width row at a time and wrap naturally.
+- Button Studio keeps its preview action mounted. The `Background` toggle
+  changes only the preview surface, never the button lifecycle.
+- Admin is intentionally absent from public navigation. A reserved Thoughts
+  phrase unlocks it for the current browser session and is intercepted before
+  Thoughts persistence. Unauthorized direct visits return to Today.
+- Chapter Library groups by Foundation, Short, Guided Learning, Reflection,
+  and Information in that order, with empty groups hidden.
 - A matching version restores the saved page.
 - A new version returns to page zero.

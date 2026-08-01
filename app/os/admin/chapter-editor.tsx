@@ -96,11 +96,9 @@ function ThemePicker({ value, onChange, label = "Chapter theme" }: { value: Chap
 function ButtonStudio() {
   const [styleId, setStyleId] = useState<ButtonStyleId>("default");
   const [label, setLabel] = useState("Send");
-  const [reward, setReward] = useState(true);
+  const [background, setBackground] = useState(true);
   const [stylePrompt, setStylePrompt] = useState("");
   const [draftReady, setDraftReady] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [previewKey, setPreviewKey] = useState(0);
 
   useEffect(() => {
     const hydrationTimer = window.setTimeout(() => {
@@ -111,7 +109,7 @@ function ButtonStudio() {
           if (parsed.styleId && BUTTON_STYLE_IDS.includes(parsed.styleId)) setStyleId(parsed.styleId);
           if (typeof parsed.label === "string") setLabel(parsed.label);
           if (typeof parsed.stylePrompt === "string") setStylePrompt(parsed.stylePrompt);
-          if (typeof parsed.rewardPreviewEnabled === "boolean") setReward(parsed.rewardPreviewEnabled);
+          if (typeof parsed.rewardPreviewEnabled === "boolean") setBackground(parsed.rewardPreviewEnabled);
         }
       } catch {
         // A damaged local preview draft should never block the Studio.
@@ -124,25 +122,23 @@ function ButtonStudio() {
 
   useEffect(() => {
     if (!draftReady) return;
-    const next: ButtonStudioDraft = { styleId, label, stylePrompt, rewardPreviewEnabled: reward };
+    const next: ButtonStudioDraft = { styleId, label, stylePrompt, rewardPreviewEnabled: background };
     window.localStorage.setItem(BUTTON_STUDIO_STORAGE_KEY, JSON.stringify(next));
-  }, [draftReady, label, reward, styleId, stylePrompt]);
+  }, [background, draftReady, label, styleId, stylePrompt]);
 
-  const studioDraft: ButtonStudioDraft = { styleId, label, stylePrompt, rewardPreviewEnabled: reward };
+  const studioDraft: ButtonStudioDraft = { styleId, label, stylePrompt, rewardPreviewEnabled: background };
 
   return (
     <section className="os-button-studio" aria-label="Button Studio">
       <div className="os-admin-section-head"><div><p>Button Engine</p><h2>Button Studio</h2></div></div>
-      <p className="os-admin-preview-note">Choose an approved design, edit its label, and tap the live button. App Box reward art is available for intentional moments such as Deep Thoughts.</p>
+      <p className="os-admin-preview-note">Choose an approved design, edit its label, and tap the live button. The Background switch previews the App Box treatment without changing the button.</p>
       <div className={`os-button-studio-stage style-${styleId}`}>
-        <ButtonRewardBackdrop active={playing && reward} styleId={styleId} />
+        <ButtonRewardBackdrop active={background} staticPreview styleId={styleId} />
         <PageLayout
           className="os-button-studio-page"
           footer={
             <CreativeButton
-              key={`${styleId}-${previewKey}`}
-              onAnimationComplete={() => { setPlaying(false); setPreviewKey((value) => value + 1); }}
-              onClick={() => setPlaying(true)}
+              previewMode
               styleId={styleId}
               type="button"
             >
@@ -152,21 +148,21 @@ function ButtonStudio() {
           headerLeft={<span className="os-card-label">Live preview</span>}
           headerRight={
             <label className="os-button-studio-reward-toggle">
-              <input checked={reward} type="checkbox" onChange={(event) => setReward(event.target.checked)} />
-              <span>Reward</span>
+              <input checked={background} type="checkbox" onChange={(event) => setBackground(event.target.checked)} />
+              <span>Background</span>
             </label>
           }
           theme="light"
           variant="app"
         >
-          <div className="os-page-main"><h3>{reward ? "Button + App Box reward" : "Button click effect"}</h3></div>
+          <div className="os-page-main"><h3>Button in motion</h3></div>
           <div className="os-page-sub" />
         </PageLayout>
       </div>
       <div className="os-button-studio-grid">
         {BUTTON_STYLE_IDS.map((id) => {
           const definition = BUTTON_STYLE_DEFINITIONS[id];
-          return <button aria-pressed={styleId === id} key={id} type="button" onClick={() => { setPlaying(false); setStyleId(id); setPreviewKey((value) => value + 1); }}><strong>{definition.name}</strong><span>{definition.tags.join(" · ")}</span></button>;
+          return <button aria-pressed={styleId === id} key={id} type="button" onClick={() => setStyleId(id)}><strong>{definition.name}</strong><span>{definition.tags.join(" · ")}</span></button>;
         })}
       </div>
       <div className="os-admin-panel os-button-studio-settings">
@@ -214,6 +210,15 @@ export function ChapterEditor() {
       return [item.chapter.title, item.chapter.id, item.category, item.classification, ...item.tags, ...item.appSpaces].join(" ").toLowerCase().includes(term);
     });
   }, [appFilter, drafts, kindFilter, published, search, starters, themeFilter]);
+  const libraryGroups = useMemo(
+    () => CHAPTER_CLASSIFICATIONS
+      .map((classification) => ({
+        classification,
+        items: libraryItems.filter(({ draft: item }) => item.classification === classification),
+      }))
+      .filter((group) => group.items.length > 0),
+    [libraryItems],
+  );
 
   useEffect(() => {
     readChapterDrafts().then((stored) => {
@@ -329,7 +334,17 @@ export function ChapterEditor() {
             <Field label="Theme"><select value={themeFilter} onChange={(event) => setThemeFilter(event.target.value as typeof themeFilter)}><option value="all">All themes</option>{CHAPTER_THEMES.map((theme) => <option key={theme.value} value={theme.value}>{theme.label}</option>)}</select></Field>
           </div>
           <div className="os-admin-draft-list">
-            {libraryItems.map(({ draft: item, kind }) => <article key={`${kind}-${item.draftId}`}><button className="os-admin-draft-open" type="button" onClick={() => openWorkshop(item, kind)}><span>{kind === "starter" ? "First-use starter" : kind === "published" ? "Published" : item.workflowStatus} · {item.appSpaces.map(pageLabel).join(", ")}</span><strong>{item.chapter.title}</strong><small>{chapterDraftToPreview(item).pages.length} pages · v{item.chapter.version} · {item.classification}</small></button><div className={kind === "draft" ? "three" : ""}><button type="button" onClick={() => openWorkshop(item, kind)}>Open</button>{kind === "draft" ? <><button type="button" onClick={() => copyDraft(item)}>Duplicate</button><button type="button" onClick={() => deleteDraft(item)}>Delete</button></> : null}{kind === "starter" ? <button type="button" onClick={() => createFromStarter(item)}>Use template</button> : null}{kind === "published" ? <button type="button" onClick={() => newPublishedVersion(item)}>Create next version</button> : null}</div></article>)}
+            {libraryGroups.map((group) => (
+              <section className="os-admin-library-group" key={group.classification}>
+                <div className="os-admin-library-group-head">
+                  <h3>{group.classification}</h3>
+                  <span>{group.items.length}</span>
+                </div>
+                <div className="os-admin-library-group-items">
+                  {group.items.map(({ draft: item, kind }) => <article key={`${kind}-${item.draftId}`}><button className="os-admin-draft-open" type="button" onClick={() => openWorkshop(item, kind)}><span>{kind === "starter" ? "First-use starter" : kind === "published" ? "Published" : item.workflowStatus} · {item.appSpaces.map(pageLabel).join(", ")}</span><strong>{item.chapter.title}</strong><small>{chapterDraftToPreview(item).pages.length} pages · v{item.chapter.version} · {item.category}</small></button><div className={kind === "draft" ? "three" : ""}><button type="button" onClick={() => openWorkshop(item, kind)}>Open</button>{kind === "draft" ? <><button type="button" onClick={() => copyDraft(item)}>Duplicate</button><button type="button" onClick={() => deleteDraft(item)}>Delete</button></> : null}{kind === "starter" ? <button type="button" onClick={() => createFromStarter(item)}>Use template</button> : null}{kind === "published" ? <button type="button" onClick={() => newPublishedVersion(item)}>Create next version</button> : null}</div></article>)}
+                </div>
+              </section>
+            ))}
           </div>
         </section>
       ) : null}

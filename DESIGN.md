@@ -172,7 +172,18 @@ typeface, motion pattern, or interaction.
   the bounded parent owns width and content may only grow the box downward.
 - Choice interactions use one full-width option per row so authoring preview
   and published behavior cannot diverge on phones.
-- Button Studio uses the shared Page anatomy. Its Reward control lives in the
-  Page Header, while the preview button stays in the Footer.
+- Button Studio uses the shared Page anatomy. Its `Background` control lives
+  in the Page Header, while the preview button stays mounted in the Footer.
 - Button motion prompts are local draft metadata exported for Codex. They do
   not call AI or generate assets in this version.
+
+## Secret Admin and authoring library
+
+- Admin has no public tab, shortcut, or login page. A reserved phrase entered
+  through Thoughts unlocks authoring for the current browser session only.
+- The reserved phrase is intercepted before thought persistence. It is never
+  saved as profile evidence or uploaded with normal Thoughts.
+- An unauthorized direct Admin visit returns quietly to Today.
+- Chapter Library groups follow the fixed authoring classification order:
+  Foundation, Short, Guided Learning, Reflection, then Information. Empty
+  groups stay hidden; free-form category metadata remains searchable.

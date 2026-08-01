@@ -78,6 +78,8 @@ type CheckIn = {
   createdAt: string;
 };
 
+const ADMIN_THOUGHT = "iseedeadpeople";
+
 type Mission = {
   text: string;
   why: string;
@@ -795,7 +797,7 @@ function RouteCrossfade({
     clearOutgoingTimer.current = window.setTimeout(() => {
       setOutgoingView(null);
       clearOutgoingTimer.current = null;
-    }, 680);
+    }, 280);
   }, [children, pathname]);
 
   useEffect(() => {
@@ -843,7 +845,7 @@ export function OSFrame({
   const active = pathname.startsWith("/os/mirror")
     ? "mirror"
     : pathname.startsWith("/os/admin")
-      ? "admin"
+      ? "connect"
     : pathname.startsWith("/os/connect")
       ? "connect"
       : "today";
@@ -913,13 +915,6 @@ export function OSFrame({
             onClick={(event) => moveToRoute(event, "/os/mirror")}
           >
             Vision
-          </Link>
-          <Link
-            className={active === "admin" ? "active" : ""}
-            href="/os/admin"
-            onClick={(event) => moveToRoute(event, "/os/admin")}
-          >
-            Admin
           </Link>
         </nav>
         <div
@@ -2200,10 +2195,30 @@ export function TodayExperience() {
     }, reducedMotion ? 40 : 900);
   }
 
-  function sendThought(event: FormEvent<HTMLFormElement>) {
+  async function sendThought(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const thought = thoughtDraft.trim();
     if (!thought || thoughtSubmissionLocked.current) return;
+    if (thought.toLowerCase() === ADMIN_THOUGHT) {
+      thoughtSubmissionLocked.current = true;
+      try {
+        const response = await fetch("/os/admin/unlock", {
+          method: "POST",
+          body: new URLSearchParams({ code: thought }),
+        });
+        if (!response.ok) return;
+        setThoughtDraft("");
+        thoughtTextareaRef.current?.blur();
+        router.push("/os/admin");
+      } catch {
+        // Keep the hidden phrase out of the thought stream even when the
+        // local network is unavailable. A later attempt can unlock Admin.
+        return;
+      } finally {
+        thoughtSubmissionLocked.current = false;
+      }
+      return;
+    }
     pauseDeepWriting();
     const deep = thoughtMode === "deep" && Boolean(deepThoughtPrompt);
     const rewarded = deep && isDeepThoughtRewardEligible({
@@ -2997,11 +3012,6 @@ export function TodayExperience() {
 
         </section>
         )}
-        <Link className="os-temporary-admin-link" href="/os/admin">
-          <span>Temporary test access</span>
-          <strong>Open Chapter Admin</strong>
-          <span aria-hidden="true">→</span>
-        </Link>
       </main>
   );
 }

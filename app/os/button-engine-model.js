@@ -104,6 +104,8 @@ export function reduceButtonLifecycle(state, event) {
       return state === "ready" || state === "pressed" ? "success" : state;
     case "success-complete":
       return state === "success" ? "exiting" : state;
+    case "preview-reset":
+      return state === "success" ? "ready" : state;
     case "exit-complete":
       return state === "exiting" ? "hidden" : state;
     default:

@@ -66,6 +66,14 @@ test("the button lifecycle follows reveal, press, success, and exit", () => {
   assert.equal(state, "hidden");
 });
 
+test("preview buttons reset in place without remounting", () => {
+  let state = "ready";
+  for (const event of ["press", "succeed", "preview-reset"]) {
+    state = reduceButtonLifecycle(state, event);
+  }
+  assert.equal(state, "ready");
+});
+
 test("disabled or committed buttons cannot activate twice", () => {
   assert.equal(canActivateButton(), true);
   assert.equal(canActivateButton({ disabled: true }), false);

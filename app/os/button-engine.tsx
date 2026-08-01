@@ -34,20 +34,23 @@ type CreativeButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   keepMountedOnSuccess?: boolean;
   onAnimationComplete?: () => void;
   onSuccessComplete?: () => void;
+  previewMode?: boolean;
 };
 
 export function ButtonRewardBackdrop({
   active,
+  staticPreview = false,
   styleId,
 }: {
   active: boolean;
+  staticPreview?: boolean;
   styleId: string;
 }) {
   const resolvedStyleId = normalizeButtonStyleId(styleId) || "default";
   return (
     <span
       aria-hidden="true"
-      className={`os-button-reward-backdrop reward-${resolvedStyleId}${active ? " active" : ""}`}
+      className={`os-button-reward-backdrop reward-${resolvedStyleId}${staticPreview ? " static-preview" : ""}${active ? " active" : ""}`}
     >
       <i /><i /><i /><i />
     </span>
@@ -75,6 +78,7 @@ export function CreativeButton({
   onPointerLeave,
   onPointerUp,
   onSuccessComplete,
+  previewMode = false,
   styleId,
   ...props
 }: CreativeButtonProps) {
@@ -84,7 +88,7 @@ export function CreativeButton({
     : null;
   const [lifecycle, dispatch] = useReducer(
     reduceButtonLifecycle,
-    "hidden" as ButtonLifecycle,
+    (previewMode ? "ready" : "hidden") as ButtonLifecycle,
   );
   const committedRef = useRef(false);
   const completionRef = useRef(onAnimationComplete);
@@ -99,8 +103,8 @@ export function CreativeButton({
   }, [onSuccessComplete]);
 
   useEffect(() => {
-    dispatch("reveal");
-  }, []);
+    if (!previewMode) dispatch("reveal");
+  }, [previewMode]);
 
   useEffect(() => {
     let timer: number | undefined;
@@ -116,7 +120,12 @@ export function CreativeButton({
       timer = window.setTimeout(
         () => {
           successCompletionRef.current?.();
-          if (!keepMountedOnSuccess) dispatch("success-complete");
+          if (previewMode) {
+            committedRef.current = false;
+            dispatch("preview-reset");
+          } else if (!keepMountedOnSuccess) {
+            dispatch("success-complete");
+          }
         },
         reducedMotion ? 160 : 640,
       );
@@ -129,7 +138,7 @@ export function CreativeButton({
     return () => {
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [keepMountedOnSuccess, lifecycle]);
+  }, [keepMountedOnSuccess, lifecycle, previewMode]);
 
   function press(event: PointerEvent<HTMLButtonElement>) {
     onPointerDown?.(event);
