@@ -262,6 +262,30 @@ When you say creative work, what are you making?`,
   assert.equal(updated.profile.profileCase.status, "ready");
 });
 
+test("Profile.md carries Athena's daily deep thought prompt", () => {
+  const state = firstVision();
+  state.profile.profileCase.deepThoughtPrompt = {
+    id: "deep-athena-2026-08-01",
+    text: "What part of your current rhythm deserves a more honest look?",
+    target: "currentLife",
+    dateKey: "2026-08-01",
+    source: "athena",
+    preparedAt: "2026-08-01T00:05:00.000Z",
+  };
+
+  const markdown = serializeProfileMarkdown(state, {
+    profileId: "p_1234567890abcdef",
+  });
+  const updated = applyProfileMarkdown(firstVision(), markdown);
+
+  assert.match(markdown, /## Deep Thought/);
+  assert.equal(
+    updated.profile.profileCase.deepThoughtPrompt.text,
+    "What part of your current rhythm deserves a more honest look?",
+  );
+  assert.equal(updated.profile.profileCase.deepThoughtPrompt.source, "athena");
+});
+
 test("profile mission comments never appear inside the app mission", () => {
   const state = firstVision();
   const markdown = serializeProfileMarkdown(state, {

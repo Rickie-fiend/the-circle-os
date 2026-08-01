@@ -36,6 +36,24 @@ type CreativeButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   onSuccessComplete?: () => void;
 };
 
+export function ButtonRewardBackdrop({
+  active,
+  styleId,
+}: {
+  active: boolean;
+  styleId: string;
+}) {
+  const resolvedStyleId = normalizeButtonStyleId(styleId) || "default";
+  return (
+    <span
+      aria-hidden="true"
+      className={`os-button-reward-backdrop reward-${resolvedStyleId}${active ? " active" : ""}`}
+    >
+      <i /><i /><i /><i />
+    </span>
+  );
+}
+
 function runHaptic(pattern: readonly number[]) {
   if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
   try {

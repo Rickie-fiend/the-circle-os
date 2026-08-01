@@ -108,14 +108,8 @@ export function createChapterDraft(now = new Date().toISOString()) {
           ...createChapterPage("result", 2),
           id: "complete",
           title: "You completed this chapter.",
-          body: "Carry one useful thought with you.",
+          body: "",
           button: "Finish",
-        },
-        {
-          ...createChapterPage("idle", 3),
-          id: "idle",
-          title: "Chapter complete",
-          body: "Return whenever you want to review it.",
         },
       ],
     },
@@ -133,8 +127,7 @@ const FIRST_USE_STARTERS = {
       { type: "slider", id: "energy", question: "How much energy do you have?", answerKey: "first-energy", min: 1, max: 5, minLabel: "Low", maxLabel: "High", required: true },
       { type: "single-choice", id: "feeling", question: "How does today feel?", answerKey: "first-feeling", options: [{ id: "light", label: "Light" }, { id: "steady", label: "Steady" }, { id: "heavy", label: "Heavy" }], required: true },
       { type: "short-text", id: "focus", question: "What matters most right now?", answerKey: "first-focus", placeholder: "One honest thing", required: true },
-      { type: "result", id: "complete", title: "You checked in.", body: "You can meet the day from where you really are." },
-      { type: "idle", id: "idle", title: "Today, right now", body: "{{first-focus}}" },
+      { type: "result", id: "complete", title: "You checked in.", body: "" },
     ],
   },
   habit: {
@@ -147,8 +140,7 @@ const FIRST_USE_STARTERS = {
       { type: "short-text", id: "action", question: "What small action do you want to repeat?", answerKey: "habit-action", placeholder: "Walk for ten minutes", required: true },
       { type: "short-text", id: "cue", question: "When or where will you do it?", answerKey: "habit-cue", placeholder: "After breakfast", required: true },
       { type: "short-text", id: "meaning", question: "Why does this matter to you?", answerKey: "habit-meaning", placeholder: "It helps me...", required: true },
-      { type: "result", id: "complete", title: "Your habit is ready.", body: "I will {{habit-action}} {{habit-cue}}." },
-      { type: "idle", id: "idle", title: "Your habit", body: "{{habit-action}}", button: "Mark done" },
+      { type: "result", id: "complete", title: "Your habit is ready.", body: "" },
     ],
   },
   log: {
@@ -160,8 +152,7 @@ const FIRST_USE_STARTERS = {
       { type: "cover", id: "cover", title: "Make the log fit your life.", body: "Start with the hours your day normally holds." },
       { type: "time", id: "wake", question: "When do you usually wake up?", answerKey: "usual-wake", required: true },
       { type: "time", id: "sleep", question: "When do you usually go to sleep?", answerKey: "usual-sleep", required: true },
-      { type: "result", id: "complete", title: "Your day is ready to notice.", body: "The log can grow when real life needs more room." },
-      { type: "idle", id: "idle", title: "Your day log", body: "Add what really happened, one hour at a time." },
+      { type: "result", id: "complete", title: "Your day is ready to notice.", body: "" },
     ],
   },
   thoughts: {
@@ -173,8 +164,7 @@ const FIRST_USE_STARTERS = {
       { type: "cover", id: "cover", title: "Some things just need somewhere to land.", body: "Thoughts keeps one honest sentence without turning it into homework." },
       { type: "info", id: "privacy", title: "Write what is true now.", body: "A thought becomes part of your private life record. You can keep it short." },
       { type: "long-text", id: "first-thought", question: "What is on your mind?", answerKey: "first-thought", placeholder: "Write freely", required: true },
-      { type: "result", id: "complete", title: "Your thought has a place.", body: "You do not need to solve it right now." },
-      { type: "idle", id: "idle", title: "Thoughts", body: "Write what you do not want to lose." },
+      { type: "result", id: "complete", title: "Your thought has a place.", body: "" },
     ],
   },
   vision: {
@@ -186,8 +176,7 @@ const FIRST_USE_STARTERS = {
       { type: "cover", id: "cover", title: "Picture an ordinary Tuesday.", body: "Not a perfect day. A day that feels like your life." },
       { type: "long-text", id: "tuesday", question: "What happens from morning to night?", answerKey: "typical-tuesday", placeholder: "I wake up...", required: true },
       { type: "short-text", id: "sign", question: "What small part of that life matters most?", answerKey: "vision-sign", placeholder: "One clear sign", required: true },
-      { type: "result", id: "complete", title: "Your Vision has a beginning.", body: "It can change as your real life gives you more evidence." },
-      { type: "idle", id: "idle", title: "One sign of your life", body: "{{vision-sign}}" },
+      { type: "result", id: "complete", title: "Your Vision has a beginning.", body: "" },
     ],
   },
   reflection: {
@@ -200,8 +189,7 @@ const FIRST_USE_STARTERS = {
       { type: "single-choice", id: "shape", question: "How did today feel overall?", answerKey: "day-shape", options: [{ id: "light", label: "Light" }, { id: "mixed", label: "Mixed" }, { id: "heavy", label: "Heavy" }], required: true },
       { type: "short-text", id: "hard", question: "What felt hard today?", answerKey: "day-hard", placeholder: "One honest thing", required: true },
       { type: "short-text", id: "good", question: "What good thing happened?", answerKey: "day-good", placeholder: "Even something small", required: true },
-      { type: "result", id: "complete", title: "Today can rest now.", body: "Both the hard thing and the good thing belong to the day." },
-      { type: "idle", id: "idle", title: "Today, remembered", body: "Good: {{day-good}}" },
+      { type: "result", id: "complete", title: "Today can rest now.", body: "" },
     ],
   },
 };
@@ -254,6 +242,10 @@ export function createNextVersionDraft(source, now = new Date().toISOString()) {
   copy.workflowStatus = "draft";
   copy.updatedAt = now;
   copy.chapter.version = source.chapter.version + 1;
+  if (copy.chapter.pages.at(-1)?.type === "idle") copy.chapter.pages.pop();
+  if (["confirm", "result"].includes(copy.chapter.pages.at(-1)?.type)) {
+    copy.chapter.pages.at(-1).body = "";
+  }
   return copy;
 }
 
@@ -280,8 +272,12 @@ export function validateChapterDraft(draft) {
   if (!Number.isInteger(chapter.estimatedMinutes) || chapter.estimatedMinutes < 1) errors.push("Estimated minutes must be a positive whole number.");
   if (!chapter.pages?.length) return [...errors, "The chapter needs pages."];
   if (chapter.pages[0]?.type !== "cover") errors.push("The first page must be a cover.");
-  if (!["confirm", "result"].includes(chapter.pages.at(-2)?.type)) errors.push("The page before the idle app must be a confirm or result page.");
-  if (chapter.pages.at(-1)?.type !== "idle") errors.push("The final page must be the idle app.");
+  const finalPage = chapter.pages.at(-1);
+  const legacyIdle = finalPage?.type === "idle";
+  const completionPage = legacyIdle ? chapter.pages.at(-2) : finalPage;
+  if (!["confirm", "result"].includes(completionPage?.type)) errors.push("The final chapter page must be a confirm or result page.");
+  if (legacyIdle && draft.workflowStatus !== "published") errors.push("Idle is a legacy app page. New chapter drafts must end on Result or Confirm.");
+  if (!legacyIdle && completionPage?.body?.trim()) errors.push("The final Result or Confirm page must leave its Sub Body empty.");
   const ids = chapter.pages.map((page) => page.id);
   if (new Set(ids).size !== ids.length) errors.push("Every page needs a unique ID.");
   chapter.pages.forEach((page, index) => {
@@ -346,8 +342,13 @@ export function chapterDraftToMarkdown(draft) {
 }
 
 export function chapterDraftToPreview(draft) {
-  return {
+  const preview = {
     ...structuredClone(draft.chapter),
     status: "published",
   };
+  if (preview.pages.at(-1)?.type === "idle") preview.pages.pop();
+  if (["confirm", "result"].includes(preview.pages.at(-1)?.type)) {
+    preview.pages.at(-1).body = "";
+  }
+  return preview;
 }

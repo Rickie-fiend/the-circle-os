@@ -40,11 +40,17 @@ import {
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
 import { InfoPage, SessionIntro, SwipeSession } from "./app-session";
-import { CreativeButton } from "./button-engine";
+import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import {
   revealButtonStyle,
   type ButtonStyleId,
 } from "./button-engine-model.js";
+import {
+  createLocalDeepThoughtPrompt,
+  deepThoughtFollowUp,
+  isDeepThoughtRewardEligible,
+  type DeepThoughtPrompt,
+} from "./deep-thought-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   chapterRunId,
@@ -313,6 +319,14 @@ export type CircleState = {
           target: string;
         } | null;
       };
+      deepThoughtPrompt: {
+        id: string;
+        text: string;
+        target: string;
+        dateKey: string;
+        source: "athena" | "local" | "local-personalized" | "follow-up";
+        preparedAt: string;
+      } | null;
     };
   };
   days: Record<string, CircleDay>;
@@ -1098,7 +1112,13 @@ export function TodayExperience() {
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
-  const [thoughtDraft, setThoughtDraft] = useState("");
+  const [thoughtMode, setThoughtMode] = useState<"regular" | "deep">("regular");
+  const [regularThoughtDraft, setRegularThoughtDraft] = useState("");
+  const [deepThoughtDraft, setDeepThoughtDraft] = useState("");
+  const [deepThoughtPrompt, setDeepThoughtPrompt] = useState<DeepThoughtPrompt | null>(null);
+  const [deepFollowUpUsed, setDeepFollowUpUsed] = useState(false);
+  const [thoughtRewarded, setThoughtRewarded] = useState(false);
+  const thoughtDraft = thoughtMode === "deep" ? deepThoughtDraft : regularThoughtDraft;
   const [thoughtSent, setThoughtSent] = useState(false);
   const [thoughtTransition, setThoughtTransition] = useState<
     "idle" | "clicked" | "paused" | "exiting"
@@ -1111,6 +1131,9 @@ export function TodayExperience() {
   const thoughtButtonQueue = useRef<ButtonStyleId[]>([]);
   const previousThoughtButtonStyle = useRef<ButtonStyleId | null>(null);
   const thoughtSubmissionLocked = useRef(false);
+  const thoughtOutcome = useRef({ deep: false, rewarded: false, followUpUsed: false });
+  const deepWritingActiveMs = useRef(0);
+  const deepWritingFocusStartedAt = useRef<number | null>(null);
   const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
   const thoughtResetTimer = useRef<number | null>(null);
   const [addingHabit, setAddingHabit] = useState(false);
@@ -2090,25 +2113,78 @@ export function TodayExperience() {
     });
   }
 
+  function setThoughtDraft(value: string) {
+    if (thoughtMode === "deep") setDeepThoughtDraft(value);
+    else setRegularThoughtDraft(value);
+  }
+
+  function pauseDeepWriting() {
+    if (deepWritingFocusStartedAt.current !== null) {
+      // This clock is read only after direct user interaction, never during render.
+      // eslint-disable-next-line react-hooks/purity
+      deepWritingActiveMs.current += Date.now() - deepWritingFocusStartedAt.current;
+      deepWritingFocusStartedAt.current = null;
+    }
+  }
+
+  function resetDeepWritingClock() {
+    deepWritingActiveMs.current = 0;
+    deepWritingFocusStartedAt.current = null;
+  }
+
+  function openDeepThoughts() {
+    if (thoughtMode === "deep") {
+      pauseDeepWriting();
+      setThoughtMode("regular");
+      concealThoughtButton();
+      return;
+    }
+    const answers = state.profile.profileCase.survey.answers;
+    const athenaPrompt = state.profile.profileCase.deepThoughtPrompt;
+    const athenaAnswered = Boolean(
+      athenaPrompt && answers.some((answer) => answer.questionId === athenaPrompt.id),
+    );
+    const deepAnswersToday = answers.filter(
+      (answer) => answer.kind === "deep-thought" && getDateKey(new Date(answer.answeredAt)) === dateKey,
+    ).length;
+    const prompt = athenaPrompt?.dateKey === dateKey && !athenaAnswered
+      ? athenaPrompt
+      : createLocalDeepThoughtPrompt(state, dateKey, deepAnswersToday);
+    setDeepThoughtPrompt(prompt);
+    setDeepFollowUpUsed(false);
+    resetDeepWritingClock();
+    setThoughtMode("deep");
+    concealThoughtButton();
+  }
+
   function sendThought(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const thought = thoughtDraft.trim();
     if (!thought || thoughtSubmissionLocked.current) return;
+    pauseDeepWriting();
+    const deep = thoughtMode === "deep" && Boolean(deepThoughtPrompt);
+    const rewarded = deep && isDeepThoughtRewardEligible({
+      text: thought,
+      activeMs: deepWritingActiveMs.current,
+    });
     thoughtSubmissionLocked.current = true;
     const createdAt = new Date();
+    const prompt = deep ? deepThoughtPrompt! : null;
     updateState((current) =>
       answerSurveyQuestion(
         current,
         {
-          id: `thought-${createdAt.getTime()}`,
-          text: "A thought I wanted to keep",
+          id: prompt?.id || `thought-${createdAt.getTime()}`,
+          text: prompt?.text || "A thought I wanted to keep",
           type: "text",
-          target: "currentLife",
+          target: prompt?.target || "currentLife",
         },
         thought,
-        "thought",
+        deep ? "deep-thought" : "thought",
       ),
     );
+    thoughtOutcome.current = { deep, rewarded, followUpUsed: deepFollowUpUsed };
+    setThoughtRewarded(rewarded);
     setThoughtSent(true);
     setThoughtTransition("clicked");
   }
@@ -2127,6 +2203,7 @@ export function TodayExperience() {
 
   function concealThoughtButton() {
     if (thoughtSent) return;
+    pauseDeepWriting();
     setThoughtButtonVisible(false);
     thoughtTextareaRef.current?.blur();
   }
@@ -2143,11 +2220,26 @@ export function TodayExperience() {
         "(prefers-reduced-motion: reduce)",
       ).matches;
       thoughtResetTimer.current = window.setTimeout(() => {
+        const outcome = thoughtOutcome.current;
         previousThoughtButtonStyle.current = thoughtButtonStyle;
         setThoughtButtonVisible(false);
         setThoughtButtonStyle(null);
-        setThoughtDraft("");
+        if (outcome.deep) {
+          setDeepThoughtDraft("");
+          resetDeepWritingClock();
+          if (!outcome.rewarded && !outcome.followUpUsed && deepThoughtPrompt) {
+            setDeepThoughtPrompt(deepThoughtFollowUp(deepThoughtPrompt));
+            setDeepFollowUpUsed(true);
+          } else {
+            setThoughtMode("regular");
+            setDeepThoughtPrompt(null);
+            setDeepFollowUpUsed(false);
+          }
+        } else {
+          setRegularThoughtDraft("");
+        }
         setThoughtSent(false);
+        setThoughtRewarded(false);
         setHoldThoughtsAfterSend(true);
         setThoughtTransition("idle");
         thoughtSubmissionLocked.current = false;
@@ -2193,8 +2285,8 @@ export function TodayExperience() {
   function checkInThoughtsCard() {
     return (
       <InfoPage
-        className="os-thoughts-page os-survey-card"
-        header={<p className="os-card-label">Thoughts</p>}
+        className={`os-thoughts-page os-survey-card${thoughtMode === "deep" ? " deep-mode" : ""}`}
+        header={<button aria-pressed={thoughtMode === "deep"} className="os-card-label os-thoughts-mode-toggle" type="button" onClick={openDeepThoughts}>{thoughtMode === "deep" ? "Deep Thoughts" : "Thoughts"}</button>}
         footer={
           <div className="os-creative-button-slot">
             {thoughtButtonVisible ? (
@@ -2215,6 +2307,7 @@ export function TodayExperience() {
           </div>
         }
       >
+        <ButtonRewardBackdrop active={thoughtSent && thoughtRewarded} styleId={thoughtButtonStyle || "default"} />
         <form
           className="os-thoughts-form"
           id="check-in-thought-form"
@@ -2222,11 +2315,23 @@ export function TodayExperience() {
         >
           <div className="os-info-page-main">
             <textarea
-              aria-label="Write a thought"
+              aria-label={thoughtMode === "deep" ? "Answer the deep thought" : "Write a thought"}
               maxLength={800}
-              onChange={(event) => setThoughtDraft(event.currentTarget.value)}
-              onFocus={revealThoughtButton}
-              placeholder="What are your thoughts?"
+              onBlur={pauseDeepWriting}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setThoughtDraft(value);
+                if (thoughtMode === "deep" && value.trim() && deepWritingFocusStartedAt.current === null) {
+                  deepWritingFocusStartedAt.current = Date.now();
+                }
+              }}
+              onFocus={() => {
+                revealThoughtButton();
+                if (thoughtMode === "deep" && thoughtDraft.trim() && deepWritingFocusStartedAt.current === null) {
+                  deepWritingFocusStartedAt.current = Date.now();
+                }
+              }}
+              placeholder={thoughtMode === "deep" ? deepThoughtPrompt?.text || "What deserves your honest attention?" : "What are your thoughts?"}
               ref={thoughtTextareaRef}
               rows={1}
               value={thoughtDraft}

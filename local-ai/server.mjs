@@ -296,6 +296,21 @@ export function applyProfileMarkdown(stateValue, markdown) {
           text: questionText,
         }
       : null;
+  const deepThoughtBlock = sections["Deep Thought"] || "";
+  const deepThoughtMeta = deepThoughtBlock.match(
+    /<!--\s*id:\s*([^;]+);\s*target:\s*([^;]+);\s*date:\s*([^;]+);\s*prepared:\s*([^\s]+)\s*-->/i,
+  );
+  const deepThoughtText = text(deepThoughtBlock.replace(/<!--[\s\S]*?-->/g, ""));
+  const deepThoughtPrompt = deepThoughtMeta && deepThoughtText
+    ? {
+        id: text(deepThoughtMeta[1], 120),
+        target: text(deepThoughtMeta[2], 80),
+        dateKey: text(deepThoughtMeta[3], 20),
+        preparedAt: text(deepThoughtMeta[4], 80),
+        text: deepThoughtText,
+        source: "athena",
+      }
+    : state.profile.profileCase.deepThoughtPrompt;
   const analysisPending = metadata.analysis_pending === "true";
   const lastAnalyzed = text(metadata.last_analyzed, 80) || null;
   const dateKey = getDateKey();
@@ -332,6 +347,7 @@ export function applyProfileMarkdown(stateValue, markdown) {
           ...state.profile.profileCase.survey,
           nextQuestion,
         },
+        deepThoughtPrompt,
       },
     },
     days: {
@@ -358,7 +374,7 @@ function formatAnswers(answers) {
 
 ${markdownText(answer.answer, "No answer.")}
 
-_${answer.kind === "habit" ? "Habit" : answer.kind === "codex" ? "Codex" : answer.kind === "routine" ? "Log setup" : answer.kind === "note" ? "Note" : "Check-in"} · Answered ${
+_${answer.kind === "habit" ? "Habit" : answer.kind === "codex" ? "Codex" : answer.kind === "routine" ? "Log setup" : answer.kind === "note" ? "Note" : answer.kind === "deep-thought" ? "Deep Thought" : answer.kind === "thought" ? "Thought" : "Check-in"} · Answered ${
   answer.answeredAt || "without a date"
 }._`,
     )
@@ -416,6 +432,7 @@ export function serializeProfileMarkdown(
   const profile = state.profile;
   const sessions = profile.profileCase.sessions;
   const question = profile.profileCase.survey.nextQuestion;
+  const deepThought = profile.profileCase.deepThoughtPrompt;
   const dateKey = getDateKey();
   const mission = state.days[dateKey]?.mission?.text;
   const sessionBlocks = PROFILE_SESSION_KEYS.map((key) => {
@@ -436,6 +453,9 @@ ${markdownText(
 
 ${question.text}`
     : "No question yet.";
+  const deepThoughtQuestion = deepThought
+    ? `<!-- id: ${deepThought.id}; target: ${deepThought.target}; date: ${deepThought.dateKey}; prepared: ${deepThought.preparedAt} -->\n\n${deepThought.text}`
+    : "No deep question yet.";
 
   return `---
 type: circle-os-profile
@@ -459,6 +479,10 @@ ${markdownText(mission, "Notice one moment that feels like you.")}
 ## Next Question
 
 ${nextQuestion}
+
+## Deep Thought
+
+${deepThoughtQuestion}
 
 ## Answers
 

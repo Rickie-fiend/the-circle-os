@@ -159,11 +159,10 @@ export function validateChapter(chapter, filename = "chapter.md") {
   }
   if (chapter.pages.length < 2) errors.push("a chapter needs at least two pages");
   if (chapter.pages[0]?.type !== "cover") errors.push("the first page must be a cover");
-  if (!["confirm", "result"].includes(chapter.pages.at(-2)?.type)) {
-    errors.push("the page before idle must be a confirm or result page");
-  }
-  if (chapter.pages.at(-1)?.type !== "idle") {
-    errors.push("the last page must be an idle page");
+  const lastPage = chapter.pages.at(-1);
+  const completionPage = lastPage?.type === "idle" ? chapter.pages.at(-2) : lastPage;
+  if (!["confirm", "result"].includes(completionPage?.type)) {
+    errors.push("the final chapter page must be a confirm or result page");
   }
   if (new Set(chapter.pages.map((page) => page.id)).size !== chapter.pages.length) {
     errors.push("page ids must be unique");

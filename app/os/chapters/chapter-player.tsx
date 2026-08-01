@@ -38,6 +38,30 @@ function displayValue(value: ChapterAnswerValue) {
   return Array.isArray(value) ? value.join(", ") : String(value);
 }
 
+function EditableCopy({
+  className,
+  label,
+  onChange,
+  rows = 1,
+  value,
+}: {
+  className: string;
+  label: string;
+  onChange: (value: string) => void;
+  rows?: number;
+  value: string;
+}) {
+  return (
+    <textarea
+      aria-label={label}
+      className={`os-chapter-inline-copy ${className}`}
+      onChange={(event) => onChange(event.currentTarget.value)}
+      rows={rows}
+      value={value}
+    />
+  );
+}
+
 function ChapterPageView({
   chapter,
   page,
@@ -53,6 +77,7 @@ function ChapterPageView({
   idleBody,
   idleContent,
   idleFooter,
+  onEdit,
 }: {
   chapter: ChapterDefinition;
   page: ChapterPage;
@@ -68,6 +93,7 @@ function ChapterPageView({
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
+  onEdit?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
   const required =
     Boolean(page.required) ||
@@ -90,7 +116,7 @@ function ChapterPageView({
     page.title || page.question || chapter.title,
     run,
   );
-  const body = renderChapterTemplate(page.body, run);
+  const renderedBody = renderChapterTemplate(page.body, run);
   const formId = `chapter-${chapter.id}-${page.id}`.replace(/[^a-zA-Z0-9_-]/g, "-");
   const progress = (
     <span aria-label={`Page ${current} of ${total}`}>
@@ -111,9 +137,28 @@ function ChapterPageView({
   }
 
   if (page.type === "cover") {
+    if (onEdit) {
+      return (
+        <PageLayout
+          className={`os-cover-page os-chapter-editable-cover theme-${chapter.theme}`}
+          footer={<button disabled type="button">Swipe to begin</button>}
+          theme={chapter.theme}
+          variant="cover"
+        >
+          <div className="os-session-intro-copy">
+            <div className="os-info-page-main">
+              <EditableCopy className="main" label="Edit cover title" onChange={(value) => onEdit(page.id, "title", value)} value={page.title || ""} />
+            </div>
+            <div className="os-info-page-sub">
+              <EditableCopy className="sub" label="Edit cover subtitle" onChange={(value) => onEdit(page.id, "body", value)} rows={2} value={page.body || ""} />
+            </div>
+          </div>
+        </PageLayout>
+      );
+    }
     return (
       <SessionIntro
-        detail={body}
+        detail={renderedBody}
         label={chapter.session}
         theme={chapter.theme}
         title={title}
@@ -123,6 +168,7 @@ function ChapterPageView({
   }
 
   const isCompletionPage = COMPLETION_TYPES.has(page.type);
+  const body = isCompletionPage ? "" : renderedBody;
   const isQuietPage = ["info", "confirm", "result", "idle"].includes(page.type);
   if (isQuietPage) {
     const isIdle = page.type === "idle";
@@ -145,6 +191,8 @@ function ChapterPageView({
           </button>
         ) : null}
       </>
+    ) : onEdit ? (
+      <EditableCopy className="main" label={`Edit ${page.type} title`} onChange={(value) => onEdit(page.id, "title", value)} rows={2} value={page.title || ""} />
     ) : (
       <h2>{title}</h2>
     );
@@ -175,15 +223,19 @@ function ChapterPageView({
         <div className="os-page-sub">
           {isIdle
             ? idleContent
-            : body
-              ? <p className="os-chapter-body">{body}</p>
-              : null}
+            : onEdit && !isCompletionPage
+              ? <EditableCopy className="sub" label={`Edit ${page.type} subtitle`} onChange={(value) => onEdit(page.id, "body", value)} rows={2} value={page.body || ""} />
+              : body
+                ? <p className="os-chapter-body">{body}</p>
+                : null}
         </div>
       </PageLayout>
     );
   }
 
-  let subContent: ReactNode = body ? <p className="os-chapter-body">{body}</p> : null;
+  let subContent: ReactNode = onEdit ? (
+    <EditableCopy className="sub" label="Edit page subtitle" onChange={(value) => onEdit(page.id, "body", value)} rows={2} value={page.body || ""} />
+  ) : body ? <p className="os-chapter-body">{body}</p> : null;
   let footer: ReactNode;
 
   if (choices.length) {
@@ -335,7 +387,7 @@ function ChapterPageView({
       variant="chapter"
     >
       <div className="os-page-main">
-        <h2>{title}</h2>
+        {onEdit ? <EditableCopy className="main" label="Edit page question" onChange={(value) => onEdit(page.id, "question", value)} rows={2} value={page.question || page.title || ""} /> : <h2>{title}</h2>}
       </div>
       <div className="os-page-sub">{subContent}</div>
     </PageLayout>
@@ -366,6 +418,7 @@ export function ChapterPlayer({
   onLongPress,
   attentionKey,
   previewMode = false,
+  onEditPage,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -390,6 +443,7 @@ export function ChapterPlayer({
   onLongPress?: () => void;
   attentionKey?: string;
   previewMode?: boolean;
+  onEditPage?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
   const [showingBackApp, setShowingBackApp] = useState(startOnBackApp);
   const [leavingCompletionKey, setLeavingCompletionKey] = useState("");
@@ -462,7 +516,7 @@ export function ChapterPlayer({
         runChangeRef.current(
           advanceChapterRun(definition, run, { page: currentPage }),
         );
-      }, 700);
+      }, 900);
     }, 2400);
 
     return () => {
@@ -503,6 +557,7 @@ export function ChapterPlayer({
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
+        onEdit={onEditPage}
       />,
       ...idleApps,
     ];
@@ -566,6 +621,7 @@ export function ChapterPlayer({
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
+        onEdit={onEditPage}
         onComplete={(submission) =>
           onRunChange(
             advanceChapterRun(definition, run, submission),
@@ -649,6 +705,7 @@ export function ChapterPlayer({
           idleBody={idleBody}
           idleContent={idleContent}
           idleFooter={idleFooter}
+          onEdit={onEditPage}
           onComplete={(submission) =>
             onRunChange(
               advanceChapterRun(definition, run, submission),

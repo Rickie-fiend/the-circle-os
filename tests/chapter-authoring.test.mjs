@@ -12,11 +12,11 @@ import {
 } from "../app/os/admin/chapter-authoring.js";
 import { parseChapterMarkdown, validateChapter } from "../scripts/chapter-compiler.mjs";
 
-test("a fresh editor draft preserves the cover, completion, and idle template order", () => {
+test("a fresh editor draft preserves the cover and final result template order", () => {
   const draft = createChapterDraft("2026-08-01T00:00:00.000Z");
   assert.equal(draft.chapter.pages[0].type, "cover");
-  assert.equal(draft.chapter.pages.at(-2).type, "result");
-  assert.equal(draft.chapter.pages.at(-1).type, "idle");
+  assert.equal(draft.chapter.pages.at(-1).type, "result");
+  assert.equal(draft.chapter.pages.at(-1).body, "");
   assert.deepEqual(validateChapterDraft(draft), []);
 });
 
@@ -28,7 +28,7 @@ test("editor Markdown compiles with the existing chapter compiler", () => {
   const compiled = validateChapter(parseChapterMarkdown(markdown, "editor-test.md"));
   assert.equal(compiled.id, "editor-test");
   assert.equal(compiled.status, "draft");
-  assert.equal(compiled.pages.length, 4);
+  assert.equal(compiled.pages.length, 3);
 });
 
 test("preview uses the published runtime shape without changing draft workflow", () => {
@@ -50,8 +50,8 @@ test("every current app has a valid first-time-use starter", () => {
     const draft = createFirstUseChapterDraft(appSpace, "2026-08-01T00:00:00.000Z");
     assert.deepEqual(validateChapterDraft(draft), [], appSpace);
     assert.equal(draft.chapter.pages[0].type, "cover", appSpace);
-    assert.match(draft.chapter.pages.at(-2).type, /confirm|result/, appSpace);
-    assert.equal(draft.chapter.pages.at(-1).type, "idle", appSpace);
+    assert.match(draft.chapter.pages.at(-1).type, /confirm|result/, appSpace);
+    assert.equal(draft.chapter.pages.at(-1).body, "", appSpace);
     validateChapter(parseChapterMarkdown(chapterDraftToMarkdown(draft), `${appSpace}.md`));
   }
 });
@@ -65,5 +65,7 @@ test("a published chapter opens as an immutable library item and copies to the n
   assert.equal(libraryItem.workflowStatus, "published");
   assert.equal(next.workflowStatus, "draft");
   assert.equal(next.chapter.version, 5);
+  assert.notEqual(next.chapter.pages.at(-1).type, "idle");
+  assert.equal(next.chapter.pages.at(-1).body, "");
   assert.equal(libraryItem.chapter.version, 4);
 });

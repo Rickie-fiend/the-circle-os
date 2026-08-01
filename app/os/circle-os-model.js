@@ -184,6 +184,7 @@ function createProfileCase() {
       answers: [],
       nextQuestion: null,
     },
+    deepThoughtPrompt: null,
   };
 }
 

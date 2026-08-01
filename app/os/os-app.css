@@ -1599,6 +1599,44 @@
   width: 100%;
 }
 
+.circle-os .os-thoughts-page {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+}
+
+.circle-os .os-thoughts-page > .os-page-header,
+.circle-os .os-thoughts-page > .os-page-body,
+.circle-os .os-thoughts-page > .os-page-footer {
+  position: relative;
+}
+
+.circle-os .os-thoughts-page > .os-page-header,
+.circle-os .os-thoughts-page > .os-page-footer,
+.circle-os .os-thoughts-page .os-thoughts-form {
+  z-index: 2;
+}
+
+.circle-os .os-thoughts-mode-toggle {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.circle-os .os-thoughts-mode-toggle:focus-visible {
+  border-radius: 5px;
+  outline: 2px solid #e36b37;
+  outline-offset: 4px;
+}
+
+.circle-os .os-thoughts-page.deep-mode .os-thoughts-mode-toggle {
+  color: #e36b37;
+}
+
 .circle-os .os-thoughts-form textarea {
   appearance: none;
   background: transparent;
@@ -2028,8 +2066,15 @@
   }
 
   .circle-os .os-ink-particles,
-  .circle-os .os-liquid-sweep {
+  .circle-os .os-liquid-sweep,
+  .circle-os .os-button-reward-backdrop i {
     display: none;
+  }
+
+  .circle-os .os-button-reward-backdrop.active {
+    animation: none !important;
+    background: radial-gradient(circle at 50% 58%, rgb(227 107 55 / 0.18), transparent 58%);
+    opacity: 1;
   }
 
   .circle-os .style-soft-clay .os-creative-button {
@@ -4224,6 +4269,7 @@
 .circle-os .os-page-header {
   align-items: flex-start;
   display: flex;
+  grid-row: 1;
   justify-content: space-between;
   min-height: 1rem;
   width: 100%;
@@ -4248,6 +4294,7 @@
 }
 
 .circle-os .os-page-heading {
+  grid-row: 2;
   min-width: 0;
   padding-top: 0.9rem;
   width: 100%;
@@ -4269,6 +4316,7 @@
 .circle-os .os-page-body {
   align-self: stretch;
   display: grid;
+  grid-row: 3;
   grid-template-rows: minmax(min-content, 2fr) minmax(0, 1fr);
   min-width: 0;
   width: 100%;
@@ -4295,6 +4343,7 @@
 .circle-os .os-page-footer {
   align-items: flex-end;
   display: flex;
+  grid-row: 4;
   min-height: 52px;
   padding-top: 0.85rem;
   width: 100%;
@@ -4536,6 +4585,80 @@
   align-self: start;
 }
 
+/* Chapter Template V2: authored copy stays centered while the Footer keeps its
+   independent bottom anchor at every viewport width. */
+.circle-os .os-cover-page .os-page-body {
+  align-items: center;
+  display: flex;
+}
+
+.circle-os .os-cover-page .os-session-intro-copy {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  justify-content: center;
+}
+
+.circle-os .os-cover-page .os-info-page-main {
+  justify-content: center;
+}
+
+.circle-os .os-cover-page .os-page-footer > button {
+  margin: 0 0 0 auto;
+}
+
+.circle-os .os-chapter-page.os-chapter-card .os-page-body {
+  align-content: center;
+  grid-template-rows: auto auto;
+}
+
+.circle-os .os-chapter-page.os-chapter-card .os-page-main {
+  justify-content: center;
+}
+
+.circle-os .os-chapter-page:is(.os-chapter-confirm, .os-chapter-result) .os-page-body {
+  align-items: center;
+  display: flex;
+}
+
+.circle-os .os-chapter-page:is(.os-chapter-confirm, .os-chapter-result) .os-page-main {
+  justify-content: center;
+}
+
+.circle-os .os-chapter-inline-copy {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  field-sizing: content;
+  font-family: var(--font-sans), Arial, sans-serif;
+  outline: 0;
+  overflow: hidden;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+
+.circle-os .os-chapter-inline-copy.main {
+  font-size: var(--os-page-main-font-size);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: var(--os-page-main-line-height);
+  max-width: 15ch;
+}
+
+.circle-os .os-chapter-inline-copy.sub {
+  font-size: clamp(0.88rem, 3.7vw, 1rem);
+  line-height: 1.45;
+  max-width: 36ch;
+  opacity: 0.78;
+}
+
+.circle-os .os-chapter-inline-copy:focus {
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgb(227 107 55 / 0.48);
+}
+
 /* Admin authoring is mobile-first: one editing column, thumb-sized controls,
    and the real Chapter Player as its preview surface. */
 .circle-os .os-admin {
@@ -4600,6 +4723,99 @@
   grid-template-columns: repeat(3, 1fr);
   margin: 24px 0;
   padding: 4px;
+}
+
+.circle-os .os-admin-modules {
+  background: #24231d;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 24px 0;
+  padding: 4px;
+}
+
+.circle-os .os-admin-modules button {
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: #918e86;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.circle-os .os-admin-modules button[aria-selected="true"] {
+  background: #f1efe8;
+  color: #191813;
+}
+
+.circle-os .os-admin-workshop-bar,
+.circle-os .os-admin-workshop-title {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.circle-os .os-admin-workshop-bar {
+  color: #918e86;
+  font-size: 0.66rem;
+  margin-bottom: 18px;
+}
+
+.circle-os .os-admin-workshop-bar button {
+  background: transparent;
+  border: 1px solid rgb(241 239 232 / 0.1);
+  border-radius: 12px;
+  color: #f1efe8;
+  padding: 0.6rem 0.8rem;
+}
+
+.circle-os .os-admin-workshop-title p {
+  color: #e36b37;
+  font-size: 0.61rem;
+  font-weight: 720;
+  letter-spacing: 0.12em;
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+}
+
+.circle-os .os-admin-workshop-title h2 {
+  font-size: clamp(1.45rem, 7vw, 2rem);
+  letter-spacing: -0.045em;
+  margin: 0;
+}
+
+.circle-os .os-admin-theme-picker {
+  display: flex;
+  gap: 7px;
+}
+
+.circle-os .os-admin-theme-picker button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgb(241 239 232 / 0.1);
+  border-radius: 12px;
+  color: #aaa69c;
+  display: grid;
+  font-size: 0.56rem;
+  gap: 4px;
+  min-width: 52px;
+  padding: 6px;
+}
+
+.circle-os .os-admin-theme-picker button > span {
+  border: 1px solid rgb(241 239 232 / 0.22);
+  border-radius: 8px;
+  display: block;
+  height: 20px;
+  width: 100%;
+}
+
+.circle-os .os-admin-theme-picker button[aria-pressed="true"] {
+  border-color: #e36b37;
+  color: #f1efe8;
+  box-shadow: 0 0 0 1px #e36b37 inset;
 }
 
 .circle-os .os-admin-views button {
@@ -4870,9 +5086,152 @@
 .circle-os .os-admin-page-actions {
   display: grid;
   gap: 8px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   margin-top: 18px;
 }
+
+.circle-os .os-button-studio-stage {
+  background: #f1efe8;
+  border-radius: 24px;
+  color: #191813;
+  display: grid;
+  gap: 1.5rem;
+  isolation: isolate;
+  margin-top: 18px;
+  min-height: 360px;
+  overflow: hidden;
+  padding: 24px;
+  position: relative;
+}
+
+.circle-os .os-button-studio-copy,
+.circle-os .os-button-studio-button {
+  position: relative;
+  z-index: 2;
+}
+
+.circle-os .os-button-studio-copy span {
+  color: #e36b37;
+  font-size: 0.58rem;
+  font-weight: 720;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.circle-os .os-button-studio-copy h3 {
+  font-size: clamp(1.8rem, 8vw, 2.5rem);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  margin: 0.7rem 0 0;
+  max-width: 12ch;
+}
+
+.circle-os .os-button-studio-button {
+  align-self: end;
+  height: 52px;
+}
+
+.circle-os .os-button-studio-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 12px;
+}
+
+.circle-os .os-button-studio-grid button {
+  align-items: flex-start;
+  background: #24231d;
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: 14px;
+  color: #f1efe8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px;
+  text-align: left;
+}
+
+.circle-os .os-button-studio-grid button span {
+  color: #918e86;
+  font-size: 0.58rem;
+  margin-top: 0.25rem;
+}
+
+.circle-os .os-button-studio-grid button[aria-pressed="true"] {
+  border-color: #e36b37;
+}
+
+.circle-os .os-button-studio-settings {
+  display: grid;
+  gap: 12px;
+}
+
+.circle-os .os-button-reward-backdrop {
+  inset: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 180ms ease;
+  z-index: 1;
+}
+
+.circle-os .os-button-reward-backdrop.active {
+  opacity: 1;
+}
+
+.circle-os .os-button-reward-backdrop i {
+  display: block;
+  position: absolute;
+}
+
+.circle-os .os-button-reward-backdrop.reward-default.active {
+  animation: os-reward-default 1200ms ease-out both;
+  background: radial-gradient(circle at 50% 58%, rgb(227 107 55 / 0.28), transparent 58%);
+}
+
+.circle-os .os-button-reward-backdrop.reward-ink-burst i {
+  background: #191813;
+  border-radius: 50%;
+  height: 18px;
+  left: 50%;
+  top: 68%;
+  width: 18px;
+  --reward-x: -150px;
+  --reward-y: -190px;
+}
+
+.circle-os .os-button-reward-backdrop.reward-ink-burst i:nth-child(2) { background: #e36b37; --reward-x: -54px; --reward-y: -242px; }
+.circle-os .os-button-reward-backdrop.reward-ink-burst i:nth-child(3) { background: #fff8f1; --reward-x: 58px; --reward-y: -226px; }
+.circle-os .os-button-reward-backdrop.reward-ink-burst i:nth-child(4) { --reward-x: 148px; --reward-y: -178px; }
+.circle-os .os-button-reward-backdrop.reward-ink-burst.active i { animation: os-reward-ink 1200ms ease-out both; }
+.circle-os .os-button-reward-backdrop.reward-ink-burst i:nth-child(2) { animation-delay: 60ms; }
+.circle-os .os-button-reward-backdrop.reward-ink-burst i:nth-child(3) { animation-delay: 120ms; }
+.circle-os .os-button-reward-backdrop.reward-ink-burst i:nth-child(4) { animation-delay: 180ms; }
+
+.circle-os .os-button-reward-backdrop.reward-soft-clay i {
+  background: rgb(227 107 55 / 0.3);
+  border-radius: 42% 58% 64% 36%;
+  height: 180px;
+  right: -40px;
+  top: 28%;
+  width: 180px;
+}
+
+.circle-os .os-button-reward-backdrop.reward-soft-clay.active i { animation: os-reward-clay 1200ms cubic-bezier(0.22, 0.82, 0.22, 1) both; }
+.circle-os .os-button-reward-backdrop.reward-soft-clay i:nth-child(2) { opacity: 0.55; right: 20%; top: 8%; transform: scale(0.55); }
+
+.circle-os .os-button-reward-backdrop.reward-liquid-capsule {
+  background: #e36b37;
+  clip-path: circle(0 at 12% 88%);
+}
+
+.circle-os .os-button-reward-backdrop.reward-liquid-capsule.active { animation: os-reward-liquid 1200ms ease-in-out both; }
+
+@keyframes os-reward-default { 0% { opacity: 0; transform: scale(0.94); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.08); } }
+@keyframes os-reward-ink { 0% { opacity: 0; transform: translate(0, 0) scale(0.2); } 24% { opacity: 0.9; } 100% { opacity: 0; transform: translate(var(--reward-x), var(--reward-y)) scale(2.6); } }
+@keyframes os-reward-clay { 0% { opacity: 0; transform: translateY(80px) scale(0.7); } 45% { opacity: 1; transform: translateY(-8px) scale(1.04); } 100% { opacity: 0; transform: translateY(-34px) scale(1); } }
+@keyframes os-reward-liquid { 0% { clip-path: circle(0 at 12% 88%); opacity: 0; } 35% { clip-path: circle(90% at 12% 88%); opacity: 0.42; } 100% { clip-path: circle(145% at 12% 88%); opacity: 0; } }
 
 .circle-os .os-admin-page-zone {
   border-top: 1px solid rgb(241 239 232 / 0.08);
