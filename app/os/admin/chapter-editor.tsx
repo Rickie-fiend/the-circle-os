@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { PageLayout } from "../app-session";
 import { ButtonRewardBackdrop, CreativeButton } from "../button-engine";
 import { BUTTON_STYLE_DEFINITIONS, BUTTON_STYLE_IDS, type ButtonStyleId } from "../button-engine-model.js";
 import { ChapterPlayer } from "../chapters/chapter-player";
@@ -29,6 +30,12 @@ type AdminModule = "chapters" | "buttons";
 type ChapterView = "library" | "workshop";
 type LibraryKind = "draft" | "starter" | "published";
 type LibraryItem = { draft: ChapterDraft; kind: LibraryKind };
+type ButtonStudioDraft = {
+  styleId: ButtonStyleId;
+  label: string;
+  stylePrompt: string;
+  rewardPreviewEnabled: boolean;
+};
 
 const INPUT_TYPES = new Set<ChapterPageType>(["single-choice", "multi-choice", "yes-no", "slider", "short-text", "long-text", "time"]);
 const CUSTOM_FOOTER_TYPES = new Set<ChapterPageType>(["multi-choice", "slider", "short-text", "long-text", "time"]);
@@ -38,6 +45,7 @@ const CHAPTER_THEMES: { label: string; value: ChapterTheme; color: string }[] = 
   { label: "Orange", value: "orange", color: "#df642d" },
   { label: "Dark", value: "dark", color: "#222119" },
 ];
+const BUTTON_STUDIO_STORAGE_KEY = "circle-os-button-studio-draft-v1";
 
 function Field({ children, label }: { children: ReactNode; label: string }) {
   return <label className="os-admin-field"><span>{label}</span>{children}</label>;
@@ -53,6 +61,21 @@ function downloadMarkdown(draft: ChapterDraft) {
   const link = document.createElement("a");
   link.href = url;
   link.download = `${draft.chapter.id || "chapter-draft"}.md`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadButtonStudioDraft(draft: ButtonStudioDraft) {
+  const payload = {
+    ...draft,
+    exportedAt: new Date().toISOString(),
+    note: "Saved for Codex. No AI or asset generation runs in this version.",
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "circle-os-button-style.json";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -74,8 +97,38 @@ function ButtonStudio() {
   const [styleId, setStyleId] = useState<ButtonStyleId>("default");
   const [label, setLabel] = useState("Send");
   const [reward, setReward] = useState(true);
+  const [stylePrompt, setStylePrompt] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
+
+  useEffect(() => {
+    const hydrationTimer = window.setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem(BUTTON_STUDIO_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as Partial<ButtonStudioDraft>;
+          if (parsed.styleId && BUTTON_STYLE_IDS.includes(parsed.styleId)) setStyleId(parsed.styleId);
+          if (typeof parsed.label === "string") setLabel(parsed.label);
+          if (typeof parsed.stylePrompt === "string") setStylePrompt(parsed.stylePrompt);
+          if (typeof parsed.rewardPreviewEnabled === "boolean") setReward(parsed.rewardPreviewEnabled);
+        }
+      } catch {
+        // A damaged local preview draft should never block the Studio.
+      } finally {
+        setDraftReady(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(hydrationTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    const next: ButtonStudioDraft = { styleId, label, stylePrompt, rewardPreviewEnabled: reward };
+    window.localStorage.setItem(BUTTON_STUDIO_STORAGE_KEY, JSON.stringify(next));
+  }, [draftReady, label, reward, styleId, stylePrompt]);
+
+  const studioDraft: ButtonStudioDraft = { styleId, label, stylePrompt, rewardPreviewEnabled: reward };
 
   return (
     <section className="os-button-studio" aria-label="Button Studio">
@@ -83,18 +136,32 @@ function ButtonStudio() {
       <p className="os-admin-preview-note">Choose an approved design, edit its label, and tap the live button. App Box reward art is available for intentional moments such as Deep Thoughts.</p>
       <div className={`os-button-studio-stage style-${styleId}`}>
         <ButtonRewardBackdrop active={playing && reward} styleId={styleId} />
-        <div className="os-button-studio-copy"><span>Live preview</span><h3>{reward ? "Button + App Box reward" : "Button click effect"}</h3></div>
-        <div className="os-button-studio-button">
-          <CreativeButton
-            key={`${styleId}-${previewKey}`}
-            onAnimationComplete={() => { setPlaying(false); setPreviewKey((value) => value + 1); }}
-            onClick={() => setPlaying(true)}
-            styleId={styleId}
-            type="button"
-          >
-            {label || "Button"}
-          </CreativeButton>
-        </div>
+        <PageLayout
+          className="os-button-studio-page"
+          footer={
+            <CreativeButton
+              key={`${styleId}-${previewKey}`}
+              onAnimationComplete={() => { setPlaying(false); setPreviewKey((value) => value + 1); }}
+              onClick={() => setPlaying(true)}
+              styleId={styleId}
+              type="button"
+            >
+              {label || "Button"}
+            </CreativeButton>
+          }
+          headerLeft={<span className="os-card-label">Live preview</span>}
+          headerRight={
+            <label className="os-button-studio-reward-toggle">
+              <input checked={reward} type="checkbox" onChange={(event) => setReward(event.target.checked)} />
+              <span>Reward</span>
+            </label>
+          }
+          theme="light"
+          variant="app"
+        >
+          <div className="os-page-main"><h3>{reward ? "Button + App Box reward" : "Button click effect"}</h3></div>
+          <div className="os-page-sub" />
+        </PageLayout>
       </div>
       <div className="os-button-studio-grid">
         {BUTTON_STYLE_IDS.map((id) => {
@@ -104,7 +171,8 @@ function ButtonStudio() {
       </div>
       <div className="os-admin-panel os-button-studio-settings">
         <Field label="Button label"><input maxLength={32} value={label} onChange={(event) => setLabel(event.target.value)} /></Field>
-        <label className="os-admin-check"><input checked={reward} type="checkbox" onChange={(event) => setReward(event.target.checked)} /><span>Preview matching App Box reward</span></label>
+        <Field label="Button style prompt"><textarea placeholder="Describe how this button should feel or move." rows={5} value={stylePrompt} onChange={(event) => setStylePrompt(event.target.value)} /></Field>
+        <button className="os-button-studio-export" type="button" onClick={() => downloadButtonStudioDraft(studioDraft)}>Export for Codex</button>
       </div>
     </section>
   );
@@ -277,14 +345,14 @@ export function ChapterEditor() {
           {activeKind === "published" ? <button className="os-admin-preview-use" type="button" onClick={() => newPublishedVersion(draft)}>Create next version</button> : null}
 
           {activeKind === "draft" ? <>
-            <div className="os-admin-actions"><button type="button" onClick={() => saveDraft()}>Save draft</button><button disabled={errors.length > 0} type="button" onClick={() => saveDraft("ready")}>Mark ready</button><button type="button" onClick={() => downloadMarkdown(draft)}>Export Markdown</button></div>
             <details className="os-admin-panel"><summary>Chapter settings</summary><div className="os-admin-fields two">
               <Field label="Title"><input value={draft.chapter.title} onChange={(event) => updateChapter("title", event.target.value)} /></Field><Field label="Chapter ID"><input value={draft.chapter.id} onChange={(event) => updateChapter("id", chapterSlug(event.target.value))} /></Field><Field label="Category"><input value={draft.category} onChange={(event) => updateDraft((next) => ({ ...next, category: event.target.value }))} /></Field><Field label="Classification"><select value={draft.classification} onChange={(event) => updateDraft((next) => ({ ...next, classification: event.target.value as ChapterDraft["classification"] }))}>{CHAPTER_CLASSIFICATIONS.map((item) => <option key={item}>{item}</option>)}</select></Field><Field label="Session"><input value={draft.chapter.session} onChange={(event) => updateChapter("session", chapterSlug(event.target.value))} /></Field><Field label="Version"><input min="1" type="number" value={draft.chapter.version} onChange={(event) => updateChapter("version", Number(event.target.value))} /></Field><Field label="Minutes"><input min="1" type="number" value={draft.chapter.estimatedMinutes} onChange={(event) => updateChapter("estimatedMinutes", Number(event.target.value))} /></Field><Field label="Purpose"><textarea rows={3} value={draft.chapter.purpose} onChange={(event) => updateChapter("purpose", event.target.value)} /></Field><Field label="Tags"><input value={draft.tags.join(", ")} onChange={(event) => updateDraft((next) => ({ ...next, tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) }))} /></Field><Field label="App spaces"><input value={draft.appSpaces.join(", ")} onChange={(event) => updateDraft((next) => ({ ...next, appSpaces: event.target.value.split(",").map((space) => chapterSlug(space)).filter(Boolean) }))} /></Field>
             </div></details>
             <details className="os-admin-panel" open><summary>Page settings · {pageLabel(page.type)}</summary><div className="os-admin-fields two">
               <Field label="Page type"><select disabled={selectedPage === 0 || selectedPage === draft.chapter.pages.length - 1} value={page.type} onChange={(event) => changePageType(event.target.value as ChapterPageType)}>{AUTHORABLE_PAGE_TYPES.map((item) => <option key={item} value={item}>{pageLabel(item)}</option>)}</select></Field><Field label="Page ID"><input value={page.id} onChange={(event) => updatePage("id", chapterSlug(event.target.value))} /></Field>{INPUT_TYPES.has(page.type) ? <><Field label="Answer key"><input value={page.answerKey || ""} onChange={(event) => updatePage("answerKey", chapterSlug(event.target.value))} /></Field><label className="os-admin-check"><input checked={Boolean(page.required)} type="checkbox" onChange={(event) => updatePage("required", event.target.checked)} /><span>Answer required</span></label></> : null}{["short-text", "long-text"].includes(page.type) ? <Field label="Placeholder"><input value={page.placeholder || ""} onChange={(event) => updatePage("placeholder", event.target.value)} /></Field> : null}{CUSTOM_FOOTER_TYPES.has(page.type) ? <Field label="Button text"><input value={page.button || ""} onChange={(event) => updatePage("button", event.target.value)} /></Field> : null}
-            </div>{["single-choice", "multi-choice"].includes(page.type) ? <div className="os-admin-options"><h3>Choices</h3>{(page.options || []).map((option, index) => <div key={`${option.id}-${index}`}><input aria-label={`Option ${index + 1} ID`} value={option.id} onChange={(event) => updateDraft((next) => { next.chapter.pages[selectedPage].options![index].id = chapterSlug(event.target.value); return next; })} /><input aria-label={`Option ${index + 1} label`} value={option.label} onChange={(event) => updateDraft((next) => { next.chapter.pages[selectedPage].options![index].label = event.target.value; return next; })} /><button aria-label={`Remove option ${index + 1}`} type="button" onClick={() => updateDraft((next) => { next.chapter.pages[selectedPage].options!.splice(index, 1); return next; })}>×</button></div>)}<button type="button" onClick={() => updateDraft((next) => { const options = next.chapter.pages[selectedPage].options ||= []; options.push({ id: `option-${options.length + 1}`, label: `Option ${options.length + 1}` }); return next; })}>Add choice</button></div> : null}<div className="os-admin-page-actions"><button disabled={selectedPage === 0 || selectedPage === draft.chapter.pages.length - 1} type="button" onClick={duplicatePage}>Duplicate page</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 1} type="button" onClick={deletePage}>Delete page</button><button aria-label="Move page left" type="button" onClick={() => movePage(-1)}>←</button><button aria-label="Move page right" type="button" onClick={() => movePage(1)}>→</button></div></details>
+            </div>{["single-choice", "multi-choice"].includes(page.type) ? <div className="os-admin-options"><h3>Choices</h3>{(page.options || []).map((option, index) => <div key={`${option.id}-${index}`}><input aria-label={`Option ${index + 1} ID`} value={option.id} onChange={(event) => updateDraft((next) => { next.chapter.pages[selectedPage].options![index].id = chapterSlug(event.target.value); return next; })} /><input aria-label={`Option ${index + 1} label`} value={option.label} onChange={(event) => updateDraft((next) => { next.chapter.pages[selectedPage].options![index].label = event.target.value; return next; })} /><button aria-label={`Remove option ${index + 1}`} type="button" onClick={() => updateDraft((next) => { next.chapter.pages[selectedPage].options!.splice(index, 1); return next; })}>×</button></div>)}<button type="button" onClick={() => updateDraft((next) => { const options = next.chapter.pages[selectedPage].options ||= []; options.push({ id: `option-${options.length + 1}`, label: `Option ${options.length + 1}` }); return next; })}>Add choice</button></div> : null}<div className="os-admin-page-actions"><button disabled={selectedPage === 0 || selectedPage === draft.chapter.pages.length - 1} type="button" onClick={duplicatePage}>Duplicate page</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 1} type="button" onClick={deletePage}>Delete page</button><button disabled={selectedPage <= 1} type="button" onClick={() => movePage(-1)}>Move earlier</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 2} type="button" onClick={() => movePage(1)}>Move later</button></div></details>
             {errors.length ? <div className="os-admin-errors" role="status"><strong>Before ready</strong><ul>{errors.map((error) => <li key={error}>{error}</li>)}</ul></div> : <p className="os-admin-valid">Ready checks passed.</p>}
+            <div className="os-admin-actions os-admin-final-actions"><button type="button" onClick={() => downloadMarkdown(draft)}>Export Markdown</button><button type="button" onClick={() => saveDraft()}>Save draft</button><button disabled={errors.length > 0} type="button" onClick={() => saveDraft("ready")}>Mark ready</button></div>
           </> : null}
         </section>
       ) : null}

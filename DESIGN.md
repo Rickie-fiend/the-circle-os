@@ -161,3 +161,14 @@ Project-local design skills live in `.agents/skills/`. Use them for critique,
 reference generation, and craft checks. Circle's own identity and the App Box
 standard always win when a generic skill recommends a conflicting layout,
 typeface, motion pattern, or interaction.
+
+## Admin previews use the production App Box contract
+
+- Runtime, Chapter Workshop, and Button Studio use one responsive width rule:
+  the bounded parent owns width and content may only grow the box downward.
+- Choice interactions use one full-width option per row so authoring preview
+  and published behavior cannot diverge on phones.
+- Button Studio uses the shared Page anatomy. Its Reward control lives in the
+  Page Header, while the preview button stays in the Footer.
+- Button motion prompts are local draft metadata exported for Codex. They do
+  not call AI or generate assets in this version.

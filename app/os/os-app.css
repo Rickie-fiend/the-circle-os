@@ -5114,7 +5114,7 @@
 .circle-os .os-admin-page-actions {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr;
   margin-top: 18px;
 }
 
@@ -5122,41 +5122,55 @@
   background: #f1efe8;
   border-radius: 24px;
   color: #191813;
-  display: grid;
-  gap: 1.5rem;
   isolation: isolate;
   margin-top: 18px;
-  min-height: 360px;
+  min-height: var(--os-app-box-min-height);
+  min-width: 0;
   overflow: hidden;
-  padding: 24px;
   position: relative;
+  width: 100%;
 }
 
-.circle-os .os-button-studio-copy,
-.circle-os .os-button-studio-button {
+.circle-os .os-button-studio-page {
+  background: transparent;
+  min-height: var(--os-app-box-min-height);
+  min-width: 0;
   position: relative;
+  width: 100%;
   z-index: 2;
 }
 
-.circle-os .os-button-studio-copy span {
-  color: #e36b37;
-  font-size: 0.58rem;
-  font-weight: 720;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.circle-os .os-button-studio-copy h3 {
-  font-size: clamp(1.8rem, 8vw, 2.5rem);
+.circle-os .os-button-studio-page .os-page-main h3 {
+  font-size: var(--os-page-main-font-size);
   letter-spacing: -0.055em;
-  line-height: 0.98;
-  margin: 0.7rem 0 0;
+  line-height: var(--os-page-main-line-height);
+  margin: 0;
   max-width: 12ch;
+  overflow-wrap: anywhere;
 }
 
-.circle-os .os-button-studio-button {
-  align-self: end;
-  height: 52px;
+.circle-os .os-button-studio-page .os-page-footer .os-creative-button {
+  width: 100%;
+}
+
+.circle-os .os-button-studio-reward-toggle {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.circle-os .os-button-studio-reward-toggle input {
+  accent-color: #e36b37;
+  height: 1rem;
+  margin: 0;
+  width: 1rem;
+}
+
+.circle-os .os-button-studio-reward-toggle span {
+  color: #77736a;
+  font-size: 0.62rem;
+  font-weight: 700;
 }
 
 .circle-os .os-button-studio-grid {
@@ -5192,6 +5206,81 @@
 .circle-os .os-button-studio-settings {
   display: grid;
   gap: 12px;
+}
+
+.circle-os .os-button-studio-export {
+  background: #e36b37;
+  border: 0;
+  border-radius: 12px;
+  color: #fff8f1;
+  font-size: 0.7rem;
+  font-weight: 720;
+  min-height: 48px;
+  width: 100%;
+}
+
+/* App Box Foundation: the container owns inline size; page content may only
+   increase block size. This contract is shared by runtime and admin previews. */
+.circle-os .os-swipe-session,
+.circle-os .os-app-window,
+.circle-os .os-app-page,
+.circle-os .os-page-layout,
+.circle-os .os-admin-workshop,
+.circle-os .os-admin-workshop > *,
+.circle-os .os-button-studio,
+.circle-os .os-button-studio > * {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.circle-os .os-admin-workshop .os-app-window.fluid-height,
+.circle-os .os-admin-workshop .os-app-page,
+.circle-os .os-admin-workshop .os-page-layout {
+  height: auto;
+  overflow-x: hidden;
+}
+
+.circle-os .os-admin-workshop .os-app-page > :first-child {
+  height: auto;
+  min-height: var(--os-app-box-min-height);
+}
+
+.circle-os .os-survey-choices,
+.circle-os .os-survey-choices.many,
+.circle-os .os-chapter-page .os-survey-choices {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.circle-os .os-survey-choices button {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  width: 100%;
+}
+
+.circle-os .os-admin-final-actions {
+  grid-template-columns: 1fr 1fr;
+  margin: 18px 0 0;
+}
+
+.circle-os .os-admin-final-actions button:first-child {
+  grid-column: 1 / -1;
+}
+
+.circle-os .os-admin-final-actions button:last-child {
+  grid-column: auto;
+}
+
+@media (max-width: 429px) {
+  .circle-os .os-admin-options > div {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .circle-os .os-admin-options > div input:first-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .circle-os .os-button-reward-backdrop {
