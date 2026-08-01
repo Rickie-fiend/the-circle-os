@@ -1124,6 +1124,7 @@ export function TodayExperience() {
     "idle" | "clicked" | "paused" | "exiting"
   >("idle");
   const [thoughtRefreshKey, setThoughtRefreshKey] = useState("");
+  const [thoughtLabelVisible, setThoughtLabelVisible] = useState(false);
   const [holdThoughtsAfterSend, setHoldThoughtsAfterSend] = useState(false);
   const [thoughtButtonVisible, setThoughtButtonVisible] = useState(false);
   const [thoughtButtonStyle, setThoughtButtonStyle] =
@@ -1135,6 +1136,7 @@ export function TodayExperience() {
   const deepWritingActiveMs = useRef(0);
   const deepWritingFocusStartedAt = useRef<number | null>(null);
   const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const thoughtLabelTimer = useRef<number | null>(null);
   const thoughtResetTimer = useRef<number | null>(null);
   const [addingHabit, setAddingHabit] = useState(false);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
@@ -1175,6 +1177,9 @@ export function TodayExperience() {
       }
       if (thoughtResetTimer.current) {
         window.clearTimeout(thoughtResetTimer.current);
+      }
+      if (thoughtLabelTimer.current) {
+        window.clearTimeout(thoughtLabelTimer.current);
       }
     },
     [],
@@ -1284,6 +1289,26 @@ export function TodayExperience() {
     : seenCheckInJourney === checkInJourneyVersion
       ? checkInApp
       : 0;
+
+  useEffect(() => {
+    if (visibleCheckInApp !== checkInThoughtsApp) return;
+    if (thoughtLabelTimer.current) {
+      window.clearTimeout(thoughtLabelTimer.current);
+    }
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    thoughtLabelTimer.current = window.setTimeout(() => {
+      setThoughtLabelVisible(true);
+      thoughtLabelTimer.current = null;
+    }, reducedMotion ? 0 : 520);
+    return () => {
+      if (thoughtLabelTimer.current) {
+        window.clearTimeout(thoughtLabelTimer.current);
+        thoughtLabelTimer.current = null;
+      }
+    };
+  }, [thoughtRefreshKey, visibleCheckInApp]);
   const scheduledProfileSparkChapter = selectHourlyChapter(
     PROFILE_SPARK_CHAPTERS,
     state.chapters.runs,
@@ -2240,10 +2265,12 @@ export function TodayExperience() {
         }
         setThoughtSent(false);
         setThoughtRewarded(false);
+        setThoughtLabelVisible(reducedMotion);
         setHoldThoughtsAfterSend(true);
         setThoughtTransition("idle");
         thoughtSubmissionLocked.current = false;
         thoughtTextareaRef.current?.blur();
+        thoughtTextareaRef.current?.style.removeProperty("height");
         if (!reducedMotion) {
           setThoughtRefreshKey(`thought-refresh:${Date.now()}`);
         }
@@ -2283,10 +2310,42 @@ export function TodayExperience() {
   }
 
   function checkInThoughtsCard() {
+    const deepThoughtsActive = thoughtMode === "deep" && Boolean(deepThoughtPrompt);
+    const thoughtInput = (
+      <textarea
+        aria-label={deepThoughtsActive ? "Answer the deep thought" : "Write a thought"}
+        className={deepThoughtsActive ? "os-deep-thought-answer" : "os-regular-thought-input"}
+        maxLength={800}
+        onBlur={pauseDeepWriting}
+        onChange={(event) => {
+          const input = event.currentTarget;
+          const value = input.value;
+          setThoughtDraft(value);
+          input.style.height = "auto";
+          input.style.height = `${input.scrollHeight}px`;
+          if (deepThoughtsActive && value.trim() && deepWritingFocusStartedAt.current === null) {
+            deepWritingFocusStartedAt.current = Date.now();
+          }
+        }}
+        onFocus={(event) => {
+          revealThoughtButton();
+          event.currentTarget.style.height = "auto";
+          event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
+          if (deepThoughtsActive && thoughtDraft.trim() && deepWritingFocusStartedAt.current === null) {
+            deepWritingFocusStartedAt.current = Date.now();
+          }
+        }}
+        placeholder={deepThoughtsActive ? "Write what comes up..." : "What are your thoughts?"}
+        ref={thoughtTextareaRef}
+        rows={deepThoughtsActive ? 2 : 1}
+        value={thoughtDraft}
+      />
+    );
+
     return (
       <InfoPage
         className={`os-thoughts-page os-survey-card${thoughtMode === "deep" ? " deep-mode" : ""}`}
-        header={<button aria-pressed={thoughtMode === "deep"} className="os-card-label os-thoughts-mode-toggle" type="button" onClick={openDeepThoughts}>{thoughtMode === "deep" ? "Deep Thoughts" : "Thoughts"}</button>}
+        header={<button aria-pressed={thoughtMode === "deep"} className={`os-card-label os-thoughts-mode-toggle${thoughtLabelVisible ? " is-visible" : " is-waiting"}`} type="button" onClick={openDeepThoughts}>{thoughtMode === "deep" ? "Deep Thoughts" : "Thoughts"}</button>}
         footer={
           <div className="os-creative-button-slot">
             {thoughtButtonVisible ? (
@@ -2309,34 +2368,22 @@ export function TodayExperience() {
       >
         <ButtonRewardBackdrop active={thoughtSent && thoughtRewarded} styleId={thoughtButtonStyle || "default"} />
         <form
-          className="os-thoughts-form"
+          className={`os-thoughts-form${deepThoughtsActive ? " deep-compose" : ""}`}
           id="check-in-thought-form"
           onSubmit={sendThought}
         >
-          <div className="os-info-page-main">
-            <textarea
-              aria-label={thoughtMode === "deep" ? "Answer the deep thought" : "Write a thought"}
-              maxLength={800}
-              onBlur={pauseDeepWriting}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setThoughtDraft(value);
-                if (thoughtMode === "deep" && value.trim() && deepWritingFocusStartedAt.current === null) {
-                  deepWritingFocusStartedAt.current = Date.now();
-                }
-              }}
-              onFocus={() => {
-                revealThoughtButton();
-                if (thoughtMode === "deep" && thoughtDraft.trim() && deepWritingFocusStartedAt.current === null) {
-                  deepWritingFocusStartedAt.current = Date.now();
-                }
-              }}
-              placeholder={thoughtMode === "deep" ? deepThoughtPrompt?.text || "What deserves your honest attention?" : "What are your thoughts?"}
-              ref={thoughtTextareaRef}
-              rows={1}
-              value={thoughtDraft}
-            />
-          </div>
+          {deepThoughtsActive ? (
+            <>
+              <div className="os-info-page-main os-deep-thought-question-wrap">
+                <h2 className="os-deep-thought-question">{deepThoughtPrompt?.text}</h2>
+              </div>
+              <div className="os-info-page-sub os-deep-thought-response">
+                {thoughtInput}
+              </div>
+            </>
+          ) : (
+            <div className="os-info-page-main">{thoughtInput}</div>
+          )}
         </form>
       </InfoPage>
     );
@@ -2412,6 +2459,7 @@ export function TodayExperience() {
             onIndexChange={(nextIndex) => {
               if (nextIndex !== checkInThoughtsApp) {
                 concealThoughtButton();
+                setThoughtLabelVisible(false);
                 setHoldThoughtsAfterSend(false);
               }
               if (nextIndex > 0) {
