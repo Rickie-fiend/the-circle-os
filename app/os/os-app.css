@@ -5615,7 +5615,9 @@
 .circle-os .os-info-page .os-thoughts-form.deep-compose textarea.os-deep-thought-answer {
   color: #191813;
   field-sizing: content;
-  font-size: clamp(1rem, 4.5vw, 1.18rem);
+  /* The generic mobile Thoughts rule intentionally makes the regular prompt
+     large. Deep Thoughts is an answer field, so it must retain body scale. */
+  font-size: clamp(1rem, 4.5vw, 1.18rem) !important;
   font-weight: 520;
   letter-spacing: -0.015em;
   line-height: 1.45;
