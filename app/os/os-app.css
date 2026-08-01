@@ -1617,19 +1617,386 @@
   opacity: 1;
 }
 
-.circle-os .os-thoughts-send {
+.circle-os .os-creative-button-slot {
+  height: 56px;
+  position: relative;
+  width: 100%;
+}
+
+.circle-os .os-creative-button-shell {
+  height: 56px;
+  isolation: isolate;
+  perspective: 520px;
+  position: relative;
+  width: 100%;
+}
+
+.circle-os .os-thoughts-send,
+.circle-os .os-creative-button {
+  appearance: none;
   background: #191813;
   border: 0;
   border-radius: 15px;
   color: #fff8f1;
+  cursor: pointer;
   font-weight: 700;
+  inset: 0;
   min-height: 56px;
+  overflow: hidden;
+  position: absolute;
+  transform-origin: center bottom;
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    transform 140ms cubic-bezier(0.22, 0.82, 0.22, 1);
+  will-change: transform, opacity;
   width: 100%;
 }
 
-.circle-os .os-thoughts-send:disabled {
+.circle-os .os-creative-button:disabled {
+  background: #403e35;
+  color: rgb(255 248 241 / 0.58);
   cursor: default;
   opacity: 1;
+}
+
+.circle-os .os-creative-button-label {
+  align-items: center;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: absolute;
+  z-index: 2;
+}
+
+.circle-os .os-creative-button-shell.phase-exiting {
+  opacity: 0;
+  transform: translateY(3px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.circle-os .os-creative-button-shell.style-fallback.phase-entering {
+  animation: os-button-fallback-enter 360ms ease-out both;
+}
+
+.circle-os .os-creative-button-shell.style-ink-burst.phase-entering .os-creative-button {
+  animation: os-ink-button-enter 620ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
+}
+
+.circle-os .os-creative-button-shell.style-ink-burst.phase-pressed .os-creative-button {
+  transform: scale(0.965);
+}
+
+.circle-os .os-creative-button-shell.style-ink-burst.phase-success .os-creative-button {
+  animation: os-ink-button-success 760ms ease-out both;
+}
+
+.circle-os .os-ink-particles {
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+}
+
+.circle-os .os-ink-particle {
+  background: #191813;
+  border-radius: 50%;
+  height: var(--particle-size);
+  left: 50%;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  width: var(--particle-size);
+}
+
+.circle-os .os-ink-particle.color-orange {
+  background: #e36b37;
+}
+
+.circle-os .os-ink-particle.color-bone {
+  background: #f1efe8;
+  box-shadow: 0 0 0 1px rgb(25 24 19 / 0.12);
+}
+
+.circle-os .style-ink-burst.phase-entering .os-ink-particle {
+  animation: os-ink-particle-gather 560ms ease-out var(--particle-delay) both;
+}
+
+.circle-os .style-ink-burst.phase-success .os-ink-particle {
+  animation: os-ink-particle-burst 640ms ease-out var(--particle-delay) both;
+}
+
+.circle-os .style-soft-clay .os-creative-button {
+  background: #222119;
+  box-shadow:
+    inset 0 1px 0 rgb(255 248 241 / 0.18),
+    0 6px 0 #403e35,
+    0 11px 18px rgb(25 24 19 / 0.22);
+  transform: translateY(-5px) rotateX(0deg);
+}
+
+.circle-os .style-soft-clay.phase-entering .os-creative-button {
+  animation: os-clay-button-enter 620ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
+}
+
+.circle-os .style-soft-clay.phase-pressed .os-creative-button {
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.2),
+    0 1px 0 #403e35,
+    0 4px 8px rgb(25 24 19 / 0.18);
+  transform: translateY(1px) scaleX(0.992);
+}
+
+.circle-os .style-soft-clay.phase-success .os-creative-button {
+  animation: os-clay-button-success 760ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
+}
+
+.circle-os .style-liquid-capsule .os-creative-button {
+  border-radius: 999px;
+}
+
+.circle-os .style-liquid-capsule.phase-entering .os-creative-button {
+  animation: os-liquid-button-enter 620ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
+}
+
+.circle-os .style-liquid-capsule.phase-pressed .os-creative-button {
+  border-radius: 18px;
+  transform: scaleX(0.97) scaleY(0.92);
+}
+
+.circle-os .style-liquid-capsule.phase-success .os-creative-button {
+  animation: os-liquid-button-success 760ms ease-out both;
+}
+
+.circle-os .os-liquid-sweep {
+  background: #e36b37;
+  border-radius: 50%;
+  height: 180px;
+  left: -60px;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translate(-100%, -50%) scale(0.2);
+  width: 180px;
+  z-index: 1;
+}
+
+.circle-os .style-liquid-capsule.phase-entering .os-liquid-sweep {
+  animation: os-liquid-sweep-enter 620ms ease-in-out both;
+}
+
+.circle-os .style-liquid-capsule.phase-success .os-liquid-sweep {
+  animation: os-liquid-sweep-success 680ms ease-in-out both;
+}
+
+.circle-os .os-visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@keyframes os-button-fallback-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes os-ink-button-enter {
+  0%,
+  24% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes os-ink-button-success {
+  0% {
+    transform: scale(1);
+  }
+  18% {
+    transform: scale(0.955);
+  }
+  48% {
+    transform: scale(1.008);
+  }
+  100% {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+}
+
+@keyframes os-ink-particle-gather {
+  0% {
+    opacity: 0;
+    transform: translate(var(--particle-x), var(--particle-y)) scale(0.2);
+  }
+  42% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.05);
+  }
+}
+
+@keyframes os-ink-particle-burst {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.2);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--particle-x), var(--particle-y)) scale(0.7);
+  }
+}
+
+@keyframes os-clay-button-enter {
+  0% {
+    box-shadow: 0 0 0 #403e35;
+    opacity: 0;
+    transform: translateY(9px) rotateX(-16deg) scaleX(0.96);
+  }
+  64% {
+    opacity: 1;
+    transform: translateY(-7px) rotateX(2deg) scaleX(1);
+  }
+  100% {
+    transform: translateY(-5px) rotateX(0deg);
+  }
+}
+
+@keyframes os-clay-button-success {
+  0% {
+    box-shadow:
+      inset 0 1px 0 rgb(255 248 241 / 0.18),
+      0 6px 0 #403e35,
+      0 11px 18px rgb(25 24 19 / 0.22);
+    transform: translateY(-5px);
+  }
+  24% {
+    box-shadow:
+      inset 0 3px 5px rgb(0 0 0 / 0.24),
+      0 0 0 #403e35,
+      0 2px 5px rgb(25 24 19 / 0.15);
+    transform: translateY(2px) scaleX(0.99);
+  }
+  62% {
+    transform: translateY(-6px) scaleX(1.002);
+  }
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgb(255 248 241 / 0.18),
+      0 4px 0 #403e35,
+      0 8px 14px rgb(25 24 19 / 0.18);
+    opacity: 0.82;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes os-liquid-button-enter {
+  0% {
+    clip-path: inset(0 50% 0 50% round 999px);
+    opacity: 0;
+    transform: scaleY(0.72);
+  }
+  100% {
+    clip-path: inset(0 round 999px);
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes os-liquid-sweep-enter {
+  0% {
+    opacity: 0;
+    transform: translate(-100%, -50%) scale(0.2);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(340%, -50%) scale(1.05);
+  }
+}
+
+@keyframes os-liquid-button-success {
+  0% {
+    border-radius: 999px;
+    transform: scale(1);
+  }
+  22% {
+    border-radius: 18px;
+    transform: scaleX(0.968) scaleY(0.9);
+  }
+  58% {
+    border-radius: 999px;
+    transform: scaleX(1.006) scaleY(1.03);
+  }
+  100% {
+    border-radius: 999px;
+    opacity: 0.8;
+    transform: scale(1);
+  }
+}
+
+@keyframes os-liquid-sweep-success {
+  0% {
+    opacity: 0;
+    transform: translate(-70%, -50%) scale(0.15);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(320%, -50%) scale(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circle-os .os-creative-button-shell,
+  .circle-os .os-creative-button,
+  .circle-os .os-creative-button-shell * {
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+
+  .circle-os .os-ink-particles,
+  .circle-os .os-liquid-sweep {
+    display: none;
+  }
+
+  .circle-os .style-soft-clay .os-creative-button {
+    box-shadow: 0 3px 0 #403e35;
+    transform: none;
+  }
+
+  .circle-os .os-creative-button-shell.phase-success .os-creative-button {
+    background: #403e35;
+    opacity: 0.8;
+    transform: none;
+  }
 }
 
 .circle-os .os-profile-question {

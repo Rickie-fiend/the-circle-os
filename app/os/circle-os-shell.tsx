@@ -40,6 +40,11 @@ import {
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
 import { InfoPage, SessionIntro, SwipeSession } from "./app-session";
+import { CreativeButton } from "./button-engine";
+import {
+  takeNextButtonStyle,
+  type ButtonStyleId,
+} from "./button-engine-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   chapterRunId,
@@ -1086,6 +1091,13 @@ export function TodayExperience() {
   const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [thoughtDraft, setThoughtDraft] = useState("");
   const [thoughtSent, setThoughtSent] = useState(false);
+  const [thoughtButtonVisible, setThoughtButtonVisible] = useState(false);
+  const [thoughtButtonStyle, setThoughtButtonStyle] =
+    useState<ButtonStyleId | null>(null);
+  const thoughtButtonQueue = useRef<ButtonStyleId[]>([]);
+  const previousThoughtButtonStyle = useRef<ButtonStyleId | null>(null);
+  const thoughtSubmissionLocked = useRef(false);
+  const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [addingHabit, setAddingHabit] = useState(false);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
@@ -2063,7 +2075,8 @@ export function TodayExperience() {
   function sendThought(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const thought = thoughtDraft.trim();
-    if (!thought) return;
+    if (!thought || thoughtSubmissionLocked.current) return;
+    thoughtSubmissionLocked.current = true;
     const createdAt = new Date();
     updateState((current) =>
       answerSurveyQuestion(
@@ -2080,7 +2093,26 @@ export function TodayExperience() {
     );
     setThoughtDraft("");
     setThoughtSent(true);
-    window.setTimeout(() => setThoughtSent(false), 1400);
+  }
+
+  function revealThoughtButton() {
+    if (thoughtButtonVisible || thoughtSent) return;
+    const next = takeNextButtonStyle(
+      thoughtButtonQueue.current,
+      previousThoughtButtonStyle.current,
+    );
+    thoughtButtonQueue.current = next.queue;
+    previousThoughtButtonStyle.current = next.styleId;
+    setThoughtButtonStyle(next.styleId);
+    setThoughtButtonVisible(true);
+  }
+
+  function finishThoughtButtonAnimation() {
+    setThoughtButtonVisible(false);
+    setThoughtButtonStyle(null);
+    setThoughtSent(false);
+    thoughtSubmissionLocked.current = false;
+    thoughtTextareaRef.current?.blur();
   }
 
   function defaultTitleForHour(hour: number) {
@@ -2119,14 +2151,22 @@ export function TodayExperience() {
         className="os-thoughts-page os-survey-card"
         header={<p className="os-card-label">Thoughts</p>}
         footer={
-          <button
-            className="os-thoughts-send"
-            disabled={!thoughtDraft.trim()}
-            form="check-in-thought-form"
-            type="submit"
-          >
-            {thoughtSent ? "Sent" : "Send"}
-          </button>
+          <div className="os-creative-button-slot">
+            {thoughtButtonVisible ? (
+              <CreativeButton
+                disabled={!thoughtDraft.trim() || thoughtSent}
+                form="check-in-thought-form"
+                onAnimationComplete={finishThoughtButtonAnimation}
+                styleId={thoughtButtonStyle || "fallback"}
+                type="submit"
+              >
+                {thoughtSent ? "Sent" : "Send"}
+              </CreativeButton>
+            ) : null}
+            <span aria-live="polite" className="os-visually-hidden" role="status">
+              {thoughtSent ? "Thought sent" : ""}
+            </span>
+          </div>
         }
       >
         <form
@@ -2139,7 +2179,9 @@ export function TodayExperience() {
               aria-label="Write a thought"
               maxLength={800}
               onChange={(event) => setThoughtDraft(event.currentTarget.value)}
+              onFocus={revealThoughtButton}
               placeholder="What are your thoughts?"
+              ref={thoughtTextareaRef}
               rows={1}
               value={thoughtDraft}
             />
