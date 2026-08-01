@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChapterPlayer } from "../chapters/chapter-player";
 import { createChapterRun } from "../chapters/chapter-model.js";
 import { publishedChapters } from "../chapters/registry";
-import type { ChapterPage, ChapterPageType, ChapterRun } from "../chapters/chapter-types";
+import type { ChapterPage, ChapterPageType, ChapterRun, ChapterTheme } from "../chapters/chapter-types";
 import {
   CHAPTER_CLASSIFICATIONS,
   CHAPTER_PAGE_TYPES,
@@ -29,6 +29,11 @@ type LibraryItem = { draft: ChapterDraft; kind: LibraryKind };
 
 const INPUT_TYPES = new Set<ChapterPageType>(["single-choice", "multi-choice", "yes-no", "slider", "short-text", "long-text", "time"]);
 const CUSTOM_FOOTER_TYPES = new Set<ChapterPageType>(["multi-choice", "slider", "short-text", "long-text", "time", "idle"]);
+const CHAPTER_THEMES: { label: string; value: ChapterTheme }[] = [
+  { label: "Light", value: "light" },
+  { label: "Orange", value: "orange" },
+  { label: "Dark", value: "dark" },
+];
 
 function Field({ children, label }: { children: ReactNode; label: string }) {
   return <label className="os-admin-field"><span>{label}</span>{children}</label>;
@@ -68,6 +73,7 @@ export function ChapterEditor() {
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<"all" | LibraryKind>("all");
   const [appFilter, setAppFilter] = useState("all");
+  const [themeFilter, setThemeFilter] = useState<"all" | ChapterTheme>("all");
   const [starters] = useState(() => FIRST_USE_APP_SPACES.map((space) => createFirstUseChapterDraft(space)));
   const published = useMemo(() => publishedChapters.map((chapter) => chapterDefinitionToDraft(chapter)), []);
   const [previewRun, setPreviewRun] = useState<ChapterRun>(() => createChapterRun(chapterDraftToPreview(createChapterDraft())));
@@ -86,11 +92,12 @@ export function ChapterEditor() {
     return items.filter(({ draft: item, kind }) => {
       if (kindFilter !== "all" && kind !== kindFilter) return false;
       if (appFilter !== "all" && !item.appSpaces.includes(appFilter)) return false;
+      if (themeFilter !== "all" && item.chapter.theme !== themeFilter) return false;
       if (!term) return true;
       return [item.chapter.title, item.chapter.id, item.category, item.classification, ...item.tags, ...item.appSpaces]
         .join(" ").toLowerCase().includes(term);
     });
-  }, [appFilter, drafts, kindFilter, published, search, starters]);
+  }, [appFilter, drafts, kindFilter, published, search, starters, themeFilter]);
 
   useEffect(() => {
     readChapterDrafts()
@@ -196,6 +203,7 @@ export function ChapterEditor() {
 
   async function createFromStarter(source: ChapterDraft) {
     const next = createFirstUseChapterDraft(source.appSpaces[0]);
+    next.chapter.theme = source.chapter.theme;
     await persistDraft(next);
     openDraft(next);
   }
@@ -275,6 +283,17 @@ export function ChapterEditor() {
     }));
   }
 
+  function choosePreviewTheme(theme: ChapterTheme) {
+    if (activeKind === "draft") {
+      updateChapter("theme", theme);
+      return;
+    }
+    setDraft((current) => ({
+      ...structuredClone(current),
+      chapter: { ...current.chapter, theme },
+    }));
+  }
+
   if (!ready) return <main className="os-admin"><p className="os-admin-loading">Opening chapter library…</p></main>;
 
   return (
@@ -296,6 +315,7 @@ export function ChapterEditor() {
             <Field label="Search"><input placeholder="Title, tag, or app" type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></Field>
             <Field label="Source"><select value={kindFilter} onChange={(event) => setKindFilter(event.target.value as typeof kindFilter)}><option value="all">All sources</option><option value="draft">My drafts</option><option value="starter">First-use starters</option><option value="published">Published versions</option></select></Field>
             <Field label="App"><select value={appFilter} onChange={(event) => setAppFilter(event.target.value)}><option value="all">All apps</option>{FIRST_USE_APP_SPACES.map((space) => <option key={space} value={space}>{pageLabel(space)}</option>)}</select></Field>
+            <Field label="Theme"><select value={themeFilter} onChange={(event) => setThemeFilter(event.target.value as typeof themeFilter)}><option value="all">All themes</option>{CHAPTER_THEMES.map((theme) => <option key={theme.value} value={theme.value}>{theme.label}</option>)}</select></Field>
           </div>
           <div className="os-admin-draft-list">
             {libraryItems.map(({ draft: item, kind }) => (
@@ -327,7 +347,7 @@ export function ChapterEditor() {
               <Field label="Category"><input value={draft.category} onChange={(event) => updateDraft((next) => ({ ...next, category: event.target.value }))} /></Field>
               <Field label="Classification"><select value={draft.classification} onChange={(event) => updateDraft((next) => ({ ...next, classification: event.target.value as ChapterDraft["classification"] }))}>{CHAPTER_CLASSIFICATIONS.map((item) => <option key={item}>{item}</option>)}</select></Field>
               <Field label="Session"><input value={draft.chapter.session} onChange={(event) => updateChapter("session", chapterSlug(event.target.value))} /></Field>
-              <Field label="Theme"><select value={draft.chapter.theme} onChange={(event) => updateChapter("theme", event.target.value)}><option value="light">Light</option><option value="orange">Orange</option><option value="dark">Dark</option></select></Field>
+              <Field label="Theme"><select value={draft.chapter.theme} onChange={(event) => updateChapter("theme", event.target.value as ChapterTheme)}>{CHAPTER_THEMES.map((theme) => <option key={theme.value} value={theme.value}>{theme.label}</option>)}</select></Field>
               <Field label="Version"><input min="1" type="number" value={draft.chapter.version} onChange={(event) => updateChapter("version", Number(event.target.value))} /></Field>
               <Field label="Minutes"><input min="1" type="number" value={draft.chapter.estimatedMinutes} onChange={(event) => updateChapter("estimatedMinutes", Number(event.target.value))} /></Field>
               <Field label="Purpose"><textarea rows={3} value={draft.chapter.purpose} onChange={(event) => updateChapter("purpose", event.target.value)} /></Field>
@@ -379,7 +399,7 @@ export function ChapterEditor() {
 
       {view === "preview" ? (
         <section className="os-admin-preview" aria-label="Chapter preview">
-          <div className="os-admin-section-head"><div><p>{activeKind === "published" ? "Published test" : activeKind === "starter" ? "Starter test" : "Live App Box"}</p><h2>{draft.chapter.title}</h2></div><button type="button" onClick={() => setPreviewRun(createChapterRun(preview))}>Restart</button></div>
+          <div className="os-admin-section-head"><div><p>{activeKind === "published" ? "Published test" : activeKind === "starter" ? "Starter test" : "Live App Box"}</p><h2>{draft.chapter.title}</h2></div><div className="os-admin-preview-controls"><Field label="Theme"><select aria-label="Preview theme" value={draft.chapter.theme} onChange={(event) => choosePreviewTheme(event.target.value as ChapterTheme)}>{CHAPTER_THEMES.map((theme) => <option key={theme.value} value={theme.value}>{theme.label}</option>)}</select></Field><button type="button" onClick={() => setPreviewRun(createChapterRun(preview))}>Restart</button></div></div>
           <p className="os-admin-preview-note">This is the real Chapter Player. Test answers stay inside this preview and never enter your profile.</p>
           <div className="os-admin-preview-pages" aria-label="Preview pages">{preview.pages.map((item, index) => <button aria-pressed={index === previewPageIndex} key={item.id} type="button" onClick={() => jumpPreview(item.id)}><span>{index + 1}</span>{pageLabel(item.type)}</button>)}</div>
           <ChapterPlayer definition={preview} label="Chapter preview" onIdleAction={() => undefined} previewMode run={previewRun} onRunChange={setPreviewRun} />

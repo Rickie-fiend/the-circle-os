@@ -4970,6 +4970,26 @@
   margin: 14px 0 18px;
 }
 
+.circle-os .os-admin-preview-controls {
+  align-items: end;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.circle-os .os-admin-preview-controls .os-admin-field {
+  gap: 4px;
+}
+
+.circle-os .os-admin-preview-controls select {
+  background: #24231d;
+  border: 1px solid rgb(241 239 232 / 0.12);
+  border-radius: 12px;
+  color: #f1efe8;
+  min-height: 44px;
+  padding: 0.55rem 1.8rem 0.55rem 0.7rem;
+}
+
 .circle-os .os-admin-preview-pages {
   display: flex;
   gap: 7px;
@@ -5074,7 +5094,23 @@
   }
 
   .circle-os .os-admin-library-tools {
-    grid-template-columns: minmax(0, 1.4fr) 1fr 1fr;
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 429px) {
+  .circle-os .os-admin-preview .os-admin-section-head {
+    align-items: flex-start;
+  }
+
+  .circle-os .os-admin-preview-controls {
+    flex-direction: column;
+  }
+
+  .circle-os .os-admin-preview-controls .os-admin-field,
+  .circle-os .os-admin-preview-controls select,
+  .circle-os .os-admin-preview-controls button {
+    width: 100%;
   }
 }
 
