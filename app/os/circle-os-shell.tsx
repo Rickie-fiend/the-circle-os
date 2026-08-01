@@ -1101,8 +1101,10 @@ export function TodayExperience() {
   const [thoughtDraft, setThoughtDraft] = useState("");
   const [thoughtSent, setThoughtSent] = useState(false);
   const [thoughtTransition, setThoughtTransition] = useState<
-    "idle" | "sending" | "resetting"
+    "idle" | "clicked" | "paused" | "exiting"
   >("idle");
+  const [thoughtRefreshKey, setThoughtRefreshKey] = useState("");
+  const [holdThoughtsAfterSend, setHoldThoughtsAfterSend] = useState(false);
   const [thoughtButtonVisible, setThoughtButtonVisible] = useState(false);
   const [thoughtButtonStyle, setThoughtButtonStyle] =
     useState<ButtonStyleId | null>(null);
@@ -2108,7 +2110,7 @@ export function TodayExperience() {
       ),
     );
     setThoughtSent(true);
-    setThoughtTransition("sending");
+    setThoughtTransition("clicked");
   }
 
   function revealThoughtButton() {
@@ -2129,22 +2131,33 @@ export function TodayExperience() {
     thoughtTextareaRef.current?.blur();
   }
 
-  function finishThoughtButtonAnimation() {
-    previousThoughtButtonStyle.current = thoughtButtonStyle;
-    setThoughtButtonVisible(false);
-    setThoughtButtonStyle(null);
-    setThoughtDraft("");
-    setThoughtSent(false);
-    setThoughtTransition("resetting");
-    thoughtSubmissionLocked.current = false;
-    thoughtTextareaRef.current?.blur();
+  function beginThoughtRefreshTransition() {
+    if (thoughtTransition !== "clicked") return;
+    setThoughtTransition("paused");
     if (thoughtResetTimer.current) {
       window.clearTimeout(thoughtResetTimer.current);
     }
     thoughtResetTimer.current = window.setTimeout(() => {
-      setThoughtTransition("idle");
-      thoughtResetTimer.current = null;
-    }, 560);
+      setThoughtTransition("exiting");
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      thoughtResetTimer.current = window.setTimeout(() => {
+        previousThoughtButtonStyle.current = thoughtButtonStyle;
+        setThoughtButtonVisible(false);
+        setThoughtButtonStyle(null);
+        setThoughtDraft("");
+        setThoughtSent(false);
+        setHoldThoughtsAfterSend(true);
+        setThoughtTransition("idle");
+        thoughtSubmissionLocked.current = false;
+        thoughtTextareaRef.current?.blur();
+        if (!reducedMotion) {
+          setThoughtRefreshKey(`thought-refresh:${Date.now()}`);
+        }
+        thoughtResetTimer.current = null;
+      }, reducedMotion ? 40 : 900);
+    }, 240);
   }
 
   function defaultTitleForHour(hour: number) {
@@ -2180,7 +2193,7 @@ export function TodayExperience() {
   function checkInThoughtsCard() {
     return (
       <InfoPage
-        className={`os-thoughts-page os-survey-card is-${thoughtTransition}`}
+        className="os-thoughts-page os-survey-card"
         header={<p className="os-card-label">Thoughts</p>}
         footer={
           <div className="os-creative-button-slot">
@@ -2188,7 +2201,8 @@ export function TodayExperience() {
               <CreativeButton
                 disabled={!thoughtDraft.trim() || thoughtSent}
                 form="check-in-thought-form"
-                onAnimationComplete={finishThoughtButtonAnimation}
+                keepMountedOnSuccess
+                onSuccessComplete={beginThoughtRefreshTransition}
                 styleId={thoughtButtonStyle || "fallback"}
                 type="submit"
               >
@@ -2234,6 +2248,7 @@ export function TodayExperience() {
           </div>
 
           {checkInConfirmed &&
+          !holdThoughtsAfterSend &&
           profileSparkChapter &&
           profileSparkRun &&
           profileSparkRun.status !== "completed" &&
@@ -2252,7 +2267,9 @@ export function TodayExperience() {
           ) : (
           <SwipeSession
             availableIndices={
-              checkInConfirmed
+              thoughtSent
+                ? [checkInThoughtsApp]
+                : checkInConfirmed
                 ? [checkInIdleApp, checkInThoughtsApp]
                 : checkInSurveyComplete
                   ? [
@@ -2269,10 +2286,14 @@ export function TodayExperience() {
                         (_, index) => index,
                       )
             }
+            attentionIndex={checkInThoughtsApp}
+            attentionKey={thoughtRefreshKey || undefined}
             className={`os-checkin-session${
               checkInRefreshing ? " update-exit" : ""
             }${
               checkInIdleEntering ? " idle-arrival" : ""
+            }${
+              thoughtTransition === "exiting" ? " update-exit" : ""
             }`}
             index={visibleCheckInApp}
             label="Check-in session"
@@ -2286,6 +2307,7 @@ export function TodayExperience() {
             onIndexChange={(nextIndex) => {
               if (nextIndex !== checkInThoughtsApp) {
                 concealThoughtButton();
+                setHoldThoughtsAfterSend(false);
               }
               if (nextIndex > 0) {
                 setSeenCheckInJourney(checkInJourneyVersion);

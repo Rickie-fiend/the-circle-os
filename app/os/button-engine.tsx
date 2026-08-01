@@ -31,7 +31,9 @@ const INK_PARTICLES = [
 
 type CreativeButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   styleId: string;
+  keepMountedOnSuccess?: boolean;
   onAnimationComplete?: () => void;
+  onSuccessComplete?: () => void;
 };
 
 function runHaptic(pattern: readonly number[]) {
@@ -47,12 +49,14 @@ export function CreativeButton({
   children,
   className = "",
   disabled = false,
+  keepMountedOnSuccess = false,
   onAnimationComplete,
   onClick,
   onPointerCancel,
   onPointerDown,
   onPointerLeave,
   onPointerUp,
+  onSuccessComplete,
   styleId,
   ...props
 }: CreativeButtonProps) {
@@ -66,10 +70,15 @@ export function CreativeButton({
   );
   const committedRef = useRef(false);
   const completionRef = useRef(onAnimationComplete);
+  const successCompletionRef = useRef(onSuccessComplete);
 
   useEffect(() => {
     completionRef.current = onAnimationComplete;
   }, [onAnimationComplete]);
+
+  useEffect(() => {
+    successCompletionRef.current = onSuccessComplete;
+  }, [onSuccessComplete]);
 
   useEffect(() => {
     dispatch("reveal");
@@ -87,7 +96,10 @@ export function CreativeButton({
       );
     } else if (lifecycle === "success") {
       timer = window.setTimeout(
-        () => dispatch("success-complete"),
+        () => {
+          successCompletionRef.current?.();
+          if (!keepMountedOnSuccess) dispatch("success-complete");
+        },
         reducedMotion ? 160 : 640,
       );
     } else if (lifecycle === "exiting") {
@@ -99,7 +111,7 @@ export function CreativeButton({
     return () => {
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [lifecycle]);
+  }, [keepMountedOnSuccess, lifecycle]);
 
   function press(event: PointerEvent<HTMLButtonElement>) {
     onPointerDown?.(event);

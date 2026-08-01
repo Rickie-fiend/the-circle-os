@@ -1854,8 +1854,8 @@
     transform: translateY(1px) scale(0.98);
   }
   100% {
-    opacity: 0.08;
-    transform: translateY(-3px) scale(1.01);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1882,7 +1882,7 @@
     transform: scale(1.008);
   }
   100% {
-    opacity: 0.08;
+    opacity: 1;
     transform: scale(1);
   }
 }
@@ -1953,7 +1953,7 @@
       inset 0 1px 0 rgb(255 248 241 / 0.18),
       0 4px 0 #403e35,
       0 8px 14px rgb(25 24 19 / 0.18);
-    opacity: 0.08;
+    opacity: 1;
     transform: translateY(-3px);
   }
 }
@@ -2000,7 +2000,7 @@
   }
   100% {
     border-radius: 999px;
-    opacity: 0.08;
+    opacity: 1;
     transform: scale(1);
   }
 }
@@ -2043,10 +2043,6 @@
     transform: none;
   }
 
-  .circle-os .os-thoughts-page .os-thoughts-form {
-    animation: none !important;
-    transition-duration: 1ms !important;
-  }
 }
 
 .circle-os .os-profile-question {
@@ -4374,38 +4370,6 @@
   overflow: hidden;
   padding-bottom: 0.12em;
   resize: none;
-}
-
-.circle-os .os-thoughts-page .os-thoughts-form {
-  opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity 460ms ease,
-    transform 520ms cubic-bezier(0.22, 0.82, 0.22, 1);
-}
-
-.circle-os .os-thoughts-page.is-sending .os-thoughts-form {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-5px);
-}
-
-.circle-os .os-thoughts-page.is-resetting .os-thoughts-form {
-  animation: os-thought-placeholder-return 560ms
-    cubic-bezier(0.22, 0.82, 0.22, 1) both;
-}
-
-@keyframes os-thought-placeholder-return {
-  from {
-    filter: blur(2px);
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    filter: blur(0);
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .circle-os .os-page-layout.os-chapter-card,
