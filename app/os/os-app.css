@@ -1132,6 +1132,16 @@
   animation-delay: 1180ms;
 }
 
+/* Thoughts reads from the center outward: reveal the writing prompt first,
+   then let the orange mode label arrive after the thought has settled. */
+.circle-os .os-app-window.update-arrival .os-app-page.current > .os-thoughts-page > .os-page-body {
+  animation-delay: 260ms;
+}
+
+.circle-os .os-app-window.update-arrival .os-app-page.current > .os-thoughts-page > .os-page-header {
+  animation-delay: 880ms;
+}
+
 .circle-os .os-swipe-session.update-exit .os-app-window {
   animation: os-update-page-exit 900ms ease-in both;
   pointer-events: none;
