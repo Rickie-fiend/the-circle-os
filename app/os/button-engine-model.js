@@ -1,10 +1,18 @@
 export const BUTTON_STYLE_IDS = Object.freeze([
+  "default",
   "ink-burst",
   "soft-clay",
   "liquid-capsule",
 ]);
 
 export const BUTTON_STYLE_DEFINITIONS = Object.freeze({
+  default: Object.freeze({
+    id: "default",
+    name: "Default",
+    world: "circle",
+    tags: Object.freeze(["quiet", "press", "fade"]),
+    haptic: Object.freeze([8]),
+  }),
   "ink-burst": Object.freeze({
     id: "ink-burst",
     name: "Ink Burst",
@@ -68,6 +76,18 @@ export function takeNextButtonStyle(
 
   const [styleId, ...remaining] = nextQueue;
   return { styleId, queue: remaining };
+}
+
+export function revealButtonStyle(
+  currentStyleId = null,
+  queue = [],
+  previousStyleId = null,
+  random = Math.random,
+) {
+  const current = normalizeButtonStyleId(currentStyleId);
+  return current
+    ? { styleId: current, queue: [...queue] }
+    : takeNextButtonStyle(queue, previousStyleId, random);
 }
 
 export function reduceButtonLifecycle(state, event) {

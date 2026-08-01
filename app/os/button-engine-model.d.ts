@@ -1,4 +1,8 @@
-export type ButtonStyleId = "ink-burst" | "soft-clay" | "liquid-capsule";
+export type ButtonStyleId =
+  | "default"
+  | "ink-burst"
+  | "soft-clay"
+  | "liquid-capsule";
 export type ButtonLifecycle =
   | "hidden"
   | "entering"
@@ -34,6 +38,12 @@ export function shuffleButtonStyles(
   random?: () => number,
 ): ButtonStyleId[];
 export function takeNextButtonStyle(
+  queue?: ButtonStyleId[],
+  previousStyleId?: ButtonStyleId | null,
+  random?: () => number,
+): { styleId: ButtonStyleId; queue: ButtonStyleId[] };
+export function revealButtonStyle(
+  currentStyleId?: ButtonStyleId | null,
   queue?: ButtonStyleId[],
   previousStyleId?: ButtonStyleId | null,
   random?: () => number,

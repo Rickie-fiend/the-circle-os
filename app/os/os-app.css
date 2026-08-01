@@ -1618,13 +1618,13 @@
 }
 
 .circle-os .os-creative-button-slot {
-  height: 56px;
+  height: 52px;
   position: relative;
   width: 100%;
 }
 
 .circle-os .os-creative-button-shell {
-  height: 56px;
+  height: 52px;
   isolation: isolate;
   perspective: 520px;
   position: relative;
@@ -1641,7 +1641,7 @@
   cursor: pointer;
   font-weight: 700;
   inset: 0;
-  min-height: 56px;
+  min-height: 52px;
   overflow: hidden;
   position: absolute;
   transform-origin: center bottom;
@@ -1679,6 +1679,20 @@
     transform 180ms ease;
 }
 
+.circle-os .os-creative-button-shell.style-default.phase-entering {
+  animation: os-button-default-enter 420ms cubic-bezier(0.22, 0.82, 0.22, 1)
+    both;
+}
+
+.circle-os .os-creative-button-shell.style-default.phase-pressed .os-creative-button {
+  transform: translateY(1px) scale(0.985);
+}
+
+.circle-os .os-creative-button-shell.style-default.phase-success .os-creative-button {
+  animation: os-button-default-success 640ms cubic-bezier(0.22, 0.82, 0.22, 1)
+    both;
+}
+
 .circle-os .os-creative-button-shell.style-fallback.phase-entering {
   animation: os-button-fallback-enter 360ms ease-out both;
 }
@@ -1692,7 +1706,7 @@
 }
 
 .circle-os .os-creative-button-shell.style-ink-burst.phase-success .os-creative-button {
-  animation: os-ink-button-success 760ms ease-out both;
+  animation: os-ink-button-success 640ms ease-out both;
 }
 
 .circle-os .os-ink-particles {
@@ -1753,7 +1767,7 @@
 }
 
 .circle-os .style-soft-clay.phase-success .os-creative-button {
-  animation: os-clay-button-success 760ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
+  animation: os-clay-button-success 640ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
 }
 
 .circle-os .style-liquid-capsule .os-creative-button {
@@ -1770,7 +1784,7 @@
 }
 
 .circle-os .style-liquid-capsule.phase-success .os-creative-button {
-  animation: os-liquid-button-success 760ms ease-out both;
+  animation: os-liquid-button-success 640ms ease-out both;
 }
 
 .circle-os .os-liquid-sweep {
@@ -1791,7 +1805,12 @@
 }
 
 .circle-os .style-liquid-capsule.phase-success .os-liquid-sweep {
-  animation: os-liquid-sweep-success 680ms ease-in-out both;
+  animation: os-liquid-sweep-success 620ms ease-in-out both;
+}
+
+.circle-os .os-creative-button-shell.phase-success .os-creative-button:disabled {
+  background: #191813;
+  color: #fff8f1;
 }
 
 .circle-os .os-visually-hidden {
@@ -1811,6 +1830,28 @@
   from {
     opacity: 0;
     transform: translateY(4px);
+  }
+}
+
+@keyframes os-button-default-enter {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.99);
+  }
+}
+
+@keyframes os-button-default-success {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  28% {
+    opacity: 1;
+    transform: translateY(1px) scale(0.98);
+  }
+  100% {
+    opacity: 0.08;
+    transform: translateY(-3px) scale(1.01);
   }
 }
 
@@ -1837,7 +1878,7 @@
     transform: scale(1.008);
   }
   100% {
-    opacity: 0.78;
+    opacity: 0.08;
     transform: scale(1);
   }
 }
@@ -1908,7 +1949,7 @@
       inset 0 1px 0 rgb(255 248 241 / 0.18),
       0 4px 0 #403e35,
       0 8px 14px rgb(25 24 19 / 0.18);
-    opacity: 0.82;
+    opacity: 0.08;
     transform: translateY(-3px);
   }
 }
@@ -1955,7 +1996,7 @@
   }
   100% {
     border-radius: 999px;
-    opacity: 0.8;
+    opacity: 0.08;
     transform: scale(1);
   }
 }
@@ -1996,6 +2037,11 @@
     background: #403e35;
     opacity: 0.8;
     transform: none;
+  }
+
+  .circle-os .os-thoughts-page .os-thoughts-form {
+    animation: none !important;
+    transition-duration: 1ms !important;
   }
 }
 
@@ -4322,7 +4368,40 @@
   field-sizing: content;
   min-height: var(--os-page-main-line-height);
   overflow: hidden;
+  padding-bottom: 0.12em;
   resize: none;
+}
+
+.circle-os .os-thoughts-page .os-thoughts-form {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 460ms ease,
+    transform 520ms cubic-bezier(0.22, 0.82, 0.22, 1);
+}
+
+.circle-os .os-thoughts-page.is-sending .os-thoughts-form {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-5px);
+}
+
+.circle-os .os-thoughts-page.is-resetting .os-thoughts-form {
+  animation: os-thought-placeholder-return 560ms
+    cubic-bezier(0.22, 0.82, 0.22, 1) both;
+}
+
+@keyframes os-thought-placeholder-return {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .circle-os .os-page-layout.os-chapter-card,

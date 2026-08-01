@@ -77,15 +77,24 @@ export function CreativeButton({
 
   useEffect(() => {
     let timer: number | undefined;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (lifecycle === "entering") {
-      timer = window.setTimeout(() => dispatch("entry-complete"), 620);
+      timer = window.setTimeout(
+        () => dispatch("entry-complete"),
+        reducedMotion ? 40 : 620,
+      );
     } else if (lifecycle === "success") {
-      timer = window.setTimeout(() => dispatch("success-complete"), 760);
+      timer = window.setTimeout(
+        () => dispatch("success-complete"),
+        reducedMotion ? 160 : 640,
+      );
     } else if (lifecycle === "exiting") {
       timer = window.setTimeout(() => {
         dispatch("exit-complete");
         completionRef.current?.();
-      }, 180);
+      }, reducedMotion ? 40 : 140);
     }
     return () => {
       if (timer !== undefined) window.clearTimeout(timer);

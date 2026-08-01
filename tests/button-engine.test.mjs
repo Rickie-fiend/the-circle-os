@@ -6,6 +6,7 @@ import {
   canActivateButton,
   normalizeButtonStyleId,
   reduceButtonLifecycle,
+  revealButtonStyle,
   shuffleButtonStyles,
   takeNextButtonStyle,
 } from "../app/os/button-engine-model.js";
@@ -16,7 +17,7 @@ test("a shuffled bag includes each approved button exactly once", () => {
   assert.deepEqual([...bag].sort(), [...BUTTON_STYLE_IDS].sort());
 });
 
-test("three selections exhaust every approved button before refilling", () => {
+test("four selections exhaust every approved button before refilling", () => {
   let queue = [];
   let previous = null;
   const selected = [];
@@ -35,7 +36,16 @@ test("a refilled bag does not immediately repeat the previous style", () => {
   assert.notEqual(next.styleId, "soft-clay");
 });
 
+test("hiding an unsent button keeps its design and does not consume the bag", () => {
+  const queue = ["default", "soft-clay"];
+  const next = revealButtonStyle("ink-burst", queue, "liquid-capsule", () => 0);
+  assert.equal(next.styleId, "ink-burst");
+  assert.deepEqual(next.queue, queue);
+  assert.notEqual(next.queue, queue);
+});
+
 test("unknown style identifiers normalize to the safe fallback", () => {
+  assert.equal(normalizeButtonStyleId("default"), "default");
   assert.equal(normalizeButtonStyleId("ink-burst"), "ink-burst");
   assert.equal(normalizeButtonStyleId("internet-code"), null);
   assert.equal(normalizeButtonStyleId(null), null);
