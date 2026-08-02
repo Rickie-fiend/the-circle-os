@@ -577,6 +577,7 @@ export function ChapterPlayer({
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
+        hideIdleHeading={hideIdleHeading}
         onEdit={onEditPage}
       />,
       ...idleApps,

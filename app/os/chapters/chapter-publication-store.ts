@@ -129,6 +129,16 @@ export function normalizeChapterPublication(
   };
 }
 
+export function publicationIsNewerThanRun(
+  publication: Pick<ChapterPublication, "publishedAt">,
+  run?: ChapterRun,
+) {
+  if (!run) return true;
+  const latestRunMoment =
+    run.completedAt || run.dismissedAt || run.startedAt || run.updatedAt || "";
+  return publication.publishedAt.localeCompare(latestRunMoment) > 0;
+}
+
 export function selectPendingAppPublication(
   publications: StoredChapterPublication[],
   targetApp: AppTarget,
@@ -149,6 +159,7 @@ export function selectPendingAppPublication(
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
       .find((publication) => {
         const run = runs[chapterRunId(publication.chapter)];
+        if (publicationIsNewerThanRun(publication, run)) return true;
         return run?.status !== "completed" &&
           (options.includeDeferred || !run?.deferredAt);
       }) || null

@@ -5,7 +5,7 @@ import { PageLayout } from "../app-session";
 import { ButtonRewardBackdrop, CreativeButton } from "../button-engine";
 import { BUTTON_STYLE_DEFINITIONS, BUTTON_STYLE_IDS, type ButtonStyleId } from "../button-engine-model.js";
 import { ChapterPlayer } from "../chapters/chapter-player";
-import { createChapterRun } from "../chapters/chapter-model.js";
+import { chapterRunId, createChapterRun } from "../chapters/chapter-model.js";
 import { publishedChapters } from "../chapters/registry";
 import {
   announceChapterPublication,
@@ -14,7 +14,7 @@ import {
 } from "../chapters/chapter-publication-store";
 import type { AppTarget, ChapterPage, ChapterPageType, ChapterRun, ChapterTheme } from "../chapters/chapter-types";
 import { publishPublicChapter } from "../circle-os-ai";
-import { loadCircleState } from "../circle-os-store";
+import { loadCircleState, saveCircleState } from "../circle-os-store";
 import {
   CHAPTER_CLASSIFICATIONS,
   CHAPTER_PAGE_TYPES,
@@ -327,6 +327,12 @@ export function ChapterEditor() {
           audienceProfileId,
           delivery: "manual",
         });
+      }
+      const runId = chapterRunId(chapter);
+      if (state.chapters.runs[runId]) {
+        const nextState = structuredClone(state);
+        delete nextState.chapters.runs[runId];
+        await saveCircleState(nextState);
       }
       announceChapterPublication();
       await persistDraft(publishedDraft);

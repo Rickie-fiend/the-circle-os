@@ -62,6 +62,7 @@ import {
 } from "./chapters/registry";
 import {
   normalizeChapterPublication,
+  publicationIsNewerThanRun,
   selectPendingAppPublication,
 } from "./chapters/chapter-publication-store";
 import { useChapterPublications } from "./chapters/use-chapter-publications";
@@ -87,7 +88,10 @@ export function PublishedChapterDelivery({
 }) {
   const { state, updateState } = useCircleState();
   const chapter = publication.chapter;
-  const run = state.chapters.runs[chapterRunId(chapter)] || createChapterRun(chapter);
+  const storedRun = state.chapters.runs[chapterRunId(chapter)];
+  const run = publicationIsNewerThanRun(publication, storedRun)
+    ? createChapterRun(chapter)
+    : storedRun || createChapterRun(chapter);
 
   function saveRun(nextRun: ChapterRun) {
     updateState((current) => {
