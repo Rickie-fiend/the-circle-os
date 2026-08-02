@@ -1,4 +1,5 @@
 import type { CircleState } from "./circle-os-shell";
+import type { ChapterDefinition } from "./chapters/chapter-types";
 
 function baseUrl(state: CircleState) {
   const value = state.ai.baseUrl.trim().replace(/\/+$/, "");
@@ -103,4 +104,54 @@ export async function checkLocalAi(address: string) {
   });
   if (!response.ok) throw new Error("The Circle server could not be reached.");
   return response.json();
+}
+
+type CircleAiConnection = Pick<
+  CircleState["ai"],
+  "baseUrl" | "profileId" | "token"
+>;
+
+export async function readPublicChapters(connection: CircleAiConnection) {
+  if (!connection.profileId || !connection.token) return [];
+  const cleanUrl = connection.baseUrl.trim().replace(/\/+$/, "");
+  if (!cleanUrl) return [];
+  const response = await fetch(`${cleanUrl}/chapters/public`, {
+    headers: {
+      Authorization: `Bearer ${connection.token}`,
+      "Content-Type": "application/json",
+    },
+    signal: AbortSignal.timeout(10_000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(
+      typeof data.error === "string" ? data.error : "Public chapters are offline.",
+    );
+  }
+  return Array.isArray(data.chapters)
+    ? (data.chapters as ChapterDefinition[])
+    : [];
+}
+
+export async function publishPublicChapter(
+  state: CircleState,
+  chapter: ChapterDefinition,
+  source: string,
+) {
+  if (!state.ai.profileId || !state.ai.token) {
+    throw new Error("Connect Circle OS before publishing for everyone.");
+  }
+  const response = await fetch(`${baseUrl(state)}/chapters/publish`, {
+    method: "POST",
+    headers: profileHeaders(state),
+    body: JSON.stringify({ chapter, source }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(
+      typeof data.error === "string" ? data.error : "The chapter was not published.",
+    );
+  }
+  return data.chapter as ChapterDefinition;
 }

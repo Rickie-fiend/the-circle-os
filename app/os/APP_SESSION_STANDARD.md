@@ -158,6 +158,15 @@ Used for charts, weekly views, and other things worth reading again.
 
 - Journey progress is stored by chapter id and immutable version.
 - Library position is stored by session id and data version.
+- Check-in opens on its idle Note Page. A chapter enters that App Box only
+  after the person deliberately taps the Check-in label. First-use and hourly
+  timers do not replace the idle page in the current release.
+- A private published chapter is immutable by id and version in this browser
+  and remains available offline. A public published chapter is written as an
+  immutable Markdown source through the connected Circle OS server, then
+  cached locally for offline use.
+- This release publishes only to the Check-in App. Publishing to another app
+  requires an explicit later product decision and runtime implementation.
 
 ## Admin previews and access
 
@@ -166,8 +175,9 @@ Used for charts, weekly views, and other things worth reading again.
 - Choice options stack one full-width row at a time and wrap naturally.
 - Button Studio keeps its preview action mounted. The `Background` toggle
   changes only the preview surface, never the button lifecycle.
-- Admin is intentionally absent from public navigation. A reserved Thoughts
-  phrase unlocks it for the current browser session and is intercepted before
+- Admin is intentionally absent from public navigation. Entering `admin`
+  (ignoring surrounding spaces and letter case) in Thoughts unlocks it for the
+  current browser session and is intercepted before
   Thoughts persistence. Unauthorized direct visits return to Today.
 - Chapter Library groups by Foundation, Short, Guided Learning, Reflection,
   and Information in that order, with empty groups hidden.

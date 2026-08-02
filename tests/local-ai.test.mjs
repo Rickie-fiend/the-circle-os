@@ -421,6 +421,44 @@ test("public phones receive separate private Obsidian profiles", async () => {
       readFileSync(firstProfilePath, "utf8"),
       /analysis_pending: false/,
     );
+
+    const chapter = {
+      schemaVersion: 1,
+      id: "quiet-check-in",
+      version: 1,
+      status: "published",
+      session: "check-in",
+      theme: "light",
+      title: "One quiet question",
+      purpose: "Invite one honest answer.",
+      estimatedMinutes: 1,
+      pages: [
+        { id: "cover", type: "cover", title: "Can I ask one thing?" },
+        { id: "complete", type: "result", title: "Thank you." },
+      ],
+    };
+    const publishResponse = await fetch(`${baseUrl}/chapters/publish`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${created.accessKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ chapter, source: "---\nid: quiet-check-in\n---" }),
+    });
+    assert.equal(publishResponse.status, 201);
+    assert.match(
+      readFileSync(
+        join(vaultPath, "Chapters", "Published Sources", "quiet-check-in-v1.md"),
+        "utf8",
+      ),
+      /quiet-check-in/,
+    );
+    const chapterResponse = await fetch(`${baseUrl}/chapters/public`, {
+      headers: { Authorization: `Bearer ${created.accessKey}` },
+    });
+    assert.equal(chapterResponse.status, 200);
+    const chapterData = await chapterResponse.json();
+    assert.equal(chapterData.chapters[0].id, "quiet-check-in");
   } finally {
     await new Promise((resolve) => server.close(resolve));
     rmSync(vaultPath, { recursive: true, force: true });

@@ -57,6 +57,16 @@ geometry and hierarchy.
   content benefits from it.
 - Respect the rule of thirds in composition without drawing a visible grid.
 - Minimum touch target: 44px.
+
+## Chapter delivery
+
+- The Check-in Note Page is the resting state. Published chapter covers appear
+  only after a deliberate tap on the Check-in label in this release.
+- Private publications stay on that browser and work offline. Public
+  publications use immutable Markdown sources through the connected Circle OS
+  server and are cached on the device.
+- A chapter id and version identify one immutable publication. Editing a
+  published chapter requires a new version.
 - Avoid nested cards. One visual surface should read as one object.
 
 ## App Box

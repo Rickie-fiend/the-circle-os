@@ -16,9 +16,7 @@ import {
 } from "react";
 import {
   CIRCLE_DAY_START_HOUR,
-  PROFILE_QUESTIONS,
   appSessionIndex,
-  answerProfileQuestion,
   answerSurveyQuestion,
   connectLocalAi,
   createEmptyState,
@@ -34,12 +32,13 @@ import {
 } from "./circle-os-model.js";
 import {
   buildServerPayload,
+  readPublicChapters,
   readCircleState,
   recoverCircleProfile,
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
-import { InfoPage, SessionIntro, SwipeSession } from "./app-session";
+import { InfoPage, SwipeSession } from "./app-session";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import {
   revealButtonStyle,
@@ -57,7 +56,6 @@ import {
   chapterAnswerText,
   createChapterRun,
   renderChapterTemplate,
-  selectHourlyChapter,
   selectManualChapter,
   storeChapterRun,
 } from "./chapters/chapter-model.js";
@@ -65,6 +63,10 @@ import {
   getPublishedChapter,
   publishedChapters,
 } from "./chapters/registry";
+import {
+  readChapterPublications,
+  writeChapterPublication,
+} from "./chapters/chapter-publication-store";
 import type {
   ChapterDefinition,
   ChapterRun,
@@ -78,7 +80,7 @@ type CheckIn = {
   createdAt: string;
 };
 
-const ADMIN_THOUGHT = "iseedeadpeople";
+const ADMIN_THOUGHT = "admin";
 
 type Mission = {
   text: string;
@@ -259,8 +261,9 @@ type CircleDay = {
   } | null;
 };
 
-const PROFILE_SPARK_CHAPTERS = Object.values(
-  publishedChapters
+function latestCheckInChapters(chapters: ChapterDefinition[]) {
+  return Object.values(
+    chapters
     .filter((chapter) => chapter.session === "check-in")
     .reduce<Record<string, ChapterDefinition>>((latest, chapter) => {
       if (!latest[chapter.id] || latest[chapter.id].version < chapter.version) {
@@ -268,8 +271,10 @@ const PROFILE_SPARK_CHAPTERS = Object.values(
       }
       return latest;
     }, {}),
-);
-const PROFILE_SPARK_OPENED_AT = Date.now();
+  );
+}
+
+const BUILT_IN_CHECK_IN_CHAPTERS = latestCheckInChapters(publishedChapters);
 
 export type CircleState = {
   version: number;
@@ -380,20 +385,6 @@ type CircleStateContextValue = {
 
 const CircleStateContext = createContext<CircleStateContextValue | null>(null);
 const RECORD_REASONS = new Set(["day-log", "mission"]);
-
-type SurveyQuestion = {
-  id: string;
-  text: string;
-  type: string;
-  options?: string[];
-  min?: number;
-  max?: number;
-  minLabel?: string;
-  maxLabel?: string;
-  placeholder?: string;
-  defaultValue?: string;
-  target: string;
-};
 
 function hourLabel(hour: number) {
   const normalized = ((hour % 24) + 24) % 24;
@@ -935,134 +926,6 @@ export function OSFrame({
   );
 }
 
-function SurveySlide({
-  label,
-  question,
-  current,
-  total,
-  existingAnswer = "",
-  onAnswer,
-}: {
-  label: string;
-  question: SurveyQuestion;
-  current: number;
-  total: number;
-  existingAnswer?: string;
-  onAnswer: (answer: string) => void;
-}) {
-  const sliderStart = Math.ceil(
-    ((question.min ?? 1) + (question.max ?? 5)) / 2,
-  );
-  const [value, setValue] = useState(
-    existingAnswer ||
-      question.defaultValue ||
-      (question.type === "slider" ? String(sliderStart) : ""),
-  );
-
-  const choices =
-    question.type === "yesno" ? ["Yes", "No"] : question.options ?? [];
-
-  return (
-    <div className="os-survey-card">
-      <div className="os-survey-head">
-        <p className="os-card-label">{label}</p>
-        <span aria-label={`Question ${current} of ${total}`}>
-          {current}/{total}
-        </span>
-      </div>
-      <h2>{question.text}</h2>
-
-      {choices.length ? (
-        <div
-          className={`os-survey-choices${
-            choices.length > 2 ? " many" : ""
-          }`}
-          role="group"
-          aria-label={question.text}
-        >
-          {choices.map((choice) => (
-            <button
-              aria-pressed={existingAnswer === choice}
-              className={existingAnswer === choice ? "selected" : ""}
-              type="button"
-              key={choice}
-              onClick={() => onAnswer(choice)}
-            >
-              {choice}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {question.type === "slider" ? (
-        <form
-          className="os-survey-slider"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onAnswer(value);
-          }}
-        >
-          <output>{value}</output>
-          <input
-            aria-label={question.text}
-            type="range"
-            min={question.min ?? 1}
-            max={question.max ?? 5}
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-          />
-          <div aria-hidden="true">
-            <span>{question.minLabel}</span>
-            <span>{question.maxLabel}</span>
-          </div>
-          <button type="submit">Continue</button>
-        </form>
-      ) : null}
-
-      {question.type === "text" ? (
-        <form
-          className="os-survey-text"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!value.trim()) return;
-            onAnswer(value);
-          }}
-        >
-          <input
-            aria-label={question.text}
-            maxLength={180}
-            placeholder={question.placeholder}
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-          />
-          <button type="submit" disabled={!value.trim()}>
-            Continue
-          </button>
-        </form>
-      ) : null}
-
-      {question.type === "time" ? (
-        <form
-          className="os-survey-time"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!value) return;
-            onAnswer(value);
-          }}
-        >
-          <input
-            aria-label={question.text}
-            type="time"
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-          />
-          <button type="submit">Continue</button>
-        </form>
-      ) : null}
-    </div>
-  );
-}
-
 function surveyAnswer(
   answers: CircleState["profile"]["profileCase"]["survey"]["answers"],
   questionId: string,
@@ -1095,8 +958,8 @@ export function TodayExperience() {
   const [liveNow, setLiveNow] = useState(() => new Date());
   const [liveMarkerTop, setLiveMarkerTop] = useState<number | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
-  const [profileSparkClock, setProfileSparkClock] = useState(
-    PROFILE_SPARK_OPENED_AT,
+  const [profileSparkChapters, setProfileSparkChapters] = useState(
+    BUILT_IN_CHECK_IN_CHAPTERS,
   );
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
@@ -1106,7 +969,6 @@ export function TodayExperience() {
   const checkInRefreshTimer = useRef<number | null>(null);
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
-  const [seenCheckInJourney, setSeenCheckInJourney] = useState("");
   const [thoughtMode, setThoughtMode] = useState<"regular" | "deep">("regular");
   const [regularThoughtDraft, setRegularThoughtDraft] = useState("");
   const [deepThoughtDraft, setDeepThoughtDraft] = useState("");
@@ -1235,60 +1097,53 @@ export function TodayExperience() {
   }, [dateKey, state.profile.name]);
 
   useEffect(() => {
-    const timer = window.setInterval(
-      () => setProfileSparkClock(Date.now()),
-      60_000,
-    );
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
     const timer = window.setInterval(() => setLiveNow(new Date()), 30_000);
     return () => window.clearInterval(timer);
   }, []);
 
-  const firstProfileQuestionIndex = PROFILE_QUESTIONS.findIndex(
-    (question) =>
-      !surveyAnswers.some((answer) => answer.questionId === question.id),
-  );
-  const codexQuestion = state.profile.profileCase.survey.nextQuestion;
-  const unansweredCodexQuestion =
-    codexQuestion &&
-    !surveyAnswers.some((answer) => answer.questionId === codexQuestion.id)
-      ? ({
-          ...codexQuestion,
-          type: "text",
-          placeholder: "One honest answer is enough",
-        } as SurveyQuestion)
-      : null;
-  const checkInCompletionApp = 12;
-  const checkInIdleApp = 13;
-  const checkInThoughtsApp = 14;
-  const checkInStartApp = unansweredCodexQuestion
-    ? 11
-    : firstProfileQuestionIndex >= 0
-      ? firstProfileQuestionIndex + 1
-      : 11;
-  const checkInJourneyVersion = unansweredCodexQuestion
-    ? `question-${unansweredCodexQuestion.id}`
-    : "profile-foundation-v1";
-  const checkInSurveyComplete =
-    firstProfileQuestionIndex < 0 && !unansweredCodexQuestion;
-  const savedCheckInApp = appSessionIndex(
-    state,
-    "today-checkin",
-    checkInJourneyVersion,
-    0,
-  );
-  const checkInConfirmed =
-    checkInSurveyComplete && savedCheckInApp >= checkInIdleApp;
-  const visibleCheckInApp = checkInConfirmed
-    ? Math.max(checkInIdleApp, checkInApp || savedCheckInApp)
-    : checkInSurveyComplete
-      ? checkInApp || checkInCompletionApp
-    : seenCheckInJourney === checkInJourneyVersion
-      ? checkInApp
-      : 0;
+  const checkInIdleApp = 0;
+  const checkInThoughtsApp = 1;
+  const checkInJourneyVersion = "manual-check-in-v1";
+  const visibleCheckInApp = Math.min(checkInThoughtsApp, checkInApp);
+
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    async function loadAvailableChapters() {
+      const stored = await readChapterPublications().catch(() => []);
+      let chapters = latestCheckInChapters([
+        ...BUILT_IN_CHECK_IN_CHAPTERS,
+        ...stored.map((publication) => publication.chapter),
+      ]);
+      if (!cancelled) setProfileSparkChapters(chapters);
+      if (!state.ai.baseUrl || !state.ai.profileId || !state.ai.token) return;
+      try {
+        const publicChapters = await readPublicChapters({
+          baseUrl: state.ai.baseUrl,
+          profileId: state.ai.profileId,
+          token: state.ai.token,
+        });
+        await Promise.all(
+          publicChapters.map((chapter) =>
+            writeChapterPublication({
+              scope: "public",
+              source: "",
+              publishedAt: new Date().toISOString(),
+              chapter,
+            }),
+          ),
+        );
+        chapters = latestCheckInChapters([...chapters, ...publicChapters]);
+        if (!cancelled) setProfileSparkChapters(chapters);
+      } catch {
+        // The phone keeps its cached chapters when the desktop server is away.
+      }
+    }
+    void loadAvailableChapters();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, state.ai.baseUrl, state.ai.profileId, state.ai.token]);
 
   useEffect(() => {
     if (visibleCheckInApp !== checkInThoughtsApp) return;
@@ -1309,15 +1164,10 @@ export function TodayExperience() {
       }
     };
   }, [thoughtRefreshKey, visibleCheckInApp]);
-  const scheduledProfileSparkChapter = selectHourlyChapter(
-    PROFILE_SPARK_CHAPTERS,
-    state.chapters.runs,
-    profileSparkClock,
-  );
   const profileSparkChapter =
-    PROFILE_SPARK_CHAPTERS.find(
+    profileSparkChapters.find(
       (chapter) => chapter.id === forcedProfileSparkId,
-    ) || scheduledProfileSparkChapter;
+    ) || null;
   const profileSparkRun = useMemo(() => {
     if (!profileSparkChapter) return null;
     if (
@@ -1878,38 +1728,6 @@ export function TodayExperience() {
     setMomentDraft("");
   }
 
-  function answerCheckIn(
-    question: SurveyQuestion,
-    answer: string,
-    appIndex: number,
-  ) {
-    if (question.id === unansweredCodexQuestion?.id) {
-      setSeenCheckInJourney("profile-foundation-v1");
-    }
-    updateState((current) =>
-      question.id === unansweredCodexQuestion?.id
-        ? answerProfileQuestion(current, answer)
-        : answerSurveyQuestion(current, question, answer, "profile"),
-    );
-    setCheckInApp(
-      appIndex >= PROFILE_QUESTIONS.length
-        ? checkInCompletionApp
-        : appIndex + 1,
-    );
-  }
-
-  function confirmCheckInChapter() {
-    updateState((current) =>
-      setAppSessionIndex(
-        current,
-        "today-checkin",
-        checkInJourneyVersion,
-        checkInIdleApp,
-      ),
-    );
-    setCheckInApp(checkInIdleApp);
-  }
-
   function saveProfileSparkRun(nextRun: ChapterRun) {
     if (!profileSparkChapter) return;
     const completedNow =
@@ -1972,7 +1790,7 @@ export function TodayExperience() {
       );
     }
     const selection = selectManualChapter(
-      PROFILE_SPARK_CHAPTERS,
+      profileSparkChapters,
       state.chapters.runs,
       profileSparkChapter?.id,
     );
@@ -1994,9 +1812,6 @@ export function TodayExperience() {
     setManualProfileSparkRunId("");
     setForcedProfileSparkId(selection.chapter.id);
     setCheckInAttention((current) => current + 1);
-    setProfileSparkClock((current) =>
-      Math.max(current, Date.now()) + 3_600_000,
-    );
     return true;
   }
 
@@ -2432,8 +2247,7 @@ export function TodayExperience() {
             </div>
           </div>
 
-          {checkInConfirmed &&
-          !holdThoughtsAfterSend &&
+          {!holdThoughtsAfterSend &&
           profileSparkChapter &&
           profileSparkRun &&
           profileSparkRun.status !== "completed" &&
@@ -2451,26 +2265,7 @@ export function TodayExperience() {
             />
           ) : (
           <SwipeSession
-            availableIndices={
-              thoughtSent
-                ? [checkInThoughtsApp]
-                : checkInConfirmed
-                ? [checkInIdleApp, checkInThoughtsApp]
-                : checkInSurveyComplete
-                  ? [
-                      ...Array.from(
-                        { length: PROFILE_QUESTIONS.length + 1 },
-                        (_, index) => index,
-                      ),
-                      checkInCompletionApp,
-                    ]
-                  : unansweredCodexQuestion
-                    ? [0, 11]
-                    : Array.from(
-                        { length: checkInStartApp + 1 },
-                        (_, index) => index,
-                      )
-            }
+            availableIndices={thoughtSent ? [checkInThoughtsApp] : [checkInIdleApp, checkInThoughtsApp]}
             attentionIndex={checkInThoughtsApp}
             attentionKey={thoughtRefreshKey || undefined}
             className={`os-checkin-session${
@@ -2484,93 +2279,24 @@ export function TodayExperience() {
             }`}
             index={visibleCheckInApp}
             label="Check-in session"
-            maxIndex={
-              checkInConfirmed
-                ? checkInThoughtsApp
-                : checkInSurveyComplete
-                  ? checkInCompletionApp
-                  : checkInStartApp
-            }
+            maxIndex={checkInThoughtsApp}
             onIndexChange={(nextIndex) => {
               setThoughtLabelVisible(false);
               if (nextIndex !== checkInThoughtsApp) {
                 concealThoughtButton();
                 setHoldThoughtsAfterSend(false);
               }
-              if (nextIndex > 0) {
-                setSeenCheckInJourney(checkInJourneyVersion);
-              }
               setCheckInApp(nextIndex);
-              if (checkInConfirmed) {
-                updateState((current) =>
-                  setAppSessionIndex(
-                    current,
-                    "today-checkin",
-                    checkInJourneyVersion,
-                    nextIndex,
-                  ),
-                );
-              }
+              updateState((current) =>
+                setAppSessionIndex(
+                  current,
+                  "today-checkin",
+                  checkInJourneyVersion,
+                  nextIndex,
+                ),
+              );
             }}
           >
-            <SessionIntro
-              refreshKey={checkInJourneyVersion}
-              label="Check-in"
-              title={
-                unansweredCodexQuestion
-                  ? "A new question is ready."
-                  : "A moment for you."
-              }
-              onBegin={() => {
-                setSeenCheckInJourney(checkInJourneyVersion);
-                setCheckInApp(checkInStartApp);
-              }}
-            />
-            {PROFILE_QUESTIONS.map((question, index) => (
-              <SurveySlide
-                existingAnswer={surveyAnswer(surveyAnswers, question.id)}
-                key={question.id}
-                label="Check-in"
-                question={question as SurveyQuestion}
-                current={index + 1}
-                total={PROFILE_QUESTIONS.length}
-                onAnswer={(answer) =>
-                  answerCheckIn(question as SurveyQuestion, answer, index + 1)
-                }
-              />
-            ))}
-            {unansweredCodexQuestion ? (
-              <SurveySlide
-                existingAnswer={surveyAnswer(
-                  surveyAnswers,
-                  unansweredCodexQuestion.id,
-                )}
-                key={unansweredCodexQuestion.id}
-                label="Check-in"
-                question={unansweredCodexQuestion}
-                current={1}
-                total={1}
-                onAnswer={(answer) =>
-                  answerCheckIn(unansweredCodexQuestion, answer, 11)
-                }
-              />
-            ) : (
-              <div
-                aria-hidden="true"
-                className="os-survey-card os-survey-placeholder"
-              />
-            )}
-            <div className="os-survey-card os-chapter-completion">
-              <p className="os-card-label">Check-in</p>
-              <h2>You completed this chapter.</h2>
-              <p>
-                Go back if you want to change an answer. Press Continue when it
-                feels right.
-              </p>
-              <button type="button" onClick={confirmCheckInChapter}>
-                Continue
-              </button>
-            </div>
             {checkInIdleCard()}
             {checkInThoughtsCard()}
           </SwipeSession>

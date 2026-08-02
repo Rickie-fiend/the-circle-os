@@ -7,7 +7,13 @@ import { BUTTON_STYLE_DEFINITIONS, BUTTON_STYLE_IDS, type ButtonStyleId } from "
 import { ChapterPlayer } from "../chapters/chapter-player";
 import { createChapterRun } from "../chapters/chapter-model.js";
 import { publishedChapters } from "../chapters/registry";
+import {
+  writeChapterPublication,
+  writeImmutableChapterPublication,
+} from "../chapters/chapter-publication-store";
 import type { ChapterPage, ChapterPageType, ChapterRun, ChapterTheme } from "../chapters/chapter-types";
+import { publishPublicChapter } from "../circle-os-ai";
+import { loadCircleState } from "../circle-os-store";
 import {
   CHAPTER_CLASSIFICATIONS,
   CHAPTER_PAGE_TYPES,
@@ -183,6 +189,8 @@ export function ChapterEditor() {
   const [selectedPage, setSelectedPage] = useState(0);
   const [ready, setReady] = useState(false);
   const [saveState, setSaveState] = useState("Saved on this device");
+  const [publishState, setPublishState] = useState("");
+  const [publishing, setPublishing] = useState(false);
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<"all" | LibraryKind>("all");
   const [appFilter, setAppFilter] = useState("all");
@@ -263,6 +271,49 @@ export function ChapterEditor() {
   async function saveDraft(workflowStatus = draft.workflowStatus) {
     const next = { ...structuredClone(draft), workflowStatus, updatedAt: new Date().toISOString() };
     await persistDraft(next); setSaveState(workflowStatus === "ready" ? "Ready for approval" : "Saved on this device");
+  }
+
+  async function publishChapter(scope: "private" | "public") {
+    if (errors.length || publishing) return;
+    if (draft.chapter.session !== "check-in" || !draft.appSpaces.includes("check-in")) {
+      setPublishState("This build can publish only to the Check-in app.");
+      return;
+    }
+    setPublishing(true);
+    setPublishState(scope === "private" ? "Publishing on this device…" : "Publishing to Circle OS…");
+    try {
+      const publishedDraft = {
+        ...structuredClone(draft),
+        workflowStatus: "published" as const,
+        updatedAt: new Date().toISOString(),
+      };
+      const chapter = chapterDraftToPreview(publishedDraft);
+      const source = chapterDraftToMarkdown(publishedDraft);
+      if (scope === "public") {
+        const state = await loadCircleState();
+        await publishPublicChapter(state, chapter, source);
+        await writeChapterPublication({
+          scope,
+          source,
+          publishedAt: publishedDraft.updatedAt,
+          chapter,
+        });
+      } else {
+        await writeImmutableChapterPublication({
+          scope,
+          source,
+          publishedAt: publishedDraft.updatedAt,
+          chapter,
+        });
+      }
+      await persistDraft(publishedDraft);
+      setSaveState(scope === "private" ? "Published on this device" : "Published for connected Circle OS users");
+      setPublishState(scope === "private" ? "Private chapter published." : "Public chapter published.");
+    } catch (error) {
+      setPublishState(error instanceof Error ? error.message : "The chapter was not published.");
+    } finally {
+      setPublishing(false);
+    }
   }
 
   function openWorkshop(next: ChapterDraft, kind: LibraryKind) {
@@ -367,7 +418,8 @@ export function ChapterEditor() {
               <Field label="Page type"><select disabled={selectedPage === 0 || selectedPage === draft.chapter.pages.length - 1} value={page.type} onChange={(event) => changePageType(event.target.value as ChapterPageType)}>{AUTHORABLE_PAGE_TYPES.map((item) => <option key={item} value={item}>{pageLabel(item)}</option>)}</select></Field><Field label="Page ID"><input value={page.id} onChange={(event) => updatePage("id", chapterSlug(event.target.value))} /></Field>{INPUT_TYPES.has(page.type) ? <><Field label="Answer key"><input value={page.answerKey || ""} onChange={(event) => updatePage("answerKey", chapterSlug(event.target.value))} /></Field><label className="os-admin-check"><input checked={Boolean(page.required)} type="checkbox" onChange={(event) => updatePage("required", event.target.checked)} /><span>Answer required</span></label></> : null}{["short-text", "long-text"].includes(page.type) ? <Field label="Placeholder"><input value={page.placeholder || ""} onChange={(event) => updatePage("placeholder", event.target.value)} /></Field> : null}{CUSTOM_FOOTER_TYPES.has(page.type) ? <Field label="Button text"><input value={page.button || ""} onChange={(event) => updatePage("button", event.target.value)} /></Field> : null}
             </div>{["single-choice", "multi-choice"].includes(page.type) ? <div className="os-admin-options"><h3>Choices</h3>{(page.options || []).map((option, index) => <div key={`${option.id}-${index}`}><input aria-label={`Option ${index + 1} ID`} value={option.id} onChange={(event) => updateDraft((next) => { next.chapter.pages[selectedPage].options![index].id = chapterSlug(event.target.value); return next; })} /><input aria-label={`Option ${index + 1} label`} value={option.label} onChange={(event) => updateDraft((next) => { next.chapter.pages[selectedPage].options![index].label = event.target.value; return next; })} /><button aria-label={`Remove option ${index + 1}`} type="button" onClick={() => updateDraft((next) => { next.chapter.pages[selectedPage].options!.splice(index, 1); return next; })}>×</button></div>)}<button type="button" onClick={() => updateDraft((next) => { const options = next.chapter.pages[selectedPage].options ||= []; options.push({ id: `option-${options.length + 1}`, label: `Option ${options.length + 1}` }); return next; })}>Add choice</button></div> : null}<div className="os-admin-page-actions"><button disabled={selectedPage === 0 || selectedPage === draft.chapter.pages.length - 1} type="button" onClick={duplicatePage}>Duplicate page</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 1} type="button" onClick={deletePage}>Delete page</button><button disabled={selectedPage <= 1} type="button" onClick={() => movePage(-1)}>Move earlier</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 2} type="button" onClick={() => movePage(1)}>Move later</button></div></details>
             {errors.length ? <div className="os-admin-errors" role="status"><strong>Before ready</strong><ul>{errors.map((error) => <li key={error}>{error}</li>)}</ul></div> : <p className="os-admin-valid">Ready checks passed.</p>}
-            <div className="os-admin-actions os-admin-final-actions"><button type="button" onClick={() => downloadMarkdown(draft)}>Export Markdown</button><button type="button" onClick={() => saveDraft()}>Save draft</button><button disabled={errors.length > 0} type="button" onClick={() => saveDraft("ready")}>Mark ready</button></div>
+            <div className="os-admin-actions os-admin-final-actions"><button type="button" onClick={() => downloadMarkdown(draft)}>Export Markdown</button><button type="button" onClick={() => saveDraft()}>Save draft</button><button disabled={errors.length > 0} type="button" onClick={() => saveDraft("ready")}>Mark ready</button><button disabled={errors.length > 0 || publishing} type="button" onClick={() => publishChapter("private")}>Publish privately</button><button disabled={errors.length > 0 || publishing} type="button" onClick={() => publishChapter("public")}>Publish publicly</button></div>
+            {publishState ? <p className="os-admin-publish-status" role="status">{publishState}</p> : null}
           </> : null}
         </section>
       ) : null}

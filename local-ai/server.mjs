@@ -19,6 +19,7 @@ import {
 } from "../app/os/circle-os-model.js";
 
 const profileIdPattern = /^p_[A-Za-z0-9_-]{16}$/;
+const chapterIdPattern = /^[a-z0-9][a-z0-9-]*$/;
 const sessionLabels = {
   typicalTuesday: "Typical Tuesday",
   currentLife: "Current Life",
@@ -591,6 +592,76 @@ function profileDirectory(vaultPath, profileId) {
   return join(vaultPath, "Profiles", profileId);
 }
 
+function publishedChapterDirectory(vaultPath) {
+  return join(vaultPath, "Chapters", "Published Sources");
+}
+
+function publicChapterManifestPath(vaultPath) {
+  return join(publishedChapterDirectory(vaultPath), "index.json");
+}
+
+function readPublicChapterManifest(vaultPath) {
+  const manifest = readJson(publicChapterManifestPath(vaultPath), {
+    version: 1,
+    updatedAt: "",
+    chapters: [],
+  });
+  return {
+    version: 1,
+    updatedAt: text(manifest?.updatedAt, 80),
+    chapters: Array.isArray(manifest?.chapters) ? manifest.chapters : [],
+  };
+}
+
+function validPublishedChapter(chapter) {
+  return Boolean(
+    chapter &&
+      chapter.schemaVersion === 1 &&
+      chapter.status === "published" &&
+      chapterIdPattern.test(chapter.id || "") &&
+      Number.isInteger(chapter.version) &&
+      chapter.version > 0 &&
+      chapter.session === "check-in" &&
+      Array.isArray(chapter.pages) &&
+      chapter.pages.length >= 2 &&
+      chapter.pages[0]?.type === "cover" &&
+      ["confirm", "result"].includes(chapter.pages.at(-1)?.type),
+  );
+}
+
+function publishChapter(vaultPath, chapter, source) {
+  if (!validPublishedChapter(chapter)) {
+    throw new Error("Only a valid Check-in chapter can be published here.");
+  }
+  const cleanSource = text(source, 200_000);
+  if (!cleanSource) throw new Error("The chapter source is empty.");
+  const directory = publishedChapterDirectory(vaultPath);
+  const sourcePath = join(directory, `${chapter.id}-v${chapter.version}.md`);
+  if (existsSync(sourcePath)) {
+    const existing = readFileSync(sourcePath, "utf8").trim();
+    if (existing !== cleanSource) {
+      throw new Error("That chapter version already exists. Create a new version.");
+    }
+  } else {
+    writeAtomic(sourcePath, `${cleanSource}\n`);
+  }
+  const manifest = readPublicChapterManifest(vaultPath);
+  const key = `${chapter.id}:v${chapter.version}`;
+  const chapters = [
+    ...manifest.chapters.filter(
+      (item) => `${item?.id}:v${item?.version}` !== key,
+    ),
+    chapter,
+  ].sort((left, right) =>
+    `${left.id}:v${left.version}`.localeCompare(`${right.id}:v${right.version}`),
+  );
+  writeAtomic(
+    publicChapterManifestPath(vaultPath),
+    `${JSON.stringify({ version: 1, updatedAt: now(), chapters }, null, 2)}\n`,
+  );
+  return chapter;
+}
+
 function readProfileState(vaultPath, profileId) {
   const directory = profileDirectory(vaultPath, profileId);
   const statePath = join(directory, "State.json");
@@ -812,6 +883,13 @@ export function createCircleAiServer(options = {}) {
     return Boolean(key && access[profileId]?.keyHash === hash(key));
   }
 
+  function authorizedPublisher(request) {
+    const key = bearer(request);
+    return Boolean(
+      key && Object.values(access).some((entry) => entry?.keyHash === hash(key)),
+    );
+  }
+
   function publicState(state) {
     return {
       ...state,
@@ -952,6 +1030,29 @@ export function createCircleAiServer(options = {}) {
           },
           origin,
         );
+        return;
+      }
+
+      if (request.url === "/chapters/public") {
+        if (!authorizedPublisher(request)) {
+          json(response, 401, { error: "This profile key is not valid." }, origin);
+          return;
+        }
+        if (request.method === "GET") {
+          const manifest = readPublicChapterManifest(vaultPath);
+          json(response, 200, { chapters: manifest.chapters }, origin);
+          return;
+        }
+      }
+
+      if (request.method === "POST" && request.url === "/chapters/publish") {
+        if (!authorizedPublisher(request)) {
+          json(response, 401, { error: "This profile key is not valid." }, origin);
+          return;
+        }
+        const input = await readBody(request);
+        const chapter = publishChapter(vaultPath, input.chapter, input.source);
+        json(response, 201, { chapter }, origin);
         return;
       }
 

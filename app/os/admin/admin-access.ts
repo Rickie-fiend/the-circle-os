@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 
 export const ADMIN_COOKIE = "circle_os_admin";
-const DEFAULT_ADMIN_CODE = "iseedeadpeople";
+const DEFAULT_ADMIN_CODE = "admin";
 
 function configuredAdminCode() {
   return (process.env.CIRCLE_OS_ADMIN_CODE || DEFAULT_ADMIN_CODE).trim().toLowerCase();
