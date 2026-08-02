@@ -436,6 +436,7 @@ export function ChapterPlayer({
   startOnBackApp = false,
   onLongPress,
   attentionKey,
+  exitOnFinalCompletion = false,
   previewMode = false,
   onEditPage,
 }: {
@@ -462,6 +463,7 @@ export function ChapterPlayer({
   startOnBackApp?: boolean;
   onLongPress?: () => void;
   attentionKey?: string;
+  exitOnFinalCompletion?: boolean;
   previewMode?: boolean;
   onEditPage?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
@@ -518,6 +520,13 @@ export function ChapterPlayer({
   const isCompletionPage = COMPLETION_TYPES.has(currentPage.type);
   const completionKey = `${run.runId}:${currentPage.id}:${run.updatedAt}`;
   const completionLeaving = leavingCompletionKey === completionKey;
+  const canExitFinalCompletion = Boolean(
+    exitOnFinalCompletion &&
+    !previewMode &&
+    run.status !== "completed" &&
+    isCompletionPage &&
+    idleIndex < 0,
+  );
 
   useEffect(() => {
     if (
@@ -708,6 +717,14 @@ export function ChapterPlayer({
       label={label}
       onLongPress={onLongPress}
       maxIndex={availableIndices.at(-1) ?? currentIndex}
+      onForwardBoundary={
+        canExitFinalCompletion
+          ? () =>
+              onRunChange(
+                advanceChapterRun(definition, run, { page: currentPage }),
+              )
+          : undefined
+      }
       onIndexChange={changeIndex}
     >
       {definition.pages.map((page) => (

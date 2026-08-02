@@ -26,6 +26,7 @@ export function SwipeSession({
   availableIndices,
   frameHeight,
   onLongPress,
+  onForwardBoundary,
   attentionKey,
   attentionIndex = 0,
 }: {
@@ -38,6 +39,7 @@ export function SwipeSession({
   availableIndices?: number[];
   frameHeight?: CSSProperties["height"];
   onLongPress?: () => void;
+  onForwardBoundary?: () => void;
   attentionKey?: string;
   attentionIndex?: number;
 }) {
@@ -389,6 +391,10 @@ export function SwipeSession({
     if (targetIndex === undefined) {
       setDragX(0);
       setDragging(false);
+      if (distance < 0 && onForwardBoundary) {
+        onForwardBoundary();
+        return;
+      }
       showBoundaryCue();
       return;
     }
@@ -426,6 +432,10 @@ export function SwipeSession({
     if (event.key === "ArrowRight") {
       event.preventDefault();
       if (nextIndex === undefined) {
+        if (onForwardBoundary) {
+          onForwardBoundary();
+          return;
+        }
         showBoundaryCue();
         return;
       }
@@ -470,6 +480,10 @@ export function SwipeSession({
     }
     const targetIndex = movingForward ? nextIndex : previousIndex;
     if (targetIndex === undefined) {
+      if (movingForward && onForwardBoundary) {
+        onForwardBoundary();
+        return;
+      }
       showBoundaryCue();
       return;
     }

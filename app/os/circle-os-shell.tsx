@@ -127,6 +127,7 @@ export function PublishedChapterDelivery({
       backApp={backApp}
       className={className}
       definition={chapter}
+      exitOnFinalCompletion
       hideIdleHeading={hideIdleHeading}
       key={chapterRunId(chapter)}
       label={label}
@@ -325,10 +326,9 @@ type CircleDay = {
   } | null;
 };
 
-function latestCheckInChapters(chapters: ChapterDefinition[]) {
+function latestPublishedChapters(chapters: ChapterDefinition[]) {
   return Object.values(
     chapters
-    .filter((chapter) => chapter.session === "check-in")
     .reduce<Record<string, ChapterDefinition>>((latest, chapter) => {
       if (!latest[chapter.id] || latest[chapter.id].version < chapter.version) {
         latest[chapter.id] = chapter;
@@ -1034,7 +1034,7 @@ export function TodayExperience() {
       )
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
       .map((publication) => publication.chapter);
-    return latestCheckInChapters(chapters);
+    return latestPublishedChapters(chapters);
   }, [publications, state.ai.profileId]);
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
