@@ -187,6 +187,18 @@ typeface, motion pattern, or interaction.
 - Button motion prompts are local draft metadata exported for Codex. They do
   not call AI or generate assets in this version.
 
+## App modes and publications
+
+- The top-left app label is a mode control, not navigation. Note recalls a
+  private chapter; Thoughts changes between Thoughts and Deep Thoughts; Habit
+  cycles Habit, Habit Record, and Habit Tracker.
+- A publication version targets exactly one app and one audience. Private work
+  stays profile-scoped. Public/global work always requires explicit approval.
+- The visible product tab is **Reflect**. Vision remains the inner white app
+  about the life the person wants.
+- Page refresh choreography is Body, Header, Footer. The background never
+  blinks or remounts between those text layers.
+
 ## Secret Admin and authoring library
 
 - Admin has no public tab, shortcut, or login page. A reserved phrase entered

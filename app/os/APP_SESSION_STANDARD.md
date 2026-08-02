@@ -158,15 +158,26 @@ Used for charts, weekly views, and other things worth reading again.
 
 - Journey progress is stored by chapter id and immutable version.
 - Library position is stored by session id and data version.
-- Check-in opens on its idle Note Page. A chapter enters that App Box only
-  after the person deliberately taps the Check-in label. First-use and hourly
-  timers do not replace the idle page in the current release.
+- Note opens on its idle Note Page. No built-in chapter replaces it. The newest
+  unfinished private publication assigned to Note enters only when the person
+  taps the Note mode label. Dismissing means not now; it never deletes delivery.
 - A private published chapter is immutable by id and version in this browser
   and remains available offline. A public published chapter is written as an
   immutable Markdown source through the connected Circle OS server, then
   cached locally for offline use.
-- This release publishes only to the Check-in App. Publishing to another app
-  requires an explicit later product decision and runtime implementation.
+- Every immutable publication names one destination app, one audience profile,
+  visibility, delivery mode, source, and publication time. Publishing the same
+  chapter elsewhere creates another immutable publication version.
+- Admin publications default to manual delivery. Athena publications default to
+  on-view delivery. Public publication always needs explicit approval.
+
+## Page arrival
+
+- Leaving is one flat content-layer fade. The App Box background stays stable.
+- New or refreshed content enters Body first, Header second, Footer last.
+- Ordinary swipes remain quick and never replay the refresh sequence.
+- Completion leaves with a flat fade; its idle App Page enters Body, Header,
+  Footer. Reduced-motion mode renders all groups immediately.
 
 ## Admin previews and access
 

@@ -45,12 +45,12 @@ export function createChapterPage(type, index = 0) {
   const page = {
     id: `${type}-${index + 1}`,
     type,
-    title: "",
+    title: "Edit Here",
     body: "",
     button: type === "cover" ? "Begin" : "Continue",
   };
   if (["single-choice", "multi-choice", "yes-no", "slider", "short-text", "long-text", "time"].includes(type)) {
-    page.question = "";
+    page.question = "Edit Here";
     page.answerKey = `${type}-answer-${index + 1}`;
     page.required = true;
   }
@@ -66,7 +66,7 @@ export function createChapterPage(type, index = 0) {
     page.minLabel = "Low";
     page.maxLabel = "High";
   }
-  if (["short-text", "long-text"].includes(type)) page.placeholder = "Write here";
+  if (["short-text", "long-text"].includes(type)) page.placeholder = "Edit Here";
   if (type === "idle") page.button = "";
   return page;
 }
@@ -78,7 +78,7 @@ export function createChapterDraft(now = new Date().toISOString()) {
     category: "Personal Growth",
     classification: "Foundation",
     tags: [],
-    appSpaces: ["check-in"],
+    appSpaces: ["note"],
     authorNotes: [],
     updatedAt: now,
     chapter: {
@@ -86,28 +86,29 @@ export function createChapterDraft(now = new Date().toISOString()) {
       id: "untitled-chapter",
       version: 1,
       status: "published",
-      session: "check-in",
+      session: "note",
       theme: "light",
       title: "Untitled chapter",
       purpose: "Describe what this chapter helps the person understand or do.",
       estimatedMinutes: 3,
+      showPageNumbers: true,
       pages: [
         {
           ...createChapterPage("cover", 0),
           id: "cover",
-          title: "Untitled chapter",
-          body: "A short invitation to begin.",
+          title: "Edit Here",
+          body: "",
         },
         {
           ...createChapterPage("info", 1),
           id: "opening",
-          title: "Start with one clear idea.",
-          body: "Add the chapter content here.",
+          title: "Edit Here",
+          body: "",
         },
         {
           ...createChapterPage("result", 2),
           id: "complete",
-          title: "You completed this chapter.",
+          title: "Edit Here",
           body: "",
           button: "Finish",
         },

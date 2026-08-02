@@ -47,7 +47,27 @@ export type ChapterDefinition = {
   title: string;
   purpose: string;
   estimatedMinutes: number;
+  showPageNumbers?: boolean;
   pages: ChapterPage[];
+};
+
+export type AppTarget =
+  | "note"
+  | "thoughts"
+  | "habit"
+  | "log"
+  | "vision"
+  | "seven-days"
+  | "athena";
+
+export type ChapterPublication = {
+  chapter: ChapterDefinition;
+  targetApp: AppTarget;
+  audienceProfileId: string;
+  visibility: "private" | "public";
+  delivery: "manual" | "on-view";
+  source: "admin" | "athena";
+  publishedAt: string;
 };
 
 export type ChapterAnswerValue = string | number | string[] | boolean;

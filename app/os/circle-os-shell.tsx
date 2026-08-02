@@ -32,7 +32,6 @@ import {
 } from "./circle-os-model.js";
 import {
   buildServerPayload,
-  readPublicChapters,
   readCircleState,
   recoverCircleProfile,
   syncCircleState,
@@ -56,16 +55,14 @@ import {
   chapterAnswerText,
   createChapterRun,
   renderChapterTemplate,
-  selectManualChapter,
   storeChapterRun,
 } from "./chapters/chapter-model.js";
 import {
   getPublishedChapter,
-  publishedChapters,
 } from "./chapters/registry";
 import {
+  normalizeChapterPublication,
   readChapterPublications,
-  writeChapterPublication,
 } from "./chapters/chapter-publication-store";
 import type {
   ChapterDefinition,
@@ -273,8 +270,6 @@ function latestCheckInChapters(chapters: ChapterDefinition[]) {
     }, {}),
   );
 }
-
-const BUILT_IN_CHECK_IN_CHAPTERS = latestCheckInChapters(publishedChapters);
 
 export type CircleState = {
   version: number;
@@ -905,7 +900,7 @@ export function OSFrame({
             href="/os/mirror"
             onClick={(event) => moveToRoute(event, "/os/mirror")}
           >
-            Vision
+            Reflect
           </Link>
         </nav>
         <div
@@ -959,7 +954,7 @@ export function TodayExperience() {
   const [liveMarkerTop, setLiveMarkerTop] = useState<number | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const [profileSparkChapters, setProfileSparkChapters] = useState(
-    BUILT_IN_CHECK_IN_CHAPTERS,
+    [] as ChapterDefinition[],
   );
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
@@ -1111,33 +1106,17 @@ export function TodayExperience() {
     let cancelled = false;
     async function loadAvailableChapters() {
       const stored = await readChapterPublications().catch(() => []);
-      let chapters = latestCheckInChapters([
-        ...BUILT_IN_CHECK_IN_CHAPTERS,
-        ...stored.map((publication) => publication.chapter),
-      ]);
-      if (!cancelled) setProfileSparkChapters(chapters);
-      if (!state.ai.baseUrl || !state.ai.profileId || !state.ai.token) return;
-      try {
-        const publicChapters = await readPublicChapters({
-          baseUrl: state.ai.baseUrl,
-          profileId: state.ai.profileId,
-          token: state.ai.token,
-        });
-        await Promise.all(
-          publicChapters.map((chapter) =>
-            writeChapterPublication({
-              scope: "public",
-              source: "",
-              publishedAt: new Date().toISOString(),
-              chapter,
-            }),
-          ),
-        );
-        chapters = latestCheckInChapters([...chapters, ...publicChapters]);
-        if (!cancelled) setProfileSparkChapters(chapters);
-      } catch {
-        // The phone keeps its cached chapters when the desktop server is away.
-      }
+      const profileId = state.ai.profileId || "local";
+      const chapters = stored
+        .map(normalizeChapterPublication)
+        .filter((publication) =>
+          publication.visibility === "private" &&
+          publication.targetApp === "note" &&
+          (publication.audienceProfileId === profileId || publication.audienceProfileId === "local")
+        )
+        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+        .map((publication) => publication.chapter);
+      if (!cancelled) setProfileSparkChapters(latestCheckInChapters(chapters));
     }
     void loadAvailableChapters();
     return () => {
@@ -1285,9 +1264,18 @@ export function TodayExperience() {
       createChapterRun(repeatHabitChapter)
     );
   }, [repeatHabitChapter, state.chapters.runs]);
-  const activeHabitChapter = addingHabit
+  const selectedHabitChapter = addingHabit
     ? repeatHabitChapter || habitBuildingChapter
     : habitBuildingChapter;
+  const activeHabitChapter = useMemo(() => {
+    if (!selectedHabitChapter) return null;
+    return {
+      ...selectedHabitChapter,
+      pages: selectedHabitChapter.pages.map((page) =>
+        page.type === "idle" ? { ...page, title: "" } : page,
+      ),
+    };
+  }, [selectedHabitChapter]);
   const activeHabitRun = addingHabit ? repeatHabitRun : habitBuildingRun;
   const habitAppVersion = "habit-record-v1";
   const habitAppIndex = appSessionIndex(
@@ -1789,13 +1777,12 @@ export function TodayExperience() {
         ),
       );
     }
-    const selection = selectManualChapter(
-      profileSparkChapters,
-      state.chapters.runs,
-      profileSparkChapter?.id,
-    );
-    if (!selection) return false;
-    const selectedRun = state.chapters.runs[chapterRunId(selection.chapter)];
+    const chapter = profileSparkChapters.find((candidate) => {
+      const candidateRun = state.chapters.runs[chapterRunId(candidate)];
+      return candidateRun?.status !== "completed";
+    });
+    if (!chapter) return false;
+    const selectedRun = state.chapters.runs[chapterRunId(chapter)];
     if (selectedRun?.deferredAt) {
       updateState((current) =>
         storeChapterRun(
@@ -1810,7 +1797,7 @@ export function TodayExperience() {
       );
     }
     setManualProfileSparkRunId("");
-    setForcedProfileSparkId(selection.chapter.id);
+    setForcedProfileSparkId(chapter.id);
     setCheckInAttention((current) => current + 1);
     return true;
   }
@@ -2139,12 +2126,12 @@ export function TodayExperience() {
         className="os-note-page os-survey-card os-survey-complete"
         header={
           <button
-            aria-label="Load a check-in"
+            aria-label="Load a private Note chapter"
             className="os-card-label os-checkin-refresh-label"
             type="button"
             onClick={revealProfileSpark}
           >
-            Check-in
+            Note
           </button>
         }
       >
@@ -2376,12 +2363,12 @@ export function TodayExperience() {
                         key={mission.id}
                       >
                         <textarea
-                          aria-label={`Edit mission: ${mission.text || "New mission"}`}
+                          aria-label={`Edit task: ${mission.text || "New Task"}`}
                           className={`os-extra-mission-copy os-mission-text-edit${
                             mission.completed ? " completed" : ""
                           }`}
                           maxLength={240}
-                          placeholder="New mission"
+                          placeholder="New Task"
                           rows={1}
                           value={mission.text}
                           onChange={(event) =>
@@ -2513,7 +2500,7 @@ export function TodayExperience() {
                     </div>
                   ) : null}
                 </div>,
-              ]}
+              ].reverse()}
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={saveHabitAppIndex}
               label="Habit chapter"

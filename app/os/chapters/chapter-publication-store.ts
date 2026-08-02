@@ -1,11 +1,15 @@
-import type { ChapterDefinition } from "./chapter-types";
+import type { AppTarget, ChapterDefinition, ChapterPublication } from "./chapter-types";
 
 export type StoredChapterPublication = {
   key: string;
-  scope: "private" | "public";
+  scope?: "private" | "public";
   source: string;
   publishedAt: string;
   chapter: ChapterDefinition;
+  targetApp?: AppTarget;
+  audienceProfileId?: string;
+  visibility?: "private" | "public";
+  delivery?: "manual" | "on-view";
 };
 
 const DATABASE = "circle-os-chapter-publications";
@@ -40,9 +44,11 @@ async function run<T>(
 
 export function chapterPublicationKey(
   chapter: Pick<ChapterDefinition, "id" | "version">,
-  scope: StoredChapterPublication["scope"] = "private",
+  visibility: "private" | "public" = "private",
+  targetApp: AppTarget = "note",
+  audienceProfileId = "local",
 ) {
-  return `${scope}:${chapter.id}:v${chapter.version}`;
+  return `${visibility}:${targetApp}:${audienceProfileId}:${chapter.id}:v${chapter.version}`;
 }
 
 export async function readChapterPublications() {
@@ -52,10 +58,16 @@ export async function readChapterPublications() {
 export function writeChapterPublication(
   publication: Omit<StoredChapterPublication, "key">,
 ) {
+  const visibility = publication.visibility || publication.scope || "private";
+  const targetApp = publication.targetApp || "note";
+  const audienceProfileId = publication.audienceProfileId || "local";
   return run<IDBValidKey>("readwrite", (store) =>
     store.put({
       ...publication,
-      key: chapterPublicationKey(publication.chapter, publication.scope),
+      visibility,
+      targetApp,
+      audienceProfileId,
+      key: chapterPublicationKey(publication.chapter, visibility, targetApp, audienceProfileId),
     }),
   );
 }
@@ -63,7 +75,10 @@ export function writeChapterPublication(
 export async function writeImmutableChapterPublication(
   publication: Omit<StoredChapterPublication, "key">,
 ) {
-  const key = chapterPublicationKey(publication.chapter, publication.scope);
+  const visibility = publication.visibility || publication.scope || "private";
+  const targetApp = publication.targetApp || "note";
+  const audienceProfileId = publication.audienceProfileId || "local";
+  const key = chapterPublicationKey(publication.chapter, visibility, targetApp, audienceProfileId);
   const database = await openDatabase();
   return new Promise<IDBValidKey>((resolve, reject) => {
     const transaction = database.transaction(STORE, "readwrite");
@@ -77,11 +92,31 @@ export async function writeImmutableChapterPublication(
         reject(new Error("That chapter version already exists. Create a new version."));
         return;
       }
-      const put = store.put({ ...publication, key });
+      const put = store.put({
+        ...publication,
+        visibility,
+        targetApp,
+        audienceProfileId,
+        key,
+      });
       put.onsuccess = () => resolve(put.result);
       put.onerror = () => reject(put.error);
     };
     transaction.oncomplete = () => database.close();
     transaction.onabort = () => database.close();
   });
+}
+
+export function normalizeChapterPublication(
+  publication: StoredChapterPublication,
+): ChapterPublication {
+  return {
+    chapter: publication.chapter,
+    targetApp: publication.targetApp || "note",
+    audienceProfileId: publication.audienceProfileId || "local",
+    visibility: publication.visibility || publication.scope || "private",
+    delivery: publication.delivery || "manual",
+    source: publication.source === "athena" ? "athena" : "admin",
+    publishedAt: publication.publishedAt,
+  };
 }

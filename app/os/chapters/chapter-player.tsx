@@ -3,6 +3,7 @@
 import {
   Fragment,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type FormEvent,
@@ -51,11 +52,28 @@ function EditableCopy({
   rows?: number;
   value: string;
 }) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const input = ref.current;
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = `${input.scrollHeight}px`;
+  }, [value]);
   return (
     <textarea
       aria-label={label}
       className={`os-chapter-inline-copy ${className}`}
-      onChange={(event) => onChange(event.currentTarget.value)}
+      onChange={(event) => {
+        const input = event.currentTarget;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        onChange(input.value);
+        window.requestAnimationFrame(() => {
+          input.focus();
+          input.setSelectionRange(start, end);
+        });
+      }}
+      ref={ref}
       rows={rows}
       value={value}
     />
@@ -95,9 +113,7 @@ function ChapterPageView({
   idleFooter?: ReactNode;
   onEdit?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
-  const required =
-    Boolean(page.required) ||
-    (chapter.session === "check-in" && INPUT_TYPES.has(page.type));
+  const required = Boolean(page.required);
   const answer = page.answerKey
     ? findChapterAnswer(run, page.answerKey)
     : undefined;
@@ -118,7 +134,7 @@ function ChapterPageView({
   );
   const renderedBody = renderChapterTemplate(page.body, run);
   const formId = `chapter-${chapter.id}-${page.id}`.replace(/[^a-zA-Z0-9_-]/g, "-");
-  const progress = (
+  const progress = chapter.showPageNumbers === false ? undefined : (
     <span aria-label={`Page ${current} of ${total}`}>
       {current}/{total}
     </span>
@@ -467,7 +483,7 @@ export function ChapterPlayer({
   );
   const currentAnswerRequired =
     INPUT_TYPES.has(currentPage.type) &&
-    (definition.session === "check-in" || Boolean(currentPage.required));
+    Boolean(currentPage.required);
   const canMoveForward =
     run.status === "completed" ||
     !currentAnswerRequired ||

@@ -714,6 +714,8 @@
 }
 
 .circle-os .os-habit .os-chapter-idle-action {
+  background: #fff8f1;
+  color: #191813;
   margin-top: 0.75rem;
 }
 
@@ -1113,31 +1115,23 @@
   pointer-events: none;
 }
 
-.circle-os .os-app-window.update-arrival .os-app-page.current > * > * {
+.circle-os .os-app-window.update-arrival .os-app-page.current .os-page-heading,
+.circle-os .os-app-window.update-arrival .os-app-page.current .os-page-body {
   opacity: 0;
   animation: os-update-copy-arrival 720ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
-}
-
-.circle-os .os-app-window.update-arrival .os-app-page.current > * > :nth-child(1) {
   animation-delay: 260ms;
 }
 
-.circle-os .os-app-window.update-arrival .os-app-page.current > * > :nth-child(2) {
+.circle-os .os-app-window.update-arrival .os-app-page.current .os-page-header {
+  opacity: 0;
+  animation: os-update-copy-arrival 720ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
   animation-delay: 620ms;
 }
 
-.circle-os .os-app-window.update-arrival .os-app-page.current > * > :nth-child(3) {
+.circle-os .os-app-window.update-arrival .os-app-page.current .os-page-footer {
+  opacity: 0;
+  animation: os-update-copy-arrival 720ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
   animation-delay: 1180ms;
-}
-
-/* Thoughts reads from the center outward: reveal the writing prompt first,
-   then let the orange mode label arrive after the thought has settled. */
-.circle-os .os-app-window.update-arrival .os-app-page.current > .os-thoughts-page > .os-page-body {
-  animation-delay: 260ms;
-}
-
-.circle-os .os-app-window.update-arrival .os-app-page.current > .os-thoughts-page > .os-page-header {
-  animation-delay: 880ms;
 }
 
 .circle-os .os-swipe-session.update-exit .os-app-window {
@@ -4416,8 +4410,8 @@
 .circle-os .os-info-page .os-inline-checkin-note .os-info-page-sub {
   grid-row: 2;
   margin: 0;
-  max-height: 100%;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
   padding: 0.7rem 0 0;
   width: 100%;
 }
@@ -4899,6 +4893,24 @@
   margin-top: 18px;
 }
 
+/* Editing stays visually identical to reading. Only the caret signals the
+   edit state, and multiline copy grows the App Box downward. */
+.circle-os textarea,
+.circle-os input {
+  caret-color: #e36b37;
+}
+
+.circle-os .theme-orange textarea,
+.circle-os .theme-dark textarea,
+.circle-os .theme-orange input,
+.circle-os .theme-dark input {
+  caret-color: #fff8f1;
+}
+
+.circle-os textarea {
+  field-sizing: content;
+}
+
 .circle-os .os-admin-library-group,
 .circle-os .os-admin-library-group-items {
   display: grid;
@@ -5157,6 +5169,12 @@
   gap: 8px;
   grid-template-columns: 1fr 1fr;
   margin-top: 18px;
+}
+
+/* Page order belongs beside the preview where the result is visible. Keep the
+   lower action row focused on duplication and deletion. */
+.circle-os .os-admin-page-actions button:nth-child(n + 3) {
+  display: none;
 }
 
 .circle-os .os-button-studio-stage {
@@ -5586,6 +5604,47 @@
   color: #191813;
 }
 
+.circle-os .os-admin-preview-order {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  margin: -4px 0 14px;
+}
+
+.circle-os .os-admin-preview-order button,
+.circle-os .os-admin-add-page-preview {
+  background: #24231d;
+  border: 1px solid rgb(241 239 232 / 0.12);
+  border-radius: 14px;
+  color: #f1efe8;
+  min-height: 46px;
+}
+
+.circle-os .os-admin-preview-order button:disabled {
+  opacity: 0.32;
+}
+
+.circle-os .os-admin-add-page-preview {
+  align-items: center;
+  border: 2px dotted #e36b37;
+  color: #e36b37;
+  display: flex;
+  gap: 0.55rem;
+  justify-content: center;
+  margin-top: 14px;
+  min-height: 76px;
+  width: 100%;
+}
+
+.circle-os details.os-admin-library-group > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.circle-os details.os-admin-library-group > summary::-webkit-details-marker {
+  display: none;
+}
+
 .circle-os .os-admin-preview-use {
   background: #e36b37;
   border: 0;
@@ -5711,6 +5770,10 @@
   border-top: 1px solid rgb(25 24 19 / 0.72);
   margin-top: 0.9rem;
   padding-top: 0;
+}
+
+.circle-os .os-habit .os-chapter-idle .os-page-heading:empty {
+  display: none;
 }
 
 .circle-os .os-habit .os-chapter-idle .os-add-habit-row {

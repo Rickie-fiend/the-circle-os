@@ -11,7 +11,7 @@ import {
   writeChapterPublication,
   writeImmutableChapterPublication,
 } from "../chapters/chapter-publication-store";
-import type { ChapterPage, ChapterPageType, ChapterRun, ChapterTheme } from "../chapters/chapter-types";
+import type { AppTarget, ChapterPage, ChapterPageType, ChapterRun, ChapterTheme } from "../chapters/chapter-types";
 import { publishPublicChapter } from "../circle-os-ai";
 import { loadCircleState } from "../circle-os-store";
 import {
@@ -52,6 +52,15 @@ const CHAPTER_THEMES: { label: string; value: ChapterTheme; color: string }[] = 
   { label: "Dark", value: "dark", color: "#222119" },
 ];
 const BUTTON_STUDIO_STORAGE_KEY = "circle-os-button-studio-draft-v1";
+const APP_TARGETS: { label: string; value: AppTarget }[] = [
+  { label: "Note", value: "note" },
+  { label: "Thoughts", value: "thoughts" },
+  { label: "Habit", value: "habit" },
+  { label: "Log", value: "log" },
+  { label: "Vision", value: "vision" },
+  { label: "Seven days", value: "seven-days" },
+  { label: "Athena", value: "athena" },
+];
 
 function Field({ children, label }: { children: ReactNode; label: string }) {
   return <label className="os-admin-field"><span>{label}</span>{children}</label>;
@@ -191,6 +200,7 @@ export function ChapterEditor() {
   const [saveState, setSaveState] = useState("Saved on this device");
   const [publishState, setPublishState] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [lastAction, setLastAction] = useState<"" | "saved" | "ready" | "published">("");
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<"all" | LibraryKind>("all");
   const [appFilter, setAppFilter] = useState("all");
@@ -237,6 +247,7 @@ export function ChapterEditor() {
 
   function updateDraft(change: (current: ChapterDraft) => ChapterDraft) {
     setSaveState("Unsaved changes");
+    setLastAction("");
     setDraft((current) => { const next = change(structuredClone(current)); next.workflowStatus = "draft"; return next; });
   }
 
@@ -271,14 +282,17 @@ export function ChapterEditor() {
   async function saveDraft(workflowStatus = draft.workflowStatus) {
     const next = { ...structuredClone(draft), workflowStatus, updatedAt: new Date().toISOString() };
     await persistDraft(next); setSaveState(workflowStatus === "ready" ? "Ready for approval" : "Saved on this device");
+    setLastAction(workflowStatus === "ready" ? "ready" : "saved");
   }
 
   async function publishChapter(scope: "private" | "public") {
     if (errors.length || publishing) return;
-    if (draft.chapter.session !== "check-in" || !draft.appSpaces.includes("check-in")) {
-      setPublishState("This build can publish only to the Check-in app.");
+    const targetApp = draft.appSpaces[0] as AppTarget | undefined;
+    if (!targetApp || !APP_TARGETS.some((item) => item.value === targetApp)) {
+      setPublishState("Choose one destination app before publishing.");
       return;
     }
+    if (scope === "public" && !window.confirm("Publish this chapter for everyone?")) return;
     setPublishing(true);
     setPublishState(scope === "private" ? "Publishing on this device…" : "Publishing to Circle OS…");
     try {
@@ -289,26 +303,34 @@ export function ChapterEditor() {
       };
       const chapter = chapterDraftToPreview(publishedDraft);
       const source = chapterDraftToMarkdown(publishedDraft);
+      const state = await loadCircleState();
+      const audienceProfileId = state.ai.profileId || "local";
       if (scope === "public") {
-        const state = await loadCircleState();
         await publishPublicChapter(state, chapter, source);
         await writeChapterPublication({
-          scope,
-          source,
+          visibility: scope,
+          source: "admin",
           publishedAt: publishedDraft.updatedAt,
           chapter,
+          targetApp,
+          audienceProfileId: "public",
+          delivery: "manual",
         });
       } else {
         await writeImmutableChapterPublication({
-          scope,
-          source,
+          visibility: scope,
+          source: "admin",
           publishedAt: publishedDraft.updatedAt,
           chapter,
+          targetApp,
+          audienceProfileId,
+          delivery: "manual",
         });
       }
       await persistDraft(publishedDraft);
       setSaveState(scope === "private" ? "Published on this device" : "Published for connected Circle OS users");
       setPublishState(scope === "private" ? "Private chapter published." : "Public chapter published.");
+      setLastAction("published");
     } catch (error) {
       setPublishState(error instanceof Error ? error.message : "The chapter was not published.");
     } finally {
@@ -358,6 +380,41 @@ export function ChapterEditor() {
     setPreviewRun((current) => ({ ...current, currentPageId: pageId, furthestPageId: pageId, updatedAt: new Date().toISOString() }));
   }
 
+  function openDraftForPublish(next: ChapterDraft) {
+    const validation = validateChapterDraft(next);
+    const firstIncompletePage = next.chapter.pages.findIndex((item) => {
+      if (!item.id.trim()) return true;
+      if (["cover", "info", "result", "confirm"].includes(item.type)) {
+        return !item.title?.trim() || item.title.trim() === "Edit Here";
+      }
+      if (INPUT_TYPES.has(item.type)) {
+        return !item.question?.trim() || item.question.trim() === "Edit Here";
+      }
+      return false;
+    });
+    openWorkshop(next, "draft");
+    if (validation.length > 0) {
+      const target = firstIncompletePage >= 0 ? firstIncompletePage : 0;
+      const definition = chapterDraftToPreview(next);
+      setSelectedPage(target);
+      const run = createChapterRun(definition);
+      setPreviewRun({
+        ...run,
+        currentPageId: next.chapter.pages[target]?.id || run.currentPageId,
+        furthestPageId: next.chapter.pages[target]?.id || run.furthestPageId,
+      });
+      setPublishState("Finish the highlighted page, then publish.");
+      return;
+    }
+    setPublishState("Ready to publish. Choose the destination below.");
+  }
+
+  function syncPreviewRun(next: ChapterRun) {
+    setPreviewRun(next);
+    const index = draft.chapter.pages.findIndex((item) => item.id === next.currentPageId);
+    if (index >= 0) setSelectedPage(index);
+  }
+
   function chooseTheme(theme: ChapterTheme) {
     if (activeKind === "draft") updateChapter("theme", theme);
     else setDraft((current) => ({ ...structuredClone(current), chapter: { ...current.chapter, theme } }));
@@ -386,15 +443,15 @@ export function ChapterEditor() {
           </div>
           <div className="os-admin-draft-list">
             {libraryGroups.map((group) => (
-              <section className="os-admin-library-group" key={group.classification}>
-                <div className="os-admin-library-group-head">
+              <details className="os-admin-library-group" key={group.classification} open>
+                <summary className="os-admin-library-group-head">
                   <h3>{group.classification}</h3>
                   <span>{group.items.length}</span>
-                </div>
+                </summary>
                 <div className="os-admin-library-group-items">
-                  {group.items.map(({ draft: item, kind }) => <article key={`${kind}-${item.draftId}`}><button className="os-admin-draft-open" type="button" onClick={() => openWorkshop(item, kind)}><span>{kind === "starter" ? "First-use starter" : kind === "published" ? "Published" : item.workflowStatus} · {item.appSpaces.map(pageLabel).join(", ")}</span><strong>{item.chapter.title}</strong><small>{chapterDraftToPreview(item).pages.length} pages · v{item.chapter.version} · {item.category}</small></button><div className={kind === "draft" ? "three" : ""}><button type="button" onClick={() => openWorkshop(item, kind)}>Open</button>{kind === "draft" ? <><button type="button" onClick={() => copyDraft(item)}>Duplicate</button><button type="button" onClick={() => deleteDraft(item)}>Delete</button></> : null}{kind === "starter" ? <button type="button" onClick={() => createFromStarter(item)}>Use template</button> : null}{kind === "published" ? <button type="button" onClick={() => newPublishedVersion(item)}>Create next version</button> : null}</div></article>)}
+                  {group.items.map(({ draft: item, kind }) => <article key={`${kind}-${item.draftId}`}><button className="os-admin-draft-open" type="button" onClick={() => openWorkshop(item, kind)}><span>{kind === "starter" ? "First-use starter" : kind === "published" ? "Published" : item.workflowStatus} · {item.appSpaces.map(pageLabel).join(", ")}</span><strong>{item.chapter.title}</strong><small>{chapterDraftToPreview(item).pages.length} pages · v{item.chapter.version} · {item.category}</small></button><div className={kind === "draft" ? "three" : ""}><button type="button" onClick={() => kind === "draft" ? openDraftForPublish(item) : openWorkshop(item, kind)}>{kind === "draft" ? "Publish" : "Open"}</button>{kind === "draft" ? <><button type="button" onClick={() => copyDraft(item)}>Duplicate</button><button type="button" onClick={() => deleteDraft(item)}>Delete</button></> : null}{kind === "starter" ? <button type="button" onClick={() => createFromStarter(item)}>Use template</button> : null}{kind === "published" ? <button type="button" onClick={() => newPublishedVersion(item)}>Create next version</button> : null}</div></article>)}
                 </div>
-              </section>
+              </details>
             ))}
           </div>
         </section>
@@ -404,21 +461,28 @@ export function ChapterEditor() {
         <section className="os-admin-workshop" aria-label="Chapter Workshop">
           <div className="os-admin-workshop-bar"><button type="button" onClick={() => setView("library")}>← Library</button><span>{activeKind === "draft" ? "Tap the page text to edit" : activeKind === "starter" ? "Starter preview" : "Published preview"}</span></div>
           <div className="os-admin-workshop-title"><div><p>{activeKind === "draft" ? "Live editor" : "Preview"}</p><h2>{draft.chapter.title}</h2></div><ThemePicker value={draft.chapter.theme} onChange={chooseTheme} /></div>
-          <div className="os-admin-preview-pages" aria-label="Chapter pages">{preview.pages.map((item, index) => <button aria-pressed={index === previewPageIndex} key={item.id} type="button" onClick={() => jumpPreview(item.id)}><span>{index + 1}</span>{pageLabel(item.type)}</button>)}{activeKind === "draft" ? <button className="add" type="button" onClick={addPage}>+ Page</button> : null}</div>
-          <ChapterPlayer definition={preview} label="Editable chapter preview" onEditPage={activeKind === "draft" ? editPreviewPage : undefined} previewMode run={previewRun} onRunChange={setPreviewRun} />
+          <div className="os-admin-preview-pages" aria-label="Chapter pages">{preview.pages.map((item, index) => <button aria-pressed={index === previewPageIndex} key={item.id} type="button" onClick={() => jumpPreview(item.id)}><span>{index + 1}</span>{pageLabel(item.type)}</button>)}</div>
+          {activeKind === "draft" ? <div className="os-admin-preview-order"><button disabled={selectedPage <= 1} type="button" onClick={() => movePage(-1)}>Move earlier</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 2} type="button" onClick={() => movePage(1)}>Move later</button></div> : null}
+          <ChapterPlayer definition={preview} label="Editable chapter preview" onEditPage={activeKind === "draft" ? editPreviewPage : undefined} previewMode run={previewRun} onRunChange={syncPreviewRun} />
+          {activeKind === "draft" ? <button className="os-admin-add-page-preview" type="button" onClick={addPage}><span aria-hidden="true">+</span><strong>Add page</strong></button> : null}
 
           {activeKind === "starter" ? <button className="os-admin-preview-use" type="button" onClick={() => createFromStarter(draft)}>Use this starter</button> : null}
           {activeKind === "published" ? <button className="os-admin-preview-use" type="button" onClick={() => newPublishedVersion(draft)}>Create next version</button> : null}
 
           {activeKind === "draft" ? <>
             <details className="os-admin-panel"><summary>Chapter settings</summary><div className="os-admin-fields two">
-              <Field label="Title"><input value={draft.chapter.title} onChange={(event) => updateChapter("title", event.target.value)} /></Field><Field label="Chapter ID"><input value={draft.chapter.id} onChange={(event) => updateChapter("id", chapterSlug(event.target.value))} /></Field><Field label="Category"><input value={draft.category} onChange={(event) => updateDraft((next) => ({ ...next, category: event.target.value }))} /></Field><Field label="Classification"><select value={draft.classification} onChange={(event) => updateDraft((next) => ({ ...next, classification: event.target.value as ChapterDraft["classification"] }))}>{CHAPTER_CLASSIFICATIONS.map((item) => <option key={item}>{item}</option>)}</select></Field><Field label="Session"><input value={draft.chapter.session} onChange={(event) => updateChapter("session", chapterSlug(event.target.value))} /></Field><Field label="Version"><input min="1" type="number" value={draft.chapter.version} onChange={(event) => updateChapter("version", Number(event.target.value))} /></Field><Field label="Minutes"><input min="1" type="number" value={draft.chapter.estimatedMinutes} onChange={(event) => updateChapter("estimatedMinutes", Number(event.target.value))} /></Field><Field label="Purpose"><textarea rows={3} value={draft.chapter.purpose} onChange={(event) => updateChapter("purpose", event.target.value)} /></Field><Field label="Tags"><input value={draft.tags.join(", ")} onChange={(event) => updateDraft((next) => ({ ...next, tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) }))} /></Field><Field label="App spaces"><input value={draft.appSpaces.join(", ")} onChange={(event) => updateDraft((next) => ({ ...next, appSpaces: event.target.value.split(",").map((space) => chapterSlug(space)).filter(Boolean) }))} /></Field>
+              <Field label="Title"><input value={draft.chapter.title} onChange={(event) => updateChapter("title", event.target.value)} /></Field><Field label="Chapter ID"><input value={draft.chapter.id} onChange={(event) => updateChapter("id", chapterSlug(event.target.value))} /></Field><Field label="Category"><input value={draft.category} onChange={(event) => updateDraft((next) => ({ ...next, category: event.target.value }))} /></Field><Field label="Classification"><select value={draft.classification} onChange={(event) => updateDraft((next) => ({ ...next, classification: event.target.value as ChapterDraft["classification"] }))}>{CHAPTER_CLASSIFICATIONS.map((item) => <option key={item}>{item}</option>)}</select></Field><Field label="Session"><input value={draft.chapter.session} onChange={(event) => updateChapter("session", chapterSlug(event.target.value))} /></Field><Field label="Version"><input min="1" type="number" value={draft.chapter.version} onChange={(event) => updateChapter("version", Number(event.target.value))} /></Field><Field label="Minutes"><input min="1" type="number" value={draft.chapter.estimatedMinutes} onChange={(event) => updateChapter("estimatedMinutes", Number(event.target.value))} /></Field><Field label="Purpose"><textarea rows={3} value={draft.chapter.purpose} onChange={(event) => updateChapter("purpose", event.target.value)} /></Field><Field label="Tags"><input value={draft.tags.join(", ")} onChange={(event) => updateDraft((next) => ({ ...next, tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) }))} /></Field>
             </div></details>
             <details className="os-admin-panel" open><summary>Page settings · {pageLabel(page.type)}</summary><div className="os-admin-fields two">
               <Field label="Page type"><select disabled={selectedPage === 0 || selectedPage === draft.chapter.pages.length - 1} value={page.type} onChange={(event) => changePageType(event.target.value as ChapterPageType)}>{AUTHORABLE_PAGE_TYPES.map((item) => <option key={item} value={item}>{pageLabel(item)}</option>)}</select></Field><Field label="Page ID"><input value={page.id} onChange={(event) => updatePage("id", chapterSlug(event.target.value))} /></Field>{INPUT_TYPES.has(page.type) ? <><Field label="Answer key"><input value={page.answerKey || ""} onChange={(event) => updatePage("answerKey", chapterSlug(event.target.value))} /></Field><label className="os-admin-check"><input checked={Boolean(page.required)} type="checkbox" onChange={(event) => updatePage("required", event.target.checked)} /><span>Answer required</span></label></> : null}{["short-text", "long-text"].includes(page.type) ? <Field label="Placeholder"><input value={page.placeholder || ""} onChange={(event) => updatePage("placeholder", event.target.value)} /></Field> : null}{CUSTOM_FOOTER_TYPES.has(page.type) ? <Field label="Button text"><input value={page.button || ""} onChange={(event) => updatePage("button", event.target.value)} /></Field> : null}
             </div>{["single-choice", "multi-choice"].includes(page.type) ? <div className="os-admin-options"><h3>Choices</h3>{(page.options || []).map((option, index) => <div key={`${option.id}-${index}`}><input aria-label={`Option ${index + 1} ID`} value={option.id} onChange={(event) => updateDraft((next) => { next.chapter.pages[selectedPage].options![index].id = chapterSlug(event.target.value); return next; })} /><input aria-label={`Option ${index + 1} label`} value={option.label} onChange={(event) => updateDraft((next) => { next.chapter.pages[selectedPage].options![index].label = event.target.value; return next; })} /><button aria-label={`Remove option ${index + 1}`} type="button" onClick={() => updateDraft((next) => { next.chapter.pages[selectedPage].options!.splice(index, 1); return next; })}>×</button></div>)}<button type="button" onClick={() => updateDraft((next) => { const options = next.chapter.pages[selectedPage].options ||= []; options.push({ id: `option-${options.length + 1}`, label: `Option ${options.length + 1}` }); return next; })}>Add choice</button></div> : null}<div className="os-admin-page-actions"><button disabled={selectedPage === 0 || selectedPage === draft.chapter.pages.length - 1} type="button" onClick={duplicatePage}>Duplicate page</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 1} type="button" onClick={deletePage}>Delete page</button><button disabled={selectedPage <= 1} type="button" onClick={() => movePage(-1)}>Move earlier</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 2} type="button" onClick={() => movePage(1)}>Move later</button></div></details>
+            <div className="os-admin-panel os-admin-publish-settings">
+              <Field label="Destination app"><select value={draft.appSpaces[0] || ""} onChange={(event) => updateDraft((next) => ({ ...next, appSpaces: event.target.value ? [event.target.value] : [] }))}><option value="">Choose an app</option>{APP_TARGETS.map((target) => <option key={target.value} value={target.value}>{target.label}</option>)}</select></Field>
+              <label className="os-admin-check"><input checked={draft.chapter.showPageNumbers !== false} type="checkbox" onChange={(event) => updateChapter("showPageNumbers", event.target.checked)} /><span>Show page numbers</span></label>
+            </div>
             {errors.length ? <div className="os-admin-errors" role="status"><strong>Before ready</strong><ul>{errors.map((error) => <li key={error}>{error}</li>)}</ul></div> : <p className="os-admin-valid">Ready checks passed.</p>}
             <div className="os-admin-actions os-admin-final-actions"><button type="button" onClick={() => downloadMarkdown(draft)}>Export Markdown</button><button type="button" onClick={() => saveDraft()}>Save draft</button><button disabled={errors.length > 0} type="button" onClick={() => saveDraft("ready")}>Mark ready</button><button disabled={errors.length > 0 || publishing} type="button" onClick={() => publishChapter("private")}>Publish privately</button><button disabled={errors.length > 0 || publishing} type="button" onClick={() => publishChapter("public")}>Publish publicly</button></div>
+            {lastAction ? <p className="os-admin-publish-status success" role="status">{lastAction === "saved" ? "Saved ✓" : lastAction === "ready" ? "Ready ✓" : "Published ✓"}</p> : null}
             {publishState ? <p className="os-admin-publish-status" role="status">{publishState}</p> : null}
           </> : null}
         </section>
