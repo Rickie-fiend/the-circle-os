@@ -17,7 +17,7 @@ export function useChapterPublications(enabled = true) {
 
   useEffect(() => {
     if (!enabled) return;
-    void refresh();
+    queueMicrotask(() => void refresh());
     const onVisible = () => {
       if (document.visibilityState === "visible") void refresh();
     };

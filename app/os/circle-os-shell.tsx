@@ -1020,10 +1020,22 @@ export function TodayExperience() {
   const [liveNow, setLiveNow] = useState(() => new Date());
   const [liveMarkerTop, setLiveMarkerTop] = useState<number | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
-  const [profileSparkChapters, setProfileSparkChapters] = useState(
-    [] as ChapterDefinition[],
-  );
   const { publications } = useChapterPublications(ready);
+  const profileSparkChapters = useMemo(() => {
+    const profileId = state.ai.profileId || "local";
+    const chapters = publications
+      .map(normalizeChapterPublication)
+      .filter(
+        (publication) =>
+          publication.targetApp === "note" &&
+          (publication.visibility === "public" ||
+            publication.audienceProfileId === profileId ||
+            publication.audienceProfileId === "local"),
+      )
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+      .map((publication) => publication.chapter);
+    return latestCheckInChapters(chapters);
+  }, [publications, state.ai.profileId]);
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
   const [checkInAttention, setCheckInAttention] = useState(0);
@@ -1170,22 +1182,6 @@ export function TodayExperience() {
   const visibleCheckInApp = Math.min(checkInThoughtsApp, checkInApp);
 
   useEffect(() => {
-    const profileId = state.ai.profileId || "local";
-    const chapters = publications
-      .map(normalizeChapterPublication)
-      .filter(
-        (publication) =>
-          publication.targetApp === "note" &&
-          (publication.visibility === "public" ||
-            publication.audienceProfileId === profileId ||
-            publication.audienceProfileId === "local"),
-      )
-      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-      .map((publication) => publication.chapter);
-    setProfileSparkChapters(latestCheckInChapters(chapters));
-  }, [publications, state.ai.profileId]);
-
-  useEffect(() => {
     if (visibleCheckInApp !== checkInThoughtsApp) return;
     if (thoughtLabelTimer.current) {
       window.clearTimeout(thoughtLabelTimer.current);
@@ -1208,6 +1204,17 @@ export function TodayExperience() {
     profileSparkChapters.find(
       (chapter) => chapter.id === forcedProfileSparkId,
     ) || null;
+  const profileSparkPublication = useMemo(() => {
+    if (!profileSparkChapter) return null;
+    return publications
+      .map(normalizeChapterPublication)
+      .filter(
+        (publication) =>
+          publication.targetApp === "note" &&
+          chapterRunId(publication.chapter) === chapterRunId(profileSparkChapter),
+      )
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0] || null;
+  }, [profileSparkChapter, publications]);
   const profileSparkRun = useMemo(() => {
     if (!profileSparkChapter) return null;
     if (
@@ -1222,13 +1229,21 @@ export function TodayExperience() {
         }
       );
     }
+    const storedRun = state.chapters.runs[chapterRunId(profileSparkChapter)];
+    if (
+      profileSparkPublication &&
+      publicationIsNewerThanRun(profileSparkPublication, storedRun)
+    ) {
+      return createChapterRun(profileSparkChapter);
+    }
     return (
-      state.chapters.runs[chapterRunId(profileSparkChapter)] ||
+      storedRun ||
       createChapterRun(profileSparkChapter)
     );
   }, [
     manualProfileSparkRunId,
     profileSparkChapter,
+    profileSparkPublication,
     state.chapters.runs,
   ]);
   const publicationProfileId = state.ai.profileId || "local";
@@ -1859,7 +1874,21 @@ export function TodayExperience() {
     }
     const chapter = profileSparkChapters.find((candidate) => {
       const candidateRun = state.chapters.runs[chapterRunId(candidate)];
-      return candidateRun?.status !== "completed";
+      const candidatePublication = publications
+        .map(normalizeChapterPublication)
+        .filter(
+          (publication) =>
+            publication.targetApp === "note" &&
+            chapterRunId(publication.chapter) === chapterRunId(candidate),
+        )
+        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0];
+      return (
+        candidateRun?.status !== "completed" ||
+        Boolean(
+          candidatePublication &&
+          publicationIsNewerThanRun(candidatePublication, candidateRun),
+        )
+      );
     });
     if (!chapter) return false;
     const selectedRun = state.chapters.runs[chapterRunId(chapter)];
