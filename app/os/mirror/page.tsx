@@ -19,10 +19,13 @@ import {
   summarizeWeek,
 } from "../circle-os-model.js";
 import {
+  PublishedChapterDelivery,
   useCircleState,
   type TimeBlock,
 } from "../circle-os-shell";
 import { SwipeSession } from "../app-session";
+import { selectPendingAppPublication } from "../chapters/chapter-publication-store";
+import { useChapterPublications } from "../chapters/use-chapter-publications";
 
 const ACTIVITY_COLORS = [
   "activity-focus",
@@ -160,6 +163,7 @@ export default function CircleOSMirror() {
     updateProfile,
     updateState,
   } = useCircleState();
+  const { publications } = useChapterPublications(ready);
   const router = useRouter();
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
@@ -174,6 +178,25 @@ export default function CircleOSMirror() {
   });
   const summary = summarizeWeek(state);
   const profileCase = state.profile.profileCase;
+  const publicationProfileId = state.ai.profileId || "local";
+  const visionPublication = selectPendingAppPublication(
+    publications,
+    "vision",
+    publicationProfileId,
+    state.chapters.runs,
+  );
+  const weekPublication = selectPendingAppPublication(
+    publications,
+    "seven-days",
+    publicationProfileId,
+    state.chapters.runs,
+  );
+  const athenaPublication = selectPendingAppPublication(
+    publications,
+    "athena",
+    publicationProfileId,
+    state.chapters.runs,
+  );
   const pastDays = summary.days.filter((item) => item.key !== dateKey);
   const loggedPastDays = pastDays.filter(
     (item) => item.day.timeBlocks.length > 0,
@@ -537,6 +560,13 @@ export default function CircleOSMirror() {
         </header>
 
         <section className="vision-profile-case" aria-label="The life you want">
+          {visionPublication ? (
+            <PublishedChapterDelivery
+              className="vision-life-apps"
+              label="Vision chapter"
+              publication={visionPublication}
+            />
+          ) : (
           <SwipeSession
             attentionKey={`vision-life:${lifeJourneyVersion}`}
             availableIndices={[0, 1, 2]}
@@ -568,6 +598,7 @@ export default function CircleOSMirror() {
               placeholder: "Tap to write your mission.",
             })}
           </SwipeSession>
+          )}
         </section>
 
         <header className="mirror-intro mirror-week-intro">
@@ -578,6 +609,13 @@ export default function CircleOSMirror() {
         </header>
 
         <section className="vision-week-session" aria-label="Last seven days session">
+          {weekPublication ? (
+            <PublishedChapterDelivery
+              className="vision-week-apps"
+              label="Last seven days chapter"
+              publication={weekPublication}
+            />
+          ) : (
           <SwipeSession
             attentionKey={`vision-week:${weekJourneyVersion}`}
             availableIndices={
@@ -745,6 +783,7 @@ export default function CircleOSMirror() {
                 </div>
               </article>
           </SwipeSession>
+          )}
         </section>
 
         <header className="mirror-intro analysis-intro">
@@ -759,6 +798,13 @@ export default function CircleOSMirror() {
           className="vision-analysis-session"
           aria-label="AI profile session"
         >
+          {athenaPublication ? (
+            <PublishedChapterDelivery
+              className="vision-analysis-apps athena-reader-session"
+              label="Athena chapter"
+              publication={athenaPublication}
+            />
+          ) : (
           <SwipeSession
             attentionKey={`athena:${profileJourneyVersion}`}
             availableIndices={
@@ -803,6 +849,7 @@ export default function CircleOSMirror() {
                 ["personality", "Personality"],
               ])}
           </SwipeSession>
+          )}
         </section>
 
         <header className="mirror-intro gap-intro">

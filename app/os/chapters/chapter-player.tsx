@@ -95,6 +95,7 @@ function ChapterPageView({
   idleBody,
   idleContent,
   idleFooter,
+  hideIdleHeading,
   onEdit,
 }: {
   chapter: ChapterDefinition;
@@ -111,6 +112,7 @@ function ChapterPageView({
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
+  hideIdleHeading?: boolean;
   onEdit?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
   const required = Boolean(page.required);
@@ -227,7 +229,7 @@ function ChapterPageView({
       <PageLayout
         className={`os-chapter-card os-chapter-${page.type} theme-${chapter.theme}`}
         footer={isIdle ? idleFooter : quietFooter}
-        heading={isIdle ? <h2>{title}</h2> : undefined}
+        heading={isIdle && !hideIdleHeading ? <h2>{title}</h2> : undefined}
         headerLeft={isIdle ? <p className="os-card-label">{chapter.session}</p> : undefined}
         headerRight={isIdle ? idleHeaderAction : !isCompletionPage ? progress : undefined}
         theme={chapter.theme}
@@ -424,6 +426,7 @@ export function ChapterPlayer({
   idleBody,
   idleContent,
   idleFooter,
+  hideIdleHeading = false,
   idleApps = [],
   idleAppIndex = 0,
   onIdleAppIndexChange,
@@ -449,6 +452,7 @@ export function ChapterPlayer({
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
+  hideIdleHeading?: boolean;
   idleApps?: ReactNode[];
   idleAppIndex?: number;
   onIdleAppIndexChange?: (index: number) => void;
@@ -721,6 +725,7 @@ export function ChapterPlayer({
           idleBody={idleBody}
           idleContent={idleContent}
           idleFooter={idleFooter}
+          hideIdleHeading={hideIdleHeading}
           onEdit={onEditPage}
           onComplete={(submission) =>
             onRunChange(

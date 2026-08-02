@@ -170,6 +170,13 @@ Used for charts, weekly views, and other things worth reading again.
   chapter elsewhere creates another immutable publication version.
 - Admin publications default to manual delivery. Athena publications default to
   on-view delivery. Public publication always needs explicit approval.
+- A pending publication renders directly inside its assigned App Box. Note is
+  the only recallable destination in this testing release: its mode label can
+  reopen the newest unfinished or dismissed Note journey.
+- Thoughts, Habit, Log, Vision, Seven Days, and Athena publications are
+  one-time journeys. Completion retires them and restores the normal App.
+  Dismissal, when that App offers it, also retires the delivery rather than
+  adding it to a recall queue.
 
 ## Page arrival
 

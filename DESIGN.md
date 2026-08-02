@@ -60,8 +60,13 @@ geometry and hierarchy.
 
 ## Chapter delivery
 
-- The Check-in Note Page is the resting state. Published chapter covers appear
-  only after a deliberate tap on the Check-in label in this release.
+- A published chapter cover appears directly inside its assigned App Box.
+- Note remains the one deliberate, recallable destination: its idle Page stays
+  visible until the person taps the Note mode label, and that label can recall
+  the newest unfinished or dismissed Note chapter.
+- Thoughts, Habit, Log, Vision, Seven Days, and Athena use one-time deliveries
+  in this testing release. After completion or dismissal, their ordinary App
+  content returns and the chapter is not recalled from the mode label.
 - Private publications stay on that browser and work offline. Public
   publications use immutable Markdown sources through the connected Circle OS
   server and are cached on the device.

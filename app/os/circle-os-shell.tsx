@@ -62,13 +62,76 @@ import {
 } from "./chapters/registry";
 import {
   normalizeChapterPublication,
-  readChapterPublications,
+  selectPendingAppPublication,
 } from "./chapters/chapter-publication-store";
+import { useChapterPublications } from "./chapters/use-chapter-publications";
 import type {
   ChapterDefinition,
+  ChapterPublication,
   ChapterRun,
   ChapterSubmission,
 } from "./chapters/chapter-types";
+
+export function PublishedChapterDelivery({
+  publication,
+  className,
+  backApp,
+  hideIdleHeading = false,
+  label,
+}: {
+  publication: ChapterPublication;
+  className: string;
+  backApp?: ReactNode;
+  hideIdleHeading?: boolean;
+  label: string;
+}) {
+  const { state, updateState } = useCircleState();
+  const chapter = publication.chapter;
+  const run = state.chapters.runs[chapterRunId(chapter)] || createChapterRun(chapter);
+
+  function saveRun(nextRun: ChapterRun) {
+    updateState((current) => {
+      const previous = current.chapters.runs[nextRun.runId];
+      let next = storeChapterRun(current, nextRun, chapter.session);
+      if (nextRun.status === "completed" && previous?.status !== "completed") {
+        next = queueProfileUpdate(next, "survey-answer");
+      }
+      return next;
+    });
+  }
+
+  function dismiss() {
+    const timestamp = new Date().toISOString();
+    updateState((current) =>
+      storeChapterRun(
+        current,
+        {
+          ...run,
+          deferCount: (run.deferCount || 0) + 1,
+          deferredAt: timestamp,
+          dismissedAt: timestamp,
+          updatedAt: timestamp,
+        },
+        chapter.session,
+      ),
+    );
+  }
+
+  return (
+    <ChapterPlayer
+      attentionKey={`publication:${publication.targetApp}:${chapter.id}:${chapter.version}`}
+      backApp={backApp}
+      className={className}
+      definition={chapter}
+      hideIdleHeading={hideIdleHeading}
+      key={chapterRunId(chapter)}
+      label={label}
+      onBackAppShown={backApp ? dismiss : undefined}
+      onRunChange={saveRun}
+      run={run}
+    />
+  );
+}
 
 type CheckIn = {
   period: string;
@@ -956,6 +1019,7 @@ export function TodayExperience() {
   const [profileSparkChapters, setProfileSparkChapters] = useState(
     [] as ChapterDefinition[],
   );
+  const { publications } = useChapterPublications(ready);
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
   const [checkInAttention, setCheckInAttention] = useState(0);
@@ -1102,27 +1166,20 @@ export function TodayExperience() {
   const visibleCheckInApp = Math.min(checkInThoughtsApp, checkInApp);
 
   useEffect(() => {
-    if (!ready) return;
-    let cancelled = false;
-    async function loadAvailableChapters() {
-      const stored = await readChapterPublications().catch(() => []);
-      const profileId = state.ai.profileId || "local";
-      const chapters = stored
-        .map(normalizeChapterPublication)
-        .filter((publication) =>
-          publication.visibility === "private" &&
+    const profileId = state.ai.profileId || "local";
+    const chapters = publications
+      .map(normalizeChapterPublication)
+      .filter(
+        (publication) =>
           publication.targetApp === "note" &&
-          (publication.audienceProfileId === profileId || publication.audienceProfileId === "local")
-        )
-        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-        .map((publication) => publication.chapter);
-      if (!cancelled) setProfileSparkChapters(latestCheckInChapters(chapters));
-    }
-    void loadAvailableChapters();
-    return () => {
-      cancelled = true;
-    };
-  }, [ready, state.ai.baseUrl, state.ai.profileId, state.ai.token]);
+          (publication.visibility === "public" ||
+            publication.audienceProfileId === profileId ||
+            publication.audienceProfileId === "local"),
+      )
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+      .map((publication) => publication.chapter);
+    setProfileSparkChapters(latestCheckInChapters(chapters));
+  }, [publications, state.ai.profileId]);
 
   useEffect(() => {
     if (visibleCheckInApp !== checkInThoughtsApp) return;
@@ -1170,6 +1227,25 @@ export function TodayExperience() {
     profileSparkChapter,
     state.chapters.runs,
   ]);
+  const publicationProfileId = state.ai.profileId || "local";
+  const thoughtsPublication = selectPendingAppPublication(
+    publications,
+    "thoughts",
+    publicationProfileId,
+    state.chapters.runs,
+  );
+  const habitPublication = selectPendingAppPublication(
+    publications,
+    "habit",
+    publicationProfileId,
+    state.chapters.runs,
+  );
+  const logPublication = selectPendingAppPublication(
+    publications,
+    "log",
+    publicationProfileId,
+    state.chapters.runs,
+  );
   const defaultLogStartHour = Math.max(CIRCLE_DAY_START_HOUR, wakeHour);
   const defaultLogEndHour = Math.min(
     CIRCLE_DAY_START_HOUR + 23,
@@ -2250,6 +2326,13 @@ export function TodayExperience() {
               onBackAppShown={deferProfileSparkRun}
               onRunChange={saveProfileSparkRun}
             />
+          ) : thoughtsPublication ? (
+            <PublishedChapterDelivery
+              backApp={checkInThoughtsCard()}
+              className="os-checkin-session"
+              label="Thoughts chapter"
+              publication={thoughtsPublication}
+            />
           ) : (
           <SwipeSession
             availableIndices={thoughtSent ? [checkInThoughtsApp] : [checkInIdleApp, checkInThoughtsApp]}
@@ -2290,7 +2373,16 @@ export function TodayExperience() {
           )}
         </section>
 
-        {activeHabitChapter && activeHabitRun ? (
+        {habitPublication ? (
+          <section className="os-habit" aria-label="Habit session">
+            <PublishedChapterDelivery
+              className="os-habit-session"
+              hideIdleHeading
+              label="Habit chapter"
+              publication={habitPublication}
+            />
+          </section>
+        ) : activeHabitChapter && activeHabitRun ? (
           <section className="os-habit" aria-label="Habit session">
             <ChapterPlayer
               className="os-habit-session"
@@ -2412,6 +2504,7 @@ export function TodayExperience() {
                   </button>
                 ) : undefined
               }
+              hideIdleHeading
               idleActionLabel={today.mission.completed ? "Completed" : undefined}
               idleActionPressed={today.mission.completed}
               idleApps={[
@@ -2515,7 +2608,15 @@ export function TodayExperience() {
           </section>
         ) : null}
 
-        {!logSetupDone && logSetupChapter && logSetupRun ? (
+        {logPublication ? (
+          <section className="os-day os-day-gated" aria-label="Log chapter">
+            <PublishedChapterDelivery
+              className="os-log-setup-session"
+              label="Log chapter"
+              publication={logPublication}
+            />
+          </section>
+        ) : !logSetupDone && logSetupChapter && logSetupRun ? (
           <section
             className="os-day os-day-gated"
             aria-label="Log setup session"

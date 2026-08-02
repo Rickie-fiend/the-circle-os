@@ -1,4 +1,12 @@
-import type { AppTarget, ChapterDefinition, ChapterPublication } from "./chapter-types";
+import { chapterRunId } from "./chapter-model.js";
+import type {
+  AppTarget,
+  ChapterDefinition,
+  ChapterPublication,
+  ChapterRun,
+} from "./chapter-types";
+
+export const CHAPTER_PUBLICATION_EVENT = "circle-os:chapter-published";
 
 export type StoredChapterPublication = {
   key: string;
@@ -119,4 +127,36 @@ export function normalizeChapterPublication(
     source: publication.source === "athena" ? "athena" : "admin",
     publishedAt: publication.publishedAt,
   };
+}
+
+export function selectPendingAppPublication(
+  publications: StoredChapterPublication[],
+  targetApp: AppTarget,
+  audienceProfileId: string,
+  runs: Record<string, ChapterRun>,
+  options: { includeDeferred?: boolean } = {},
+) {
+  return (
+    publications
+      .map(normalizeChapterPublication)
+      .filter(
+        (publication) =>
+          publication.targetApp === targetApp &&
+          (publication.visibility === "public" ||
+            publication.audienceProfileId === audienceProfileId ||
+            publication.audienceProfileId === "local"),
+      )
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+      .find((publication) => {
+        const run = runs[chapterRunId(publication.chapter)];
+        return run?.status !== "completed" &&
+          (options.includeDeferred || !run?.deferredAt);
+      }) || null
+  );
+}
+
+export function announceChapterPublication() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(CHAPTER_PUBLICATION_EVENT));
+  }
 }

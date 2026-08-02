@@ -8,6 +8,7 @@ import { ChapterPlayer } from "../chapters/chapter-player";
 import { createChapterRun } from "../chapters/chapter-model.js";
 import { publishedChapters } from "../chapters/registry";
 import {
+  announceChapterPublication,
   writeChapterPublication,
   writeImmutableChapterPublication,
 } from "../chapters/chapter-publication-store";
@@ -327,6 +328,7 @@ export function ChapterEditor() {
           delivery: "manual",
         });
       }
+      announceChapterPublication();
       await persistDraft(publishedDraft);
       setSaveState(scope === "private" ? "Published on this device" : "Published for connected Circle OS users");
       setPublishState(scope === "private" ? "Private chapter published." : "Public chapter published.");
