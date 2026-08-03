@@ -4893,6 +4893,16 @@
   margin-top: 18px;
 }
 
+.circle-os .athena-reader-app .athena-memory-copy {
+  color: #fff8f1;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.06rem;
+  font-weight: 560;
+  line-height: 1.58;
+  margin: 0.8rem 0 0;
+  white-space: pre-wrap;
+}
+
 /* Editing stays visually identical to reading. Only the caret signals the
    edit state, and multiline copy grows the App Box downward. */
 .circle-os textarea,

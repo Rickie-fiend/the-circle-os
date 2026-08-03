@@ -26,6 +26,7 @@ import {
 import { SwipeSession } from "../app-session";
 import { selectPendingAppPublication } from "../chapters/chapter-publication-store";
 import { useChapterPublications } from "../chapters/use-chapter-publications";
+import { buildAthenaReading } from "../athena-memory-model.js";
 
 const ACTIVITY_COLORS = [
   "activity-focus",
@@ -243,8 +244,15 @@ export default function CircleOSMirror() {
         : weekReady
           ? "Your week is starting to show a pattern."
           : "Your week starts here.";
-  const profileReady = hasReadableProfileCase(profileCase);
-  const updateLabel = formatUpdated(profileCase.updatedAt);
+  const athenaReading = buildAthenaReading(state.athenaMemory);
+  const profileReady = athenaReading.ready || hasReadableProfileCase(profileCase);
+  const readingUpdatedAt =
+    String(athenaReading.updatedAt || "").localeCompare(
+      String(profileCase.updatedAt || ""),
+    ) >= 0
+      ? athenaReading.updatedAt
+      : profileCase.updatedAt;
+  const updateLabel = formatUpdated(readingUpdatedAt);
   const gapReading = gapVisualReading(
     profileCase.sessions.gap.text,
     loggedPastDays,
@@ -256,7 +264,7 @@ export default function CircleOSMirror() {
     pastCheckIns,
     pastMissionWins,
   ].join("|");
-  const profileJourneyVersion = profileCase.updatedAt || profileCase.status;
+  const profileJourneyVersion = readingUpdatedAt || profileCase.status;
   const lifeJourneyVersion = [
     "vision-cover-v1",
     profileCase.sessions.typicalTuesday.updatedAt,
@@ -467,10 +475,11 @@ export default function CircleOSMirror() {
     );
   }
 
-  function profileReaderApp(
+  function athenaReaderApp(
     label: string,
     title: string,
-    keys: Array<[string, string]>,
+    memorySections: Array<{ heading: string; text: string }>,
+    fallbackKeys: Array<[string, string]>,
   ) {
     return (
       <article className="athena-reader-app" key={label}>
@@ -479,7 +488,18 @@ export default function CircleOSMirror() {
           <h2>{title}</h2>
         </header>
         <div className="athena-reader-copy">
-          {keys.map(([key, heading]) => profileArticleSection(key, heading))}
+          {memorySections.length
+            ? memorySections.map((section) => (
+                <section className="profile-article-part" key={section.heading}>
+                  <div>
+                    <h2>{section.heading}</h2>
+                  </div>
+                  <p className="athena-memory-copy">{section.text}</p>
+                </section>
+              ))
+            : fallbackKeys.map(([key, heading]) =>
+                profileArticleSection(key, heading),
+              )}
         </div>
       </article>
     );
@@ -838,16 +858,27 @@ export default function CircleOSMirror() {
                 {profileReady ? "Swipe to begin" : "Still learning"}
               </span>
             </div>
-              {profileReaderApp("Your days", "The life you are living.", [
-                ["currentLife", "Current life"],
-              ])}
-              {profileReaderApp("What feels alive", "What matters to you.", [
-                ["whatMatters", "What matters"],
-                ["interests", "Interests"],
-              ])}
-              {profileReaderApp("Your shape", "How you may move through life.", [
-                ["personality", "Personality"],
-              ])}
+              {athenaReaderApp(
+                "Your days",
+                "The life you are living.",
+                athenaReading.pages.days,
+                [["currentLife", "Current life"]],
+              )}
+              {athenaReaderApp(
+                "What feels alive",
+                "What matters to you.",
+                athenaReading.pages.alive,
+                [
+                  ["whatMatters", "What matters"],
+                  ["interests", "Interests"],
+                ],
+              )}
+              {athenaReaderApp(
+                "Your shape",
+                "How you may move through life.",
+                athenaReading.pages.shape,
+                [["personality", "Personality"]],
+              )}
           </SwipeSession>
           )}
         </section>

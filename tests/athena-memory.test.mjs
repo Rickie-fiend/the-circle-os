@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildAthenaReading,
   captureAthenaThought,
   createAthenaMemory,
   extractAthenaFacts,
@@ -12,6 +13,42 @@ import {
   serializeAthenaMemoryMarkdown,
   suppressAthenaObservation,
 } from "../app/os/athena-memory-model.js";
+
+test("builds Athena Reading from active source-linked memory", () => {
+  const reading = buildAthenaReading({
+    updatedAt: "2026-08-03T08:00:00.000Z",
+    ledger: [
+      {
+        id: "film-perfect-days",
+        kind: "film",
+        label: "Perfect Days",
+        state: "watched",
+        statement: "Perfect Days was watched.",
+        status: "active",
+      },
+    ],
+    rhythms: [
+      {
+        id: "late-sleep",
+        statement: "Sleep has recently begun late.",
+        status: "active",
+      },
+    ],
+    portrait: [
+      {
+        id: "suppressed-guess",
+        statement: "This should stay hidden.",
+        status: "suppressed",
+      },
+    ],
+  });
+
+  assert.equal(reading.ready, true);
+  assert.equal(reading.updatedAt, "2026-08-03T08:00:00.000Z");
+  assert.equal(reading.pages.days[0].text, "Sleep has recently begun late.");
+  assert.match(reading.pages.alive[0].text, /Perfect Days was watched/);
+  assert.equal(reading.pages.shape.length, 0);
+});
 
 const at = "2026-08-03T06:15:00.000Z";
 

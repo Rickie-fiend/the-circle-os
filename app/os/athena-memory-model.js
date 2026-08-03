@@ -151,6 +151,64 @@ export function normalizeAthenaMemory(value) {
   };
 }
 
+function activeAthenaItems(items) {
+  return (Array.isArray(items) ? items : []).filter(
+    (item) => item && item.status !== "suppressed",
+  );
+}
+
+function observationText(item) {
+  return cleanText(
+    item?.statement ||
+      (item?.label
+        ? `${item.label}${item.state ? ` — ${item.state}` : ""}.`
+        : ""),
+    1_200,
+  );
+}
+
+function readingSection(heading, items) {
+  const text = activeAthenaItems(items)
+    .map(observationText)
+    .filter(Boolean)
+    .join(" ");
+  return text ? { heading, text } : null;
+}
+
+/**
+ * @param {...({ heading: string, text: string } | null)} sections
+ * @returns {Array<{ heading: string, text: string }>}
+ */
+function compactReadingSections(...sections) {
+  return sections.filter(Boolean);
+}
+
+/**
+ * Projects Athena's private, source-linked memory into the readable blog.
+ * Raw evidence remains untouched; suppressed observations never appear.
+ */
+export function buildAthenaReading(memoryValue) {
+  const memory = normalizeAthenaMemory(memoryValue);
+  const pages = {
+    days: compactReadingSections(
+      readingSection("Recent rhythm", memory.rhythms),
+    ),
+    alive: compactReadingSections(
+      readingSection("What seems to matter", memory.tastes),
+      readingSection("What Athena remembers", memory.ledger),
+    ),
+    shape: compactReadingSections(
+      readingSection("A working guess", memory.portrait),
+    ),
+  };
+
+  return {
+    updatedAt: memory.updatedAt || memory.lastPreparedAt || null,
+    ready: Object.values(pages).some((sections) => sections.length > 0),
+    pages,
+  };
+}
+
 export function mergeAthenaMemory(leftValue, rightValue) {
   const left = normalizeAthenaMemory(leftValue);
   const right = normalizeAthenaMemory(rightValue);
