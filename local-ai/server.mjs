@@ -17,6 +17,11 @@ import {
   getDateKey,
   normalizeState,
 } from "../app/os/circle-os-model.js";
+import {
+  mergeAthenaMemory,
+  normalizeAthenaMemory,
+  serializeAthenaMemoryMarkdown,
+} from "../app/os/athena-memory-model.js";
 
 const profileIdPattern = /^p_[A-Za-z0-9_-]{16}$/;
 const chapterIdPattern = /^[a-z0-9][a-z0-9-]*$/;
@@ -216,6 +221,10 @@ export function mergeClientState(serverValue, phoneValue) {
     appSessions: mergeUpdatedRecords(
       server.appSessions,
       phone.appSessions,
+    ),
+    athenaMemory: mergeAthenaMemory(
+      server.athenaMemory,
+      phone.athenaMemory,
     ),
     ai: {
       ...server.ai,
@@ -674,6 +683,16 @@ function readProfileState(vaultPath, profileId) {
       readFileSync(profilePath, "utf8"),
     );
   }
+  const athenaMemoryPath = join(directory, "Athena Memory.json");
+  if (existsSync(athenaMemoryPath)) {
+    state = {
+      ...state,
+      athenaMemory: mergeAthenaMemory(
+        state.athenaMemory,
+        readJson(athenaMemoryPath),
+      ),
+    };
+  }
   return state;
 }
 
@@ -712,6 +731,15 @@ function saveProfileState(
       lastAnalyzed: metadata.last_analyzed || "",
       analysisPending,
     }),
+  );
+  const athenaMemory = normalizeAthenaMemory(state.athenaMemory);
+  writeAtomic(
+    join(directory, "Athena Memory.json"),
+    `${JSON.stringify(athenaMemory, null, 2)}\n`,
+  );
+  writeAtomic(
+    join(directory, "Athena Memory.md"),
+    serializeAthenaMemoryMarkdown(athenaMemory, profileId),
   );
   mkdirSync(join(directory, "Days"), { recursive: true });
   for (const day of Object.values(state.days)) {

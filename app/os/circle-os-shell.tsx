@@ -418,6 +418,34 @@ export type CircleState = {
       updatedAt: string;
     }
   >;
+  athenaMemory: {
+    version: number;
+    updatedAt: string;
+    lastPreparedAt: string;
+    ledger: Array<{
+      id: string;
+      kind: string;
+      label: string;
+      state: string;
+      confidence: number;
+      stability: string;
+      sourceRefs: Array<{
+        sourceId: string;
+        sourceType: string;
+        capturedAt: string;
+        excerpt?: string;
+      }>;
+      firstSeenAt: string;
+      lastSeenAt: string;
+      status: "active" | "suppressed";
+    }>;
+    tastes: Array<Record<string, unknown>>;
+    rhythms: Array<Record<string, unknown>>;
+    portrait: Array<Record<string, unknown>>;
+    curiosity: Array<Record<string, unknown>>;
+    corrections: Array<Record<string, unknown>>;
+    lowSignalEvidence: Array<Record<string, unknown>>;
+  };
   outbox: Array<{
     id: string;
     reason: string;

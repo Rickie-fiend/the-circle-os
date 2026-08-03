@@ -1,3 +1,11 @@
+import {
+  captureAthenaThought,
+  createAthenaMemory,
+  forgetAthenaEvidence as forgetDerivedAthenaEvidence,
+  mergeAthenaMemory,
+  normalizeAthenaMemory,
+} from "./athena-memory-model.js";
+
 export const CIRCLE_OS_STORAGE_KEY = "circle-os-state-v2";
 export const CIRCLE_OS_LEGACY_STORAGE_KEY = "circle-os-state-v1";
 
@@ -190,7 +198,7 @@ function createProfileCase() {
 
 export function createEmptyState() {
   return {
-    version: 3,
+    version: 4,
     ai: {
       baseUrl: CIRCLE_OS_SERVER_URL,
       token: "",
@@ -220,6 +228,7 @@ export function createEmptyState() {
       sessions: {},
     },
     appSessions: {},
+    athenaMemory: createAthenaMemory(),
     outbox: [],
   };
 }
@@ -296,7 +305,7 @@ export function normalizeState(state) {
   return {
     ...empty,
     ...state,
-    version: 3,
+    version: 4,
     ai: {
       ...empty.ai,
       ...state.ai,
@@ -341,6 +350,7 @@ export function normalizeState(state) {
       state.appSessions && typeof state.appSessions === "object"
         ? state.appSessions
         : {},
+    athenaMemory: normalizeAthenaMemory(state.athenaMemory),
     outbox: Array.isArray(state.outbox) ? state.outbox : [],
   };
 }
@@ -532,6 +542,10 @@ export function mergeServerState(state, serverState) {
       ...remote.appSessions,
       ...mergeUpdatedRecords(remote.appSessions, local.appSessions),
     },
+    athenaMemory: mergeAthenaMemory(
+      remote.athenaMemory,
+      local.athenaMemory,
+    ),
     outbox: [...outbox.values()],
     ai: {
       ...remote.ai,
@@ -757,6 +771,7 @@ export function answerProfileQuestion(state, answer) {
 export function answerSurveyQuestion(state, question, answer, kind = "profile") {
   const cleanAnswer = String(answer || "").trim();
   if (!question?.id || (!cleanAnswer && kind !== "note")) return state;
+  const answeredAt = new Date().toISOString();
   const previousAnswers = state.profile.profileCase.survey.answers.filter(
     (item) => item.questionId !== question.id,
   );
@@ -777,7 +792,7 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
                   answer: cleanAnswer,
                   target: question.target || "whatMatters",
                   kind,
-                  answeredAt: new Date().toISOString(),
+                  answeredAt,
                 },
               ]
             : previousAnswers,
@@ -785,6 +800,18 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
       },
     },
   };
+
+  if ((kind === "thought" || kind === "deep-thought") && cleanAnswer) {
+    next = {
+      ...next,
+      athenaMemory: captureAthenaThought(next.athenaMemory, {
+        sourceId: question.id,
+        sourceType: kind,
+        text: cleanAnswer,
+        capturedAt: answeredAt,
+      }),
+    };
+  }
 
   if (kind === "habit" && question.id === "habit-action") {
     const identity =
@@ -820,6 +847,28 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
     next,
     kind === "habit" ? "habit-answer" : "survey-answer",
   );
+}
+
+export function forgetAthenaEvidence(state, sourceId) {
+  const cleanId = String(sourceId || "").trim();
+  if (!cleanId) return state;
+  const next = {
+    ...state,
+    profile: {
+      ...state.profile,
+      profileCase: {
+        ...state.profile.profileCase,
+        survey: {
+          ...state.profile.profileCase.survey,
+          answers: state.profile.profileCase.survey.answers.filter(
+            (item) => item.questionId !== cleanId,
+          ),
+        },
+      },
+    },
+    athenaMemory: forgetDerivedAthenaEvidence(state.athenaMemory, cleanId),
+  };
+  return queueProfileUpdate(next, "athena-evidence-forgotten");
 }
 
 export function getDateKey(date = new Date()) {

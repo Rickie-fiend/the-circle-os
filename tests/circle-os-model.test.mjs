@@ -64,6 +64,26 @@ test("profile and habit cards save structured answers immediately", () => {
   assert.ok(state.outbox.some((item) => item.reason === "habit-answer"));
 });
 
+test("Thoughts remain raw while Athena captures only a clear source-linked fact", () => {
+  const state = answerSurveyQuestion(
+    createEmptyState(),
+    {
+      id: "thought-123",
+      text: "A thought I wanted to keep",
+      target: "currentLife",
+    },
+    "I watched Perfect Days. I loved how calm it felt.",
+    "thought",
+  );
+  const raw = state.profile.profileCase.survey.answers.find(
+    (answer) => answer.questionId === "thought-123",
+  );
+  assert.equal(raw.answer, "I watched Perfect Days. I loved how calm it felt.");
+  assert.equal(state.athenaMemory.ledger[0].label, "Perfect Days");
+  assert.equal(state.athenaMemory.ledger[0].sourceRefs[0].sourceId, "thought-123");
+  assert.equal(state.athenaMemory.portrait.length, 0);
+});
+
 test("maps hours into the four lightweight check-in periods", () => {
   assert.equal(getDayPeriod(7), "morning");
   assert.equal(getDayPeriod(12), "midday");

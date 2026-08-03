@@ -14,7 +14,14 @@ The server:
 1. saves each person under the Obsidian `Circle OS\Profiles` folder;
 2. keeps profile keys outside Obsidian;
 3. returns the structured `Profile.md` to Vision;
-4. collects every person's product suggestions in one `Suggestions.md` file.
+4. stores source-linked Athena understanding in `Athena Memory.json` and a
+   readable `Athena Memory.md` projection;
+5. collects every person's product suggestions in one `Suggestions.md` file.
+
+Raw Thoughts, logs, and day records remain unchanged. Immediate memory capture
+is limited to clearly named facts such as a watched film or finished book.
+Deeper interpretation belongs to Athena's 06:15 preparation and must keep its
+source references.
 
 Codex analyzes only profiles marked `analysis_pending: true`. The nightly
 instructions live in Obsidian at:

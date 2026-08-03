@@ -17,6 +17,7 @@ import {
   serializeProfileMarkdown,
 } from "../local-ai/server.mjs";
 import {
+  answerSurveyQuestion,
   createEmptyState,
   queueProfileUpdate,
   queueSuggestion,
@@ -343,6 +344,13 @@ test("public phones receive separate private Obsidian profiles", async () => {
       ),
       /analysis_pending: true/,
     );
+    assert.match(
+      readFileSync(
+        join(vaultPath, "Profiles", created.profileId, "Athena Memory.md"),
+        "utf8",
+      ),
+      /# Athena Memory/,
+    );
 
     const recoveryResponse = await fetch(`${baseUrl}/profiles/recover`, {
       method: "POST",
@@ -397,8 +405,42 @@ test("public phones receive separate private Obsidian profiles", async () => {
     const refreshedProfile = await refreshed.json();
     assert.equal(refreshedProfile.state.profile.profileCase.status, "ready");
 
-    const suggestionState = queueSuggestion(
+    const thoughtState = answerSurveyQuestion(
       refreshedProfile.state,
+      { id: "thought-server", text: "A thought I wanted to keep" },
+      "I watched Perfect Days.",
+      "thought",
+    );
+    const thoughtResponse = await fetch(
+      `${baseUrl}/profiles/${created.profileId}/sync`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${created.accessKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ state: thoughtState }),
+      },
+    );
+    assert.equal(thoughtResponse.status, 200);
+    const thoughtSynced = await thoughtResponse.json();
+    assert.match(
+      readFileSync(
+        join(vaultPath, "Profiles", created.profileId, "Athena Memory.md"),
+        "utf8",
+      ),
+      /film: Perfect Days — watched/,
+    );
+    assert.doesNotMatch(
+      readFileSync(
+        join(vaultPath, "Profiles", second.profileId, "Athena Memory.md"),
+        "utf8",
+      ),
+      /Perfect Days/,
+    );
+
+    const suggestionState = queueSuggestion(
+      thoughtSynced.state,
       "Let me draw how I feel.",
     );
     const suggestionResponse = await fetch(
@@ -419,7 +461,7 @@ test("public phones receive separate private Obsidian profiles", async () => {
     );
     assert.match(
       readFileSync(firstProfilePath, "utf8"),
-      /analysis_pending: false/,
+      /analysis_pending: true/,
     );
 
     const chapter = {
