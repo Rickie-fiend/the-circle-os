@@ -237,6 +237,8 @@ export function advanceChapterRun(
 }
 
 export function storeChapterRun(state, run, session) {
+  const timestamp = new Date().toISOString();
+  const revision = Number(state.evidence?.localRevision || 0) + 1;
   const progressItem = {
     id:
       typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -244,10 +246,23 @@ export function storeChapterRun(state, run, session) {
         : `chapter-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     reason: "chapter-progress",
     message: run.runId,
-    createdAt: new Date().toISOString(),
+    revision,
+    createdAt: timestamp,
   };
   return {
     ...state,
+    evidence: {
+      ...(state.evidence || {}),
+      localRevision: revision,
+      lastChangedAt: timestamp,
+    },
+    profile: {
+      ...state.profile,
+      profileCase: {
+        ...state.profile.profileCase,
+        status: "waiting",
+      },
+    },
     chapters: {
       ...state.chapters,
       runs: {

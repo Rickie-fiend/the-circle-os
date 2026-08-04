@@ -5,11 +5,14 @@ import {
   HABIT_QUESTIONS,
   LOG_SETUP_QUESTIONS,
   PROFILE_QUESTIONS,
+  addHabitDefinition,
+  addTask,
   appSessionIndex,
   applyProfileResult,
   answerSurveyQuestion,
   buildVisionAnalysis,
   connectLocalAi,
+  completeTask,
   createEmptyState,
   createSampleState,
   ensureDay,
@@ -19,6 +22,9 @@ import {
   mergeServerState,
   minutesBetween,
   normalizeState,
+  toggleHabitForDay,
+  updateHabitDefinition,
+  updateTask,
   queueSuggestion,
   setDayLogRange,
   setAppSessionIndex,
@@ -52,16 +58,77 @@ test("profile and habit cards save structured answers immediately", () => {
     state.profile.profileCase.survey.answers[0].kind,
     "profile",
   );
-  assert.equal(
-    state.days[getDateKey()].mission.text,
-    "Write for ten minutes",
-  );
-  assert.equal(
-    state.days[getDateKey()].mission.identity,
-    "A person who follows through",
-  );
+  const savedHabit = Object.values(state.habits.definitions)[0];
+  assert.equal(savedHabit.text, "Write for ten minutes");
+  assert.equal(state.profile.identityFocus, "A person who follows through");
   assert.ok(state.outbox.some((item) => item.reason === "survey-answer"));
   assert.ok(state.outbox.some((item) => item.reason === "habit-answer"));
+});
+
+test("habits persist while their completion remains scoped to one Circle day", () => {
+  let state = createEmptyState();
+  const created = addHabitDefinition(state, "habit-steady");
+  state = updateHabitDefinition(created.state, created.id, "Meditate");
+  state = toggleHabitForDay(state, created.id, "2026-08-04");
+  state = ensureDay(state, "2026-08-05");
+
+  assert.equal(state.habits.definitions[created.id].text, "Meditate");
+  assert.equal(state.habits.completions["2026-08-04:habit-steady"].completed, true);
+  assert.equal(state.habits.completions["2026-08-05:habit-steady"], undefined);
+});
+
+test("open tasks cross the day boundary and completed tasks remain records", () => {
+  let state = createEmptyState();
+  const created = addTask(state, "task-steady");
+  state = updateTask(created.state, created.id, "Call the dentist");
+  state = ensureDay(state, "2026-08-05");
+  assert.equal(state.tasks.items[created.id].status, "open");
+
+  state = completeTask(state, created.id);
+  assert.equal(state.tasks.items[created.id].status, "completed");
+  assert.ok(state.tasks.items[created.id].completedAt);
+});
+
+test("legacy day missions migrate without changing historical day evidence", () => {
+  const legacyDay = {
+    date: "2026-08-03",
+    mission: {
+      text: "Read",
+      completed: true,
+      completedAt: "2026-08-03T08:00:00.000Z",
+      updatedAt: "2026-08-03T08:00:00.000Z",
+    },
+    missions: [
+      {
+        id: "habit-water",
+        kind: "habit",
+        text: "Drink water",
+        completed: false,
+        createdAt: "2026-08-03T07:00:00.000Z",
+        updatedAt: "2026-08-03T07:00:00.000Z",
+      },
+      {
+        id: "task-letter",
+        kind: "task",
+        text: "Post letter",
+        completed: false,
+        createdAt: "2026-08-03T07:30:00.000Z",
+        updatedAt: "2026-08-03T07:30:00.000Z",
+      },
+    ],
+    checkIns: [],
+    timeBlocks: [],
+  };
+  const state = normalizeState({
+    version: 4,
+    profile: {},
+    days: { "2026-08-03": legacyDay },
+  });
+
+  assert.equal(state.habits.definitions["legacy-primary-habit"].text, "Read");
+  assert.equal(state.habits.definitions["habit-water"].text, "Drink water");
+  assert.equal(state.tasks.items["task-letter"].status, "open");
+  assert.deepEqual(state.days["2026-08-03"].missions, legacyDay.missions);
 });
 
 test("Thoughts remain raw while Athena captures only a clear source-linked fact", () => {

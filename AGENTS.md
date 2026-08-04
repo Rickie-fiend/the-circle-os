@@ -15,8 +15,8 @@ This file governs the whole repository. Circle OS is the live product at
 Before changing Circle OS code, layout, interaction, chapters, AI behavior, or
 project direction, read:
 
-1. `C:\Brain\10 Projects\Grimm App\Project Home.md`
-2. `C:\Brain\10 Projects\Grimm App\Agent Operating Rules.md`
+1. `C:\Brain\10 Projects\The Circle\Circle OS\START HERE.md`
+2. `C:\Brain\10 Projects\The Circle\Circle OS\Circle OS Master Build Plan.md`
 3. `C:\Brain\10 Projects\The Circle\BRAND_SYSTEM.md`
 4. `C:\Brain\10 Projects\The Circle\CIRCLE_OS_BRAND_APPLICATION.md`
 5. `C:\Brain\10 Projects\The Circle\Circle OS\App Box and Page Standard.md`

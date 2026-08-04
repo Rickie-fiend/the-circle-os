@@ -93,6 +93,23 @@ function mergeAnswers(serverAnswers = [], phoneAnswers = []) {
   );
 }
 
+function recordTime(value) {
+  return value?.updatedAt || value?.completedAt || value?.createdAt || "";
+}
+
+function mergeRecordArrays(serverRecords = [], phoneRecords = [], key = "id") {
+  const records = new Map();
+  for (const record of [...(serverRecords || []), ...(phoneRecords || [])]) {
+    const id = record?.[key];
+    if (!id) continue;
+    const current = records.get(id);
+    if (!current || recordTime(record).localeCompare(recordTime(current)) >= 0) {
+      records.set(id, record);
+    }
+  }
+  return [...records.values()];
+}
+
 function mergeDays(serverDays, phoneDays) {
   const days = { ...serverDays };
   for (const [date, phoneDay] of Object.entries(phoneDays || {})) {
@@ -101,17 +118,19 @@ function mergeDays(serverDays, phoneDays) {
       days[date] = phoneDay;
       continue;
     }
+    const serverMission = serverDay.mission || {};
+    const phoneMission = phoneDay.mission || {};
+    const mission = recordTime(phoneMission).localeCompare(recordTime(serverMission)) >= 0
+      ? { ...serverMission, ...phoneMission }
+      : { ...phoneMission, ...serverMission };
     days[date] = {
       ...serverDay,
       ...phoneDay,
-      mission: {
-        ...phoneDay.mission,
-        text: serverDay.mission?.text || phoneDay.mission?.text,
-        why: serverDay.mission?.why || phoneDay.mission?.why,
-        identity: serverDay.mission?.identity || phoneDay.mission?.identity,
-        completed: Boolean(phoneDay.mission?.completed),
-        completedAt: phoneDay.mission?.completedAt || null,
-      },
+      mission,
+      missions: mergeRecordArrays(serverDay.missions, phoneDay.missions),
+      checkIns: mergeRecordArrays(serverDay.checkIns, phoneDay.checkIns, "period"),
+      timeBlocks: mergeRecordArrays(serverDay.timeBlocks, phoneDay.timeBlocks),
+      logRange: phoneDay.logRange ?? serverDay.logRange ?? null,
     };
   }
   return days;
@@ -222,6 +241,37 @@ export function mergeClientState(serverValue, phoneValue) {
       server.appSessions,
       phone.appSessions,
     ),
+    habits: {
+      definitions: mergeUpdatedRecords(
+        server.habits.definitions,
+        phone.habits.definitions,
+      ),
+      completions: mergeUpdatedRecords(
+        server.habits.completions,
+        phone.habits.completions,
+      ),
+    },
+    tasks: {
+      items: mergeUpdatedRecords(server.tasks.items, phone.tasks.items),
+    },
+    evidence: {
+      localRevision: Math.max(
+        Number(server.evidence.localRevision || 0),
+        Number(phone.evidence.localRevision || 0),
+      ),
+      acknowledgedRevision: Math.max(
+        Number(server.evidence.acknowledgedRevision || 0),
+        Number(phone.evidence.acknowledgedRevision || 0),
+      ),
+      lastChangedAt: newest(
+        server.evidence.lastChangedAt,
+        phone.evidence.lastChangedAt,
+      ),
+      lastAcknowledgedAt: newest(
+        server.evidence.lastAcknowledgedAt,
+        phone.evidence.lastAcknowledgedAt,
+      ),
+    },
     athenaMemory: mergeAthenaMemory(
       server.athenaMemory,
       phone.athenaMemory,
@@ -527,11 +577,53 @@ function formatTimeBlocks(day) {
     .join("\n");
 }
 
-function formatMissions(day) {
-  const missions = [
-    ...(day.mission ? [day.mission] : []),
-    ...(day.missions || []),
-  ].filter((mission) => mission?.text);
+function circleDateOf(timestamp) {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  return Number.isNaN(date.getTime()) ? "" : getDateKey(date);
+}
+
+function formatMissions(day, state = null) {
+  const definitions = Object.values(state?.habits?.definitions || {});
+  const completions = state?.habits?.completions || {};
+  const persistentHabitIds = new Set(definitions.map((habit) => habit.id));
+  const persistentTaskIds = new Set(Object.keys(state?.tasks?.items || {}));
+  const persistent = [];
+  for (const habit of definitions) {
+    const completion = completions[`${day.date}:${habit.id}`];
+    const createdDate = circleDateOf(habit.createdAt);
+    if (
+      !habit.text ||
+      (habit.status !== "active" && !completion?.completed) ||
+      (createdDate && createdDate > day.date)
+    ) {
+      continue;
+    }
+    persistent.push({
+      text: `Habit: ${habit.text}`,
+      completed: Boolean(completion?.completed),
+    });
+  }
+  for (const task of Object.values(state?.tasks?.items || {})) {
+    const createdDate = circleDateOf(task.createdAt);
+    const completedDate = circleDateOf(task.completedAt);
+    if (createdDate !== day.date && completedDate !== day.date) continue;
+    persistent.push({
+      text: `Task: ${task.text}`,
+      completed: completedDate === day.date,
+    });
+  }
+  const legacy = [
+    ...(day.mission && !persistentHabitIds.has("legacy-primary-habit")
+      ? [day.mission]
+      : []),
+    ...(day.missions || []).filter(
+      (mission) =>
+        !persistentHabitIds.has(mission?.id) &&
+        !persistentTaskIds.has(mission?.id),
+    ),
+  ];
+  const missions = [...persistent, ...legacy].filter((mission) => mission?.text);
   if (!missions.length) return "No mission yet.";
   return missions
     .map(
@@ -544,7 +636,7 @@ function formatMissions(day) {
     .join("\n");
 }
 
-export function serializeDayMarkdown(day) {
+export function serializeDayMarkdown(day, state = null) {
   return `---
 type: circle-os-day
 date: ${day.date}
@@ -558,7 +650,7 @@ ${formatCheckIns(day)}
 
 ## Mission
 
-${formatMissions(day)}
+${formatMissions(day, state)}
 
 ## Day
 
@@ -745,7 +837,7 @@ function saveProfileState(
   for (const day of Object.values(state.days)) {
     writeAtomic(
       join(directory, "Days", `${day.date}.md`),
-      serializeDayMarkdown(day),
+      serializeDayMarkdown(day, state),
     );
   }
   return state;
@@ -1003,6 +1095,17 @@ export function createCircleAiServer(options = {}) {
           readProfileState(vaultPath, profileId),
           phoneState,
         );
+        const acknowledgedOutboxIds = Array.isArray(input?.state?.outbox)
+          ? input.state.outbox.map((item) => item?.id).filter(Boolean)
+          : [];
+        const acknowledgedEvidenceRevision = Number(
+          input?.state?.evidence?.localRevision || 0,
+        );
+        state.evidence = {
+          ...state.evidence,
+          acknowledgedRevision: acknowledgedEvidenceRevision,
+          lastAcknowledgedAt: now(),
+        };
         saveSuggestions(vaultPath, profileId, state, input?.state?.outbox);
         const saved = saveProfileState(vaultPath, profileId, state, {
           analysisPending: true,
@@ -1015,6 +1118,8 @@ export function createCircleAiServer(options = {}) {
             profileId,
             accessKey,
             state: publicState(saved),
+            acknowledgedEvidenceRevision,
+            acknowledgedOutboxIds,
           },
           origin,
         );
@@ -1111,12 +1216,16 @@ export function createCircleAiServer(options = {}) {
           }
           const profileOutbox = Array.isArray(input?.state?.outbox)
             ? input.state.outbox.filter(
-                (item) =>
-                  item?.reason !== "suggestion" &&
-                  item?.reason !== "chapter-progress",
+                (item) => item?.reason !== "suggestion",
               )
             : [];
           const pending = profileOutbox.length > 0;
+          const acknowledgedOutboxIds = Array.isArray(input?.state?.outbox)
+            ? input.state.outbox.map((item) => item?.id).filter(Boolean)
+            : [];
+          const acknowledgedEvidenceRevision = Number(
+            input?.state?.evidence?.localRevision || 0,
+          );
           const merged = mergeClientState(current, input.state);
           saveSuggestions(
             vaultPath,
@@ -1127,6 +1236,23 @@ export function createCircleAiServer(options = {}) {
           merged.profile.profileCase.status = pending
             ? "waiting"
             : current.profile.profileCase.status;
+          merged.evidence = {
+            ...merged.evidence,
+            acknowledgedRevision: Math.max(
+              Number(merged.evidence?.acknowledgedRevision || 0),
+              acknowledgedEvidenceRevision,
+            ),
+            lastAcknowledgedAt: now(),
+          };
+          if (pending) {
+            merged.athenaMemory = {
+              ...merged.athenaMemory,
+              lastEvidenceAt: newest(
+                merged.athenaMemory?.lastEvidenceAt,
+                input?.state?.evidence?.lastChangedAt || now(),
+              ),
+            };
+          }
           const saved = saveProfileState(vaultPath, profileId, merged, {
             analysisPending:
               pending ||
@@ -1134,7 +1260,11 @@ export function createCircleAiServer(options = {}) {
                 "true",
           });
           writeIndex(vaultPath);
-          json(response, 200, { state: publicState(saved) }, origin);
+          json(response, 200, {
+            state: publicState(saved),
+            acknowledgedEvidenceRevision,
+            acknowledgedOutboxIds,
+          }, origin);
           return;
         }
       }

@@ -16,11 +16,16 @@ import {
 } from "react";
 import {
   CIRCLE_DAY_START_HOUR,
+  addHabitDefinition,
+  addTask,
   appSessionIndex,
   answerSurveyQuestion,
   connectLocalAi,
   createEmptyState,
   ensureDay,
+  completeTask,
+  discardEmptyHabit,
+  discardEmptyTask,
   getDateKey,
   mergeServerState,
   minutesBetween,
@@ -28,6 +33,9 @@ import {
   queueProfileUpdate,
   setAppSessionIndex,
   setDayLogRange,
+  toggleHabitForDay,
+  updateHabitDefinition,
+  updateTask,
   upsertTimeBlock,
 } from "./circle-os-model.js";
 import {
@@ -165,68 +173,6 @@ type ExtraMission = {
   kind?: "habit" | "task";
 };
 
-function InlineMissionEditor({
-  ariaLabel,
-  className,
-  completed = false,
-  onCommit,
-  onDraftChange,
-  value,
-}: {
-  ariaLabel: string;
-  className: string;
-  completed?: boolean;
-  onCommit: (text: string) => void;
-  onDraftChange?: (text: string) => void;
-  value: string;
-}) {
-  const editorRef = useRef<HTMLTextAreaElement | null>(null);
-  const editingRef = useRef(false);
-  const [draft, setDraft] = useState(value);
-
-  useLayoutEffect(() => {
-    if (editingRef.current) return;
-    setDraft((current) => (current === value ? current : value));
-  }, [value]);
-
-  useLayoutEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    editor.style.height = "auto";
-    editor.style.height = `${editor.scrollHeight}px`;
-  }, [draft]);
-
-  return (
-    <textarea
-      aria-label={ariaLabel}
-      className={`${className}${completed ? " completed" : ""}`}
-      maxLength={240}
-      ref={editorRef}
-      rows={1}
-      spellCheck
-      value={draft}
-      onChange={(event) => {
-        const next = event.currentTarget.value;
-        setDraft(next);
-        if (next.trim()) onDraftChange?.(next);
-      }}
-      onBlur={() => {
-        editingRef.current = false;
-        const text = draft.replace(/\u00a0/g, " ").trim();
-        if (!text) {
-          setDraft(value);
-          return;
-        }
-        setDraft(text);
-        onCommit(text);
-      }}
-      onFocus={() => {
-        editingRef.current = true;
-      }}
-    />
-  );
-}
-
 function InlineCheckInEditor({
   note,
   onCommit,
@@ -312,6 +258,7 @@ export type TimeBlock = {
   title?: string;
   moments?: string[];
   createdAt: string;
+  updatedAt?: string;
 };
 
 type CircleDay = {
@@ -418,10 +365,54 @@ export type CircleState = {
       updatedAt: string;
     }
   >;
+  habits: {
+    definitions: Record<
+      string,
+      {
+        id: string;
+        text: string;
+        status: "active" | "archived";
+        createdAt: string;
+        updatedAt: string;
+      }
+    >;
+    completions: Record<
+      string,
+      {
+        id: string;
+        habitId: string;
+        dateKey: string;
+        completed: boolean;
+        completedAt: string | null;
+        updatedAt: string;
+      }
+    >;
+  };
+  tasks: {
+    items: Record<
+      string,
+      {
+        id: string;
+        text: string;
+        status: "open" | "completed";
+        createdAt: string;
+        updatedAt: string;
+        completedAt: string | null;
+      }
+    >;
+  };
+  evidence: {
+    localRevision: number;
+    acknowledgedRevision: number;
+    lastChangedAt: string | null;
+    lastAcknowledgedAt: string | null;
+  };
   athenaMemory: {
     version: number;
     updatedAt: string;
     lastPreparedAt: string;
+    lastEvidenceAt?: string | null;
+    preparedEvidenceRevision?: number;
     ledger: Array<{
       id: string;
       kind: string;
@@ -452,6 +443,7 @@ export type CircleState = {
     message?: string;
     createdAt: string;
     triedAt?: string;
+    revision?: number;
   }>;
 };
 
@@ -474,8 +466,6 @@ type CircleStateContextValue = {
 };
 
 const CircleStateContext = createContext<CircleStateContextValue | null>(null);
-const RECORD_REASONS = new Set(["day-log", "mission"]);
-
 function hourLabel(hour: number) {
   const normalized = ((hour % 24) + 24) % 24;
   return `${String(normalized).padStart(2, "0")}:00`;
@@ -496,6 +486,9 @@ function serverSignature(state: CircleState) {
     profile: payload.profile,
     days: payload.days,
     chapters: payload.chapters,
+    habits: payload.habits,
+    tasks: payload.tasks,
+    evidence: payload.evidence,
     outbox: payload.outbox,
   });
 }
@@ -515,12 +508,38 @@ function applySyncResult(
     state: CircleState;
     profileId: string;
     accessKey: string;
+    acknowledgedEvidenceRevision?: number;
+    acknowledgedOutboxIds?: string[];
   },
 ) {
-  const next = ensureDay(
+  const merged = ensureDay(
     mergeServerState(current, result.state),
     getDateKey(),
   );
+  const acknowledgedIds = new Set(result.acknowledgedOutboxIds || []);
+  const acknowledgedRevision = Math.max(
+    Number(merged.evidence.acknowledgedRevision || 0),
+    Number(result.acknowledgedEvidenceRevision || 0),
+  );
+  const next = {
+    ...merged,
+    evidence: {
+      ...merged.evidence,
+      acknowledgedRevision,
+      lastAcknowledgedAt: new Date().toISOString(),
+    },
+    outbox: merged.outbox.filter((item) => {
+      const hasRevision = Number.isFinite(Number(item.revision));
+      const revision = hasRevision ? Number(item.revision) : 0;
+      if (
+        acknowledgedIds.has(item.id) &&
+        (!hasRevision || revision <= acknowledgedRevision)
+      ) {
+        return false;
+      }
+      return !hasRevision || revision > acknowledgedRevision;
+    }),
+  };
   return {
     ...next,
     ai: {
@@ -531,11 +550,9 @@ function applySyncResult(
       status: "ready",
       lastError: "",
       lastSyncedAt: new Date().toISOString(),
-      lastSyncSlot:
-        current.outbox.some((item) => RECORD_REASONS.has(item.reason)) &&
-        isAthenaSyncTime()
-          ? currentSyncSlot()
-          : current.ai.lastSyncSlot,
+      lastSyncSlot: isAthenaSyncTime()
+        ? currentSyncSlot()
+        : current.ai.lastSyncSlot,
     },
   };
 }
@@ -598,22 +615,9 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready || !state.ai.baseUrl) return;
     if (!state.profile.vision.completedAt) return;
-    const urgent = state.outbox.some((item) =>
-      [
-        "first-vision",
-        "question-answered",
-        "survey-answer",
-        "habit-answer",
-        "chapter-progress",
-        "profile-edit",
-        "suggestion",
-      ].includes(item.reason),
-    );
+    const urgent = state.outbox.length > 0;
     const needsFirstProfile = !state.ai.profileId || !state.ai.token;
-    const scheduledSyncDue =
-      state.outbox.some((item) => RECORD_REASONS.has(item.reason)) &&
-      isAthenaSyncTime();
-    if (!needsFirstProfile && !urgent && !scheduledSyncDue) return;
+    if (!needsFirstProfile && !urgent) return;
     const signature = serverSignature(state);
     if (signature === lastServerSignature.current) return;
     if (syncing.current) {
@@ -630,7 +634,6 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
           setState((current) => {
             if (serverSignature(current) !== sentSignature) {
               syncPending.current = true;
-              return current;
             }
             const next = applySyncResult(current, result);
             lastServerSignature.current = serverSignature(next);
@@ -668,6 +671,13 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
       setSyncTick((value) => value + 1);
     }, 60_000);
     return () => window.clearInterval(timer);
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const retry = () => setSyncTick((value) => value + 1);
+    window.addEventListener("online", retry);
+    return () => window.removeEventListener("online", retry);
   }, [ready]);
 
   useEffect(() => {
@@ -930,6 +940,18 @@ export function OSFrame({
     : pathname.startsWith("/os/connect")
       ? "connect"
       : "today";
+  const evidenceWaiting =
+    state.outbox.length > 0 ||
+    state.evidence.localRevision > state.evidence.acknowledgedRevision;
+  const syncLabel = !state.ai.profileId
+    ? "Saved"
+    : evidenceWaiting && state.ai.status === "offline"
+      ? "Waiting to sync"
+      : evidenceWaiting
+        ? "Saved"
+        : state.ai.lastSyncedAt
+          ? "Synced"
+          : "Saved";
 
   function moveToRoute(
     event: ReactMouseEvent<HTMLAnchorElement>,
@@ -976,10 +998,8 @@ export function OSFrame({
             <span className="os-brand-mark" aria-hidden="true" />
             <span>CIRCLE OS</span>
           </Link>
-          <span className="os-local-status">
-            {state.ai.profileId && state.outbox.length === 0
-              ? "Saved · Obsidian"
-              : "Saving…"}
+          <span aria-live="polite" className="os-local-status">
+            {syncLabel}
           </span>
         </header>
         <nav className="os-nav" aria-label="Circle OS" data-active={active}>
@@ -1100,7 +1120,8 @@ export function TodayExperience() {
   const thoughtLabelTimer = useRef<number | null>(null);
   const thoughtResetTimer = useRef<number | null>(null);
   const thoughtModeTimer = useRef<number | null>(null);
-  const [addingHabit, setAddingHabit] = useState(false);
+  const [newHabitId, setNewHabitId] = useState<string | null>(null);
+  const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
   const taskExitTimers = useRef<
@@ -1356,23 +1377,6 @@ export function TodayExperience() {
 
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
-  const repeatHabitChapter = useMemo<ChapterDefinition | null>(() => {
-    if (!habitBuildingChapter) return null;
-    const reusablePageIds = new Set([
-      "habit",
-      "time-place",
-      "identity",
-      "complete",
-      "idle",
-    ]);
-    return {
-      ...habitBuildingChapter,
-      id: "habit-repeat",
-      pages: habitBuildingChapter.pages.filter((page) =>
-        reusablePageIds.has(page.id),
-      ),
-    };
-  }, [habitBuildingChapter]);
   const habitBuildingRun = useMemo(() => {
     if (!habitBuildingChapter) return null;
     return (
@@ -1380,26 +1384,16 @@ export function TodayExperience() {
       createChapterRun(habitBuildingChapter)
     );
   }, [habitBuildingChapter, state.chapters.runs]);
-  const repeatHabitRun = useMemo(() => {
-    if (!repeatHabitChapter) return null;
-    return (
-      state.chapters.runs[chapterRunId(repeatHabitChapter)] ||
-      createChapterRun(repeatHabitChapter)
-    );
-  }, [repeatHabitChapter, state.chapters.runs]);
-  const selectedHabitChapter = addingHabit
-    ? repeatHabitChapter || habitBuildingChapter
-    : habitBuildingChapter;
   const activeHabitChapter = useMemo(() => {
-    if (!selectedHabitChapter) return null;
+    if (!habitBuildingChapter) return null;
     return {
-      ...selectedHabitChapter,
-      pages: selectedHabitChapter.pages.map((page) =>
+      ...habitBuildingChapter,
+      pages: habitBuildingChapter.pages.map((page) =>
         page.type === "idle" ? { ...page, title: "" } : page,
       ),
     };
-  }, [selectedHabitChapter]);
-  const activeHabitRun = addingHabit ? repeatHabitRun : habitBuildingRun;
+  }, [habitBuildingChapter]);
+  const activeHabitRun = habitBuildingRun;
   const habitAppVersion = "habit-record-v1";
   const habitAppIndex = appSessionIndex(
     state,
@@ -1407,41 +1401,51 @@ export function TodayExperience() {
     habitAppVersion,
     0,
   );
-  const extraHabits = (today.missions || []).filter(
-    (mission) => mission.kind === "habit",
+  const habits = Object.values(state.habits.definitions)
+    .filter((habit) => habit.status === "active")
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  const habitCompletion = (habitId: string, key = dateKey) =>
+    state.habits.completions[`${key}:${habitId}`];
+  const oneTimeTasks = Object.values(state.tasks.items)
+    .filter(
+      (task) => task.status === "open" || leavingMissionIds.includes(task.id),
+    )
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  const completedHabitRecords = habits.filter(
+    (habit) => habitCompletion(habit.id)?.completed,
   );
-  const oneTimeTaskCandidates = (today.missions || []).filter(
-    (mission) =>
-      mission.kind !== "habit" &&
-      (!mission.completed || leavingMissionIds.includes(mission.id)),
-  );
-  const firstBlankTaskId = oneTimeTaskCandidates.find(
-    (mission) => !mission.completed && !mission.text.trim(),
-  )?.id;
-  const oneTimeTasks = oneTimeTaskCandidates.filter(
-    (mission) =>
-      mission.completed || mission.text.trim() || mission.id === firstBlankTaskId,
-  );
-  const completedHabitRecords = (today.missions || []).filter(
-    (mission) => mission.completed && mission.kind === "habit",
-  );
-  const completedTaskRecords = (today.missions || []).filter(
-    (mission) => mission.completed && mission.kind !== "habit",
+  const completedTaskRecords = Object.values(state.tasks.items)
+    .filter((task) => task.status === "completed")
+    .sort((left, right) =>
+      String(right.completedAt || "").localeCompare(String(left.completedAt || "")),
+    );
+  const completedTasksToday = completedTaskRecords.filter(
+    (task) => task.completedAt && getDateKey(new Date(task.completedAt)) === dateKey,
   );
   const completedHabitCount =
-    (today.mission.completed ? 1 : 0) +
-    completedHabitRecords.length +
-    completedTaskRecords.length;
+    completedHabitRecords.length + completedTasksToday.length;
+  const hasAnyRecord =
+    completedHabitRecords.length > 0 || completedTaskRecords.length > 0;
+
+  useEffect(() => {
+    const editorId = newHabitId || newTaskId;
+    if (!editorId) return;
+    const editor = document.querySelector<HTMLTextAreaElement>(
+      `[data-inline-editor-id="${editorId}"]`,
+    );
+    editor?.focus();
+  }, [habits.length, newHabitId, newTaskId, oneTimeTasks.length]);
   const habitTrackerDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date();
     date.setHours(12, 0, 0, 0);
     date.setDate(date.getDate() - (6 - index));
     const key = getDateKey(date);
-    const day = state.days[key];
     return {
       key,
       label: date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1),
-      completed: Boolean(day?.mission?.completed),
+      completed: Object.values(state.habits.completions).some(
+        (completion) => completion.dateKey === key && completion.completed,
+      ),
     };
   });
   const logSetupRun = useMemo(() => {
@@ -1470,191 +1474,74 @@ export function TodayExperience() {
     ? logSetupRun.status === "completed"
     : routineTimesKnown;
 
-  function toggleMission() {
-    const updatedAt = new Date().toISOString();
-    updateToday((day) => ({
-      ...day,
-      mission: {
-        ...day.mission,
-        completed: !day.mission.completed,
-        completedAt: day.mission.completed ? null : updatedAt,
-        updatedAt,
-      },
-    }), "mission");
-  }
-
-  function addExtraMission() {
-    if (
-      (today.missions || []).some(
-        (mission) =>
-          mission.kind !== "habit" &&
-          !mission.completed &&
-          !mission.text.trim(),
-      )
-    ) {
+  function beginNewHabit() {
+    const existing = habits.find((habit) => !habit.text.trim());
+    if (existing) {
+      setNewHabitId(existing.id);
       return;
     }
-    const timestamp = new Date().toISOString();
-    updateToday(
-      (day) => {
-        if (
-          (day.missions || []).some(
-            (mission) =>
-              mission.kind !== "habit" &&
-              !mission.completed &&
-              !mission.text.trim(),
-          )
-        ) {
-          return day;
-        }
-        return {
-          ...day,
-          missions: [
-            ...(day.missions || []),
-            {
-              id:
-                typeof crypto !== "undefined" && "randomUUID" in crypto
-                  ? crypto.randomUUID()
-                  : `mission-${Date.now()}`,
-              text: "",
-              completed: false,
-              completedAt: null,
-              createdAt: timestamp,
-            },
-          ],
-        };
-      },
-    );
+    updateState((current) => {
+      const added = addHabitDefinition(current);
+      setNewHabitId(added.id);
+      return added.state;
+    });
   }
 
-  function changePrimaryMissionDraft(text: string) {
-    if (!text.trim()) return;
-    const updatedAt = new Date().toISOString();
-    updateToday(
-      (day) => ({
-        ...day,
-        mission: {
-          ...day.mission,
-          text,
-          updatedAt,
-        },
-      }),
-    );
-  }
-
-  function commitPrimaryMission(text: string) {
-    const normalized = text.trim();
-    if (!normalized) return;
-    const updatedAt = new Date().toISOString();
-    updateToday(
-      (day) => ({
-        ...day,
-        mission: {
-          ...day.mission,
-          text: normalized,
-          updatedAt,
-        },
-      }),
-      "mission",
-    );
-  }
-
-  function changeExtraMission(id: string, text: string) {
-    updateToday(
-      (day) => ({
-        ...day,
-        missions: (day.missions || []).map((mission) =>
-          mission.id === id ? { ...mission, text } : mission,
-        ),
-      }),
-      "mission",
-    );
-  }
-
-  function removeExtraMissionIfEmpty(id: string, value: string) {
-    const text = value.trim();
-    if (!text) {
-      updateToday(
-        (day) => ({
-          ...day,
-          missions: (day.missions || []).filter((mission) => mission.id !== id),
-        }),
-        "mission",
-      );
+  function beginNewTask() {
+    const existing = oneTimeTasks.find((task) => !task.text.trim());
+    if (existing) {
+      setNewTaskId(existing.id);
+      return;
     }
+    updateState((current) => {
+      const added = addTask(current);
+      setNewTaskId(added.id);
+      return added.state;
+    });
   }
 
-  function toggleExtraMission(id: string) {
-    const mission = today.missions?.find((item) => item.id === id);
-    if (!mission) return;
-    const isCompleting = !mission?.completed;
+  function changeHabit(id: string, text: string) {
+    updateState((current) => updateHabitDefinition(current, id, text));
+  }
+
+  function finishHabitEdit(id: string) {
+    updateState((current) => discardEmptyHabit(current, id));
+    setNewHabitId((current) => (current === id ? null : current));
+  }
+
+  function changeTask(id: string, text: string) {
+    updateState((current) => updateTask(current, id, text));
+  }
+
+  function finishTaskEdit(id: string) {
+    updateState((current) => discardEmptyTask(current, id));
+    setNewTaskId((current) => (current === id ? null : current));
+  }
+
+  function toggleHabit(id: string) {
+    updateState((current) => toggleHabitForDay(current, id, dateKey));
+  }
+
+  function finishTask(id: string) {
+    const task = state.tasks.items[id];
+    if (!task || !task.text.trim() || task.status === "completed") return;
     const existingTimers = taskExitTimers.current[id];
     if (existingTimers) {
       window.clearTimeout(existingTimers.fade);
       window.clearTimeout(existingTimers.remove);
       delete taskExitTimers.current[id];
     }
-    if (mission.kind !== "habit" && !mission.text.trim()) {
-      setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
-      const fade = window.setTimeout(() => {
-        setFadingMissionIds((ids) => [...new Set([...ids, id])]);
-      }, 300);
-      const remove = window.setTimeout(() => {
-        updateToday((day) => ({
-          ...day,
-          missions: (day.missions || []).filter((item) => item.id !== id),
-        }));
-        setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-        setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-        delete taskExitTimers.current[id];
-      }, 1_500);
-      taskExitTimers.current[id] = { fade, remove };
-      return;
-    }
-    updateToday(
-      (day) => ({
-        ...day,
-        missions: (day.missions || []).map((mission) =>
-          mission.id === id
-            ? {
-                ...mission,
-                completed: !mission.completed,
-                completedAt: mission.completed
-                  ? null
-                  : new Date().toISOString(),
-              }
-            : mission,
-        ),
-      }),
-      "mission",
-    );
-    if (isCompleting && mission?.kind !== "habit") {
-      setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
-      const fade = window.setTimeout(() => {
-        setFadingMissionIds((ids) => [...new Set([...ids, id])]);
-      }, 1_800);
-      const remove = window.setTimeout(() => {
-        setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-        setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-        delete taskExitTimers.current[id];
-      }, 3_800);
-      taskExitTimers.current[id] = { fade, remove };
-    } else if (mission?.kind !== "habit") {
+    updateState((current) => completeTask(current, id));
+    setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
+    const fade = window.setTimeout(() => {
+      setFadingMissionIds((ids) => [...new Set([...ids, id])]);
+    }, 1_800);
+    const remove = window.setTimeout(() => {
       setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
       setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-    }
-  }
-
-  function beginNewHabit() {
-    if (!repeatHabitChapter) return;
-    setAddingHabit(true);
-    updateState((current) =>
-      storeChapterRun(
-        current,
-        createChapterRun(repeatHabitChapter),
-        repeatHabitChapter.session,
-      ),
-    );
+      delete taskExitTimers.current[id];
+    }, 3_800);
+    taskExitTimers.current[id] = { fade, remove };
   }
 
   function saveHabitAppIndex(index: number) {
@@ -1727,6 +1614,7 @@ export function TodayExperience() {
       (typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `block-${Date.now()}`);
+    const updatedAt = new Date().toISOString();
     updateToday((day) => {
       if (!cleanTitle && !cleanMoments.length) {
         return {
@@ -1744,7 +1632,8 @@ export function TodayExperience() {
         moments: cleanMoments,
         createdAt:
           day.timeBlocks.find((block) => block.id === id)?.createdAt ??
-          new Date().toISOString(),
+          updatedAt,
+        updatedAt,
       });
     }, "day-log");
     resetLogForm();
@@ -1759,6 +1648,7 @@ export function TodayExperience() {
       return;
     }
     const startTime = hourLabel(hour);
+    const updatedAt = new Date().toISOString();
     updateToday((day) => {
       const existing = day.timeBlocks.find(
         (block) => block.start === startTime,
@@ -1775,7 +1665,8 @@ export function TodayExperience() {
           note: "",
           title: "",
           moments: [moment],
-          createdAt: new Date().toISOString(),
+          createdAt: updatedAt,
+          updatedAt,
         });
       }
       return {
@@ -1793,6 +1684,7 @@ export function TodayExperience() {
                       : []),
                   moment,
                 ],
+                updatedAt,
               }
             : block,
         ),
@@ -1816,6 +1708,7 @@ export function TodayExperience() {
     const cleanMoment = String(
       new FormData(event.currentTarget).get("moment") || "",
     ).trim();
+    const updatedAt = new Date().toISOString();
     updateToday((day) => {
       const nextBlocks = day.timeBlocks
         .map((item) => {
@@ -1826,7 +1719,7 @@ export function TodayExperience() {
           } else {
             moments.splice(index, 1);
           }
-          return { ...item, note: "", moments };
+          return { ...item, note: "", moments, updatedAt };
         })
         .filter(
           (item) =>
@@ -1959,10 +1852,6 @@ export function TodayExperience() {
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
-    const isNewHabit = addingHabit;
-    if (isNewHabit && nextRun.status === "completed") {
-      setAddingHabit(false);
-    }
     updateState((current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(
@@ -1983,43 +1872,12 @@ export function TodayExperience() {
         );
         const identity =
           chapterAnswerText(nextRun, "habit-identity") || "Yourself";
-        next = ensureDay(next, dateKey);
+        const added = addHabitDefinition(next);
+        next = updateHabitDefinition(added.state, added.id, missionText);
         next = {
           ...next,
-          days: {
-            ...next.days,
-            [dateKey]: isNewHabit
-              ? {
-                  ...next.days[dateKey],
-                  missions: [
-                    ...(next.days[dateKey].missions || []),
-                    {
-                      id:
-                        typeof crypto !== "undefined" && "randomUUID" in crypto
-                          ? crypto.randomUUID()
-                          : `habit-${Date.now()}`,
-                      text: missionText,
-                      kind: "habit",
-                      completed: false,
-                      completedAt: null,
-                      createdAt: new Date().toISOString(),
-                    },
-                  ],
-                }
-              : {
-                  ...next.days[dateKey],
-                  mission: {
-                    text: missionText,
-                    why: "",
-                    identity,
-                    completed: false,
-                    completedAt: null,
-                    updatedAt: new Date().toISOString(),
-                  },
-                },
-          },
+          profile: { ...next.profile, identityFocus: identity },
         };
-        next = queueProfileUpdate(next, "habit-answer");
       }
       return next;
     });
@@ -2450,103 +2308,80 @@ export function TodayExperience() {
               definition={activeHabitChapter}
               key={activeHabitChapter.id}
               idleBody={
-                <InlineMissionEditor
-                  ariaLabel="Edit habit mission"
-                  className="os-primary-mission-copy os-mission-text-edit"
-                  completed={today.mission.completed}
-                  onCommit={commitPrimaryMission}
-                  onDraftChange={changePrimaryMissionDraft}
-                  value={
-                    today.mission.text
-                  }
-                />
-              }
-              idleContent={
-                <div
-                  className={`os-habit-sub-body${
-                    extraHabits.length || oneTimeTasks.length ? " has-items" : ""
-                  }`}
-                >
-                  {extraHabits.length ? (
-                    <div className="os-repeated-habits">
-                      {extraHabits.map((mission) => (
+                <section className="os-habit-body-session" aria-labelledby="habit-session-title">
+                  <p className="os-habit-session-label" id="habit-session-title">Habits</p>
+                  <div className="os-repeated-habits">
+                    {habits.map((habit) => {
+                      const completed = Boolean(habitCompletion(habit.id)?.completed);
+                      return (
                         <article
-                          className={`os-extra-mission os-repeated-habit${
-                            mission.completed ? " completed" : ""
-                          }`}
-                          key={mission.id}
+                          className={`os-extra-mission os-repeated-habit${completed ? " completed" : ""}`}
+                          key={habit.id}
                         >
                           <textarea
-                            aria-label={`Edit habit: ${mission.text}`}
-                            className={`os-extra-mission-copy os-mission-text-edit${
-                              mission.completed ? " completed" : ""
-                            }`}
+                            aria-label={`Edit habit: ${habit.text || "New Habit"}`}
+                            autoFocus={newHabitId === habit.id}
+                            data-inline-editor-id={habit.id}
+                            className={`os-extra-mission-copy os-mission-text-edit${completed ? " completed" : ""}`}
                             maxLength={240}
+                            onBlur={() => finishHabitEdit(habit.id)}
+                            onChange={(event) => changeHabit(habit.id, event.target.value)}
+                            placeholder="New Habit"
                             rows={1}
-                            value={mission.text}
-                            onChange={(event) =>
-                              changeExtraMission(mission.id, event.target.value)
-                            }
-                            onBlur={(event) =>
-                              removeExtraMissionIfEmpty(
-                                mission.id,
-                                event.currentTarget.value,
-                              )
-                            }
+                            value={habit.text}
                           />
-                          <button
-                            className="os-extra-mission-done"
+                          <CreativeButton
+                            aria-pressed={completed}
+                            className="os-habit-done-button"
+                            disabled={!habit.text.trim()}
+                            keepMountedOnSuccess
+                            onClick={() => toggleHabit(habit.id)}
+                            role="habit"
+                            styleId="soft-clay"
                             type="button"
-                            aria-pressed={mission.completed}
-                            onClick={() => toggleExtraMission(mission.id)}
                           >
-                            {mission.completed ? "Completed" : "Mark done"}
-                          </button>
+                            {completed ? "Done" : "Mark done"}
+                          </CreativeButton>
                         </article>
-                      ))}
-                    </div>
-                  ) : null}
-                  {oneTimeTasks.length ? (
-                    <div className="os-one-time-tasks">
-                      {oneTimeTasks.map((mission) => (
+                      );
+                    })}
+                  </div>
+                </section>
+              }
+              idleContent={
+                <section className="os-task-body-session" aria-labelledby="task-session-title">
+                  <p className="os-task-session-label" id="task-session-title">Tasks</p>
+                  <div className="os-one-time-tasks">
+                    {oneTimeTasks.map((task) => (
                       <article
-                        className={`os-extra-mission${
-                          mission.completed ? " completed" : ""
-                        }${fadingMissionIds.includes(mission.id) ? " leaving" : ""}`}
-                        key={mission.id}
+                        className={`os-extra-mission os-task-row${task.status === "completed" ? " completed" : ""}${fadingMissionIds.includes(task.id) ? " leaving" : ""}`}
+                        key={task.id}
                       >
                         <textarea
-                          aria-label={`Edit task: ${mission.text || "New Task"}`}
-                          className={`os-extra-mission-copy os-mission-text-edit${
-                            mission.completed ? " completed" : ""
-                          }`}
+                          aria-label={`Edit task: ${task.text || "New Task"}`}
+                          autoFocus={newTaskId === task.id}
+                          data-inline-editor-id={task.id}
+                          className={`os-extra-mission-copy os-mission-text-edit${task.status === "completed" ? " completed" : ""}`}
                           maxLength={240}
+                          onBlur={() => finishTaskEdit(task.id)}
+                          onChange={(event) => changeTask(task.id, event.target.value)}
                           placeholder="New Task"
                           rows={1}
-                          value={mission.text}
-                          onChange={(event) =>
-                            changeExtraMission(mission.id, event.target.value)
-                          }
-                          onBlur={(event) =>
-                            removeExtraMissionIfEmpty(
-                              mission.id,
-                              event.currentTarget.value,
-                            )
-                          }
+                          value={task.text}
                         />
                         <button
-                          className="os-extra-mission-done"
+                          aria-label={`Complete task: ${task.text || "New Task"}`}
+                          className="os-extra-mission-done os-task-done"
+                          disabled={!task.text.trim() || task.status === "completed"}
+                          onClick={() => finishTask(task.id)}
                           type="button"
-                          aria-pressed={mission.completed}
-                          onClick={() => toggleExtraMission(mission.id)}
                         >
-                          {mission.completed ? "Completed" : "Mark done"}
+                          {task.status === "completed" ? "Done" : "Complete"}
                         </button>
                       </article>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
+                    ))}
+                  </div>
+                </section>
               }
               idleHeaderAction={
                 <button className="os-new-habit" type="button" onClick={beginNewHabit}>
@@ -2554,11 +2389,11 @@ export function TodayExperience() {
                 </button>
               }
               idleFooter={
-                !addingHabit && habitBuildingRun?.status === "completed" && habitAppIndex === 0 ? (
+                habitBuildingRun?.status === "completed" && habitAppIndex === 0 ? (
                   <button
                     className="os-add-habit-row"
                     type="button"
-                    onClick={addExtraMission}
+                    onClick={beginNewTask}
                   >
                     <span aria-hidden="true">+</span>
                     Add task
@@ -2566,8 +2401,6 @@ export function TodayExperience() {
                 ) : undefined
               }
               hideIdleHeading
-              idleActionLabel={today.mission.completed ? "Completed" : undefined}
-              idleActionPressed={today.mission.completed}
               idleApps={[
                 <div className="os-habit-record os-habit-tracker" key="habit-tracker">
                   <p className="os-card-label">Habit tracker</p>
@@ -2594,59 +2427,24 @@ export function TodayExperience() {
                       ? `${completedHabitCount} completed today.`
                       : "Nothing completed yet."}
                   </p>
-                  {completedHabitCount ? (
+                  {hasAnyRecord ? (
                     <div className="os-habit-record-list">
-                      {today.mission.completed || completedHabitRecords.length ? (
+                      {completedHabitRecords.length ? (
                         <section className="os-habit-record-group">
-                          <span className="os-habit-record-group-label">Habit</span>
-                          {today.mission.completed ? (
-                            <div className="os-habit-record-row" key="repeat">
-                              <InlineMissionEditor
-                                ariaLabel="Edit completed habit"
-                                className="os-habit-record-edit"
-                                onCommit={commitPrimaryMission}
-                                onDraftChange={changePrimaryMissionDraft}
-                                value={today.mission.text}
-                              />
-                            </div>
-                          ) : null}
-                          {completedHabitRecords.map((mission) => (
-                            <div className="os-habit-record-row" key={mission.id}>
-                              <textarea
-                                aria-label={`Edit completed habit: ${mission.text}`}
-                                className="os-habit-record-edit"
-                                maxLength={240}
-                                rows={1}
-                                value={mission.text}
-                                onChange={(event) =>
-                                  changeExtraMission(mission.id, event.target.value)
-                                }
-                              />
+                          <span className="os-habit-record-group-label">Habits</span>
+                          {completedHabitRecords.map((habit) => (
+                            <div className="os-habit-record-row" key={habit.id}>
+                              <span>{habit.text}</span>
                             </div>
                           ))}
                         </section>
                       ) : null}
                       {completedTaskRecords.length ? (
                         <section className="os-habit-record-group">
-                          <span className="os-habit-record-group-label">Task</span>
-                          {completedTaskRecords.map((mission) => (
-                            <div className="os-habit-record-row" key={mission.id}>
-                          <textarea
-                            aria-label={`Edit completed task: ${mission.text}`}
-                            className="os-habit-record-edit"
-                            maxLength={240}
-                            rows={1}
-                            value={mission.text}
-                            onChange={(event) =>
-                              changeExtraMission(mission.id, event.target.value)
-                            }
-                            onBlur={(event) =>
-                              removeExtraMissionIfEmpty(
-                                mission.id,
-                                event.currentTarget.value,
-                              )
-                            }
-                          />
+                          <span className="os-habit-record-group-label">Tasks</span>
+                          {completedTaskRecords.map((task) => (
+                            <div className="os-habit-record-row" key={task.id}>
+                              <span>{task.text}</span>
                             </div>
                           ))}
                         </section>
@@ -2659,11 +2457,6 @@ export function TodayExperience() {
               onIdleAppIndexChange={saveHabitAppIndex}
               label="Habit chapter"
               run={activeHabitRun}
-              backApp={
-                addingHabit ? <div aria-hidden="true" className="os-habit-cancel-page" /> : undefined
-              }
-              onBackAppShown={addingHabit ? () => setAddingHabit(false) : undefined}
-              onIdleAction={toggleMission}
               onRunChange={saveHabitBuildingRun}
             />
           </section>

@@ -11,6 +11,7 @@ import {
 import {
   appSessionIndex,
   editProfileSession,
+  getDateKey,
   hasReadableProfileCase,
   minutesBetween,
   queueProfileUpdate,
@@ -59,6 +60,27 @@ function formatUpdated(value: string | null) {
     hour: "numeric",
     minute: "2-digit",
   })}`;
+}
+
+function athenaFreshnessLabel(
+  state: ReturnType<typeof useCircleState>["state"],
+  reading: ReturnType<typeof buildAthenaReading>,
+  fallbackUpdatedAt: string | null,
+) {
+  const hasUnsyncedEvidence =
+    state.outbox.length > 0 ||
+    state.evidence.localRevision > state.evidence.acknowledgedRevision;
+  if (hasUnsyncedEvidence) return "Waiting to sync";
+  if (state.profile.profileCase.status === "waiting") return "Preparing";
+  const today = getDateKey();
+  const preparedToday =
+    reading.preparedAt && getDateKey(new Date(reading.preparedAt)) === today;
+  const changedToday =
+    reading.contentUpdatedAt &&
+    getDateKey(new Date(reading.contentUpdatedAt)) === today;
+  if (preparedToday && changedToday) return "Updated this morning";
+  if (preparedToday) return "Checked this morning · No new evidence";
+  return formatUpdated(reading.contentUpdatedAt || fallbackUpdatedAt);
 }
 
 function InlineProfileSessionEditor({
@@ -252,7 +274,11 @@ export default function CircleOSMirror() {
     ) >= 0
       ? athenaReading.updatedAt
       : profileCase.updatedAt;
-  const updateLabel = formatUpdated(readingUpdatedAt);
+  const updateLabel = athenaFreshnessLabel(
+    state,
+    athenaReading,
+    profileCase.updatedAt,
+  );
   const gapReading = gapVisualReading(
     profileCase.sessions.gap.text,
     loggedPastDays,
@@ -264,7 +290,12 @@ export default function CircleOSMirror() {
     pastCheckIns,
     pastMissionWins,
   ].join("|");
-  const profileJourneyVersion = readingUpdatedAt || profileCase.status;
+  const profileJourneyVersion = [
+    readingUpdatedAt,
+    athenaReading.preparedAt,
+    state.evidence.acknowledgedRevision,
+    profileCase.status,
+  ].join("|");
   const lifeJourneyVersion = [
     "vision-cover-v1",
     profileCase.sessions.typicalTuesday.updatedAt,

@@ -156,6 +156,95 @@ const DEFAULT_MISSION = {
   updatedAt: null,
 };
 
+function recordTimestamp(value) {
+  return value?.updatedAt || value?.completedAt || value?.createdAt || "";
+}
+
+function mergeRecordMaps(left = {}, right = {}) {
+  const records = { ...left };
+  for (const [id, candidate] of Object.entries(right || {})) {
+    const existing = records[id];
+    if (
+      !existing ||
+      String(recordTimestamp(candidate)).localeCompare(
+        String(recordTimestamp(existing)),
+      ) >= 0
+    ) {
+      records[id] = candidate;
+    }
+  }
+  return records;
+}
+
+export function habitCompletionId(habitId, dateKey) {
+  return `${dateKey}:${habitId}`;
+}
+
+function migrateDailyPractice(days) {
+  const definitions = {};
+  const completions = {};
+  const tasks = {};
+  for (const dateKey of Object.keys(days).sort()) {
+    const day = days[dateKey];
+    const primary = day?.mission;
+    if (primary?.text?.trim() && primary.updatedAt) {
+      const id = "legacy-primary-habit";
+      definitions[id] = {
+        id,
+        text: primary.text.trim(),
+        status: "active",
+        createdAt: definitions[id]?.createdAt || primary.updatedAt,
+        updatedAt: primary.updatedAt,
+      };
+      if (primary.completed) {
+        const completionId = habitCompletionId(id, dateKey);
+        completions[completionId] = {
+          id: completionId,
+          habitId: id,
+          dateKey,
+          completed: true,
+          completedAt: primary.completedAt || primary.updatedAt,
+          updatedAt: primary.completedAt || primary.updatedAt,
+        };
+      }
+    }
+    for (const legacy of day?.missions || []) {
+      if (!legacy?.id || !legacy.text?.trim()) continue;
+      const updatedAt = legacy.updatedAt || legacy.completedAt || legacy.createdAt;
+      if (legacy.kind === "habit") {
+        definitions[legacy.id] = {
+          id: legacy.id,
+          text: legacy.text.trim(),
+          status: "active",
+          createdAt: definitions[legacy.id]?.createdAt || legacy.createdAt || updatedAt,
+          updatedAt,
+        };
+        if (legacy.completed) {
+          const completionId = habitCompletionId(legacy.id, dateKey);
+          completions[completionId] = {
+            id: completionId,
+            habitId: legacy.id,
+            dateKey,
+            completed: true,
+            completedAt: legacy.completedAt || updatedAt,
+            updatedAt: legacy.completedAt || updatedAt,
+          };
+        }
+      } else {
+        tasks[legacy.id] = {
+          id: legacy.id,
+          text: legacy.text.trim(),
+          status: legacy.completed ? "completed" : "open",
+          createdAt: legacy.createdAt || updatedAt,
+          updatedAt,
+          completedAt: legacy.completedAt || null,
+        };
+      }
+    }
+  }
+  return { definitions, completions, tasks };
+}
+
 function createProfileSession(text = "", confidence = 0) {
   return {
     text,
@@ -198,7 +287,7 @@ function createProfileCase() {
 
 export function createEmptyState() {
   return {
-    version: 4,
+    version: 5,
     ai: {
       baseUrl: CIRCLE_OS_SERVER_URL,
       token: "",
@@ -228,6 +317,19 @@ export function createEmptyState() {
       sessions: {},
     },
     appSessions: {},
+    habits: {
+      definitions: {},
+      completions: {},
+    },
+    tasks: {
+      items: {},
+    },
+    evidence: {
+      localRevision: 0,
+      acknowledgedRevision: 0,
+      lastChangedAt: null,
+      lastAcknowledgedAt: null,
+    },
     athenaMemory: createAthenaMemory(),
     outbox: [],
   };
@@ -301,11 +403,24 @@ export function normalizeState(state) {
       },
     ]),
   );
+  const migratedPractice = migrateDailyPractice(days);
+  const storedHabitDefinitions =
+    state.habits?.definitions && typeof state.habits.definitions === "object"
+      ? state.habits.definitions
+      : {};
+  const storedHabitCompletions =
+    state.habits?.completions && typeof state.habits.completions === "object"
+      ? state.habits.completions
+      : {};
+  const storedTasks =
+    state.tasks?.items && typeof state.tasks.items === "object"
+      ? state.tasks.items
+      : {};
 
   return {
     ...empty,
     ...state,
-    version: 4,
+    version: 5,
     ai: {
       ...empty.ai,
       ...state.ai,
@@ -350,27 +465,57 @@ export function normalizeState(state) {
       state.appSessions && typeof state.appSessions === "object"
         ? state.appSessions
         : {},
+    habits: {
+      definitions: mergeRecordMaps(
+        migratedPractice.definitions,
+        storedHabitDefinitions,
+      ),
+      completions: mergeRecordMaps(
+        migratedPractice.completions,
+        storedHabitCompletions,
+      ),
+    },
+    tasks: {
+      items: mergeRecordMaps(migratedPractice.tasks, storedTasks),
+    },
+    evidence: {
+      ...empty.evidence,
+      ...(state.evidence || {}),
+    },
     athenaMemory: normalizeAthenaMemory(state.athenaMemory),
     outbox: Array.isArray(state.outbox) ? state.outbox : [],
   };
 }
 
 export function queueProfileUpdate(state, reason) {
+  const timestamp = new Date().toISOString();
+  const revision = Number(state.evidence?.localRevision || 0) + 1;
   const alreadyQueued = state.outbox.some((item) => item.reason === reason);
-  if (alreadyQueued) return state;
   return {
     ...state,
-    outbox: [
-      ...state.outbox,
-      {
+    evidence: {
+      ...(state.evidence || {}),
+      localRevision: revision,
+      lastChangedAt: timestamp,
+    },
+    outbox: alreadyQueued
+      ? state.outbox.map((item) =>
+          item.reason === reason
+            ? { ...item, revision, createdAt: timestamp }
+            : item,
+        )
+      : [
+          ...state.outbox,
+          {
         id:
           typeof crypto !== "undefined" && "randomUUID" in crypto
             ? crypto.randomUUID()
             : `ai-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         reason,
-        createdAt: new Date().toISOString(),
-      },
-    ],
+        revision,
+        createdAt: timestamp,
+          },
+        ],
     profile: {
       ...state.profile,
       profileCase: {
@@ -444,6 +589,23 @@ export function mergeServerState(state, serverState) {
       answers.set(answer.questionId, answer);
     }
   }
+  const mergeRecordArrays = (remoteRecords = [], localRecords = [], key = "id") => {
+    const records = new Map();
+    for (const record of [...remoteRecords, ...localRecords]) {
+      const id = record?.[key];
+      if (!id) continue;
+      const existing = records.get(id);
+      if (
+        !existing ||
+        String(recordTimestamp(record)).localeCompare(
+          String(recordTimestamp(existing)),
+        ) >= 0
+      ) {
+        records.set(id, record);
+      }
+    }
+    return [...records.values()];
+  };
   const days = { ...remote.days };
   for (const [dateKey, localDay] of Object.entries(local.days)) {
     const remoteDay = remote.days[dateKey];
@@ -464,11 +626,13 @@ export function mergeServerState(state, serverState) {
       mission: localMissionIsNewest
         ? { ...remoteMission, ...localMission }
         : { ...localMission, ...remoteMission },
-      missions: localDay.missions?.length
-        ? localDay.missions
-        : remoteDay.missions ?? [],
-      checkIns: localDay.checkIns ?? remoteDay.checkIns ?? [],
-      timeBlocks: localDay.timeBlocks ?? remoteDay.timeBlocks ?? [],
+      missions: mergeRecordArrays(remoteDay.missions, localDay.missions),
+      checkIns: mergeRecordArrays(
+        remoteDay.checkIns,
+        localDay.checkIns,
+        "period",
+      ),
+      timeBlocks: mergeRecordArrays(remoteDay.timeBlocks, localDay.timeBlocks),
       logRange: localDay.logRange ?? remoteDay.logRange ?? null,
     };
   }
@@ -542,6 +706,41 @@ export function mergeServerState(state, serverState) {
       ...remote.appSessions,
       ...mergeUpdatedRecords(remote.appSessions, local.appSessions),
     },
+    habits: {
+      definitions: mergeUpdatedRecords(
+        remote.habits.definitions,
+        local.habits.definitions,
+      ),
+      completions: mergeUpdatedRecords(
+        remote.habits.completions,
+        local.habits.completions,
+      ),
+    },
+    tasks: {
+      items: mergeUpdatedRecords(remote.tasks.items, local.tasks.items),
+    },
+    evidence: {
+      localRevision: Math.max(
+        Number(remote.evidence.localRevision || 0),
+        Number(local.evidence.localRevision || 0),
+      ),
+      acknowledgedRevision: Math.max(
+        Number(remote.evidence.acknowledgedRevision || 0),
+        Number(local.evidence.acknowledgedRevision || 0),
+      ),
+      lastChangedAt:
+        String(remote.evidence.lastChangedAt || "").localeCompare(
+          String(local.evidence.lastChangedAt || ""),
+        ) >= 0
+          ? remote.evidence.lastChangedAt
+          : local.evidence.lastChangedAt,
+      lastAcknowledgedAt:
+        String(remote.evidence.lastAcknowledgedAt || "").localeCompare(
+          String(local.evidence.lastAcknowledgedAt || ""),
+        ) >= 0
+          ? remote.evidence.lastAcknowledgedAt
+          : local.evidence.lastAcknowledgedAt,
+    },
     athenaMemory: mergeAthenaMemory(
       remote.athenaMemory,
       local.athenaMemory,
@@ -556,6 +755,164 @@ export function mergeServerState(state, serverState) {
       lastSyncSlot: local.ai.lastSyncSlot,
     },
   };
+}
+
+function freshRecordId(prefix) {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+export function addHabitDefinition(state, id = freshRecordId("habit")) {
+  const timestamp = new Date().toISOString();
+  return {
+    state: {
+      ...state,
+      habits: {
+        ...state.habits,
+        definitions: {
+          ...state.habits.definitions,
+          [id]: {
+            id,
+            text: "",
+            status: "active",
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          },
+        },
+      },
+    },
+    id,
+  };
+}
+
+export function updateHabitDefinition(state, id, text) {
+  const current = state.habits.definitions[id];
+  if (!current) return state;
+  const cleanText = String(text || "").slice(0, 240);
+  const next = {
+    ...state,
+    habits: {
+      ...state.habits,
+      definitions: {
+        ...state.habits.definitions,
+        [id]: {
+          ...current,
+          text: cleanText,
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    },
+  };
+  return cleanText.trim() ? queueProfileUpdate(next, "habit") : next;
+}
+
+export function discardEmptyHabit(state, id) {
+  const current = state.habits.definitions[id];
+  if (!current || current.text.trim()) return state;
+  const definitions = { ...state.habits.definitions };
+  delete definitions[id];
+  return { ...state, habits: { ...state.habits, definitions } };
+}
+
+export function toggleHabitForDay(state, id, dateKey) {
+  if (!state.habits.definitions[id]) return state;
+  const key = habitCompletionId(id, dateKey);
+  const current = state.habits.completions[key];
+  const timestamp = new Date().toISOString();
+  return queueProfileUpdate(
+    {
+      ...state,
+      habits: {
+        ...state.habits,
+        completions: {
+          ...state.habits.completions,
+          [key]: {
+            id: key,
+            habitId: id,
+            dateKey,
+            completed: !current?.completed,
+            completedAt: current?.completed ? null : timestamp,
+            updatedAt: timestamp,
+          },
+        },
+      },
+    },
+    "habit",
+  );
+}
+
+export function addTask(state, id = freshRecordId("task")) {
+  const timestamp = new Date().toISOString();
+  return {
+    state: {
+      ...state,
+      tasks: {
+        ...state.tasks,
+        items: {
+          ...state.tasks.items,
+          [id]: {
+            id,
+            text: "",
+            status: "open",
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            completedAt: null,
+          },
+        },
+      },
+    },
+    id,
+  };
+}
+
+export function updateTask(state, id, text) {
+  const current = state.tasks.items[id];
+  if (!current) return state;
+  const cleanText = String(text || "").slice(0, 240);
+  const next = {
+    ...state,
+    tasks: {
+      ...state.tasks,
+      items: {
+        ...state.tasks.items,
+        [id]: { ...current, text: cleanText, updatedAt: new Date().toISOString() },
+      },
+    },
+  };
+  return cleanText.trim() ? queueProfileUpdate(next, "task") : next;
+}
+
+export function discardEmptyTask(state, id) {
+  const current = state.tasks.items[id];
+  if (!current || current.text.trim()) return state;
+  const items = { ...state.tasks.items };
+  delete items[id];
+  return { ...state, tasks: { ...state.tasks, items } };
+}
+
+export function completeTask(state, id) {
+  const current = state.tasks.items[id];
+  if (!current || current.status === "completed") return state;
+  const timestamp = new Date().toISOString();
+  return queueProfileUpdate(
+    {
+      ...state,
+      tasks: {
+        ...state.tasks,
+        items: {
+          ...state.tasks.items,
+          [id]: {
+            ...current,
+            status: "completed",
+            completedAt: timestamp,
+            updatedAt: timestamp,
+          },
+        },
+      },
+    },
+    "task",
+  );
 }
 
 export function appSessionIndex(
@@ -818,27 +1175,13 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
       next.profile.profileCase.survey.answers.find(
         (item) => item.questionId === "habit-identity",
       )?.answer || "Yourself";
-    const dateKey = getDateKey();
-    const day = next.days[dateKey] || createDay(dateKey);
+    const added = addHabitDefinition(next);
+    next = updateHabitDefinition(added.state, added.id, cleanAnswer);
     next = {
       ...next,
       profile: {
         ...next.profile,
         identityFocus: identity,
-      },
-      days: {
-        ...next.days,
-        [dateKey]: {
-          ...day,
-          mission: {
-            ...day.mission,
-            text: cleanAnswer,
-            identity,
-            completed: false,
-            completedAt: null,
-            updatedAt: new Date().toISOString(),
-          },
-        },
       },
     };
   }

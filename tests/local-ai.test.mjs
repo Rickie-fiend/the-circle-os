@@ -424,6 +424,18 @@ test("public phones receive separate private Obsidian profiles", async () => {
     );
     assert.equal(thoughtResponse.status, 200);
     const thoughtSynced = await thoughtResponse.json();
+    assert.equal(
+      thoughtSynced.acknowledgedEvidenceRevision,
+      thoughtState.evidence.localRevision,
+    );
+    assert.deepEqual(
+      new Set(thoughtSynced.acknowledgedOutboxIds),
+      new Set(thoughtState.outbox.map((item) => item.id)),
+    );
+    assert.equal(
+      thoughtSynced.state.evidence.acknowledgedRevision,
+      thoughtState.evidence.localRevision,
+    );
     assert.match(
       readFileSync(
         join(vaultPath, "Profiles", created.profileId, "Athena Memory.md"),

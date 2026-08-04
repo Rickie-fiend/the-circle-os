@@ -31,6 +31,7 @@ const INK_PARTICLES = [
 
 type CreativeButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   styleId: string;
+  role?: "thought" | "habit";
   keepMountedOnSuccess?: boolean;
   onAnimationComplete?: () => void;
   onSuccessComplete?: () => void;
@@ -79,6 +80,7 @@ export function CreativeButton({
   onPointerUp,
   onSuccessComplete,
   previewMode = false,
+  role = "thought",
   styleId,
   ...props
 }: CreativeButtonProps) {
@@ -120,7 +122,7 @@ export function CreativeButton({
       timer = window.setTimeout(
         () => {
           successCompletionRef.current?.();
-          if (previewMode) {
+          if (previewMode || role === "habit") {
             committedRef.current = false;
             dispatch("preview-reset");
           } else if (!keepMountedOnSuccess) {
@@ -138,7 +140,7 @@ export function CreativeButton({
     return () => {
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [keepMountedOnSuccess, lifecycle, previewMode]);
+  }, [keepMountedOnSuccess, lifecycle, previewMode, role]);
 
   function press(event: PointerEvent<HTMLButtonElement>) {
     onPointerDown?.(event);
@@ -161,7 +163,7 @@ export function CreativeButton({
 
   return (
     <div
-      className={`os-creative-button-shell ${styleClass} phase-${lifecycle}`}
+      className={`os-creative-button-shell role-${role} ${styleClass} phase-${lifecycle}`}
       data-button-lifecycle={lifecycle}
       data-button-style={resolvedStyleId || "fallback"}
     >
@@ -186,7 +188,7 @@ export function CreativeButton({
       <button
         {...props}
         aria-busy={lifecycle === "success" || lifecycle === "exiting"}
-        className={`os-thoughts-send os-creative-button ${className}`.trim()}
+        className={`${role === "thought" ? "os-thoughts-send " : ""}os-creative-button ${className}`.trim()}
         disabled={disabled}
         onClick={(event) => {
           if (!canActivateButton({ disabled, committed: committedRef.current })) {

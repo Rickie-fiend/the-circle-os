@@ -118,6 +118,8 @@ export function createAthenaMemory() {
     version: ATHENA_MEMORY_VERSION,
     updatedAt: null,
     lastPreparedAt: null,
+    lastEvidenceAt: null,
+    preparedEvidenceRevision: 0,
     processedEvidenceIds: [],
     lowSignalEvidence: [],
     ledger: [],
@@ -203,7 +205,11 @@ export function buildAthenaReading(memoryValue) {
   };
 
   return {
-    updatedAt: memory.updatedAt || memory.lastPreparedAt || null,
+    updatedAt: memory.updatedAt || null,
+    contentUpdatedAt: memory.updatedAt || null,
+    preparedAt: memory.lastPreparedAt || null,
+    lastEvidenceAt: memory.lastEvidenceAt || null,
+    preparedEvidenceRevision: Number(memory.preparedEvidenceRevision || 0),
     ready: Object.values(pages).some((sections) => sections.length > 0),
     pages,
   };
@@ -223,6 +229,14 @@ export function mergeAthenaMemory(leftValue, rightValue) {
       String(left.lastPreparedAt || "").localeCompare(String(right.lastPreparedAt || "")) >= 0
         ? left.lastPreparedAt
         : right.lastPreparedAt,
+    lastEvidenceAt:
+      String(left.lastEvidenceAt || "").localeCompare(String(right.lastEvidenceAt || "")) >= 0
+        ? left.lastEvidenceAt
+        : right.lastEvidenceAt,
+    preparedEvidenceRevision: Math.max(
+      Number(left.preparedEvidenceRevision || 0),
+      Number(right.preparedEvidenceRevision || 0),
+    ),
     processedEvidenceIds: unique([
       ...left.processedEvidenceIds,
       ...right.processedEvidenceIds,
@@ -370,6 +384,7 @@ export function captureAthenaThought(memoryValue, evidence) {
   return normalizeAthenaMemory({
     ...memory,
     updatedAt: capturedAt,
+    lastEvidenceAt: capturedAt,
     processedEvidenceIds: [...memory.processedEvidenceIds, sourceId],
     lowSignalEvidence: lowSignal
       ? [
@@ -464,6 +479,8 @@ type: circle-os-athena-memory
 profile_id: ${profileId}
 updated: ${memory.updatedAt || ""}
 last_prepared: ${memory.lastPreparedAt || ""}
+last_evidence: ${memory.lastEvidenceAt || ""}
+prepared_evidence_revision: ${Number(memory.preparedEvidenceRevision || 0)}
 ---
 
 # Athena Memory

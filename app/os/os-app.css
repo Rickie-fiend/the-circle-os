@@ -5794,6 +5794,121 @@
   padding-block: 0.55rem;
 }
 
+/* Daily Trust: Habits are a bold repeated practice; Tasks remain a quiet list. */
+.circle-os .os-habit .os-chapter-idle .os-page-body:has(.os-habit-body-session) {
+  grid-template-rows: auto auto;
+  gap: 1.15rem;
+}
+
+.circle-os .os-habit-body-session,
+.circle-os .os-task-body-session {
+  min-width: 0;
+  width: 100%;
+}
+
+.circle-os .os-habit-body-session {
+  background: rgb(255 248 241 / 0.1);
+  border: 1px solid rgb(255 248 241 / 0.34);
+  border-radius: 20px;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.circle-os .os-task-body-session {
+  border-top: 1px solid rgb(25 24 19 / 0.68);
+  padding-top: 0.9rem;
+}
+
+.circle-os .os-habit-session-label,
+.circle-os .os-task-session-label {
+  font-size: 0.68rem;
+  font-weight: 760;
+  letter-spacing: 0.12em;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.circle-os .os-habit-session-label {
+  color: #fff8f1;
+}
+
+.circle-os .os-task-session-label {
+  color: #191813;
+}
+
+.circle-os .os-habit-body-session .os-extra-mission {
+  border-bottom-color: rgb(255 248 241 / 0.34);
+}
+
+.circle-os .os-habit-body-session .os-extra-mission-copy {
+  color: #fff8f1;
+  font-size: 1.35rem !important;
+  font-weight: 780;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+
+.circle-os .os-habit-body-session .os-extra-mission-copy::placeholder {
+  color: rgb(255 248 241 / 0.62);
+}
+
+.circle-os .os-task-row .os-extra-mission-copy {
+  color: #191813;
+  font-size: 1rem !important;
+  font-weight: 480;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+}
+
+.circle-os .os-task-row .os-extra-mission-copy::placeholder {
+  color: rgb(25 24 19 / 0.48);
+}
+
+.circle-os .os-creative-button-shell.role-habit {
+  height: 48px;
+  margin-top: 0.15rem;
+}
+
+.circle-os .os-creative-button-shell.role-habit .os-creative-button {
+  background: #191813;
+  border: 1px solid rgb(255 248 241 / 0.28);
+  color: #fff8f1;
+  min-height: 44px;
+}
+
+.circle-os .os-creative-button-shell.role-habit.style-soft-clay .os-creative-button {
+  box-shadow:
+    inset 0 1px 0 rgb(255 248 241 / 0.2),
+    0 5px 0 #9f3f1e,
+    0 10px 16px rgb(25 24 19 / 0.24);
+}
+
+.circle-os .os-creative-button-shell.role-habit.style-soft-clay.phase-pressed .os-creative-button {
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.22),
+    0 1px 0 #9f3f1e,
+    0 4px 8px rgb(25 24 19 / 0.2);
+}
+
+.circle-os .os-task-done {
+  background: transparent;
+  border: 1px solid rgb(25 24 19 / 0.62);
+  color: #191813;
+  font-weight: 620;
+  min-height: 44px;
+}
+
+.circle-os .os-task-done:disabled {
+  opacity: 0.55;
+}
+
+.circle-os .os-habit-record-row span {
+  color: #191813;
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  padding: 0.25rem 0;
+}
+
 .circle-os .os-habit .os-chapter-idle .os-add-habit-row span {
   color: #191813;
 }

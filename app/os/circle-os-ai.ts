@@ -67,6 +67,12 @@ export async function syncCircleState(state: CircleState) {
     state: data.state,
     profileId: data.profileId || state.ai.profileId,
     accessKey: data.accessKey || state.ai.token,
+    acknowledgedEvidenceRevision: Number(
+      data.acknowledgedEvidenceRevision || 0,
+    ),
+    acknowledgedOutboxIds: Array.isArray(data.acknowledgedOutboxIds)
+      ? data.acknowledgedOutboxIds
+      : [],
   };
 }
 
