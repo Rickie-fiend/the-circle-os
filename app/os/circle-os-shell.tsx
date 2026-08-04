@@ -528,7 +528,7 @@ function applySyncResult(
       acknowledgedRevision,
       lastAcknowledgedAt: new Date().toISOString(),
     },
-    outbox: merged.outbox.filter((item) => {
+    outbox: merged.outbox.filter((item: CircleState["outbox"][number]) => {
       const hasRevision = Number.isFinite(Number(item.revision));
       const revision = hasRevision ? Number(item.revision) : 0;
       if (
