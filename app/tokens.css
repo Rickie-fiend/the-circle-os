@@ -1,0 +1,139 @@
+/*
+ * The Circle — design tokens
+ * ---------------------------------------------------------------------------
+ * The single source of truth for colour, type, radius, spacing, and motion.
+ *
+ * Two layers:
+ *   1. Primitives (--c-*, --text-*, --r-*, --motion-*) are raw values.
+ *      Components never use a raw hex, px size, or bezier directly.
+ *   2. Semantic roles live in globals.css and os-app.css. They point at
+ *      primitives and are what components actually consume.
+ *
+ * Brand colours are exact and immovable. See DESIGN.md and the durable
+ * documents in `C:\Brain\10 Projects\The Circle`.
+ */
+
+:root {
+  /* ---------------------------------------------------------------------
+   * Colour — brand
+   * Bone, Ink, Orange, and Charcoal are the four named brand colours.
+   * ------------------------------------------------------------------- */
+  --c-bone: #f1efe8;
+  --c-ink: #191813;
+  --c-orange: #e36b37;
+  --c-charcoal: #403e35;
+
+  /* ---------------------------------------------------------------------
+   * Colour — warm neutral ramp
+   * One continuous warm scale from white to below Ink. Bone sits at 100 and
+   * Charcoal at 800 so the brand colours are steps on the ramp, not
+   * exceptions to it. Replaces 40+ hand-picked greys.
+   * ------------------------------------------------------------------- */
+  --c-white: #ffffff;
+  --c-warm-50: #fff8f1; /* warm app surface */
+  --c-warm-100: #fbfaf6;
+  --c-warm-200: #f7f4ec;
+  --c-neutral-100: var(--c-bone);
+  --c-neutral-200: #d9d5ca;
+  --c-neutral-300: #c2bdb2;
+  --c-neutral-400: #aaa59a;
+  --c-neutral-500: #918c81;
+  --c-neutral-600: #787369;
+  --c-neutral-700: #5f5b53;
+  --c-neutral-800: var(--c-charcoal);
+  --c-neutral-900: #302f28;
+  --c-neutral-950: #24231d;
+  --c-ink-deep: #0f0f0d;
+
+  /* ---------------------------------------------------------------------
+   * Colour — orange states
+   * Orange marks identity and action. These are its pressed and deep states,
+   * never decoration.
+   * ------------------------------------------------------------------- */
+  --c-orange-600: #df642d;
+  --c-orange-700: #c65225;
+  --c-orange-800: #b64c23;
+  --c-orange-900: #9f3f1e;
+
+  /* ---------------------------------------------------------------------
+   * Colour — activity categories
+   * A categorical palette for the hourly timeline. Distinct hues, held at low
+   * chroma so a full day reads as one calm object. Focus reuses Orange
+   * because focused time is identity time.
+   * ------------------------------------------------------------------- */
+  --c-activity-focus: var(--c-orange);
+  --c-activity-reading: #e8d8be;
+  --c-activity-exercise: #b98b69;
+  --c-activity-outside: #a99f79;
+  --c-activity-social: #9d7f83;
+  --c-activity-rest: #77796f;
+  --c-activity-entertainment: #635f69;
+
+  /* ---------------------------------------------------------------------
+   * Type scale
+   * Thirteen steps replacing 57 ad-hoc sizes. 10px is the readability floor:
+   * DESIGN.md says never shrink type to fit content, so nothing goes below it.
+   * ------------------------------------------------------------------- */
+  --text-2xs: 0.625rem; /* 10px — micro label, uppercase meta */
+  --text-xs: 0.6875rem; /* 11px */
+  --text-sm: 0.75rem; /* 12px */
+  --text-md: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px — body */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.75rem; /* 28px */
+  --text-4xl: 2rem; /* 32px */
+  --text-5xl: 2.5rem; /* 40px */
+  --text-6xl: 3.25rem; /* 52px */
+  --text-7xl: 4.5rem; /* 72px — outer editorial only */
+
+  /* ---------------------------------------------------------------------
+   * Radius
+   * The App Box is one shape. `--r-box` is that shape and must not be
+   * redefined per feature.
+   * ------------------------------------------------------------------- */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-box: 28px; /* the App Box */
+  --r-full: 999px;
+
+  /* ---------------------------------------------------------------------
+   * Motion
+   * One easing curve. Durations are named for what they do, matching the
+   * vocabulary in APP_SESSION_STANDARD.md.
+   * ------------------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 0.8, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.6, 0, 0.2, 1);
+
+  --motion-tap: 120ms; /* immediate feedback */
+  --motion-quick: 200ms; /* ordinary page travel, consecutive swipes */
+  --motion-page: 280ms;
+  --motion-frame: 400ms; /* App Box height easing after a transition */
+  --motion-fade: 560ms; /* content-layer leave */
+  --motion-reveal: 720ms; /* ceremonial cover reveal */
+  --motion-settle: 900ms;
+
+  /* ---------------------------------------------------------------------
+   * Layout
+   * ------------------------------------------------------------------- */
+  --gutter-phone: 24px;
+  --touch-min: 44px;
+  --content-max: 1120px;
+  --reading-max: 65ch;
+}
+
+/* Reduced motion collapses every duration to nothing. Because the durations
+ * are tokens, this is the only place the preference has to be handled. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-tap: 0ms;
+    --motion-quick: 0ms;
+    --motion-page: 0ms;
+    --motion-frame: 0ms;
+    --motion-fade: 0ms;
+    --motion-reveal: 0ms;
+    --motion-settle: 0ms;
+  }
+}
