@@ -798,65 +798,116 @@
     transform 1800ms cubic-bezier(0.22, 0.82, 0.22, 1);
 }
 
-/* The tick runs through the button engine rather than being a bare checkbox.
- * Soft Clay carries the press: at rest the key sits raised on a solid leg, and
- * pressing collapses it. Marking a habit done should feel like pressing a key,
- * not ticking a form. The shell sizing for the old full-width habit button does
- * not apply here. */
+/* Row ticks
+ *
+ * Open sits proud of the surface on a solid leg. Pressing drives it down onto
+ * the surface, and done keeps it there: sunk in, with the light coming from
+ * inside the hole rather than from a shadow underneath. There is no blur under
+ * a tick, because a blur reads as floating and these are seated in the App Box.
+ *
+ * The habit is the larger key and the task the smaller one, so the two parts of
+ * the Page stay legible from a glance without reading the labels. */
 .circle-os .os-creative-button-shell.role-habit:has(.os-row-tick) {
   height: auto;
   margin-top: 0;
+  perspective: none;
 }
 
-/* Beats the role-habit sizing meant for the old full-width button, which sets a
- * 44px min-height and would stretch the circle into a pill. */
 .circle-os .os-creative-button-shell.role-habit .os-row-tick.os-creative-button {
   align-items: center;
+  background: rgb(255 248 241 / 0.17);
   border: 0;
   border-radius: var(--r-full);
   display: flex;
-  height: 34px;
   justify-content: center;
   min-height: 0;
+  overflow: visible;
   padding: 0;
   position: relative;
-  width: 34px;
+  transform-origin: center;
+  /* One duration for movement and shadow so a press lands as a single event. */
+  transition:
+    background-color 90ms var(--ease-out),
+    box-shadow 90ms var(--ease-out),
+    transform 90ms var(--ease-out);
+  will-change: transform;
 }
 
-.circle-os .os-creative-button-shell.style-soft-clay .os-row-tick.os-creative-button {
-  background: rgb(255 248 241 / 0.16);
+.circle-os .os-row-tick-habit.os-creative-button {
+  height: 42px;
+  width: 42px;
+}
+
+.circle-os .os-row-tick-task.os-creative-button {
+  height: 30px;
+  width: 30px;
+}
+
+/* Open: standing up on its leg. */
+.circle-os .os-creative-button-shell.role-habit
+  .os-row-tick-habit.os-creative-button {
+  box-shadow:
+    inset 0 1px 0 rgb(255 248 241 / 0.4),
+    0 4px 0 var(--c-orange-900);
+  transform: translateY(-4px);
+}
+
+.circle-os .os-creative-button-shell.role-habit
+  .os-row-tick-task.os-creative-button {
   box-shadow:
     inset 0 1px 0 rgb(255 248 241 / 0.34),
-    0 4px 0 var(--c-orange-900),
-    0 8px 14px rgb(25 24 19 / 0.22);
+    0 3px 0 var(--c-orange-900);
+  transform: translateY(-3px);
 }
 
-.circle-os .os-creative-button-shell.style-soft-clay.phase-pressed
+/* Pressing: driven flat onto the surface, the leg gone. */
+.circle-os .os-creative-button-shell.role-habit.phase-pressed
   .os-row-tick.os-creative-button {
-  box-shadow:
-    inset 0 2px 4px rgb(0 0 0 / 0.26),
-    0 1px 0 var(--c-orange-900),
-    0 3px 6px rgb(25 24 19 / 0.2);
+  box-shadow: inset 0 2px 5px rgb(25 24 19 / 0.42);
+  transform: translateY(0);
+  transition-duration: 60ms;
 }
 
-/* Done: the key stays pressed in and fills with Ink. */
-.circle-os .os-row-tick[aria-pressed="true"].os-creative-button {
-  background: var(--c-ink);
+/* Done: it stays in the hole. */
+.circle-os .os-creative-button-shell.role-habit
+  .os-row-tick[aria-pressed="true"].os-creative-button {
+  background: var(--c-orange-900);
+  box-shadow:
+    inset 0 2px 6px rgb(25 24 19 / 0.5),
+    inset 0 -1px 0 rgb(255 248 241 / 0.14);
+  transform: translateY(0);
 }
 
 .circle-os .os-row-tick[aria-pressed="true"]::after {
   border: solid var(--c-warm-50);
   border-width: 0 2.5px 2.5px 0;
   content: "";
-  height: 13px;
-  margin-top: -3px;
   transform: rotate(43deg);
-  width: 6px;
+}
+
+.circle-os .os-row-tick-habit[aria-pressed="true"]::after {
+  height: 15px;
+  margin-top: -3px;
+  width: 7px;
+}
+
+.circle-os .os-row-tick-task[aria-pressed="true"]::after {
+  border-width: 0 2px 2px 0;
+  height: 11px;
+  margin-top: -2px;
+  width: 5px;
 }
 
 .circle-os .os-row-tick:disabled {
   cursor: not-allowed;
   opacity: 0.32;
+}
+
+/* A tick sits in a list. It must not fly in, and it must not inherit the
+ * three-dimensional entrance built for the full-width footer button. */
+.circle-os .os-creative-button-shell.role-habit.phase-entering
+  .os-row-tick.os-creative-button {
+  animation: none;
 }
 
 .circle-os .os-extra-mission.completed {
@@ -1780,12 +1831,15 @@
   overflow: hidden;
   position: absolute;
   transform-origin: center bottom;
+  /* Movement and shadow share one duration and one curve. They used to run at
+   * 140ms and 180ms, so every press arrived as two events a beat apart, which
+   * is what made the buttons feel loose rather than clicky. */
   transition:
-    background-color 180ms ease,
-    box-shadow 180ms ease,
-    color 180ms ease,
-    opacity 180ms ease,
-    transform 140ms cubic-bezier(0.22, 0.82, 0.22, 1);
+    background-color 110ms var(--ease-out),
+    box-shadow 110ms var(--ease-out),
+    color 110ms var(--ease-out),
+    opacity 110ms var(--ease-out),
+    transform 110ms var(--ease-out);
   will-change: transform, opacity;
   width: 100%;
 }
@@ -1880,7 +1934,7 @@
   animation: os-ink-particle-burst 640ms ease-out var(--particle-delay) both;
 }
 
-.circle-os .style-soft-clay .os-creative-button {
+.circle-os .style-soft-clay .os-creative-button:not(.os-row-tick) {
   background: var(--c-neutral-950);
   box-shadow:
     inset 0 1px 0 rgb(255 248 241 / 0.18),
@@ -5917,8 +5971,9 @@
 }
 
 .circle-os .os-habit-body-session .os-extra-mission-copy {
-  font-size: var(--text-xl) !important;
-  font-weight: 640;
+  font-size: var(--text-2xl) !important;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .circle-os .os-task-row .os-extra-mission-copy {
@@ -5936,21 +5991,21 @@
   margin-top: 0.15rem;
 }
 
-.circle-os .os-creative-button-shell.role-habit .os-creative-button {
+.circle-os .os-creative-button-shell.role-habit .os-creative-button:not(.os-row-tick) {
   background: var(--c-ink);
   border: 1px solid rgb(255 248 241 / 0.28);
   color: var(--c-warm-50);
   min-height: 44px;
 }
 
-.circle-os .os-creative-button-shell.role-habit.style-soft-clay .os-creative-button {
+.circle-os .os-creative-button-shell.role-habit.style-soft-clay .os-creative-button:not(.os-row-tick) {
   box-shadow:
     inset 0 1px 0 rgb(255 248 241 / 0.2),
     0 5px 0 var(--c-orange-900),
     0 10px 16px rgb(25 24 19 / 0.24);
 }
 
-.circle-os .os-creative-button-shell.role-habit.style-soft-clay.phase-pressed .os-creative-button {
+.circle-os .os-creative-button-shell.role-habit.style-soft-clay.phase-pressed .os-creative-button:not(.os-row-tick) {
   box-shadow:
     inset 0 2px 4px rgb(0 0 0 / 0.22),
     0 1px 0 var(--c-orange-900),
@@ -6070,162 +6125,135 @@
 /* ---------------------------------------------------------------------------
  * Fractured Glass
  *
- * The one style that does not act on the first press. Each strike opens more
- * cracks and shakes the surface; the last one shatters the button and the
- * fracture runs out into the App Box behind it. Breaking and sending are the
- * same moment, so the effort is the ceremony rather than a delay before one.
+ * The one style that does not act on the first press. Each strike opens another
+ * group of fracture lines and jolts the surface; the last one breaks the button
+ * and the fracture carries out past its edges. Breaking it is the send, not a
+ * delay before one.
+ *
+ * The lines are drawn as jagged, branching paths rather than spokes, because a
+ * straight line from the centre reads as a scratch instead of a crack.
  * ------------------------------------------------------------------------- */
 .circle-os .style-fractured-glass .os-creative-button {
   background: linear-gradient(
-    160deg,
-    rgb(255 248 241 / 0.96),
-    rgb(241 239 232 / 0.88)
+    158deg,
+    rgb(255 250 245),
+    rgb(238 234 226) 62%,
+    rgb(226 221 211)
   );
-  border: 1px solid rgb(25 24 19 / 0.14);
+  border: 1px solid rgb(25 24 19 / 0.16);
   color: var(--c-ink);
   overflow: visible;
-  position: relative;
-  transition:
-    transform var(--motion-tap) var(--ease-out),
-    box-shadow var(--motion-tap) var(--ease-out);
 }
 
-.circle-os .os-crack-shards {
+.circle-os .os-crack-web {
+  height: 100%;
   inset: 0;
   overflow: visible;
   pointer-events: none;
   position: absolute;
+  width: 100%;
+  z-index: 1;
 }
 
-.circle-os .os-crack-shard {
-  background: linear-gradient(
-    to bottom,
-    rgb(25 24 19 / 0.62),
-    rgb(25 24 19 / 0.08)
-  );
-  height: var(--shard-length);
-  left: 50%;
-  margin-left: -1px;
+.circle-os .os-crack-web path {
+  fill: none;
+  stroke: rgb(25 24 19 / 0.66);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+}
+
+/* Each group is drawn on by its own strike. */
+.circle-os .os-crack-stage {
   opacity: 0;
-  position: absolute;
-  top: 50%;
-  transform: rotate(var(--shard-angle)) scaleY(0);
-  transform-origin: 50% 0;
-  transition:
-    opacity 160ms var(--ease-out),
-    transform 260ms var(--ease-out);
-  width: 2px;
+  transition: opacity 120ms var(--ease-out);
 }
 
-/* Each strike opens roughly two more cracks. */
-.circle-os [data-button-damage="1"] .os-crack-shard:nth-child(-n + 2),
-.circle-os [data-button-damage="2"] .os-crack-shard:nth-child(-n + 4),
-.circle-os [data-button-damage="3"] .os-crack-shard:nth-child(-n + 6),
-.circle-os [data-button-damage="4"] .os-crack-shard {
+.circle-os [data-button-damage="1"] .os-crack-stage[data-stage="1"],
+.circle-os [data-button-damage="2"] .os-crack-stage[data-stage="1"],
+.circle-os [data-button-damage="2"] .os-crack-stage[data-stage="2"],
+.circle-os [data-button-damage="3"] .os-crack-stage,
+.circle-os [data-button-damage="4"] .os-crack-stage {
   opacity: 1;
-  transform: rotate(var(--shard-angle)) scaleY(1);
 }
 
-/* A struck surface flinches. */
+/* A struck pane jolts once and settles. Short and flat, so it reads as impact
+ * rather than wobble. */
 .circle-os .style-fractured-glass[data-button-damage="1"] .os-creative-button,
 .circle-os .style-fractured-glass[data-button-damage="2"] .os-creative-button,
 .circle-os .style-fractured-glass[data-button-damage="3"] .os-creative-button {
-  animation: os-crack-strike 220ms var(--ease-out) both;
+  animation: os-crack-strike 130ms var(--ease-out) both;
 }
 
 .circle-os .style-fractured-glass[data-button-damage="2"] .os-creative-button {
-  box-shadow: inset 0 0 14px rgb(25 24 19 / 0.1);
+  filter: brightness(0.985);
 }
 
 .circle-os .style-fractured-glass[data-button-damage="3"] .os-creative-button {
-  box-shadow: inset 0 0 22px rgb(25 24 19 / 0.18);
+  filter: brightness(0.965);
 }
 
 @keyframes os-crack-strike {
   0% {
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
-  28% {
-    transform: translate3d(-2px, 1px, 0) scale(0.986);
+  35% {
+    transform: translate3d(-1.5px, 0.5px, 0);
   }
-  62% {
-    transform: translate3d(2px, -1px, 0) scale(0.994);
+  70% {
+    transform: translate3d(1.5px, -0.5px, 0);
   }
   100% {
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 
-/* The break. */
+/* The break: the pane gives way and the fracture runs past its edges. */
 .circle-os .style-fractured-glass.phase-success .os-creative-button {
-  animation: os-crack-shatter var(--motion-fade) var(--ease-out) both;
+  animation: os-crack-give var(--motion-fade) var(--ease-out) both;
 }
 
-@keyframes os-crack-shatter {
+.circle-os .style-fractured-glass.phase-success .os-crack-web {
+  animation: os-crack-carry var(--motion-reveal) var(--ease-out) both;
+}
+
+.circle-os .style-fractured-glass.phase-success .os-crack-web path {
+  stroke-width: 1.1;
+}
+
+@keyframes os-crack-give {
   0% {
-    filter: brightness(1);
     opacity: 1;
     transform: scale(1);
   }
-  22% {
-    filter: brightness(1.16);
-    transform: scale(1.035);
+  18% {
+    filter: brightness(1.1);
+    transform: scale(1.012);
   }
   100% {
-    filter: brightness(0.96);
     opacity: 0;
-    transform: scale(0.9) translateY(6px);
+    transform: scale(0.985) translateY(3px);
   }
 }
 
-/* The fracture carries on into the surface behind the button. */
-.circle-os .style-fractured-glass.phase-success::after {
-  animation: os-crack-spread var(--motion-reveal) var(--ease-out) both;
-  background:
-    conic-gradient(
-      from 8deg,
-      transparent 0deg 3deg,
-      rgb(25 24 19 / 0.16) 3deg 4deg,
-      transparent 4deg 61deg,
-      rgb(25 24 19 / 0.13) 61deg 62deg,
-      transparent 62deg 128deg,
-      rgb(25 24 19 / 0.16) 128deg 129deg,
-      transparent 129deg 194deg,
-      rgb(25 24 19 / 0.11) 194deg 195deg,
-      transparent 195deg 262deg,
-      rgb(25 24 19 / 0.15) 262deg 263deg,
-      transparent 263deg 318deg,
-      rgb(25 24 19 / 0.12) 318deg 319deg,
-      transparent 319deg 360deg
-    );
-  content: "";
-  inset: -180px;
-  pointer-events: none;
-  position: absolute;
-  z-index: -1;
-}
-
-@keyframes os-crack-spread {
+@keyframes os-crack-carry {
   0% {
-    opacity: 0;
-    transform: scale(0.24);
-  }
-  40% {
     opacity: 1;
+    transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: scale(1);
+    transform: scale(3.4);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .circle-os .style-fractured-glass .os-creative-button,
   .circle-os .style-fractured-glass.phase-success .os-creative-button,
-  .circle-os .style-fractured-glass.phase-success::after {
+  .circle-os .style-fractured-glass.phase-success .os-crack-web {
     animation: none;
   }
-  .circle-os .os-crack-shard {
+  .circle-os .os-crack-stage {
     transition: none;
   }
 }

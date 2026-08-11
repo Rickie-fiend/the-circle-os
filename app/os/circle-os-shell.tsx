@@ -2337,7 +2337,7 @@ export function TodayExperience() {
                           <CreativeButton
                             aria-label={`${completed ? "Undo" : "Mark done"}: ${habit.text || "New Habit"}`}
                             aria-pressed={completed}
-                            className="os-row-tick"
+                            className="os-row-tick os-row-tick-habit"
                             disabled={!habit.text.trim()}
                             keepMountedOnSuccess
                             onClick={() => toggleHabit(habit.id)}
@@ -2375,7 +2375,7 @@ export function TodayExperience() {
                         <CreativeButton
                           aria-label={`Complete task: ${task.text || "New Task"}`}
                           aria-pressed={task.status === "completed"}
-                          className="os-row-tick"
+                          className="os-row-tick os-row-tick-task"
                           disabled={!task.text.trim() || task.status === "completed"}
                           keepMountedOnSuccess
                           onClick={() => finishTask(task.id)}

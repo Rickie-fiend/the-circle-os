@@ -20,15 +20,26 @@ import {
   type ButtonLifecycle,
 } from "./button-engine-model.js";
 
-// Thin shards drawn over a breaking button. Each is [x%, y%, rotation, length%].
-const CRACK_SHARDS = [
-  [50, 50, -68, 46],
-  [50, 50, 14, 58],
-  [50, 50, 72, 40],
-  [50, 50, 128, 52],
-  [50, 50, -142, 44],
-  [50, 50, 168, 36],
-] as const;
+// Fracture lines drawn over a breaking button, grouped by the strike that
+// opens them. They run in the 100x52 space of the button and are deliberately
+// jagged and branching: a straight line reads as a scratch, not a crack.
+const CRACK_STAGES: readonly (readonly string[])[] = [
+  [
+    "M50 26 L41 19 L33 10 L27 2",
+    "M50 26 L60 32 L69 41 L74 51",
+  ],
+  [
+    "M50 26 L63 22 L75 16 L88 9",
+    "M50 26 L38 33 L27 39 L14 47",
+    "M33 10 L28 12",
+  ],
+  [
+    "M50 26 L49 14 L53 6 L50 0",
+    "M50 26 L52 38 L48 45 L51 52",
+    "M75 16 L79 12",
+    "M27 39 L23 43",
+  ],
+];
 
 const INK_PARTICLES = [
   [-58, -22, 8, "ink"],
@@ -238,23 +249,20 @@ export function CreativeButton({
           <span aria-hidden="true" className="os-liquid-sweep" />
         ) : null}
         {pressesToBreak > 1 ? (
-          <span aria-hidden="true" className="os-crack-shards">
-            {CRACK_SHARDS.map(([x, y, angle, length], index) => (
-              <i
-                className="os-crack-shard"
-                key={`${angle}-${length}`}
-                style={
-                  {
-                    "--shard-angle": `${angle}deg`,
-                    "--shard-length": `${length}%`,
-                    "--shard-step": index,
-                    "--shard-x": `${x}%`,
-                    "--shard-y": `${y}%`,
-                  } as CSSProperties
-                }
-              />
+          <svg
+            aria-hidden="true"
+            className="os-crack-web"
+            preserveAspectRatio="none"
+            viewBox="0 0 100 52"
+          >
+            {CRACK_STAGES.map((paths, stage) => (
+              <g className="os-crack-stage" data-stage={stage + 1} key={stage}>
+                {paths.map((d) => (
+                  <path d={d} key={d} vectorEffect="non-scaling-stroke" />
+                ))}
+              </g>
             ))}
-          </span>
+          </svg>
         ) : null}
         <span className="os-creative-button-label">{children}</span>
       </button>
