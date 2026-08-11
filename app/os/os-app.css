@@ -862,10 +862,19 @@
   transform: translateY(-3px);
 }
 
-/* Pressing: driven flat onto the surface, the leg gone. */
-/* Down is near instant. Anything slower reads as lag rather than contact. */
-.circle-os .os-creative-button-shell.role-habit.phase-pressed
-  .os-row-tick.os-creative-button {
+/* Pressing: driven flat onto the surface, the leg gone.
+ *
+ * This is keyed on :active rather than the engine's pressed phase. The engine
+ * returns a button to ready on pointerup, which happens before React re-renders
+ * with the new checked state, so a phase-driven tick sprang back up for a frame
+ * and then dropped into the checked state. That bounce is what read as a click
+ * animation playing before the real state arrived. :active ends as the finger
+ * lifts and the checked state takes over in the same beat, so the key goes down
+ * once and stays there.
+ *
+ * Down is near instant. Anything slower reads as lag rather than contact. */
+.circle-os .os-creative-button-shell.role-habit
+  .os-row-tick.os-creative-button:active {
   box-shadow: inset 0 2px 5px rgb(25 24 19 / 0.42);
   transform: translateY(0);
   transition-duration: 40ms;
@@ -1946,11 +1955,11 @@
   transform: translateY(-5px) rotateX(0deg);
 }
 
-.circle-os .style-soft-clay.phase-entering .os-creative-button {
+.circle-os .style-soft-clay.phase-entering .os-creative-button:not(.os-row-tick) {
   animation: os-clay-button-enter 620ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
 }
 
-.circle-os .style-soft-clay.phase-pressed .os-creative-button {
+.circle-os .style-soft-clay.phase-pressed .os-creative-button:not(.os-row-tick) {
   box-shadow:
     inset 0 2px 4px rgb(0 0 0 / 0.2),
     0 1px 0 var(--c-charcoal),
@@ -1958,7 +1967,7 @@
   transform: translateY(1px) scaleX(0.992);
 }
 
-.circle-os .style-soft-clay.phase-success .os-creative-button {
+.circle-os .style-soft-clay.phase-success .os-creative-button:not(.os-row-tick) {
   animation: os-clay-button-success 640ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
 }
 
