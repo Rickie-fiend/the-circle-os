@@ -2330,18 +2330,14 @@ export function TodayExperience() {
                             rows={1}
                             value={habit.text}
                           />
-                          <CreativeButton
+                          <button
+                            aria-label={`${completed ? "Undo" : "Mark done"}: ${habit.text || "New Habit"}`}
                             aria-pressed={completed}
-                            className="os-habit-done-button"
+                            className="os-row-tick"
                             disabled={!habit.text.trim()}
-                            keepMountedOnSuccess
                             onClick={() => toggleHabit(habit.id)}
-                            role="habit"
-                            styleId="soft-clay"
                             type="button"
-                          >
-                            {completed ? "Done" : "Mark done"}
-                          </CreativeButton>
+                          />
                         </article>
                       );
                     })}
@@ -2371,13 +2367,12 @@ export function TodayExperience() {
                         />
                         <button
                           aria-label={`Complete task: ${task.text || "New Task"}`}
-                          className="os-extra-mission-done os-task-done"
+                          aria-pressed={task.status === "completed"}
+                          className="os-row-tick"
                           disabled={!task.text.trim() || task.status === "completed"}
                           onClick={() => finishTask(task.id)}
                           type="button"
-                        >
-                          {task.status === "completed" ? "Done" : "Complete"}
-                        </button>
+                        />
                       </article>
                     ))}
                   </div>

@@ -779,12 +779,18 @@
   margin-top: 0;
 }
 
+/* One row rhythm, shared by Habits and Tasks. The standard asks for one quiet
+ * divider and one row per item, with no nested card and no doubled spacing, so
+ * the text and its tick sit on a single line rather than stacking. */
 .circle-os .os-extra-mission {
-  border-bottom: 1px solid rgb(25 24 19 / 0.52);
+  align-items: center;
+  border-bottom: 1px solid rgb(25 24 19 / 0.11);
+  column-gap: 0.75rem;
   display: grid;
-  gap: 0.85rem;
+  grid-template-columns: 1fr auto;
   max-height: 1000px;
-  padding: 1rem 0;
+  min-height: var(--touch-min);
+  padding: 0.6rem 0;
   transition:
     max-height 1800ms cubic-bezier(0.22, 0.82, 0.22, 1),
     opacity 1700ms ease,
@@ -792,15 +798,61 @@
     transform 1800ms cubic-bezier(0.22, 0.82, 0.22, 1);
 }
 
+/* The tick is the whole control: no label, no button chrome. Habits and Tasks
+ * both sit on the orange App Box, so the ring is bone and the finished state
+ * fills with Ink. */
+.circle-os .os-row-tick {
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-full);
+  box-shadow: inset 0 0 0 1.5px rgb(255 248 241 / 0.55);
+  cursor: pointer;
+  flex: none;
+  height: 22px;
+  padding: 0;
+  position: relative;
+  transition:
+    background var(--motion-tap) var(--ease-out),
+    box-shadow var(--motion-tap) var(--ease-out);
+  width: 22px;
+}
+
+.circle-os .os-row-tick:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1.5px var(--c-warm-50);
+}
+
+.circle-os .os-row-tick[aria-pressed="true"] {
+  background: var(--c-ink);
+  box-shadow: none;
+}
+
+.circle-os .os-row-tick[aria-pressed="true"]::after {
+  border: solid var(--c-warm-50);
+  border-width: 0 2px 2px 0;
+  content: "";
+  height: 10px;
+  left: 7.5px;
+  position: absolute;
+  top: 4px;
+  transform: rotate(43deg);
+  width: 5px;
+}
+
+.circle-os .os-row-tick:disabled {
+  cursor: not-allowed;
+  opacity: 0.32;
+}
+
 .circle-os .os-extra-mission.completed {
   opacity: 1;
 }
 
+/* A finished row quiets down rather than changing colour: it stays bone on the
+ * orange surface and simply recedes. */
 .circle-os .os-extra-mission.completed .os-mission-text-edit {
-  color: var(--c-ink);
+  opacity: 0.52;
   text-decoration: line-through;
-  text-decoration-color: var(--c-ink);
-  text-decoration-thickness: 2px;
+  text-decoration-thickness: 1.5px;
 }
 
 .circle-os .os-extra-mission.leaving {
@@ -5808,61 +5860,49 @@
   width: 100%;
 }
 
+/* Habits and Tasks are two parts of one surface, not two cards. The standard
+ * forbids a nested card inside the App Box, so this region carries no fill,
+ * border or radius of its own; the label and the row rhythm separate it. */
 .circle-os .os-habit-body-session {
-  background: rgb(255 248 241 / 0.1);
-  border: 1px solid rgb(255 248 241 / 0.34);
-  border-radius: var(--r-lg);
-  padding: 0.9rem 1rem 1rem;
+  padding: 0;
 }
 
+/* One quiet divider between the two parts, in the same language as the row
+ * dividers rather than a hard dark line. */
 .circle-os .os-task-body-session {
-  border-top: 1px solid rgb(25 24 19 / 0.68);
+  border-top: 1px solid rgb(255 248 241 / 0.22);
+  margin-top: 0.9rem;
   padding-top: 0.9rem;
 }
 
 .circle-os .os-habit-session-label,
 .circle-os .os-task-session-label {
-  font-size: var(--text-xs);
-  font-weight: 760;
-  letter-spacing: 0.12em;
-  margin: 0 0 0.35rem;
+  color: rgb(255 248 241 / 0.72);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  margin: 0 0 0.5rem;
   text-transform: uppercase;
-}
-
-.circle-os .os-habit-session-label {
-  color: var(--c-warm-50);
-}
-
-.circle-os .os-task-session-label {
-  color: var(--c-ink);
 }
 
 .circle-os .os-habit-body-session .os-extra-mission {
   border-bottom-color: rgb(255 248 241 / 0.34);
 }
 
-.circle-os .os-habit-body-session .os-extra-mission-copy {
-  color: var(--c-warm-50);
-  font-size: 1.35rem !important;
-  font-weight: 780;
-  letter-spacing: -0.03em;
-  line-height: 1.12;
-}
-
-.circle-os .os-habit-body-session .os-extra-mission-copy::placeholder {
-  color: rgb(255 248 241 / 0.62);
-}
-
+/* Habits and Tasks read at one size and weight. They were 21.6px/780 against
+ * 16px/480, which made two parts of the same App Box look like two features. */
+.circle-os .os-habit-body-session .os-extra-mission-copy,
 .circle-os .os-task-row .os-extra-mission-copy {
-  color: var(--c-ink);
-  font-size: 1rem !important;
-  font-weight: 480;
+  color: var(--c-warm-50);
+  font-size: var(--text-lg) !important;
+  font-weight: 540;
   letter-spacing: -0.015em;
-  line-height: 1.35;
+  line-height: 1.32;
 }
 
+.circle-os .os-habit-body-session .os-extra-mission-copy::placeholder,
 .circle-os .os-task-row .os-extra-mission-copy::placeholder {
-  color: rgb(25 24 19 / 0.48);
+  color: rgb(255 248 241 / 0.56);
 }
 
 .circle-os .os-creative-button-shell.role-habit {
