@@ -330,9 +330,11 @@ add(
 .row{display:flex;gap:26px;flex-wrap:wrap}
 .anat{position:relative}
 .reg{outline:1px dashed rgb(227 107 55/.55);outline-offset:2px;position:relative}
-.reg::after{content:attr(data-r);position:absolute;top:2px;right:3px;
+/* Region labels sit on the dashed edge like a fieldset legend, so they never
+ * land on top of the content they are pointing at. */
+.reg::after{content:attr(data-r);position:absolute;top:-7px;right:6px;
 font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--c-orange);
-font-weight:700}
+font-weight:700;background:var(--c-warm-50);padding:0 4px;line-height:1}
 .cap{font-size:var(--text-2xs);letter-spacing:.14em;text-transform:uppercase;
 font-weight:600;color:var(--c-neutral-600);margin:10px 0 0;text-align:center}
 @media (prefers-color-scheme:dark){.cap{color:var(--c-neutral-400)}}`,
