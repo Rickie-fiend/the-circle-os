@@ -2308,8 +2308,7 @@ export function TodayExperience() {
               definition={activeHabitChapter}
               key={activeHabitChapter.id}
               idleBody={
-                <section className="os-habit-body-session" aria-labelledby="habit-session-title">
-                  <p className="os-habit-session-label" id="habit-session-title">Habits</p>
+                <section className="os-habit-body-session" aria-label="Habits">
                   <div className="os-repeated-habits">
                     {habits.map((habit) => {
                       const completed = Boolean(habitCompletion(habit.id)?.completed);
@@ -2330,12 +2329,15 @@ export function TodayExperience() {
                             rows={1}
                             value={habit.text}
                           />
-                          <button
+                          <CreativeButton
                             aria-label={`${completed ? "Undo" : "Mark done"}: ${habit.text || "New Habit"}`}
                             aria-pressed={completed}
                             className="os-row-tick"
                             disabled={!habit.text.trim()}
+                            keepMountedOnSuccess
                             onClick={() => toggleHabit(habit.id)}
+                            role="habit"
+                            styleId="soft-clay"
                             type="button"
                           />
                         </article>
@@ -2365,12 +2367,15 @@ export function TodayExperience() {
                           rows={1}
                           value={task.text}
                         />
-                        <button
+                        <CreativeButton
                           aria-label={`Complete task: ${task.text || "New Task"}`}
                           aria-pressed={task.status === "completed"}
                           className="os-row-tick"
                           disabled={!task.text.trim() || task.status === "completed"}
+                          keepMountedOnSuccess
                           onClick={() => finishTask(task.id)}
+                          role="habit"
+                          styleId="soft-clay"
                           type="button"
                         />
                       </article>

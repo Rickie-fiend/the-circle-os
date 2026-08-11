@@ -1,5 +1,9 @@
-export const DEEP_THOUGHT_MIN_WORDS = 15;
-export const DEEP_THOUGHT_MIN_ACTIVE_MS = 20_000;
+// A reward should follow a real sentence, not an essay. "happy" earns the press
+// effect only; "I love this day, I am grateful for today" earns the reward.
+// The active time is a guard against pasting, not a measure of effort, so it is
+// only long enough that a sentence cannot appear instantly.
+export const DEEP_THOUGHT_MIN_WORDS = 6;
+export const DEEP_THOUGHT_MIN_ACTIVE_MS = 5_000;
 
 export const LOCAL_DEEP_THOUGHTS = Object.freeze([
   Object.freeze({ text: "What are you pretending not to know right now?", target: "currentLife" }),

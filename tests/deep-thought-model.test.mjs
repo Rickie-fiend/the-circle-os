@@ -2,12 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { countDeepThoughtWords, createLocalDeepThoughtPrompt, deepThoughtFollowUp, isDeepThoughtRewardEligible } from "../app/os/deep-thought-model.js";
 
-test("deep reward requires both fifteen words and twenty active seconds", () => {
-  const fifteen = "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen";
-  assert.equal(countDeepThoughtWords(fifteen), 15);
-  assert.equal(isDeepThoughtRewardEligible({ text: fifteen, activeMs: 19_999 }), false);
-  assert.equal(isDeepThoughtRewardEligible({ text: "one two", activeMs: 30_000 }), false);
-  assert.equal(isDeepThoughtRewardEligible({ text: fifteen, activeMs: 20_000 }), true);
+test("deep reward follows a sentence, not an essay", () => {
+  const sentence = "I love this day, I am grateful for today";
+  assert.equal(countDeepThoughtWords(sentence), 9);
+  assert.equal(isDeepThoughtRewardEligible({ text: sentence, activeMs: 5_000 }), true);
+
+  // A single word earns the press effect only.
+  assert.equal(isDeepThoughtRewardEligible({ text: "happy", activeMs: 30_000 }), false);
+
+  // Six words is the floor, and five is still short of it.
+  assert.equal(isDeepThoughtRewardEligible({ text: "one two three four five six", activeMs: 5_000 }), true);
+  assert.equal(isDeepThoughtRewardEligible({ text: "one two three four five", activeMs: 30_000 }), false);
+
+  // The time guard only rules out text that could not have been typed.
+  assert.equal(isDeepThoughtRewardEligible({ text: sentence, activeMs: 4_999 }), false);
 });
 
 test("local deep questions may use reviewed mission evidence", () => {
