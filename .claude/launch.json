@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "design-system",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/serve-design-system.mjs"],
+      "port": 4321
     }
   ]
 }
