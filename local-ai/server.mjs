@@ -998,15 +998,24 @@ export function createCircleAiServer(options = {}) {
     writeIndex(vaultPath);
   }
 
+  // A profile may hold more than one key so the same person can open it on a
+  // second device without knocking the first one off. Recovery still replaces
+  // every key, because that case means a phone was lost.
+  function keyHashes(entry) {
+    if (!entry) return [];
+    const extra = Array.isArray(entry.extraKeyHashes) ? entry.extraKeyHashes : [];
+    return [entry.keyHash, ...extra].filter(Boolean);
+  }
+
   function authorizedProfile(request, profileId) {
     const key = bearer(request);
-    return Boolean(key && access[profileId]?.keyHash === hash(key));
+    return Boolean(key && keyHashes(access[profileId]).includes(hash(key)));
   }
 
   function authorizedPublisher(request) {
     const key = bearer(request);
     return Boolean(
-      key && Object.values(access).some((entry) => entry?.keyHash === hash(key)),
+      key && Object.values(access).some((entry) => keyHashes(entry).includes(hash(key))),
     );
   }
 
@@ -1151,6 +1160,9 @@ export function createCircleAiServer(options = {}) {
         }
         const accessKey = randomKey(32);
         access[profileId].keyHash = hash(accessKey);
+        // Recovery means the earlier device is gone, so every other key it
+        // handed out stops working too.
+        access[profileId].extraKeyHashes = [];
         access[profileId].recoveredAt = now();
         saveAccess();
         json(
@@ -1190,12 +1202,47 @@ export function createCircleAiServer(options = {}) {
       }
 
       const profileMatch = request.url?.match(
-        /^\/profiles\/(p_[A-Za-z0-9_-]{16})(?:\/(sync))?$/,
+        /^\/profiles\/(p_[A-Za-z0-9_-]{16})(?:\/(sync|attach))?$/,
       );
       if (profileMatch) {
         const profileId = profileMatch[1];
         if (!authorizedProfile(request, profileId)) {
           json(response, 401, { error: "This profile key is not valid." }, origin);
+          return;
+        }
+        // Hand an additional key to a second device. Unlike recovery this keeps
+        // every existing key working, so a test build can read the real profile
+        // while the everyday phone stays connected. It needs a key already, so
+        // knowing the profile id alone is not enough to attach.
+        if (request.method === "POST" && profileMatch[2] === "attach") {
+          const state = readProfileState(vaultPath, profileId);
+          if (!state) {
+            json(response, 404, { error: "Profile not found." }, origin);
+            return;
+          }
+          const entry = access[profileId];
+          const extra = Array.isArray(entry.extraKeyHashes)
+            ? entry.extraKeyHashes
+            : [];
+          if (extra.length >= 4) {
+            json(
+              response,
+              429,
+              { error: "This profile already has the most devices it allows." },
+              origin,
+            );
+            return;
+          }
+          const accessKey = randomKey(32);
+          entry.extraKeyHashes = [...extra, hash(accessKey)];
+          entry.attachedAt = now();
+          saveAccess();
+          json(
+            response,
+            201,
+            { profileId, accessKey, state: publicState(state) },
+            origin,
+          );
           return;
         }
         if (request.method === "GET" && !profileMatch[2]) {
