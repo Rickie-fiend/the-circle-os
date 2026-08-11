@@ -6,11 +6,13 @@
 // so the bundle can be checked before it is pushed to claude.ai/design.
 
 import { createServer } from "node:http";
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { readFileSync, existsSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, extname, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "design-system");
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(HERE, "..", "design-system");
+const CAPTURES = join(HERE, "..", "design-system", "_captured");
 const PORT = 4321;
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -42,8 +44,44 @@ ${groups
   .join("")}`;
 };
 
+// Capture endpoint. The running app posts its rendered markup here so the
+// screen cards show what the app actually is, rather than a redrawing of it.
+// Kept out of the app itself: this is a local authoring tool, not a feature.
+const capture = (req, res, name) => {
+  let body = "";
+  req.on("data", (chunk) => (body += chunk));
+  req.on("end", () => {
+    mkdirSync(CAPTURES, { recursive: true });
+    writeFileSync(join(CAPTURES, `${name}.html`), body, "utf8");
+    console.log(`captured ${name} (${Math.round(body.length / 1024)}KB)`);
+    res.writeHead(200, {
+      "content-type": "text/plain",
+      "access-control-allow-origin": "*",
+    });
+    res.end(`saved ${body.length}`);
+  });
+};
+
 createServer((req, res) => {
   const url = decodeURIComponent(req.url.split("?")[0]);
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "POST, OPTIONS",
+      "access-control-allow-headers": "content-type",
+    });
+    return res.end();
+  }
+  if (req.method === "POST" && url.startsWith("/_capture/")) {
+    const name = url.slice("/_capture/".length).replace(/[^a-z0-9-]/gi, "");
+    if (!name) {
+      res.writeHead(400, { "access-control-allow-origin": "*" });
+      return res.end("bad name");
+    }
+    return capture(req, res, name);
+  }
+
   if (url === "/" || url === "/index.html") {
     res.writeHead(200, { "content-type": TYPES[".html"] });
     return res.end(index());

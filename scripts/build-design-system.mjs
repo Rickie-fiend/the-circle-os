@@ -9,7 +9,7 @@
 // design reference that silently falls back to the wrong font is worse than no
 // reference at all.
 
-import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -603,6 +603,107 @@ empty-state height. Tasks stay visible in one continuous Sub Body rather than an
 inner scrolling panel.</p>`,
   }),
   { name: "Habit stack", group: "Components", subtitle: "Continuous rows, filled and empty", w: 1060, h: 800 },
+);
+
+// ---------------------------------------------------------------------------
+// Real app screens
+//
+// These are not redrawings. `scripts/serve-design-system.mjs` exposes a capture
+// endpoint; the running app posts its own rendered markup there, and the
+// compiled stylesheets are pulled from the dev server with Tailwind already
+// resolved. The markup goes in an iframe so the app's CSS, which sets body and
+// element styles globally, cannot fight the card around it.
+// ---------------------------------------------------------------------------
+const CAPTURED = join(OUT, "_captured");
+const captured = (f) => {
+  const p = join(CAPTURED, f);
+  if (!existsSync(p)) return null;
+  return readFileSync(p, "utf8");
+};
+
+// The compiled stylesheet from the production build, not the dev server: Vite
+// serves CSS as a JavaScript module in dev, so fetching it over HTTP returns a
+// wrapper the CSS parser gives up on after three rules.
+const appCss = captured("app.css");
+
+const screen = (file, capture, title, lede, notes, meta) => {
+  const markup = captured(capture);
+  if (!markup || !appCss) {
+    console.warn(`skipping ${file}: run the capture step first`);
+    return;
+  }
+  // Drop the build's own @font-face rules: their URLs point at hashed asset
+  // paths that do not exist inside a standalone card, and because they come
+  // later in the cascade they would beat the embedded copies.
+  const noFonts = appCss.replace(/@font-face\{[^}]*\}/g, "");
+
+  // next/font puts --font-sans and --font-display on <body> via a generated
+  // class. The capture starts at .circle-os, below that, so the variables have
+  // to be restored or every rule that reads them falls back to a system face.
+  const inner = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<style>${FONT_FACE}${noFonts}
+html{--font-sans:Geist;--font-display:"Cormorant Garamond"}
+html,body{margin:0;background:var(--c-ink-deep);font-family:Geist,system-ui,sans-serif}
+</style></head>
+<body>${markup}</body></html>`;
+  const srcdoc = inner.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+
+  add(
+    file,
+    page({
+      group: "The app today",
+      name: "Live screen",
+      title,
+      lede,
+      extra: `
+.phone{width:375px;height:760px;border:0;border-radius:var(--r-box);
+background:var(--c-ink-deep);box-shadow:0 2px 4px rgb(25 24 19/.1),
+0 18px 48px rgb(25 24 19/.16);display:block}
+.frame{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.cap{font-size:var(--text-2xs);letter-spacing:.14em;text-transform:uppercase;
+font-weight:600;color:var(--c-neutral-600);margin:10px 0 0;text-align:center}
+.obs{margin:0 0 8px;padding-left:17px;font-size:var(--text-sm);line-height:1.6;
+color:var(--c-neutral-700)}
+@media (prefers-color-scheme:dark){.cap,.obs{color:var(--c-neutral-400)}}`,
+      body: `<div class="frame">
+<div><iframe class="phone" title="${title}" sandbox="allow-same-origin"
+srcdoc="${srcdoc}"></iframe><p class="cap">375 × 760 — iPhone width</p></div>
+<div style="flex:1;min-width:270px">
+<p class="eyebrow">What to look at</p>
+${notes.map((n) => `<p class="obs">${n}</p>`).join("")}
+</div></div>`,
+    }),
+    meta,
+  );
+};
+
+screen(
+  "screens/today.html",
+  "today.html",
+  "Today",
+  "The real Today screen, captured from the running app with a seeded profile. This is the surface used every day: check-in, habit, tasks, and the hourly log.",
+  [
+    "The App Box stack: Check-in, Habit, Habits, Tasks, then Log. Each is its own box rather than one scrolling page.",
+    "The hourly log runs from the recorded wake time to sleep, so the length of the day is the person's own, not a fixed 24 rows.",
+    "Empty hours still offer <b>Add main activity</b>. Most rows on a normal day are empty, which is worth designing for rather than around.",
+    "Filled hours carry an activity colour from the categorical palette. Several of those colours sit close in value, which is easiest to judge here.",
+    "Every row has a <b>+</b> affordance. On a full day that is a lot of repeated controls competing for attention.",
+  ],
+  { name: "Today", group: "The app today", subtitle: "Check-in, habit, tasks, hourly log", w: 1060, h: 900 },
+);
+
+screen(
+  "screens/reflect.html",
+  "reflect.html",
+  "Reflect",
+  "The Reflect tab, which holds Vision, the last seven days, and Athena. Vision remains the inner white app about the life the person wants.",
+  [
+    "Three library sessions stacked: <b>Vision</b>, <b>Last seven days</b>, <b>Athena</b>. Each is swipeable in both directions and keeps a stable height.",
+    "Each session shows a cover first with a <b>Swipe to see</b> cue, so nothing is read before the person asks for it.",
+    "Athena observes evidence and expresses uncertainty. It never gives life advice, and every conclusion must stay editable and dismissible.",
+    "This is the surface where interpretation lives, deliberately separated from the observed data on Today.",
+  ],
+  { name: "Reflect", group: "The app today", subtitle: "Vision, seven days, Athena", w: 1060, h: 900 },
 );
 
 // ---------------------------------------------------------------------------
