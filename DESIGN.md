@@ -162,6 +162,13 @@ Session
 - Required-input feedback uses a brief, clear head shake of the text layer.
 - Respect reduced-motion preferences.
 - The page moves; the App Box does not.
+- Every action runs through the button engine. A feature does not draw its own
+  button or its own checkbox.
+- One style may break instead of pressing. Fractured Glass takes four strikes:
+  the first three only crack it, and the last one shatters the button and the
+  surface behind it. Breaking it is the action, never a delay before it.
+- A breaking button is a reward, not a toll. It appears when the person has
+  written a real sentence; a single word keeps the ordinary press.
 
 ## Content and AI
 

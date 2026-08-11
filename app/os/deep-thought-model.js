@@ -28,6 +28,14 @@ export function isDeepThoughtRewardEligible({ text = "", activeMs = 0 } = {}) {
   return countDeepThoughtWords(text) >= DEEP_THOUGHT_MIN_WORDS && Number(activeMs) >= DEEP_THOUGHT_MIN_ACTIVE_MS;
 }
 
+// Whether the Send button should be the one that breaks. This reads only the
+// text, so it is safe during render and the button can change as the sentence
+// is written. "happy" keeps the ordinary press; a real sentence earns the
+// button that has to be broken.
+export function isSentenceWorthBreakingFor(text = "") {
+  return countDeepThoughtWords(text) >= DEEP_THOUGHT_MIN_WORDS;
+}
+
 function short(value, maximum = 64) {
   const clean = String(value || "").replace(/\s+/g, " ").trim();
   return clean.length > maximum ? `${clean.slice(0, maximum - 3).trim()}...` : clean;

@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buttonPressesToBreak,
+  isButtonBroken,
+  nextButtonDamage,
   BUTTON_STYLE_IDS,
   canActivateButton,
   normalizeButtonStyleId,
@@ -78,4 +81,35 @@ test("disabled or committed buttons cannot activate twice", () => {
   assert.equal(canActivateButton(), true);
   assert.equal(canActivateButton({ disabled: true }), false);
   assert.equal(canActivateButton({ committed: true }), false);
+});
+
+test("a breaking style takes several presses before it commits", () => {
+  assert.equal(buttonPressesToBreak("fractured-glass"), 4);
+
+  // Every other style acts on the first press, so callers never special-case.
+  assert.equal(buttonPressesToBreak("soft-clay"), 1);
+  assert.equal(buttonPressesToBreak("default"), 1);
+  assert.equal(buttonPressesToBreak("not-a-style"), 1);
+  assert.equal(buttonPressesToBreak(null), 1);
+
+  // Four strikes: the first three only fracture it.
+  let damage = 0;
+  const struck = [];
+  for (let press = 0; press < 4; press += 1) {
+    damage = nextButtonDamage(damage, 4);
+    struck.push(isButtonBroken(damage, 4));
+  }
+  assert.deepEqual(struck, [false, false, false, true]);
+  assert.equal(damage, 4);
+
+  // Damage never runs past the break, however many times it is hit.
+  assert.equal(nextButtonDamage(4, 4), 4);
+  assert.equal(nextButtonDamage(99, 4), 4);
+
+  // Nonsense damage is treated as untouched rather than throwing.
+  assert.equal(nextButtonDamage(Number.NaN, 4), 1);
+  assert.equal(nextButtonDamage(-3, 4), 1);
+
+  // A single-press style is broken by its first press.
+  assert.equal(isButtonBroken(nextButtonDamage(0, 1), 1), true);
 });

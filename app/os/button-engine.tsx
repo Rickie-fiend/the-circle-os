@@ -4,17 +4,31 @@ import {
   useEffect,
   useReducer,
   useRef,
+  useState,
   type ButtonHTMLAttributes,
   type CSSProperties,
   type PointerEvent,
 } from "react";
 import {
   BUTTON_STYLE_DEFINITIONS,
+  buttonPressesToBreak,
   canActivateButton,
+  isButtonBroken,
+  nextButtonDamage,
   normalizeButtonStyleId,
   reduceButtonLifecycle,
   type ButtonLifecycle,
 } from "./button-engine-model.js";
+
+// Thin shards drawn over a breaking button. Each is [x%, y%, rotation, length%].
+const CRACK_SHARDS = [
+  [50, 50, -68, 46],
+  [50, 50, 14, 58],
+  [50, 50, 72, 40],
+  [50, 50, 128, 52],
+  [50, 50, -142, 44],
+  [50, 50, 168, 36],
+] as const;
 
 const INK_PARTICLES = [
   [-58, -22, 8, "ink"],
@@ -95,6 +109,8 @@ export function CreativeButton({
   const committedRef = useRef(false);
   const completionRef = useRef(onAnimationComplete);
   const successCompletionRef = useRef(onSuccessComplete);
+  const pressesToBreak = buttonPressesToBreak(resolvedStyleId);
+  const [damage, setDamage] = useState(0);
 
   useEffect(() => {
     completionRef.current = onAnimationComplete;
@@ -164,6 +180,7 @@ export function CreativeButton({
   return (
     <div
       className={`os-creative-button-shell role-${role} ${styleClass} phase-${lifecycle}`}
+      data-button-damage={pressesToBreak > 1 ? damage : undefined}
       data-button-lifecycle={lifecycle}
       data-button-style={resolvedStyleId || "fallback"}
     >
@@ -195,6 +212,18 @@ export function CreativeButton({
             event.preventDefault();
             return;
           }
+          // A breaking style takes several presses. Each one fractures it a
+          // little more and does nothing else; only the press that finishes it
+          // commits, so the breaking and the action are the same moment.
+          if (pressesToBreak > 1) {
+            const struck = nextButtonDamage(damage, pressesToBreak);
+            setDamage(struck);
+            if (!isButtonBroken(struck, pressesToBreak)) {
+              if (definition) runHaptic(definition.haptic.slice(0, 1));
+              event.preventDefault();
+              return;
+            }
+          }
           committedRef.current = true;
           dispatch("succeed");
           if (definition) runHaptic(definition.haptic);
@@ -207,6 +236,25 @@ export function CreativeButton({
       >
         {resolvedStyleId === "liquid-capsule" ? (
           <span aria-hidden="true" className="os-liquid-sweep" />
+        ) : null}
+        {pressesToBreak > 1 ? (
+          <span aria-hidden="true" className="os-crack-shards">
+            {CRACK_SHARDS.map(([x, y, angle, length], index) => (
+              <i
+                className="os-crack-shard"
+                key={`${angle}-${length}`}
+                style={
+                  {
+                    "--shard-angle": `${angle}deg`,
+                    "--shard-length": `${length}%`,
+                    "--shard-step": index,
+                    "--shard-x": `${x}%`,
+                    "--shard-y": `${y}%`,
+                  } as CSSProperties
+                }
+              />
+            ))}
+          </span>
         ) : null}
         <span className="os-creative-button-label">{children}</span>
       </button>

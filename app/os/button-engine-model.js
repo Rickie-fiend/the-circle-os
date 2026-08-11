@@ -3,6 +3,7 @@ export const BUTTON_STYLE_IDS = Object.freeze([
   "ink-burst",
   "soft-clay",
   "liquid-capsule",
+  "fractured-glass",
 ]);
 
 export const BUTTON_STYLE_DEFINITIONS = Object.freeze({
@@ -33,6 +34,17 @@ export const BUTTON_STYLE_DEFINITIONS = Object.freeze({
     world: "liquid",
     tags: Object.freeze(["draw", "ripple", "morph"]),
     haptic: Object.freeze([6, 28, 8]),
+  }),
+  // The only style that does not act on the first press. Each tap fractures it
+  // further and the last one breaks it, so the action costs a little effort and
+  // the breaking becomes the moment rather than a decoration on top of it.
+  "fractured-glass": Object.freeze({
+    id: "fractured-glass",
+    name: "Fractured Glass",
+    world: "glass",
+    tags: Object.freeze(["strike", "fracture", "shatter"]),
+    haptic: Object.freeze([9, 26, 12]),
+    pressesToBreak: 4,
   }),
 });
 
@@ -115,4 +127,28 @@ export function reduceButtonLifecycle(state, event) {
 
 export function canActivateButton({ disabled = false, committed = false } = {}) {
   return !disabled && !committed;
+}
+
+// How many presses a style needs before it commits. Every style answers 1
+// except the ones that break, so callers never special-case a style id.
+export function buttonPressesToBreak(styleId) {
+  const id = normalizeButtonStyleId(styleId);
+  const presses = id ? BUTTON_STYLE_DEFINITIONS[id].pressesToBreak : 1;
+  return Number.isInteger(presses) && presses > 1 ? presses : 1;
+}
+
+function safeDamage(value) {
+  const damage = Math.floor(Number(value));
+  return Number.isFinite(damage) && damage > 0 ? damage : 0;
+}
+
+// One press worth of damage, never past the point where the button is gone.
+export function nextButtonDamage(damage = 0, pressesToBreak = 1) {
+  const limit = Number.isInteger(pressesToBreak) && pressesToBreak > 1 ? pressesToBreak : 1;
+  return Math.min(limit, safeDamage(damage) + 1);
+}
+
+export function isButtonBroken(damage = 0, pressesToBreak = 1) {
+  const limit = Number.isInteger(pressesToBreak) && pressesToBreak > 1 ? pressesToBreak : 1;
+  return safeDamage(damage) >= limit;
 }

@@ -57,3 +57,6 @@ export function canActivateButton(options?: {
   disabled?: boolean;
   committed?: boolean;
 }): boolean;
+export function buttonPressesToBreak(styleId?: string | null): number;
+export function nextButtonDamage(damage?: number, pressesToBreak?: number): number;
+export function isButtonBroken(damage?: number, pressesToBreak?: number): boolean;

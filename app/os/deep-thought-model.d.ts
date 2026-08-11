@@ -11,5 +11,6 @@ export const DEEP_THOUGHT_MIN_ACTIVE_MS: number;
 export const LOCAL_DEEP_THOUGHTS: readonly Readonly<{ text: string; target: string }>[];
 export function countDeepThoughtWords(value?: string): number;
 export function isDeepThoughtRewardEligible(options?: { text?: string; activeMs?: number }): boolean;
+export function isSentenceWorthBreakingFor(text?: string): boolean;
 export function createLocalDeepThoughtPrompt(state: unknown, dateKey: string, offset?: number): DeepThoughtPrompt;
 export function deepThoughtFollowUp(prompt: DeepThoughtPrompt): DeepThoughtPrompt;
