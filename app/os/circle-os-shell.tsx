@@ -24,6 +24,7 @@ import {
   createEmptyState,
   ensureDay,
   completeTask,
+  reopenTask,
   discardEmptyHabit,
   discardEmptyTask,
   getDateKey,
@@ -1523,25 +1524,44 @@ export function TodayExperience() {
     updateState((current) => toggleHabitForDay(current, id, dateKey));
   }
 
-  function finishTask(id: string) {
-    const task = state.tasks.items[id];
-    if (!task || !task.text.trim() || task.status === "completed") return;
+  function clearTaskExit(id: string) {
     const existingTimers = taskExitTimers.current[id];
     if (existingTimers) {
       window.clearTimeout(existingTimers.fade);
       window.clearTimeout(existingTimers.remove);
       delete taskExitTimers.current[id];
     }
+  }
+
+  // Undo while the row is still on the Page. A task finished by accident should
+  // not be a one-way door just because it has started leaving.
+  function reopenFinishedTask(id: string) {
+    clearTaskExit(id);
+    setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
+    setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
+    updateState((current) => reopenTask(current, id));
+  }
+
+  function finishTask(id: string) {
+    const task = state.tasks.items[id];
+    if (!task || !task.text.trim()) return;
+    if (task.status === "completed") {
+      reopenFinishedTask(id);
+      return;
+    }
+    clearTaskExit(id);
     updateState((current) => completeTask(current, id));
     setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
+    // The row stays put long enough to undo an accidental press before it
+    // begins to fade, and the fade itself is unhurried for the same reason.
     const fade = window.setTimeout(() => {
       setFadingMissionIds((ids) => [...new Set([...ids, id])]);
-    }, 1_800);
+    }, 5_000);
     const remove = window.setTimeout(() => {
       setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
       setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
       delete taskExitTimers.current[id];
-    }, 3_800);
+    }, 9_000);
     taskExitTimers.current[id] = { fade, remove };
   }
 
@@ -2373,10 +2393,10 @@ export function TodayExperience() {
                           value={task.text}
                         />
                         <CreativeButton
-                          aria-label={`Complete task: ${task.text || "New Task"}`}
+                          aria-label={`${task.status === "completed" ? "Undo" : "Complete"} task: ${task.text || "New Task"}`}
                           aria-pressed={task.status === "completed"}
                           className="os-row-tick os-row-tick-task"
-                          disabled={!task.text.trim() || task.status === "completed"}
+                          disabled={!task.text.trim()}
                           keepMountedOnSuccess
                           onClick={() => finishTask(task.id)}
                           role="habit"

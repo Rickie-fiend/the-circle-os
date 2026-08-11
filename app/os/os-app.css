@@ -825,11 +825,13 @@
   padding: 0;
   position: relative;
   transform-origin: center;
-  /* One duration for movement and shadow so a press lands as a single event. */
+  /* A click is not symmetric. The key drops almost instantly and comes back up
+   * a little slower, which is what separates a click from a twitch. Movement
+   * and shadow share the timing so the press lands as one event. */
   transition:
-    background-color 90ms var(--ease-out),
-    box-shadow 90ms var(--ease-out),
-    transform 90ms var(--ease-out);
+    background-color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out),
+    transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1);
   will-change: transform;
 }
 
@@ -861,20 +863,20 @@
 }
 
 /* Pressing: driven flat onto the surface, the leg gone. */
+/* Down is near instant. Anything slower reads as lag rather than contact. */
 .circle-os .os-creative-button-shell.role-habit.phase-pressed
   .os-row-tick.os-creative-button {
   box-shadow: inset 0 2px 5px rgb(25 24 19 / 0.42);
   transform: translateY(0);
-  transition-duration: 60ms;
+  transition-duration: 40ms;
 }
 
-/* Done: it stays in the hole. */
+/* Done: a black disc with a bone tick, sitting flat in the surface. It reads as
+ * finished but is plainly still a control, so it can be pressed back open. */
 .circle-os .os-creative-button-shell.role-habit
   .os-row-tick[aria-pressed="true"].os-creative-button {
-  background: var(--c-orange-900);
-  box-shadow:
-    inset 0 2px 6px rgb(25 24 19 / 0.5),
-    inset 0 -1px 0 rgb(255 248 241 / 0.14);
+  background: var(--c-ink);
+  box-shadow: inset 0 1px 3px rgb(25 24 19 / 0.55);
   transform: translateY(0);
 }
 
@@ -1833,13 +1835,14 @@
   transform-origin: center bottom;
   /* Movement and shadow share one duration and one curve. They used to run at
    * 140ms and 180ms, so every press arrived as two events a beat apart, which
-   * is what made the buttons feel loose rather than clicky. */
+   * is what made the buttons feel loose. The curve settles rather than
+   * overshooting, because a bounce on the way back up reads as a twitch. */
   transition:
-    background-color 110ms var(--ease-out),
-    box-shadow 110ms var(--ease-out),
-    color 110ms var(--ease-out),
-    opacity 110ms var(--ease-out),
-    transform 110ms var(--ease-out);
+    background-color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    opacity 150ms var(--ease-out),
+    transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1);
   will-change: transform, opacity;
   width: 100%;
 }
@@ -5937,12 +5940,12 @@
   padding: 0;
 }
 
-/* One quiet divider between the two parts, in the same language as the row
- * dividers rather than a hard dark line. */
+/* Habits and Tasks are two parts of one Page, so the seam between them is a
+ * real line rather than the quiet rule used between rows. */
 .circle-os .os-task-body-session {
-  border-top: 1px solid rgb(255 248 241 / 0.22);
-  margin-top: 0.9rem;
-  padding-top: 0.9rem;
+  border-top: 2px solid var(--c-ink);
+  margin-top: 1rem;
+  padding-top: 1rem;
 }
 
 .circle-os .os-habit-session-label,

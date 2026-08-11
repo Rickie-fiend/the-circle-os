@@ -891,6 +891,33 @@ export function discardEmptyTask(state, id) {
   return { ...state, tasks: { ...state.tasks, items } };
 }
 
+// A task that was finished by accident has to be recoverable. Completing one
+// starts it leaving the Page, and until it has gone the same control puts it
+// back. Nothing is deleted either way.
+export function reopenTask(state, id) {
+  const current = state.tasks.items[id];
+  if (!current || current.status !== "completed") return state;
+  const timestamp = new Date().toISOString();
+  return queueProfileUpdate(
+    {
+      ...state,
+      tasks: {
+        ...state.tasks,
+        items: {
+          ...state.tasks.items,
+          [id]: {
+            ...current,
+            status: "open",
+            completedAt: null,
+            updatedAt: timestamp,
+          },
+        },
+      },
+    },
+    "task",
+  );
+}
+
 export function completeTask(state, id) {
   const current = state.tasks.items[id];
   if (!current || current.status === "completed") return state;

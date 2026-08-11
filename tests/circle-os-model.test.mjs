@@ -7,6 +7,7 @@ import {
   PROFILE_QUESTIONS,
   addHabitDefinition,
   addTask,
+  reopenTask,
   appSessionIndex,
   applyProfileResult,
   answerSurveyQuestion,
@@ -660,4 +661,21 @@ test("sample Mirror includes the essential weekly evidence", () => {
   assert.ok(summary.moods.length > 0);
   assert.ok(summary.missions.completed > 0);
   assert.match(summary.sentence, /evidence|time|week/i);
+});
+
+test("a task finished by accident can be reopened", () => {
+  const base = createEmptyState();
+  const withTask = updateTask(addTask(base, "t1").state, "t1", "Call the venue");
+  const done = completeTask(withTask, "t1");
+  assert.equal(done.tasks.items.t1.status, "completed");
+  assert.ok(done.tasks.items.t1.completedAt);
+
+  const reopened = reopenTask(done, "t1");
+  assert.equal(reopened.tasks.items.t1.status, "open");
+  assert.equal(reopened.tasks.items.t1.completedAt, null);
+  assert.equal(reopened.tasks.items.t1.text, "Call the venue", "the words survive");
+
+  // Reopening something already open changes nothing.
+  assert.equal(reopenTask(reopened, "t1"), reopened);
+  assert.equal(reopenTask(reopened, "missing"), reopened);
 });
