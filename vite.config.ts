@@ -1,39 +1,7 @@
 import vinext from "vinext";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
-
-// vinext rewrites the `@font-face` sources it generates from the local font
-// cache to the URL its dev middleware and `writeBundle` hook actually serve.
-// That rewrite compares strings literally:
-//
-//   if (!cacheDir || !css.includes(cacheDir)) return css;
-//
-// On Windows `cacheDir` arrives with backslashes while the generated CSS uses
-// forward slashes, so the check fails, the rewrite silently no-ops, and a raw
-// disk path such as `C:/Projects/circle-os/.vinext/fonts/geist-*/geist-*.woff2`
-// ships in the stylesheet. A page served over http:// cannot fetch that, so
-// Geist and Cormorant Garamond both fail and the browser falls back to a
-// generic sans. It is invisible except that every typeface is wrong.
-//
-// The font files themselves are fine: dev middleware serves them from
-// `/assets/_vinext_fonts/` and the build copies them to the matching folder.
-// Only the URL is broken, so redoing the rewrite separator-agnostically is
-// enough. Remove this once vinext normalizes the path upstream.
-const VINEXT_FONT_CACHE = /(?:[A-Za-z]:)?(?:\\{1,2}|\/)(?:[^"'()\s]*?)\.vinext(?:\\{1,2}|\/)fonts/g;
-const VINEXT_FONT_SERVED_URL = "/assets/_vinext_fonts";
-
-function fixVinextFontUrls(): Plugin {
-  return {
-    name: "circle-fix-vinext-font-urls",
-    enforce: "post",
-    transform(code) {
-      if (!code.includes(".vinext")) return null;
-      const fixed = code.replace(VINEXT_FONT_CACHE, VINEXT_FONT_SERVED_URL);
-      return fixed === code ? null : { code: fixed, map: null };
-    },
-  };
-}
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -81,7 +49,6 @@ export default defineConfig(async () => {
       : undefined,
     plugins: [
       vinext(),
-      fixVinextFontUrls(),
       sites(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },

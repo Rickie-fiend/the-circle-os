@@ -6280,18 +6280,6 @@
  * Solid means non-negotiable, dashed means negotiable. That is the whole visual
  * language, which is the point: this has to be readable by a child.
  * ------------------------------------------------------------------------- */
-.circle-os .os-protocol {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  width: 100%;
-}
-
-.circle-os .os-protocol-head {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
 
 .circle-os .os-protocol-progress {
   color: var(--c-ink);

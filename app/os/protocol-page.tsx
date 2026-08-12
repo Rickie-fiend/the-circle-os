@@ -1,5 +1,6 @@
 "use client";
 
+import { PageLayout } from "./app-session";
 import { CreativeButton } from "./button-engine";
 import { PROTOCOL_DURATIONS } from "./circle-os-model.js";
 
@@ -47,6 +48,10 @@ type ProtocolPageProps = {
  *
  * Solid means non-negotiable. Dashed means negotiable. That is the whole visual
  * language, which matters because this has to be usable by a child.
+ *
+ * It renders through the shared PageLayout so it keeps the same five regions as
+ * every other Page: an App Page that builds its own frame gets none of the
+ * padding, and its header runs into the edge of the App Box.
  */
 export function ProtocolPage({
   protocol,
@@ -62,18 +67,25 @@ export function ProtocolPage({
   onToggleItem,
   onEndRun,
 }: ProtocolPageProps) {
+  const label = <p className="os-card-label">Protocol</p>;
+
   if (!protocol) {
     return (
-      <div className="os-protocol os-protocol-empty">
-        <p className="os-card-label">Protocol</p>
+      <PageLayout
+        className="os-protocol"
+        headerLeft={label}
+        theme="orange"
+        footer={
+          <button className="os-protocol-begin" onClick={onStart} type="button">
+            Start a protocol
+          </button>
+        }
+      >
         <p className="os-protocol-invite">
           A protocol is a short stretch of days you agree with yourself, kept the
           same every day until it ends.
         </p>
-        <button className="os-protocol-begin" onClick={onStart} type="button">
-          Start a protocol
-        </button>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -81,8 +93,21 @@ export function ProtocolPage({
 
   if (isDraft) {
     return (
-      <div className="os-protocol os-protocol-draft">
-        <p className="os-card-label">Protocol</p>
+      <PageLayout
+        className="os-protocol os-protocol-draft"
+        headerLeft={label}
+        theme="orange"
+        footer={
+          <button
+            className="os-protocol-begin"
+            disabled={!canBegin}
+            onClick={onBegin}
+            type="button"
+          >
+            {canBegin ? `Begin ${run.days} days` : "Add one non-negotiable"}
+          </button>
+        }
+      >
         <input
           aria-label="Protocol name"
           className="os-protocol-name-edit"
@@ -124,42 +149,46 @@ export function ProtocolPage({
           onChangeItem={onChangeItem}
           onFinishItemEdit={onFinishItemEdit}
         />
-
-        <button
-          className="os-protocol-begin"
-          disabled={!canBegin}
-          onClick={onBegin}
-          type="button"
-        >
-          {canBegin ? `Begin ${run.days} days` : "Add one non-negotiable"}
-        </button>
-      </div>
+      </PageLayout>
     );
   }
 
   if (isOver) {
     return (
-      <div className="os-protocol os-protocol-over">
-        <p className="os-card-label">Protocol</p>
+      <PageLayout
+        className="os-protocol os-protocol-over"
+        headerLeft={label}
+        theme="orange"
+        footer={
+          <button className="os-protocol-begin" onClick={onEndRun} type="button">
+            Close this protocol
+          </button>
+        }
+      >
         <p className="os-protocol-name">{run.name}</p>
         <p className="os-protocol-invite">
           {run.days} days finished. What you kept is in your record.
         </p>
-        <button className="os-protocol-begin" onClick={onEndRun} type="button">
-          Close this protocol
-        </button>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="os-protocol">
-      <div className="os-protocol-head">
-        <p className="os-card-label">Protocol</p>
-        <p className="os-protocol-progress">
+    <PageLayout
+      className="os-protocol"
+      headerLeft={label}
+      headerRight={
+        <span className="os-protocol-progress">
           Day {day} of {run.days}
-        </p>
-      </div>
+        </span>
+      }
+      theme="orange"
+      footer={
+        <button className="os-protocol-end" onClick={onEndRun} type="button">
+          End this protocol
+        </button>
+      }
+    >
       <p className="os-protocol-name">{run.name}</p>
 
       {nonNegotiable.length ? (
@@ -179,11 +208,7 @@ export function ProtocolPage({
           ))}
         </>
       ) : null}
-
-      <button className="os-protocol-end" onClick={onEndRun} type="button">
-        End this protocol
-      </button>
-    </div>
+    </PageLayout>
   );
 }
 
@@ -253,7 +278,7 @@ function ProtocolDraftGroup({
               kind === "non-negotiable" ? "Journaling 1 line" : "Read 1 chapter"
             }
             rows={1}
-            value={item.text}
+          value={item.text}
           />
         </div>
       ))}

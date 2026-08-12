@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Geist } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-});
+// The typefaces are served from public/fonts and declared in globals.css.
+//
+// They used to come from next/font/google, which fetches them during the build.
+// That made a network hiccup able to fail a production deploy, and it did:
+// a build died fetching Cormorant while the preview of the same commit passed
+// seconds later, so production silently stayed on the previous commit. It also
+// never worked under vinext on Windows, which emitted a raw disk path into the
+// stylesheet and left both faces falling back to a system sans.
+//
+// Self-hosting removes the build-time network dependency entirely.
 
 export const metadata: Metadata = {
   title: "The Circle — Mastermind Fight Club",
@@ -57,7 +55,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${geist.variable} ${cormorant.variable}`}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

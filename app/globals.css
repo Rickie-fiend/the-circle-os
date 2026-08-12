@@ -1,6 +1,42 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
+/* The two brand typefaces, served from public/fonts rather than fetched during
+ * the build. Latin subsets only, matching what Google served; anything outside
+ * that range falls back, which is what the hosted version did too.
+ *
+ * Both are variable, so one file covers the whole weight range. --font-sans and
+ * --font-display were previously injected by next/font; they are declared here
+ * so nothing else has to change. */
+@font-face {
+  font-family: Geist;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/geist-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("/fonts/cormorant-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: italic;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("/fonts/cormorant-latin-italic.woff2") format("woff2");
+}
+
+:root {
+  --font-sans: Geist;
+  --font-display: "Cormorant Garamond";
+}
+
 :root {
   --bone: var(--c-bone);
   --paper: var(--c-warm-100);
