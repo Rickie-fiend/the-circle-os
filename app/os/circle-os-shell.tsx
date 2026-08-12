@@ -2322,11 +2322,11 @@ export function TodayExperience() {
                   onClick={toggleHabitMode}
                   type="button"
                 >
-                  {habitMode === "yesterday" ? "Yesterday" : "Habit"}
+                  {habitMode === "yesterday" ? "Record" : "Habit"}
                 </button>
               }
               idleBody={habitMode === "yesterday" ? (
-                <section className="os-habit-body-session os-yesterday" aria-label="Today so far and yesterday">
+                <section className="os-habit-body-session os-yesterday" aria-label="Habit record">
                   <p className="os-record-label">Today so far</p>
                   {todaySoFar.total ? (
                     <div className="os-yesterday-list">

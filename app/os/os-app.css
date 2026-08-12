@@ -1038,139 +1038,6 @@
   padding: 0.4rem 0.78rem;
 }
 
-.circle-os .os-habit-record {
-  background: var(--c-orange-600);
-  color: var(--c-warm-50);
-  display: grid;
-  gap: 0.85rem;
-  min-height: 250px;
-  padding: 24px;
-}
-
-.circle-os .os-habit-record .os-card-label {
-  color: var(--c-ink);
-}
-
-.circle-os .os-habit-record h2,
-.circle-os .os-habit-record p {
-  margin: 0;
-}
-
-.circle-os .os-habit-record h2 {
-  color: var(--c-warm-50);
-  font-size: var(--text-4xl);
-  font-weight: 750;
-  letter-spacing: -0.045em;
-}
-
-.circle-os .os-habit-record-summary {
-  color: var(--c-ink);
-  font-size: var(--text-base);
-  font-weight: 750;
-}
-
-.circle-os .os-habit-record-list {
-  border-top: 2px solid var(--c-ink);
-  display: grid;
-}
-
-.circle-os .os-habit-record-group {
-  border-bottom: 1px solid rgb(25 24 19 / 0.28);
-  display: grid;
-  gap: 0;
-  padding: 0.85rem 0 0.2rem;
-}
-
-.circle-os .os-habit-record-group:last-child {
-  border-bottom: 0;
-}
-
-.circle-os .os-habit-record-row {
-  border-bottom: 1px solid rgb(25 24 19 / 0.28);
-  display: grid;
-  gap: 0.25rem;
-  padding: 0.9rem 0;
-}
-
-.circle-os .os-habit-record-group-label {
-  background: var(--c-ink);
-  border-radius: var(--r-full);
-  color: var(--c-warm-50);
-  font-size: var(--text-2xs);
-  font-size: var(--text-2xs);
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  padding: 0.28rem 0.42rem;
-  text-transform: uppercase;
-  width: fit-content;
-}
-
-.circle-os .os-habit-record-row p {
-  font-size: var(--text-base);
-  font-weight: 650;
-  line-height: 1.35;
-}
-
-.circle-os .os-habit-record-edit {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  color: var(--c-warm-50);
-  cursor: text;
-  field-sizing: content;
-  font: inherit;
-  font-size: var(--text-lg);
-  font-weight: 650;
-  line-height: 1.35;
-  min-height: 1.35em;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  padding: 0;
-  resize: none;
-  white-space: pre-wrap;
-  width: 100%;
-}
-
-.circle-os .os-habit-record-edit:focus {
-  outline: 1px solid rgb(25 24 19 / 0.72);
-  outline-offset: 5px;
-}
-
-.circle-os .os-habit-tracker-days {
-  border-top: 2px solid var(--c-ink);
-  display: grid;
-  gap: 0.45rem;
-  grid-template-columns: repeat(7, 1fr);
-  padding-top: 1rem;
-}
-
-.circle-os .os-habit-tracker-days > div {
-  align-items: center;
-  display: grid;
-  gap: 0.45rem;
-  justify-items: center;
-}
-
-.circle-os .os-habit-tracker-days span {
-  color: var(--c-ink);
-  font-size: var(--text-2xs);
-  font-weight: 700;
-}
-
-.circle-os .os-habit-tracker-days i {
-  background: rgb(255 248 241 / 0.35);
-  border: 1px solid rgb(25 24 19 / 0.35);
-  border-radius: var(--r-full);
-  display: block;
-  height: 24px;
-  width: 24px;
-}
-
-.circle-os .os-habit-tracker-days i.done {
-  background: var(--c-ink);
-  border-color: var(--c-ink);
-}
-
 .circle-os .os-session-intro {
   transition:
     opacity 600ms ease,
@@ -6006,9 +5873,9 @@
 
 .circle-os .os-habit-session-label,
 .circle-os .os-task-session-label {
-  color: rgb(255 248 241 / 0.72);
+  color: var(--c-ink);
   font-size: var(--text-2xs);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.14em;
   margin: 0 0 0.5rem;
   text-transform: uppercase;
@@ -6083,14 +5950,6 @@
   opacity: 0.55;
 }
 
-.circle-os .os-habit-record-row span {
-  color: var(--c-ink);
-  display: block;
-  font-size: var(--text-md);
-  line-height: 1.4;
-  padding: 0.25rem 0;
-}
-
 .circle-os .os-habit .os-chapter-idle .os-add-habit-row span {
   color: var(--c-ink);
 }
@@ -6153,18 +6012,6 @@
 @media (prefers-reduced-motion: reduce) {
   .os-future-room-background::after {
     transform: none;
-  }
-
-  .circle-os .os-nav::before,
-  .circle-os .os-route-content,
-  .circle-os .os-route-layer,
-  .circle-os .os-app-window.fluid-height,
-  .circle-os .os-app-page,
-  .circle-os .os-habit-record > *,
-  .circle-os .os-session-intro,
-  .circle-os .os-swipe-session.required-nudge > .os-app-window {
-    animation: none !important;
-    transition: none !important;
   }
 
   .circle-os .os-thoughts-mode-toggle.is-visible {
@@ -6381,9 +6228,9 @@
 /* Yesterday mode holds two records on one Page: what is done so far today,
  * which can still be undone, and what happened yesterday, which cannot. */
 .circle-os .os-record-label {
-  color: rgb(255 248 241 / 0.72);
+  color: var(--c-ink);
   font-size: var(--text-2xs);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.14em;
   margin: 0 0 0.5rem;
   text-transform: uppercase;
