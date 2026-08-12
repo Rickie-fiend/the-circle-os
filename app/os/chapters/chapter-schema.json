@@ -16,23 +16,129 @@
     "pages"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-    "version": { "type": "integer", "minimum": 1 },
-    "status": { "const": "published" },
-    "session": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-    "theme": { "enum": ["light", "orange", "dark"] },
-    "title": { "type": "string", "minLength": 1 },
-    "purpose": { "type": "string", "minLength": 1 },
-    "estimatedMinutes": { "type": "integer", "minimum": 1 },
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "const": "published"
+    },
+    "session": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "theme": {
+      "enum": [
+        "light",
+        "orange",
+        "dark"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "estimatedMinutes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "kind": {
+      "enum": [
+        "spark",
+        "check-in",
+        "mirror",
+        "lesson",
+        "probe",
+        "debate"
+      ]
+    },
+    "app": {
+      "enum": [
+        "note",
+        "thoughts",
+        "deep-thoughts",
+        "habit",
+        "protocol",
+        "log",
+        "vision",
+        "seven-days",
+        "athena"
+      ]
+    },
+    "voice": {
+      "enum": [
+        "athena",
+        "oscar"
+      ]
+    },
+    "weight": {
+      "type": "number"
+    },
+    "earliestAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cooldownDays": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "requires": {
+      "type": "object",
+      "properties": {
+        "minLoggedDays": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLoggedDays": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hasVision": {
+          "type": "boolean"
+        },
+        "habitStreakBroken": {
+          "type": "boolean"
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "pages": {
       "type": "array",
       "minItems": 2,
       "items": {
         "type": "object",
-        "required": ["id", "type"],
+        "required": [
+          "id",
+          "type"
+        ],
         "properties": {
-          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
           "type": {
             "enum": [
               "cover",
@@ -49,36 +155,77 @@
               "idle"
             ]
           },
-          "title": { "type": "string" },
-          "body": { "type": "string" },
-          "question": { "type": "string" },
-          "button": { "type": "string" },
-          "answerKey": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-          "placeholder": { "type": "string" },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "button": {
+            "type": "string"
+          },
+          "answerKey": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "placeholder": {
+            "type": "string"
+          },
           "options": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["id", "label"],
+              "required": [
+                "id",
+                "label"
+              ],
               "properties": {
-                "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-                "label": { "type": "string", "minLength": 1 }
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]*$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                }
               },
               "additionalProperties": false
             }
           },
-          "min": { "type": "number" },
-          "max": { "type": "number" },
-          "minLabel": { "type": "string" },
-          "maxLabel": { "type": "string" },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "minLabel": {
+            "type": "string"
+          },
+          "maxLabel": {
+            "type": "string"
+          },
           "defaultValue": {
             "oneOf": [
-              { "type": "string" },
-              { "type": "number" },
-              { "type": "array", "items": { "type": "string" } }
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             ]
           },
-          "required": { "type": "boolean" }
+          "required": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
       }

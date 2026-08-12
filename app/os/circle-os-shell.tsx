@@ -59,6 +59,7 @@ import {
   isDeepThoughtRewardEligible,
   type DeepThoughtPrompt,
 } from "./deep-thought-model.js";
+import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   chapterRunId,
@@ -75,6 +76,11 @@ import {
   publicationIsNewerThanRun,
   selectPendingAppPublication,
 } from "./chapters/chapter-publication-store";
+import {
+  chapterFacts,
+  countChaptersStartedOn,
+  selectScheduledChapter,
+} from "./chapters/chapter-scheduler.js";
 import { useChapterPublications } from "./chapters/use-chapter-publications";
 import type {
   ChapterDefinition,
@@ -1087,6 +1093,26 @@ export function TodayExperience() {
     return latestPublishedChapters(chapters);
   }, [publications, state.ai.profileId]);
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
+  const schedulerFacts = useMemo(() => chapterFacts(state), [state]);
+  // A republished chapter is offered again, so its finished run must not block
+  // it. Dropping the run here keeps that behaviour without teaching the
+  // scheduler what a publication is.
+  const scheduledRuns = useMemo(() => {
+    const runs = { ...state.chapters.runs };
+    for (const publication of publications.map(normalizeChapterPublication)) {
+      const runId = chapterRunId(publication.chapter);
+      if (publicationIsNewerThanRun(publication, runs[runId])) delete runs[runId];
+    }
+    return runs;
+  }, [publications, state.chapters.runs]);
+  const scheduledSpark = useMemo(
+    () =>
+      selectScheduledChapter(profileSparkChapters, scheduledRuns, {
+        app: "note",
+        facts: schedulerFacts,
+      }),
+    [profileSparkChapters, schedulerFacts, scheduledRuns],
+  );
   const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
   const [checkInAttention, setCheckInAttention] = useState(0);
   const [checkInRefreshing, setCheckInRefreshing] = useState(false);
@@ -1101,6 +1127,12 @@ export function TodayExperience() {
   const [deepFollowUpUsed, setDeepFollowUpUsed] = useState(false);
   const [thoughtRewarded, setThoughtRewarded] = useState(false);
   const thoughtDraft = thoughtMode === "deep" ? deepThoughtDraft : regularThoughtDraft;
+  // liveNow already ticks every thirty seconds and the prompt is bucketed by the
+  // hour, so this changes through the day without moving under the person.
+  const thoughtPlaceholder = useMemo(
+    () => selectThoughtPrompt(state, dateKey, liveNow),
+    [dateKey, liveNow, state],
+  );
   const [thoughtSent, setThoughtSent] = useState(false);
   const [thoughtTransition, setThoughtTransition] = useState<
     "idle" | "clicked" | "paused" | "exiting"
@@ -1257,10 +1289,28 @@ export function TodayExperience() {
       }
     };
   }, [thoughtRefreshKey, visibleCheckInApp]);
+  const scheduledSparkRun = scheduledSpark
+    ? state.chapters.runs[chapterRunId(scheduledSpark)]
+    : undefined;
+  // One chapter greets the first open of the day; the rest are asked for by
+  // pressing Note. It stays while it is being answered, and swiping back to the
+  // note puts it aside for good. Anything already put aside never returns here.
+  const arrivingSpark =
+    ready &&
+    !holdThoughtsAfterSend &&
+    scheduledSpark &&
+    !scheduledSparkRun?.deferredAt &&
+    (scheduledSparkRun?.status === "in-progress" ||
+      !countChaptersStartedOn(profileSparkChapters, state.chapters.runs, dateKey)
+        .total)
+      ? scheduledSpark
+      : null;
   const profileSparkChapter =
     profileSparkChapters.find(
       (chapter) => chapter.id === forcedProfileSparkId,
-    ) || null;
+    ) ||
+    arrivingSpark ||
+    null;
   const profileSparkPublication = useMemo(() => {
     if (!profileSparkChapter) return null;
     return publications
@@ -1801,24 +1851,7 @@ export function TodayExperience() {
         ),
       );
     }
-    const chapter = profileSparkChapters.find((candidate) => {
-      const candidateRun = state.chapters.runs[chapterRunId(candidate)];
-      const candidatePublication = publications
-        .map(normalizeChapterPublication)
-        .filter(
-          (publication) =>
-            publication.targetApp === "note" &&
-            chapterRunId(publication.chapter) === chapterRunId(candidate),
-        )
-        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0];
-      return (
-        candidateRun?.status !== "completed" ||
-        Boolean(
-          candidatePublication &&
-          publicationIsNewerThanRun(candidatePublication, candidateRun),
-        )
-      );
-    });
+    const chapter = scheduledSpark;
     if (!chapter) return false;
     const selectedRun = state.chapters.runs[chapterRunId(chapter)];
     if (selectedRun?.deferredAt) {
@@ -2173,7 +2206,7 @@ export function TodayExperience() {
             deepWritingFocusStartedAt.current = Date.now();
           }
         }}
-        placeholder={deepThoughtsActive ? "Write what comes up..." : "What are your thoughts?"}
+        placeholder={deepThoughtsActive ? "Write what comes up..." : thoughtPlaceholder}
         ref={thoughtTextareaRef}
         rows={deepThoughtsActive ? 2 : 1}
         value={thoughtDraft}

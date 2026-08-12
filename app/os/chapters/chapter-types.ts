@@ -37,6 +37,28 @@ export type ChapterPage = {
   required?: boolean;
 };
 
+// What a chapter is for. The mix is the point: mostly sparks, so that the rare
+// probe is answered properly instead of skipped.
+export type ChapterKind =
+  | "spark"
+  | "check-in"
+  | "mirror"
+  | "lesson"
+  | "probe"
+  | "debate";
+
+export type ChapterVoice = "athena" | "oscar";
+
+// Conditions the phone can check offline, with no reading of its own. Athena
+// attaches them when she writes the chapter; the device only does arithmetic.
+export type ChapterRequirement = {
+  minLoggedDays?: number;
+  maxLoggedDays?: number;
+  hasVision?: boolean;
+  habitStreakBroken?: boolean;
+  weekdays?: number[];
+};
+
 export type ChapterDefinition = {
   schemaVersion: 1;
   id: string;
@@ -48,13 +70,23 @@ export type ChapterDefinition = {
   purpose: string;
   estimatedMinutes: number;
   showPageNumbers?: boolean;
+  kind?: ChapterKind;
+  app?: AppTarget;
+  voice?: ChapterVoice;
+  weight?: number;
+  earliestAt?: string;
+  expiresAt?: string;
+  cooldownDays?: number;
+  requires?: ChapterRequirement;
   pages: ChapterPage[];
 };
 
 export type AppTarget =
   | "note"
   | "thoughts"
+  | "deep-thoughts"
   | "habit"
+  | "protocol"
   | "log"
   | "vision"
   | "seven-days"

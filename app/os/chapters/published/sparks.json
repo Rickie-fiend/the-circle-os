@@ -1,0 +1,1047 @@
+{
+  "schemaVersion": 1,
+  "chapters": [
+    {
+      "schemaVersion": 1,
+      "id": "spark-joke-atoms",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "orange",
+      "title": "Two atoms walk into a bar.",
+      "purpose": "Give the person a small free laugh that asks nothing back.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Two atoms walk into a bar.",
+          "button": "Go on"
+        },
+        {
+          "id": "setup",
+          "type": "info",
+          "title": "One says: I think I lost an electron.",
+          "button": "And?"
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "The other says: are you sure?",
+          "body": "I am positive.",
+          "button": "Ha"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Two atoms walked into a bar.",
+          "body": "You were there."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-joke-later",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "orange",
+      "title": "One about doing it later.",
+      "purpose": "Give the person a small free laugh that asks nothing back.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "One about doing it later.",
+          "button": "Tell me"
+        },
+        {
+          "id": "setup",
+          "type": "info",
+          "title": "I was going to tell you a joke about procrastination.",
+          "button": "And?"
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "I will tell it tomorrow.",
+          "button": "Fair"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "A joke about procrastination.",
+          "body": "Coming tomorrow."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-joke-tracker",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "orange",
+      "title": "One about habits.",
+      "purpose": "Give the person a small free laugh that asks nothing back.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "One about habits.",
+          "button": "Go on"
+        },
+        {
+          "id": "setup",
+          "type": "info",
+          "title": "I built a habit tracker to track my habit tracker.",
+          "button": "And?"
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Neither has been opened since Tuesday.",
+          "button": "Rude"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Two trackers.",
+          "body": "Neither opened since Tuesday."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-joke-sleep",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "dark",
+      "title": "A short one before you go.",
+      "purpose": "Give the person a small free laugh that asks nothing back.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "A short one before you go.",
+          "button": "Go on"
+        },
+        {
+          "id": "setup",
+          "type": "info",
+          "title": "My sleep schedule and I are no longer speaking.",
+          "button": "And?"
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "It says I started it.",
+          "body": "It is correct.",
+          "button": "Ouch"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "You and your sleep schedule.",
+          "body": "Not speaking."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-gift-noticed",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Nothing to answer here.",
+      "purpose": "Give something without asking for anything, so the app is not only a mouth.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 60,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Nothing to answer here.",
+          "button": "Suspicious"
+        },
+        {
+          "id": "noticed",
+          "type": "info",
+          "title": "You opened this app again.",
+          "body": "Most people build the life they meant to build in exactly this way. Boringly. Repeatedly. On days that felt like nothing.",
+          "button": "Go on"
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "That is all.",
+          "body": "Close it. Nothing is owed.",
+          "button": "Thanks"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Nothing was owed.",
+          "body": "You opened it anyway."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-animal-today",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What animal was today?",
+      "purpose": "Let the person name the shape of the day without explaining it.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What animal was today?"
+        },
+        {
+          "id": "animal",
+          "type": "single-choice",
+          "question": "Pick the animal.",
+          "answerKey": "spark-animal",
+          "required": true,
+          "options": [
+            {
+              "id": "goose",
+              "label": "A goose"
+            },
+            {
+              "id": "cat",
+              "label": "A cat in a sunbeam"
+            },
+            {
+              "id": "moth",
+              "label": "A moth at a window"
+            },
+            {
+              "id": "horse",
+              "label": "A horse, frankly"
+            },
+            {
+              "id": "crow",
+              "label": "A crow with a plan"
+            }
+          ]
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Noted.",
+          "body": "That was the animal.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Today was an animal.",
+          "body": "{{spark-animal}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-brain-noise",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "dark",
+      "title": "What noise is your head making?",
+      "purpose": "Let the person name their inner volume in one tap.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What noise is your head making?"
+        },
+        {
+          "id": "noise",
+          "type": "single-choice",
+          "question": "Pick the noise.",
+          "answerKey": "spark-noise",
+          "required": true,
+          "options": [
+            {
+              "id": "silence",
+              "label": "Nothing. Suspiciously nothing."
+            },
+            {
+              "id": "fridge",
+              "label": "A fridge hum"
+            },
+            {
+              "id": "radio",
+              "label": "Three radios, different songs"
+            },
+            {
+              "id": "kettle",
+              "label": "A kettle about to go"
+            },
+            {
+              "id": "choir",
+              "label": "Honestly, a choir"
+            }
+          ]
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Heard.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Inside your head.",
+          "body": "{{spark-noise}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-villain-plan",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "dark",
+      "title": "Suppose you were the villain today.",
+      "purpose": "Let the person look at their own day sideways and enjoy it.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Suppose you were the villain today."
+        },
+        {
+          "id": "plan",
+          "type": "single-choice",
+          "question": "What was the evil plan?",
+          "answerKey": "spark-villain",
+          "required": true,
+          "options": [
+            {
+              "id": "nap",
+              "label": "Nap through the important part"
+            },
+            {
+              "id": "snack",
+              "label": "Eat the thing that was not mine"
+            },
+            {
+              "id": "delay",
+              "label": "Delay one email into next week"
+            },
+            {
+              "id": "phone",
+              "label": "Scroll until the feeling passed"
+            },
+            {
+              "id": "none",
+              "label": "I was, disappointingly, good"
+            }
+          ]
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your secret is safe.",
+          "body": "I am a machine. I tell no one.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Today's evil plan.",
+          "body": "{{spark-villain}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-weather-inside",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What is the weather in there?",
+      "purpose": "Let the person describe an inner state through metaphor instead of a score.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What is the weather in there?"
+        },
+        {
+          "id": "weather",
+          "type": "single-choice",
+          "question": "Inside, not outside.",
+          "answerKey": "spark-weather",
+          "required": true,
+          "options": [
+            {
+              "id": "clear",
+              "label": "Clear"
+            },
+            {
+              "id": "bright",
+              "label": "Bright and a bit much"
+            },
+            {
+              "id": "overcast",
+              "label": "Overcast"
+            },
+            {
+              "id": "storm",
+              "label": "Something building"
+            },
+            {
+              "id": "fog",
+              "label": "Fog"
+            }
+          ]
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Forecast saved.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "The weather in there.",
+          "body": "{{spark-weather}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-slider-person",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "orange",
+      "title": "How much of a person are you today?",
+      "purpose": "Ask about capacity in a way nobody can feel judged by.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "How much of a person are you today?"
+        },
+        {
+          "id": "amount",
+          "type": "slider",
+          "question": "Be honest.",
+          "answerKey": "spark-personhood",
+          "min": 1,
+          "max": 5,
+          "minLabel": "A rumour",
+          "maxLabel": "Fully a guy",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Recorded, gravely.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Personhood today.",
+          "body": "{{spark-personhood}} out of 5."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-slider-nap",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "dark",
+      "title": "How badly do you want a nap?",
+      "purpose": "Notice tiredness without turning it into a health question.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "How badly do you want a nap?"
+        },
+        {
+          "id": "nap",
+          "type": "slider",
+          "question": "Right now.",
+          "answerKey": "spark-nap",
+          "min": 1,
+          "max": 5,
+          "minLabel": "Not at all",
+          "maxLabel": "Typing this from the floor",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Understandable.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Nap urgency.",
+          "body": "{{spark-nap}} out of 5."
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-defend-opinion",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "orange",
+      "title": "What is the dumbest hill you would die on?",
+      "purpose": "Reach a real value through a question that feels like a game.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 90,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What is the dumbest hill you would die on?"
+        },
+        {
+          "id": "hill",
+          "type": "short-text",
+          "question": "Name the hill.",
+          "answerKey": "spark-hill",
+          "placeholder": "The pettier the better.",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "I respect the hill.",
+          "body": "I may bring it up again.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Your hill.",
+          "body": "{{spark-hill}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-petty-annoyance",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "What was the pettiest thing today?",
+      "purpose": "Let small friction out, and learn what actually gets under the skin.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "What was the pettiest thing today?"
+        },
+        {
+          "id": "petty",
+          "type": "short-text",
+          "question": "Something too small to mention to a human.",
+          "answerKey": "spark-petty",
+          "placeholder": "Say the small thing.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Out of your head now.",
+          "body": "It lives here instead.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "The petty thing.",
+          "body": "{{spark-petty}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-intrusive-thought",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "dark",
+      "title": "Type it before you edit it.",
+      "purpose": "Catch an unedited thought, which is worth more than a careful one.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 30,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Type it before you edit it.",
+          "body": "Whatever was in your head as you opened this."
+        },
+        {
+          "id": "thought",
+          "type": "short-text",
+          "question": "No editing. No spelling. Go.",
+          "answerKey": "spark-intrusive",
+          "placeholder": "The unedited one.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Nobody is reading over your shoulder.",
+          "body": "Except me. I am fine about it.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Caught mid-thought.",
+          "body": "{{spark-intrusive}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-good-thing",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "One good thing. Small counts.",
+      "purpose": "Anchor one piece of real evidence that the day contained something.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 21,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "One good thing. Small counts."
+        },
+        {
+          "id": "good",
+          "type": "short-text",
+          "question": "What was it?",
+          "answerKey": "spark-good-thing",
+          "placeholder": "A coffee counts. A text counts.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Small counts.",
+          "body": "That is the whole point of small.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "One good thing.",
+          "body": "{{spark-good-thing}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-yesterday-you",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Would yesterday's you be pleased?",
+      "purpose": "Create a gentle comparison the person makes for themselves.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Would yesterday's you be pleased?"
+        },
+        {
+          "id": "pleased",
+          "type": "yes-no",
+          "question": "With how today went.",
+          "answerKey": "spark-yesterday-pleased",
+          "required": true
+        },
+        {
+          "id": "why",
+          "type": "short-text",
+          "question": "Why?",
+          "answerKey": "spark-yesterday-why",
+          "placeholder": "One line.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Yesterday's you has been told.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Yesterday's you.",
+          "body": "{{spark-yesterday-why}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-would-notice",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "light",
+      "title": "Would anyone notice?",
+      "purpose": "Surface what the person quietly wants seen.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 60,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Would anyone notice?",
+          "body": "If you kept this up for a year."
+        },
+        {
+          "id": "notice",
+          "type": "yes-no",
+          "question": "Would someone notice the change?",
+          "answerKey": "spark-notice",
+          "required": true
+        },
+        {
+          "id": "who",
+          "type": "short-text",
+          "question": "Who would notice first?",
+          "answerKey": "spark-notice-who",
+          "placeholder": "A name, or nobody.",
+          "required": false
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Filed.",
+          "body": "I will remember the name.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Who would notice.",
+          "body": "{{spark-notice-who}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-oscar-hello",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "orange",
+      "title": "Oscar has notes.",
+      "purpose": "Introduce a second voice so the app is not one tone forever.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "oscar",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Oscar has notes.",
+          "button": "Of course he does"
+        },
+        {
+          "id": "notes",
+          "type": "info",
+          "title": "I have reviewed your day.",
+          "body": "I have no qualifications and I did not read it closely. My notes are as follows: it happened, and you were there for most of it.",
+          "button": "Continue"
+        },
+        {
+          "id": "verdict",
+          "type": "single-choice",
+          "question": "How would you like to respond?",
+          "answerKey": "spark-oscar-reply",
+          "required": true,
+          "options": [
+            {
+              "id": "thanks",
+              "label": "Thank you, Oscar"
+            },
+            {
+              "id": "fair",
+              "label": "Unfortunately fair"
+            },
+            {
+              "id": "rude",
+              "label": "This is harassment"
+            },
+            {
+              "id": "silence",
+              "label": "No comment"
+            }
+          ]
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Oscar considers this a win.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Oscar had notes.",
+          "body": "You said: {{spark-oscar-reply}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-oscar-two-doors",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "orange",
+      "title": "Oscar's game. Pick a door.",
+      "purpose": "A pure choice with no consequence, for the pleasure of choosing.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "oscar",
+      "cooldownDays": 45,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Oscar's game. Pick a door.",
+          "button": "Fine"
+        },
+        {
+          "id": "door",
+          "type": "single-choice",
+          "question": "One door. No hints.",
+          "answerKey": "spark-oscar-door",
+          "required": true,
+          "options": [
+            {
+              "id": "left",
+              "label": "Left"
+            },
+            {
+              "id": "right",
+              "label": "Right"
+            },
+            {
+              "id": "neither",
+              "label": "I refuse both doors"
+            }
+          ]
+        },
+        {
+          "id": "reveal",
+          "type": "info",
+          "title": "Behind your door: a chair.",
+          "body": "Behind the other door: a slightly better chair. This is the game. Oscar designed it.",
+          "button": "Continue"
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "You may keep the chair.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "You picked a door.",
+          "body": "{{spark-oscar-door}}"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spark-this-or-that-life",
+      "version": 1,
+      "status": "published",
+      "session": "check-in",
+      "theme": "orange",
+      "title": "Quick. No thinking.",
+      "purpose": "A run of fast choices that quietly describe a temperament.",
+      "estimatedMinutes": 1,
+      "kind": "spark",
+      "app": "note",
+      "voice": "athena",
+      "cooldownDays": 60,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Quick. No thinking.",
+          "button": "Go"
+        },
+        {
+          "id": "pace",
+          "type": "single-choice",
+          "question": "Pick one.",
+          "answerKey": "spark-pace",
+          "required": true,
+          "options": [
+            {
+              "id": "early",
+              "label": "Early and quiet"
+            },
+            {
+              "id": "late",
+              "label": "Late and awake"
+            }
+          ]
+        },
+        {
+          "id": "company",
+          "type": "single-choice",
+          "question": "Pick one.",
+          "answerKey": "spark-company",
+          "required": true,
+          "options": [
+            {
+              "id": "alone",
+              "label": "Alone in a crowd"
+            },
+            {
+              "id": "together",
+              "label": "Together in a small room"
+            }
+          ]
+        },
+        {
+          "id": "risk",
+          "type": "single-choice",
+          "question": "Pick one.",
+          "answerKey": "spark-risk",
+          "required": true,
+          "options": [
+            {
+              "id": "plan",
+              "label": "A plan that works"
+            },
+            {
+              "id": "chance",
+              "label": "A chance that might not"
+            }
+          ]
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "That told me more than a survey would.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Quick answers.",
+          "body": "{{spark-pace}}, {{spark-company}}, {{spark-risk}}"
+        }
+      ]
+    }
+  ]
+}

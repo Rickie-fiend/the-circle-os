@@ -6,13 +6,18 @@ import {
   readChapterPublications,
   type StoredChapterPublication,
 } from "./chapter-publication-store";
+import { mergeChapterSupply } from "./chapter-supply";
 
 export function useChapterPublications(enabled = true) {
   const [publications, setPublications] = useState<StoredChapterPublication[]>([]);
 
   const refresh = useCallback(async () => {
     if (!enabled) return;
-    setPublications(await readChapterPublications().catch(() => []));
+    // Built-in chapters are merged in even when IndexedDB is empty or fails, so
+    // a fresh device still has a deck on its first open.
+    setPublications(
+      mergeChapterSupply(await readChapterPublications().catch(() => [])),
+    );
   }, [enabled]);
 
   useEffect(() => {

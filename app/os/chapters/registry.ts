@@ -1,4 +1,5 @@
 import published from "./published/index.json";
+import sparks from "./published/sparks.json";
 import type { ChapterDefinition } from "./chapter-types";
 
 const PAGE_TYPES = new Set([
@@ -36,9 +37,13 @@ function isChapter(value: unknown): value is ChapterDefinition {
   );
 }
 
-export const publishedChapters: ChapterDefinition[] = (
-  published.chapters as unknown[]
-).filter(isChapter);
+// The compiler owns index.json. The spark pack is hand-written and committed
+// beside it: it is the evergreen floor, so the app always has something to give
+// even when the nightly deck is empty or the server has been down for a week.
+export const publishedChapters: ChapterDefinition[] = [
+  ...(published.chapters as unknown[]),
+  ...(sparks.chapters as unknown[]),
+].filter(isChapter);
 
 export function getPublishedChapter(id: string, version?: number) {
   return publishedChapters
