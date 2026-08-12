@@ -145,9 +145,9 @@ Used for charts, weekly views, and other things worth reading again.
   anchored below the Header. They are not centered: a centered group grows in
   both directions, which moves words that were already written.
 - Cover Main text, Note Main text, and the Thoughts placeholder use one shared
-  typography token and center anchor. They remain left-aligned inside that
+  typography token and top anchor. They remain left-aligned inside that
   centered group.
-- A Note Page keeps its Main text on the same center anchor as a Cover Page.
+- A Note Page keeps its Main text on the same top anchor as a Cover Page.
   Optional Sub text begins beneath that anchor without pushing the Main text up.
 - Habit App Pages place `Your habit today` in Heading, the main habit in Main
   Body, added habits and tasks in Sub Body, and Add task in Footer. The divider

@@ -113,7 +113,7 @@ Session
 - One optional short subtitle.
 - Footer cue: `Swipe to begin` or `Swipe to see`.
 - Never editable.
-- Main text uses the shared Info Page type token and center anchor. It looks
+- Main text uses the shared Info Page type token and top anchor. It looks
   identical to the Main text on Note and Thoughts Pages.
 
 ### Chapter Page
@@ -132,7 +132,7 @@ Session
 ### Note Page
 
 - Header shows the app label or app action.
-- Main and optional Sub text use the same center anchor as a Cover Page.
+- Main and optional Sub text use the same top anchor as a Cover Page.
 - Text can be edited directly with its display typography.
 - No separate edit box and no Save-message step.
 
@@ -140,7 +140,7 @@ Session
 
 - Uses the Info Page geometry.
 - Inviting editable typography in the body.
-- Its placeholder uses the same size, weight, line-height, and center anchor as
+- Its placeholder uses the same size, weight, line-height, and top anchor as
   Cover and Note Main text.
 - One full-width black Send action in the Footer.
 
