@@ -50,6 +50,70 @@ test("builds Athena Reading from active source-linked memory", () => {
   assert.equal(reading.pages.shape.length, 0);
 });
 
+test("an unauthored page keeps each observation as its own paragraph", () => {
+  const reading = buildAthenaReading({
+    updatedAt: "2026-08-12T08:00:00.000Z",
+    rhythms: [
+      { id: "walking", statement: "You walked on 13 of 14 days.", status: "active" },
+      { id: "gym", statement: "The gym stopped after 6 August.", status: "active" },
+    ],
+  });
+
+  assert.deepEqual(reading.pages.days[0].paragraphs, [
+    "You walked on 13 of 14 days.",
+    "The gym stopped after 6 August.",
+  ]);
+  assert.equal(reading.pages.days[0].authored, false);
+});
+
+test("Athena's authored prose replaces the derived observations", () => {
+  const reading = buildAthenaReading({
+    updatedAt: "2026-08-12T08:00:00.000Z",
+    rhythms: [
+      { id: "walking", statement: "You walked on 13 of 14 days.", status: "active" },
+    ],
+    reading: {
+      days: [
+        {
+          heading: "The part that held",
+          paragraphs: ["You walked on almost every day.", "Other things stopped."],
+        },
+      ],
+    },
+  });
+
+  assert.equal(reading.pages.days.length, 1);
+  assert.equal(reading.pages.days[0].heading, "The part that held");
+  assert.equal(reading.pages.days[0].authored, true);
+  assert.equal(reading.pages.days[0].paragraphs.length, 2);
+  // A page she has not written still falls back rather than going blank.
+  assert.equal(reading.pages.days[0].text.includes("13 of 14"), false);
+});
+
+test("a section with no heading or no words is not published", () => {
+  const reading = buildAthenaReading({
+    updatedAt: "2026-08-12T08:00:00.000Z",
+    portrait: [{ id: "guess", statement: "A working guess.", status: "active" }],
+    reading: { shape: [{ heading: "", paragraphs: ["orphaned"] }, { heading: "Empty", paragraphs: ["  "] }] },
+  });
+
+  assert.equal(reading.pages.shape[0].authored, false);
+  assert.equal(reading.pages.shape[0].text, "A working guess.");
+});
+
+test("syncing memory without a reading never erases an authored one", () => {
+  const authored = {
+    updatedAt: "2026-08-12T06:00:00.000Z",
+    reading: { shape: [{ heading: "Your shape", paragraphs: ["A working idea."] }] },
+  };
+  const fresherPhoneSync = { updatedAt: "2026-08-12T09:00:00.000Z" };
+
+  const merged = mergeAthenaMemory(authored, fresherPhoneSync);
+
+  assert.equal(merged.updatedAt, "2026-08-12T09:00:00.000Z");
+  assert.equal(merged.reading.shape[0].paragraphs[0], "A working idea.");
+});
+
 const at = "2026-08-03T06:15:00.000Z";
 
 test("captures a clearly named watched film without interpreting personality", () => {

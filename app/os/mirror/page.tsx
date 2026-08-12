@@ -509,7 +509,7 @@ export default function CircleOSMirror() {
   function athenaReaderApp(
     label: string,
     title: string,
-    memorySections: Array<{ heading: string; text: string }>,
+    memorySections: Array<{ heading: string; text: string; paragraphs?: string[] }>,
     fallbackKeys: Array<[string, string]>,
   ) {
     return (
@@ -525,7 +525,14 @@ export default function CircleOSMirror() {
                   <div>
                     <h2>{section.heading}</h2>
                   </div>
-                  <p className="athena-memory-copy">{section.text}</p>
+                  {(section.paragraphs?.length
+                    ? section.paragraphs
+                    : [section.text]
+                  ).map((paragraph, index) => (
+                    <p className="athena-memory-copy" key={index}>
+                      {paragraph}
+                    </p>
+                  ))}
                 </section>
               ))
             : fallbackKeys.map(([key, heading]) =>

@@ -128,7 +128,38 @@ export function createAthenaMemory() {
     portrait: [],
     curiosity: [],
     corrections: [],
+    reading: createAthenaReadingDraft(),
   };
+}
+
+/** Athena's authored prose, one group of sections for each Reading page. */
+export function createAthenaReadingDraft() {
+  return { days: [], alive: [], shape: [] };
+}
+
+const READING_PAGES = ["days", "alive", "shape"];
+
+function normalizeReadingSection(value) {
+  const heading = cleanText(value?.heading, 80);
+  const paragraphs = (Array.isArray(value?.paragraphs)
+    ? value.paragraphs
+    : [value?.text]
+  )
+    .map((paragraph) => cleanText(paragraph, 1_200))
+    .filter(Boolean);
+  if (!heading || !paragraphs.length) return null;
+  return { heading, paragraphs };
+}
+
+export function normalizeAthenaReading(value) {
+  const reading = value && typeof value === "object" ? value : {};
+  const normalized = createAthenaReadingDraft();
+  for (const page of READING_PAGES) {
+    normalized[page] = (Array.isArray(reading[page]) ? reading[page] : [])
+      .map(normalizeReadingSection)
+      .filter(Boolean);
+  }
+  return normalized;
 }
 
 export function normalizeAthenaMemory(value) {
@@ -150,6 +181,7 @@ export function normalizeAthenaMemory(value) {
     corrections: Array.isArray(memory.corrections)
       ? memory.corrections.filter((item) => item?.id)
       : [],
+    reading: normalizeAthenaReading(memory.reading),
   };
 }
 
@@ -169,12 +201,25 @@ function observationText(item) {
   );
 }
 
+/**
+ * Falls back to raw observations when Athena has not authored this page yet.
+ * Each observation stands as its own paragraph so an unauthored page still
+ * reads as a list of separate noticings rather than one run-on paragraph.
+ */
 function readingSection(heading, items) {
-  const text = activeAthenaItems(items)
-    .map(observationText)
-    .filter(Boolean)
-    .join(" ");
-  return text ? { heading, text } : null;
+  const paragraphs = activeAthenaItems(items).map(observationText).filter(Boolean);
+  return paragraphs.length
+    ? { heading, text: paragraphs.join(" "), paragraphs, authored: false }
+    : null;
+}
+
+function authoredSections(reading, page) {
+  return (reading[page] || []).map((section) => ({
+    heading: section.heading,
+    text: section.paragraphs.join(" "),
+    paragraphs: section.paragraphs,
+    authored: true,
+  }));
 }
 
 /**
@@ -191,17 +236,20 @@ function compactReadingSections(...sections) {
  */
 export function buildAthenaReading(memoryValue) {
   const memory = normalizeAthenaMemory(memoryValue);
+  // Athena's own prose wins. Derived observations are the honest fallback for a
+  // page she has not written yet, so a profile never loses its existing reading.
+  const authored = (page, ...derived) => {
+    const written = authoredSections(memory.reading, page);
+    return written.length ? written : compactReadingSections(...derived);
+  };
   const pages = {
-    days: compactReadingSections(
-      readingSection("Recent rhythm", memory.rhythms),
-    ),
-    alive: compactReadingSections(
+    days: authored("days", readingSection("Recent rhythm", memory.rhythms)),
+    alive: authored(
+      "alive",
       readingSection("What seems to matter", memory.tastes),
       readingSection("What Athena remembers", memory.ledger),
     ),
-    shape: compactReadingSections(
-      readingSection("A working guess", memory.portrait),
-    ),
+    shape: authored("shape", readingSection("A working guess", memory.portrait)),
   };
 
   return {
@@ -258,7 +306,21 @@ export function mergeAthenaMemory(leftValue, rightValue) {
     portrait: mergeById(left.portrait, right.portrait),
     curiosity: mergeById(left.curiosity, right.curiosity, "updatedAt"),
     corrections: mergeById(left.corrections, right.corrections, "createdAt"),
+    // Only the morning preparation authors prose. The phone syncs memory without
+    // it, so never let an empty side erase a reading the other side still holds.
+    reading: readingWeight(freshest.reading)
+      ? freshest.reading
+      : readingWeight(left.reading) >= readingWeight(right.reading)
+        ? left.reading
+        : right.reading,
   });
+}
+
+function readingWeight(reading) {
+  return READING_PAGES.reduce(
+    (total, page) => total + (reading?.[page]?.length || 0),
+    0,
+  );
 }
 
 export function isLowSignalText(value) {
@@ -510,5 +572,30 @@ ${markdownList(memory.curiosity, (item) => `- ${item.question || item.statement}
 ## Corrections
 
 ${memory.corrections.length ? memory.corrections.map((item) => `- ${item.action}: ${item.note || item.targetId || item.sourceId || "recorded"}`).join("\n") : "No corrections yet."}
+
+## Reading
+
+${serializeAthenaReading(memory.reading)}
 `;
+}
+
+const READING_PAGE_TITLES = {
+  days: "Your days",
+  alive: "What feels alive",
+  shape: "Your shape",
+};
+
+function serializeAthenaReading(reading) {
+  const pages = READING_PAGES.filter((page) => reading[page]?.length);
+  if (!pages.length) return "Athena has not written a reading yet.";
+  return pages
+    .map((page) =>
+      [
+        `### ${READING_PAGE_TITLES[page]}`,
+        ...reading[page].map((section) =>
+          [`**${section.heading}**`, ...section.paragraphs].join("\n\n"),
+        ),
+      ].join("\n\n"),
+    )
+    .join("\n\n");
 }
