@@ -5,7 +5,12 @@
   /* The distance from the Header to the first line of Main Body. Fixed for
    * every App and every Chapter, so a Page never rearranges itself as it is
    * written into. */
-  --os-body-top: 1.25rem;
+  /* Where the first line of Main Body sits, measured from the top of the Body
+   * region. About the middle of an App Box at its minimum height: the first
+   * line lands there, a second fits under it, and a third is what makes the box
+   * grow. Anchoring at the very top left a dead field of colour beneath short
+   * text; centring the whole group moved words that were already written. */
+  --os-body-top: calc(var(--os-app-box-min-height) * 0.34);
   align-items: flex-start;
   background: var(--c-ink-deep);
   display: flex;
@@ -4473,6 +4478,13 @@
   flex-direction: column;
   grid-row: 1;
   justify-content: flex-start;
+}
+
+/* Main Body always reserves two lines, measured in the text's own line height
+ * rather than a token, so a second line costs nothing and the App Box only
+ * begins to grow at the third. */
+.circle-os .os-info-page-main > :first-child {
+  min-height: 2lh;
 }
 
 .circle-os .os-cover-page .os-session-intro-copy .os-info-page-sub,
