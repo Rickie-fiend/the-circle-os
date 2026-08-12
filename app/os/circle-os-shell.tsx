@@ -22,8 +22,21 @@ import {
   connectLocalAi,
   createEmptyState,
   ensureDay,
+  activeProtocolRun,
+  addProtocolItem,
+  appSessionIndex,
+  beginProtocolRun,
+  canBeginProtocolRun,
   completeTask,
   dayRecord,
+  discardEmptyProtocolItem,
+  endProtocolRun,
+  protocolToday,
+  renameProtocolRun,
+  setProtocolDays,
+  startProtocolDraft,
+  toggleProtocolItem,
+  updateProtocolItem,
   previousDateKey,
   reopenTask,
   discardEmptyHabit,
@@ -61,6 +74,7 @@ import {
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
+import { ProtocolPage } from "./protocol-page";
 import {
   chapterRunId,
   chapterAnswerText,
@@ -1157,6 +1171,7 @@ export function TodayExperience() {
   const [habitMode, setHabitMode] = useState<"habit" | "yesterday">("habit");
   const [habitModeRefreshing, setHabitModeRefreshing] = useState(false);
   const habitModeTimer = useRef<number | null>(null);
+  const [newProtocolItemId, setNewProtocolItemId] = useState<string | null>(null);
   const [newHabitId, setNewHabitId] = useState<string | null>(null);
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
@@ -1467,14 +1482,25 @@ export function TodayExperience() {
   const yesterday = dayRecord(state, yesterdayKey);
   const todaySoFar = dayRecord(state, dateKey);
 
+  // Protocol is the second page of this App Box, so the box keeps a saved
+  // page index again now that it has more than one page.
+  const habitAppVersion = "habit-protocol-v1";
+  const habitAppIndex = appSessionIndex(
+    state,
+    "today-habit",
+    habitAppVersion,
+  );
+  const protocol = protocolToday(state, dateKey);
+  const protocolRun = activeProtocolRun(state);
+
   useEffect(() => {
-    const editorId = newHabitId || newTaskId;
+    const editorId = newHabitId || newTaskId || newProtocolItemId;
     if (!editorId) return;
     const editor = document.querySelector<HTMLTextAreaElement>(
       `[data-inline-editor-id="${editorId}"]`,
     );
     editor?.focus();
-  }, [habits.length, newHabitId, newTaskId, oneTimeTasks.length]);
+  }, [habits.length, newHabitId, newProtocolItemId, newTaskId, oneTimeTasks.length]);
   const logSetupRun = useMemo(() => {
     if (!logSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
@@ -1593,6 +1619,39 @@ export function TodayExperience() {
   // Habit and Yesterday are two modes of one App Page, changed in place. The
   // standard makes Thoughts to Deep Thoughts the reference for this, so it uses
   // the same ceremonial pause rather than swapping instantly.
+  function saveHabitAppIndex(index: number) {
+    updateState((current) =>
+      setAppSessionIndex(current, "today-habit", habitAppVersion, index),
+    );
+  }
+
+  function startProtocol() {
+    updateState((current) => {
+      const started = startProtocolDraft(current);
+      return started.state;
+    });
+  }
+
+  function addProtocolTerm(kind: "non-negotiable" | "negotiable") {
+    if (!protocolRun) return;
+    updateState((current) => {
+      const added = addProtocolItem(current, protocolRun.id, kind);
+      if (added.id) setNewProtocolItemId(added.id);
+      return added.state;
+    });
+  }
+
+  function changeProtocolTerm(itemId: string, text: string) {
+    if (!protocolRun) return;
+    updateState((current) => updateProtocolItem(current, protocolRun.id, itemId, text));
+  }
+
+  function finishProtocolTermEdit(itemId: string) {
+    if (!protocolRun) return;
+    updateState((current) => discardEmptyProtocolItem(current, protocolRun.id, itemId));
+    setNewProtocolItemId((current) => (current === itemId ? null : current));
+  }
+
   function toggleHabitMode() {
     if (habitModeRefreshing) return;
     const nextMode = habitMode === "yesterday" ? "habit" : "yesterday";
@@ -2506,6 +2565,39 @@ export function TodayExperience() {
                 ) : undefined
               }
               hideIdleHeading
+              idleApps={[
+                <ProtocolPage
+                  key="protocol"
+                  protocol={protocol}
+                  canBegin={canBeginProtocolRun(protocolRun)}
+                  editingItemId={newProtocolItemId}
+                  onStart={startProtocol}
+                  onRename={(name) =>
+                    protocolRun &&
+                    updateState((current) => renameProtocolRun(current, protocolRun.id, name))
+                  }
+                  onSetDays={(days) =>
+                    protocolRun &&
+                    updateState((current) => setProtocolDays(current, protocolRun.id, days))
+                  }
+                  onAddItem={addProtocolTerm}
+                  onChangeItem={changeProtocolTerm}
+                  onFinishItemEdit={finishProtocolTermEdit}
+                  onBegin={() =>
+                    protocolRun &&
+                    updateState((current) => beginProtocolRun(current, protocolRun.id, dateKey))
+                  }
+                  onToggleItem={(itemId) =>
+                    updateState((current) => toggleProtocolItem(current, itemId, dateKey))
+                  }
+                  onEndRun={() =>
+                    protocolRun &&
+                    updateState((current) => endProtocolRun(current, protocolRun.id))
+                  }
+                />,
+              ]}
+              idleAppIndex={habitAppIndex}
+              onIdleAppIndexChange={saveHabitAppIndex}
               label="Habit chapter"
               run={activeHabitRun}
               onRunChange={saveHabitBuildingRun}

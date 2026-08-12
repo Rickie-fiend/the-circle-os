@@ -324,6 +324,10 @@ export function createEmptyState() {
     tasks: {
       items: {},
     },
+    protocol: {
+      runs: {},
+      completions: {},
+    },
     evidence: {
       localRevision: 0,
       acknowledgedRevision: 0,
@@ -465,6 +469,10 @@ export function normalizeState(state) {
       state.appSessions && typeof state.appSessions === "object"
         ? state.appSessions
         : {},
+    protocol: {
+      runs: { ...(state.protocol?.runs || {}) },
+      completions: { ...(state.protocol?.completions || {}) },
+    },
     habits: {
       definitions: mergeRecordMaps(
         migratedPractice.definitions,
@@ -718,6 +726,13 @@ export function mergeServerState(state, serverState) {
     },
     tasks: {
       items: mergeUpdatedRecords(remote.tasks.items, local.tasks.items),
+    },
+    protocol: {
+      runs: mergeUpdatedRecords(remote.protocol.runs, local.protocol.runs),
+      completions: mergeUpdatedRecords(
+        remote.protocol.completions,
+        local.protocol.completions,
+      ),
     },
     evidence: {
       localRevision: Math.max(
@@ -1621,4 +1636,268 @@ export function dayRecord(state, dateKey) {
     .map((task) => ({ id: task.id, text: task.text }));
 
   return { dateKey, habits, tasks, total: habits.length + tasks.length };
+}
+
+
+// ---------------------------------------------------------------------------
+// Protocol
+//
+// A habit is open-ended. A protocol is a container of time: it starts, it ends,
+// and its terms were agreed before it began. One run at a time, because "Monk
+// Mode" means something only while it is the single thing being kept.
+//
+// Missing a non-negotiable is recorded and costs nothing. There is no reset and
+// no failure state, because the app is here to show what happened rather than
+// to grade it.
+// ---------------------------------------------------------------------------
+
+function now() {
+  return new Date().toISOString();
+}
+
+export const PROTOCOL_DURATIONS = [3, 7, 14, 21];
+export const PROTOCOL_DEFAULT_NAME = "Monk Mode";
+const PROTOCOL_KINDS = new Set(["non-negotiable", "negotiable"]);
+
+export function protocolCompletionId(itemId, dateKey) {
+  return `${dateKey}:${itemId}`;
+}
+
+function writeRun(state, run) {
+  return {
+    ...state,
+    protocol: {
+      ...state.protocol,
+      runs: { ...state.protocol.runs, [run.id]: run },
+    },
+  };
+}
+
+// The run being written or kept. A finished run is history and never active.
+export function activeProtocolRun(state) {
+  return (
+    Object.values(state.protocol?.runs || {})
+      .filter((run) => run.status === "draft" || run.status === "active")
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] || null
+  );
+}
+
+export function startProtocolDraft(state, id = freshRecordId("protocol")) {
+  if (activeProtocolRun(state)) return { state, id: activeProtocolRun(state).id };
+  const timestamp = now();
+  return {
+    state: writeRun(state, {
+      id,
+      name: PROTOCOL_DEFAULT_NAME,
+      days: 7,
+      status: "draft",
+      startDateKey: null,
+      startedAt: null,
+      endedAt: null,
+      items: {},
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }),
+    id,
+  };
+}
+
+export function renameProtocolRun(state, runId, name) {
+  const run = state.protocol.runs[runId];
+  if (!run || run.status !== "draft") return state;
+  return writeRun(state, {
+    ...run,
+    name: String(name || "").slice(0, 60),
+    updatedAt: now(),
+  });
+}
+
+export function setProtocolDays(state, runId, days) {
+  const run = state.protocol.runs[runId];
+  const value = Number(days);
+  if (!run || run.status !== "draft" || !PROTOCOL_DURATIONS.includes(value)) {
+    return state;
+  }
+  return writeRun(state, { ...run, days: value, updatedAt: now() });
+}
+
+export function addProtocolItem(state, runId, kind, id = freshRecordId("pitem")) {
+  const run = state.protocol.runs[runId];
+  if (!run || run.status !== "draft" || !PROTOCOL_KINDS.has(kind)) {
+    return { state, id: null };
+  }
+  const timestamp = now();
+  return {
+    state: writeRun(state, {
+      ...run,
+      items: {
+        ...run.items,
+        [id]: {
+          id,
+          text: "",
+          kind,
+          status: "active",
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        },
+      },
+      updatedAt: timestamp,
+    }),
+    id,
+  };
+}
+
+export function updateProtocolItem(state, runId, itemId, text) {
+  const run = state.protocol.runs[runId];
+  const item = run?.items?.[itemId];
+  if (!run || !item || run.status !== "draft") return state;
+  const timestamp = now();
+  return writeRun(state, {
+    ...run,
+    items: {
+      ...run.items,
+      [itemId]: { ...item, text: String(text || "").slice(0, 120), updatedAt: timestamp },
+    },
+    updatedAt: timestamp,
+  });
+}
+
+// Archived rather than removed, for the same reason a habit is: a record the
+// phone deletes has nothing left for the server merge to compare against, so
+// the server copy wins and the item comes back.
+export function discardEmptyProtocolItem(state, runId, itemId) {
+  const run = state.protocol.runs[runId];
+  const item = run?.items?.[itemId];
+  if (!run || !item || run.status !== "draft") return state;
+  if (item.text.trim() || item.status === "archived") return state;
+  const timestamp = now();
+  return writeRun(state, {
+    ...run,
+    items: {
+      ...run.items,
+      [itemId]: { ...item, status: "archived", updatedAt: timestamp },
+    },
+    updatedAt: timestamp,
+  });
+}
+
+export function protocolItems(run, kind) {
+  return Object.values(run?.items || {})
+    .filter(
+      (item) =>
+        item.status === "active" && (!kind || item.kind === kind) && true,
+    )
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+}
+
+// A run needs at least one non-negotiable with words in it. Negotiables are
+// optional by definition, so they are never required to begin.
+export function canBeginProtocolRun(run) {
+  return Boolean(
+    run &&
+      run.status === "draft" &&
+      protocolItems(run, "non-negotiable").some((item) => item.text.trim()),
+  );
+}
+
+export function beginProtocolRun(state, runId, dateKey) {
+  const run = state.protocol.runs[runId];
+  if (!canBeginProtocolRun(run)) return state;
+  const timestamp = now();
+  // Anything still blank at the moment of starting never becomes a term.
+  const items = Object.fromEntries(
+    Object.entries(run.items).map(([id, item]) => [
+      id,
+      item.text.trim() ? item : { ...item, status: "archived", updatedAt: timestamp },
+    ]),
+  );
+  return writeRun(state, {
+    ...run,
+    items,
+    status: "active",
+    startDateKey: dateKey,
+    startedAt: timestamp,
+    updatedAt: timestamp,
+  });
+}
+
+// Ending early is honest and is recorded. It is not a failure.
+export function endProtocolRun(state, runId, status = "ended") {
+  const run = state.protocol.runs[runId];
+  if (!run || (run.status !== "active" && run.status !== "draft")) return state;
+  const timestamp = now();
+  return writeRun(state, {
+    ...run,
+    status: run.status === "draft" ? "ended" : status,
+    endedAt: timestamp,
+    updatedAt: timestamp,
+  });
+}
+
+// Which day of the run a date is, counting the first day as day one.
+export function protocolDay(run, dateKey) {
+  if (!run?.startDateKey) return 0;
+  const start = Date.parse(`${run.startDateKey}T00:00:00Z`);
+  const current = Date.parse(`${dateKey}T00:00:00Z`);
+  if (Number.isNaN(start) || Number.isNaN(current)) return 0;
+  return Math.floor((current - start) / 86400000) + 1;
+}
+
+export function toggleProtocolItem(state, itemId, dateKey) {
+  const run = activeProtocolRun(state);
+  const item = run?.items?.[itemId];
+  if (!run || !item || run.status !== "active" || item.status !== "active") {
+    return state;
+  }
+  const key = protocolCompletionId(itemId, dateKey);
+  const current = state.protocol.completions[key];
+  const timestamp = now();
+  return queueProfileUpdate(
+    {
+      ...state,
+      protocol: {
+        ...state.protocol,
+        completions: {
+          ...state.protocol.completions,
+          [key]: {
+            id: key,
+            itemId,
+            runId: run.id,
+            dateKey,
+            completed: !current?.completed,
+            completedAt: current?.completed ? null : timestamp,
+            updatedAt: timestamp,
+          },
+        },
+      },
+    },
+    "protocol",
+  );
+}
+
+// Everything a Protocol Page needs for one day, in one shape.
+export function protocolToday(state, dateKey) {
+  const run = activeProtocolRun(state);
+  if (!run) return null;
+  const day = protocolDay(run, dateKey);
+  const decorate = (item) => ({
+    ...item,
+    completed: Boolean(
+      state.protocol.completions[protocolCompletionId(item.id, dateKey)]?.completed,
+    ),
+  });
+  const nonNegotiable = protocolItems(run, "non-negotiable").map(decorate);
+  const negotiable = protocolItems(run, "negotiable").map(decorate);
+  return {
+    run,
+    day,
+    isDraft: run.status === "draft",
+    // The run is finished once the day after the last one arrives. It is not
+    // ended by missing anything.
+    isOver: run.status === "active" && day > run.days,
+    keptAll:
+      nonNegotiable.length > 0 && nonNegotiable.every((item) => item.completed),
+    nonNegotiable,
+    negotiable,
+  };
 }

@@ -254,6 +254,16 @@ export function mergeClientState(serverValue, phoneValue) {
     tasks: {
       items: mergeUpdatedRecords(server.tasks.items, phone.tasks.items),
     },
+    // A protocol is a container of time and its terms are locked, so a run
+    // merges whole by updatedAt. Without this the server copy would win by
+    // spread and a protocol started on the phone would vanish on sync.
+    protocol: {
+      runs: mergeUpdatedRecords(server.protocol?.runs, phone.protocol?.runs),
+      completions: mergeUpdatedRecords(
+        server.protocol?.completions,
+        phone.protocol?.completions,
+      ),
+    },
     evidence: {
       localRevision: Math.max(
         Number(server.evidence.localRevision || 0),

@@ -5,20 +5,26 @@ import {
   HABIT_QUESTIONS,
   LOG_SETUP_QUESTIONS,
   PROFILE_QUESTIONS,
+  PROTOCOL_DURATIONS,
+  activeProtocolRun,
   addHabitDefinition,
+  addProtocolItem,
   addTask,
   answerSurveyQuestion,
   appSessionIndex,
   applyProfileResult,
+  beginProtocolRun,
   buildVisionAnalysis,
+  canBeginProtocolRun,
   completeTask,
   connectLocalAi,
-  dayRecord,
-  previousDateKey,
   createEmptyState,
   createSampleState,
+  dayRecord,
   discardEmptyHabit,
+  discardEmptyProtocolItem,
   discardEmptyTask,
+  endProtocolRun,
   ensureDay,
   getDateKey,
   getDayPeriod,
@@ -26,13 +32,21 @@ import {
   mergeServerState,
   minutesBetween,
   normalizeState,
+  previousDateKey,
+  protocolDay,
+  protocolItems,
+  protocolToday,
   queueSuggestion,
   reopenTask,
   setAppSessionIndex,
   setDayLogRange,
+  setProtocolDays,
+  startProtocolDraft,
   summarizeWeek,
   toggleHabitForDay,
+  toggleProtocolItem,
   updateHabitDefinition,
+  updateProtocolItem,
   updateTask,
   upsertTimeBlock,
 } from "../app/os/circle-os-model.js";
@@ -743,4 +757,131 @@ test("yesterday's record shows one finished day and nothing else", () => {
   // A day with nothing recorded answers plainly rather than throwing.
   const empty = dayRecord(createEmptyState(), "2026-08-11");
   assert.deepEqual(empty, { dateKey: "2026-08-11", habits: [], tasks: [], total: 0 });
+});
+
+
+test("a protocol is drafted, locked, and kept for its days", () => {
+  let state = createEmptyState();
+  assert.equal(activeProtocolRun(state), null, "nothing runs by default");
+
+  const draft = startProtocolDraft(state, "run-1");
+  state = draft.state;
+  assert.equal(activeProtocolRun(state).name, "Monk Mode");
+  assert.equal(activeProtocolRun(state).days, 7);
+
+  // One run at a time.
+  const second = startProtocolDraft(state, "run-2");
+  assert.equal(second.id, "run-1", "a second draft returns the first");
+
+  // Only the offered durations are accepted.
+  state = setProtocolDays(state, "run-1", 14);
+  assert.equal(activeProtocolRun(state).days, 14);
+  state = setProtocolDays(state, "run-1", 9);
+  assert.equal(activeProtocolRun(state).days, 14, "9 days is not on offer");
+  assert.deepEqual(PROTOCOL_DURATIONS, [3, 7, 14, 21]);
+
+  const journal = addProtocolItem(state, "run-1", "non-negotiable", "i-journal");
+  state = updateProtocolItem(journal.state, "run-1", "i-journal", "Journaling 1 line");
+  const train = addProtocolItem(state, "run-1", "non-negotiable", "i-train");
+  state = updateProtocolItem(train.state, "run-1", "i-train", "Working out 5 min");
+  const read = addProtocolItem(state, "run-1", "negotiable", "i-read");
+  state = updateProtocolItem(read.state, "run-1", "i-read", "Read 1 chapter");
+  // Left blank on purpose; it must never become a term.
+  state = addProtocolItem(state, "run-1", "negotiable", "i-blank").state;
+
+  assert.equal(protocolItems(activeProtocolRun(state), "non-negotiable").length, 2);
+  assert.ok(canBeginProtocolRun(activeProtocolRun(state)));
+
+  state = beginProtocolRun(state, "run-1", "2026-08-12");
+  const run = activeProtocolRun(state);
+  assert.equal(run.status, "active");
+  assert.equal(run.items["i-blank"].status, "archived", "a blank item never becomes a term");
+
+  // Terms are locked once it is running.
+  state = updateProtocolItem(state, "run-1", "i-journal", "Journaling 10 pages");
+  assert.equal(activeProtocolRun(state).items["i-journal"].text, "Journaling 1 line");
+  state = addProtocolItem(state, "run-1", "non-negotiable", "i-late").state;
+  assert.equal(activeProtocolRun(state).items["i-late"], undefined);
+  state = setProtocolDays(state, "run-1", 3);
+  assert.equal(activeProtocolRun(state).days, 14);
+
+  // Day counting, from one.
+  assert.equal(protocolDay(run, "2026-08-12"), 1);
+  assert.equal(protocolDay(run, "2026-08-14"), 3);
+  assert.equal(protocolDay(run, "2026-09-01"), 21, "counts across a month end");
+
+  // A day is kept by ticking, and untick puts it back.
+  let today = protocolToday(state, "2026-08-12");
+  assert.equal(today.day, 1);
+  assert.equal(today.nonNegotiable.length, 2);
+  assert.equal(today.negotiable.length, 1, "the blank negotiable is gone");
+  assert.equal(today.keptAll, false);
+
+  state = toggleProtocolItem(state, "i-journal", "2026-08-12");
+  state = toggleProtocolItem(state, "i-train", "2026-08-12");
+  today = protocolToday(state, "2026-08-12");
+  assert.equal(today.keptAll, true, "negotiables are not required to keep a day");
+
+  state = toggleProtocolItem(state, "i-train", "2026-08-12");
+  assert.equal(protocolToday(state, "2026-08-12").keptAll, false);
+
+  // Ticks belong to their own day.
+  assert.equal(protocolToday(state, "2026-08-13").nonNegotiable.every((i) => !i.completed), true);
+});
+
+test("missing a non-negotiable costs nothing, and a run ends without failing", () => {
+  let state = startProtocolDraft(createEmptyState(), "run-1").state;
+  state = setProtocolDays(state, "run-1", 3);
+  state = updateProtocolItem(
+    addProtocolItem(state, "run-1", "non-negotiable", "i-1").state,
+    "run-1", "i-1", "Meditation 5 min",
+  );
+  state = beginProtocolRun(state, "run-1", "2026-08-12");
+
+  // Day two is missed entirely. Nothing resets and the run carries on.
+  state = toggleProtocolItem(state, "i-1", "2026-08-12");
+  const dayThree = protocolToday(state, "2026-08-14");
+  assert.equal(dayThree.day, 3);
+  assert.equal(activeProtocolRun(state).status, "active", "a missed day does not end it");
+  assert.equal(dayThree.isOver, false);
+  assert.equal(dayThree.keptAll, false, "day three is simply not kept yet");
+
+  // The run is over the day after the last one, by arithmetic rather than by grading.
+  assert.equal(protocolToday(state, "2026-08-15").isOver, true);
+
+  // Ending early is recorded and clears the slot for the next run.
+  state = endProtocolRun(state, "run-1");
+  assert.equal(state.protocol.runs["run-1"].status, "ended");
+  assert.ok(state.protocol.runs["run-1"].endedAt);
+  assert.equal(activeProtocolRun(state), null, "a finished run is history");
+  assert.equal(
+    state.protocol.completions["2026-08-12:i-1"].completed,
+    true,
+    "what was kept survives the run ending",
+  );
+
+  // A finished run cannot be ticked into.
+  const after = toggleProtocolItem(state, "i-1", "2026-08-16");
+  assert.equal(after, state);
+});
+
+test("clearing a protocol term survives the server merge", () => {
+  let state = startProtocolDraft(createEmptyState(), "run-1").state;
+  state = updateProtocolItem(
+    addProtocolItem(state, "run-1", "non-negotiable", "i-1").state,
+    "run-1", "i-1", "Cold shower",
+  );
+  state = updateProtocolItem(state, "run-1", "i-1", "");
+  state = discardEmptyProtocolItem(state, "run-1", "i-1");
+
+  const item = state.protocol.runs["run-1"].items["i-1"];
+  assert.equal(item.status, "archived", "the record stays for the merge to compare");
+  assert.equal(protocolItems(state.protocol.runs["run-1"]).length, 0);
+  assert.equal(discardEmptyProtocolItem(state, "run-1", "i-1"), state, "archiving twice is a no-op");
+});
+
+test("an older saved state receives a protocol slice", () => {
+  const migrated = normalizeState({ version: 4, profile: {}, days: {} });
+  assert.deepEqual(migrated.protocol, { runs: {}, completions: {} });
+  assert.equal(activeProtocolRun(migrated), null);
 });

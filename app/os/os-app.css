@@ -1860,7 +1860,7 @@
   animation: os-ink-particle-burst 640ms ease-out var(--particle-delay) both;
 }
 
-.circle-os .style-soft-clay .os-creative-button:not(.os-row-tick) {
+.circle-os .style-soft-clay .os-creative-button:not(.os-row-tick):not(.os-protocol-block) {
   background: var(--c-neutral-950);
   box-shadow:
     inset 0 1px 0 rgb(255 248 241 / 0.18),
@@ -1869,11 +1869,11 @@
   transform: translateY(-5px) rotateX(0deg);
 }
 
-.circle-os .style-soft-clay.phase-entering .os-creative-button:not(.os-row-tick) {
+.circle-os .style-soft-clay.phase-entering .os-creative-button:not(.os-row-tick):not(.os-protocol-block) {
   animation: os-clay-button-enter 620ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
 }
 
-.circle-os .style-soft-clay.phase-pressed .os-creative-button:not(.os-row-tick) {
+.circle-os .style-soft-clay.phase-pressed .os-creative-button:not(.os-row-tick):not(.os-protocol-block) {
   box-shadow:
     inset 0 2px 4px rgb(0 0 0 / 0.2),
     0 1px 0 var(--c-charcoal),
@@ -1881,7 +1881,7 @@
   transform: translateY(1px) scaleX(0.992);
 }
 
-.circle-os .style-soft-clay.phase-success .os-creative-button:not(.os-row-tick) {
+.circle-os .style-soft-clay.phase-success .os-creative-button:not(.os-row-tick):not(.os-protocol-block) {
   animation: os-clay-button-success 640ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
 }
 
@@ -5917,21 +5917,21 @@
   margin-top: 0.15rem;
 }
 
-.circle-os .os-creative-button-shell.role-habit .os-creative-button:not(.os-row-tick) {
+.circle-os .os-creative-button-shell.role-habit .os-creative-button:not(.os-row-tick):not(.os-protocol-block) {
   background: var(--c-ink);
   border: 1px solid rgb(255 248 241 / 0.28);
   color: var(--c-warm-50);
   min-height: 44px;
 }
 
-.circle-os .os-creative-button-shell.role-habit.style-soft-clay .os-creative-button:not(.os-row-tick) {
+.circle-os .os-creative-button-shell.role-habit.style-soft-clay .os-creative-button:not(.os-row-tick):not(.os-protocol-block) {
   box-shadow:
     inset 0 1px 0 rgb(255 248 241 / 0.2),
     0 5px 0 var(--c-orange-900),
     0 10px 16px rgb(25 24 19 / 0.24);
 }
 
-.circle-os .os-creative-button-shell.role-habit.style-soft-clay.phase-pressed .os-creative-button:not(.os-row-tick) {
+.circle-os .os-creative-button-shell.role-habit.style-soft-clay.phase-pressed .os-creative-button:not(.os-row-tick):not(.os-protocol-block) {
   box-shadow:
     inset 0 2px 4px rgb(0 0 0 / 0.22),
     0 1px 0 var(--c-orange-900),
@@ -6266,4 +6266,304 @@
 .circle-os .os-record-row.is-task .os-record-text {
   font-size: var(--text-md);
   font-weight: 540;
+}
+
+/* ---------------------------------------------------------------------------
+ * Protocol
+ *
+ * The second page of the Habit App Box. Same orange surface, same radius; the
+ * difference is the shape. Habit rows are lines with a tick beside them,
+ * protocol terms are blocks, and the block is the button. That works because a
+ * running protocol's terms are locked, so nothing inside a block needs tapping
+ * for editing.
+ *
+ * Solid means non-negotiable, dashed means negotiable. That is the whole visual
+ * language, which is the point: this has to be readable by a child.
+ * ------------------------------------------------------------------------- */
+.circle-os .os-protocol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.circle-os .os-protocol-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.circle-os .os-protocol-progress {
+  color: var(--c-ink);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.circle-os .os-protocol-name {
+  color: var(--c-warm-50);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  margin: 0.35rem 0 1rem;
+}
+
+.circle-os .os-protocol-second-label {
+  margin-top: 1rem;
+}
+
+/* The block. Raised on a solid leg with no blur, like every other control in
+ * this app, so it sits on the surface instead of floating above it. */
+.circle-os .os-creative-button-shell:has(.os-protocol-block) {
+  height: auto;
+  margin: 0 0 0.6rem;
+  perspective: none;
+}
+
+.circle-os .os-creative-button-shell .os-protocol-block.os-creative-button {
+  align-items: center;
+  background: rgb(255 248 241 / 0.14);
+  border: 2px solid var(--c-ink);
+  border-radius: var(--r-md);
+  color: var(--c-warm-50);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  min-height: 56px;
+  overflow: visible;
+  padding: 0.8rem 0.9rem;
+  position: relative;
+  text-align: left;
+  transform: translateY(-3px);
+  /* Movement and shadow animate; the fill does not. A block going from bone to
+   * Ink through a colour transition passes through muddy greys and reads as a
+   * blink, the same way the row ticks did. The state lands at once. */
+  transition:
+    box-shadow 150ms var(--ease-out),
+    transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.circle-os .os-creative-button-shell.style-soft-clay
+  .os-protocol-block.os-creative-button {
+  box-shadow: 0 3px 0 var(--c-orange-900);
+}
+
+.circle-os .os-creative-button-shell.style-soft-clay
+  .os-protocol-block.os-creative-button:active {
+  box-shadow: inset 0 2px 5px rgb(25 24 19 / 0.4);
+  transform: translateY(0);
+  transition-duration: 40ms;
+}
+
+/* Negotiable: the same block, a lighter commitment. Needs to outrank the
+ * block base rule above, which also carries four classes. */
+.circle-os .os-creative-button-shell
+  .os-protocol-block.is-negotiable.os-creative-button {
+  border-color: rgb(25 24 19 / 0.5);
+  border-style: dashed;
+  min-height: 48px;
+}
+
+.circle-os .os-creative-button-shell.style-soft-clay
+  .os-protocol-block.is-negotiable.os-creative-button {
+  box-shadow: 0 2px 0 rgb(159 63 30 / 0.55);
+  transform: translateY(-2px);
+}
+
+/* Kept: the block fills in and stays down. */
+.circle-os .os-creative-button-shell
+  .os-protocol-block.is-kept.os-creative-button,
+.circle-os .os-creative-button-shell.style-soft-clay
+  .os-protocol-block.is-kept.os-creative-button {
+  background: var(--c-ink);
+  box-shadow: inset 0 1px 3px rgb(25 24 19 / 0.5);
+  transform: translateY(0);
+}
+
+.circle-os .os-protocol-block .os-creative-button-label {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  inset: auto;
+  justify-content: space-between;
+  position: static;
+  width: 100%;
+}
+
+.circle-os .os-protocol-block-text {
+  flex: 1;
+  font-size: var(--text-lg);
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  min-width: 0;
+  text-align: left;
+}
+
+.circle-os .os-protocol-block.is-negotiable .os-protocol-block-text {
+  font-size: var(--text-md);
+  font-weight: 540;
+}
+
+.circle-os .os-protocol-block.is-kept .os-protocol-block-text {
+  opacity: 0.6;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.circle-os .os-protocol-block-dot {
+  border-radius: var(--r-full);
+  box-shadow: inset 0 0 0 2px rgb(25 24 19 / 0.5);
+  flex: none;
+  height: 24px;
+  position: relative;
+  width: 24px;
+}
+
+.circle-os .os-protocol-block.is-kept .os-protocol-block-dot {
+  background: var(--c-warm-50);
+  box-shadow: none;
+}
+
+.circle-os .os-protocol-block.is-kept .os-protocol-block-dot::after {
+  border: solid var(--c-ink);
+  border-width: 0 2.5px 2.5px 0;
+  content: "";
+  height: 11px;
+  left: 8.5px;
+  position: absolute;
+  top: 5px;
+  transform: rotate(43deg);
+  width: 6px;
+}
+
+/* Drafting a run. Terms are editable only before it begins. */
+.circle-os .os-protocol-block.is-draft {
+  align-items: center;
+  display: flex;
+  margin-bottom: 0.6rem;
+}
+
+.circle-os .os-protocol-block-edit {
+  background: none;
+  border: 0;
+  color: var(--c-warm-50);
+  font-family: inherit;
+  font-size: var(--text-lg);
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  min-width: 0;
+  outline: none;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+
+.circle-os .os-protocol-block.is-negotiable .os-protocol-block-edit {
+  font-size: var(--text-md);
+  font-weight: 540;
+}
+
+.circle-os .os-protocol-block-edit::placeholder {
+  color: rgb(255 248 241 / 0.52);
+}
+
+.circle-os .os-protocol-name-edit {
+  background: none;
+  border: 0;
+  color: var(--c-warm-50);
+  font-family: inherit;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0.35rem 0 0.9rem;
+  outline: none;
+  padding: 0;
+  width: 100%;
+}
+
+.circle-os .os-protocol-name-edit::placeholder {
+  color: rgb(255 248 241 / 0.52);
+}
+
+.circle-os .os-protocol-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.circle-os .os-protocol-day-choice {
+  background: rgb(255 248 241 / 0.14);
+  border: 1px solid rgb(25 24 19 / 0.4);
+  border-radius: var(--r-full);
+  color: var(--c-warm-50);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  min-height: var(--touch-min);
+  padding: 0 0.9rem;
+}
+
+.circle-os .os-protocol-day-choice[aria-pressed="true"] {
+  background: var(--c-ink);
+  border-color: var(--c-ink);
+}
+
+.circle-os .os-protocol-group {
+  margin-bottom: 1rem;
+}
+
+.circle-os .os-protocol-add,
+.circle-os .os-protocol-begin {
+  background: none;
+  border: 1px dashed rgb(25 24 19 / 0.45);
+  border-radius: var(--r-md);
+  color: var(--c-warm-50);
+  cursor: pointer;
+  display: block;
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 600;
+  min-height: var(--touch-min);
+  padding: 0.7rem;
+  text-align: center;
+  width: 100%;
+}
+
+.circle-os .os-protocol-begin {
+  background: var(--c-ink);
+  border: 0;
+  margin-top: 0.4rem;
+}
+
+.circle-os .os-protocol-begin:disabled {
+  background: rgb(25 24 19 / 0.28);
+  cursor: not-allowed;
+}
+
+.circle-os .os-protocol-end {
+  background: none;
+  border: 0;
+  color: rgb(255 248 241 / 0.66);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-top: 0.9rem;
+  min-height: var(--touch-min);
+  padding: 0;
+  text-align: left;
+}
+
+.circle-os .os-protocol-invite {
+  color: rgb(255 248 241 / 0.82);
+  font-size: var(--text-lg);
+  font-weight: 540;
+  line-height: 1.4;
+  margin: 0.5rem 0 1rem;
 }
