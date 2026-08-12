@@ -47,6 +47,10 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - A fluid App Box may grow for its content and ease back down, but never below
   the shared default minimum.
 - The App Box does not jump when adjacent Pages have different heights.
+- An App Box grows downward only. The top edge, the width, the radius, the
+  Header and the distance from the Header to the first line of Main Body all
+  stay where they are. The bottom edge is the only thing that travels, and the
+  gap between the last line and the Footer stays fixed as it does.
 - Real added rows may extend a fluid App Box while the Footer remains below
   them. Habit tasks stay visible in one continuous Sub Body; they do not move
   into an inner scrolling panel.
@@ -130,10 +134,16 @@ Used for charts, weekly views, and other things worth reading again.
   a one-off Cover, Note, Thoughts, or Blog visual inside a feature.
 - Every Page keeps Header, Heading, Main Body, Sub Body, and Footer. Empty
   optional text does not move those anchors.
-- Main Body content anchors to the lower edge of its larger two-part space.
-  Sub Body follows directly beneath it and may grow for real content.
-- On Cover, Note, and Thoughts Info Pages, Main and Sub read as one centered
-  text group rather than floating near the top of the App Box.
+- Main Body content anchors to the top of its space and stays there. The first
+  line sits a fixed distance below the Header on every Page, and writing more
+  never moves it. Sub Body follows directly beneath it and may grow.
+- A Page has four regions in one column: Header, Heading, Body, Footer. Body is
+  the only one that flexes. Written with Heading flexible instead, spare height
+  collects above the words, so a short thought sits low and jumps upward the
+  moment it gains a second line.
+- On Cover, Note, and Thoughts Info Pages, Main and Sub read as one text group
+  anchored below the Header. They are not centered: a centered group grows in
+  both directions, which moves words that were already written.
 - Cover Main text, Note Main text, and the Thoughts placeholder use one shared
   typography token and center anchor. They remain left-aligned inside that
   centered group.

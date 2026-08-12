@@ -94,7 +94,8 @@ Session
 - Pages never add a second outer card.
 - The App Box starts as a compact rounded rectangle and never contracts below
   the shared default size.
-- Main content anchors to the lower edge of its larger two-part Main Body.
+- Main content anchors to the top of its Main Body and stays there. A Page grows
+  downward for more writing; the words already on it never move.
   Optional Sub Body content begins directly beneath it.
 - Real added rows may extend a fluid App Box without colliding with the Footer.
   Habit tasks stay visible in one continuous Sub Body rather than an inner

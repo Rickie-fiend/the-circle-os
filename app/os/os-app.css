@@ -2,6 +2,10 @@
 
 .circle-os {
   --os-app-box-min-height: clamp(310px, 64vw, 390px);
+  /* The distance from the Header to the first line of Main Body. Fixed for
+   * every App and every Chapter, so a Page never rearranges itself as it is
+   * written into. */
+  --os-body-top: 1.25rem;
   align-items: flex-start;
   background: var(--c-ink-deep);
   display: flex;
@@ -438,12 +442,16 @@
 .circle-os .os-checkin-session .os-session-intro,
 .circle-os .os-checkin-session .os-survey-complete {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  /* Four tracks: Header, Heading, Body, Footer. Written as three, the Heading
+   * became the flexible one and spare height piled up directly above the text,
+   * so a short thought sat low and gained a line by jumping upward. The Body
+   * track is the one that flexes, so a Page grows beneath its words. */
+  grid-template-rows: auto min-content minmax(0, 1fr) auto;
 }
 
 .circle-os .os-info-page {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto min-content minmax(0, 1fr) auto;
 }
 
 .circle-os .os-info-page-header {
@@ -4334,7 +4342,12 @@
   --os-page-main-line-height: 0.98;
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  /* The Heading track is min-content rather than auto. An auto track is
+   * stretched when the Page has spare height, and because Heading sits above
+   * Body that spare height landed on top of the words: a short thought pushed
+   * the first line about 33px down, and writing a second line took it away
+   * again. Spare height belongs to the Body track, below the text. */
+  grid-template-rows: auto min-content minmax(0, 1fr) auto;
   min-height: var(--os-app-box-min-height);
   padding: 24px;
 }
@@ -4441,9 +4454,15 @@
   width: 100%;
 }
 
-.circle-os .os-info-page .os-page-body {
-  align-items: center;
+/* Text is anchored, not centred. A centred body grows in both directions, so
+ * writing a second line dragged the first one upward; the box is what moves,
+ * downward, and the words stay where they were put. */
+.circle-os .os-info-page .os-page-body,
+.circle-os .os-cover-page .os-page-body {
+  align-items: start;
+  align-self: start;
   display: flex;
+  padding-top: var(--os-body-top);
 }
 
 .circle-os .os-cover-page .os-info-page-main,
@@ -4453,7 +4472,7 @@
   display: flex;
   flex-direction: column;
   grid-row: 1;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .circle-os .os-cover-page .os-session-intro-copy .os-info-page-sub,
@@ -4667,20 +4686,15 @@
 
 /* Chapter Template V2: authored copy stays centered while the Footer keeps its
    independent bottom anchor at every viewport width. */
-.circle-os .os-cover-page .os-page-body {
-  align-items: center;
-  display: flex;
-}
-
 .circle-os .os-cover-page .os-session-intro-copy {
   display: flex;
   flex-direction: column;
   height: auto;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .circle-os .os-cover-page .os-info-page-main {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .circle-os .os-cover-page .os-page-footer > button {
