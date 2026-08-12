@@ -926,6 +926,22 @@ for (const c of cards) {
   mkdirSync(dirname(full), { recursive: true });
   writeFileSync(full, c.html, "utf8");
 }
+// The Design pane indexes cards from this manifest. It is compiled by the app's
+// own self-check, which does not re-run for an incremental push, so cards can
+// upload successfully and still never appear. Emit it here and push it with the
+// bundle so the index always matches what was uploaded.
+writeFileSync(
+  join(OUT, "_ds_manifest.json"),
+  JSON.stringify({
+    namespace: "TheCircleOS_d1c2ec",
+    components: [], startingPoints: [],
+    cards: cards.map(({ path, group }) => ({ path, group })),
+    templates: [], hasThumbnailHtml: false, globalCssPaths: [],
+    tokens: [], themes: [], fonts: [], brandFonts: [], source: "spa",
+  }),
+  "utf8",
+);
+
 writeFileSync(
   join(OUT, "_manifest.json"),
   JSON.stringify(
