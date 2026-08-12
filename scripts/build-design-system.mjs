@@ -709,91 +709,19 @@ screen(
 );
 
 // ---------------------------------------------------------------------------
-// Protocol — proposed
+// Protocol and the proposed Today
+//
+// Two rules the first pass got wrong and this one holds to:
+//
+// 1. An App Box is square-ish. The app sets
+//    --os-app-box-min-height: clamp(310px, 64vw, 390px), which is 310px at
+//    phone width, so a box never shrink-wraps its contents into a letterbox.
+// 2. Protocol is not a fourth box in the stack. It is the second page of the
+//    Habit App Box, one swipe across, exactly as Thoughts is the second page
+//    of the Note box.
 // ---------------------------------------------------------------------------
-const PROTOCOL_EXTRA = `
-.row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
-.cap{font-size:var(--text-2xs);letter-spacing:.14em;text-transform:uppercase;
-font-weight:600;color:var(--c-neutral-600);margin:10px 0 0;text-align:center}
-.box.tall{min-height:430px}
-.kind{font-size:var(--text-2xs);letter-spacing:.14em;text-transform:uppercase;
-font-weight:600;opacity:.72;margin:0 0 8px}
-.runname{font-size:var(--text-2xl);font-weight:700;letter-spacing:-.015em;margin:0 0 14px}
-/* A protocol item is a block, and the block is the button. Terms are locked
- * while a run is going, so nothing inside needs to be tapped for editing. */
-.blk{display:flex;align-items:center;justify-content:space-between;gap:12px;
-width:100%;text-align:left;font-family:inherit;color:inherit;cursor:pointer;
-border-radius:var(--r-md);padding:14px 15px;margin-bottom:9px;min-height:56px;
-background:rgb(255 248 241 / 0.14);border:2px solid var(--c-ink);
-font-size:var(--text-lg);font-weight:640;line-height:1.25;
-box-shadow:0 3px 0 var(--c-orange-900);transform:translateY(-3px)}
-.blk .t{flex:1;min-width:0}
-.blk .dot{width:24px;height:24px;border-radius:var(--r-full);flex:none;
-box-shadow:inset 0 0 0 2px rgb(25 24 19 / 0.5)}
-/* Negotiable: same block, lighter commitment. */
-.blk.nego{border-style:dashed;border-color:rgb(25 24 19 / 0.5);
-font-size:var(--text-md);font-weight:540;min-height:48px;
-box-shadow:0 2px 0 rgb(159 63 30 / 0.55);transform:translateY(-2px)}
-/* Done: the block fills in. */
-.blk.done{background:var(--c-ink);color:var(--c-warm-50);box-shadow:none;
-transform:translateY(0)}
-.blk.done .t{opacity:.62;text-decoration:line-through;text-decoration-thickness:1.5px}
-.blk.done .dot{background:var(--c-warm-50);box-shadow:none;position:relative}
-.blk.done .dot::after{content:"";position:absolute;left:8.5px;top:5px;width:6px;
-height:11px;border:solid var(--c-ink);border-width:0 2.5px 2.5px 0;transform:rotate(43deg)}
-.obs{margin:0 0 8px;padding-left:17px;font-size:var(--text-sm);line-height:1.6;
-color:var(--c-neutral-700)}
-@media (prefers-color-scheme:dark){.cap,.obs{color:var(--c-neutral-400)}}`;
-
-add(
-  "components/protocol.html",
-  page({
-    group: "Protocol",
-    name: "Proposed",
-    title: "Protocol",
-    lede:
-      "A habit is open-ended. A protocol is a container of time: it starts, it ends, and the terms were agreed at the start. Same orange App Box as Habit, but the rows become blocks — a list of lines against a stack of blocks, legible without being explained.",
-    extra: PROTOCOL_EXTRA,
-    body: `<div class="row">
-<div><div class="box tall orange">
-<header><span>Protocol</span><span>Day 3 of 7</span></header>
-<div class="body" style="justify-content:flex-start">
-<p class="runname">Monk Mode</p>
-<p class="kind">Non-negotiable</p>
-<button class="blk done"><span class="t">Journaling 1 line</span><span class="dot"></span></button>
-<button class="blk"><span class="t">Working out 5 min</span><span class="dot"></span></button>
-<button class="blk"><span class="t">Meditation 5 min</span><span class="dot"></span></button>
-<p class="kind" style="margin-top:16px">Negotiable</p>
-<button class="blk nego"><span class="t">Read 1 chapter</span><span class="dot"></span></button>
-</div><footer></footer></div>
-<p class="cap">Day 3 of a run</p></div>
-
-<div style="flex:1;min-width:260px">
-<p class="eyebrow">How it reads</p>
-<p class="obs">A solid block must happen. A dashed block is one you can negotiate. That is the entire visual language, and it works for an eight year old.</p>
-<p class="obs">The block is the button. Habit rows keep a tick beside them because their text is edited in place; a protocol's terms are locked while it runs, so the whole block can be pressed and there is nothing to conflict with.</p>
-<p class="obs">Pressing fills the block in. Each day you fill your blocks.</p>
-<p class="obs">Missing one is recorded and punished with nothing. No reset, no failure screen. The day shows what happened, which is the point of the app.</p>
-<p class="obs">Terms cannot be edited mid-run. A run can be ended early and that is recorded honestly, because otherwise "non-negotiable" is a word with no meaning.</p>
-<p class="obs">Progress sits in the Header right slot, the same place a Chapter Page puts it.</p>
-</div></div>`,
-  }),
-  { name: "Protocol", group: "Protocol", subtitle: "Blocks, non-negotiable and negotiable", w: 1060, h: 860 },
-);
-
-// ---------------------------------------------------------------------------
-// Today — proposed
-// ---------------------------------------------------------------------------
-add(
-  "screens/today-proposed.html",
-  page({
-    group: "The app today",
-    name: "Proposed",
-    title: "Today, proposed",
-    lede:
-      "The whole doing surface, with the combined Habit app and the new Protocol app in place. Every App Box keeps one shape and one radius; only the theme and the contents change.",
-    extra: `
-.phone{width:375px;background:var(--c-ink-deep);border-radius:34px;padding:14px 12px 20px;
+const PROPOSED_CSS = `
+.phone{width:375px;flex:none;background:var(--c-ink-deep);border-radius:34px;padding:14px 12px 20px;
 box-shadow:0 2px 4px rgb(25 24 19/.1),0 18px 48px rgb(25 24 19/.18)}
 .chrome{display:flex;justify-content:space-between;align-items:center;
 padding:6px 8px 12px;color:var(--c-bone);font-size:var(--text-2xs);
@@ -807,16 +735,25 @@ font-size:var(--text-md);font-weight:600;color:rgb(255 248 241/.6)}
 text-transform:uppercase;font-weight:700;margin:0 0 4px;padding:0 4px}
 .hello{color:var(--c-bone);font-size:var(--text-2xl);font-weight:700;
 letter-spacing:-.02em;margin:0 0 16px;padding:0 4px}
-.app{border-radius:var(--r-box);padding:20px;margin-bottom:14px}
+/* Square-ish, always. 310px is the clamp floor at phone width. */
+.app{border-radius:var(--r-box);padding:20px;margin-bottom:14px;min-height:310px;
+display:flex;flex-direction:column}
+.app.tall{min-height:420px}
 .app.note{background:var(--c-bone);color:var(--c-ink)}
 .app.orange{background:var(--c-orange);color:var(--c-warm-50)}
 .app.dark{background:var(--c-ink);color:var(--c-bone)}
 .ahead{display:flex;justify-content:space-between;align-items:center;
 font-size:var(--text-2xs);letter-spacing:.15em;text-transform:uppercase;
 font-weight:700;margin-bottom:14px;opacity:.9}
+.abody{flex:1;display:flex;flex-direction:column}
 .pill{background:var(--c-ink);color:var(--c-bone);border-radius:var(--r-full);
 padding:7px 13px;font-size:var(--text-2xs);letter-spacing:.06em;text-transform:none;
 font-weight:600}
+/* Page dots: which page of this App Box you are on. */
+.dots{display:flex;gap:6px;justify-content:center;padding-top:14px;margin-top:auto}
+.dots i{width:6px;height:6px;border-radius:var(--r-full);background:currentColor;
+opacity:.28}
+.dots i.on{opacity:.95}
 .hrow{display:flex;align-items:center;gap:12px;min-height:44px;padding:7px 0}
 .hrow .t{flex:1;font-size:var(--text-2xl);font-weight:700;line-height:1.2;
 letter-spacing:-.015em}
@@ -834,15 +771,18 @@ border:solid var(--c-warm-50);border-width:0 2.5px 2.5px 0;transform:rotate(43de
 .seam{height:2px;background:var(--c-ink);margin:12px 0;border:0}
 .kind{font-size:var(--text-2xs);letter-spacing:.14em;text-transform:uppercase;
 font-weight:700;opacity:.72;margin:0 0 8px}
+.runname{font-size:var(--text-2xl);font-weight:700;letter-spacing:-.015em;margin:0 0 14px}
 .blk{display:flex;align-items:center;justify-content:space-between;gap:12px;
+width:100%;text-align:left;font-family:inherit;color:inherit;cursor:pointer;
 border-radius:var(--r-md);padding:13px 14px;margin-bottom:9px;min-height:54px;
 background:rgb(255 248 241/.14);border:2px solid var(--c-ink);
-font-size:var(--text-lg);font-weight:640;box-shadow:0 3px 0 var(--c-orange-900);
-transform:translateY(-3px)}
+font-size:var(--text-lg);font-weight:640;line-height:1.25;
+box-shadow:0 3px 0 var(--c-orange-900);transform:translateY(-3px)}
+.blk .t{flex:1;min-width:0}
 .blk.nego{border-style:dashed;border-color:rgb(25 24 19/.5);font-size:var(--text-md);
 font-weight:540;min-height:46px;box-shadow:0 2px 0 rgb(159 63 30/.55);transform:translateY(-2px)}
 .blk.done{background:var(--c-ink);color:var(--c-warm-50);box-shadow:none;transform:translateY(0)}
-.blk.done .t{opacity:.6;text-decoration:line-through}
+.blk.done .t{opacity:.6;text-decoration:line-through;text-decoration-thickness:1.5px}
 .dot{width:24px;height:24px;border-radius:var(--r-full);flex:none;
 box-shadow:inset 0 0 0 2px rgb(25 24 19/.5);position:relative}
 .blk.done .dot{background:var(--c-warm-50);box-shadow:none}
@@ -855,10 +795,79 @@ border-top:1px solid rgb(255 248 241/.09);font-size:var(--text-sm)}
 .hour b{width:44px;font-weight:600;opacity:.9}
 .hour span{flex:1;opacity:.45}
 .hour i{color:var(--c-orange);font-style:normal;font-weight:700}
-.frame{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.frame{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.cap{font-size:var(--text-2xs);letter-spacing:.14em;text-transform:uppercase;
+font-weight:600;color:var(--c-neutral-600);margin:10px 0 0;text-align:center}
 .obs{margin:0 0 8px;padding-left:17px;font-size:var(--text-sm);line-height:1.6;
 color:var(--c-neutral-700)}
-@media (prefers-color-scheme:dark){.obs{color:var(--c-neutral-400)}}`,
+.swipe{align-self:center;font-size:var(--text-2xl);color:var(--c-neutral-400);
+padding:0 2px;margin-top:120px}
+@media (prefers-color-scheme:dark){.cap,.obs{color:var(--c-neutral-400)}}`;
+
+// The Habit App Box, page 1: Habits and Tasks.
+const HABIT_PAGE = `<div class="app orange" style="margin-bottom:0;min-height:445px">
+<div class="ahead"><span>Habit</span><span class="pill">New habit</span></div>
+<div class="abody">
+<div class="hrow"><span class="t">Walk before the first screen</span><span class="tick done"></span></div>
+<div class="hrow"><span class="t">Read ten pages</span><span class="tick"></span></div>
+<hr class="seam">
+<p class="kind">Tasks</p>
+<div class="hrow task"><span class="t">Call the venue</span><span class="tick done"></span></div>
+<div class="hrow task"><span class="t">Book the room</span><span class="tick"></span></div>
+<div class="addrow">+ Add task</div>
+<div class="dots"><i class="on"></i><i></i></div>
+</div></div>`;
+
+// The same App Box, page 2: Protocol. One swipe across, never a second box.
+const PROTOCOL_PAGE = `<div class="app orange" style="margin-bottom:0;min-height:445px">
+<div class="ahead"><span>Protocol</span><span style="opacity:.85">Day 3 of 7</span></div>
+<div class="abody">
+<p class="runname">Monk Mode</p>
+<p class="kind">Non-negotiable</p>
+<button class="blk done"><span class="t">Journaling 1 line</span><span class="dot"></span></button>
+<button class="blk"><span class="t">Working out 5 min</span><span class="dot"></span></button>
+<button class="blk"><span class="t">Meditation 5 min</span><span class="dot"></span></button>
+<p class="kind" style="margin-top:15px">Negotiable</p>
+<button class="blk nego"><span class="t">Read 1 chapter</span><span class="dot"></span></button>
+<div class="dots"><i></i><i class="on"></i></div>
+</div></div>`;
+
+add(
+  "components/protocol.html",
+  page({
+    group: "Protocol",
+    name: "Proposed",
+    title: "Protocol",
+    lede:
+      "A habit is open-ended. A protocol is a container of time: it starts, it ends, and the terms were agreed at the start. It is the second page of the Habit App Box, one swipe across, the same way Thoughts is the second page of the Note box. Never a separate box in the stack.",
+    extra: PROPOSED_CSS,
+    body: `<div class="frame">
+<div style="width:375px;flex:none">${HABIT_PAGE}<p class="cap">Page 1 — Habit</p></div>
+<div class="swipe" aria-hidden="true">&rarr;</div>
+<div style="width:375px;flex:none">${PROTOCOL_PAGE}<p class="cap">Page 2 — Protocol</p></div>
+</div>
+<hr class="rule">
+<p class="eyebrow">How it reads</p>
+<p class="obs">One App Box, two pages. The box does not move; the page moves inside it, and the dots say which page you are on.</p>
+<p class="obs">A solid block must happen. A dashed block is one you can negotiate. That is the entire visual language, and it works for an eight year old.</p>
+<p class="obs">The block is the button. Habit rows keep a tick beside them because their text is edited in place; a protocol's terms are locked while it runs, so the whole block can be pressed and nothing conflicts.</p>
+<p class="obs">Pressing fills the block in. Each day you fill your blocks.</p>
+<p class="obs">Missing one is recorded and punished with nothing. No reset, no failure screen. The day shows what happened, which is the point of the app.</p>
+<p class="obs">Terms cannot be edited mid-run. A run can be ended early and that is recorded honestly, because otherwise non-negotiable is a word with no meaning.</p>
+<p class="obs">Both pages hold the same square-ish minimum height, so swiping between them never changes the size of the box.</p>`,
+  }),
+  { name: "Protocol", group: "Protocol", subtitle: "Page 2 of the Habit App Box", w: 1060, h: 900 },
+);
+
+add(
+  "screens/today-proposed.html",
+  page({
+    group: "The app today",
+    name: "Proposed",
+    title: "Today, proposed",
+    lede:
+      "The whole doing surface. Three App Boxes, not four: Protocol lives inside the Habit box as its second page. Every box keeps one radius and one square-ish minimum height, so the stack reads as one system.",
+    extra: PROPOSED_CSS,
     body: `<div class="frame">
 <div class="phone">
 <div class="chrome"><span>Circle OS</span><span style="opacity:.5">Synced</span></div>
@@ -868,13 +877,16 @@ color:var(--c-neutral-700)}
 
 <div class="app note">
 <div class="ahead"><span>Note</span><span></span></div>
+<div class="abody">
 <p style="font-size:var(--text-2xl);font-weight:700;line-height:1.22;margin:0 0 8px;
 letter-spacing:-.02em">Small things, kept honestly, become evidence.</p>
 <p style="font-size:var(--text-sm);opacity:.55;margin:0">Tap the label to change mode</p>
-</div>
+<div class="dots"><i class="on"></i><i></i></div>
+</div></div>
 
 <div class="app orange">
 <div class="ahead"><span>Habit</span><span class="pill">New habit</span></div>
+<div class="abody">
 <div class="hrow"><span class="t">Walk before the first screen</span><span class="tick done"></span></div>
 <div class="hrow"><span class="t">Read ten pages</span><span class="tick"></span></div>
 <hr class="seam">
@@ -882,40 +894,32 @@ letter-spacing:-.02em">Small things, kept honestly, become evidence.</p>
 <div class="hrow task"><span class="t">Call the venue</span><span class="tick done"></span></div>
 <div class="hrow task"><span class="t">Book the room</span><span class="tick"></span></div>
 <div class="addrow">+ Add task</div>
-</div>
+<div class="dots"><i class="on"></i><i></i></div>
+</div></div>
 
-<div class="app orange">
-<div class="ahead"><span>Protocol</span><span style="opacity:.85">Day 3 of 7</span></div>
-<p style="font-size:var(--text-2xl);font-weight:700;letter-spacing:-.015em;margin:0 0 14px">Monk Mode</p>
-<p class="kind">Non-negotiable</p>
-<div class="blk done"><span class="t">Journaling 1 line</span><span class="dot"></span></div>
-<div class="blk"><span class="t">Working out 5 min</span><span class="dot"></span></div>
-<div class="blk"><span class="t">Meditation 5 min</span><span class="dot"></span></div>
-<p class="kind" style="margin-top:15px">Negotiable</p>
-<div class="blk nego"><span class="t">Read 1 chapter</span><span class="dot"></span></div>
-</div>
-
-<div class="app dark">
+<div class="app dark tall">
 <div class="ahead"><span>Log</span><span></span></div>
+<div class="abody">
 <p style="font-size:var(--text-xl);font-weight:700;margin:0 0 6px">Your day, hour by hour</p>
 <div class="hour"><b>07:00</b><span style="opacity:.9">Wake up</span><i>+</i></div>
 <div class="hour"><b>08:00</b><span>Add main activity</span><i>+</i></div>
 <div class="hour"><b>09:00</b><span style="opacity:.9">Read ten pages</span><i>+</i></div>
 <div class="hour"><b>10:00</b><span>Add main activity</span><i>+</i></div>
 <div class="hour"><b>11:00</b><span>Add main activity</span><i>+</i></div>
-</div>
+<div class="hour"><b>12:00</b><span style="opacity:.9">Lunch with Ko Ko</span><i>+</i></div>
+</div></div>
 </div>
 
 <div style="flex:1;min-width:280px">
 <p class="eyebrow">What changed</p>
-<p class="obs"><b>Habit is one page.</b> Today so far and Your week are gone. Tapping the Habit label switches to Yesterday, the same in-place mode change Thoughts uses for Deep Thoughts.</p>
-<p class="obs"><b>Protocol is new.</b> Same orange App Box and the same radius, but blocks instead of lines. Solid means must; dashed means negotiable.</p>
+<p class="obs"><b>Three boxes, not four.</b> Protocol is the second page of the Habit box, one swipe across, the same as Thoughts inside Note. The dots at the foot of a box say how many pages it has.</p>
+<p class="obs"><b>Every box is square-ish.</b> The app already sets a minimum of 310px at phone width, so no box shrink-wraps its contents into a letterbox. The Note box in the first version did, which is what made it look like a different kind of object.</p>
+<p class="obs"><b>Habit is one page.</b> Today so far and Your week are gone. Tapping the Habit label switches to Yesterday.</p>
 <p class="obs"><b>Habit rows keep a tick beside them</b> because their text is edited in place. Tap the text to edit, tap the tick to complete.</p>
-<p class="obs"><b>A protocol block is the button.</b> Terms are locked while a run is going, so there is nothing to edit and the whole block can be pressed.</p>
-<p class="obs">Four apps, one shape. Only theme and content change between them, which is what keeps a stack this tall calm.</p>
+<p class="obs">One shape, one radius, one minimum height. Only theme and contents change between apps, which is what keeps a stack this tall calm.</p>
 </div></div>`,
   }),
-  { name: "Today, proposed", group: "The app today", subtitle: "Habit combined, Protocol added", w: 1060, h: 1200 },
+  { name: "Today, proposed", group: "The app today", subtitle: "Three boxes; Protocol swipes inside Habit", w: 1060, h: 1250 },
 );
 
 // ---------------------------------------------------------------------------
