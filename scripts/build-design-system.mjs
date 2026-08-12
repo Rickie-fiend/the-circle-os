@@ -805,7 +805,7 @@ padding:0 2px;margin-top:120px}
 @media (prefers-color-scheme:dark){.cap,.obs{color:var(--c-neutral-400)}}`;
 
 // The Habit App Box, page 1: Habits and Tasks.
-const HABIT_PAGE = `<div class="app orange" style="margin-bottom:0;min-height:445px">
+const HABIT_PAGE = `<div class="app orange" style="margin-bottom:0">
 <div class="ahead"><span>Habit</span><span class="pill">New habit</span></div>
 <div class="abody">
 <div class="hrow"><span class="t">Walk before the first screen</span><span class="tick done"></span></div>
@@ -819,7 +819,7 @@ const HABIT_PAGE = `<div class="app orange" style="margin-bottom:0;min-height:44
 </div></div>`;
 
 // The same App Box, page 2: Protocol. One swipe across, never a second box.
-const PROTOCOL_PAGE = `<div class="app orange" style="margin-bottom:0;min-height:445px">
+const PROTOCOL_PAGE = `<div class="app orange" style="margin-bottom:0">
 <div class="ahead"><span>Protocol</span><span style="opacity:.85">Day 3 of 7</span></div>
 <div class="abody">
 <p class="runname">Monk Mode</p>
@@ -920,6 +920,78 @@ letter-spacing:-.02em">Small things, kept honestly, become evidence.</p>
 </div></div>`,
   }),
   { name: "Today, proposed", group: "The app today", subtitle: "Three boxes; Protocol swipes inside Habit", w: 1060, h: 1250 },
+);
+
+// ---------------------------------------------------------------------------
+// App Box growth
+// ---------------------------------------------------------------------------
+add(
+  "components/app-box-growth.html",
+  page({
+    group: "App Box",
+    name: "Behaviour",
+    title: "How the box grows",
+    lede:
+      "Square-ish is the default, not the maximum. A box grows downward for real content and eases back down when the content goes, but it never drops below the minimum and it never grows in any other direction. Every anchor stays where it was.",
+    extra: `
+.row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.cap{font-size:var(--text-2xs);letter-spacing:.14em;text-transform:uppercase;
+font-weight:600;color:var(--c-neutral-600);margin:10px 0 0;text-align:center}
+.tb{width:340px;flex:none;border-radius:var(--r-box);background:var(--c-warm-50);
+color:var(--c-ink);padding:22px;display:flex;flex-direction:column;min-height:310px;
+box-shadow:0 1px 2px rgb(25 24 19/.06),0 12px 32px rgb(25 24 19/.07);position:relative}
+.tb header{display:flex;justify-content:space-between;font-size:var(--text-2xs);
+letter-spacing:.15em;text-transform:uppercase;font-weight:700;min-height:18px}
+.tb .body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 0}
+.tb .main{font-size:var(--text-xl);line-height:1.32;font-weight:600;letter-spacing:-.01em;margin:0}
+.tb footer{padding-top:16px}
+.tb .act{display:block;width:100%;border:0;border-radius:var(--r-md);
+background:var(--c-ink);color:var(--c-bone);font-family:inherit;font-size:var(--text-md);
+font-weight:600;padding:14px;min-height:var(--touch-min);text-align:center}
+.mark{position:absolute;left:-1px;right:-1px;height:0;border-top:1px dashed var(--c-orange);
+opacity:.85}
+.mark span{position:absolute;right:0;top:-15px;font-size:9px;letter-spacing:.1em;
+text-transform:uppercase;color:var(--c-orange);font-weight:700}
+.obs{margin:0 0 8px;padding-left:17px;font-size:var(--text-sm);line-height:1.6;
+color:var(--c-neutral-700)}
+@media (prefers-color-scheme:dark){.cap,.obs{color:var(--c-neutral-400)}}`,
+    body: `<div class="row">
+<div>
+<div class="tb">
+<header><span>Thoughts</span><span></span></header>
+<div class="body"><p class="main">Today felt lighter.</p></div>
+<footer><button class="act">Send</button></footer>
+<div class="mark" style="top:310px"><span>minimum</span></div>
+</div>
+<p class="cap">One line — at the minimum</p>
+</div>
+
+<div>
+<div class="tb">
+<header><span>Thoughts</span><span></span></header>
+<div class="body"><p class="main">Today felt lighter. I finished the thing I
+kept moving to tomorrow, and the rest of the day was easier for it. I want to
+remember that the weight was the postponing, not the work.</p></div>
+<footer><button class="act">Send</button></footer>
+<div class="mark" style="top:310px"><span>minimum</span></div>
+</div>
+<p class="cap">Four lines — grown downward only</p>
+</div>
+
+<div style="flex:1;min-width:250px">
+<p class="eyebrow">The rule</p>
+<p class="obs"><b>Square-ish is the floor.</b> A short thought does not shrink the box; the box holds its minimum and the text sits in it.</p>
+<p class="obs"><b>Growth is downward only.</b> The top edge, the label, the width and the radius do not move. The bottom edge travels and nothing else does.</p>
+<p class="obs"><b>Anchors hold.</b> The label stays at the top, the action stays at the bottom, and the text keeps its place in the middle. Typing a fourth line must not shove the words upward or shrink them.</p>
+<p class="obs"><b>Type never shrinks to fit.</b> The box grows instead. That is the standard's rule and it is why the box is fluid in the first place.</p>
+<p class="obs"><b>It eases back.</b> Delete the text and the box returns to the minimum on the same curve, never a snap.</p>
+<hr class="rule">
+<p class="eyebrow">Across a swipe</p>
+<p class="obs">Two pages of one box may be different heights. The frame keeps the height of the page it is leaving until the swipe finishes, then eases to the height of the page that arrived. It never resizes mid-gesture, because a box changing size under a moving finger is what makes a swipe feel broken.</p>
+<p class="obs">Reduced motion makes that resize immediate instead of eased.</p>
+</div></div>`,
+  }),
+  { name: "How the box grows", group: "App Box", subtitle: "Square-ish floor, downward growth, held anchors", w: 1060, h: 760 },
 );
 
 // ---------------------------------------------------------------------------
