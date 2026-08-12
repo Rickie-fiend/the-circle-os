@@ -56,7 +56,6 @@ import {
   createLocalDeepThoughtPrompt,
   deepThoughtFollowUp,
   isDeepThoughtRewardEligible,
-  isSentenceWorthBreakingFor,
   type DeepThoughtPrompt,
 } from "./deep-thought-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
@@ -396,7 +395,7 @@ export type CircleState = {
       {
         id: string;
         text: string;
-        status: "open" | "completed";
+        status: "open" | "completed" | "archived";
         createdAt: string;
         updatedAt: string;
         completedAt: string | null;
@@ -2205,11 +2204,7 @@ export function TodayExperience() {
                 form="check-in-thought-form"
                 keepMountedOnSuccess
                 onSuccessComplete={beginThoughtRefreshTransition}
-                styleId={
-                  isSentenceWorthBreakingFor(thoughtDraft)
-                    ? "fractured-glass"
-                    : thoughtButtonStyle || "fallback"
-                }
+                styleId={thoughtButtonStyle || "fallback"}
                 type="submit"
               >
                 {thoughtSent ? "Sent" : "Send"}

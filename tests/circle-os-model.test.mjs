@@ -7,15 +7,16 @@ import {
   PROFILE_QUESTIONS,
   addHabitDefinition,
   addTask,
-  reopenTask,
+  answerSurveyQuestion,
   appSessionIndex,
   applyProfileResult,
-  answerSurveyQuestion,
   buildVisionAnalysis,
-  connectLocalAi,
   completeTask,
+  connectLocalAi,
   createEmptyState,
   createSampleState,
+  discardEmptyHabit,
+  discardEmptyTask,
   ensureDay,
   getDateKey,
   getDayPeriod,
@@ -23,13 +24,14 @@ import {
   mergeServerState,
   minutesBetween,
   normalizeState,
+  queueSuggestion,
+  reopenTask,
+  setAppSessionIndex,
+  setDayLogRange,
+  summarizeWeek,
   toggleHabitForDay,
   updateHabitDefinition,
   updateTask,
-  queueSuggestion,
-  setDayLogRange,
-  setAppSessionIndex,
-  summarizeWeek,
   upsertTimeBlock,
 } from "../app/os/circle-os-model.js";
 
@@ -678,4 +680,37 @@ test("a task finished by accident can be reopened", () => {
   // Reopening something already open changes nothing.
   assert.equal(reopenTask(reopened, "t1"), reopened);
   assert.equal(reopenTask(reopened, "missing"), reopened);
+});
+
+test("clearing a habit or task survives the server merge", () => {
+  // The server merge walks its own records and lets a newer phone record win.
+  // A removed record has no key left to compare, so the server copy used to
+  // survive and the habit reappeared on the next sync. Archiving keeps a record
+  // with a newer updatedAt for the merge to honour.
+  let phone = createEmptyState();
+  const habit = addHabitDefinition(phone);
+  phone = updateHabitDefinition(habit.state, habit.id, "Walk before the first screen");
+  const task = addTask(phone);
+  phone = updateTask(task.state, task.id, "Call the venue");
+
+  assert.equal(phone.habits.definitions[habit.id].status, "active");
+  assert.equal(phone.tasks.items[task.id].status, "open");
+
+  phone = discardEmptyHabit(updateHabitDefinition(phone, habit.id, ""), habit.id);
+  phone = discardEmptyTask(updateTask(phone, task.id, ""), task.id);
+
+  // The records stay, so the merge has something newer to compare against.
+  assert.equal(phone.habits.definitions[habit.id].status, "archived");
+  assert.equal(phone.tasks.items[task.id].status, "archived");
+
+  // Neither is listed any more: the Page shows active habits and open tasks.
+  const active = Object.values(phone.habits.definitions).filter((h) => h.status === "active");
+  const open = Object.values(phone.tasks.items).filter((t) => t.status === "open");
+  assert.equal(active.length, 0);
+  assert.equal(open.length, 0);
+
+  // Archiving twice is a no-op, and a named habit is never archived by a blur.
+  assert.equal(discardEmptyHabit(phone, habit.id), phone);
+  const named = updateHabitDefinition(phone, habit.id, "Read ten pages");
+  assert.equal(discardEmptyHabit(named, habit.id).habits.definitions[habit.id].text, "Read ten pages");
 });

@@ -882,14 +882,45 @@
 
 /* Done: a black disc with a bone tick, sitting flat in the surface. It reads as
  * finished but is plainly still a control, so it can be pressed back open. */
+/* Done: a black disc grows from the centre and the check draws in just behind
+ * it. The colour is never interpolated, because crossfading a translucent bone
+ * into an opaque Ink passes through muddy greys, which reads as a blink rather
+ * than a change of state. */
 .circle-os .os-creative-button-shell.role-habit
   .os-row-tick[aria-pressed="true"].os-creative-button {
-  background: var(--c-ink);
   box-shadow: inset 0 1px 3px rgb(25 24 19 / 0.55);
   transform: translateY(0);
 }
 
+.circle-os .os-creative-button-shell.role-habit
+  .os-row-tick.os-creative-button::before {
+  background: var(--c-ink);
+  border-radius: var(--r-full);
+  content: "";
+  inset: 0;
+  position: absolute;
+  transform: scale(0);
+  transition: transform 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.circle-os .os-creative-button-shell.role-habit
+  .os-row-tick[aria-pressed="true"].os-creative-button::before {
+  transform: scale(1);
+}
+
+/* The check arrives a beat after the fill, so the two read as one gesture. */
+.circle-os .os-row-tick::after {
+  opacity: 0;
+  transform: rotate(43deg) scale(0.55);
+  transition:
+    opacity 110ms var(--ease-out) 80ms,
+    transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1) 80ms;
+  z-index: 1;
+}
+
 .circle-os .os-row-tick[aria-pressed="true"]::after {
+  opacity: 1;
+  transform: rotate(43deg) scale(1);
   border: solid var(--c-warm-50);
   border-width: 0 2.5px 2.5px 0;
   content: "";
@@ -1885,8 +1916,24 @@
     both;
 }
 
+/* Every essential action presses like a row tick: down on :active so it lands
+ * with the finger instead of a lifecycle phase, seated on a solid leg with no
+ * blur beneath it, and near instant on the way down. */
+.circle-os .os-creative-button-shell.style-default .os-creative-button {
+  box-shadow: 0 3px 0 rgb(25 24 19 / 0.34);
+  transform: translateY(-3px);
+}
+
+.circle-os .os-creative-button-shell.style-default .os-creative-button:active,
 .circle-os .os-creative-button-shell.style-default.phase-pressed .os-creative-button {
-  transform: translateY(1px) scale(0.985);
+  box-shadow: 0 0 0 rgb(25 24 19 / 0.34);
+  transform: translateY(0);
+  transition-duration: 40ms;
+}
+
+.circle-os .os-creative-button-shell.style-default .os-creative-button:disabled {
+  box-shadow: none;
+  transform: translateY(0);
 }
 
 .circle-os .os-creative-button-shell.style-default.phase-success .os-creative-button {

@@ -807,12 +807,32 @@ export function updateHabitDefinition(state, id, text) {
   return cleanText.trim() ? queueProfileUpdate(next, "habit") : next;
 }
 
+// Clearing a habit archives it rather than removing the record.
+//
+// The server merges by walking its own records and letting a newer phone record
+// win. A record the phone removed has no key left to compare, so the server copy
+// survives the merge and the habit returns on the next sync. Archiving leaves a
+// record with a newer updatedAt, which the merge honours, and the app already
+// lists only active habits.
 export function discardEmptyHabit(state, id) {
   const current = state.habits.definitions[id];
-  if (!current || current.text.trim()) return state;
-  const definitions = { ...state.habits.definitions };
-  delete definitions[id];
-  return { ...state, habits: { ...state.habits, definitions } };
+  if (!current || current.text.trim() || current.status === "archived") {
+    return state;
+  }
+  return {
+    ...state,
+    habits: {
+      ...state.habits,
+      definitions: {
+        ...state.habits.definitions,
+        [id]: {
+          ...current,
+          status: "archived",
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    },
+  };
 }
 
 export function toggleHabitForDay(state, id, dateKey) {
@@ -883,12 +903,28 @@ export function updateTask(state, id, text) {
   return cleanText.trim() ? queueProfileUpdate(next, "task") : next;
 }
 
+// Archived rather than removed, for the same reason as a habit: a record the
+// phone deletes has nothing left for the server merge to compare against, so
+// the server copy wins and the task comes back. The Page lists open tasks only.
 export function discardEmptyTask(state, id) {
   const current = state.tasks.items[id];
-  if (!current || current.text.trim()) return state;
-  const items = { ...state.tasks.items };
-  delete items[id];
-  return { ...state, tasks: { ...state.tasks, items } };
+  if (!current || current.text.trim() || current.status === "archived") {
+    return state;
+  }
+  return {
+    ...state,
+    tasks: {
+      ...state.tasks,
+      items: {
+        ...state.tasks.items,
+        [id]: {
+          ...current,
+          status: "archived",
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    },
+  };
 }
 
 // A task that was finished by accident has to be recoverable. Completing one
