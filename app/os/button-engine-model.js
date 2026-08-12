@@ -58,8 +58,15 @@ function randomIndex(random, length) {
   return Math.min(length - 1, Math.max(0, Math.floor(value * length)));
 }
 
+// Styles that appear in the everyday rotation. Fractured Glass is deliberately
+// absent: it is chosen for a moment that has earned it, never dealt at random,
+// because a button that must be broken four times is not a neutral default.
+export const BUTTON_ROTATION_STYLE_IDS = Object.freeze(
+  BUTTON_STYLE_IDS.filter((id) => id !== "fractured-glass"),
+);
+
 export function shuffleButtonStyles(random = Math.random) {
-  const styles = [...BUTTON_STYLE_IDS];
+  const styles = [...BUTTON_ROTATION_STYLE_IDS];
   for (let index = styles.length - 1; index > 0; index -= 1) {
     const swapIndex = randomIndex(random, index + 1);
     [styles[index], styles[swapIndex]] = [styles[swapIndex], styles[index]];

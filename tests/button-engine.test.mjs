@@ -5,6 +5,7 @@ import {
   buttonPressesToBreak,
   isButtonBroken,
   nextButtonDamage,
+  BUTTON_ROTATION_STYLE_IDS,
   BUTTON_STYLE_IDS,
   canActivateButton,
   normalizeButtonStyleId,
@@ -14,24 +15,24 @@ import {
   takeNextButtonStyle,
 } from "../app/os/button-engine-model.js";
 
-test("a shuffled bag includes each approved button exactly once", () => {
+test("a shuffled bag includes each rotating button exactly once", () => {
   const bag = shuffleButtonStyles(() => 0.42);
-  assert.equal(bag.length, BUTTON_STYLE_IDS.length);
-  assert.deepEqual([...bag].sort(), [...BUTTON_STYLE_IDS].sort());
+  assert.equal(bag.length, BUTTON_ROTATION_STYLE_IDS.length);
+  assert.deepEqual([...bag].sort(), [...BUTTON_ROTATION_STYLE_IDS].sort());
 });
 
-test("four selections exhaust every approved button before refilling", () => {
+test("selections exhaust every rotating button before refilling", () => {
   let queue = [];
   let previous = null;
   const selected = [];
-  for (let index = 0; index < BUTTON_STYLE_IDS.length; index += 1) {
+  for (let index = 0; index < BUTTON_ROTATION_STYLE_IDS.length; index += 1) {
     const next = takeNextButtonStyle(queue, previous, () => 0.42);
     selected.push(next.styleId);
     previous = next.styleId;
     queue = next.queue;
   }
-  assert.deepEqual([...selected].sort(), [...BUTTON_STYLE_IDS].sort());
-  assert.equal(new Set(selected).size, BUTTON_STYLE_IDS.length);
+  assert.deepEqual([...selected].sort(), [...BUTTON_ROTATION_STYLE_IDS].sort());
+  assert.equal(new Set(selected).size, BUTTON_ROTATION_STYLE_IDS.length);
 });
 
 test("a refilled bag does not immediately repeat the previous style", () => {
@@ -112,4 +113,27 @@ test("a breaking style takes several presses before it commits", () => {
 
   // A single-press style is broken by its first press.
   assert.equal(isButtonBroken(nextButtonDamage(0, 1), 1), true);
+});
+
+test("a breaking style is never dealt by the everyday rotation", () => {
+  assert.ok(BUTTON_STYLE_IDS.includes("fractured-glass"), "still a valid style");
+  assert.ok(!BUTTON_ROTATION_STYLE_IDS.includes("fractured-glass"));
+
+  // Deal many full bags; a style that must be broken four times should never
+  // arrive by chance on an ordinary action.
+  const dealt = new Set();
+  for (let round = 0; round < 200; round += 1) {
+    let queue = [];
+    for (let draw = 0; draw < BUTTON_STYLE_IDS.length + 2; draw += 1) {
+      const next = takeNextButtonStyle(queue);
+      queue = next.queue;
+      dealt.add(next.styleId);
+    }
+  }
+  assert.ok(!dealt.has("fractured-glass"), "never dealt at random");
+  assert.equal(dealt.size, BUTTON_ROTATION_STYLE_IDS.length);
+
+  // It stays usable when chosen deliberately.
+  assert.equal(normalizeButtonStyleId("fractured-glass"), "fractured-glass");
+  assert.equal(buttonPressesToBreak("fractured-glass"), 4);
 });

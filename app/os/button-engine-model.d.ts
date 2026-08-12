@@ -60,3 +60,4 @@ export function canActivateButton(options?: {
 export function buttonPressesToBreak(styleId?: string | null): number;
 export function nextButtonDamage(damage?: number, pressesToBreak?: number): number;
 export function isButtonBroken(damage?: number, pressesToBreak?: number): boolean;
+export const BUTTON_ROTATION_STYLE_IDS: readonly string[];
