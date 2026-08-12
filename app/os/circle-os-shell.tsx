@@ -1415,6 +1415,7 @@ export function TodayExperience() {
   // Habit shows one finished day behind the label, not a week of dots.
   const yesterdayKey = previousDateKey(dateKey);
   const yesterday = dayRecord(state, yesterdayKey);
+  const todaySoFar = dayRecord(state, dateKey);
 
   useEffect(() => {
     const editorId = newHabitId || newTaskId;
@@ -2325,7 +2326,46 @@ export function TodayExperience() {
                 </button>
               }
               idleBody={habitMode === "yesterday" ? (
-                <section className="os-habit-body-session os-yesterday" aria-label="Yesterday">
+                <section className="os-habit-body-session os-yesterday" aria-label="Today so far and yesterday">
+                  <p className="os-record-label">Today so far</p>
+                  {todaySoFar.total ? (
+                    <div className="os-yesterday-list">
+                      {todaySoFar.habits.map((habit: { id: string; text: string }) => (
+                        <article className="os-extra-mission os-record-row" key={habit.id}>
+                          <p className="os-record-text">{habit.text}</p>
+                          <CreativeButton
+                            aria-label={`Undo: ${habit.text}`}
+                            aria-pressed
+                            className="os-row-tick os-row-tick-habit"
+                            keepMountedOnSuccess
+                            onClick={() => toggleHabit(habit.id)}
+                            role="habit"
+                            styleId="soft-clay"
+                            type="button"
+                          />
+                        </article>
+                      ))}
+                      {todaySoFar.tasks.map((task: { id: string; text: string }) => (
+                        <article className="os-extra-mission os-record-row is-task" key={task.id}>
+                          <p className="os-record-text">{task.text}</p>
+                          <CreativeButton
+                            aria-label={`Undo task: ${task.text}`}
+                            aria-pressed
+                            className="os-row-tick os-row-tick-task"
+                            keepMountedOnSuccess
+                            onClick={() => finishTask(task.id)}
+                            role="habit"
+                            styleId="soft-clay"
+                            type="button"
+                          />
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="os-yesterday-empty">Nothing completed yet today.</p>
+                  )}
+                  <hr className="os-record-seam" />
+                  <p className="os-record-label">Yesterday</p>
                   {yesterday.total ? (
                     <div className="os-yesterday-list">
                       {yesterday.habits.map((habit: { id: string; text: string }) => (
