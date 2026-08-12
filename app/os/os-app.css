@@ -6316,3 +6316,62 @@
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Habit — Yesterday mode
+ *
+ * The label is the control, exactly as it is on Thoughts. Tapping it changes
+ * the Page in place rather than navigating, and the change uses the ceremonial
+ * pause the standard reserves for a mode change.
+ * ------------------------------------------------------------------------- */
+.circle-os .os-habit-mode-toggle {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  text-transform: inherit;
+}
+
+.circle-os .os-habit-session.mode-refreshing .os-page-layout {
+  opacity: 0;
+  transition: opacity var(--motion-fade) var(--ease-out);
+}
+
+.circle-os .os-yesterday-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* One finished day, read back plainly. These are records rather than controls,
+ * so they carry no tick and cannot be changed from here. */
+.circle-os .os-yesterday-row {
+  border-bottom: 1px solid rgb(255 248 241 / 0.16);
+  color: var(--c-warm-50);
+  font-size: var(--text-xl);
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  margin: 0;
+  padding: 0.6rem 0;
+}
+
+.circle-os .os-yesterday-row.is-task {
+  font-size: var(--text-md);
+  font-weight: 540;
+  opacity: 0.82;
+}
+
+.circle-os .os-yesterday-row:last-child {
+  border-bottom: 0;
+}
+
+.circle-os .os-yesterday-empty {
+  color: rgb(255 248 241 / 0.72);
+  font-size: var(--text-lg);
+  font-weight: 540;
+  line-height: 1.4;
+  margin: 0;
+}

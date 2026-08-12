@@ -18,12 +18,13 @@ import {
   CIRCLE_DAY_START_HOUR,
   addHabitDefinition,
   addTask,
-  appSessionIndex,
   answerSurveyQuestion,
   connectLocalAi,
   createEmptyState,
   ensureDay,
   completeTask,
+  dayRecord,
+  previousDateKey,
   reopenTask,
   discardEmptyHabit,
   discardEmptyTask,
@@ -1121,6 +1122,9 @@ export function TodayExperience() {
   const thoughtLabelTimer = useRef<number | null>(null);
   const thoughtResetTimer = useRef<number | null>(null);
   const thoughtModeTimer = useRef<number | null>(null);
+  const [habitMode, setHabitMode] = useState<"habit" | "yesterday">("habit");
+  const [habitModeRefreshing, setHabitModeRefreshing] = useState(false);
+  const habitModeTimer = useRef<number | null>(null);
   const [newHabitId, setNewHabitId] = useState<string | null>(null);
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
@@ -1167,6 +1171,9 @@ export function TodayExperience() {
       }
       if (thoughtModeTimer.current) {
         window.clearTimeout(thoughtModeTimer.current);
+      }
+      if (habitModeTimer.current) {
+        window.clearTimeout(habitModeTimer.current);
       }
     },
     [],
@@ -1395,13 +1402,6 @@ export function TodayExperience() {
     };
   }, [habitBuildingChapter]);
   const activeHabitRun = habitBuildingRun;
-  const habitAppVersion = "habit-record-v1";
-  const habitAppIndex = appSessionIndex(
-    state,
-    "today-habit",
-    habitAppVersion,
-    0,
-  );
   const habits = Object.values(state.habits.definitions)
     .filter((habit) => habit.status === "active")
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
@@ -1412,21 +1412,9 @@ export function TodayExperience() {
       (task) => task.status === "open" || leavingMissionIds.includes(task.id),
     )
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
-  const completedHabitRecords = habits.filter(
-    (habit) => habitCompletion(habit.id)?.completed,
-  );
-  const completedTaskRecords = Object.values(state.tasks.items)
-    .filter((task) => task.status === "completed")
-    .sort((left, right) =>
-      String(right.completedAt || "").localeCompare(String(left.completedAt || "")),
-    );
-  const completedTasksToday = completedTaskRecords.filter(
-    (task) => task.completedAt && getDateKey(new Date(task.completedAt)) === dateKey,
-  );
-  const completedHabitCount =
-    completedHabitRecords.length + completedTasksToday.length;
-  const hasAnyRecord =
-    completedHabitRecords.length > 0 || completedTaskRecords.length > 0;
+  // Habit shows one finished day behind the label, not a week of dots.
+  const yesterdayKey = previousDateKey(dateKey);
+  const yesterday = dayRecord(state, yesterdayKey);
 
   useEffect(() => {
     const editorId = newHabitId || newTaskId;
@@ -1436,19 +1424,6 @@ export function TodayExperience() {
     );
     editor?.focus();
   }, [habits.length, newHabitId, newTaskId, oneTimeTasks.length]);
-  const habitTrackerDays = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date();
-    date.setHours(12, 0, 0, 0);
-    date.setDate(date.getDate() - (6 - index));
-    const key = getDateKey(date);
-    return {
-      key,
-      label: date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1),
-      completed: Object.values(state.habits.completions).some(
-        (completion) => completion.dateKey === key && completion.completed,
-      ),
-    };
-  });
   const logSetupRun = useMemo(() => {
     if (!logSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(logSetupChapter)];
@@ -1564,10 +1539,22 @@ export function TodayExperience() {
     taskExitTimers.current[id] = { fade, remove };
   }
 
-  function saveHabitAppIndex(index: number) {
-    updateState((current) =>
-      setAppSessionIndex(current, "today-habit", habitAppVersion, index),
-    );
+  // Habit and Yesterday are two modes of one App Page, changed in place. The
+  // standard makes Thoughts to Deep Thoughts the reference for this, so it uses
+  // the same ceremonial pause rather than swapping instantly.
+  function toggleHabitMode() {
+    if (habitModeRefreshing) return;
+    const nextMode = habitMode === "yesterday" ? "habit" : "yesterday";
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    setHabitModeRefreshing(true);
+    if (habitModeTimer.current) window.clearTimeout(habitModeTimer.current);
+    habitModeTimer.current = window.setTimeout(() => {
+      setHabitMode(nextMode);
+      setHabitModeRefreshing(false);
+      habitModeTimer.current = null;
+    }, reducedMotion ? 40 : 620);
   }
 
   function resetLogForm() {
@@ -2324,10 +2311,35 @@ export function TodayExperience() {
         ) : activeHabitChapter && activeHabitRun ? (
           <section className="os-habit" aria-label="Habit session">
             <ChapterPlayer
-              className="os-habit-session"
+              className={`os-habit-session${habitModeRefreshing ? " mode-refreshing" : ""}`}
               definition={activeHabitChapter}
               key={activeHabitChapter.id}
-              idleBody={
+              idleLabel={
+                <button
+                  aria-pressed={habitMode === "yesterday"}
+                  className="os-card-label os-habit-mode-toggle"
+                  onClick={toggleHabitMode}
+                  type="button"
+                >
+                  {habitMode === "yesterday" ? "Yesterday" : "Habit"}
+                </button>
+              }
+              idleBody={habitMode === "yesterday" ? (
+                <section className="os-habit-body-session os-yesterday" aria-label="Yesterday">
+                  {yesterday.total ? (
+                    <div className="os-yesterday-list">
+                      {yesterday.habits.map((habit: { id: string; text: string }) => (
+                        <p className="os-yesterday-row" key={habit.id}>{habit.text}</p>
+                      ))}
+                      {yesterday.tasks.map((task: { id: string; text: string }) => (
+                        <p className="os-yesterday-row is-task" key={task.id}>{task.text}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="os-yesterday-empty">Nothing was recorded yesterday.</p>
+                  )}
+                </section>
+              ) : (
                 <section className="os-habit-body-session" aria-label="Habits">
                   <div className="os-repeated-habits">
                     {habits.map((habit) => {
@@ -2365,8 +2377,8 @@ export function TodayExperience() {
                     })}
                   </div>
                 </section>
-              }
-              idleContent={
+              )}
+              idleContent={habitMode === "yesterday" ? undefined : (
                 <section className="os-task-body-session" aria-labelledby="task-session-title">
                   <p className="os-task-session-label" id="task-session-title">Tasks</p>
                   <div className="os-one-time-tasks">
@@ -2402,14 +2414,14 @@ export function TodayExperience() {
                     ))}
                   </div>
                 </section>
-              }
-              idleHeaderAction={
+              )}
+              idleHeaderAction={habitMode === "yesterday" ? undefined : (
                 <button className="os-new-habit" type="button" onClick={beginNewHabit}>
                   New habit
                 </button>
-              }
+              )}
               idleFooter={
-                habitBuildingRun?.status === "completed" && habitAppIndex === 0 ? (
+                habitBuildingRun?.status === "completed" && habitMode === "habit" ? (
                   <button
                     className="os-add-habit-row"
                     type="button"
@@ -2421,60 +2433,6 @@ export function TodayExperience() {
                 ) : undefined
               }
               hideIdleHeading
-              idleApps={[
-                <div className="os-habit-record os-habit-tracker" key="habit-tracker">
-                  <p className="os-card-label">Habit tracker</p>
-                  <h2>Your week.</h2>
-                  <p className="os-habit-record-summary">
-                    {habitTrackerDays.some((day) => day.completed)
-                      ? "Your main habit, as recorded."
-                      : "No habit wins recorded yet."}
-                  </p>
-                  <div className="os-habit-tracker-days" aria-label="Main habit this week">
-                    {habitTrackerDays.map((day) => (
-                      <div key={day.key}>
-                        <span>{day.label}</span>
-                        <i className={day.completed ? "done" : ""} />
-                      </div>
-                    ))}
-                  </div>
-                </div>,
-                <div className="os-habit-record" key="habit-record">
-                  <p className="os-card-label">Habit record</p>
-                  <h2>Today, so far.</h2>
-                  <p className="os-habit-record-summary">
-                    {completedHabitCount
-                      ? `${completedHabitCount} completed today.`
-                      : "Nothing completed yet."}
-                  </p>
-                  {hasAnyRecord ? (
-                    <div className="os-habit-record-list">
-                      {completedHabitRecords.length ? (
-                        <section className="os-habit-record-group">
-                          <span className="os-habit-record-group-label">Habits</span>
-                          {completedHabitRecords.map((habit) => (
-                            <div className="os-habit-record-row" key={habit.id}>
-                              <span>{habit.text}</span>
-                            </div>
-                          ))}
-                        </section>
-                      ) : null}
-                      {completedTaskRecords.length ? (
-                        <section className="os-habit-record-group">
-                          <span className="os-habit-record-group-label">Tasks</span>
-                          {completedTaskRecords.map((task) => (
-                            <div className="os-habit-record-row" key={task.id}>
-                              <span>{task.text}</span>
-                            </div>
-                          ))}
-                        </section>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>,
-              ].reverse()}
-              idleAppIndex={habitAppIndex}
-              onIdleAppIndexChange={saveHabitAppIndex}
               label="Habit chapter"
               run={activeHabitRun}
               onRunChange={saveHabitBuildingRun}

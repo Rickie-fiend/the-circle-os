@@ -92,6 +92,7 @@ function ChapterPageView({
   idleActionDisabled,
   idleActionPressed,
   idleHeaderAction,
+  idleLabel,
   idleBody,
   idleContent,
   idleFooter,
@@ -109,6 +110,7 @@ function ChapterPageView({
   idleActionDisabled?: boolean;
   idleActionPressed?: boolean;
   idleHeaderAction?: ReactNode;
+  idleLabel?: ReactNode;
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
@@ -230,7 +232,7 @@ function ChapterPageView({
         className={`os-chapter-card os-chapter-${page.type} theme-${chapter.theme}`}
         footer={isIdle ? idleFooter : quietFooter}
         heading={isIdle && !hideIdleHeading ? <h2>{title}</h2> : undefined}
-        headerLeft={isIdle ? <p className="os-card-label">{chapter.session}</p> : undefined}
+        headerLeft={isIdle ? (idleLabel ?? <p className="os-card-label">{chapter.session}</p>) : undefined}
         headerRight={isIdle ? idleHeaderAction : !isCompletionPage ? progress : undefined}
         theme={chapter.theme}
         variant={isIdle ? "app" : "chapter"}
@@ -423,6 +425,7 @@ export function ChapterPlayer({
   idleActionDisabled = false,
   idleActionPressed = false,
   idleHeaderAction,
+  idleLabel,
   idleBody,
   idleContent,
   idleFooter,
@@ -450,6 +453,7 @@ export function ChapterPlayer({
   idleActionDisabled?: boolean;
   idleActionPressed?: boolean;
   idleHeaderAction?: ReactNode;
+  idleLabel?: ReactNode;
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
@@ -583,6 +587,7 @@ export function ChapterPlayer({
         idleActionDisabled={idleActionDisabled}
         idleActionPressed={idleActionPressed}
         idleHeaderAction={idleHeaderAction}
+        idleLabel={idleLabel}
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
@@ -648,6 +653,7 @@ export function ChapterPlayer({
         idleActionDisabled={idleActionDisabled}
         idleActionPressed={idleActionPressed}
         idleHeaderAction={idleHeaderAction}
+        idleLabel={idleLabel}
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
@@ -740,6 +746,7 @@ export function ChapterPlayer({
           idleActionDisabled={idleActionDisabled}
           idleActionPressed={idleActionPressed}
           idleHeaderAction={idleHeaderAction}
+          idleLabel={idleLabel}
           idleBody={idleBody}
           idleContent={idleContent}
           idleFooter={idleFooter}

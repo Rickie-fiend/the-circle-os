@@ -1583,3 +1583,42 @@ export function createSampleState(now = new Date()) {
 
   return state;
 }
+
+// The Circle day before this one. Dates are plain keys rather than clock time,
+// so stepping back a day never has to reason about the 06:00 boundary again.
+export function previousDateKey(dateKey) {
+  const [year, month, day] = String(dateKey).split("-").map(Number);
+  if (!year || !month || !day) return dateKey;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+// What the person actually did on one finished day: habits they ticked and
+// tasks they completed, and nothing else. Deliberately one day rather than a
+// week, because a row of seven dots is a scoreboard and invites chasing a
+// streak instead of noticing what happened.
+export function dayRecord(state, dateKey) {
+  const habits = Object.values(state.habits.definitions)
+    .filter(
+      (habit) =>
+        habit.status === "active" &&
+        state.habits.completions[habitCompletionId(habit.id, dateKey)]?.completed,
+    )
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+    .map((habit) => ({ id: habit.id, text: habit.text }));
+
+  const tasks = Object.values(state.tasks.items)
+    .filter(
+      (task) =>
+        task.status === "completed" &&
+        task.completedAt &&
+        getDateKey(new Date(task.completedAt)) === dateKey,
+    )
+    .sort((left, right) =>
+      String(left.completedAt).localeCompare(String(right.completedAt)),
+    )
+    .map((task) => ({ id: task.id, text: task.text }));
+
+  return { dateKey, habits, tasks, total: habits.length + tasks.length };
+}

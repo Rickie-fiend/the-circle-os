@@ -13,6 +13,8 @@ import {
   buildVisionAnalysis,
   completeTask,
   connectLocalAi,
+  dayRecord,
+  previousDateKey,
   createEmptyState,
   createSampleState,
   discardEmptyHabit,
@@ -713,4 +715,32 @@ test("clearing a habit or task survives the server merge", () => {
   assert.equal(discardEmptyHabit(phone, habit.id), phone);
   const named = updateHabitDefinition(phone, habit.id, "Read ten pages");
   assert.equal(discardEmptyHabit(named, habit.id).habits.definitions[habit.id].text, "Read ten pages");
+});
+
+test("yesterday's record shows one finished day and nothing else", () => {
+  assert.equal(previousDateKey("2026-08-12"), "2026-08-11");
+  assert.equal(previousDateKey("2026-08-01"), "2026-07-31");
+  assert.equal(previousDateKey("2026-01-01"), "2025-12-31");
+  assert.equal(previousDateKey("2028-03-01"), "2028-02-29", "leap year");
+
+  let state = createEmptyState();
+  const kept = addHabitDefinition(state, "h-kept");
+  state = updateHabitDefinition(kept.state, "h-kept", "Walk before the first screen");
+  const missed = addHabitDefinition(state, "h-missed");
+  state = updateHabitDefinition(missed.state, "h-missed", "Read ten pages");
+
+  state = toggleHabitForDay(state, "h-kept", "2026-08-11");
+  state = toggleHabitForDay(state, "h-missed", "2026-08-12");
+
+  const yesterday = dayRecord(state, "2026-08-11");
+  assert.deepEqual(yesterday.habits.map((h) => h.text), ["Walk before the first screen"]);
+  assert.equal(yesterday.total, 1, "today's tick does not leak into yesterday");
+
+  // An archived habit never appears, even if it was ticked that day.
+  state = discardEmptyHabit(updateHabitDefinition(state, "h-kept", ""), "h-kept");
+  assert.equal(dayRecord(state, "2026-08-11").habits.length, 0);
+
+  // A day with nothing recorded answers plainly rather than throwing.
+  const empty = dayRecord(createEmptyState(), "2026-08-11");
+  assert.deepEqual(empty, { dateKey: "2026-08-11", habits: [], tasks: [], total: 0 });
 });
