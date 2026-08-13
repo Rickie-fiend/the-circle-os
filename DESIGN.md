@@ -93,10 +93,17 @@ Session
 - The App Box owns radius, clipping, border, shadow, theme, and height change.
 - Pages never add a second outer card.
 - The App Box starts as a compact rounded rectangle and never contracts below
-  the shared default size.
+  the shared default size. Every App Box rests at that one size, so swiping
+  from Note to Thoughts or from Habit to Protocol never resizes the frame. One
+  set of tokens owns the size, the padding, the drop to the first line, the
+  Main-to-Sub gap and the Body-to-Footer gap; an App does not restate them.
 - Main content anchors to the top of its Main Body and stays there. A Page grows
   downward for more writing; the words already on it never move.
   Optional Sub Body content begins directly beneath it.
+- One written line costs one line of App Box, and the gap between the last line
+  and the action stays the same as the box grows. On Cover, Note and Thoughts
+  the two-to-one weight of Main and Sub is where the eye lands, not a
+  reservation: an absent Sub Body takes no room at all.
 - Real added rows may extend a fluid App Box without colliding with the Footer.
   Habit tasks stay visible in one continuous Sub Body rather than an inner
   scrolling panel.
@@ -163,6 +170,9 @@ Session
 - Required-input feedback uses a brief, clear head shake of the text layer.
 - Respect reduced-motion preferences.
 - The page moves; the App Box does not.
+- An idle App Box turns its own pages after a shared dwell, so a Page nobody
+  swiped to still comes past. It restarts on touch, waits out focus and a part
+  written thought, and never runs in the background.
 - Every action runs through the button engine. A feature does not draw its own
   button or its own checkbox.
 - One style may break instead of pressing. Fractured Glass takes four strikes:

@@ -55,6 +55,10 @@ unrelated work.
   flash, or expose gaps during a swipe or resize.
 - Reuse the shared Page anatomy: Header, Heading, Main Body, Sub Body, Footer.
 - Main Body receives roughly two parts of body space; Sub Body receives one.
+  On Cover, Note and Thoughts that weight is where the eye lands, not reserved
+  space: an empty Sub Body costs nothing and the App Box stays at its default.
+- Every App Box rests at one shared default size. An idle App Box with more
+  than one Page turns its own pages after a quiet dwell.
 - One Page has one main action. Do not add decorative controls or explanatory
   words without a clear purpose.
 - Motion is calm and meaningful. Existing page travel remains quick; only a

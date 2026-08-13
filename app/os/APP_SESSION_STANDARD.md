@@ -43,7 +43,18 @@ Every Cover, Chapter, and App Page uses the same five regions.
 
 ## App Box size
 
-- The default App Box is a compact rounded rectangle.
+- The default App Box is a compact rounded rectangle, and it is the same
+  rectangle everywhere. Note, Thoughts, Habit, Protocol, a short Chapter, a
+  Cover, Vision, Athena and Gap all rest at exactly one height. Swiping between
+  two Pages of the same App never resizes the frame.
+- One foundation owns that size and the space inside it. `--os-app-box-min-height`
+  is the height, `--os-app-box-padding-*` the inset, `--os-body-top` the drop
+  from the Header to the first line of Main Body, `--os-main-sub-gap` the space
+  between Main and Sub, and `--os-body-footer-gap` the space between the last
+  line of Body and the Footer. An App does not restate any of them.
+- `--os-body-top` is set so that two lines of Main and one line of Sub fill the
+  default App Box exactly. That is the budget: the box grows at the third line
+  and never before it.
 - A fluid App Box may grow for its content and ease back down, but never below
   the shared default minimum.
 - The App Box does not jump when adjacent Pages have different heights.
@@ -51,6 +62,13 @@ Every Cover, Chapter, and App Page uses the same five regions.
   Header and the distance from the Header to the first line of Main Body all
   stay where they are. The bottom edge is the only thing that travels, and the
   gap between the last line and the Footer stays fixed as it does.
+- One written line costs one line of App Box. Main and Sub are two real rows
+  that take the room they need. Written instead as a two-parts-to-one-part
+  split of the Body, an absent Sub Body still claimed half of whatever Main
+  took, so every line written added one and a half lines of box and opened a
+  growing field of empty colour above the action. The two-to-one proportion
+  describes where the eye should land, not a grid that reserves space nobody
+  asked for.
 - Real added rows may extend a fluid App Box while the Footer remains below
   them. Habit tasks stay visible in one continuous Sub Body; they do not move
   into an inner scrolling panel.
@@ -93,6 +111,22 @@ Used for charts, weekly views, and other things worth reading again.
 - The frame keeps one stable height.
 - The selected page survives route changes and reloads.
 - New server data may create a new cover once.
+
+## Idle rotation
+
+- An idle App Box turns its own pages. A Page nobody swiped to still comes
+  past, so a habit is not left unticked all day because its Page was behind
+  Protocol and nothing on screen said so.
+- Note and Thoughts turn between themselves. Habit and Protocol turn between
+  themselves. One dwell, `IDLE_PAGE_DWELL_MS`, is shared by both.
+- Turning never interrupts. The dwell restarts on any touch or key inside the
+  box, it waits while anything inside the box has focus, it holds while a
+  thought is part written, and it does not run while the app is in the
+  background.
+- A turned Page arrives with the ordinary quick page travel, not the ceremonial
+  update reveal. Nothing new has arrived; the box is only showing what it holds.
+- A journey, a Chapter and a pending publication never rotate. Only an idle App
+  with more than one Page does.
 
 ## Interaction
 

@@ -16,6 +16,21 @@ import {
 
 const seenAttentionKeys = new Set<string>();
 
+/**
+ * How long an idle App Box rests on one Page before it quietly turns to the
+ * next one.
+ *
+ * An idle App Box holds more than one Page, and the second Page is easy to
+ * forget: a habit stays unticked all day because the Habit Page is behind
+ * Protocol, and nothing on screen says so. An idle box turns its own pages, so
+ * everything it holds comes past on its own.
+ *
+ * It never takes a Page away from someone using it. The dwell restarts on any
+ * touch, it waits while anything inside the box has focus, and it does not run
+ * while the phone is asleep or the app is in the background.
+ */
+export const IDLE_PAGE_DWELL_MS = 30000;
+
 export function SwipeSession({
   children,
   index,
@@ -29,6 +44,8 @@ export function SwipeSession({
   onForwardBoundary,
   attentionKey,
   attentionIndex = 0,
+  rotateMs,
+  rotatePaused = false,
 }: {
   children: ReactNode;
   index: number;
@@ -42,6 +59,8 @@ export function SwipeSession({
   onForwardBoundary?: () => void;
   attentionKey?: string;
   attentionIndex?: number;
+  rotateMs?: number;
+  rotatePaused?: boolean;
 }) {
   const apps = Children.toArray(children);
   const lastIndex = Math.max(0, Math.min(
@@ -104,9 +123,85 @@ export function SwipeSession({
   const longPressCallback = useRef(onLongPress);
   const longPressEnabled = Boolean(onLongPress);
 
+  const rotation = useRef({ allowedIndices, activeIndex, onIndexChange });
+
   useEffect(() => {
     longPressCallback.current = onLongPress;
   }, [onLongPress]);
+
+  useEffect(() => {
+    rotation.current = { allowedIndices, activeIndex, onIndexChange };
+  });
+
+  // An idle App Box turns its own pages, so a Page nobody swiped to still comes
+  // past. Everything here is about not interrupting: the dwell restarts on any
+  // touch or key, it waits out focus rather than pulling a Page away from
+  // someone writing on it, and a background tab never advances quietly.
+  useEffect(() => {
+    const session = sessionRef.current;
+    if (
+      !session ||
+      !rotateMs ||
+      rotatePaused ||
+      allowedIndices.length < 2 ||
+      dragging ||
+      settling ||
+      committing
+    ) {
+      return;
+    }
+
+    let timer: number | null = null;
+
+    const stop = () => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+    };
+
+    const start = () => {
+      stop();
+      if (document.hidden) return;
+      timer = window.setTimeout(turn, rotateMs);
+    };
+
+    const turn = () => {
+      const {
+        allowedIndices: indices,
+        activeIndex: current,
+        onIndexChange: change,
+      } = rotation.current;
+      if (document.hidden || session.contains(document.activeElement)) {
+        start();
+        return;
+      }
+      const next = indices[(indices.indexOf(current) + 1) % indices.length];
+      if (next === undefined || next === current) return;
+      change(next);
+    };
+
+    start();
+    session.addEventListener("pointerdown", start);
+    session.addEventListener("keydown", start);
+    session.addEventListener("focusin", stop);
+    session.addEventListener("focusout", start);
+    document.addEventListener("visibilitychange", start);
+    return () => {
+      stop();
+      session.removeEventListener("pointerdown", start);
+      session.removeEventListener("keydown", start);
+      session.removeEventListener("focusin", stop);
+      session.removeEventListener("focusout", start);
+      document.removeEventListener("visibilitychange", start);
+    };
+  }, [
+    activeIndex,
+    allowedIndices.length,
+    committing,
+    dragging,
+    rotateMs,
+    rotatePaused,
+    settling,
+  ]);
 
   useEffect(() => {
     const session = sessionRef.current;

@@ -9,7 +9,12 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { PageLayout, SessionIntro, SwipeSession } from "../app-session";
+import {
+  IDLE_PAGE_DWELL_MS,
+  PageLayout,
+  SessionIntro,
+  SwipeSession,
+} from "../app-session";
 import {
   advanceChapterRun,
   findChapterAnswer,
@@ -433,6 +438,7 @@ export function ChapterPlayer({
   idleApps = [],
   idleAppIndex = 0,
   onIdleAppIndexChange,
+  rotateIdleApps = false,
   backApp,
   onBackAppShown,
   onBackAppHidden,
@@ -461,6 +467,7 @@ export function ChapterPlayer({
   idleApps?: ReactNode[];
   idleAppIndex?: number;
   onIdleAppIndexChange?: (index: number) => void;
+  rotateIdleApps?: boolean;
   backApp?: ReactNode;
   onBackAppShown?: () => void;
   onBackAppHidden?: () => void;
@@ -604,6 +611,7 @@ export function ChapterPlayer({
         index={Math.max(0, Math.min(apps.length - 1, idleAppIndex))}
         label={label}
         onLongPress={onLongPress}
+        rotateMs={rotateIdleApps ? IDLE_PAGE_DWELL_MS : undefined}
         onIndexChange={(index) => onIdleAppIndexChange?.(index)}
       >
         {apps}

@@ -60,7 +60,7 @@ import {
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
-import { InfoPage, SwipeSession } from "./app-session";
+import { IDLE_PAGE_DWELL_MS, InfoPage, SwipeSession } from "./app-session";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import {
   revealButtonStyle,
@@ -2369,6 +2369,8 @@ export function TodayExperience() {
             index={visibleCheckInApp}
             label="Check-in session"
             maxIndex={checkInThoughtsApp}
+            rotateMs={IDLE_PAGE_DWELL_MS}
+            rotatePaused={Boolean(thoughtDraft.trim())}
             onIndexChange={(nextIndex) => {
               setThoughtLabelVisible(false);
               if (nextIndex !== checkInThoughtsApp) {
@@ -2598,6 +2600,7 @@ export function TodayExperience() {
               ]}
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={saveHabitAppIndex}
+              rotateIdleApps
               label="Habit chapter"
               run={activeHabitRun}
               onRunChange={saveHabitBuildingRun}

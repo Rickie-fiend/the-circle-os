@@ -1,16 +1,36 @@
 @import "../tokens.css";
 
 .circle-os {
+  /* The App Box foundation. Every App Box in Circle OS starts at exactly this
+   * size and grows only downward for real content. Note, Thoughts, Habit and
+   * Protocol are one size at rest, so a swipe never resizes the frame. */
   --os-app-box-min-height: clamp(310px, 64vw, 390px);
-  /* The distance from the Header to the first line of Main Body. Fixed for
-   * every App and every Chapter, so a Page never rearranges itself as it is
-   * written into. */
+  --os-app-box-padding-x: 24px;
+  --os-app-box-padding-top: 20px;
+  --os-app-box-padding-bottom: 24px;
   /* Where the first line of Main Body sits, measured from the top of the Body
-   * region. About the middle of an App Box at its minimum height: the first
-   * line lands there, a second fits under it, and a third is what makes the box
-   * grow. Anchoring at the very top left a dead field of colour beneath short
-   * text; centring the whole group moved words that were already written. */
-  --os-body-top: calc(var(--os-app-box-min-height) * 0.34);
+   * region. It is the same distance on every App and every Chapter, so a Page
+   * never rearranges itself as it is written into. The value is chosen so that
+   * a Page carrying two lines of Main and one line of Sub fills the default
+   * App Box exactly: the box grows at the third line, never before it. */
+  --os-body-top: calc(var(--os-app-box-min-height) * 0.27);
+  /* The gap between the last line of Main and the first line of Sub. */
+  --os-main-sub-gap: 0.55rem;
+  /* The gap between the last line of Body and the Footer. Fixed: as a Page
+   * grows this stays the same, so writing never opens a field of empty colour
+   * above the action and never pushes the action out of the frame. */
+  --os-body-footer-gap: 26px;
+  /* The four Page tracks: Header, Heading, Body, Footer.
+   *
+   * The Heading track is min-content rather than auto. An auto track is
+   * stretched when the Page has spare height, and because Heading sits above
+   * Body that spare height landed on top of the words: a short thought pushed
+   * the first line about 33px down, and writing a second line took it away
+   * again. Spare height belongs to the Body track, below the text.
+   *
+   * One token, because three separate rules used to declare these tracks and
+   * they drifted apart. */
+  --os-page-rows: auto min-content minmax(0, 1fr) auto;
   align-items: flex-start;
   background: var(--c-ink-deep);
   display: flex;
@@ -441,22 +461,17 @@
 .circle-os .os-checkin-session .os-app-page > .os-survey-card {
   box-sizing: border-box;
   min-height: var(--os-app-box-min-height);
-  padding: 26px 24px;
 }
 
 .circle-os .os-checkin-session .os-session-intro,
 .circle-os .os-checkin-session .os-survey-complete {
   display: grid;
-  /* Four tracks: Header, Heading, Body, Footer. Written as three, the Heading
-   * became the flexible one and spare height piled up directly above the text,
-   * so a short thought sat low and gained a line by jumping upward. The Body
-   * track is the one that flexes, so a Page grows beneath its words. */
-  grid-template-rows: auto min-content minmax(0, 1fr) auto;
+  grid-template-rows: var(--os-page-rows);
 }
 
 .circle-os .os-info-page {
   display: grid;
-  grid-template-rows: auto min-content minmax(0, 1fr) auto;
+  grid-template-rows: var(--os-page-rows);
 }
 
 .circle-os .os-info-page-header {
@@ -484,7 +499,7 @@
 }
 
 .circle-os .os-info-page-sub {
-  margin-top: 0.7rem;
+  margin-top: var(--os-main-sub-gap);
 }
 
 .circle-os .os-info-page-footer {
@@ -732,10 +747,6 @@
   background: var(--c-warm-50);
   color: var(--c-ink);
   margin-top: 0.75rem;
-}
-
-.circle-os .os-habit .os-chapter-idle {
-  padding: 24px;
 }
 
 .circle-os .os-habit .os-chapter-idle h2 {
@@ -2990,7 +3001,10 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-height: 330px;
-  padding: 26px 24px;
+  padding:
+    var(--os-app-box-padding-top)
+    var(--os-app-box-padding-x)
+    var(--os-app-box-padding-bottom);
 }
 
 .circle-os .vision-life-cover .os-card-label {
@@ -3212,7 +3226,10 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-height: 360px;
-  padding: 26px 24px;
+  padding:
+    var(--os-app-box-padding-top)
+    var(--os-app-box-padding-x)
+    var(--os-app-box-padding-bottom);
 }
 
 .circle-os .vision-week-cover .os-card-label {
@@ -3279,7 +3296,10 @@
   background: var(--c-orange-600);
   color: var(--c-warm-50);
   min-height: 330px;
-  padding: 26px 24px;
+  padding:
+    var(--os-app-box-padding-top)
+    var(--os-app-box-padding-x)
+    var(--os-app-box-padding-bottom);
 }
 
 .circle-os .athena-reader-cover .os-card-label,
@@ -3411,7 +3431,10 @@
   box-sizing: border-box;
   color: var(--c-ink);
   min-height: 330px;
-  padding: 26px 24px;
+  padding:
+    var(--os-app-box-padding-top)
+    var(--os-app-box-padding-x)
+    var(--os-app-box-padding-bottom);
 }
 
 .circle-os .gap-cover {
@@ -4347,14 +4370,12 @@
   --os-page-main-line-height: 0.98;
   box-sizing: border-box;
   display: grid;
-  /* The Heading track is min-content rather than auto. An auto track is
-   * stretched when the Page has spare height, and because Heading sits above
-   * Body that spare height landed on top of the words: a short thought pushed
-   * the first line about 33px down, and writing a second line took it away
-   * again. Spare height belongs to the Body track, below the text. */
-  grid-template-rows: auto min-content minmax(0, 1fr) auto;
+  grid-template-rows: var(--os-page-rows);
   min-height: var(--os-app-box-min-height);
-  padding: 24px;
+  padding:
+    var(--os-app-box-padding-top)
+    var(--os-app-box-padding-x)
+    var(--os-app-box-padding-bottom);
 }
 
 .circle-os .os-page-header {
@@ -4436,7 +4457,7 @@
   display: flex;
   grid-row: 4;
   min-height: 52px;
-  padding-top: 0.85rem;
+  padding-top: var(--os-body-footer-gap);
   width: 100%;
 }
 
@@ -4453,8 +4474,12 @@
 .circle-os .os-info-page .os-thoughts-form {
   display: grid;
   gap: 0;
-  grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
-  height: 100%;
+  /* Main and Sub each take the room they need. Written as a 2fr to 1fr split,
+   * an empty Sub Body still claimed half of Main's height, so every line
+   * written added one and a half lines of App Box and opened a growing gap
+   * above the action. An absent Sub Body now costs nothing. */
+  grid-template-rows: auto auto;
+  height: auto;
   margin: 0;
   width: 100%;
 }
@@ -4493,7 +4518,7 @@
   margin: 0;
   max-height: none;
   overflow: visible;
-  padding: 0.7rem 0 0;
+  padding: var(--os-main-sub-gap) 0 0;
   width: 100%;
 }
 
