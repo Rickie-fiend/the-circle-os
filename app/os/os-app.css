@@ -6401,6 +6401,21 @@
  * language, which is the point: this has to be readable by a child.
  * ------------------------------------------------------------------------- */
 
+.circle-os .os-protocol-mode-toggle {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.circle-os .os-protocol-mode-toggle:focus-visible {
+  border-radius: var(--r-sm);
+  outline: 2px solid var(--c-ink);
+  outline-offset: 4px;
+}
+
 .circle-os .os-protocol-progress {
   color: var(--c-ink);
   font-size: var(--text-2xs);
