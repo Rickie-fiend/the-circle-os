@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { PageLayout } from "./app-session";
 import { CreativeButton } from "./button-engine";
 import { PROTOCOL_DURATIONS } from "./circle-os-model.js";
@@ -68,6 +69,34 @@ export function ProtocolPage({
   onEndRun,
 }: ProtocolPageProps) {
   const label = <p className="os-card-label">Protocol</p>;
+  // Ending a run early is the one thing here that cannot be undone: the terms
+  // were agreed before it began and the days do not come back. It asks once.
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
+  const confirmTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (confirmTimer.current) window.clearTimeout(confirmTimer.current);
+    },
+    [],
+  );
+
+  function endRun() {
+    if (confirmTimer.current) window.clearTimeout(confirmTimer.current);
+    if (confirmingEnd) {
+      confirmTimer.current = null;
+      setConfirmingEnd(false);
+      onEndRun();
+      return;
+    }
+    setConfirmingEnd(true);
+    // The question expires. A protocol left mid-question should not end
+    // because the screen was still open an hour later.
+    confirmTimer.current = window.setTimeout(() => {
+      setConfirmingEnd(false);
+      confirmTimer.current = null;
+    }, 4000);
+  }
 
   if (!protocol) {
     return (
@@ -81,10 +110,12 @@ export function ProtocolPage({
           </button>
         }
       >
-        <p className="os-protocol-invite">
-          A protocol is a short stretch of days you agree with yourself, kept the
-          same every day until it ends.
-        </p>
+        <div className="os-page-main os-protocol-identity">
+          <p className="os-protocol-invite">
+            A protocol is a short stretch of days you agree with yourself, kept
+            the same every day until it ends.
+          </p>
+        </div>
       </PageLayout>
     );
   }
@@ -108,47 +139,55 @@ export function ProtocolPage({
           </button>
         }
       >
-        <input
-          aria-label="Protocol name"
-          className="os-protocol-name-edit"
-          maxLength={60}
-          onChange={(event) => onRename(event.target.value)}
-          placeholder="Monk Mode"
-          value={run.name}
-        />
+        {/* What the protocol is goes in Main Body; its terms are the Sub Body
+            stack. Written as four loose children they fell into the Body's two
+            tracks by position, so the name alone was stretched to fill the
+            Main track and the page ran on for 650px. */}
+        <div className="os-page-main os-protocol-identity">
+          <input
+            aria-label="Protocol name"
+            className="os-protocol-name-edit"
+            maxLength={60}
+            onChange={(event) => onRename(event.target.value)}
+            placeholder="Monk Mode"
+            value={run.name}
+          />
 
-        <div className="os-protocol-days" role="group" aria-label="How many days">
-          {PROTOCOL_DURATIONS.map((days: number) => (
-            <button
-              aria-pressed={run.days === days}
-              className="os-protocol-day-choice"
-              key={days}
-              onClick={() => onSetDays(days)}
-              type="button"
-            >
-              {days} days
-            </button>
-          ))}
+          <div className="os-protocol-days" role="group" aria-label="How many days">
+            {PROTOCOL_DURATIONS.map((days: number) => (
+              <button
+                aria-pressed={run.days === days}
+                className="os-protocol-day-choice"
+                key={days}
+                onClick={() => onSetDays(days)}
+                type="button"
+              >
+                {days} days
+              </button>
+            ))}
+          </div>
         </div>
 
-        <ProtocolDraftGroup
-          items={nonNegotiable}
-          editingItemId={editingItemId}
-          kind="non-negotiable"
-          label="Non-negotiable"
-          onAddItem={onAddItem}
-          onChangeItem={onChangeItem}
-          onFinishItemEdit={onFinishItemEdit}
-        />
-        <ProtocolDraftGroup
-          items={negotiable}
-          editingItemId={editingItemId}
-          kind="negotiable"
-          label="Negotiable"
-          onAddItem={onAddItem}
-          onChangeItem={onChangeItem}
-          onFinishItemEdit={onFinishItemEdit}
-        />
+        <div className="os-page-sub os-protocol-terms">
+          <ProtocolDraftGroup
+            items={nonNegotiable}
+            editingItemId={editingItemId}
+            kind="non-negotiable"
+            label="Non-negotiable"
+            onAddItem={onAddItem}
+            onChangeItem={onChangeItem}
+            onFinishItemEdit={onFinishItemEdit}
+          />
+          <ProtocolDraftGroup
+            items={negotiable}
+            editingItemId={editingItemId}
+            kind="negotiable"
+            label="Negotiable"
+            onAddItem={onAddItem}
+            onChangeItem={onChangeItem}
+            onFinishItemEdit={onFinishItemEdit}
+          />
+        </div>
       </PageLayout>
     );
   }
@@ -165,10 +204,12 @@ export function ProtocolPage({
           </button>
         }
       >
-        <p className="os-protocol-name">{run.name}</p>
-        <p className="os-protocol-invite">
-          {run.days} days finished. What you kept is in your record.
-        </p>
+        <div className="os-page-main os-protocol-identity">
+          <p className="os-protocol-name">{run.name}</p>
+          <p className="os-protocol-invite">
+            {run.days} days finished. What you kept is in your record.
+          </p>
+        </div>
       </PageLayout>
     );
   }
@@ -184,30 +225,38 @@ export function ProtocolPage({
       }
       theme="orange"
       footer={
-        <button className="os-protocol-end" onClick={onEndRun} type="button">
-          End this protocol
+        <button
+          className={`os-protocol-end${confirmingEnd ? " is-confirming" : ""}`}
+          onClick={endRun}
+          type="button"
+        >
+          {confirmingEnd ? "Tap again to end it" : "End this protocol"}
         </button>
       }
     >
-      <p className="os-protocol-name">{run.name}</p>
+      <div className="os-page-main os-protocol-identity">
+        <p className="os-protocol-name">{run.name}</p>
+      </div>
 
-      {nonNegotiable.length ? (
-        <>
-          <p className="os-record-label">Non-negotiable</p>
-          {nonNegotiable.map((item) => (
-            <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} />
-          ))}
-        </>
-      ) : null}
+      <div className="os-page-sub os-protocol-terms">
+        {nonNegotiable.length ? (
+          <>
+            <p className="os-record-label">Non-negotiable</p>
+            {nonNegotiable.map((item) => (
+              <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} />
+            ))}
+          </>
+        ) : null}
 
-      {negotiable.length ? (
-        <>
-          <p className="os-record-label os-protocol-second-label">Negotiable</p>
-          {negotiable.map((item) => (
-            <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} />
-          ))}
-        </>
-      ) : null}
+        {negotiable.length ? (
+          <>
+            <p className="os-record-label os-protocol-second-label">Negotiable</p>
+            {negotiable.map((item) => (
+              <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} />
+            ))}
+          </>
+        ) : null}
+      </div>
     </PageLayout>
   );
 }

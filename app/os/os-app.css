@@ -6579,6 +6579,30 @@
   color: rgb(255 248 241 / 0.52);
 }
 
+/* Protocol carries its weight in Sub Body, not Main: the terms are the page and
+   the name is one line above them. Under the two-parts-to-one rule the terms
+   dragged Main to twice their own height, which opened 300px of empty colour
+   between the name and the first term. Both tracks size to their content, the
+   same way Habit does once it has rows. */
+.circle-os .os-protocol .os-page-body {
+  grid-template-rows: auto auto;
+}
+
+.circle-os .os-protocol .os-protocol-identity {
+  align-self: start;
+  display: grid;
+  gap: 0.75rem;
+  justify-content: stretch;
+}
+
+/* The terms are one continuous stack, the same rhythm Habit uses for repeated
+   rows: one label, one row spacing, no nested card and no doubled gap. */
+.circle-os .os-protocol .os-protocol-terms {
+  align-self: start;
+  display: grid;
+  gap: 0.9rem;
+}
+
 .circle-os .os-protocol-name-edit {
   background: none;
   border: 0;
@@ -6587,7 +6611,8 @@
   font-size: var(--text-2xl);
   font-weight: 700;
   letter-spacing: -0.015em;
-  margin: 0.35rem 0 0.9rem;
+  margin: 0;
+  min-width: 0;
   outline: none;
   padding: 0;
   width: 100%;
@@ -6598,23 +6623,30 @@
 }
 
 .circle-os .os-protocol-days {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 0.4rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
 }
 
 .circle-os .os-protocol-day-choice {
+  align-items: center;
   background: rgb(255 248 241 / 0.14);
   border: 1px solid rgb(25 24 19 / 0.4);
   border-radius: var(--r-full);
   color: var(--c-warm-50);
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
+  justify-content: center;
+  line-height: 1.05;
   min-height: var(--touch-min);
-  padding: 0 0.9rem;
+  min-width: 0;
+  padding: 0 0.2rem;
+  text-align: center;
 }
 
 .circle-os .os-protocol-day-choice[aria-pressed="true"] {
@@ -6623,7 +6655,9 @@
 }
 
 .circle-os .os-protocol-group {
-  margin-bottom: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
 }
 
 .circle-os .os-protocol-add,
@@ -6652,6 +6686,11 @@
 .circle-os .os-protocol-begin:disabled {
   background: rgb(25 24 19 / 0.28);
   cursor: not-allowed;
+}
+
+.circle-os .os-protocol-end.is-confirming {
+  color: var(--c-ink);
+  font-weight: 750;
 }
 
 .circle-os .os-protocol-end {

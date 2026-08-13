@@ -113,6 +113,10 @@ Session
 - Repeated habits use that same continuous stack: one quiet divider and one row
   rhythm per habit, with no nested card or doubled spacing.
 - Empty optional regions collapse cleanly and leave no dead gap.
+- A Page puts its content in Main Body and Sub Body. Loose children fall into
+  the Body tracks by position and get stretched by them.
+- Where an App carries its weight in Sub Body, as Habit and Protocol do, both
+  tracks size to their content instead of holding the two-to-one weight.
 
 ## Reflect
 

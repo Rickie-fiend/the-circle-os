@@ -157,6 +157,21 @@ Used for charts, weekly views, and other things worth reading again.
 - Clear is only present while writing. It never appears on a Note at rest,
   where the only thing to press would be a way to lose what is there.
 
+## Protocol
+
+- Protocol carries its weight in Sub Body. The terms are the page; the name and
+  the duration are one Main Body line above them. The two-parts-to-one rule is
+  wrong here, so both tracks size to their content the way Habit's do once it
+  has rows.
+- A Page must put its content in Main Body and Sub Body. Loose children fall
+  into the Body tracks by position, which is how the Protocol name alone came
+  to be stretched to fill the Main track.
+- The four durations are one even row, not a wrapping list.
+- Ending a run early asks once. The terms were agreed before the run began and
+  the days do not come back, so the action states what the next press does and
+  the question expires rather than waiting all day. Closing a run that has
+  already finished asks nothing; there is nothing left to lose.
+
 ## Idle rotation
 
 - An idle App Box turns its own pages. A Page nobody swiped to still comes

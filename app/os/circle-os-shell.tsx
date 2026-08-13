@@ -213,6 +213,7 @@ function InlineCheckInEditor({
   const noteRef = useRef<HTMLTextAreaElement | null>(null);
   const editingRef = useRef(false);
   const lastClearSignal = useRef(clearSignal);
+  const clearedAt = useRef(0);
   const [titleDraft, setTitleDraft] = useState(title);
   const [noteDraft, setNoteDraft] = useState(note);
 
@@ -225,9 +226,16 @@ function InlineCheckInEditor({
   // Clear empties both bodies and leaves the caret in the main one, so the next
   // thing that happens is writing. It commits empty rather than the "Keep
   // going." default, because the point is a blank page to write on.
+  //
+  // It also stays in editing. On a phone the press blurs the note, and that
+  // blur is the tail of the clear rather than a separate edit: left alone it
+  // committed an empty title, the parent turned that back into "Keep going.",
+  // and the words the person just cleared reappeared.
   useLayoutEffect(() => {
     if (clearSignal === lastClearSignal.current) return;
     lastClearSignal.current = clearSignal;
+    clearedAt.current = Date.now();
+    editingRef.current = true;
     setTitleDraft("");
     setNoteDraft("");
     onCommit("", "");
@@ -248,6 +256,12 @@ function InlineCheckInEditor({
   }
 
   function commit() {
+    // The blur that a press on Clear causes belongs to the clear. Writing here
+    // would put the default title back over the blank page it just made.
+    if (Date.now() - clearedAt.current < 600) {
+      titleRef.current?.focus();
+      return;
+    }
     editingRef.current = false;
     onEditingChange?.(false);
     const nextTitle = titleDraft.trim() || "Keep going.";
@@ -1106,6 +1120,16 @@ export function TodayExperience() {
   // Clear is a Page action, so it lives in the Header and only while writing.
   const [noteEditing, setNoteEditing] = useState(false);
   const [noteClearSignal, setNoteClearSignal] = useState(0);
+  const noteClearedAt = useRef(0);
+
+  // Pointerdown clears and click is the keyboard path, so one press can call
+  // this twice. The second call inside the same press is the same press.
+  function clearNote() {
+    const now = Date.now();
+    if (now - noteClearedAt.current < 500) return;
+    noteClearedAt.current = now;
+    setNoteClearSignal((signal) => signal + 1);
+  }
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
   const [liveNow, setLiveNow] = useState(() => new Date());
@@ -2255,11 +2279,19 @@ export function TodayExperience() {
             <button
               className="os-note-clear"
               type="button"
-              // Keep the caret in the note. Without this the button steals
-              // focus on press, the editor commits "Keep going." on the way
-              // out, and Clear fights a write it caused itself.
-              onPointerDown={(event) => event.preventDefault()}
-              onClick={() => setNoteClearSignal((signal) => signal + 1)}
+              // The clear happens on press, not on click.
+              //
+              // The editor commits on blur and the action only exists while
+              // writing, so a handler that waits for click is racing its own
+              // unmount: the press blurs the note, the note commits, the
+              // action disappears, and on touch the click never arrives at all
+              // once default is prevented. Pointerdown lands before any of it.
+              onPointerDown={(event) => {
+                event.preventDefault();
+                clearNote();
+              }}
+              // Keyboard and assistive presses never send pointerdown.
+              onClick={clearNote}
             >
               Clear
             </button>
