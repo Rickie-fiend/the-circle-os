@@ -40,6 +40,14 @@ const INPUT_TYPES = new Set([
 ]);
 const COMPLETION_TYPES = new Set(["confirm", "result"]);
 
+// How long the last page of a chapter holds before it retires itself.
+//
+// It used to be 2400ms, which is long enough to see that a page arrived and not
+// long enough to read it. The page is usually the payoff, and a payoff that
+// leaves before it lands takes the whole chapter with it, because retiring is
+// what makes it unreachable afterwards.
+const COMPLETION_DWELL_MS = 6000;
+
 function displayValue(value: ChapterAnswerValue) {
   return Array.isArray(value) ? value.join(", ") : String(value);
 }
@@ -143,11 +151,12 @@ function ChapterPageView({
   );
   const renderedBody = renderChapterTemplate(page.body, run);
   const formId = `chapter-${chapter.id}-${page.id}`.replace(/[^a-zA-Z0-9_-]/g, "-");
-  const progress = chapter.showPageNumbers === false ? undefined : (
-    <span aria-label={`Page ${current} of ${total}`}>
-      {current}/{total}
-    </span>
-  );
+  const progress =
+    chapter.showPageNumbers === false || total <= 1 ? undefined : (
+      <span aria-label={`Page ${current} of ${total}`}>
+        {current}/{total}
+      </span>
+    );
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -521,9 +530,6 @@ export function ChapterPlayer({
       ? [idleIndex >= 0 ? idleIndex : currentIndex]
       : [
           ...Array.from({ length: reviewMaxIndex + 1 }, (_, index) => index),
-          ...(COMPLETION_TYPES.has(currentPage.type) && idleIndex >= 0
-            ? [idleIndex]
-            : []),
         ];
   const countedPages = definition.pages.filter(
     (page) =>
@@ -560,7 +566,7 @@ export function ChapterPlayer({
           advanceChapterRun(definition, run, { page: currentPage }),
         );
       }, 900);
-    }, 2400);
+    }, COMPLETION_DWELL_MS);
 
     return () => {
       window.clearTimeout(pauseTimer);

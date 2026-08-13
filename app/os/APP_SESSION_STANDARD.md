@@ -100,8 +100,14 @@ Used for questions, teaching, setup, and habit creation.
 - Answered pages remain available while the chapter is an open draft.
 - Before confirmation, the person may move backward and edit any answer.
 - The last question leads to a separate completion page.
-- A short Check-in completion may leave by one final left swipe or by a quiet
-  timed fade. It returns to the real idle app without a confirmation button.
+- A short Check-in completion leaves by a quiet timed fade, and only by that.
+  It cannot be swiped forward: the last page is usually the payoff, and a
+  forward swipe there skipped it and retired the chapter in one gesture, which
+  is what put a joke out of reach before it was read. Backward stays open, so
+  the setup can be read again while the page is up.
+- The last page holds long enough to be read, not merely seen.
+- Page numbers appear only when there is more than one page to count. A chapter
+  with one question showed "1/1", which is not progress.
 - After completion, the draft pages retire and only the useful idle app
   remains.
 - A new immutable chapter version creates a new journey and cover.
