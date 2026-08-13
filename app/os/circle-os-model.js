@@ -1702,9 +1702,27 @@ export function startProtocolDraft(state, id = freshRecordId("protocol")) {
   };
 }
 
+/**
+ * A run is open to editing while it is being drafted and while it is going.
+ *
+ * The original rule locked the terms the moment a run began, because a protocol
+ * is an agreement made before it starts. Sai asked to be able to change a run
+ * he is in, so the lock is gone. What is kept instead is the record: an item
+ * keeps its id through an edit, so the days already marked against it stay
+ * attached to it, and a term is archived rather than deleted for the same
+ * reason a habit is.
+ *
+ * Length is the one thing that stays fixed. The day counter and the ending are
+ * arithmetic on it, and a run that can be shortened when it gets hard is not a
+ * protocol.
+ */
+function protocolRunIsOpen(run) {
+  return Boolean(run) && (run.status === "draft" || run.status === "active");
+}
+
 export function renameProtocolRun(state, runId, name) {
   const run = state.protocol.runs[runId];
-  if (!run || run.status !== "draft") return state;
+  if (!protocolRunIsOpen(run)) return state;
   return writeRun(state, {
     ...run,
     name: String(name || "").slice(0, 60),
@@ -1723,7 +1741,7 @@ export function setProtocolDays(state, runId, days) {
 
 export function addProtocolItem(state, runId, kind, id = freshRecordId("pitem")) {
   const run = state.protocol.runs[runId];
-  if (!run || run.status !== "draft" || !PROTOCOL_KINDS.has(kind)) {
+  if (!protocolRunIsOpen(run) || !PROTOCOL_KINDS.has(kind)) {
     return { state, id: null };
   }
   const timestamp = now();
@@ -1750,7 +1768,7 @@ export function addProtocolItem(state, runId, kind, id = freshRecordId("pitem"))
 export function updateProtocolItem(state, runId, itemId, text) {
   const run = state.protocol.runs[runId];
   const item = run?.items?.[itemId];
-  if (!run || !item || run.status !== "draft") return state;
+  if (!item || !protocolRunIsOpen(run)) return state;
   const timestamp = now();
   return writeRun(state, {
     ...run,
@@ -1768,7 +1786,7 @@ export function updateProtocolItem(state, runId, itemId, text) {
 export function discardEmptyProtocolItem(state, runId, itemId) {
   const run = state.protocol.runs[runId];
   const item = run?.items?.[itemId];
-  if (!run || !item || run.status !== "draft") return state;
+  if (!item || !protocolRunIsOpen(run)) return state;
   if (item.text.trim() || item.status === "archived") return state;
   const timestamp = now();
   return writeRun(state, {

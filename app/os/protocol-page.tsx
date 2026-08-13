@@ -72,6 +72,7 @@ export function ProtocolPage({
   // Ending a run early is the one thing here that cannot be undone: the terms
   // were agreed before it began and the days do not come back. It asks once.
   const [confirmingEnd, setConfirmingEnd] = useState(false);
+  const [editing, setEditing] = useState(false);
   const confirmTimer = useRef<number | null>(null);
 
   useEffect(
@@ -214,10 +215,86 @@ export function ProtocolPage({
     );
   }
 
+  // The label is the mode control, the way it is on Habit and Thoughts. A block
+  // is the button that keeps a term, so it cannot also be the way to rewrite
+  // one; changing a running protocol is a mode, not a second tap target.
+  const runningLabel = (
+    <button
+      aria-pressed={editing}
+      className="os-card-label os-protocol-mode-toggle"
+      onClick={() => setEditing((open) => !open)}
+      type="button"
+    >
+      {editing ? "Done" : "Protocol"}
+    </button>
+  );
+
+  if (editing) {
+    return (
+      <PageLayout
+        className="os-protocol os-protocol-draft os-protocol-editing"
+        headerLeft={runningLabel}
+        headerRight={
+          <span className="os-protocol-progress">
+            Day {day} of {run.days}
+          </span>
+        }
+        theme="orange"
+        footer={
+          <button
+            className="os-protocol-begin"
+            onClick={() => setEditing(false)}
+            type="button"
+          >
+            Done
+          </button>
+        }
+      >
+        <div className="os-page-main os-protocol-identity">
+          <input
+            aria-label="Protocol name"
+            className="os-protocol-name-edit"
+            maxLength={60}
+            onChange={(event) => onRename(event.target.value)}
+            placeholder="Monk Mode"
+            value={run.name}
+          />
+          {/* Length is not offered. The day counter and the ending are
+              arithmetic on it, and a run that can be shortened when it gets
+              hard is not a protocol. */}
+          <p className="os-protocol-invite os-protocol-length-note">
+            {run.days} days, agreed on day one.
+          </p>
+        </div>
+
+        <div className="os-page-sub os-protocol-terms">
+          <ProtocolDraftGroup
+            items={nonNegotiable}
+            editingItemId={editingItemId}
+            kind="non-negotiable"
+            label="Non-negotiable"
+            onAddItem={onAddItem}
+            onChangeItem={onChangeItem}
+            onFinishItemEdit={onFinishItemEdit}
+          />
+          <ProtocolDraftGroup
+            items={negotiable}
+            editingItemId={editingItemId}
+            kind="negotiable"
+            label="Negotiable"
+            onAddItem={onAddItem}
+            onChangeItem={onChangeItem}
+            onFinishItemEdit={onFinishItemEdit}
+          />
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       className="os-protocol"
-      headerLeft={label}
+      headerLeft={runningLabel}
       headerRight={
         <span className="os-protocol-progress">
           Day {day} of {run.days}

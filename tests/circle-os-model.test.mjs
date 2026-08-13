@@ -760,7 +760,7 @@ test("yesterday's record shows one finished day and nothing else", () => {
 });
 
 
-test("a protocol is drafted, locked, and kept for its days", () => {
+test("a protocol is drafted, edited while it runs, and kept for its days", () => {
   let state = createEmptyState();
   assert.equal(activeProtocolRun(state), null, "nothing runs by default");
 
@@ -797,13 +797,27 @@ test("a protocol is drafted, locked, and kept for its days", () => {
   assert.equal(run.status, "active");
   assert.equal(run.items["i-blank"].status, "archived", "a blank item never becomes a term");
 
-  // Terms are locked once it is running.
+  // A run can be changed while it is going. The item keeps its id through an
+  // edit, so any day already marked against it stays attached to it.
   state = updateProtocolItem(state, "run-1", "i-journal", "Journaling 10 pages");
-  assert.equal(activeProtocolRun(state).items["i-journal"].text, "Journaling 1 line");
+  assert.equal(activeProtocolRun(state).items["i-journal"].text, "Journaling 10 pages");
+  assert.equal(activeProtocolRun(state).items["i-journal"].id, "i-journal");
   state = addProtocolItem(state, "run-1", "non-negotiable", "i-late").state;
-  assert.equal(activeProtocolRun(state).items["i-late"], undefined);
+  state = updateProtocolItem(state, "run-1", "i-late", "Cold shower");
+  assert.equal(activeProtocolRun(state).items["i-late"].text, "Cold shower");
+  assert.equal(protocolItems(activeProtocolRun(state), "non-negotiable").length, 3);
+
+  // And taken back out again by emptying it, which archives rather than deletes
+  // so the server merge has something to compare against.
+  state = updateProtocolItem(state, "run-1", "i-late", "");
+  state = discardEmptyProtocolItem(state, "run-1", "i-late");
+  assert.equal(activeProtocolRun(state).items["i-late"].status, "archived");
+  assert.equal(protocolItems(activeProtocolRun(state), "non-negotiable").length, 2);
+
+  // Length is the one thing that stays fixed. A run that can be shortened when
+  // it gets hard is not a protocol.
   state = setProtocolDays(state, "run-1", 3);
-  assert.equal(activeProtocolRun(state).days, 14);
+  assert.equal(activeProtocolRun(state).days, 14, "a running protocol keeps its length");
 
   // Day counting, from one.
   assert.equal(protocolDay(run, "2026-08-12"), 1);

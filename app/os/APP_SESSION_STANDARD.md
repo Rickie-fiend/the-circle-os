@@ -159,6 +159,18 @@ Used for charts, weekly views, and other things worth reading again.
 
 ## Protocol
 
+- Protocol is the first Page of its App Box and Habit is one swipe across. A
+  protocol is the agreement a habit is built inside, so it is what the box
+  opens on.
+- A running protocol can be changed. Its label is the mode control: tapping it
+  turns the Page into an editor for the name and the terms, and tapping Done
+  turns it back. A block is the button that keeps a term, so it cannot also be
+  the way to rewrite one; editing is a mode rather than a second tap target.
+- An edited term keeps its id, so the days already marked against it stay
+  attached. A term taken out is archived, never deleted.
+- Length is the one thing a running protocol cannot change. The day counter and
+  the ending are arithmetic on it, and a run that can be shortened when it gets
+  hard is not a protocol.
 - Protocol carries its weight in Sub Body. The terms are the page; the name and
   the duration are one Main Body line above them. The two-parts-to-one rule is
   wrong here, so both tracks size to their content the way Habit's do once it

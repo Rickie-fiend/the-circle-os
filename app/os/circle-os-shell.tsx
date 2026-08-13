@@ -1527,9 +1527,11 @@ export function TodayExperience() {
   const yesterday = dayRecord(state, yesterdayKey);
   const todaySoFar = dayRecord(state, dateKey);
 
-  // Protocol is the second page of this App Box, so the box keeps a saved
-  // page index again now that it has more than one page.
-  const habitAppVersion = "habit-protocol-v1";
+  // Protocol leads this App Box and Habit is one swipe across. A protocol is
+  // the agreement a habit is built inside, so it is the thing to open on.
+  // The version changed with the order: a saved index from the old arrangement
+  // would land on the wrong Page, and a new version returns to page zero.
+  const habitAppVersion = "protocol-habit-v2";
   const habitAppIndex = appSessionIndex(
     state,
     "today-habit",
@@ -2669,6 +2671,7 @@ export function TodayExperience() {
                 />,
               ]}
               idleAppIndex={habitAppIndex}
+              idleAppsFirst
               onIdleAppIndexChange={saveHabitAppIndex}
               rotateIdleApps
               label="Habit chapter"
