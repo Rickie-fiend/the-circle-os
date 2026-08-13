@@ -196,17 +196,23 @@ type ExtraMission = {
 };
 
 function InlineCheckInEditor({
+  clearSignal = 0,
   note,
   onCommit,
+  onEditingChange,
   title,
 }: {
+  /** Increments when the Page's Clear action is pressed. */
+  clearSignal?: number;
   note: string;
   onCommit: (title: string, note: string) => void;
+  onEditingChange?: (editing: boolean) => void;
   title: string;
 }) {
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
   const noteRef = useRef<HTMLTextAreaElement | null>(null);
   const editingRef = useRef(false);
+  const lastClearSignal = useRef(clearSignal);
   const [titleDraft, setTitleDraft] = useState(title);
   const [noteDraft, setNoteDraft] = useState(note);
 
@@ -216,6 +222,18 @@ function InlineCheckInEditor({
     setNoteDraft(note);
   }, [note, title]);
 
+  // Clear empties both bodies and leaves the caret in the main one, so the next
+  // thing that happens is writing. It commits empty rather than the "Keep
+  // going." default, because the point is a blank page to write on.
+  useLayoutEffect(() => {
+    if (clearSignal === lastClearSignal.current) return;
+    lastClearSignal.current = clearSignal;
+    setTitleDraft("");
+    setNoteDraft("");
+    onCommit("", "");
+    titleRef.current?.focus();
+  }, [clearSignal, onCommit]);
+
   useLayoutEffect(() => {
     for (const editor of [titleRef.current, noteRef.current]) {
       if (!editor) continue;
@@ -224,8 +242,14 @@ function InlineCheckInEditor({
     }
   }, [noteDraft, titleDraft]);
 
+  function beginEditing() {
+    editingRef.current = true;
+    onEditingChange?.(true);
+  }
+
   function commit() {
     editingRef.current = false;
+    onEditingChange?.(false);
     const nextTitle = titleDraft.trim() || "Keep going.";
     const nextNote = noteDraft.trim();
     setTitleDraft(nextTitle);
@@ -239,12 +263,9 @@ function InlineCheckInEditor({
         <textarea
           aria-label="Edit idle title"
           className="os-inline-checkin-title"
-          maxLength={54}
           onBlur={commit}
           onChange={(event) => setTitleDraft(event.currentTarget.value)}
-          onFocus={() => {
-            editingRef.current = true;
-          }}
+          onFocus={beginEditing}
           placeholder="Keep going."
           ref={titleRef}
           rows={1}
@@ -255,12 +276,9 @@ function InlineCheckInEditor({
         <textarea
           aria-label="Edit idle note"
           className="os-inline-checkin-copy"
-          maxLength={220}
           onBlur={commit}
           onChange={(event) => setNoteDraft(event.currentTarget.value)}
-          onFocus={() => {
-            editingRef.current = true;
-          }}
+          onFocus={beginEditing}
           placeholder=""
           ref={noteRef}
           rows={1}
@@ -1085,6 +1103,9 @@ export function TodayExperience() {
   const checkInIdleTitle =
     surveyAnswer(surveyAnswers, "checkin-idle-title") || "Keep going.";
   const checkInNote = surveyAnswer(surveyAnswers, "checkin-note");
+  // Clear is a Page action, so it lives in the Header and only while writing.
+  const [noteEditing, setNoteEditing] = useState(false);
+  const [noteClearSignal, setNoteClearSignal] = useState(0);
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
   const [liveNow, setLiveNow] = useState(() => new Date());
@@ -2229,10 +2250,27 @@ export function TodayExperience() {
             Note
           </button>
         }
+        headerAction={
+          noteEditing ? (
+            <button
+              className="os-note-clear"
+              type="button"
+              // Keep the caret in the note. Without this the button steals
+              // focus on press, the editor commits "Keep going." on the way
+              // out, and Clear fights a write it caused itself.
+              onPointerDown={(event) => event.preventDefault()}
+              onClick={() => setNoteClearSignal((signal) => signal + 1)}
+            >
+              Clear
+            </button>
+          ) : undefined
+        }
       >
         <InlineCheckInEditor
+          clearSignal={noteClearSignal}
           note={checkInNote}
           onCommit={commitCheckInNote}
+          onEditingChange={setNoteEditing}
           title={checkInIdleTitle}
         />
       </InfoPage>

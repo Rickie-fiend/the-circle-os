@@ -791,6 +791,7 @@ export function InfoPage({
   className = "",
   footer,
   header,
+  headerAction,
   heading,
   theme = "light",
 }: {
@@ -798,6 +799,8 @@ export function InfoPage({
   className?: string;
   footer?: ReactNode;
   header?: ReactNode;
+  /** The Page's optional right-hand app action, per the Header rule. */
+  headerAction?: ReactNode;
   heading?: ReactNode;
   theme?: "light" | "orange" | "dark";
 }) {
@@ -806,6 +809,7 @@ export function InfoPage({
       className={`os-info-page ${className}`.trim()}
       footer={footer}
       headerLeft={header}
+      headerRight={headerAction}
       heading={heading}
       theme={theme}
       variant="app"

@@ -29,6 +29,8 @@ import { selectPendingAppPublication } from "../chapters/chapter-publication-sto
 import { useChapterPublications } from "../chapters/use-chapter-publications";
 import { buildAthenaReading } from "../athena-memory-model.js";
 
+const READING_PAGES = ["days", "alive", "shape"] as const;
+
 const ACTIVITY_COLORS = [
   "activity-focus",
   "activity-reading",
@@ -60,6 +62,44 @@ function formatUpdated(value: string | null) {
     hour: "numeric",
     minute: "2-digit",
   })}`;
+}
+
+type AthenaReadingSection = {
+  heading: string;
+  text: string;
+  paragraphs: string[];
+};
+
+/**
+ * One published edition of Athena's reading. The model is JavaScript, so the
+ * shape it hands back is stated here where it is read.
+ */
+type AthenaEdition = {
+  id: string;
+  publishedAt: string | null;
+  pages: Record<(typeof READING_PAGES)[number], AthenaReadingSection[]>;
+};
+
+/** The morning an edition was written, as a person would say it. */
+function editionDateLabel(edition: AthenaEdition | null) {
+  if (!edition?.publishedAt) return "Undated";
+  const date = new Date(edition.publishedAt);
+  if (Number.isNaN(date.getTime())) return "Undated";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/** What a past edition says for a part Athena did not write that day. */
+function editionSilenceNote(edition: AthenaEdition | null) {
+  return `Athena did not write this part on ${editionDateLabel(edition)}.`;
+}
+
+/** The first thing an edition says, so the archive reads as writing, not dates. */
+function editionLeadLine(edition: AthenaEdition) {
+  for (const page of READING_PAGES) {
+    const section = edition.pages[page][0];
+    if (section) return section.heading;
+  }
+  return "A reading";
 }
 
 function athenaFreshnessLabel(
@@ -313,18 +353,36 @@ export default function CircleOSMirror() {
     weekJourneyVersion,
     0,
   );
-  const visibleProfileApp = appSessionIndex(
+  // Athena's reading and the gap were two sections asking the same question.
+  // They are one part now: what sits between the life you want and the one you
+  // are living. Its own session key, so an old saved position cannot land on a
+  // page that no longer exists.
+  const betweenJourneyVersion = `${profileJourneyVersion}|${loggedPastDays}`;
+  const visibleBetweenApp = appSessionIndex(
     state,
-    "vision-profile",
-    profileJourneyVersion,
+    "vision-between",
+    betweenJourneyVersion,
     0,
   );
-  const visibleGapApp = appSessionIndex(
-    state,
-    "vision-gap",
-    `${profileJourneyVersion}|${loggedPastDays}`,
-    0,
-  );
+  // Which edition is open. Nothing chosen means the newest one.
+  const [openEditionId, setOpenEditionId] = useState<string | null>(null);
+  const editions: AthenaEdition[] = athenaReading.editions;
+  const openEdition =
+    editions.find((edition) => edition.id === openEditionId) || editions[0] || null;
+  const readingLatest = !openEdition || openEdition.id === athenaReading.latestEditionId;
+  // The live reading falls back to derived observations for a page Athena has
+  // not written. That fallback belongs to today only: showing it beside an
+  // older edition would mix this week's evidence into words written last month.
+  const readingPages = Object.fromEntries(
+    READING_PAGES.map((page) => [
+      page,
+      openEdition && openEdition.pages[page].length
+        ? openEdition.pages[page]
+        : readingLatest
+          ? athenaReading.pages[page]
+          : [],
+    ]),
+  ) as typeof athenaReading.pages;
   const setupComplete = Boolean(
     ready &&
       state.profile.name &&
@@ -506,11 +564,19 @@ export default function CircleOSMirror() {
     );
   }
 
+  /**
+   * One page of a reading.
+   *
+   * `emptyNote` is what a past edition says for a part Athena did not write
+   * that day. The profile fallback belongs to today: shown under an older
+   * edition it would quietly mix this week's evidence into last month's words.
+   */
   function athenaReaderApp(
     label: string,
     title: string,
     memorySections: Array<{ heading: string; text: string; paragraphs?: string[] }>,
     fallbackKeys: Array<[string, string]>,
+    emptyNote?: string,
   ) {
     return (
       <article className="athena-reader-app" key={label}>
@@ -519,7 +585,9 @@ export default function CircleOSMirror() {
           <h2>{title}</h2>
         </header>
         <div className="athena-reader-copy">
-          {memorySections.length
+          {!memorySections.length && emptyNote ? (
+            <p className="athena-memory-copy athena-reader-quiet">{emptyNote}</p>
+          ) : memorySections.length
             ? memorySections.map((section) => (
                 <section className="profile-article-part" key={section.heading}>
                   <div>
@@ -844,113 +912,55 @@ export default function CircleOSMirror() {
           )}
         </section>
 
-        <header className="mirror-intro analysis-intro">
+        <header className="mirror-intro between-intro">
           <div>
-            <p className="os-eyebrow">Athena</p>
-            <h1>A reading of you</h1>
+            <p className="os-eyebrow">The space between</p>
+            <h1>What sits between</h1>
             <p className="profile-updated">{updateLabel}</p>
           </div>
         </header>
 
         <section
-          className="vision-analysis-session"
-          aria-label="AI profile session"
+          className="vision-between-session"
+          aria-label="The space between"
         >
           {athenaPublication ? (
             <PublishedChapterDelivery
-              className="vision-analysis-apps athena-reader-session"
+              className="vision-between-apps athena-reader-session"
               label="Athena chapter"
               publication={athenaPublication}
             />
           ) : (
           <SwipeSession
-            attentionKey={`athena:${profileJourneyVersion}`}
+            attentionKey={`between:${athenaReading.latestEditionId || betweenJourneyVersion}`}
             availableIndices={
               profileReady
-                ? [0, 1, 2, 3]
-                : [0]
+                ? [0, 1, 2, 3, 4, ...(editions.length > 1 ? [5] : [])]
+                : [0, 1]
             }
-            className="vision-analysis-apps athena-reader-session"
-            index={visibleProfileApp}
-            label="Athena reading apps"
-            maxIndex={profileReady ? 3 : 0}
+            className="vision-between-apps athena-reader-session"
+            index={visibleBetweenApp}
+            label="The space between apps"
+            maxIndex={profileReady ? (editions.length > 1 ? 5 : 4) : 1}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
                   current,
-                  "vision-profile",
-                  profileJourneyVersion,
-                  nextIndex,
-                ),
-              )
-            }
-          >
-            <div className="athena-reader-cover">
-              <p className="os-card-label">Athena</p>
-              <h2>
-                {profileReady
-                  ? "You have changed."
-                  : "Athena is still learning."}
-              </h2>
-              <span className="athena-reader-begin">
-                {profileReady ? "Swipe to begin" : "Still learning"}
-              </span>
-            </div>
-              {athenaReaderApp(
-                "Your days",
-                "The life you are living.",
-                athenaReading.pages.days,
-                [["currentLife", "Current life"]],
-              )}
-              {athenaReaderApp(
-                "What feels alive",
-                "What matters to you.",
-                athenaReading.pages.alive,
-                [
-                  ["whatMatters", "What matters"],
-                  ["interests", "Interests"],
-                ],
-              )}
-              {athenaReaderApp(
-                "Your shape",
-                "How you may move through life.",
-                athenaReading.pages.shape,
-                [["personality", "Personality"]],
-              )}
-          </SwipeSession>
-          )}
-        </section>
-
-        <header className="mirror-intro gap-intro">
-          <div>
-            <p className="os-eyebrow">The gap</p>
-            <h1>What sits between</h1>
-          </div>
-        </header>
-
-        <section className="vision-gap-session" aria-label="The gap session">
-          <SwipeSession
-            attentionKey={`vision-gap:${profileJourneyVersion}:${loggedPastDays}`}
-            availableIndices={[0, 1, 2]}
-            className="vision-gap-apps"
-            index={visibleGapApp}
-            label="The gap apps"
-            maxIndex={2}
-            onIndexChange={(nextIndex) =>
-              updateState((current) =>
-                setAppSessionIndex(
-                  current,
-                  "vision-gap",
-                  `${profileJourneyVersion}|${loggedPastDays}`,
+                  "vision-between",
+                  betweenJourneyVersion,
                   nextIndex,
                 ),
               )
             }
           >
             <div className="gap-cover">
-              <p className="os-card-label">The gap</p>
-              <h2>Some parts meet. Some do not.</h2>
-              <span>Swipe to see</span>
+              <p className="os-card-label">The space between</p>
+              <h2>
+                {profileReady
+                  ? "Some parts meet. Some do not."
+                  : "Athena is still learning."}
+              </h2>
+              <span>{profileReady ? "Swipe to see" : "Still learning"}</span>
             </div>
 
             <article className={`gap-visual-app is-${gapReading.mode}`}>
@@ -973,11 +983,63 @@ export default function CircleOSMirror() {
               <p>Athena is making a rough guess from the days you recorded.</p>
             </article>
 
-            {profileSession("gap", "Athena's rough reading", {
-              feature: true,
-              placeholder: "There is not enough evidence to say yet.",
-            })}
+            {athenaReaderApp(
+              readingLatest ? "Your days" : `Your days · ${editionDateLabel(openEdition)}`,
+              "The life you are living.",
+              readingPages.days,
+              [["currentLife", "Current life"]],
+              readingLatest ? undefined : editionSilenceNote(openEdition),
+            )}
+            {athenaReaderApp(
+              readingLatest
+                ? "What feels alive"
+                : `What feels alive · ${editionDateLabel(openEdition)}`,
+              "What matters to you.",
+              readingPages.alive,
+              [
+                ["whatMatters", "What matters"],
+                ["interests", "Interests"],
+              ],
+              readingLatest ? undefined : editionSilenceNote(openEdition),
+            )}
+            {athenaReaderApp(
+              readingLatest ? "Your shape" : `Your shape · ${editionDateLabel(openEdition)}`,
+              "How you may move through life.",
+              readingPages.shape,
+              [["personality", "Personality"]],
+              readingLatest ? undefined : editionSilenceNote(openEdition),
+            )}
+
+            {editions.length > 1 ? (
+              <article className="athena-archive-app" key="archive">
+                <header>
+                  <p className="os-card-label">Earlier readings</p>
+                  <h2>What Athena wrote before.</h2>
+                </header>
+                <div className="athena-archive-list">
+                  {editions.map((edition) => (
+                    <button
+                      aria-pressed={edition.id === openEdition?.id}
+                      className={`athena-archive-row${
+                        edition.id === openEdition?.id ? " is-open" : ""
+                      }`}
+                      key={edition.id}
+                      type="button"
+                      onClick={() => setOpenEditionId(edition.id)}
+                    >
+                      <span className="athena-archive-date">
+                        {editionDateLabel(edition)}
+                      </span>
+                      <span className="athena-archive-lead">
+                        {editionLeadLine(edition)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </article>
+            ) : null}
           </SwipeSession>
+          )}
         </section>
 
         <section

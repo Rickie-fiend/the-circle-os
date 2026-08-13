@@ -129,8 +129,17 @@ export function createAthenaMemory() {
     curiosity: [],
     corrections: [],
     reading: createAthenaReadingDraft(),
+    editions: [],
   };
 }
+
+/**
+ * How many editions travel with the synced memory.
+ *
+ * The vault keeps every edition Athena has ever written; this is only how far
+ * back the phone can read without the server. Roughly two months of mornings.
+ */
+export const ATHENA_EDITION_LIMIT = 60;
 
 /** Athena's authored prose, one group of sections for each Reading page. */
 export function createAthenaReadingDraft() {
@@ -138,6 +147,87 @@ export function createAthenaReadingDraft() {
 }
 
 const READING_PAGES = ["days", "alive", "shape"];
+
+/**
+ * The words of a reading, reduced to one stable key.
+ *
+ * An edition is identified by what it says rather than by the morning it was
+ * prepared. Athena prepares every day whether or not the evidence moved, so
+ * keying on the date would publish the same words over and over and the tab
+ * would claim something new on a day when nothing was. Keying on the words
+ * means a quiet morning publishes nothing, which is the honest outcome.
+ */
+function readingContentKey(reading) {
+  return stableHash(
+    JSON.stringify(
+      READING_PAGES.map((page) =>
+        (reading[page] || []).map((section) => [
+          section.heading,
+          section.paragraphs,
+        ]),
+      ),
+    ),
+  );
+}
+
+function readingHasWords(reading) {
+  return READING_PAGES.some((page) => (reading[page] || []).length > 0);
+}
+
+function normalizeAthenaEdition(value) {
+  const edition = value && typeof value === "object" ? value : {};
+  const reading = normalizeAthenaReading(edition);
+  if (!readingHasWords(reading)) return null;
+  const id = cleanText(edition.id, 80) || `edition-${readingContentKey(reading)}`;
+  return { id, publishedAt: cleanText(edition.publishedAt, 80) || null, ...reading };
+}
+
+/**
+ * The edition this memory's current reading represents.
+ *
+ * Only Athena's authored prose is published. The derived observations that
+ * stand in for a page she has not written are a fallback for display, not a
+ * publication: they change whenever the evidence does, and would mint an
+ * edition out of nothing being said.
+ */
+function mintAthenaEdition(reading, publishedAt) {
+  if (!readingHasWords(reading)) return null;
+  return {
+    id: `edition-${readingContentKey(reading)}`,
+    publishedAt: cleanText(publishedAt, 80) || null,
+    ...reading,
+  };
+}
+
+/**
+ * Newest first. An edition is immutable, so two copies of one id differ only in
+ * how much of its history each side saw; the earlier publication date is the
+ * true one.
+ */
+function collectAthenaEditions(candidates) {
+  const editions = new Map();
+  for (const candidate of candidates) {
+    const edition = candidate && candidate.id ? candidate : null;
+    if (!edition) continue;
+    const previous = editions.get(edition.id);
+    if (!previous) {
+      editions.set(edition.id, edition);
+      continue;
+    }
+    const publishedAt = [previous.publishedAt, edition.publishedAt]
+      .filter(Boolean)
+      .sort()[0] || null;
+    editions.set(edition.id, { ...previous, publishedAt });
+  }
+  return [...editions.values()]
+    .sort((left, right) => {
+      const order = String(right.publishedAt || "").localeCompare(
+        String(left.publishedAt || ""),
+      );
+      return order || String(left.id).localeCompare(String(right.id));
+    })
+    .slice(0, ATHENA_EDITION_LIMIT);
+}
 
 function normalizeReadingSection(value) {
   const heading = cleanText(value?.heading, 80);
@@ -165,6 +255,7 @@ export function normalizeAthenaReading(value) {
 export function normalizeAthenaMemory(value) {
   const empty = createAthenaMemory();
   const memory = value && typeof value === "object" ? value : {};
+  const reading = normalizeAthenaReading(memory.reading);
   return {
     ...empty,
     ...memory,
@@ -181,7 +272,13 @@ export function normalizeAthenaMemory(value) {
     corrections: Array.isArray(memory.corrections)
       ? memory.corrections.filter((item) => item?.id)
       : [],
-    reading: normalizeAthenaReading(memory.reading),
+    reading,
+    editions: collectAthenaEditions([
+      ...(Array.isArray(memory.editions) ? memory.editions : []).map(
+        normalizeAthenaEdition,
+      ),
+      mintAthenaEdition(reading, memory.updatedAt),
+    ]),
   };
 }
 
@@ -252,6 +349,17 @@ export function buildAthenaReading(memoryValue) {
     shape: authored("shape", readingSection("A working guess", memory.portrait)),
   };
 
+  // Every edition Athena has published, newest first. `pages` stays the live
+  // view, because it still falls back to derived observations for a page she
+  // has not written; an edition only ever holds prose she actually wrote.
+  const editions = memory.editions.map((edition) => ({
+    id: edition.id,
+    publishedAt: edition.publishedAt,
+    pages: Object.fromEntries(
+      READING_PAGES.map((page) => [page, authoredSections(edition, page)]),
+    ),
+  }));
+
   return {
     updatedAt: memory.updatedAt || null,
     contentUpdatedAt: memory.updatedAt || null,
@@ -260,6 +368,9 @@ export function buildAthenaReading(memoryValue) {
     preparedEvidenceRevision: Number(memory.preparedEvidenceRevision || 0),
     ready: Object.values(pages).some((sections) => sections.length > 0),
     pages,
+    editions,
+    latestEditionId: editions[0]?.id || null,
+    publishedAt: editions[0]?.publishedAt || null,
   };
 }
 
@@ -313,6 +424,10 @@ export function mergeAthenaMemory(leftValue, rightValue) {
       : readingWeight(left.reading) >= readingWeight(right.reading)
         ? left.reading
         : right.reading,
+    // Editions are immutable and each side may hold ones the other never saw.
+    // A merge is a union: a past edition is never lost because a phone synced
+    // from a copy that predates it.
+    editions: [...left.editions, ...right.editions],
   });
 }
 

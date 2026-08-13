@@ -4,16 +4,16 @@
   /* The App Box foundation. Every App Box in Circle OS starts at exactly this
    * size and grows only downward for real content. Note, Thoughts, Habit and
    * Protocol are one size at rest, so a swipe never resizes the frame. */
-  --os-app-box-min-height: clamp(310px, 64vw, 390px);
+  --os-app-box-min-height: clamp(344px, 70vw, 420px);
   --os-app-box-padding-x: 24px;
   --os-app-box-padding-top: 20px;
   --os-app-box-padding-bottom: 24px;
   /* Where the first line of Main Body sits, measured from the top of the Body
    * region. It is the same distance on every App and every Chapter, so a Page
    * never rearranges itself as it is written into. The value is chosen so that
-   * a Page carrying two lines of Main and one line of Sub fills the default
-   * App Box exactly: the box grows at the third line, never before it. */
-  --os-body-top: calc(var(--os-app-box-min-height) * 0.27);
+   * a Page carrying three lines of Main and one line of Sub fills the default
+   * App Box exactly: the box grows at the fourth line, never before it. */
+  --os-body-top: calc(var(--os-app-box-min-height) * 0.245);
   /* The gap between the last line of Main and the first line of Sub. */
   --os-main-sub-gap: 0.55rem;
   /* The gap between the last line of Body and the Footer. Fixed: as a Page
@@ -526,6 +526,26 @@
   line-height: 0.98;
   margin: 0;
   max-width: 12ch;
+}
+
+.circle-os .os-note-clear {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--c-neutral-600);
+  cursor: pointer;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  line-height: 1;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+.circle-os .os-note-clear:active {
+  color: var(--c-ink);
 }
 
 .circle-os .os-checkin-refresh-label {
@@ -3181,13 +3201,12 @@
   padding: 20px;
 }
 
-.circle-os .analysis-intro {
+.circle-os .between-intro {
   margin-top: 18px;
 }
 
 .circle-os .vision-week-session,
-.circle-os .vision-analysis-session,
-.circle-os .vision-gap-session {
+.circle-os .vision-between-session {
   border: 0;
   padding: 0 !important;
 }
@@ -3199,11 +3218,11 @@
 }
 
 .circle-os .vision-week-apps,
-.circle-os .vision-analysis-apps {
+.circle-os .vision-between-apps {
   border-radius: var(--r-box);
 }
 
-.circle-os .vision-analysis-apps {
+.circle-os .vision-between-apps {
   background: var(--c-orange-600);
   border: 1px solid rgb(255 248 241 / 0.2);
   box-shadow: 0 18px 38px rgb(105 35 12 / 0.25);
@@ -3292,6 +3311,78 @@
 }
 
 .circle-os .athena-reader-cover,
+.circle-os .athena-archive-app {
+  background: var(--c-orange-600);
+  box-sizing: border-box;
+  color: var(--c-warm-50);
+  min-height: var(--os-app-box-min-height);
+  padding:
+    var(--os-app-box-padding-top)
+    var(--os-app-box-padding-x)
+    var(--os-app-box-padding-bottom);
+}
+
+.circle-os .athena-archive-app .os-card-label {
+  color: var(--c-ink);
+}
+
+.circle-os .athena-archive-app h2 {
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(1.5rem, 5.5vw, 1.9rem);
+  font-weight: 760;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  margin: 0.2rem 0 0;
+  max-width: 16ch;
+}
+
+.circle-os .athena-archive-list {
+  display: grid;
+  margin-top: 1.1rem;
+}
+
+/* One row rhythm, one quiet divider, no nested card. The same continuous stack
+   Habit uses for repeated rows. */
+.circle-os .athena-archive-row {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid rgb(25 24 19 / 0.24);
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 0.15rem;
+  min-height: 44px;
+  padding: 0.7rem 0;
+  text-align: left;
+  width: 100%;
+}
+
+.circle-os .athena-archive-row:first-child {
+  border-top: 0;
+}
+
+.circle-os .athena-archive-date {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.circle-os .athena-archive-lead {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  opacity: 0.82;
+}
+
+.circle-os .athena-archive-row.is-open .athena-archive-date {
+  color: var(--c-ink);
+}
+
+.circle-os .athena-archive-row.is-open .athena-archive-lead {
+  opacity: 1;
+}
+
 .circle-os .athena-reader-app {
   background: var(--c-orange-600);
   color: var(--c-warm-50);
@@ -3400,37 +3491,12 @@
   width: 100%;
 }
 
-.circle-os .gap-intro {
-  margin-top: 18px;
-}
-
-.circle-os .vision-gap-apps {
-  background: var(--c-bone);
-  border: 1px solid rgb(25 24 19 / 0.08);
-  border-radius: var(--r-box);
-  box-shadow: 0 18px 38px rgb(0 0 0 / 0.14);
-}
-
-.circle-os .vision-gap-apps .os-app-window {
-  background: var(--c-bone);
-  border-radius: var(--r-box);
-}
-
-.circle-os .vision-gap-apps .os-app-page {
-  background: var(--c-bone);
-}
-
-.circle-os .vision-gap-apps .profile-session.feature {
-  box-sizing: border-box;
-  min-height: 100%;
-}
-
 .circle-os .gap-cover,
 .circle-os .gap-visual-app {
-  background: var(--c-bone);
+  background: var(--c-orange-600);
   box-sizing: border-box;
-  color: var(--c-ink);
-  min-height: 330px;
+  color: var(--c-warm-50);
+  min-height: var(--os-app-box-min-height);
   padding:
     var(--os-app-box-padding-top)
     var(--os-app-box-padding-x)
@@ -3444,7 +3510,7 @@
 
 .circle-os .gap-cover .os-card-label,
 .circle-os .gap-visual-app .os-card-label {
-  color: var(--c-orange-800);
+  color: var(--c-ink);
 }
 
 .circle-os .gap-cover h2 {
@@ -3459,7 +3525,7 @@
 }
 
 .circle-os .gap-cover > span {
-  color: var(--c-neutral-600);
+  color: rgb(255 248 241 / 0.72);
   font-size: var(--text-xs);
   text-align: right;
 }
@@ -3471,7 +3537,7 @@
 }
 
 .circle-os .gap-visual-head > span {
-  color: var(--c-neutral-600);
+  color: rgb(255 248 241 / 0.72);
   font-size: var(--text-2xs);
 }
 
@@ -3484,7 +3550,7 @@
 
 .circle-os .gap-orbit {
   align-items: center;
-  border: 2px solid var(--c-ink);
+  border: 2px solid var(--c-warm-50);
   border-radius: 50%;
   display: flex;
   height: 138px;
@@ -3506,7 +3572,7 @@
 }
 
 .circle-os .gap-orbit-lived {
-  background: rgb(227 107 55 / 0.22);
+  background: rgb(25 24 19 / 0.24);
   left: 48%;
   transition: left 1100ms cubic-bezier(0.16, 0.78, 0.2, 1);
 }
@@ -4104,9 +4170,8 @@
   .circle-os .vision-profile-case,
   .circle-os .vision-analysis,
   .circle-os .mirror-week-intro,
-  .circle-os .analysis-intro,
-  .circle-os .gap-intro,
-  .circle-os .vision-gap-session,
+  .circle-os .between-intro,
+  .circle-os .vision-between-session,
   .circle-os .vision-suggestion-session {
     grid-column: 1 / -1;
   }
@@ -4505,11 +4570,15 @@
   justify-content: flex-start;
 }
 
-/* Main Body always reserves two lines, measured in the text's own line height
- * rather than a token, so a second line costs nothing and the App Box only
- * begins to grow at the third. */
+/* Main Body always reserves three lines, measured in the text's own line height
+ * rather than a token, so the App Box only begins to grow at the fourth.
+ *
+ * Two was not enough. A Note title is usually two lines but the Thoughts
+ * placeholder is sometimes three, so the two Pages of one App Box sat at
+ * different heights and the frame resized on the swipe between them. Three
+ * covers both, and the reserve is what keeps them identical. */
 .circle-os .os-info-page-main > :first-child {
-  min-height: 2lh;
+  min-height: 3lh;
 }
 
 .circle-os .os-cover-page .os-session-intro-copy .os-info-page-sub,
@@ -4550,11 +4619,11 @@
   resize: none;
 }
 
-/* Keep the first writing baseline where the two-line prompt began. A short
+/* Keep the first writing baseline where the three-line prompt began. A short
    answer must not collapse the editor and jump down when focus or typing
    replaces the placeholder; longer answers can still grow naturally. */
 .circle-os .os-info-page .os-thoughts-form textarea.os-regular-thought-input {
-  min-height: 1.96em;
+  min-height: 2.94em;
 }
 
 .circle-os .os-page-layout.os-chapter-card,

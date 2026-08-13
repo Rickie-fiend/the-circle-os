@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ATHENA_EDITION_LIMIT,
   buildAthenaReading,
   captureAthenaThought,
   createAthenaMemory,
@@ -115,6 +116,86 @@ test("syncing memory without a reading never erases an authored one", () => {
 });
 
 const at = "2026-08-03T06:15:00.000Z";
+
+test("a reading is published as a dated edition that survives the next one", () => {
+  const july = {
+    updatedAt: "2026-07-30T04:00:00.000Z",
+    reading: { days: [{ heading: "The first week", paragraphs: ["You walked."] }] },
+  };
+  const august = {
+    updatedAt: "2026-08-13T04:24:00.000Z",
+    reading: { days: [{ heading: "What held", paragraphs: ["You walked anyway."] }] },
+  };
+
+  const reading = buildAthenaReading(mergeAthenaMemory(july, august));
+
+  assert.equal(reading.editions.length, 2);
+  assert.equal(reading.editions[0].publishedAt, "2026-08-13T04:24:00.000Z");
+  assert.equal(reading.editions[0].pages.days[0].heading, "What held");
+  assert.equal(reading.editions[1].pages.days[0].heading, "The first week");
+  assert.equal(reading.latestEditionId, reading.editions[0].id);
+});
+
+test("a morning that says the same thing publishes nothing new", () => {
+  const words = { days: [{ heading: "Your days", paragraphs: ["Walking held."] }] };
+  const monday = { updatedAt: "2026-08-12T04:00:00.000Z", reading: words };
+  const tuesday = { updatedAt: "2026-08-13T04:00:00.000Z", reading: words };
+
+  const reading = buildAthenaReading(mergeAthenaMemory(monday, tuesday));
+
+  assert.equal(reading.editions.length, 1);
+  // The edition keeps the morning it was actually written, not the morning
+  // Athena last checked and found nothing to add.
+  assert.equal(reading.editions[0].publishedAt, "2026-08-12T04:00:00.000Z");
+});
+
+test("an edition already read on the phone is not lost to an older sync", () => {
+  const phone = {
+    updatedAt: "2026-08-13T04:00:00.000Z",
+    reading: { shape: [{ heading: "A working guess", paragraphs: ["Newest."] }] },
+  };
+  const staleServer = {
+    updatedAt: "2026-08-01T04:00:00.000Z",
+    reading: { shape: [{ heading: "An older guess", paragraphs: ["Older."] }] },
+  };
+
+  const merged = buildAthenaReading(mergeAthenaMemory(phone, staleServer));
+
+  assert.equal(merged.editions.length, 2);
+  assert.deepEqual(
+    merged.editions.map((edition) => edition.pages.shape[0].heading),
+    ["A working guess", "An older guess"],
+  );
+});
+
+test("only authored prose is published, never the derived fallback", () => {
+  const reading = buildAthenaReading({
+    updatedAt: "2026-08-13T04:00:00.000Z",
+    rhythms: [{ id: "r1", statement: "You walked on 13 of 14 days." }],
+  });
+
+  // The page still reads, so the tab is never blank.
+  assert.equal(reading.pages.days[0].authored, false);
+  // But nothing was written, so there is no edition to claim as new.
+  assert.equal(reading.editions.length, 0);
+  assert.equal(reading.latestEditionId, null);
+});
+
+test("the phone carries a bounded archive, newest first", () => {
+  const memory = {
+    updatedAt: "2026-08-13T04:00:00.000Z",
+    editions: Array.from({ length: ATHENA_EDITION_LIMIT + 20 }, (_, index) => ({
+      id: `edition-${index}`,
+      publishedAt: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
+      days: [{ heading: `Day ${index}`, paragraphs: ["words"] }],
+    })),
+  };
+
+  const reading = buildAthenaReading(memory);
+
+  assert.equal(reading.editions.length, ATHENA_EDITION_LIMIT);
+  assert.equal(reading.editions[0].pages.days[0].heading, `Day ${ATHENA_EDITION_LIMIT + 19}`);
+});
 
 test("captures a clearly named watched film without interpreting personality", () => {
   const memory = captureAthenaThought(createAthenaMemory(), {

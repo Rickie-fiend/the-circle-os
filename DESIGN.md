@@ -100,6 +100,9 @@ Session
 - Main content anchors to the top of its Main Body and stays there. A Page grows
   downward for more writing; the words already on it never move.
   Optional Sub Body content begins directly beneath it.
+- Main Body reserves three lines, so a two-line Note title and a three-line
+  Thoughts placeholder rest at exactly the same height. The box grows at the
+  fourth line.
 - One written line costs one line of App Box, and the gap between the last line
   and the action stays the same as the box grows. On Cover, Note and Thoughts
   the two-to-one weight of Main and Sub is where the eye lands, not a
@@ -110,6 +113,16 @@ Session
 - Repeated habits use that same continuous stack: one quiet divider and one row
   rhythm per habit, with no nested card or doubled spacing.
 - Empty optional regions collapse cleanly and leave no dead gap.
+
+## Reflect
+
+Reflect is where a person reads about their life. It has three parts: the life
+you want, the life you are living, and the space between. Athena's voice runs
+through all three rather than sitting beside them.
+
+Her reading is published as dated editions that accumulate, so there is such a
+thing as a new one, and such a thing as reading back. A morning that says the
+same thing publishes nothing.
 
 ## Page types
 
@@ -138,6 +151,9 @@ Session
 
 ### Note Page
 
+- Header shows the app label, and while writing, a Clear action on the right
+  that empties Main and Sub together.
+- Main and Sub both take unlimited writing.
 - Header shows the app label or app action.
 - Main and optional Sub text use the same top anchor as a Cover Page.
 - Text can be edited directly with its display typography.

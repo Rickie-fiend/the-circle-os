@@ -52,9 +52,15 @@ Every Cover, Chapter, and App Page uses the same five regions.
   from the Header to the first line of Main Body, `--os-main-sub-gap` the space
   between Main and Sub, and `--os-body-footer-gap` the space between the last
   line of Body and the Footer. An App does not restate any of them.
-- `--os-body-top` is set so that two lines of Main and one line of Sub fill the
-  default App Box exactly. That is the budget: the box grows at the third line
+- Main Body reserves **three lines**, measured in the text's own line height.
+  `--os-body-top` is set so three lines of Main and one line of Sub fill the
+  default App Box exactly. That is the budget: the box grows at the fourth line
   and never before it.
+- Two lines was not enough. A Note title is usually two lines but the Thoughts
+  placeholder is sometimes three, so two Pages of one App Box sat at different
+  heights and the frame resized on the swipe between them. The reserve is what
+  keeps Pages of one App identical, so it must cover the longest ordinary Page,
+  not the shortest.
 - A fluid App Box may grow for its content and ease back down, but never below
   the shared default minimum.
 - The App Box does not jump when adjacent Pages have different heights.
@@ -111,6 +117,45 @@ Used for charts, weekly views, and other things worth reading again.
 - The frame keeps one stable height.
 - The selected page survives route changes and reloads.
 - New server data may create a new cover once.
+
+## Reflect
+
+- Reflect has three parts and no more: **the life you want**, **the life you
+  are living**, and **the space between**. Athena's voice runs through all
+  three; it is not a fourth part.
+- The gap belongs inside the space between. It was its own section asking the
+  same question as the reading, which made two App Boxes out of one idea.
+- Reflect is for reading. Chapters ask a question and collect an answer, so
+  they belong to Today. A publication assigned to Vision or Athena still
+  delivers into its App Box, but Reflect never grows its own questionnaire.
+
+## Editions
+
+- Athena's reading is published as **editions**: dated, immutable, and
+  accumulating. A reading that is overwritten every morning can never be new,
+  never be unread, and never be read back.
+- An edition is identified by its own words, not by the morning it was
+  prepared. Athena prepares daily whether or not the evidence moved, so a
+  quiet morning publishes nothing and the tab does not claim something new
+  when nothing was said.
+- Only authored prose is published. The derived observations that stand in for
+  a page Athena has not written are a fallback for display, never a
+  publication.
+- An edition never mixes with another day. A part Athena did not write in a
+  past edition says so, rather than borrowing today's profile text.
+- Editions merge as a union. A phone syncing from a copy that predates an
+  edition never loses it.
+- The phone carries a bounded archive; the vault keeps the full history.
+
+## Note
+
+- Note takes as much writing as a person wants, in Main Body and in Sub Body
+  both. Neither is capped; the App Box grows downward for real content.
+- While a Note is being written, the Header carries one right-hand action:
+  **Clear**. It empties Main and Sub together and leaves the caret in Main, so
+  the next thing that happens is writing.
+- Clear is only present while writing. It never appears on a Note at rest,
+  where the only thing to press would be a way to lose what is there.
 
 ## Idle rotation
 
