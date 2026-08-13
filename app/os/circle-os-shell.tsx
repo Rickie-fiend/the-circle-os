@@ -10,7 +10,6 @@ import {
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
   type FormEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -29,9 +28,7 @@ import {
   beginProtocolRun,
   canBeginProtocolRun,
   completeTask,
-  currentDeclaration,
   dayRecord,
-  declareLife,
   discardEmptyProtocolItem,
   endProtocolRun,
   protocolToday,
@@ -123,12 +120,14 @@ export function PublishedChapterDelivery({
   backApp,
   hideIdleHeading = false,
   label,
+  onCompleted,
 }: {
   publication: ChapterPublication;
   className: string;
   backApp?: ReactNode;
   hideIdleHeading?: boolean;
   label: string;
+  onCompleted?: (state: CircleState, run: ChapterRun) => CircleState;
 }) {
   const { state, updateState } = useCircleState();
   const chapter = publication.chapter;
@@ -142,7 +141,9 @@ export function PublishedChapterDelivery({
       const previous = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(current, nextRun, chapter.session);
       if (nextRun.status === "completed" && previous?.status !== "completed") {
-        next = queueProfileUpdate(next, "survey-answer");
+        next = onCompleted
+          ? onCompleted(next, nextRun)
+          : queueProfileUpdate(next, "survey-answer");
       }
       return next;
     });
@@ -190,55 +191,6 @@ type CheckIn = {
 };
 
 const ADMIN_THOUGHT = "admin";
-
-const DECLARATION_SETUP = [
-  { kind: "vision", chapterId: "declare-vision" },
-  { kind: "missionStatement", chapterId: "declare-mission-statement" },
-  { kind: "typicalTuesday", chapterId: "declare-typical-tuesday" },
-  { kind: "dreamline", chapterId: "declare-dreamline" },
-] as const;
-
-type DeclarationKind = (typeof DECLARATION_SETUP)[number]["kind"];
-
-function subscribeToLocation() {
-  return () => undefined;
-}
-
-function browserLocationSearch() {
-  return window.location.search;
-}
-
-function serverLocationSearch() {
-  return "";
-}
-
-function declarationFromRun(kind: DeclarationKind, run: ChapterRun) {
-  if (kind === "vision") {
-    return {
-      life: chapterAnswerText(run, "vision-life"),
-      why: chapterAnswerText(run, "vision-why"),
-    };
-  }
-  if (kind === "missionStatement") {
-    return { statement: chapterAnswerText(run, "mission-statement") };
-  }
-  if (kind === "typicalTuesday") {
-    return {
-      wake: chapterAnswerText(run, "tuesday-wake"),
-      morning: chapterAnswerText(run, "tuesday-morning"),
-      day: chapterAnswerText(run, "tuesday-day"),
-      people: chapterAnswerText(run, "tuesday-people"),
-      evening: chapterAnswerText(run, "tuesday-evening"),
-      feeling: chapterAnswerText(run, "tuesday-feeling"),
-    };
-  }
-  return {
-    dream: chapterAnswerText(run, "dreamline-dream"),
-    now: chapterAnswerText(run, "dreamline-now"),
-    tomorrow: chapterAnswerText(run, "dreamline-tomorrow"),
-    dayAfter: chapterAnswerText(run, "dreamline-day-after"),
-  };
-}
 
 type Mission = {
   text: string;
@@ -1262,6 +1214,7 @@ export function TodayExperience() {
   const [revealedLine, setRevealedLine] = useState<
     { id: string; kind: string; text: string; sub: string } | null
   >(null);
+  const [revealedLinePage, setRevealedLinePage] = useState(0);
   const checkInRefreshTimer = useRef<number | null>(null);
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
@@ -1582,42 +1535,6 @@ export function TodayExperience() {
 
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
-  const firstMissingDeclaration = DECLARATION_SETUP.find(
-    ({ kind }) => !currentDeclaration(state, kind),
-  );
-  const [selectedDeclarationKind, setSelectedDeclarationKind] =
-    useState<DeclarationKind | null>(null);
-  const locationSearch = useSyncExternalStore(
-    subscribeToLocation,
-    browserLocationSearch,
-    serverLocationSearch,
-  );
-  const requested = new URLSearchParams(locationSearch).get("declare");
-  const requestedDeclarationKind = DECLARATION_SETUP.find(
-    ({ kind }) => kind === requested,
-  )?.kind;
-  const declarationSetupKind = ready
-    ? selectedDeclarationKind ||
-      (requestedDeclarationKind &&
-      !currentDeclaration(state, requestedDeclarationKind)
-        ? requestedDeclarationKind
-        : firstMissingDeclaration?.kind) ||
-      null
-    : null;
-
-  const declarationSetupDefinition = declarationSetupKind
-    ? getPublishedChapter(
-        DECLARATION_SETUP.find(({ kind }) => kind === declarationSetupKind)
-          ?.chapterId || "",
-      )
-    : null;
-  const declarationSetupRun = useMemo(() => {
-    if (!declarationSetupDefinition) return null;
-    return (
-      state.chapters.runs[chapterRunId(declarationSetupDefinition)] ||
-      createChapterRun(declarationSetupDefinition)
-    );
-  }, [declarationSetupDefinition, state.chapters.runs]);
   const habitBuildingRun = useMemo(() => {
     if (!habitBuildingChapter) return null;
     return (
@@ -2107,6 +2024,7 @@ export function TodayExperience() {
     setCheckInRefreshing(true);
     setNoteDeckNote("");
     setRevealedLine(null);
+    setRevealedLinePage(0);
     checkInRefreshTimer.current = window.setTimeout(() => {
       const loaded = refreshProfileSpark();
       setCheckInRefreshing(false);
@@ -2114,6 +2032,7 @@ export function TodayExperience() {
         const line = selectLine(linePool, state.seenLines);
         if (line) {
           setRevealedLine(line);
+          setRevealedLinePage(0);
           updateState((current) => markLineSeen(current, line.id));
         } else {
           // Only reachable with an empty pool, which would be a build fault
@@ -2187,39 +2106,6 @@ export function TodayExperience() {
       }
       return next;
     });
-  }
-
-  function saveDeclarationRun(nextRun: ChapterRun) {
-    if (!declarationSetupDefinition || !declarationSetupKind) return;
-    setSelectedDeclarationKind(declarationSetupKind);
-    updateState((current) => {
-      const previous = current.chapters.runs[nextRun.runId];
-      let next = storeChapterRun(
-        current,
-        nextRun,
-        declarationSetupDefinition.session,
-      );
-      if (nextRun.status === "completed" && previous?.status !== "completed") {
-        next = declareLife(
-          next,
-          declarationSetupKind,
-          declarationFromRun(declarationSetupKind, nextRun),
-        );
-      }
-      return next;
-    });
-  }
-
-  function leaveDeclarationSetup() {
-    const nextMissing = DECLARATION_SETUP.find(
-      ({ kind }) =>
-        kind !== declarationSetupKind && !currentDeclaration(state, kind),
-    );
-    if (nextMissing) {
-      setSelectedDeclarationKind(nextMissing.kind);
-      return;
-    }
-    router.push("/os/mirror");
   }
 
   function saveLogSetupRun(
@@ -2600,32 +2486,7 @@ export function TodayExperience() {
             </div>
           </div>
 
-          {declarationSetupDefinition && declarationSetupRun ? (
-            <div
-              className="os-declaration-setup"
-              aria-label="Declare the life you want"
-            >
-              <ChapterPlayer
-                backApp={checkInIdleCard()}
-                className="os-declaration-setup-session"
-                definition={declarationSetupDefinition}
-                idleActionLabel={
-                  DECLARATION_SETUP.some(
-                    ({ kind }) =>
-                      kind !== declarationSetupKind &&
-                      !currentDeclaration(state, kind),
-                  )
-                    ? "Next declaration"
-                    : "Open Reflect"
-                }
-                label="Declaration setup"
-                onIdleAction={leaveDeclarationSetup}
-                onRunChange={saveDeclarationRun}
-                run={declarationSetupRun}
-              />
-            </div>
-          ) : (
-          !holdThoughtsAfterSend &&
+          {!holdThoughtsAfterSend &&
           profileSparkChapter &&
           profileSparkRun &&
           profileSparkRun.status !== "completed" &&
@@ -2649,32 +2510,54 @@ export function TodayExperience() {
               publication={thoughtsPublication}
             />
           ) : revealedLine ? (
-            // A line takes the box the way a chapter does, and leaves the same
-            // way: one swipe forward and the Note is back. It records only that
-            // it was read.
             <SwipeSession
-              availableIndices={[0, 1]}
+              availableIndices={
+                revealedLine.kind === "quote" ? [0, 1] : [0, 1, 2]
+              }
               className="os-checkin-session"
-              index={0}
+              index={revealedLinePage}
               label="A line"
-              maxIndex={1}
-              onIndexChange={() => setRevealedLine(null)}
+              maxIndex={revealedLine.kind === "quote" ? 1 : 2}
+              onIndexChange={(nextIndex) => {
+                if (revealedLine.kind !== "quote" && nextIndex === 1) {
+                  setRevealedLinePage(1);
+                  return;
+                }
+                setRevealedLine(null);
+                setRevealedLinePage(0);
+              }}
             >
               <PageLayout
                 className="os-line-page"
                 theme="light"
                 variant="cover"
-                footer={<span className="os-line-cue">Swipe to close</span>}
+                footer={
+                  <span className="os-line-cue">
+                    {revealedLine.kind === "quote" ? "Swipe to close" : "Swipe to reveal"}
+                  </span>
+                }
               >
                 <div className="os-info-page-main">
                   <h2>{revealedLine.text}</h2>
                 </div>
-                {revealedLine.sub ? (
+                {revealedLine.kind === "quote" && revealedLine.sub ? (
                   <div className="os-info-page-sub">
                     <p className="os-line-sub">{revealedLine.sub}</p>
                   </div>
                 ) : null}
               </PageLayout>
+              {revealedLine.kind !== "quote" ? (
+                <PageLayout
+                  className="os-line-page os-line-reveal-page"
+                  footer={<span className="os-line-cue">Swipe to close</span>}
+                  theme="light"
+                  variant="cover"
+                >
+                  <div className="os-info-page-main">
+                    <h2>{revealedLine.sub}</h2>
+                  </div>
+                </PageLayout>
+              ) : null}
               {checkInIdleCard()}
             </SwipeSession>
           ) : (
@@ -2716,7 +2599,7 @@ export function TodayExperience() {
             {checkInIdleCard()}
             {checkInThoughtsCard()}
           </SwipeSession>
-          ))}
+          )}
         </section>
 
         {habitPublication ? (

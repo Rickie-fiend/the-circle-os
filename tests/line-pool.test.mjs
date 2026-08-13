@@ -23,6 +23,34 @@ test("every shipped line is readable and of a known kind", () => {
   assert.equal(new Set(lines.map((l) => l.id)).size, lines.length, "ids are unique");
 });
 
+test("jokes are exactly a setup and punchline, and facts keep a reveal", () => {
+  const lines = normalizeLinePool(pool);
+  for (const line of lines.filter(({ kind }) => kind === "joke")) {
+    assert.ok(line.text, `${line.id} has no setup`);
+    assert.ok(line.sub, `${line.id} has no punchline`);
+    assert.equal(
+      (line.text.match(/[.!?](?=\s+\S)/g) || []).length,
+      0,
+      `${line.id} has more than one setup line`,
+    );
+    assert.equal(
+      (line.sub.match(/[.!?](?=\s+\S)/g) || []).length,
+      0,
+      `${line.id} has more than one punchline line`,
+    );
+  }
+  for (const line of pool.lines.filter(({ kind }) => kind === "joke")) {
+    assert.deepEqual(
+      Object.keys(line).sort(),
+      ["id", "kind", "sub", "text"],
+      `${line.id} carries chapter state`,
+    );
+  }
+  for (const line of lines.filter(({ kind }) => kind === "fact")) {
+    assert.ok(line.sub, `${line.id} has no reveal`);
+  }
+});
+
 test("the pool mixes its kinds instead of serving one kind at a time", () => {
   let seen = [];
   const kinds = [];

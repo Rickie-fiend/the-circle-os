@@ -5,20 +5,20 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type CSSProperties,
+  useSyncExternalStore,
   type FocusEvent,
   type FormEvent,
 } from "react";
 import {
   answerSurveyQuestion,
   appSessionIndex,
+  buildWeekClaims,
   compareVisionDeclarations,
   declarationVersions,
   declareLife,
   editProfileSession,
   getDateKey,
   hasReadableProfileCase,
-  minutesBetween,
   queueProfileUpdate,
   queueSuggestion,
   setAppSessionIndex,
@@ -27,39 +27,24 @@ import {
 import {
   PublishedChapterDelivery,
   useCircleState,
-  type TimeBlock,
+  type CircleState,
 } from "../circle-os-shell";
 import {
   IDLE_PAGE_DWELL_MS,
   PageLayout,
   SwipeSession,
 } from "../app-session";
-import { selectPendingAppPublication } from "../chapters/chapter-publication-store";
+import {
+  normalizeChapterPublication,
+  publicationIsNewerThanRun,
+  selectPendingAppPublication,
+} from "../chapters/chapter-publication-store";
+import { chapterAnswerText, chapterRunId } from "../chapters/chapter-model.js";
+import type { ChapterRun } from "../chapters/chapter-types";
 import { useChapterPublications } from "../chapters/use-chapter-publications";
 import { buildAthenaReading } from "../athena-memory-model.js";
 
 const READING_PAGES = ["days", "alive", "shape"] as const;
-
-const ACTIVITY_COLORS = [
-  "activity-focus",
-  "activity-reading",
-  "activity-exercise",
-  "activity-outside",
-  "activity-social",
-  "activity-rest",
-];
-
-function activityColor(index: number) {
-  return ACTIVITY_COLORS[index % ACTIVITY_COLORS.length];
-}
-
-function formatMinutes(minutes: number) {
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  if (!hours) return `${remainder}m`;
-  if (!remainder) return `${hours}h`;
-  return `${hours}h ${remainder}m`;
-}
 
 function formatUpdated(value: string | null) {
   if (!value) return "Not updated yet";
@@ -169,6 +154,53 @@ const DECLARATION_PAGES: Array<{
     empty: "What do you want to make real in six months?",
   },
 ];
+
+const DECLARATION_CHAPTERS: Record<DeclarationKind, string> = {
+  vision: "declare-vision",
+  missionStatement: "declare-mission-statement",
+  typicalTuesday: "declare-typical-tuesday",
+  dreamline: "declare-dreamline",
+};
+
+function subscribeToMirrorLocation() {
+  return () => undefined;
+}
+
+function mirrorLocationSearch() {
+  return window.location.search;
+}
+
+function serverMirrorLocationSearch() {
+  return "";
+}
+
+function declarationFromRun(kind: DeclarationKind, run: ChapterRun) {
+  if (kind === "vision") {
+    return {
+      life: chapterAnswerText(run, "vision-life"),
+      why: chapterAnswerText(run, "vision-why"),
+    };
+  }
+  if (kind === "missionStatement") {
+    return { statement: chapterAnswerText(run, "mission-statement") };
+  }
+  if (kind === "typicalTuesday") {
+    return {
+      wake: chapterAnswerText(run, "tuesday-wake"),
+      morning: chapterAnswerText(run, "tuesday-morning"),
+      day: chapterAnswerText(run, "tuesday-day"),
+      people: chapterAnswerText(run, "tuesday-people"),
+      evening: chapterAnswerText(run, "tuesday-evening"),
+      feeling: chapterAnswerText(run, "tuesday-feeling"),
+    };
+  }
+  return {
+    dream: chapterAnswerText(run, "dreamline-dream"),
+    now: chapterAnswerText(run, "dreamline-now"),
+    tomorrow: chapterAnswerText(run, "dreamline-tomorrow"),
+    dayAfter: chapterAnswerText(run, "dreamline-day-after"),
+  };
+}
 
 const DECLARATION_FIELDS: Record<
   DeclarationKind,
@@ -353,6 +385,21 @@ function AthenaAnswerPage({
     editor.style.height = `${editor.scrollHeight}px`;
   }, [draft]);
 
+  if (answer.trim()) {
+    return (
+      <PageLayout
+        className="vision-athena-answer is-sent"
+        footer={<span>Athena reads this tonight.</span>}
+        headerLeft={<p className="os-card-label">{label}</p>}
+        theme={theme}
+      >
+        <div className="os-page-main">
+          <h2>Your answer is with Athena.</h2>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       className="vision-athena-answer"
@@ -456,17 +503,51 @@ export default function CircleOSMirror() {
     age: "",
   });
   const summary = summarizeWeek(state);
+  const weekClaims = buildWeekClaims(state);
   const profileCase = state.profile.profileCase;
   const publicationProfileId = state.ai.profileId || "local";
-  const visionPublication = selectPendingAppPublication(
+  const locationSearch = useSyncExternalStore(
+    subscribeToMirrorLocation,
+    mirrorLocationSearch,
+    serverMirrorLocationSearch,
+  );
+  const requested = new URLSearchParams(locationSearch).get("declare");
+  const requestedDeclaration = DECLARATION_PAGES.some(
+    (page) => page.kind === requested,
+  )
+    ? (requested as DeclarationKind)
+    : null;
+  const firstMissingDeclaration = DECLARATION_PAGES.find(
+    (page) => !declarationVersions(state, page.kind).length,
+  )?.kind;
+  const desiredDeclaration =
+    requestedDeclaration && !declarationVersions(state, requestedDeclaration).length
+      ? requestedDeclaration
+      : firstMissingDeclaration;
+  const desiredDeclarationPublication = desiredDeclaration
+    ? publications
+        .map(normalizeChapterPublication)
+        .find((publication) => {
+          if (publication.chapter.id !== DECLARATION_CHAPTERS[desiredDeclaration]) {
+            return false;
+          }
+          if (
+            publication.visibility !== "public" &&
+            publication.audienceProfileId !== publicationProfileId &&
+            publication.audienceProfileId !== "local"
+          ) {
+            return false;
+          }
+          const run = state.chapters.runs[chapterRunId(publication.chapter)];
+          return (
+            publicationIsNewerThanRun(publication, run) ||
+            (run?.status !== "completed" && !run?.deferredAt)
+          );
+        }) || null
+    : null;
+  const visionPublication = desiredDeclarationPublication || selectPendingAppPublication(
     publications,
     "vision",
-    publicationProfileId,
-    state.chapters.runs,
-  );
-  const weekPublication = selectPendingAppPublication(
-    publications,
-    "seven-days",
     publicationProfileId,
     state.chapters.runs,
   );
@@ -480,48 +561,6 @@ export default function CircleOSMirror() {
   const loggedPastDays = pastDays.filter(
     (item) => item.day.timeBlocks.length > 0,
   ).length;
-  const pastMinutes = pastDays.reduce(
-    (total: number, item: (typeof pastDays)[number]) =>
-      total +
-      item.day.timeBlocks.reduce(
-        (dayTotal: number, block: TimeBlock) =>
-          dayTotal + minutesBetween(block.start, block.end),
-        0,
-      ),
-    0,
-  );
-  const pastCheckIns = pastDays.reduce(
-    (total: number, item: (typeof pastDays)[number]) =>
-      total + item.day.checkIns.length,
-    0,
-  );
-  const pastMissionWins = pastDays.filter(
-    (item) => item.day.mission?.completed,
-  ).length;
-  const weekReady = Boolean(
-    loggedPastDays || summary.coverage.recorded || summary.missions.available,
-  );
-  const recentTimelineActivities = pastDays
-    .flatMap((item) => item.day.timeBlocks)
-    .map((block) => (block.title || block.activity || "").trim())
-    .filter(
-      (activity, index, activities) =>
-        activity &&
-        activities.findIndex(
-          (item) => item.toLowerCase() === activity.toLowerCase(),
-        ) === index,
-    )
-    .slice(0, 6);
-  const weekObservation =
-    recentTimelineActivities.length > 1
-      ? `Your recent days moved through ${recentTimelineActivities
-          .slice(0, -1)
-          .join(", ")}, and ${recentTimelineActivities.at(-1)}.`
-      : recentTimelineActivities.length === 1
-        ? `Your recent days included ${recentTimelineActivities[0]}.`
-        : weekReady
-          ? "Your week is starting to show a pattern."
-          : "Your week starts here.";
   const athenaReading = buildAthenaReading(state.athenaMemory);
   const profileReady = athenaReading.ready || hasReadableProfileCase(profileCase);
   const readingUpdatedAt =
@@ -546,11 +585,10 @@ export default function CircleOSMirror() {
           label: declarationComparison.text,
         };
   const weekJourneyVersion = [
-    "week-observation-cover-v1",
-    loggedPastDays,
-    pastMinutes,
-    pastCheckIns,
-    pastMissionWins,
+    "week-claims-v1",
+    ...weekClaims.map((claim: { key: string; sentence: string }) =>
+      `${claim.key}:${claim.sentence}`,
+    ),
   ].join("|");
   const profileJourneyVersion = [
     readingUpdatedAt,
@@ -586,12 +624,10 @@ export default function CircleOSMirror() {
         (answer) => answer.questionId === athenaPrompt.id,
       )?.answer || ""
     : "";
-  const lifePageCount = declarationPageRecords.length + (athenaPrompt ? 1 : 0);
+  const lifePageCount = declarationPageRecords.length;
   const lifeJourneyVersion = [
     "declarations-v1",
     ...declarationPageRecords.map((page) => page.record?.id || `${page.kind}-empty`),
-    athenaPrompt?.id || "no-question",
-    athenaAnswer,
   ].join("|");
   const visibleLifeApp = appSessionIndex(
     state,
@@ -719,6 +755,18 @@ export default function CircleOSMirror() {
     content: Record<string, string>,
   ) {
     updateState((current) => declareLife(current, kind, content));
+  }
+
+  function completeDeclaration(
+    current: CircleState,
+    run: ChapterRun,
+  ) {
+    const kind = (Object.entries(DECLARATION_CHAPTERS) as Array<
+      [DeclarationKind, string]
+    >).find(([, chapterId]) => chapterId === run.chapterId)?.[0];
+    return kind
+      ? declareLife(current, kind, declarationFromRun(kind, run))
+      : current;
   }
 
   function sendAthenaAnswer(answer: string) {
@@ -881,6 +929,7 @@ export default function CircleOSMirror() {
             <PublishedChapterDelivery
               className="vision-life-apps"
               label="Vision chapter"
+              onCompleted={completeDeclaration}
               publication={visionPublication}
             />
           ) : (
@@ -914,19 +963,10 @@ export default function CircleOSMirror() {
                 kind={page.kind}
                 label={page.label}
                 onCommit={(content) => commitDeclaration(page.kind, content)}
-                onSetup={() => router.push(`/os?declare=${page.kind}`)}
+                onSetup={() => router.push(`/os/mirror?declare=${page.kind}`)}
                 record={page.record}
               />
             ))}
-            {athenaPrompt ? (
-              <AthenaAnswerPage
-                answer={athenaAnswer}
-                key={`vision-question-${athenaPrompt.id}`}
-                label="Athena asks"
-                onSend={sendAthenaAnswer}
-                prompt={athenaPrompt}
-              />
-            ) : null}
           </SwipeSession>
           )}
         </section>
@@ -939,25 +979,14 @@ export default function CircleOSMirror() {
         </header>
 
         <section className="vision-week-session" aria-label="Last seven days session">
-          {weekPublication ? (
-            <PublishedChapterDelivery
-              className="vision-week-apps"
-              label="Last seven days chapter"
-              publication={weekPublication}
-            />
-          ) : (
           <SwipeSession
             attentionKey={`vision-week:${weekJourneyVersion}`}
-            availableIndices={
-              visibleWeekApp === 0
-                ? [0, 1]
-                : [1, 2, 3, 4]
-            }
+            availableIndices={weekClaims.map((_: unknown, index: number) => index)}
             className="vision-week-apps"
-            frameHeight="360px"
             index={visibleWeekApp}
             label="Last seven days apps"
-            maxIndex={weekReady ? 4 : 0}
+            maxIndex={Math.max(0, weekClaims.length - 1)}
+            rotateMs={IDLE_PAGE_DWELL_MS}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -969,151 +998,45 @@ export default function CircleOSMirror() {
               )
             }
           >
-            <div className="vision-week-cover">
-              <p className="os-card-label">Last seven days</p>
-              <h2>{weekObservation}</h2>
-              <span>{weekReady ? "Swipe to see" : "Check tomorrow morning"}</span>
-            </div>
-              <article
-                className="mirror-summary-card vision-week-app"
-                aria-labelledby="mirror-sentence"
+            {weekClaims.map((claim: {
+              key: string;
+              label: string;
+              sentence: string;
+              evidence: Array<{
+                label: string;
+                shortLabel: string;
+                value: string;
+                tone: string;
+              }>;
+            }) => (
+              <PageLayout
+                className="vision-week-claim"
+                headerLeft={<p className="os-card-label">{claim.label}</p>}
+                key={claim.key}
+                theme="dark"
               >
-                <p className="os-card-label">Overview</p>
-                <h2 id="mirror-sentence">{summary.sentence}</h2>
-                <div className="week-ribbon" aria-label="Data coverage">
-                  {summary.days.map((item) => (
-                    <article key={item.key}>
-                      <span>{item.label}</span>
-                      <div
-                        aria-label={`${item.recordedPeriods} of 4 periods recorded`}
-                      >
-                        {[0, 1, 2, 3].map((period) => (
-                          <i
-                            className={
-                              period < item.recordedPeriods ? "recorded" : ""
-                            }
-                            key={period}
-                          />
-                        ))}
-                      </div>
-                    </article>
+                <div className="os-page-main">
+                  <h2>{claim.sentence}</h2>
+                </div>
+                <div
+                  aria-label={`Evidence for ${claim.label}`}
+                  className="os-page-sub week-claim-evidence"
+                >
+                  {claim.evidence.map((item, index) => (
+                    <span
+                      className={`is-${item.tone}`}
+                      key={`${item.label}-${index}`}
+                      title={item.label}
+                    >
+                      <i aria-hidden="true" />
+                      <b>{item.shortLabel}</b>
+                      <small>{item.value}</small>
+                    </span>
                   ))}
                 </div>
-                <p className="coverage-line">
-                  <strong>{summary.coverage.percent}%</strong>
-                  of the week recorded
-                </p>
-              </article>
-
-              <article
-                className="mirror-card mirror-time vision-week-app"
-                aria-labelledby="time-heading"
-              >
-                <div className="mirror-card-head">
-                  <div>
-                    <p className="os-card-label">Time</p>
-                    <h2 id="time-heading">Your week</h2>
-                  </div>
-                  <strong>{formatMinutes(summary.totalMinutes)}</strong>
-                </div>
-
-                <div className="time-river">
-                  {summary.days.map((item) => (
-                    <div className="time-river-day" key={item.key}>
-                      <span>{item.label}</span>
-                      <div className="time-river-track">
-                        {item.day.timeBlocks.length ? (
-                          item.day.timeBlocks.map(
-                            (block: TimeBlock, blockIndex: number) => {
-                              const minutes = minutesBetween(
-                                block.start,
-                                block.end,
-                              );
-                              return (
-                                <i
-                                  className={activityColor(blockIndex)}
-                                  key={block.id}
-                                  style={{ flexGrow: Math.max(15, minutes) }}
-                                  title={`${block.title || block.activity}: ${formatMinutes(minutes)}`}
-                                />
-                              );
-                            },
-                          )
-                        ) : (
-                          <em />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="time-allocation">
-                  {summary.time.length ? (
-                    summary.time.slice(0, 4).map((item, index) => (
-                      <div key={item.activity}>
-                        <span
-                          className={activityColor(index)}
-                          aria-hidden="true"
-                        />
-                        <p>{item.activity}</p>
-                        <strong>{formatMinutes(item.minutes)}</strong>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="mirror-empty">Nothing logged yet.</p>
-                  )}
-                </div>
-              </article>
-
-              <article
-                className="mirror-card mirror-energy vision-week-app"
-                aria-labelledby="energy-heading"
-              >
-                <div className="mirror-card-head">
-                  <div>
-                    <p className="os-card-label">Energy</p>
-                    <h2 id="energy-heading">Your rhythm</h2>
-                  </div>
-                </div>
-                <div className="energy-chart">
-                  {summary.energy.map((item) => (
-                    <div key={item.period}>
-                      <div className="energy-plot">
-                        {item.value ? (
-                          <i
-                            style={
-                              {
-                                "--energy-height": `${(item.value / 5) * 100}%`,
-                              } as CSSProperties
-                            }
-                          />
-                        ) : (
-                          <em>—</em>
-                        )}
-                      </div>
-                      <strong>
-                        {item.value ? item.value.toFixed(1) : "—"}
-                      </strong>
-                      <span>{item.label.slice(0, 3)}</span>
-                    </div>
-                  ))}
-                </div>
-              </article>
-
-              <article
-                className="mirror-card mirror-life vision-week-app"
-                aria-label="Recorded days"
-              >
-                <div className="mirror-life-block">
-                  <p className="os-card-label">Record</p>
-                  <h2>{loggedPastDays} days recorded</h2>
-                  <p className="mirror-record-copy">
-                    Your own words become clearer here over time.
-                  </p>
-                </div>
-              </article>
+              </PageLayout>
+            ))}
           </SwipeSession>
-          )}
         </section>
 
         <header className="mirror-intro between-intro">

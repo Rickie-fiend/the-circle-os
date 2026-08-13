@@ -1788,6 +1788,227 @@ export function summarizeWeek(state, now = new Date()) {
   };
 }
 
+function weekTimeLabel(value) {
+  const minutes = Number(value) % (24 * 60);
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${String(minute).padStart(2, "0")} ${period}`;
+}
+
+function weekList(values) {
+  if (values.length < 2) return values[0] || "";
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
+}
+
+function weekActivityGroup(value = "") {
+  const text = String(value).toLowerCase();
+  if (/sleep|bed|nap/.test(text)) return "Sleep and rest";
+  if (/lunch|dinner|breakfast|meal|eat|coffee/.test(text)) return "Meals and coffee";
+  if (/walk|gym|outdoor|samrong|patio|exercise/.test(text)) return "Movement and outside time";
+  if (/project|computer|focus|work|edit|video|codex|build/.test(text)) return "Project and computer work";
+  if (/friend|family|mom|cousin|talk|dota/.test(text)) return "Time with other people";
+  if (/shower|brush|wind down/.test(text)) return "Personal care";
+  if (/movie|game|entertain/.test(text)) return "Entertainment";
+  if (/immigration|market|class|come back|home/.test(text)) return "Errands and travel";
+  if (/read|journal|reflect/.test(text)) return "Reading and reflection";
+  return "Other recorded time";
+}
+
+function weekEvidenceDay(item, value, tone = "plain") {
+  return { label: item.fullLabel, shortLabel: item.label, value, tone };
+}
+
+/**
+ * Local weekly claims. These are arithmetic over the phone's state, never AI
+ * prose. Fewer than three recorded days produces one explicit silence and no
+ * pattern-shaped output.
+ */
+export function buildWeekClaims(state, now = new Date()) {
+  const summary = summarizeWeek(state, now);
+  const days = summary.days.filter(({ key, day }) => {
+    const habitTouched = Object.values(state.habits?.completions || {}).some(
+      (completion) => completion?.dateKey === key,
+    );
+    return Boolean(
+      day.timeBlocks.length ||
+        day.checkIns.length ||
+        day.mission?.completed ||
+        day.missions?.length ||
+        habitTouched,
+    );
+  });
+  if (days.length < 3) {
+    const count = days.length;
+    return [{
+      key: "silence",
+      label: "Still learning",
+      sentence: count === 0
+        ? "There are no recorded days to call a weekly pattern."
+        : `${count} recorded day${count === 1 ? " is" : "s are"} not enough to call a weekly pattern.`,
+      evidence: summary.days.map((item) =>
+        weekEvidenceDay(item, days.some((day) => day.key === item.key) ? "recorded" : "quiet", days.some((day) => day.key === item.key) ? "held" : "quiet"),
+      ),
+    }];
+  }
+
+  const claims = [];
+  const starts = days
+    .map((item) => {
+      const first = [...item.day.timeBlocks]
+        .filter((block) => block.start)
+        .sort((left, right) => circleTimeValue(left.start) - circleTimeValue(right.start))[0];
+      return first ? { item, minutes: circleTimeValue(first.start) % (24 * 60) } : null;
+    })
+    .filter(Boolean);
+  if (starts.length >= 3) {
+    const counts = new Map();
+    for (const start of starts) counts.set(start.minutes, (counts.get(start.minutes) || 0) + 1);
+    const [commonStart, commonCount] = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
+    const minimum = Math.min(...starts.map((start) => start.minutes));
+    const maximum = Math.max(...starts.map((start) => start.minutes));
+    const sentence = commonCount >= Math.ceil(starts.length / 2)
+      ? `${commonCount} of ${starts.length} recorded days began at ${weekTimeLabel(commonStart)}.`
+      : `Your recorded days began between ${weekTimeLabel(minimum)} and ${weekTimeLabel(maximum)}.`;
+    claims.push({
+      key: "day-start",
+      label: "Day start",
+      sentence,
+      evidence: starts.map(({ item, minutes }) => weekEvidenceDay(item, weekTimeLabel(minutes))),
+    });
+  }
+
+  const habits = Object.values(state.habits?.definitions || {})
+    .filter((habit) => habit?.status === "active" && habit.text?.trim())
+    .map((habit) => {
+      const eligible = days.filter((item) => {
+        const completion = state.habits.completions[habitCompletionId(habit.id, item.key)];
+        return Boolean(completion) || item.key >= getDateKey(new Date(habit.createdAt));
+      });
+      return { habit, eligible };
+    })
+    .filter(({ eligible }) => eligible.length >= 3)
+    .sort((left, right) => right.eligible.length - left.eligible.length);
+  const habitReading = habits[0];
+  if (habitReading) {
+    const held = habitReading.eligible.filter((item) =>
+      state.habits.completions[habitCompletionId(habitReading.habit.id, item.key)]?.completed,
+    );
+    const slipped = habitReading.eligible.filter((item) => !held.includes(item));
+    const habitName = habitReading.habit.text.trim().replace(/[.!?]+$/, "");
+    const status = [
+      held.length ? `held on ${weekList(held.map((item) => item.fullLabel))}` : "did not hold on a recorded day",
+      slipped.length ? `slipped on ${weekList(slipped.map((item) => item.fullLabel))}` : "did not slip on a recorded day",
+    ];
+    claims.push({
+      key: "habit",
+      label: "Habit",
+      sentence: `${habitName} ${status[0]}, and ${status[1]}.`,
+      evidence: habitReading.eligible.map((item) =>
+        weekEvidenceDay(item, held.includes(item) ? "held" : "slipped", held.includes(item) ? "held" : "slipped"),
+      ),
+    });
+  }
+
+  const mealKinds = [
+    { label: "Lunch", pattern: /lunch/i },
+    { label: "Dinner", pattern: /dinner/i },
+    { label: "Breakfast", pattern: /breakfast/i },
+  ].map((meal) => ({
+    ...meal,
+    events: days.flatMap((item) => {
+      const matching = item.day.timeBlocks
+        .filter((block) =>
+          meal.pattern.test(
+            [block.title || block.activity || "", ...(block.moments || [])].join(" "),
+          ),
+        )
+        .sort((left, right) => circleTimeValue(left.start) - circleTimeValue(right.start));
+      return matching[0]
+        ? [{ item, minutes: circleTimeValue(matching[0].start) % (24 * 60) }]
+        : [];
+    }),
+  })).sort((left, right) => right.events.length - left.events.length);
+  const meal = mealKinds[0];
+  if (meal?.events.length >= 3) {
+    const minimum = Math.min(...meal.events.map((event) => event.minutes));
+    const maximum = Math.max(...meal.events.map((event) => event.minutes));
+    claims.push({
+      key: "eating",
+      label: "Eating",
+      sentence: `${meal.label} appeared on ${meal.events.length} of ${days.length} recorded days, between ${weekTimeLabel(minimum)} and ${weekTimeLabel(maximum)}.`,
+      evidence: meal.events.map(({ item, minutes }) => weekEvidenceDay(item, weekTimeLabel(minutes))),
+    });
+  }
+
+  const allocation = new Map();
+  for (const { day } of days) {
+    for (const block of day.timeBlocks) {
+      const group = weekActivityGroup(block.title || block.activity);
+      allocation.set(group, (allocation.get(group) || 0) + minutesBetween(block.start, block.end));
+    }
+  }
+  const allocationRows = [...allocation.entries()].sort((a, b) => b[1] - a[1]);
+  if (allocationRows.length) {
+    const [group, minutes] = allocationRows[0];
+    claims.push({
+      key: "hours",
+      label: "Hours",
+      sentence: `${group} took the most recorded time: ${formatDuration(minutes)}.`,
+      evidence: allocationRows.slice(0, 4).map(([label, value]) => ({
+        label,
+        shortLabel: label,
+        value: formatDuration(value),
+        tone: label === group ? "held" : "plain",
+      })),
+    });
+  }
+
+  const energyDays = days
+    .map((item) => {
+      const values = item.day.checkIns.map((checkIn) => checkIn.energy).filter(Number.isFinite);
+      return values.length
+        ? { item, value: values.reduce((total, value) => total + value, 0) / values.length }
+        : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.value - a.value);
+  if (energyDays.length >= 3) {
+    const highest = energyDays.slice(0, 2);
+    const common = highest[0].item.day.timeBlocks
+      .map((block) => weekActivityGroup(block.title || block.activity))
+      .find((group) => highest[1].item.day.timeBlocks.some(
+        (block) => weekActivityGroup(block.title || block.activity) === group,
+      ));
+    claims.push({
+      key: "best-days",
+      label: "Best days",
+      sentence: common
+        ? `Your two highest-energy recorded days both included ${common.toLowerCase()}.`
+        : "Your two highest-energy recorded days did not share one logged activity.",
+      evidence: energyDays.map(({ item, value }) => weekEvidenceDay(item, value.toFixed(1), highest.some((day) => day.item.key === item.key) ? "held" : "plain")),
+    });
+  } else {
+    claims.push({
+      key: "best-days",
+      label: "Best days",
+      sentence: "There are not enough energy check-ins to say what your best days had in common.",
+      evidence: days.map((item) => weekEvidenceDay(item, "no check-in", "quiet")),
+    });
+  }
+  return claims;
+}
+
+function formatDuration(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  if (!hours) return `${remainder} minutes`;
+  if (!remainder) return `${hours} hour${hours === 1 ? "" : "s"}`;
+  return `${hours} hour${hours === 1 ? "" : "s"} ${remainder} minutes`;
+}
+
 export function buildVisionAnalysis(state, now = new Date()) {
   const summary = summarizeWeek(state, now);
   const vision = state.profile?.vision?.description?.trim() ?? "";

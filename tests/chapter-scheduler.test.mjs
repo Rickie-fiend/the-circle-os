@@ -22,11 +22,18 @@ import {
   previousDateKey,
 } from "../app/os/circle-os-model.js";
 import { validateChapter } from "../scripts/chapter-compiler.mjs";
+import { assertPublishedChapterRouting } from "../app/os/chapters/chapter-registry-check.js";
 import { selectThoughtPrompt } from "../app/os/thought-prompt-model.js";
 
 const sparks = JSON.parse(
   await readFile(
     new URL("../app/os/chapters/published/sparks.json", import.meta.url),
+    "utf8",
+  ),
+);
+const published = JSON.parse(
+  await readFile(
+    new URL("../app/os/chapters/published/index.json", import.meta.url),
     "utf8",
   ),
 );
@@ -70,13 +77,62 @@ function run(target, extra = {}) {
   };
 }
 
-test("a chapter without delivery metadata still has a kind and an app", () => {
+test("known sessions and explicit apps route deliberately", () => {
   assert.equal(chapterKind(chapter("plain")), "check-in");
-  assert.equal(chapterApp(chapter("plain")), "note");
   assert.equal(chapterKind(chapter("h", { session: "habit" })), "lesson");
   assert.equal(chapterApp(chapter("h", { session: "habit" })), "habit");
   assert.equal(chapterKind(chapter("s", { kind: "spark" })), "spark");
   assert.equal(chapterApp(chapter("p", { app: "protocol" })), "protocol");
+});
+
+test("chapterApp routes every declaration to Vision", () => {
+  for (const session of [
+    "declaration-vision",
+    "declaration-mission-statement",
+    "declaration-typical-tuesday",
+    "declaration-dreamline",
+  ]) {
+    assert.equal(chapterApp(chapter(session, { session })), "vision");
+  }
+});
+
+test("every shipped declaration publication opens in Vision", () => {
+  const declarations = published.chapters.filter((chapter) =>
+    chapter.id.startsWith("declare-"),
+  );
+  assert.deepEqual(
+    declarations.map((chapter) => `${chapter.id}@${chapter.version}`).sort(),
+    [
+      "declare-dreamline@1",
+      "declare-mission-statement@1",
+      "declare-typical-tuesday@1",
+      "declare-vision@1",
+    ],
+  );
+  assert.ok(declarations.every((chapter) => chapterApp(chapter) === "vision"));
+});
+
+test("chapterApp rejects an unknown session with no explicit app", () => {
+  assert.throws(
+    () => chapterApp(chapter("unknown", { session: "unknown-session" })),
+    /unknown-session.*has no app routing/,
+  );
+});
+
+test("the chapter compiler rejects an unknown session with no app", () => {
+  assert.throws(
+    () => validateChapter(chapter("compiler-unknown", { session: "unknown-session" })),
+    /unknown-session.*has no app routing/,
+  );
+});
+
+test("the published registry rejects an unknown session with no app", () => {
+  assert.throws(
+    () => assertPublishedChapterRouting([
+      chapter("registry-unknown", { session: "unknown-session" }),
+    ]),
+    /unknown-session.*has no app routing/,
+  );
 });
 
 test("only the highest version of a chapter id can be delivered", () => {

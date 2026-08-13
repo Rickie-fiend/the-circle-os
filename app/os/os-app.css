@@ -8,14 +8,10 @@
   --os-app-box-padding-x: 24px;
   --os-app-box-padding-top: 20px;
   --os-app-box-padding-bottom: 24px;
-  /* Where the first line of Main Body sits, measured from the top of the Body
-   * region. It is the same distance on every App and every Chapter, so a Page
-   * never rearranges itself as it is written into. The value is chosen so that
-   * a Page carrying three lines of Main and one line of Sub fills the default
-   * App Box exactly: the box grows at the fourth line, never before it. */
-  --os-body-top: calc(var(--os-app-box-min-height) * 0.245);
-  /* The gap between the last line of Main and the first line of Sub. */
-  --os-main-sub-gap: 0.55rem;
+  /* Main and Sub are one text block. The block rests one optical pixel above
+   * mathematical centre, and the gap is a ratio of Main's own line box. */
+  --os-body-optical-shift: -1px;
+  --os-main-sub-gap: 0.28lh;
   /* The gap between the last line of Body and the Footer. Fixed: as a Page
    * grows this stays the same, so writing never opens a field of empty colour
    * above the action and never pushes the action out of the frame. */
@@ -30,7 +26,7 @@
    *
    * One token, because three separate rules used to declare these tracks and
    * they drifted apart. */
-  --os-page-rows: auto min-content minmax(0, 1fr) auto;
+  --os-page-rows: auto min-content minmax(min-content, 1fr) auto;
   align-items: flex-start;
   background: var(--c-ink-deep);
   display: flex;
@@ -502,6 +498,11 @@
   margin-top: var(--os-main-sub-gap);
 }
 
+.circle-os .os-info-page-sub:empty {
+  display: none;
+  margin-top: 0;
+}
+
 .circle-os .os-info-page-footer {
   align-self: end;
   min-width: 0;
@@ -531,10 +532,6 @@
 /* A line is white. The App Box already paints Bone and owns that surface, so
    the Page declares nothing: Oscar and the rest take their colour from their
    own box when they arrive. */
-.circle-os .os-line-page .os-info-page-sub {
-  padding-top: var(--os-main-sub-gap);
-}
-
 .circle-os .os-line-sub {
   color: var(--c-charcoal);
   font-size: var(--text-lg);
@@ -3043,16 +3040,9 @@
   background: var(--c-bone);
 }
 
-.circle-os .vision-declaration-page .os-page-body {
-  align-items: start;
-  align-self: start;
-  display: flex;
-  padding-top: var(--os-body-top);
-}
-
 .circle-os .vision-declaration-copy {
-  display: grid;
-  grid-template-rows: auto auto;
+  display: flex;
+  flex-direction: column;
   width: 100%;
 }
 
@@ -3063,7 +3053,6 @@
 .circle-os .vision-declaration-copy > .os-page-sub {
   display: grid;
   gap: 0.7rem;
-  padding-top: var(--os-main-sub-gap);
 }
 
 .circle-os .vision-declaration-field {
@@ -3108,7 +3097,7 @@
   font-weight: 760;
   letter-spacing: -0.055em;
   line-height: 0.98;
-  min-height: 2lh;
+  min-height: 1lh;
 }
 
 .circle-os .vision-declaration-field textarea:focus-visible {
@@ -3134,10 +3123,6 @@
 
 .circle-os .vision-athena-answer .os-page-main {
   justify-content: flex-start;
-}
-
-.circle-os .vision-athena-answer .os-page-sub {
-  padding-top: var(--os-main-sub-gap);
 }
 
 .circle-os .vision-athena-answer textarea {
@@ -3414,6 +3399,58 @@
 
 .circle-os .vision-week-apps .os-app-window {
   border-radius: var(--r-box);
+}
+
+.circle-os .vision-week-claim {
+  background: var(--c-neutral-950);
+  color: var(--c-bone);
+}
+
+.circle-os .vision-week-claim .os-card-label {
+  color: var(--c-orange);
+}
+
+.circle-os .week-claim-evidence {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
+}
+
+.circle-os .week-claim-evidence > span {
+  align-content: start;
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.circle-os .week-claim-evidence i {
+  background: rgb(241 239 232 / 0.28);
+  border-radius: 999px;
+  display: block;
+  height: 6px;
+  width: 100%;
+}
+
+.circle-os .week-claim-evidence .is-held i {
+  background: var(--c-orange);
+}
+
+.circle-os .week-claim-evidence .is-slipped i {
+  background: transparent;
+  border: 1px solid rgb(241 239 232 / 0.42);
+}
+
+.circle-os .week-claim-evidence b,
+.circle-os .week-claim-evidence small {
+  font-size: 0.62rem;
+  font-weight: 650;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.circle-os .week-claim-evidence small {
+  color: rgb(241 239 232 / 0.56);
+  font-weight: 500;
 }
 
 .circle-os .vision-week-cover {
@@ -4669,11 +4706,14 @@
 }
 
 .circle-os .os-page-body {
+  align-items: stretch;
   align-self: stretch;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   grid-row: 3;
-  grid-template-rows: minmax(min-content, 2fr) minmax(0, 1fr);
+  justify-content: center;
   min-width: 0;
+  transform: translateY(var(--os-body-optical-shift));
   width: 100%;
 }
 
@@ -4684,15 +4724,20 @@
 }
 
 .circle-os .os-page-main {
-  align-self: stretch;
+  align-self: start;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .circle-os .os-page-sub {
   align-self: start;
-  padding-top: 0.85rem;
+  padding-top: var(--os-main-sub-gap);
+}
+
+.circle-os .os-page-sub:empty {
+  display: none;
+  padding-top: 0;
 }
 
 .circle-os .os-page-footer {
@@ -4715,27 +4760,19 @@
 .circle-os .os-cover-page .os-session-intro-copy,
 .circle-os .os-info-page .os-inline-checkin-note,
 .circle-os .os-info-page .os-thoughts-form {
-  display: grid;
-  gap: 0;
-  /* Main and Sub each take the room they need. Written as a 2fr to 1fr split,
-   * an empty Sub Body still claimed half of Main's height, so every line
-   * written added one and a half lines of App Box and opened a growing gap
-   * above the action. An absent Sub Body now costs nothing. */
-  grid-template-rows: auto auto;
+  display: flex;
+  flex-direction: column;
   height: auto;
   margin: 0;
   width: 100%;
 }
 
-/* Text is anchored, not centred. A centred body grows in both directions, so
- * writing a second line dragged the first one upward; the box is what moves,
- * downward, and the words stay where they were put. */
 .circle-os .os-info-page .os-page-body,
 .circle-os .os-cover-page .os-page-body {
-  align-items: start;
-  align-self: start;
+  align-items: stretch;
+  align-self: stretch;
   display: flex;
-  padding-top: var(--os-body-top);
+  padding-top: 0;
 }
 
 .circle-os .os-cover-page .os-info-page-main,
@@ -4748,24 +4785,12 @@
   justify-content: flex-start;
 }
 
-/* Main Body always reserves three lines, measured in the text's own line height
- * rather than a token, so the App Box only begins to grow at the fourth.
- *
- * Two was not enough. A Note title is usually two lines but the Thoughts
- * placeholder is sometimes three, so the two Pages of one App Box sat at
- * different heights and the frame resized on the swipe between them. Three
- * covers both, and the reserve is what keeps them identical. */
-.circle-os .os-info-page-main > :first-child {
-  min-height: 3lh;
-}
-
 .circle-os .os-cover-page .os-session-intro-copy .os-info-page-sub,
 .circle-os .os-info-page .os-inline-checkin-note .os-info-page-sub {
-  grid-row: 2;
   margin: 0;
   max-height: none;
   overflow: visible;
-  padding: var(--os-main-sub-gap) 0 0;
+  padding: 0;
   width: 100%;
 }
 
@@ -4797,11 +4822,8 @@
   resize: none;
 }
 
-/* Keep the first writing baseline where the three-line prompt began. A short
-   answer must not collapse the editor and jump down when focus or typing
-   replaces the placeholder; longer answers can still grow naturally. */
 .circle-os .os-info-page .os-thoughts-form textarea.os-regular-thought-input {
-  min-height: 2.94em;
+  min-height: var(--os-page-main-line-height);
 }
 
 .circle-os .os-page-layout.os-chapter-card,
@@ -4817,15 +4839,6 @@
 .circle-os .os-chapter-page .os-page-sub,
 .circle-os .os-chapter-page form {
   min-height: 0;
-}
-
-.circle-os .os-chapter-page .os-page-sub {
-  align-self: end;
-  padding-top: 0.6rem;
-}
-
-.circle-os .os-chapter-page .os-page-body {
-  grid-template-rows: minmax(0, 1fr) auto;
 }
 
 .circle-os .os-chapter-page .os-page-main {
@@ -4986,8 +4999,7 @@
 }
 
 .circle-os .os-chapter-page.os-chapter-card .os-page-body {
-  align-content: center;
-  grid-template-rows: auto auto;
+  justify-content: center;
 }
 
 .circle-os .os-chapter-page.os-chapter-card .os-page-main {
@@ -6066,12 +6078,8 @@
   text-transform: uppercase;
 }
 
-.circle-os .os-habit .os-chapter-idle .os-page-sub {
-  padding-top: 0;
-}
-
 .circle-os .os-habit .os-chapter-idle .os-page-main {
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .circle-os .os-habit .os-chapter-idle .os-primary-mission-copy {
@@ -6092,21 +6100,9 @@
   min-height: 0;
 }
 
-.circle-os .os-habit .os-chapter-idle .os-page-body {
-  padding-top: 0.55rem;
-}
-
 .circle-os .os-habit .os-chapter-idle .os-page-sub {
   align-self: start;
   overflow: visible;
-}
-
-.circle-os .os-habit .os-chapter-idle .os-page-body:has(.os-habit-sub-body:not(.has-items)) {
-  grid-template-rows: minmax(0, 1fr) 0;
-}
-
-.circle-os .os-habit .os-chapter-idle .os-page-body:has(.os-habit-sub-body.has-items) {
-  grid-template-rows: auto auto;
 }
 
 .circle-os .os-habit .os-chapter-idle .os-page-sub:has(.os-habit-sub-body:not(.has-items)) {
@@ -6130,7 +6126,7 @@
 
 .circle-os .os-habit-sub-body.has-items {
   border-top: 1px solid rgb(25 24 19 / 0.72);
-  margin-top: 0.9rem;
+  margin-top: 0;
   padding-top: 0;
 }
 
@@ -6147,11 +6143,6 @@
 }
 
 /* Daily Trust: Habits are a bold repeated practice; Tasks remain a quiet list. */
-.circle-os .os-habit .os-chapter-idle .os-page-body:has(.os-habit-body-session) {
-  grid-template-rows: auto auto;
-  gap: 1.15rem;
-}
-
 .circle-os .os-habit-body-session,
 .circle-os .os-task-body-session {
   min-width: 0;
@@ -6781,10 +6772,6 @@
    dragged Main to twice their own height, which opened 300px of empty colour
    between the name and the first term. Both tracks size to their content, the
    same way Habit does once it has rows. */
-.circle-os .os-protocol .os-page-body {
-  grid-template-rows: auto auto;
-}
-
 .circle-os .os-protocol .os-protocol-identity {
   align-self: start;
   display: grid;

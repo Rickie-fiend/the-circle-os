@@ -15,6 +15,7 @@ import {
   applyProfileResult,
   beginProtocolRun,
   buildVisionAnalysis,
+  buildWeekClaims,
   canBeginProtocolRun,
   completeTask,
   compareVisionDeclarations,
@@ -816,6 +817,35 @@ test("sample Mirror includes the essential weekly evidence", () => {
   assert.ok(summary.moods.length > 0);
   assert.ok(summary.missions.completed > 0);
   assert.match(summary.sentence, /evidence|time|week/i);
+});
+
+test("two recorded days produce one honest silence and no pattern claims", () => {
+  let state = createEmptyState();
+  for (const [dateKey, start] of [["2026-08-12", "10:00"], ["2026-08-13", "12:00"]]) {
+    state = ensureDay(state, dateKey);
+    state.days[dateKey].timeBlocks.push({
+      id: `block-${dateKey}`,
+      start,
+      end: "13:00",
+      activity: "Project",
+      title: "Project",
+      note: "",
+      moments: [],
+      createdAt: `${dateKey}T12:00:00.000Z`,
+    });
+  }
+  const claims = buildWeekClaims(state, new Date("2026-08-14T12:00:00.000Z"));
+  assert.deepEqual(claims.map((claim) => claim.key), ["silence"]);
+  assert.equal(claims[0].sentence, "2 recorded days are not enough to call a weekly pattern.");
+});
+
+test("weekly claims are sentences backed by local evidence", () => {
+  const state = createSampleState(new Date("2026-08-14T12:00:00.000Z"));
+  const claims = buildWeekClaims(state, new Date("2026-08-14T12:00:00.000Z"));
+  assert.ok(claims.length >= 3);
+  assert.ok(claims.every((claim) => /[.!?]$/.test(claim.sentence)));
+  assert.ok(claims.every((claim) => claim.evidence.length > 0));
+  assert.equal(claims.some((claim) => claim.key === "silence"), false);
 });
 
 test("a task finished by accident can be reopened", () => {

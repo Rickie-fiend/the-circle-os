@@ -57,6 +57,8 @@ const KIND_BY_SESSION = Object.freeze({
 
 const APP_BY_SESSION = Object.freeze({
   "check-in": "note",
+  note: "note",
+  reflection: "note",
   thoughts: "thoughts",
   "deep-thoughts": "deep-thoughts",
   habit: "habit",
@@ -65,7 +67,23 @@ const APP_BY_SESSION = Object.freeze({
   vision: "vision",
   "seven-days": "seven-days",
   athena: "athena",
+  "declaration-vision": "vision",
+  "declaration-mission-statement": "vision",
+  "declaration-typical-tuesday": "vision",
+  "declaration-dreamline": "vision",
 });
+
+export const CHAPTER_APPS = Object.freeze([
+  "note",
+  "thoughts",
+  "deep-thoughts",
+  "habit",
+  "protocol",
+  "log",
+  "vision",
+  "seven-days",
+  "athena",
+]);
 
 export function chapterKind(chapter) {
   return CHAPTER_KINDS.includes(chapter?.kind)
@@ -74,7 +92,20 @@ export function chapterKind(chapter) {
 }
 
 export function chapterApp(chapter) {
-  return chapter?.app || APP_BY_SESSION[chapter?.session] || "note";
+  const explicitApp = chapter?.app;
+  if (explicitApp) {
+    if (!CHAPTER_APPS.includes(explicitApp)) {
+      throw new Error(
+        `Chapter ${chapter?.id || "(unknown)"} names unknown app "${explicitApp}".`,
+      );
+    }
+    return explicitApp;
+  }
+  const mappedApp = APP_BY_SESSION[chapter?.session];
+  if (mappedApp) return mappedApp;
+  throw new Error(
+    `Chapter ${chapter?.id || "(unknown)"} session "${chapter?.session || "(missing)"}" has no app routing. Add App frontmatter or a deliberate session mapping.`,
+  );
 }
 
 export function chapterWeight(chapter) {

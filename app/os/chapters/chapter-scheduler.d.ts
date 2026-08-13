@@ -6,6 +6,7 @@ import type {
 } from "./chapter-types";
 
 export const CHAPTER_KINDS: readonly ChapterKind[];
+export const CHAPTER_APPS: readonly AppTarget[];
 export const HOURLY_CHAPTER_BUDGET: number;
 export function hourKey(value?: Date | string): string;
 export function millisecondsUntilNextHour(now?: Date): number;

@@ -1,11 +1,10 @@
 /**
- * Lines: one-beat content that gives and collects nothing.
+ * Lines: small content that gives and collects nothing.
  *
  * A chapter is a journey. It has pages, a run, an immutable version, recorded
  * answers, a cooldown and a completion, and all of that exists because a
- * chapter asks something and the answer has to be kept. A quote asks nothing,
- * so every part of that machinery would be overhead: a one-line joke was
- * costing a four-page structured document to say.
+ * chapter asks something and the answer has to be kept. Quotes stay on one
+ * Page; jokes and facts may reveal a second Page without gaining chapter state.
  *
  * So a line is not a chapter. There is no run, no version and no cooldown. The
  * only rule is that it should not repeat while there is anything else to show,
