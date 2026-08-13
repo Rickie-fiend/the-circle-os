@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  DAILY_CHAPTER_BUDGET,
+  DISMISSED_RETURN_HOURS,
+  HOURLY_CHAPTER_BUDGET,
   DAILY_PROBE_BUDGET,
   chapterApp,
   chapterBlockReason,
@@ -154,23 +155,56 @@ test("a finished chapter stays finished unless it carries a cooldown", () => {
   );
 });
 
-test("a chapter put aside for good is never scheduled again", () => {
+test("a chapter put aside waits a few hours and then comes back", () => {
   const dismissed = chapter("dismissed");
+  const justNow = new Date(NOW.getTime() - 60 * 60 * 1000).toISOString();
+
+  // Not now.
   assert.equal(
-    chapterBlockReason(dismissed, {
-      now: NOW,
-      run: { dismissedAt: "2026-08-10T12:00:00.000Z" },
-    }),
+    chapterBlockReason(dismissed, { now: NOW, run: { dismissedAt: justNow } }),
     "dismissed",
   );
   assert.equal(
-    selectScheduledChapter(
-      [dismissed],
-      run(dismissed, { dismissedAt: "2026-08-10T12:00:00.000Z" }),
-      { now: NOW },
-    ),
+    selectScheduledChapter([dismissed], run(dismissed, { dismissedAt: justNow }), {
+      now: NOW,
+    }),
     undefined,
   );
+
+  // Not never.
+  const earlier = new Date(
+    NOW.getTime() - (DISMISSED_RETURN_HOURS + 1) * 60 * 60 * 1000,
+  ).toISOString();
+  assert.equal(
+    chapterBlockReason(dismissed, { now: NOW, run: { dismissedAt: earlier } }),
+    "",
+  );
+  assert.equal(
+    selectScheduledChapter([dismissed], run(dismissed, { dismissedAt: earlier }), {
+      now: NOW,
+    })?.id,
+    "dismissed",
+  );
+});
+
+test("the hour is what refills, so an empty hour becomes a full one", () => {
+  const deck = Array.from({ length: HOURLY_CHAPTER_BUDGET + 1 }, (_, index) =>
+    chapter(`spark-${index}`),
+  );
+  const thisHour = NOW.toISOString();
+  const runs = Object.assign(
+    {},
+    ...deck.slice(0, HOURLY_CHAPTER_BUDGET).map((item) =>
+      run(item, { status: "completed", startedAt: thisHour, completedAt: thisHour }),
+    ),
+  );
+
+  // The hour is spent.
+  assert.equal(selectScheduledChapter(deck, runs, { now: NOW }), undefined);
+
+  // An hour later the same runs no longer count against it.
+  const nextHour = new Date(NOW.getTime() + 61 * 60 * 1000);
+  assert.ok(selectScheduledChapter(deck, runs, { now: nextHour }));
 });
 
 test("the deck rotates to the chapter touched least recently", () => {
@@ -206,8 +240,8 @@ test("weight outranks rotation, and an unfinished chapter outranks both", () => 
   );
 });
 
-test("the daily budget holds back new chapters but never a started one", () => {
-  const opened = Array.from({ length: DAILY_CHAPTER_BUDGET }, (_, index) =>
+test("the hourly budget holds back new chapters but never a started one", () => {
+  const opened = Array.from({ length: HOURLY_CHAPTER_BUDGET }, (_, index) =>
     chapter(`opened-${index}`),
   );
   const waiting = chapter("waiting");

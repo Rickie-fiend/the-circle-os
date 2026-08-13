@@ -6,7 +6,14 @@ import type {
 } from "./chapter-types";
 
 export const CHAPTER_KINDS: readonly ChapterKind[];
-export const DAILY_CHAPTER_BUDGET: number;
+export const HOURLY_CHAPTER_BUDGET: number;
+export function hourKey(value?: Date | string): string;
+export function millisecondsUntilNextHour(now?: Date): number;
+export function countChaptersStartedInHour(
+  chapters: ChapterDefinition[],
+  runs?: Record<string, ChapterRun>,
+  now?: Date,
+): { hour: number; probesToday: number };
 export const DAILY_PROBE_BUDGET: number;
 
 export type ChapterFacts = {

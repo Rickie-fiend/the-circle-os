@@ -17,10 +17,24 @@ export const CHAPTER_KINDS = Object.freeze([
   "debate",
 ]);
 
-// A spark costs one tap, so several a day stay welcome. A probe asks for real
-// thought, and rarity is what makes it answered instead of skipped.
-export const DAILY_CHAPTER_BUDGET = 3;
+// The budget cycles by the hour, not by the day.
+//
+// Three a day meant a person who opened the app in the morning had nothing for
+// the rest of it, which is the opposite of a reason to come back. Three an hour
+// keeps the door open all day without turning any single sitting into a feed:
+// the fourth chapter in one hour still waits, it just waits minutes rather than
+// until tomorrow.
+//
+// A probe asks for real thought, and rarity is what makes it answered instead
+// of skipped, so it stays rationed by the day.
+export const HOURLY_CHAPTER_BUDGET = 3;
 export const DAILY_PROBE_BUDGET = 1;
+
+// Putting a chapter aside means not now, not never. It comes back after a few
+// hours, which is long enough that dismissing is a real way to clear the Page
+// and short enough that a deck of twenty does not shrink every time one is
+// waved off. It returns ranked last, because it has been seen most recently.
+export const DISMISSED_RETURN_HOURS = 4;
 
 // Among chapters nobody has seen yet, delight goes first. A person who opens the
 // app for the first time in a week should meet a joke, not a survey.
@@ -83,6 +97,27 @@ export function latestChapterVersions(chapters = []) {
 function dayKey(value) {
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? "" : getDateKey(date);
+}
+
+/** The bucket a moment falls in, as plain local hours. */
+export function hourKey(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${getDateKey(date)}T${String(date.getHours()).padStart(2, "0")}`;
+}
+
+/** Milliseconds until the next hour opens, for telling someone when to return. */
+export function millisecondsUntilNextHour(now = new Date()) {
+  const next = new Date(now);
+  next.setMinutes(0, 0, 0);
+  next.setHours(next.getHours() + 1);
+  return next.getTime() - now.getTime();
+}
+
+function hoursBetween(fromValue, now) {
+  const from = new Date(fromValue);
+  if (Number.isNaN(from.getTime())) return Number.POSITIVE_INFINITY;
+  return (now.getTime() - from.getTime()) / 3_600_000;
 }
 
 function daysBetween(fromValue, now) {
@@ -162,7 +197,9 @@ function requirementUnmet(requires, facts) {
 // instead of false so a quiet deck can explain itself.
 export function chapterBlockReason(chapter, { now = new Date(), run, facts = {} } = {}) {
   if (!chapter) return "missing";
-  if (run?.dismissedAt) return "dismissed";
+  if (run?.dismissedAt && hoursBetween(run.dismissedAt, now) < DISMISSED_RETURN_HOURS) {
+    return "dismissed";
+  }
   if (chapter.earliestAt && new Date(chapter.earliestAt) > now) return "not-yet";
   if (chapter.expiresAt && new Date(chapter.expiresAt) <= now) return "expired";
 
@@ -177,8 +214,8 @@ export function chapterBlockReason(chapter, { now = new Date(), run, facts = {} 
   return "";
 }
 
-// A chapter counts against the day once it has been opened, not once it has been
-// finished, so putting three aside does not buy three more.
+// A chapter counts against the hour once it has been opened, not once it has
+// been finished, so putting three aside does not buy three more.
 export function countChaptersStartedOn(chapters, runs = {}, dateKey) {
   const ids = new Set();
   for (const chapter of chapters) {
@@ -194,13 +231,30 @@ export function countChaptersStartedOn(chapters, runs = {}, dateKey) {
   };
 }
 
+/** What has been opened in this hour, and how many probes today. */
+export function countChaptersStartedInHour(chapters, runs = {}, now = new Date()) {
+  const bucket = hourKey(now);
+  const today = getDateKey(now);
+  const inHour = new Set();
+  const probesToday = new Set();
+  for (const chapter of chapters) {
+    const run = runs[`${chapter.id}@${chapter.version}`];
+    const moment = run?.startedAt || run?.updatedAt;
+    if (!moment) continue;
+    if (hourKey(moment) === bucket) inHour.add(chapter.id);
+    if (dayKey(moment) === today && chapterKind(chapter) === "probe") {
+      probesToday.add(chapter.id);
+    }
+  }
+  return { hour: inHour.size, probesToday: probesToday.size };
+}
+
 // Ranked, not filtered by app: the caller asks for the app it is drawing.
 export function scheduleChapters(chapters = [], runs = {}, context = {}) {
   const now = context.now || new Date();
   const facts = context.facts || {};
-  const todayKey = getDateKey(now);
   const candidates = latestChapterVersions(chapters);
-  const spent = countChaptersStartedOn(candidates, runs, todayKey);
+  const spent = countChaptersStartedInHour(candidates, runs, now);
 
   return candidates
     .map((chapter) => {
@@ -218,8 +272,8 @@ export function scheduleChapters(chapters = [], runs = {}, context = {}) {
       // An opened chapter can always be finished. The budget only holds back
       // chapters the person has not started yet.
       if (entry.unfinished) return true;
-      if (spent.total >= DAILY_CHAPTER_BUDGET) return false;
-      return !(entry.kind === "probe" && spent.probes >= DAILY_PROBE_BUDGET);
+      if (spent.hour >= HOURLY_CHAPTER_BUDGET) return false;
+      return !(entry.kind === "probe" && spent.probesToday >= DAILY_PROBE_BUDGET);
     })
     .sort((left, right) => {
       if (left.unfinished !== right.unfinished) return left.unfinished ? -1 : 1;

@@ -92,8 +92,10 @@ import {
 } from "./chapters/chapter-publication-store";
 import {
   chapterFacts,
+  countChaptersStartedInHour,
   countChaptersStartedOn,
-  DAILY_CHAPTER_BUDGET,
+  HOURLY_CHAPTER_BUDGET,
+  millisecondsUntilNextHour,
   selectScheduledChapter,
 } from "./chapters/chapter-scheduler.js";
 import { useChapterPublications } from "./chapters/use-chapter-publications";
@@ -2014,23 +2016,24 @@ export function TodayExperience() {
     }, 900);
   }
 
-  /**
+/**
    * Why the Note label found nothing.
    *
-   * Three a day is the rule, so having spent them is the ordinary answer and
-   * should read as one. Anything else means the deck itself is empty, which is
-   * a different thing and worth saying differently.
+   * Having spent the hour is the ordinary answer and should read as one, with
+   * the wait named in minutes so coming back is a real instruction rather than
+   * a shrug. Anything else means the deck itself is empty, which is a different
+   * thing and worth saying differently.
    */
   function emptyNoteDeckReason() {
-    const startedToday = countChaptersStartedOn(
+    const spent = countChaptersStartedInHour(
       profileSparkChapters,
       state.chapters.runs,
-      dateKey,
     );
-    if (startedToday.total >= DAILY_CHAPTER_BUDGET) {
-      return "That is the three for today. More tomorrow.";
+    if (spent.hour >= HOURLY_CHAPTER_BUDGET) {
+      const minutes = Math.max(1, Math.round(millisecondsUntilNextHour() / 60_000));
+      return `That is three this hour. More in ${minutes} min.`;
     }
-    return "Nothing new to read yet.";
+    return "Nothing new right now. Check back in a bit.";
   }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
