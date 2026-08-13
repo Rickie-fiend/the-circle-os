@@ -77,6 +77,89 @@ unrelated work.
 - Use `apply_patch` for intentional source edits.
 - Do not deploy unless the user asks to publish or keep the live site updated.
 
+## Working alongside another agent
+
+Codex and Claude both change this repository, and Sai brainstorms with both.
+Codex implements. Claude reviews, optimizes, and keeps the design system and
+architecture coherent. Sai decides the product. Neither agent is the other's
+approver: both answer to Sai, and Claude's review is advice with reasons, not
+permission.
+
+### Before starting
+
+- Run `git status --short` and `git log --oneline -10`. Recent commits are the
+  other agent's work and are usually the reason the code looks unfamiliar.
+- Uncommitted changes are not yours. Read them before touching anything nearby.
+  If they conflict with the task, stop and say so rather than resolving it alone.
+- Read the note in `C:\Brain\10 Projects\The Circle\Circle OS` that owns the
+  area you are about to change. If a decision already has a written reason, do
+  not re-decide it silently; argue with it in the report or leave it alone.
+
+### While working
+
+- Stay inside the task. An unrelated improvement noticed on the way belongs in
+  the report, not in the diff.
+- Never `git add -A` or `git commit -a`. Stage the paths you actually changed,
+  so half-finished work from the other agent is not swept into your commit.
+- Do not rewrite history that has been pushed, and do not force-push.
+- Leave the tree clean at the end of a session. Uncommitted work is invisible to
+  the next agent and is the easiest thing in this setup to destroy by accident.
+
+### What to prepare for handoff
+
+Every piece of work ends with these, in the report and in the repository:
+
+1. **The commit range**, so the work can be read as a diff rather than
+   reconstructed from prose.
+2. **What was verified and how.** Name the command and the result. `npm.cmd test`
+   runs the build first, so a passing test run is also a passing build.
+3. **What was not verified**, and why. Silence about a gap reads as a claim.
+4. **Which invariants the change touched** from the list below, and what was
+   measured to show they still hold.
+5. **What remains uncertain or unfinished**, stated plainly enough that the next
+   agent can pick it up without asking Sai to explain it again.
+6. **The Obsidian update** — the reasoning note, the build record in
+   `Circle OS Master Build Plan.md`, and a dated section in that folder's
+   `START HERE.md` when app behaviour or an interaction rule changed.
+
+### Invariants that need measuring, not reasoning
+
+These were each established by finding a real defect. Changing one is allowed;
+changing one by accident is the failure mode.
+
+- **App Box geometry.** Every App Box rests at one shared default size, and
+  `--os-body-top` is tuned to a two-line Main plus one-line Sub budget. After any
+  geometry, type-scale or gap change, measure the rendered heights of Note,
+  Thoughts, Habit and Protocol. They must be equal at rest.
+- **Give versus ask.** Content that gives is unrationed; content that asks stays
+  rationed. A Line never acquires a run, version, cooldown or completion. Before
+  raising any chapter budget, check supply rather than raising the number.
+- **Chapter versions are immutable.** A published `id@version` never changes its
+  content. Change means a new version, because a finished run still renders the
+  pages it was answered on.
+- **Athena's editions accumulate.** A reading is dated and immutable. A morning
+  that says the same thing publishes nothing. Only authored prose becomes an
+  edition; derived observations may stand in on screen but never be published.
+- **Local-first persistence.** The phone keeps evidence until the server
+  acknowledges a revision. A clearing edit writes a dated empty value rather than
+  removing a record, or an older server copy restores it on merge.
+- **No live-AI assumptions.** There is no API access. Anything Athena produces is
+  authored ahead of time and delivered declaratively; the phone only does
+  arithmetic on its own state.
+- **The Circle day starts at 06:00.** Anything recorded before then belongs to
+  the finished day.
+
+### What an agent does not decide alone
+
+- Visual language — colour, typography, brand. Those belong to a Claude Design
+  session with Sai, not to code.
+- The ratios and budgets that shape how the app feels. They are guesses awaiting
+  lived use, and Sai is the only one using the app.
+- Athena's philosophy. The wisdom and practice libraries are Sai's writing.
+  An agent may build the structure and leave the positions empty.
+- Deploying. Do not publish unless Sai asks. He ships to `main` himself with a
+  fast-forward, because he is the only user until v1.
+
 ## Verification and handoff
 
 - Run the smallest useful checks for the change. Prefer `npm.cmd` on Windows.
