@@ -93,6 +93,7 @@ import {
 import {
   chapterFacts,
   countChaptersStartedOn,
+  DAILY_CHAPTER_BUDGET,
   selectScheduledChapter,
 } from "./chapters/chapter-scheduler.js";
 import { useChapterPublications } from "./chapters/use-chapter-publications";
@@ -1176,6 +1177,9 @@ export function TodayExperience() {
   const [checkInAttention, setCheckInAttention] = useState(0);
   const [checkInRefreshing, setCheckInRefreshing] = useState(false);
   const [checkInIdleEntering, setCheckInIdleEntering] = useState(false);
+  // What the Note Page says when its label found nothing to open.
+  const [noteDeckNote, setNoteDeckNote] = useState("");
+  const noteDeckNoteTimer = useRef<number | null>(null);
   const checkInRefreshTimer = useRef<number | null>(null);
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
@@ -1254,6 +1258,9 @@ export function TodayExperience() {
       }
       if (checkInIdleTimer.current) {
         window.clearTimeout(checkInIdleTimer.current);
+      }
+      if (noteDeckNoteTimer.current) {
+        window.clearTimeout(noteDeckNoteTimer.current);
       }
       if (thoughtResetTimer.current) {
         window.clearTimeout(thoughtResetTimer.current);
@@ -1982,10 +1989,20 @@ export function TodayExperience() {
   function revealProfileSpark() {
     if (checkInRefreshing) return;
     setCheckInRefreshing(true);
+    setNoteDeckNote("");
     checkInRefreshTimer.current = window.setTimeout(() => {
       const loaded = refreshProfileSpark();
       setCheckInRefreshing(false);
       if (!loaded) {
+        // A deliberate tap that produces nothing has to say so. Silence here is
+        // indistinguishable from the app being broken, and the usual reason is
+        // the daily budget, which is a decision rather than a fault.
+        setNoteDeckNote(emptyNoteDeckReason());
+        if (noteDeckNoteTimer.current) window.clearTimeout(noteDeckNoteTimer.current);
+        noteDeckNoteTimer.current = window.setTimeout(() => {
+          setNoteDeckNote("");
+          noteDeckNoteTimer.current = null;
+        }, 5000);
         setCheckInIdleEntering(true);
         if (checkInIdleTimer.current) window.clearTimeout(checkInIdleTimer.current);
         checkInIdleTimer.current = window.setTimeout(() => {
@@ -1995,6 +2012,25 @@ export function TodayExperience() {
       }
       checkInRefreshTimer.current = null;
     }, 900);
+  }
+
+  /**
+   * Why the Note label found nothing.
+   *
+   * Three a day is the rule, so having spent them is the ordinary answer and
+   * should read as one. Anything else means the deck itself is empty, which is
+   * a different thing and worth saying differently.
+   */
+  function emptyNoteDeckReason() {
+    const startedToday = countChaptersStartedOn(
+      profileSparkChapters,
+      state.chapters.runs,
+      dateKey,
+    );
+    if (startedToday.total >= DAILY_CHAPTER_BUDGET) {
+      return "That is the three for today. More tomorrow.";
+    }
+    return "Nothing new to read yet.";
   }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
@@ -2297,6 +2333,13 @@ export function TodayExperience() {
             >
               Clear
             </button>
+          ) : undefined
+        }
+        footer={
+          noteDeckNote ? (
+            <p aria-live="polite" className="os-note-deck-note" role="status">
+              {noteDeckNote}
+            </p>
           ) : undefined
         }
       >

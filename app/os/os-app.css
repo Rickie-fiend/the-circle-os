@@ -528,6 +528,16 @@
   max-width: 12ch;
 }
 
+/* The Note Page's Footer is an empty spacer at rest, so a quiet status can sit
+   there without moving a word of what is written above it. */
+.circle-os .os-note-deck-note {
+  color: var(--c-neutral-600);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin: 0;
+  align-self: end;
+}
+
 .circle-os .os-note-clear {
   appearance: none;
   background: transparent;
@@ -860,8 +870,11 @@
 .circle-os .os-creative-button-shell.role-habit .os-row-tick.os-creative-button {
   align-items: center;
   background: rgb(255 248 241 / 0.17);
-  border: 0;
+  /* The same Ink stroke a protocol term carries. Border-box, so the stroke
+     lands inside the tick rather than growing it. */
+  border: 2px solid var(--c-ink);
   border-radius: var(--r-full);
+  box-sizing: border-box;
   display: flex;
   justify-content: center;
   min-height: 0;
@@ -5914,6 +5927,10 @@
   min-height: 0;
 }
 
+.circle-os .os-habit .os-chapter-idle .os-page-body {
+  padding-top: 0.55rem;
+}
+
 .circle-os .os-habit .os-chapter-idle .os-page-sub {
   align-self: start;
   overflow: visible;
@@ -6434,7 +6451,7 @@
 }
 
 .circle-os .os-protocol-second-label {
-  margin-top: 1rem;
+  margin-top: 0.55rem;
 }
 
 /* The block. Raised on a solid leg with no blur, like every other control in
@@ -6566,7 +6583,7 @@
 .circle-os .os-protocol-block.is-draft {
   align-items: center;
   display: flex;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0;
 }
 
 .circle-os .os-protocol-block-edit {
@@ -6606,7 +6623,7 @@
 .circle-os .os-protocol .os-protocol-identity {
   align-self: start;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.55rem;
   justify-content: stretch;
 }
 
@@ -6615,7 +6632,7 @@
 .circle-os .os-protocol .os-protocol-terms {
   align-self: start;
   display: grid;
-  gap: 0.9rem;
+  gap: 0.65rem;
 }
 
 .circle-os .os-protocol-name-edit {
@@ -6671,7 +6688,7 @@
 
 .circle-os .os-protocol-group {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.45rem;
   margin: 0;
 }
 
@@ -6716,7 +6733,7 @@
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
-  margin-top: 0.9rem;
+  margin-top: 0.5rem;
   min-height: var(--touch-min);
   padding: 0;
   text-align: left;
@@ -6727,5 +6744,5 @@
   font-size: var(--text-lg);
   font-weight: 540;
   line-height: 1.4;
-  margin: 0.5rem 0 1rem;
+  margin: 0.35rem 0 0.6rem;
 }
