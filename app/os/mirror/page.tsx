@@ -6,10 +6,15 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type FocusEvent,
   type FormEvent,
 } from "react";
 import {
+  answerSurveyQuestion,
   appSessionIndex,
+  compareVisionDeclarations,
+  declarationVersions,
+  declareLife,
   editProfileSession,
   getDateKey,
   hasReadableProfileCase,
@@ -24,7 +29,11 @@ import {
   useCircleState,
   type TimeBlock,
 } from "../circle-os-shell";
-import { SwipeSession } from "../app-session";
+import {
+  IDLE_PAGE_DWELL_MS,
+  PageLayout,
+  SwipeSession,
+} from "../app-session";
 import { selectPendingAppPublication } from "../chapters/chapter-publication-store";
 import { useChapterPublications } from "../chapters/use-chapter-publications";
 import { buildAthenaReading } from "../athena-memory-model.js";
@@ -123,24 +132,219 @@ function athenaFreshnessLabel(
   return formatUpdated(reading.contentUpdatedAt || fallbackUpdatedAt);
 }
 
-function InlineProfileSessionEditor({
-  label,
-  onCommit,
-  placeholder,
-  value,
-}: {
+type DeclarationKind =
+  | "vision"
+  | "missionStatement"
+  | "typicalTuesday"
+  | "dreamline";
+
+type DeclarationRecord = {
+  id: string;
+  kind: DeclarationKind;
+  content: Record<string, string>;
+  declaredAt: string;
+  supersedesId: string | null;
+  targetAt?: string | null;
+};
+
+const DECLARATION_PAGES: Array<{
+  kind: DeclarationKind;
   label: string;
-  onCommit: (text: string) => void;
-  placeholder: string;
-  value: string;
+  empty: string;
+}> = [
+  { kind: "vision", label: "Vision", empty: "What life is worth wanting?" },
+  {
+    kind: "missionStatement",
+    label: "Mission statement",
+    empty: "How do you intend to live?",
+  },
+  {
+    kind: "typicalTuesday",
+    label: "Typical Tuesday",
+    empty: "What does an ordinary day in that life look like?",
+  },
+  {
+    kind: "dreamline",
+    label: "Dreamline",
+    empty: "What do you want to make real in six months?",
+  },
+];
+
+const DECLARATION_FIELDS: Record<
+  DeclarationKind,
+  Array<{ key: string; label: string }>
+> = {
+  vision: [
+    { key: "life", label: "The life" },
+    { key: "why", label: "Why it is worth wanting" },
+  ],
+  missionStatement: [{ key: "statement", label: "Mission statement" }],
+  typicalTuesday: [
+    { key: "wake", label: "Where you wake" },
+    { key: "morning", label: "Morning" },
+    { key: "day", label: "Day" },
+    { key: "people", label: "People" },
+    { key: "evening", label: "Evening" },
+    { key: "feeling", label: "How it feels" },
+  ],
+  dreamline: [
+    { key: "dream", label: "In six months" },
+    { key: "now", label: "Now" },
+    { key: "tomorrow", label: "Tomorrow" },
+    { key: "dayAfter", label: "The day after" },
+  ],
+};
+
+function declarationDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Undated";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function DeclarationPage({
+  kind,
+  label,
+  empty,
+  record,
+  current,
+  onCommit,
+  onSetup,
+}: {
+  kind: DeclarationKind;
+  label: string;
+  empty: string;
+  record?: DeclarationRecord;
+  current: boolean;
+  onCommit: (content: Record<string, string>) => void;
+  onSetup: () => void;
 }) {
-  const editorRef = useRef<HTMLTextAreaElement | null>(null);
-  const editingRef = useRef(false);
-  const [draft, setDraft] = useState(value);
+  const pageRef = useRef<HTMLDivElement | null>(null);
+  const [draft, setDraft] = useState<Record<string, string>>(
+    () => ({ ...(record?.content || {}) }),
+  );
+  const fields = DECLARATION_FIELDS[kind];
 
   useLayoutEffect(() => {
-    if (!editingRef.current) setDraft(value);
-  }, [value]);
+    for (const editor of pageRef.current?.querySelectorAll("textarea") || []) {
+      editor.style.height = "auto";
+      editor.style.height = `${editor.scrollHeight}px`;
+    }
+  }, [draft]);
+
+  function commitWhenLeaving(event: FocusEvent<HTMLDivElement>) {
+    if (
+      event.relatedTarget instanceof Node &&
+      event.currentTarget.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+    if (!record || !current) return;
+    const clean = Object.fromEntries(
+      fields.map((field) => [field.key, String(draft[field.key] || "").trim()]),
+    );
+    if (fields.some((field) => !clean[field.key])) {
+      setDraft({ ...record.content });
+      return;
+    }
+    const changed = fields.some(
+      (field) => clean[field.key] !== String(record.content[field.key] || "").trim(),
+    );
+    if (changed) onCommit(clean);
+  }
+
+  if (!record) {
+    return (
+      <PageLayout
+        className="vision-declaration-page is-empty"
+        footer={
+          <button className="vision-declaration-setup" onClick={onSetup} type="button">
+            Set up
+          </button>
+        }
+        headerLeft={<p className="os-card-label">{label}</p>}
+        theme="light"
+      >
+        <div className="os-page-main">
+          <h2>{empty}</h2>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const fieldViews = fields.map((field, index) => {
+    const value = draft[field.key] || "";
+    if (!current) {
+      return (
+        <div className="vision-declaration-field" key={field.key}>
+          {index ? <span>{field.label}</span> : null}
+          <p>{value}</p>
+        </div>
+      );
+    }
+    return (
+      <label className="vision-declaration-field" key={field.key}>
+        {index ? <span>{field.label}</span> : null}
+        <textarea
+          aria-label={`Edit ${label}: ${field.label}`}
+          maxLength={1600}
+          onChange={(event) =>
+            setDraft((value) => ({
+              ...value,
+              [field.key]: event.currentTarget.value,
+            }))
+          }
+          rows={1}
+          value={value}
+        />
+      </label>
+    );
+  });
+
+  return (
+    <PageLayout
+      className={`vision-declaration-page${current ? " is-current" : " is-earlier"}`}
+      footer={
+        <span className="vision-declaration-date">
+          {current ? "Declared" : "Earlier"} {declarationDate(record.declaredAt)}
+        </span>
+      }
+      headerLeft={
+        <p className="os-card-label">
+          {label}{current ? "" : " · Earlier"}
+        </p>
+      }
+      theme="light"
+    >
+      <div onBlurCapture={commitWhenLeaving} ref={pageRef} className="vision-declaration-copy">
+        <div className="os-page-main">{fieldViews[0]}</div>
+        {fieldViews.length > 1 ? (
+          <div className="os-page-sub">{fieldViews.slice(1)}</div>
+        ) : null}
+      </div>
+    </PageLayout>
+  );
+}
+
+function AthenaAnswerPage({
+  answer,
+  label,
+  onSend,
+  prompt,
+  theme = "light",
+}: {
+  answer: string;
+  label: string;
+  onSend: (answer: string) => void;
+  prompt: { id: string; text: string; target: string };
+  theme?: "light" | "orange";
+}) {
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
+  const [draft, setDraft] = useState(answer);
+  const [sent, setSent] = useState(Boolean(answer));
 
   useLayoutEffect(() => {
     const editor = editorRef.current;
@@ -150,29 +354,42 @@ function InlineProfileSessionEditor({
   }, [draft]);
 
   return (
-    <textarea
-      aria-label={`Edit ${label}`}
-      className="profile-session-copy profile-session-inline"
-      maxLength={1600}
-      placeholder={placeholder}
-      ref={editorRef}
-      rows={1}
-      value={draft}
-      onBlur={() => {
-        editingRef.current = false;
-        const next = draft.trim();
-        if (!next) {
-          setDraft(value);
-          return;
-        }
-        setDraft(next);
-        if (next !== value) onCommit(next);
-      }}
-      onChange={(event) => setDraft(event.currentTarget.value)}
-      onFocus={() => {
-        editingRef.current = true;
-      }}
-    />
+    <PageLayout
+      className="vision-athena-answer"
+      footer={
+        <button
+          className="vision-athena-send"
+          disabled={!draft.trim()}
+          onClick={() => {
+            onSend(draft);
+            setSent(true);
+          }}
+          type="button"
+        >
+          {sent && draft.trim() === answer.trim() ? "Sent" : "Send"}
+        </button>
+      }
+      headerLeft={<p className="os-card-label">{label}</p>}
+      theme={theme}
+    >
+      <div className="os-page-main">
+        <h2>{prompt.text}</h2>
+      </div>
+      <div className="os-page-sub">
+        <textarea
+          aria-label="Answer Athena"
+          maxLength={1600}
+          onChange={(event) => {
+            setDraft(event.currentTarget.value);
+            setSent(false);
+          }}
+          placeholder="Write what comes up..."
+          ref={editorRef}
+          rows={2}
+          value={draft}
+        />
+      </div>
+    </PageLayout>
   );
 }
 
@@ -237,7 +454,6 @@ export default function CircleOSMirror() {
   const [draft, setDraft] = useState({
     name: "",
     age: "",
-    description: "",
   });
   const summary = summarizeWeek(state);
   const profileCase = state.profile.profileCase;
@@ -319,10 +535,16 @@ export default function CircleOSMirror() {
     athenaReading,
     profileCase.updatedAt,
   );
-  const gapReading = gapVisualReading(
-    profileCase.sessions.gap.text,
-    loggedPastDays,
-  );
+  const declarationComparison = compareVisionDeclarations(state);
+  const gapReading =
+    declarationComparison.different === null
+      ? gapVisualReading(profileCase.sessions.gap.text, loggedPastDays)
+      : {
+          mode: declarationComparison.different
+            ? ("far" as GapVisualMode)
+            : ("close" as GapVisualMode),
+          label: declarationComparison.text,
+        };
   const weekJourneyVersion = [
     "week-observation-cover-v1",
     loggedPastDays,
@@ -336,10 +558,40 @@ export default function CircleOSMirror() {
     state.evidence.acknowledgedRevision,
     profileCase.status,
   ].join("|");
+  const declarationPageRecords = DECLARATION_PAGES.reduce<
+    Array<
+      (typeof DECLARATION_PAGES)[number] & {
+        record?: DeclarationRecord;
+        current: boolean;
+      }
+    >
+  >((pages, page) => {
+    const versions = declarationVersions(state, page.kind) as DeclarationRecord[];
+    if (versions.length) {
+      pages.push(
+        ...versions.map((record, index) => ({
+          ...page,
+          record,
+          current: index === 0,
+        })),
+      );
+    } else {
+      pages.push({ ...page, current: true });
+    }
+    return pages;
+  }, []);
+  const athenaPrompt = profileCase.deepThoughtPrompt;
+  const athenaAnswer = athenaPrompt
+    ? profileCase.survey.answers.find(
+        (answer) => answer.questionId === athenaPrompt.id,
+      )?.answer || ""
+    : "";
+  const lifePageCount = declarationPageRecords.length + (athenaPrompt ? 1 : 0);
   const lifeJourneyVersion = [
-    "vision-cover-v1",
-    profileCase.sessions.typicalTuesday.updatedAt,
-    profileCase.sessions.missionStatement.updatedAt,
+    "declarations-v1",
+    ...declarationPageRecords.map((page) => page.record?.id || `${page.kind}-empty`),
+    athenaPrompt?.id || "no-question",
+    athenaAnswer,
   ].join("|");
   const visibleLifeApp = appSessionIndex(
     state,
@@ -386,11 +638,10 @@ export default function CircleOSMirror() {
   const setupComplete = Boolean(
     ready &&
       state.profile.name &&
-      state.profile.age &&
-      state.profile.vision.completedAt,
+      state.profile.age,
   );
 
-  async function saveFirstVision(event: FormEvent<HTMLFormElement>) {
+  async function saveFirstProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const recoveryCode = draft.name.trim();
     if (/^p_[A-Za-z0-9_-]{16}$/.test(recoveryCode)) {
@@ -411,8 +662,8 @@ export default function CircleOSMirror() {
       return;
     }
     const age = Number(draft.age);
-    if (!draft.name.trim() || !draft.description.trim()) {
-      setError("Please answer all three.");
+    if (!draft.name.trim()) {
+      setError("Please add your name.");
       return;
     }
     if (!Number.isInteger(age) || age < 1 || age > 120) {
@@ -423,32 +674,15 @@ export default function CircleOSMirror() {
       ...profile,
       name: draft.name.trim(),
       age,
-      vision: {
-        description: draft.description.trim(),
-        preview: draft.description.trim(),
-        understanding: "",
-        gap: "",
-        completedAt: new Date().toISOString(),
-      },
       profileCase: {
         ...profile.profileCase,
         status: "waiting",
-        sessions: {
-          ...profile.profileCase.sessions,
-          typicalTuesday: {
-            ...profile.profileCase.sessions.typicalTuesday,
-            text: draft.description.trim(),
-            confidence: 0.5,
-            userEdited: true,
-            updatedAt: new Date().toISOString(),
-          },
-        },
         survey: {
           ...profile.profileCase.survey,
           nextQuestion: null,
         },
       },
-    }), "first-vision");
+    }), "profile-created");
     setError("");
     router.push("/os");
   }
@@ -480,11 +714,21 @@ export default function CircleOSMirror() {
     setSessionDraft("");
   }
 
-  function commitProfileSession(key: string, nextText: string) {
+  function commitDeclaration(
+    kind: DeclarationKind,
+    content: Record<string, string>,
+  ) {
+    updateState((current) => declareLife(current, kind, content));
+  }
+
+  function sendAthenaAnswer(answer: string) {
+    if (!athenaPrompt) return;
     updateState((current) =>
-      queueProfileUpdate(
-        editProfileSession(current, key, nextText),
-        "profile-edit",
+      answerSurveyQuestion(
+        current,
+        athenaPrompt,
+        answer,
+        "deep-thought",
       ),
     );
   }
@@ -495,41 +739,6 @@ export default function CircleOSMirror() {
     updateState((current) => queueSuggestion(current, suggestionDraft));
     setSuggestionDraft("");
     setSuggestionSaved(true);
-  }
-
-  function profileSession(
-    key: string,
-    label: string,
-    options: {
-      feature?: boolean;
-      locked?: boolean;
-      placeholder?: string;
-    } = {},
-  ) {
-    const session = profileCase.sessions[key];
-    return (
-      <article
-        key={key}
-        className={options.feature ? "profile-session feature" : "profile-session"}
-      >
-        <div className="profile-session-head">
-          <p className="os-card-label">{label}</p>
-        </div>
-        {options.locked ? (
-          <p className="profile-session-copy">
-            Answer {Math.max(0, 6 - profileCase.survey.answers.length)} more
-            check-ins to build this.
-          </p>
-        ) : (
-          <InlineProfileSessionEditor
-            label={label}
-            onCommit={(text) => commitProfileSession(key, text)}
-            placeholder={options.placeholder || "Tap to write."}
-            value={session.text}
-          />
-        )}
-      </article>
-    );
   }
 
   function profileArticleSection(key: string, label: string) {
@@ -615,9 +824,9 @@ export default function CircleOSMirror() {
     return (
         <main className="os-mirror os-setup">
           <section className="vision-survey" aria-labelledby="vision-start">
-            <p className="os-eyebrow">Vision</p>
-            <h1 id="vision-start">Describe the life you want.</h1>
-            <form className="profile-form" onSubmit={saveFirstVision}>
+            <p className="os-eyebrow">Circle OS</p>
+            <h1 id="vision-start">Start with you.</h1>
+            <form className="profile-form" onSubmit={saveFirstProfile}>
               <label>
                 <span>Name</span>
                 <input
@@ -648,24 +857,6 @@ export default function CircleOSMirror() {
                   }
                 />
               </label>
-              <label>
-                <span>Describe your typical Tuesday</span>
-                <textarea
-                  rows={6}
-                  value={draft.description}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      description: event.target.value,
-                    }))
-                  }
-                />
-                <small>
-                  Imagine a normal day in the life you want. Where are you?
-                  What do you do? Who is with you? How does it feel? One
-                  paragraph is enough.
-                </small>
-              </label>
               {error ? <p className="vision-error">{error}</p> : null}
               <button type="submit" disabled={recovering}>
                 {recovering ? "Recovering..." : "Begin"}
@@ -695,11 +886,15 @@ export default function CircleOSMirror() {
           ) : (
           <SwipeSession
             attentionKey={`vision-life:${lifeJourneyVersion}`}
-            availableIndices={[0, 1, 2]}
+            availableIndices={Array.from(
+              { length: lifePageCount },
+              (_, index) => index,
+            )}
             className="vision-life-apps"
             index={visibleLifeApp}
             label="The life you want apps"
-            maxIndex={2}
+            maxIndex={Math.max(0, lifePageCount - 1)}
+            rotateMs={IDLE_PAGE_DWELL_MS}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -711,18 +906,27 @@ export default function CircleOSMirror() {
               )
             }
           >
-            <div className="vision-life-cover">
-              <p className="os-card-label">Vision</p>
-              <h2>The life you want.</h2>
-              <span>Swipe to see</span>
-            </div>
-            {profileSession("typicalTuesday", "Typical Tuesday", {
-              feature: true,
-            })}
-            {profileSession("missionStatement", "Mission Statement", {
-              feature: true,
-              placeholder: "Tap to write your mission.",
-            })}
+            {declarationPageRecords.map((page) => (
+              <DeclarationPage
+                current={page.current}
+                empty={page.empty}
+                key={page.record?.id || `${page.kind}-empty`}
+                kind={page.kind}
+                label={page.label}
+                onCommit={(content) => commitDeclaration(page.kind, content)}
+                onSetup={() => router.push(`/os?declare=${page.kind}`)}
+                record={page.record}
+              />
+            ))}
+            {athenaPrompt ? (
+              <AthenaAnswerPage
+                answer={athenaAnswer}
+                key={`vision-question-${athenaPrompt.id}`}
+                label="Athena asks"
+                onSend={sendAthenaAnswer}
+                prompt={athenaPrompt}
+              />
+            ) : null}
           </SwipeSession>
           )}
         </section>
@@ -935,13 +1139,25 @@ export default function CircleOSMirror() {
             attentionKey={`between:${athenaReading.latestEditionId || betweenJourneyVersion}`}
             availableIndices={
               profileReady
-                ? [0, 1, 2, 3, 4, ...(editions.length > 1 ? [5] : [])]
+                ? [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    ...(editions.length > 1 ? [5] : []),
+                    ...(athenaPrompt ? [editions.length > 1 ? 6 : 5] : []),
+                  ]
                 : [0, 1]
             }
             className="vision-between-apps athena-reader-session"
             index={visibleBetweenApp}
             label="The space between apps"
-            maxIndex={profileReady ? (editions.length > 1 ? 5 : 4) : 1}
+            maxIndex={
+              profileReady
+                ? (editions.length > 1 ? 5 : 4) + (athenaPrompt ? 1 : 0)
+                : 1
+            }
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -1037,6 +1253,16 @@ export default function CircleOSMirror() {
                   ))}
                 </div>
               </article>
+            ) : null}
+            {athenaPrompt ? (
+              <AthenaAnswerPage
+                answer={athenaAnswer}
+                key={`athena-question-${athenaPrompt.id}`}
+                label="Athena asks"
+                onSend={sendAthenaAnswer}
+                prompt={athenaPrompt}
+                theme="orange"
+              />
             ) : null}
           </SwipeSession>
           )}

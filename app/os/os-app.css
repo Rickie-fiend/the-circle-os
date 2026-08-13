@@ -3043,6 +3043,150 @@
   background: var(--c-bone);
 }
 
+.circle-os .vision-declaration-page .os-page-body {
+  align-items: start;
+  align-self: start;
+  display: flex;
+  padding-top: var(--os-body-top);
+}
+
+.circle-os .vision-declaration-copy {
+  display: grid;
+  grid-template-rows: auto auto;
+  width: 100%;
+}
+
+.circle-os .vision-declaration-copy > .os-page-main {
+  justify-content: flex-start;
+}
+
+.circle-os .vision-declaration-copy > .os-page-sub {
+  display: grid;
+  gap: 0.7rem;
+  padding-top: var(--os-main-sub-gap);
+}
+
+.circle-os .vision-declaration-field {
+  display: grid;
+  gap: 0.18rem;
+  margin: 0;
+  min-width: 0;
+}
+
+.circle-os .vision-declaration-field > span {
+  color: var(--c-neutral-600);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.circle-os .vision-declaration-field textarea,
+.circle-os .vision-declaration-field p {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--c-ink);
+  field-sizing: content;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: var(--text-lg);
+  font-weight: 560;
+  letter-spacing: -0.018em;
+  line-height: 1.42;
+  margin: 0;
+  max-height: none;
+  min-height: 1.42em;
+  overflow: hidden;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+
+.circle-os .vision-declaration-copy > .os-page-main .vision-declaration-field textarea,
+.circle-os .vision-declaration-copy > .os-page-main .vision-declaration-field p {
+  font-size: clamp(2rem, 8vw, 2.7rem);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  min-height: 2lh;
+}
+
+.circle-os .vision-declaration-field textarea:focus-visible {
+  outline: 0;
+}
+
+.circle-os .vision-declaration-date {
+  color: var(--c-neutral-600);
+  font-size: var(--text-xs);
+}
+
+.circle-os .vision-declaration-setup {
+  background: var(--c-ink);
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--c-bone);
+  font: inherit;
+  font-weight: 700;
+  min-height: 52px;
+  padding: 0 1rem;
+  width: 100%;
+}
+
+.circle-os .vision-athena-answer .os-page-main {
+  justify-content: flex-start;
+}
+
+.circle-os .vision-athena-answer .os-page-sub {
+  padding-top: var(--os-main-sub-gap);
+}
+
+.circle-os .vision-athena-answer textarea {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  field-sizing: content;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  min-height: 2.9em;
+  overflow: hidden;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+
+.circle-os .vision-athena-answer textarea:focus-visible {
+  outline: 0;
+}
+
+.circle-os .vision-athena-send {
+  background: var(--c-ink);
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--c-bone);
+  font: inherit;
+  font-weight: 700;
+  min-height: 52px;
+  width: 100%;
+}
+
+.circle-os .vision-athena-answer.theme-orange .vision-athena-send {
+  background: var(--c-bone);
+  color: var(--c-ink);
+}
+
+.circle-os .vision-athena-send:disabled {
+  opacity: 0.4;
+}
+
+.circle-os .os-declaration-setup-session {
+  background: var(--c-bone);
+  border: 1px solid rgb(25 24 19 / 0.05);
+  border-radius: var(--r-box);
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.08);
+}
+
 .circle-os .vision-life-apps .profile-session.feature {
   box-sizing: border-box;
   min-height: 100%;

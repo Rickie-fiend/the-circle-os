@@ -17,10 +17,14 @@ import {
   buildVisionAnalysis,
   canBeginProtocolRun,
   completeTask,
+  compareVisionDeclarations,
   connectLocalAi,
   createEmptyState,
   createSampleState,
+  currentDeclaration,
   dayRecord,
+  declarationVersions,
+  declareLife,
   discardEmptyHabit,
   discardEmptyProtocolItem,
   discardEmptyTask,
@@ -209,6 +213,139 @@ test("keeps old device data and simplifies it into one Tuesday paragraph", () =>
   assert.equal(
     state.profile.vision.completedAt,
     "2026-07-29T00:00:00.000Z",
+  );
+  assert.equal(
+    state.profile.profileCase.sessions.typicalTuesday.text,
+    "",
+    "normalization must not copy a legacy vision into Athena's Typical Tuesday",
+  );
+  assert.deepEqual(
+    state.declarations.records,
+    {},
+    "Sai's legacy writing stays where it is until he chooses to declare it",
+  );
+});
+
+test("declarations append, date, and supersede without changing the old version", () => {
+  let state = createEmptyState();
+  state = declareLife(
+    state,
+    "vision",
+    {
+      life: "A home where people make useful things together.",
+      why: "It makes work and friendship part of one life.",
+    },
+    { id: "vision-one", declaredAt: "2026-08-01T09:00:00.000Z" },
+  );
+  const firstSnapshot = structuredClone(state.declarations.records["vision-one"]);
+  state = declareLife(
+    state,
+    "vision",
+    {
+      life: "A quiet life near the sea with room to write.",
+      why: "Ease and attention matter more now.",
+    },
+    { id: "vision-two", declaredAt: "2026-08-14T09:00:00.000Z" },
+  );
+
+  assert.equal(currentDeclaration(state, "vision").id, "vision-two");
+  assert.equal(
+    state.declarations.records["vision-two"].supersedesId,
+    "vision-one",
+  );
+  assert.deepEqual(state.declarations.records["vision-one"], firstSnapshot);
+  assert.deepEqual(
+    declarationVersions(state, "vision").map((record) => record.id),
+    ["vision-two", "vision-one"],
+  );
+});
+
+test("two deliberately different declarations stay different in the app model", () => {
+  let state = createEmptyState();
+  state = declareLife(
+    state,
+    "vision",
+    {
+      life: "Build a generous creative home with friends.",
+      why: "Shared work and close relationships feel worth protecting.",
+    },
+    { id: "different-vision", declaredAt: "2026-08-14T08:00:00.000Z" },
+  );
+  state = declareLife(
+    state,
+    "typicalTuesday",
+    {
+      wake: "Wake alone in a city hotel.",
+      morning: "Trade markets before breakfast.",
+      day: "Spend the day in meetings and airports.",
+      people: "Meet clients I do not know yet.",
+      evening: "Eat late while travelling.",
+      feeling: "Fast and restless.",
+    },
+    { id: "different-tuesday", declaredAt: "2026-08-14T08:05:00.000Z" },
+  );
+
+  assert.deepEqual(compareVisionDeclarations(state), {
+    mode: "different",
+    different: true,
+    text: "Your Vision and Typical Tuesday say different things.",
+  });
+});
+
+test("a dreamline sends its now step to Today and a new version replaces the open step", () => {
+  let state = createEmptyState();
+  state = declareLife(
+    state,
+    "dreamline",
+    {
+      dream: "Publish the first small book.",
+      now: "Write the first page.",
+      tomorrow: "Read it out loud.",
+      dayAfter: "Send it to one friend.",
+    },
+    { id: "dream-one", declaredAt: "2026-08-14T09:00:00.000Z" },
+  );
+  assert.equal(state.tasks.items["dreamline-now-dream-one"].text, "Write the first page.");
+  assert.equal(state.tasks.items["dreamline-now-dream-one"].status, "open");
+  assert.equal(
+    state.declarations.records["dream-one"].targetAt,
+    "2027-02-14T09:00:00.000Z",
+  );
+
+  state = declareLife(
+    state,
+    "dreamline",
+    {
+      dream: "Print the finished small book.",
+      now: "Choose the final ten pages.",
+      tomorrow: "Ask a printer for a quote.",
+      dayAfter: "Make the cover list.",
+    },
+    { id: "dream-two", declaredAt: "2026-08-15T09:00:00.000Z" },
+  );
+  assert.equal(state.tasks.items["dreamline-now-dream-one"].status, "archived");
+  assert.equal(state.tasks.items["dreamline-now-dream-two"].status, "open");
+  assert.equal(state.tasks.items["dreamline-now-dream-two"].sourceDeclarationId, "dream-two");
+});
+
+test("declaration versions from two devices merge as an immutable union", () => {
+  const base = createEmptyState();
+  const remote = declareLife(
+    base,
+    "missionStatement",
+    { statement: "Make useful things with care." },
+    { id: "mission-remote", declaredAt: "2026-08-13T09:00:00.000Z" },
+  );
+  const local = declareLife(
+    base,
+    "missionStatement",
+    { statement: "Be present and make useful things." },
+    { id: "mission-local", declaredAt: "2026-08-14T09:00:00.000Z" },
+  );
+  const merged = mergeServerState(local, remote);
+  assert.deepEqual(
+    declarationVersions(merged, "missionStatement").map((record) => record.id),
+    ["mission-local", "mission-remote"],
   );
 });
 

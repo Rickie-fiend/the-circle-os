@@ -14,6 +14,8 @@ import { fileURLToPath } from "node:url";
 import {
   PROFILE_SESSION_KEYS,
   createDay,
+  declarationText,
+  declarationVersions,
   getDateKey,
   normalizeState,
 } from "../app/os/circle-os-model.js";
@@ -94,7 +96,13 @@ function mergeAnswers(serverAnswers = [], phoneAnswers = []) {
 }
 
 function recordTime(value) {
-  return value?.updatedAt || value?.completedAt || value?.createdAt || "";
+  return (
+    value?.updatedAt ||
+    value?.completedAt ||
+    value?.createdAt ||
+    value?.declaredAt ||
+    ""
+  );
 }
 
 function mergeRecordArrays(serverRecords = [], phoneRecords = [], key = "id") {
@@ -253,6 +261,12 @@ export function mergeClientState(serverValue, phoneValue) {
     },
     tasks: {
       items: mergeUpdatedRecords(server.tasks.items, phone.tasks.items),
+    },
+    declarations: {
+      records: mergeUpdatedRecords(
+        server.declarations.records,
+        phone.declarations.records,
+      ),
     },
     // A protocol is a container of time and its terms are locked, so a run
     // merges whole by updatedAt. Without this the server copy would win by
@@ -488,6 +502,31 @@ function formatAllAnswers(state) {
   );
 }
 
+const declarationLabels = {
+  vision: "Vision",
+  missionStatement: "Mission Statement",
+  typicalTuesday: "Typical Tuesday",
+  dreamline: "Dreamline",
+};
+
+function formatDeclarations(state) {
+  const blocks = Object.keys(declarationLabels).flatMap((kind) =>
+    declarationVersions(state, kind).map((record, index) => {
+      const status = index === 0 ? "Current" : "Earlier version";
+      const supersedes = record.supersedesId
+        ? `; supersedes: ${record.supersedesId}`
+        : "";
+      const target = record.targetAt ? `; target: ${record.targetAt}` : "";
+      return `### ${declarationLabels[kind]} - ${status}
+
+<!-- declaration-id: ${record.id}; declared: ${record.declaredAt}${supersedes}${target} -->
+
+${markdownText(declarationText(record), "No declaration yet.")}`;
+    }),
+  );
+  return blocks.length ? blocks.join("\n\n") : "No declarations yet.";
+}
+
 export function serializeProfileMarkdown(
   value,
   {
@@ -541,6 +580,10 @@ analysis_pending: ${Boolean(analysisPending)}
 Age: ${profile.age ?? "Not added"}
 
 ${sessionBlocks}
+
+## Declarations
+
+${formatDeclarations(state)}
 
 ## Today's Mission
 
@@ -1076,10 +1119,9 @@ export function createCircleAiServer(options = {}) {
         const phoneState = normalizeState(input.state);
         if (
           !phoneState.profile.name ||
-          !phoneState.profile.age ||
-          !phoneState.profile.vision.description
+          !phoneState.profile.age
         ) {
-          json(response, 400, { error: "Finish the first Vision first." }, origin);
+          json(response, 400, { error: "Finish the first step first." }, origin);
           return;
         }
 

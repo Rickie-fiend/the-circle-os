@@ -19,6 +19,7 @@ import {
 import {
   answerSurveyQuestion,
   createEmptyState,
+  declareLife,
   queueProfileUpdate,
   queueSuggestion,
 } from "../app/os/circle-os-model.js";
@@ -225,6 +226,32 @@ test("chapter answers remain readable in the Obsidian profile", () => {
 
   assert.match(markdown, /Who are you becoming\?/);
   assert.match(markdown, /A reader/);
+});
+
+test("dated declaration versions remain readable in the Obsidian profile", () => {
+  let state = firstVision();
+  state = declareLife(
+    state,
+    "vision",
+    { life: "A small creative house by the water.", why: "People can gather there." },
+    { id: "vision-one", declaredAt: "2026-08-14T08:00:00.000Z" },
+  );
+  state = declareLife(
+    state,
+    "vision",
+    { life: "A generous creative home in the city.", why: "Friends can make things together." },
+    { id: "vision-two", declaredAt: "2026-08-14T09:00:00.000Z" },
+  );
+
+  const markdown = serializeProfileMarkdown(state, {
+    profileId: "p_1234567890abcdef",
+  });
+
+  assert.match(markdown, /## Declarations/);
+  assert.match(markdown, /### Vision - Current/);
+  assert.match(markdown, /declaration-id: vision-two; declared: 2026-08-14T09:00:00.000Z; supersedes: vision-one/);
+  assert.match(markdown, /### Vision - Earlier version/);
+  assert.match(markdown, /A small creative house by the water\./);
 });
 
 test("Vision reads Codex output directly from Profile.md", () => {

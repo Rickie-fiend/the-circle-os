@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type FormEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -28,7 +29,9 @@ import {
   beginProtocolRun,
   canBeginProtocolRun,
   completeTask,
+  currentDeclaration,
   dayRecord,
+  declareLife,
   discardEmptyProtocolItem,
   endProtocolRun,
   protocolToday,
@@ -187,6 +190,55 @@ type CheckIn = {
 };
 
 const ADMIN_THOUGHT = "admin";
+
+const DECLARATION_SETUP = [
+  { kind: "vision", chapterId: "declare-vision" },
+  { kind: "missionStatement", chapterId: "declare-mission-statement" },
+  { kind: "typicalTuesday", chapterId: "declare-typical-tuesday" },
+  { kind: "dreamline", chapterId: "declare-dreamline" },
+] as const;
+
+type DeclarationKind = (typeof DECLARATION_SETUP)[number]["kind"];
+
+function subscribeToLocation() {
+  return () => undefined;
+}
+
+function browserLocationSearch() {
+  return window.location.search;
+}
+
+function serverLocationSearch() {
+  return "";
+}
+
+function declarationFromRun(kind: DeclarationKind, run: ChapterRun) {
+  if (kind === "vision") {
+    return {
+      life: chapterAnswerText(run, "vision-life"),
+      why: chapterAnswerText(run, "vision-why"),
+    };
+  }
+  if (kind === "missionStatement") {
+    return { statement: chapterAnswerText(run, "mission-statement") };
+  }
+  if (kind === "typicalTuesday") {
+    return {
+      wake: chapterAnswerText(run, "tuesday-wake"),
+      morning: chapterAnswerText(run, "tuesday-morning"),
+      day: chapterAnswerText(run, "tuesday-day"),
+      people: chapterAnswerText(run, "tuesday-people"),
+      evening: chapterAnswerText(run, "tuesday-evening"),
+      feeling: chapterAnswerText(run, "tuesday-feeling"),
+    };
+  }
+  return {
+    dream: chapterAnswerText(run, "dreamline-dream"),
+    now: chapterAnswerText(run, "dreamline-now"),
+    tomorrow: chapterAnswerText(run, "dreamline-tomorrow"),
+    dayAfter: chapterAnswerText(run, "dreamline-day-after"),
+  };
+}
 
 type Mission = {
   text: string;
@@ -466,6 +518,19 @@ export type CircleState = {
       }
     >;
   };
+  declarations: {
+    records: Record<
+      string,
+      {
+        id: string;
+        kind: "vision" | "missionStatement" | "typicalTuesday" | "dreamline";
+        content: Record<string, string>;
+        declaredAt: string;
+        supersedesId: string | null;
+        targetAt?: string | null;
+      }
+    >;
+  };
   evidence: {
     localRevision: number;
     acknowledgedRevision: number;
@@ -555,6 +620,7 @@ function serverSignature(state: CircleState) {
     chapters: payload.chapters,
     habits: payload.habits,
     tasks: payload.tasks,
+    declarations: payload.declarations,
     evidence: payload.evidence,
     outbox: payload.outbox,
   });
@@ -681,7 +747,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!ready || !state.ai.baseUrl) return;
-    if (!state.profile.vision.completedAt) return;
+    if (!state.profile.name || !state.profile.age) return;
     const urgent = state.outbox.length > 0;
     const needsFirstProfile = !state.ai.profileId || !state.ai.token;
     if (!needsFirstProfile && !urgent) return;
@@ -1298,8 +1364,7 @@ export function TodayExperience() {
     if (
       ready &&
       (!state.profile.name ||
-        !state.profile.age ||
-        !state.profile.vision.completedAt)
+        !state.profile.age)
     ) {
       router.replace("/os/mirror");
     }
@@ -1308,7 +1373,6 @@ export function TodayExperience() {
     router,
     state.profile.age,
     state.profile.name,
-    state.profile.vision.completedAt,
   ]);
 
   useEffect(() => {
@@ -1518,6 +1582,42 @@ export function TodayExperience() {
 
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
+  const firstMissingDeclaration = DECLARATION_SETUP.find(
+    ({ kind }) => !currentDeclaration(state, kind),
+  );
+  const [selectedDeclarationKind, setSelectedDeclarationKind] =
+    useState<DeclarationKind | null>(null);
+  const locationSearch = useSyncExternalStore(
+    subscribeToLocation,
+    browserLocationSearch,
+    serverLocationSearch,
+  );
+  const requested = new URLSearchParams(locationSearch).get("declare");
+  const requestedDeclarationKind = DECLARATION_SETUP.find(
+    ({ kind }) => kind === requested,
+  )?.kind;
+  const declarationSetupKind = ready
+    ? selectedDeclarationKind ||
+      (requestedDeclarationKind &&
+      !currentDeclaration(state, requestedDeclarationKind)
+        ? requestedDeclarationKind
+        : firstMissingDeclaration?.kind) ||
+      null
+    : null;
+
+  const declarationSetupDefinition = declarationSetupKind
+    ? getPublishedChapter(
+        DECLARATION_SETUP.find(({ kind }) => kind === declarationSetupKind)
+          ?.chapterId || "",
+      )
+    : null;
+  const declarationSetupRun = useMemo(() => {
+    if (!declarationSetupDefinition) return null;
+    return (
+      state.chapters.runs[chapterRunId(declarationSetupDefinition)] ||
+      createChapterRun(declarationSetupDefinition)
+    );
+  }, [declarationSetupDefinition, state.chapters.runs]);
   const habitBuildingRun = useMemo(() => {
     if (!habitBuildingChapter) return null;
     return (
@@ -2089,6 +2189,39 @@ export function TodayExperience() {
     });
   }
 
+  function saveDeclarationRun(nextRun: ChapterRun) {
+    if (!declarationSetupDefinition || !declarationSetupKind) return;
+    setSelectedDeclarationKind(declarationSetupKind);
+    updateState((current) => {
+      const previous = current.chapters.runs[nextRun.runId];
+      let next = storeChapterRun(
+        current,
+        nextRun,
+        declarationSetupDefinition.session,
+      );
+      if (nextRun.status === "completed" && previous?.status !== "completed") {
+        next = declareLife(
+          next,
+          declarationSetupKind,
+          declarationFromRun(declarationSetupKind, nextRun),
+        );
+      }
+      return next;
+    });
+  }
+
+  function leaveDeclarationSetup() {
+    const nextMissing = DECLARATION_SETUP.find(
+      ({ kind }) =>
+        kind !== declarationSetupKind && !currentDeclaration(state, kind),
+    );
+    if (nextMissing) {
+      setSelectedDeclarationKind(nextMissing.kind);
+      return;
+    }
+    router.push("/os/mirror");
+  }
+
   function saveLogSetupRun(
     nextRun: ChapterRun,
     submission?: ChapterSubmission,
@@ -2467,7 +2600,32 @@ export function TodayExperience() {
             </div>
           </div>
 
-          {!holdThoughtsAfterSend &&
+          {declarationSetupDefinition && declarationSetupRun ? (
+            <div
+              className="os-declaration-setup"
+              aria-label="Declare the life you want"
+            >
+              <ChapterPlayer
+                backApp={checkInIdleCard()}
+                className="os-declaration-setup-session"
+                definition={declarationSetupDefinition}
+                idleActionLabel={
+                  DECLARATION_SETUP.some(
+                    ({ kind }) =>
+                      kind !== declarationSetupKind &&
+                      !currentDeclaration(state, kind),
+                  )
+                    ? "Next declaration"
+                    : "Open Reflect"
+                }
+                label="Declaration setup"
+                onIdleAction={leaveDeclarationSetup}
+                onRunChange={saveDeclarationRun}
+                run={declarationSetupRun}
+              />
+            </div>
+          ) : (
+          !holdThoughtsAfterSend &&
           profileSparkChapter &&
           profileSparkRun &&
           profileSparkRun.status !== "completed" &&
@@ -2558,7 +2716,7 @@ export function TodayExperience() {
             {checkInIdleCard()}
             {checkInThoughtsCard()}
           </SwipeSession>
-          )}
+          ))}
         </section>
 
         {habitPublication ? (

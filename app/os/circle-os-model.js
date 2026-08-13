@@ -10,6 +10,13 @@ import { mergeSeenLines, rememberLine } from "./lines/line-pool.js";
 export const CIRCLE_OS_STORAGE_KEY = "circle-os-state-v2";
 export const CIRCLE_OS_LEGACY_STORAGE_KEY = "circle-os-state-v1";
 
+export const DECLARATION_KINDS = Object.freeze([
+  "vision",
+  "missionStatement",
+  "typicalTuesday",
+  "dreamline",
+]);
+
 export const PROFILE_SESSION_KEYS = [
   "typicalTuesday",
   "currentLife",
@@ -158,7 +165,13 @@ const DEFAULT_MISSION = {
 };
 
 function recordTimestamp(value) {
-  return value?.updatedAt || value?.completedAt || value?.createdAt || "";
+  return (
+    value?.updatedAt ||
+    value?.completedAt ||
+    value?.createdAt ||
+    value?.declaredAt ||
+    ""
+  );
 }
 
 function mergeRecordMaps(left = {}, right = {}) {
@@ -286,9 +299,101 @@ function createProfileCase() {
   };
 }
 
+function normalizeDeclarationContent(kind, value = {}) {
+  const content = value && typeof value === "object" ? value : {};
+  const clean = (field, maximum = 1600) =>
+    typeof content[field] === "string"
+      ? content[field].trim().slice(0, maximum)
+      : "";
+  if (kind === "vision") {
+    return { life: clean("life"), why: clean("why") };
+  }
+  if (kind === "missionStatement") {
+    return { statement: clean("statement", 320) };
+  }
+  if (kind === "typicalTuesday") {
+    return {
+      wake: clean("wake", 600),
+      morning: clean("morning", 600),
+      day: clean("day", 600),
+      people: clean("people", 600),
+      evening: clean("evening", 600),
+      feeling: clean("feeling", 600),
+    };
+  }
+  if (kind === "dreamline") {
+    return {
+      dream: clean("dream"),
+      now: clean("now", 320),
+      tomorrow: clean("tomorrow", 320),
+      dayAfter: clean("dayAfter", 320),
+    };
+  }
+  return {};
+}
+
+function declarationHasContent(kind, content) {
+  if (kind === "vision") return Boolean(content.life && content.why);
+  if (kind === "missionStatement") return Boolean(content.statement);
+  if (kind === "typicalTuesday") {
+    return Boolean(
+      content.wake &&
+        content.morning &&
+        content.day &&
+        content.people &&
+        content.evening &&
+        content.feeling,
+    );
+  }
+  if (kind === "dreamline") {
+    return Boolean(
+      content.dream && content.now && content.tomorrow && content.dayAfter,
+    );
+  }
+  return false;
+}
+
+function sixMonthsAfter(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setUTCMonth(date.getUTCMonth() + 6);
+  return date.toISOString();
+}
+
+function normalizeDeclarations(value) {
+  const records = {};
+  for (const [key, candidate] of Object.entries(value?.records || {})) {
+    if (!candidate || !DECLARATION_KINDS.includes(candidate.kind)) continue;
+    const content = normalizeDeclarationContent(candidate.kind, candidate.content);
+    if (!declarationHasContent(candidate.kind, content)) continue;
+    const declaredAt =
+      typeof candidate.declaredAt === "string" &&
+      !Number.isNaN(new Date(candidate.declaredAt).getTime())
+        ? candidate.declaredAt
+        : null;
+    if (!declaredAt) continue;
+    const id = String(candidate.id || key).trim();
+    if (!id) continue;
+    records[id] = {
+      id,
+      kind: candidate.kind,
+      content,
+      declaredAt,
+      supersedesId:
+        typeof candidate.supersedesId === "string" && candidate.supersedesId
+          ? candidate.supersedesId
+          : null,
+      ...(candidate.kind === "dreamline"
+        ? { targetAt: candidate.targetAt || sixMonthsAfter(declaredAt) }
+        : {}),
+    };
+  }
+  return { records };
+}
+
 export function createEmptyState() {
   return {
-    version: 5,
+    version: 6,
     ai: {
       baseUrl: CIRCLE_OS_SERVER_URL,
       token: "",
@@ -324,6 +429,9 @@ export function createEmptyState() {
     },
     tasks: {
       items: {},
+    },
+    declarations: {
+      records: {},
     },
     protocol: {
       runs: {},
@@ -378,15 +486,6 @@ export function normalizeState(state) {
       },
     ]),
   );
-  if (!sessions.typicalTuesday.text) {
-    sessions.typicalTuesday.text = state.profile.vision?.preview || description;
-  }
-  if (!sessions.whatMatters.text && state.profile.vision?.understanding) {
-    sessions.whatMatters.text = state.profile.vision.understanding;
-  }
-  if (!sessions.gap.text && state.profile.vision?.gap) {
-    sessions.gap.text = state.profile.vision.gap;
-  }
   const days = Object.fromEntries(
     Object.entries(state.days).map(([dateKey, day]) => [
       dateKey,
@@ -428,7 +527,7 @@ export function normalizeState(state) {
   return {
     ...empty,
     ...state,
-    version: 5,
+    version: 6,
     ai: {
       ...empty.ai,
       ...state.ai,
@@ -490,6 +589,7 @@ export function normalizeState(state) {
     tasks: {
       items: mergeRecordMaps(migratedPractice.tasks, storedTasks),
     },
+    declarations: normalizeDeclarations(state.declarations),
     evidence: {
       ...empty.evidence,
       ...(state.evidence || {}),
@@ -504,6 +604,154 @@ export function markLineSeen(state, lineId) {
   const seenLines = rememberLine(state.seenLines, lineId);
   if (seenLines === state.seenLines) return state;
   return { ...state, seenLines };
+}
+
+export function declarationVersions(state, kind) {
+  if (!DECLARATION_KINDS.includes(kind)) return [];
+  return Object.values(state?.declarations?.records || {})
+    .filter((record) => record?.kind === kind)
+    .sort((left, right) =>
+      String(right.declaredAt).localeCompare(String(left.declaredAt)),
+    );
+}
+
+export function currentDeclaration(state, kind) {
+  return declarationVersions(state, kind)[0] || null;
+}
+
+export function declarationText(record) {
+  if (!record) return "";
+  const content = record.content || {};
+  if (record.kind === "vision") {
+    return [content.life, content.why].filter(Boolean).join(" ");
+  }
+  if (record.kind === "missionStatement") return content.statement || "";
+  if (record.kind === "typicalTuesday") {
+    return [
+      content.wake,
+      content.morning,
+      content.day,
+      content.people,
+      content.evening,
+      content.feeling,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+  if (record.kind === "dreamline") return content.dream || "";
+  return "";
+}
+
+function declarationRecordId(kind, declaredAt) {
+  return freshRecordId(`declaration-${kind}-${new Date(declaredAt).getTime()}`);
+}
+
+// A declaration is never edited in place. Every save adds a dated record that
+// points back to the version it replaces, so a change can be read later rather
+// than disappearing into the newest sentence.
+export function declareLife(
+  state,
+  kind,
+  value,
+  { id = "", declaredAt = new Date().toISOString() } = {},
+) {
+  if (!DECLARATION_KINDS.includes(kind)) return state;
+  const content = normalizeDeclarationContent(kind, value);
+  if (!declarationHasContent(kind, content)) return state;
+  const previous = currentDeclaration(state, kind);
+  const recordId = id || declarationRecordId(kind, declaredAt);
+  if (state.declarations?.records?.[recordId]) return state;
+  const record = {
+    id: recordId,
+    kind,
+    content,
+    declaredAt,
+    supersedesId: previous?.id || null,
+    ...(kind === "dreamline" ? { targetAt: sixMonthsAfter(declaredAt) } : {}),
+  };
+  let next = {
+    ...state,
+    declarations: {
+      records: {
+        ...(state.declarations?.records || {}),
+        [recordId]: record,
+      },
+    },
+  };
+
+  if (kind === "dreamline") {
+    const timestamp = declaredAt;
+    const items = Object.fromEntries(
+      Object.entries(next.tasks?.items || {}).map(([taskId, task]) => [
+        taskId,
+        task?.status === "open" && task?.sourceDeclarationKind === "dreamline"
+          ? { ...task, status: "archived", updatedAt: timestamp }
+          : task,
+      ]),
+    );
+    const taskId = `dreamline-now-${recordId}`;
+    next = {
+      ...next,
+      tasks: {
+        items: {
+          ...items,
+          [taskId]: {
+            id: taskId,
+            text: content.now,
+            status: "open",
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            completedAt: null,
+            sourceDeclarationKind: "dreamline",
+            sourceDeclarationId: recordId,
+          },
+        },
+      },
+    };
+  }
+
+  return queueProfileUpdate(next, `declaration-${kind}`);
+}
+
+function comparisonWords(value) {
+  return new Set(
+    declarationText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((word) => word.length > 2),
+  );
+}
+
+// This is intentionally a plain relationship, never a score. It proves the
+// two declarations are independent without pretending to know what the
+// difference means to the person.
+export function compareVisionDeclarations(state) {
+  const vision = currentDeclaration(state, "vision");
+  const tuesday = currentDeclaration(state, "typicalTuesday");
+  if (!vision || !tuesday) {
+    return {
+      mode: "unclear",
+      different: null,
+      text: "Vision and Typical Tuesday are still taking shape.",
+    };
+  }
+  const visionWords = comparisonWords(vision);
+  const tuesdayWords = comparisonWords(tuesday);
+  const shared = [...visionWords].filter((word) => tuesdayWords.has(word)).length;
+  const smaller = Math.max(1, Math.min(visionWords.size, tuesdayWords.size));
+  const different = shared / smaller < 0.6;
+  return different
+    ? {
+        mode: "different",
+        different: true,
+        text: "Your Vision and Typical Tuesday say different things.",
+      }
+    : {
+        mode: "close",
+        different: false,
+        text: "Your Vision and Typical Tuesday share much of the same language.",
+      };
 }
 
 export function queueProfileUpdate(state, reason) {
@@ -738,6 +986,12 @@ export function mergeServerState(state, serverState) {
     },
     tasks: {
       items: mergeUpdatedRecords(remote.tasks.items, local.tasks.items),
+    },
+    declarations: {
+      records: mergeRecordMaps(
+        remote.declarations.records,
+        local.declarations.records,
+      ),
     },
     protocol: {
       runs: mergeUpdatedRecords(remote.protocol.runs, local.protocol.runs),

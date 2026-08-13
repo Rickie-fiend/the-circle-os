@@ -16,6 +16,7 @@ import {
 } from "../app/os/chapters/chapter-scheduler.js";
 import {
   createEmptyState,
+  declareLife,
   getDateKey,
   habitCompletionId,
   previousDateKey,
@@ -365,12 +366,17 @@ test("facts are read from the real shape of a Circle state", () => {
 
   const todayKey = getDateKey(NOW);
   const yesterdayKey = previousDateKey(todayKey);
-  const withEvidence = {
-    ...empty,
-    profile: {
-      ...empty.profile,
-      vision: { ...empty.profile.vision, completedAt: NOW.toISOString() },
+  const withVision = declareLife(
+    empty,
+    "vision",
+    {
+      life: "A calm home where people make things together.",
+      why: "Shared work and friendship matter.",
     },
+    { id: "scheduler-vision", declaredAt: NOW.toISOString() },
+  );
+  const withEvidence = {
+    ...withVision,
     days: {
       [yesterdayKey]: {
         date: yesterdayKey,

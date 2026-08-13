@@ -1,6 +1,7 @@
 import {
   getDateKey,
   habitCompletionId,
+  currentDeclaration,
   previousDateKey,
 } from "../circle-os-model.js";
 
@@ -149,7 +150,7 @@ export function chapterFacts(state, now = new Date()) {
             day.mission?.completed),
       ),
     ).length,
-    hasVision: Boolean(state?.profile?.vision?.completedAt),
+    hasVision: Boolean(currentDeclaration(state, "vision")),
     // Only a real streak can break. With no habits defined there is nothing to
     // miss, so a lesson about missing twice would be noise.
     habitStreakBroken: Boolean(habitIds.length) && !keptYesterday,

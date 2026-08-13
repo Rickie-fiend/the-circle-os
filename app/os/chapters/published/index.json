@@ -630,6 +630,246 @@
     },
     {
       "schemaVersion": 1,
+      "id": "declare-dreamline",
+      "version": 1,
+      "status": "published",
+      "session": "declaration-dreamline",
+      "theme": "light",
+      "title": "Give one dream a date.",
+      "purpose": "Set a six-month dream and three immediate steps that reach Today.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Give one dream a date.",
+          "body": "A dream becomes real when it can meet the next three days.",
+          "button": "Begin"
+        },
+        {
+          "id": "dream",
+          "type": "long-text",
+          "question": "In six months, what do you dream of?",
+          "answerKey": "dreamline-dream",
+          "placeholder": "Say the future state plainly.",
+          "required": true
+        },
+        {
+          "id": "now",
+          "type": "short-text",
+          "question": "What can you do now?",
+          "answerKey": "dreamline-now",
+          "placeholder": "One action you can do today.",
+          "required": true
+        },
+        {
+          "id": "tomorrow",
+          "type": "short-text",
+          "question": "What will you do tomorrow?",
+          "answerKey": "dreamline-tomorrow",
+          "placeholder": "One next step.",
+          "required": true
+        },
+        {
+          "id": "day-after",
+          "type": "short-text",
+          "question": "What will you do the day after?",
+          "answerKey": "dreamline-day-after",
+          "placeholder": "One more step.",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your Dreamline is declared.",
+          "body": "Your now step is waiting in Today.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "In six months",
+          "body": "{{dreamline-dream}}",
+          "button": "Open Reflect"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "declare-mission-statement",
+      "version": 1,
+      "status": "published",
+      "session": "declaration-mission-statement",
+      "theme": "light",
+      "title": "Write your mission statement.",
+      "purpose": "Name in one line how the person intends to live.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Write your mission statement.",
+          "body": "One line can bring the life you want into today.",
+          "button": "Begin"
+        },
+        {
+          "id": "statement",
+          "type": "short-text",
+          "question": "How do you intend to live?",
+          "answerKey": "mission-statement",
+          "placeholder": "One clear line.",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your mission is declared.",
+          "body": "{{mission-statement}}",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Mission statement",
+          "body": "{{mission-statement}}",
+          "button": "Open Reflect"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "declare-typical-tuesday",
+      "version": 1,
+      "status": "published",
+      "session": "declaration-typical-tuesday",
+      "theme": "light",
+      "title": "Walk through an ordinary day.",
+      "purpose": "Describe a concrete ordinary day inside the life the person wants.",
+      "estimatedMinutes": 3,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Walk through an ordinary day.",
+          "body": "A life is made of normal days. Picture one Tuesday inside yours.",
+          "button": "Begin"
+        },
+        {
+          "id": "wake",
+          "type": "short-text",
+          "question": "Where do you wake up?",
+          "answerKey": "tuesday-wake",
+          "placeholder": "Name the place.",
+          "required": true
+        },
+        {
+          "id": "morning",
+          "type": "short-text",
+          "question": "What happens in the morning?",
+          "answerKey": "tuesday-morning",
+          "placeholder": "What do you really do?",
+          "required": true
+        },
+        {
+          "id": "day",
+          "type": "long-text",
+          "question": "How do you spend the day?",
+          "answerKey": "tuesday-day",
+          "placeholder": "Work, rest, making, or something else.",
+          "required": true
+        },
+        {
+          "id": "people",
+          "type": "short-text",
+          "question": "Who is around you?",
+          "answerKey": "tuesday-people",
+          "placeholder": "Alone is also an answer.",
+          "required": true
+        },
+        {
+          "id": "evening",
+          "type": "short-text",
+          "question": "What happens in the evening?",
+          "answerKey": "tuesday-evening",
+          "placeholder": "How does the day come to rest?",
+          "required": true
+        },
+        {
+          "id": "feeling",
+          "type": "short-text",
+          "question": "How does this ordinary day feel?",
+          "answerKey": "tuesday-feeling",
+          "placeholder": "Use your own words.",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your Typical Tuesday is declared.",
+          "body": "This is an ordinary day inside the life you want. It is not a report of today.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "Typical Tuesday",
+          "body": "{{tuesday-wake}} {{tuesday-morning}} {{tuesday-day}} {{tuesday-people}} {{tuesday-evening}} {{tuesday-feeling}}",
+          "button": "Open Reflect"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "declare-vision",
+      "version": 1,
+      "status": "published",
+      "session": "declaration-vision",
+      "theme": "light",
+      "title": "Declare the life you want.",
+      "purpose": "Name the life the person wants and why it is worth wanting.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Declare the life you want.",
+          "body": "Take your time. This is not a plan for one busy day.",
+          "button": "Begin"
+        },
+        {
+          "id": "life",
+          "type": "long-text",
+          "question": "What life do you want to live?",
+          "answerKey": "vision-life",
+          "placeholder": "Say what makes this life yours.",
+          "required": true
+        },
+        {
+          "id": "why",
+          "type": "long-text",
+          "question": "Why is this life worth wanting?",
+          "answerKey": "vision-why",
+          "placeholder": "What would make it matter to you?",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your Vision is declared.",
+          "body": "You can change it later. The words you wrote today will stay.",
+          "button": "Continue"
+        },
+        {
+          "id": "idle",
+          "type": "idle",
+          "title": "The life you want.",
+          "body": "{{vision-life}}",
+          "button": "Open Reflect"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "habit-building",
       "version": 1,
       "status": "published",
