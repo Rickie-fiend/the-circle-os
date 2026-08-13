@@ -5,6 +5,7 @@ import {
   mergeAthenaMemory,
   normalizeAthenaMemory,
 } from "./athena-memory-model.js";
+import { mergeSeenLines, rememberLine } from "./lines/line-pool.js";
 
 export const CIRCLE_OS_STORAGE_KEY = "circle-os-state-v2";
 export const CIRCLE_OS_LEGACY_STORAGE_KEY = "circle-os-state-v1";
@@ -335,6 +336,9 @@ export function createEmptyState() {
       lastAcknowledgedAt: null,
     },
     athenaMemory: createAthenaMemory(),
+    // Which lines have been read lately, newest first. A line is not a chapter:
+    // there is no run to record, only enough memory to keep the pool rotating.
+    seenLines: [],
     outbox: [],
   };
 }
@@ -491,8 +495,15 @@ export function normalizeState(state) {
       ...(state.evidence || {}),
     },
     athenaMemory: normalizeAthenaMemory(state.athenaMemory),
+    seenLines: mergeSeenLines(state.seenLines, []),
     outbox: Array.isArray(state.outbox) ? state.outbox : [],
   };
+}
+
+export function markLineSeen(state, lineId) {
+  const seenLines = rememberLine(state.seenLines, lineId);
+  if (seenLines === state.seenLines) return state;
+  return { ...state, seenLines };
 }
 
 export function queueProfileUpdate(state, reason) {
@@ -710,6 +721,7 @@ export function mergeServerState(state, serverState) {
         local.chapters.sessions,
       ),
     },
+    seenLines: mergeSeenLines(local.seenLines, remote.seenLines),
     appSessions: {
       ...remote.appSessions,
       ...mergeUpdatedRecords(remote.appSessions, local.appSessions),

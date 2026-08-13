@@ -135,6 +135,23 @@ Used for charts, weekly views, and other things worth reading again.
   they belong to Today. A publication assigned to Vision or Athena still
   delivers into its App Box, but Reflect never grows its own questionnaire.
 
+## Lines
+
+- A **Line** is one-beat content that gives and collects nothing: a quote, a
+  joke, a small fact. It is not a Chapter. There is no run, no version, no
+  cooldown and no completion, because all of that machinery exists to keep an
+  answer and a Line never asks for one.
+- Content that gives is unrationed. Content that asks stays rationed. Being
+  asked constantly is what stops a person answering honestly, and honest
+  answers are the whole input to Athena; a quote costs nothing to see.
+- The Note label therefore always has an answer: a Chapter when the hour allows
+  one, a Line when it does not.
+- A Line takes the App Box the way a Chapter does and leaves the same way, on
+  one swipe forward. It records only that it was read, so the pool rotates.
+- Lines are white. The App Box paints Bone and owns that surface; the Page
+  declares no colour of its own.
+- Two-beat jokes stay Chapters. A punchline needs its own Page.
+
 ## Editions
 
 - Athena's reading is published as **editions**: dated, immutable, and

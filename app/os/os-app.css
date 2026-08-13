@@ -528,6 +528,27 @@
   max-width: 12ch;
 }
 
+/* A line is white. The App Box already paints Bone and owns that surface, so
+   the Page declares nothing: Oscar and the rest take their colour from their
+   own box when they arrive. */
+.circle-os .os-line-page .os-info-page-sub {
+  padding-top: var(--os-main-sub-gap);
+}
+
+.circle-os .os-line-sub {
+  color: var(--c-charcoal);
+  font-size: var(--text-lg);
+  font-weight: 540;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.circle-os .os-line-cue {
+  color: var(--c-neutral-600);
+  font-size: var(--text-xs);
+  margin-left: auto;
+}
+
 /* The Note Page's Footer is an empty spacer at rest, so a quiet status can sit
    there without moving a word of what is written above it. */
 .circle-os .os-note-deck-note {

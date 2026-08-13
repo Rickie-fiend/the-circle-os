@@ -46,6 +46,7 @@ import {
   minutesBetween,
   normalizeState,
   queueProfileUpdate,
+  markLineSeen,
   setAppSessionIndex,
   setDayLogRange,
   toggleHabitForDay,
@@ -60,7 +61,14 @@ import {
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
-import { IDLE_PAGE_DWELL_MS, InfoPage, SwipeSession } from "./app-session";
+import {
+  IDLE_PAGE_DWELL_MS,
+  InfoPage,
+  PageLayout,
+  SwipeSession,
+} from "./app-session";
+import linePool from "./lines/lines.json";
+import { selectLine } from "./lines/line-pool.js";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import {
   revealButtonStyle,
@@ -494,6 +502,8 @@ export type CircleState = {
     corrections: Array<Record<string, unknown>>;
     lowSignalEvidence: Array<Record<string, unknown>>;
   };
+  /** Ids of lines read lately, newest first. */
+  seenLines: string[];
   outbox: Array<{
     id: string;
     reason: string;
@@ -1182,6 +1192,10 @@ export function TodayExperience() {
   // What the Note Page says when its label found nothing to open.
   const [noteDeckNote, setNoteDeckNote] = useState("");
   const noteDeckNoteTimer = useRef<number | null>(null);
+  // The line currently taking the box, if the label had no chapter to give.
+  const [revealedLine, setRevealedLine] = useState<
+    { id: string; kind: string; text: string; sub: string } | null
+  >(null);
   const checkInRefreshTimer = useRef<number | null>(null);
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
@@ -1992,19 +2006,25 @@ export function TodayExperience() {
     if (checkInRefreshing) return;
     setCheckInRefreshing(true);
     setNoteDeckNote("");
+    setRevealedLine(null);
     checkInRefreshTimer.current = window.setTimeout(() => {
       const loaded = refreshProfileSpark();
       setCheckInRefreshing(false);
       if (!loaded) {
-        // A deliberate tap that produces nothing has to say so. Silence here is
-        // indistinguishable from the app being broken, and the usual reason is
-        // the daily budget, which is a decision rather than a fault.
-        setNoteDeckNote(emptyNoteDeckReason());
-        if (noteDeckNoteTimer.current) window.clearTimeout(noteDeckNoteTimer.current);
-        noteDeckNoteTimer.current = window.setTimeout(() => {
-          setNoteDeckNote("");
-          noteDeckNoteTimer.current = null;
-        }, 5000);
+        const line = selectLine(linePool, state.seenLines);
+        if (line) {
+          setRevealedLine(line);
+          updateState((current) => markLineSeen(current, line.id));
+        } else {
+          // Only reachable with an empty pool, which would be a build fault
+          // rather than a decision, so it says the plainer thing.
+          setNoteDeckNote(emptyNoteDeckReason());
+          if (noteDeckNoteTimer.current) window.clearTimeout(noteDeckNoteTimer.current);
+          noteDeckNoteTimer.current = window.setTimeout(() => {
+            setNoteDeckNote("");
+            noteDeckNoteTimer.current = null;
+          }, 5000);
+        }
         setCheckInIdleEntering(true);
         if (checkInIdleTimer.current) window.clearTimeout(checkInIdleTimer.current);
         checkInIdleTimer.current = window.setTimeout(() => {
@@ -2470,6 +2490,35 @@ export function TodayExperience() {
               label="Thoughts chapter"
               publication={thoughtsPublication}
             />
+          ) : revealedLine ? (
+            // A line takes the box the way a chapter does, and leaves the same
+            // way: one swipe forward and the Note is back. It records only that
+            // it was read.
+            <SwipeSession
+              availableIndices={[0, 1]}
+              className="os-checkin-session"
+              index={0}
+              label="A line"
+              maxIndex={1}
+              onIndexChange={() => setRevealedLine(null)}
+            >
+              <PageLayout
+                className="os-line-page"
+                theme="light"
+                variant="cover"
+                footer={<span className="os-line-cue">Swipe to close</span>}
+              >
+                <div className="os-info-page-main">
+                  <h2>{revealedLine.text}</h2>
+                </div>
+                {revealedLine.sub ? (
+                  <div className="os-info-page-sub">
+                    <p className="os-line-sub">{revealedLine.sub}</p>
+                  </div>
+                ) : null}
+              </PageLayout>
+              {checkInIdleCard()}
+            </SwipeSession>
           ) : (
           <SwipeSession
             availableIndices={thoughtSent ? [checkInThoughtsApp] : [checkInIdleApp, checkInThoughtsApp]}
