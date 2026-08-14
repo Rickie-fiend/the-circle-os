@@ -6885,7 +6885,9 @@
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
-  margin-top: 0.5rem;
+  /* Sits under the last negotiable block. The touch target stays 44px, so most
+     of the space Sai saw was the label centred inside it rather than margin. */
+  margin-top: 0.15rem;
   min-height: var(--touch-min);
   padding: 0;
   text-align: left;

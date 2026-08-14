@@ -67,6 +67,7 @@ import {
   PageLayout,
   SwipeSession,
 } from "./app-session";
+import { sizeTextAreaToContent } from "./text-area-size";
 import linePool from "./lines/lines.json";
 import { selectLine } from "./lines/line-pool.js";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
@@ -259,9 +260,7 @@ function InlineCheckInEditor({
 
   useLayoutEffect(() => {
     for (const editor of [titleRef.current, noteRef.current]) {
-      if (!editor) continue;
-      editor.style.height = "auto";
-      editor.style.height = `${editor.scrollHeight}px`;
+      sizeTextAreaToContent(editor);
     }
   }, [noteDraft, titleDraft]);
 
@@ -1276,6 +1275,10 @@ export function TodayExperience() {
   const [editingMomentKey, setEditingMomentKey] = useState<string | null>(null);
   const [momentDraft, setMomentDraft] = useState("");
 
+  useLayoutEffect(() => {
+    sizeTextAreaToContent(thoughtTextareaRef.current);
+  }, [thoughtDraft, thoughtMode]);
+
   useEffect(
     () => () => {
       Object.values(taskExitTimers.current).forEach(({ fade, remove }) => {
@@ -1567,11 +1570,12 @@ export function TodayExperience() {
   const yesterday = dayRecord(state, yesterdayKey);
   const todaySoFar = dayRecord(state, dateKey);
 
-  // Protocol leads this App Box and Habit is one swipe across. A protocol is
-  // the agreement a habit is built inside, so it is the thing to open on.
-  // The version changed with the order: a saved index from the old arrangement
+  // Habit leads this App Box and Protocol is one swipe across. Habits and Tasks
+  // are what Sai touches most; a protocol is a stretch of days he does not need
+  // in front of him every time he opens the app.
+  // The version changes with the order: a saved index from the old arrangement
   // would land on the wrong Page, and a new version returns to page zero.
-  const habitAppVersion = "protocol-habit-v2";
+  const habitAppVersion = "protocol-habit-v3";
   const habitAppIndex = appSessionIndex(
     state,
     "today-habit",
@@ -2408,23 +2412,21 @@ export function TodayExperience() {
           const input = event.currentTarget;
           const value = input.value;
           setThoughtDraft(value);
-          input.style.height = "auto";
-          input.style.height = `${input.scrollHeight}px`;
+          sizeTextAreaToContent(input);
           if (deepThoughtsActive && value.trim() && deepWritingFocusStartedAt.current === null) {
             deepWritingFocusStartedAt.current = Date.now();
           }
         }}
         onFocus={(event) => {
           revealThoughtButton();
-          event.currentTarget.style.height = "auto";
-          event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
+          sizeTextAreaToContent(event.currentTarget);
           if (deepThoughtsActive && thoughtDraft.trim() && deepWritingFocusStartedAt.current === null) {
             deepWritingFocusStartedAt.current = Date.now();
           }
         }}
         placeholder={deepThoughtsActive ? "Write what comes up..." : thoughtPlaceholder}
         ref={thoughtTextareaRef}
-        rows={deepThoughtsActive ? 2 : 1}
+        rows={1}
         value={thoughtDraft}
       />
     );
@@ -2807,7 +2809,6 @@ export function TodayExperience() {
                 />,
               ]}
               idleAppIndex={habitAppIndex}
-              idleAppsFirst
               onIdleAppIndexChange={saveHabitAppIndex}
               rotateIdleApps
               label="Habit chapter"
