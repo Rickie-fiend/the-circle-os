@@ -347,6 +347,15 @@ Used for charts, weekly views, and other things worth reading again.
 - A mode label names the visible side. It is never an edit or completion
   action. Returning to an already known side does not replay a staged arrival.
 
+## Fixed evidence Apps
+
+- Log uses the shared Page and frame rather than a route-level heading above a
+  free-standing timeline. Its evidence surface remains dark.
+- A long timeline uses `minmax(0, 1fr)` for Body and scrolls within that Body.
+  The route and swipe page remain still.
+- The App Box owns background, border, radius, clipping and shadow. Until its
+  week Page exists, Log shows no back control.
+
 ## Admin previews and access
 
 - Chapter Workshop and Button Studio render the production App Box and Page

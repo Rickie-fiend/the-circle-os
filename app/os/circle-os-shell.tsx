@@ -2908,15 +2908,30 @@ export function TodayExperience() {
             </div>
           </section>
         ) : (
-        <section className="os-day" aria-labelledby="day-heading">
-          <div className="os-section-heading">
-            <div>
-              <p className="os-card-label">Log</p>
-              <h2 id="day-heading">Your day, hour by hour</h2>
-            </div>
-          </div>
-
-          <div className="os-timeline" ref={timelineRef}>
+        <section className="os-log-section" aria-labelledby="day-heading">
+          <SwipeSession
+            className="os-log-session"
+            frameHeight="var(--os-app-box-min-height)"
+            index={0}
+            label="Log"
+            onIndexChange={() => {}}
+          >
+            <PageLayout
+              className="os-log-page"
+              footer={
+                <button
+                  className="os-log-add-current"
+                  onClick={() => openHour(liveClockHour)}
+                  type="button"
+                >
+                  Add this hour
+                </button>
+              }
+              heading={<h2 id="day-heading">Your day, hour by hour</h2>}
+              headerLeft={<p className="os-card-label">Log</p>}
+              theme="dark"
+            >
+              <div className="os-timeline" ref={timelineRef}>
             {liveMarkerTop !== null ? (
               <span
                 aria-label="Current time"
@@ -3098,8 +3113,9 @@ export function TodayExperience() {
                 <span aria-hidden="true">+</span>
               </button>
             ) : null}
-          </div>
-
+              </div>
+            </PageLayout>
+          </SwipeSession>
         </section>
         )}
       </main>

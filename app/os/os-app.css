@@ -8,6 +8,7 @@
   --os-app-box-padding-x: 24px;
   --os-app-box-padding-top: 20px;
   --os-app-box-padding-bottom: 24px;
+  --os-page-header-height: 19px;
   /* Main alone owns the centre. Sub hangs below it; once Main reaches four
    * lines, its top stays at the three-line position and the box grows down. */
   --os-body-optical-shift: -1px;
@@ -2669,8 +2670,62 @@
 
 .circle-os .os-timeline {
   border: 0;
-  margin-top: 0.9rem;
+  margin-top: 0;
   position: relative;
+}
+
+.circle-os .os-log-section {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.circle-os .os-log-session {
+  background:
+    radial-gradient(circle at 88% 8%, rgb(227 107 55 / 0.11), transparent 38%),
+    var(--c-neutral-950);
+  border: 1px solid rgb(241 239 232 / 0.1);
+  border-radius: var(--r-box);
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.16);
+}
+
+.circle-os .os-page-layout.os-log-page {
+  grid-template-rows: auto min-content minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.circle-os .os-log-page .os-page-heading h2 {
+  font-size: var(--text-lg);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  max-width: none;
+}
+
+.circle-os .os-log-page .os-page-body {
+  justify-content: stretch;
+  min-height: 0;
+  overflow: hidden;
+  transform: none;
+}
+
+.circle-os .os-log-page .os-timeline {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--c-charcoal) transparent;
+  scrollbar-width: thin;
+}
+
+.circle-os .os-log-add-current {
+  background: var(--c-bone);
+  border: 0;
+  border-radius: var(--r-md);
+  color: var(--c-ink);
+  font-size: var(--text-sm);
+  font-weight: 720;
+  min-height: 52px;
+  width: 100%;
 }
 
 .circle-os .os-expand-hour {
@@ -4695,7 +4750,7 @@
   display: flex;
   grid-row: 1;
   justify-content: space-between;
-  min-height: 1rem;
+  min-height: var(--os-page-header-height);
   width: 100%;
 }
 
@@ -4703,7 +4758,7 @@
 .circle-os .os-page-header-right {
   align-items: center;
   display: flex;
-  min-height: 1rem;
+  min-height: var(--os-page-header-height);
 }
 
 .circle-os .os-page-header-left > *,
