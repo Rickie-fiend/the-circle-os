@@ -15,6 +15,7 @@ import {
   SessionIntro,
   SwipeSession,
 } from "../app-session";
+import { sizeTextAreaToContent } from "../text-area-size";
 import {
   advanceChapterRun,
   findChapterAnswer,
@@ -68,9 +69,7 @@ function EditableCopy({
   const ref = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const input = ref.current;
-    if (!input) return;
-    input.style.height = "auto";
-    input.style.height = `${input.scrollHeight}px`;
+    sizeTextAreaToContent(input);
   }, [value]);
   return (
     <textarea

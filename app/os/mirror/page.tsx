@@ -34,6 +34,7 @@ import {
   PageLayout,
   SwipeSession,
 } from "../app-session";
+import { sizeTextAreaToContent } from "../text-area-size";
 import {
   normalizeChapterPublication,
   publicationIsNewerThanRun,
@@ -262,8 +263,7 @@ function DeclarationPage({
 
   useLayoutEffect(() => {
     for (const editor of pageRef.current?.querySelectorAll("textarea") || []) {
-      editor.style.height = "auto";
-      editor.style.height = `${editor.scrollHeight}px`;
+      sizeTextAreaToContent(editor);
     }
   }, [draft]);
 
@@ -381,8 +381,7 @@ function AthenaAnswerPage({
   useLayoutEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
-    editor.style.height = "auto";
-    editor.style.height = `${editor.scrollHeight}px`;
+    sizeTextAreaToContent(editor);
   }, [draft]);
 
   if (answer.trim()) {

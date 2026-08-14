@@ -97,12 +97,11 @@ Session
   from Note to Thoughts or from Habit to Protocol never resizes the frame. One
   set of tokens owns the size, the padding, the drop to the first line, the
   Main-to-Sub gap and the Body-to-Footer gap; an App does not restate them.
-- Main content anchors to the top of its Main Body and stays there. A Page grows
-  downward for more writing; the words already on it never move.
-  Optional Sub Body content begins directly beneath it.
-- Main Body reserves three lines, so a two-line Note title and a three-line
-  Thoughts placeholder rest at exactly the same height. The box grows at the
-  fourth line.
+- Main content alone centres in the Body region for one, two and three lines.
+  At four lines its top pins to the three-line position, and every further line
+  grows the Page downward.
+- Optional Sub Body content hangs directly beneath Main's last line. It is not
+  part of the centred block and never moves Main.
 - One written line costs one line of App Box, and the gap between the last line
   and the action stays the same as the box grows. On Cover, Note and Thoughts
   the two-to-one weight of Main and Sub is where the eye lands, not a
@@ -159,7 +158,8 @@ same thing publishes nothing.
   that empties Main and Sub together.
 - Main and Sub both take unlimited writing.
 - Header shows the app label or app action.
-- Main and optional Sub text use the same top anchor as a Cover Page.
+- Main and optional Sub text use the same centre, three-line pin and shared gap
+  as a Cover Page.
 - Text can be edited directly with its display typography.
 - No separate edit box and no Save-message step.
 
@@ -167,7 +167,7 @@ same thing publishes nothing.
 
 - Uses the Info Page geometry.
 - Inviting editable typography in the body.
-- Its placeholder uses the same size, weight, line-height, and top anchor as
+- Its placeholder uses the same size, weight, line-height, and centring rule as
   Cover and Note Main text.
 - One full-width black Send action in the Footer.
 

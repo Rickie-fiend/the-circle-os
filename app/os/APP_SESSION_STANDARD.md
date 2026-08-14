@@ -48,14 +48,14 @@ Every Cover, Chapter, and App Page uses the same five regions.
   Cover, Vision, Athena and Gap all rest at exactly one height. Swiping between
   two Pages of the same App never resizes the frame.
 - One foundation owns that size and the space inside it. `--os-app-box-min-height`
-  is the height, `--os-app-box-padding-*` the inset, `--os-body-top` the drop
-  from the Header to the first line of Main Body, `--os-main-sub-gap` the space
-  between Main and Sub, and `--os-body-footer-gap` the space between the last
-  line of Body and the Footer. An App does not restate any of them.
-- Main Body reserves **three lines**, measured in the text's own line height.
-  `--os-body-top` is set so three lines of Main and one line of Sub fill the
-  default App Box exactly. That is the budget: the box grows at the fourth line
-  and never before it.
+  is the height, `--os-app-box-padding-*` the inset,
+  `--os-body-optical-shift` Main's optical correction,
+  `--os-main-sub-gap` the space between Main and Sub, and
+  `--os-body-footer-gap` the space between the last line of Body and the Footer.
+  An App does not restate any of them.
+- Main Body is the centred element. One, two and three lines centre in the Body
+  region, measured in Main's own line height. At four lines its top pins where
+  the three-line top was and the App Box grows down by every added line.
 - Two lines was not enough. A Note title is usually two lines but the Thoughts
   placeholder is sometimes three, so two Pages of one App Box sat at different
   heights and the frame resized on the swipe between them. The reserve is what
@@ -64,10 +64,9 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - A fluid App Box may grow for its content and ease back down, but never below
   the shared default minimum.
 - The App Box does not jump when adjacent Pages have different heights.
-- An App Box grows downward only. The top edge, the width, the radius, the
-  Header and the distance from the Header to the first line of Main Body all
-  stay where they are. The bottom edge is the only thing that travels, and the
-  gap between the last line and the Footer stays fixed as it does.
+- An App Box grows downward only. The top edge, the width, the radius and the
+  Header stay where they are. Once Main reaches four lines, its top stays at the
+  three-line position; the bottom edge is the only edge that travels.
 - One written line costs one line of App Box. Main and Sub are two real rows
   that take the room they need. Written instead as a two-parts-to-one-part
   split of the Body, an absent Sub Body still claimed half of whatever Main
@@ -263,21 +262,20 @@ Used for charts, weekly views, and other things worth reading again.
   a one-off Cover, Note, Thoughts, or Blog visual inside a feature.
 - Every Page keeps Header, Heading, Main Body, Sub Body, and Footer. Empty
   optional text does not move those anchors.
-- Main Body content anchors to the top of its space and stays there. The first
-  line sits a fixed distance below the Header on every Page, and writing more
-  never moves it. Sub Body follows directly beneath it and may grow.
+- Main Body alone centres in the Body region through three lines. At four or
+  more its top pins to the three-line position and writing grows downward.
+  Sub Body follows directly beneath Main and may grow without moving it.
 - A Page has four regions in one column: Header, Heading, Body, Footer. Body is
   the only one that flexes. Written with Heading flexible instead, spare height
   collects above the words, so a short thought sits low and jumps upward the
   moment it gains a second line.
-- On Cover, Note, and Thoughts Info Pages, Main and Sub read as one text group
-  anchored below the Header. They are not centered: a centered group grows in
-  both directions, which moves words that were already written.
-- Cover Main text, Note Main text, and the Thoughts placeholder use one shared
-  typography token and top anchor. They remain left-aligned inside that
-  centered group.
-- A Note Page keeps its Main text on the same top anchor as a Cover Page.
-  Optional Sub text begins beneath that anchor without pushing the Main text up.
+- On Cover, Note, Thoughts and Vision declaration Pages, Main is the centred
+  element and Sub hangs from its last line at the shared gap.
+- Cover Main text, Note Main text, the Thoughts placeholder and the Vision
+  declaration editor use one shared typography token and centring rule. They
+  remain left-aligned.
+- A Note Page keeps its Main text on the same centre or three-line pin as a
+  Cover Page. Optional Sub text begins beneath Main without moving it.
 - Habit App Pages place `Your habit today` in Heading, the main habit in Main
   Body, added habits and tasks in Sub Body, and Add task in Footer. The divider
   appears only when Sub Body has an item.

@@ -13,6 +13,7 @@ import {
   type ReactNode,
   type WheelEvent,
 } from "react";
+import { pageTextLayout } from "./page-text-layout.js";
 
 const seenAttentionKeys = new Set<string>();
 
@@ -766,19 +767,87 @@ export function PageLayout({
   theme?: "light" | "orange" | "dark";
   variant?: "app" | "chapter" | "cover";
 }) {
+  const pageRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const variantClass =
     variant === "app" ? "os-app-content-page" : `os-${variant}-page`;
+
+  useLayoutEffect(() => {
+    const page = pageRef.current;
+    const body = bodyRef.current;
+    if (!page || !body) return;
+    const main = body.querySelector<HTMLElement>(
+      ".os-page-main, .os-info-page-main",
+    );
+    const mainText = main?.querySelector<HTMLElement>(
+      "textarea, h1, h2, h3, p, [data-os-main-text]",
+    );
+    if (!main || !mainText) return;
+
+    let active = true;
+    let frame = 0;
+    const measure = () => {
+      if (!active) return;
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        if (!active) return;
+        const pageStyle = window.getComputedStyle(page);
+        const textStyle = window.getComputedStyle(mainText);
+        const minPageHeight = Number.parseFloat(pageStyle.minHeight);
+        const lineHeight = Number.parseFloat(textStyle.lineHeight);
+        if (!minPageHeight || !lineHeight) return;
+
+        const header = page.querySelector<HTMLElement>(":scope > .os-page-header");
+        const heading = page.querySelector<HTMLElement>(":scope > .os-page-heading");
+        const footer = page.querySelector<HTMLElement>(":scope > .os-page-footer");
+        const baseBodyHeight =
+          minPageHeight -
+          Number.parseFloat(pageStyle.paddingTop) -
+          Number.parseFloat(pageStyle.paddingBottom) -
+          (header?.getBoundingClientRect().height || 0) -
+          (heading?.getBoundingClientRect().height || 0) -
+          (footer?.getBoundingClientRect().height || 0);
+        const opticalShift = Number.parseFloat(
+          window.getComputedStyle(page).getPropertyValue("--os-body-optical-shift"),
+        ) || 0;
+        const metrics = pageTextLayout({
+          baseBodyHeight,
+          lineHeight,
+          mainHeight: main.getBoundingClientRect().height,
+          opticalShift,
+        });
+
+        body.dataset.osTextLayout = "measured";
+        body.style.setProperty(
+          "--os-measured-body-min-height",
+          `${metrics.bodyMinHeight}px`,
+        );
+        body.style.setProperty("--os-measured-main-top", `${metrics.mainTop}px`);
+      });
+    };
+
+    window.addEventListener("resize", measure);
+    measure();
+    void document.fonts.ready.then(measure);
+
+    return () => {
+      active = false;
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", measure);
+    };
+  }, [children, footer, heading, headerLeft, headerRight]);
 
   return (
     <div
       className={`os-page-layout ${variantClass} os-session-intro theme-${theme} ${className}`.trim()}
+      ref={pageRef}
     >
       <div className="os-page-header">
         <div className="os-page-header-left">{headerLeft}</div>
         <div className="os-page-header-right">{headerRight}</div>
       </div>
       <div className="os-page-heading">{heading}</div>
-      <div className="os-page-body">{children}</div>
+      <div className="os-page-body" ref={bodyRef}>{children}</div>
       <div className="os-page-footer">
         {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
       </div>
