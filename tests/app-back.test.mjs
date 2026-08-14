@@ -62,3 +62,36 @@ test("Routine centres its identity while Record clears stale text offsets", () =
   assert.match(chapterPlayer, /textLayout=\{isIdle \? idleTextLayout : undefined\}/);
   assert.match(appSession, /if \(!main \|\| !mainText\) \{\s*clearMeasurement\(\);/);
 });
+
+test("Routine mirrors Protocol title and Footer geometry", () => {
+  const routineFooter = css.match(
+    /\.circle-os \.os-habit \.os-chapter-idle \.os-page-footer \{([^}]*)\}/,
+  )?.[1];
+  const protocolName = css.match(
+    /\.circle-os \.os-protocol-name \{([^}]*)\}/,
+  )?.[1];
+  const routineName = css.match(
+    /\.circle-os \.os-routine-name-edit \{([^}]*)\}/,
+  )?.[1];
+  const routineBody = css.match(
+    /\.circle-os \.os-routine-body \{([^}]*)\}/,
+  )?.[1];
+  const routineAction = css.match(
+    /\.circle-os \.os-habit \.os-chapter-idle \.os-add-habit-row \{([^}]*)\}/,
+  )?.[1];
+
+  assert.ok(routineFooter);
+  assert.ok(protocolName);
+  assert.ok(routineName);
+  assert.ok(routineBody);
+  assert.ok(routineAction);
+  assert.doesNotMatch(routineFooter, /min-height|padding-top/);
+  assert.match(css, /\.circle-os \.os-page-footer \{[\s\S]*?min-height: 52px;[\s\S]*?padding-top: var\(--os-body-footer-gap\);/);
+  assert.match(protocolName, /margin: 0\.35rem 0 1rem;/);
+  assert.match(routineName, /margin: 0\.35rem 0 1rem;/);
+  assert.match(routineBody, /padding-top: 0;/);
+  assert.match(routineAction, /font-size: var\(--text-md\);/);
+  assert.match(routineAction, /margin-top: 0\.4rem;/);
+  assert.match(routineAction, /min-height: var\(--touch-min\);/);
+  assert.match(routineAction, /padding: 0\.6rem 0\.7rem;/);
+});

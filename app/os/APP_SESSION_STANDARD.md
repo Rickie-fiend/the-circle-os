@@ -299,6 +299,9 @@ Used for charts, weekly views, and other things worth reading again.
   quiet divider and one row rhythm; it never creates a nested card or double gap.
 - Routine is the first Page and Protocol is one swipe across. Their Headers are
   equal and their editable identities begin on the same line.
+- Their title box, title-to-first-label gap and Footer action outer height are
+  equal too. Those measurements feed Main centring; a feature-specific Footer
+  or duplicate content gap must not move one identity below the other.
 - When Routine has no rows, the empty Sub Body collapses and the Page rests at
   the shared default height.
 - Full-width actions use the same black button language across apps.
