@@ -2754,7 +2754,8 @@ export function TodayExperience() {
               )}
               idleContent={habitMode === "yesterday" ? undefined : (
                 <div className="os-routine-body">
-                  <section className="os-habit-body-session" aria-label="Habits">
+                  <section className="os-habit-body-session" aria-labelledby="habit-session-title">
+                    <p className="os-record-label" id="habit-session-title">Habits</p>
                     <div className="os-repeated-habits">
                       {habits.map((habit) => {
                         const completed = Boolean(habitCompletion(habit.id)?.completed);
@@ -2902,6 +2903,7 @@ export function TodayExperience() {
                   }
                 />,
               ]}
+              idleEaseKey={habitMode}
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={changeHabitAppPage}
               rotateIdleApps={!sealedProtocolDay}

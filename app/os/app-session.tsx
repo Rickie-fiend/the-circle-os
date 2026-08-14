@@ -45,6 +45,7 @@ export function SwipeSession({
   onForwardBoundary,
   attentionKey,
   attentionIndex = 0,
+  easeKey,
   rotateMs,
   rotatePaused = false,
 }: {
@@ -60,6 +61,8 @@ export function SwipeSession({
   onForwardBoundary?: () => void;
   attentionKey?: string;
   attentionIndex?: number;
+  /** Changes when a Page swaps its content without changing index: a flip. */
+  easeKey?: string;
   rotateMs?: number;
   rotatePaused?: boolean;
 }) {
@@ -114,6 +117,7 @@ export function SwipeSession({
   const [showingBlockedCue, setShowingBlockedCue] = useState(false);
   const [externalMotion, setExternalMotion] = useState("");
   const [frameEasing, setFrameEasing] = useState(false);
+  const lastEaseKey = useRef<string | undefined>(undefined);
   const attentionIsNew = Boolean(
     attentionKey &&
     activeIndex === attentionIndex &&
@@ -245,6 +249,20 @@ export function SwipeSession({
       if (timer) window.clearTimeout(timer);
     };
   }, [activeIndex, attentionIndex, attentionKey]);
+
+  // A flip changes what the Page holds without changing which Page it is, so
+  // it earns the same height ease a swipe does. Without this the frame resized
+  // in the same frame as the new copy and the box jumped instead of easing.
+  useLayoutEffect(() => {
+    if (easeKey === undefined || easeKey === lastEaseKey.current) return;
+    lastEaseKey.current = easeKey;
+    if (frameEaseTimer.current) window.clearTimeout(frameEaseTimer.current);
+    setFrameEasing(true);
+    frameEaseTimer.current = window.setTimeout(() => {
+      setFrameEasing(false);
+      frameEaseTimer.current = null;
+    }, 460);
+  }, [easeKey]);
 
   useLayoutEffect(() => {
     const previousIndex = previousActiveIndex.current;

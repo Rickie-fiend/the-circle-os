@@ -446,6 +446,7 @@ export function ChapterPlayer({
   hideIdleHeading = false,
   idleApps = [],
   idleAppIndex = 0,
+  idleEaseKey,
   onIdleAppIndexChange,
   rotateIdleApps = false,
   backApp,
@@ -474,6 +475,8 @@ export function ChapterPlayer({
   hideIdleHeading?: boolean;
   idleApps?: ReactNode[];
   idleAppIndex?: number;
+  /** Changes when the idle Page flips to its other side. */
+  idleEaseKey?: string;
   onIdleAppIndexChange?: (index: number) => void;
   rotateIdleApps?: boolean;
   backApp?: ReactNode;
@@ -616,6 +619,7 @@ export function ChapterPlayer({
         index={Math.max(0, Math.min(orderedApps.length - 1, idleAppIndex))}
         label={label}
         onLongPress={onLongPress}
+        easeKey={idleEaseKey}
         rotateMs={rotateIdleApps ? IDLE_PAGE_DWELL_MS : undefined}
         onIndexChange={(index) => onIdleAppIndexChange?.(index)}
       >

@@ -5009,6 +5009,12 @@
   gap: 0.65rem;
 }
 
+/* A declared Vision reads as a title and then its sections, not as one run of
+   words: the first section starts clear of the title above it. */
+.circle-os .profile-article-part:first-of-type {
+  margin-top: 0.9rem;
+}
+
 .circle-os .os-page-layout h2 {
   font-family: var(--font-sans), Arial, sans-serif;
   font-size: clamp(1.75rem, 6vw, 2.15rem);
@@ -6329,10 +6335,14 @@
   transform: translateY(-50%);
 }
 
+/* The identity names what is under it, so it needs air beneath it. Without
+   this the title and the first habit read as one block of text. */
 .circle-os .os-routine-body {
   align-self: start;
   display: grid;
+  gap: 1rem;
   min-width: 0;
+  padding-top: 0.9rem;
   width: 100%;
 }
 
