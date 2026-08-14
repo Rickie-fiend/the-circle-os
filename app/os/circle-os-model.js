@@ -2656,3 +2656,91 @@ export function latestCompletedProtocol(state) {
     negotiable: protocolItems(run, "negotiable").map(decorate),
   };
 }
+
+function protocolDateFromTimestamp(value) {
+  const match = String(value || "").match(/^\d{4}-\d{2}-\d{2}/);
+  return match?.[0] || null;
+}
+
+function addProtocolDays(dateKey, amount) {
+  const start = Date.parse(`${dateKey}T00:00:00Z`);
+  if (Number.isNaN(start)) return null;
+  return new Date(start + amount * 86400000).toISOString().slice(0, 10);
+}
+
+// Protocol home is a read model over the records the phone already keeps. No
+// aggregate is persisted: correcting one completion changes the next read.
+export function protocolPhaseRecords(state) {
+  const completions = Object.values(state.protocol?.completions || {});
+  const seals = Object.values(state.protocol?.seals || {});
+  return Object.values(state.protocol?.runs || {})
+    .filter((run) => run.status === "completed" || run.status === "ended")
+    .map((run) => {
+      const runCompletions = completions.filter(
+        (completion) => completion.runId === run.id,
+      );
+      const runSeals = seals.filter((seal) => seal.runId === run.id);
+      const dateKeys = [...new Set(
+        [...runCompletions, ...runSeals]
+          .map((record) => record.dateKey)
+          .filter(Boolean),
+      )].sort();
+      const terms = protocolItems(run).map((item) => ({
+        id: item.id,
+        text: item.text,
+        kind: item.kind,
+        keptDays: new Set(
+          runCompletions
+            .filter(
+              (completion) =>
+                completion.itemId === item.id && completion.completed,
+            )
+            .map((completion) => completion.dateKey),
+        ).size,
+      }));
+      const required = terms.filter((item) => item.kind === "non-negotiable");
+      const keptDays = required.length
+        ? dateKeys.filter((dateKey) =>
+            required.every((item) =>
+              runCompletions.some(
+                (completion) =>
+                  completion.itemId === item.id &&
+                  completion.dateKey === dateKey &&
+                  completion.completed,
+              ),
+            ),
+          ).length
+        : 0;
+      const scheduledEnd =
+        run.status === "completed" && run.startDateKey
+          ? addProtocolDays(run.startDateKey, Math.max(0, run.days - 1))
+          : null;
+      const observedEnd = [
+        ...dateKeys,
+        protocolDateFromTimestamp(run.endedAt),
+      ]
+        .filter(Boolean)
+        .sort()
+        .at(-1) || null;
+
+      return {
+        id: run.id,
+        name: run.name,
+        days: run.days,
+        status: run.status,
+        endedEarly: run.status === "ended",
+        keptDays,
+        startDateKey:
+          run.startDateKey || protocolDateFromTimestamp(run.createdAt),
+        endDateKey: scheduledEnd || observedEnd,
+        terms,
+        endedAt: run.endedAt,
+        updatedAt: run.updatedAt,
+      };
+    })
+    .sort((left, right) =>
+      String(right.endedAt || right.updatedAt || "").localeCompare(
+        String(left.endedAt || left.updatedAt || ""),
+      ),
+    );
+}

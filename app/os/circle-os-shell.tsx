@@ -32,6 +32,7 @@ import {
   discardEmptyProtocolItem,
   endProtocolRun,
   latestCompletedProtocol,
+  protocolPhaseRecords,
   protocolToday,
   renameProtocolRun,
   setProtocolDays,
@@ -1619,6 +1620,7 @@ export function TodayExperience() {
   const protocol = protocolToday(state, dateKey);
   const protocolRun = activeProtocolRun(state);
   const completedProtocol = latestCompletedProtocol(state);
+  const phaseRecords = protocolPhaseRecords(state);
 
   useEffect(() => {
     const editorId = newHabitId || newTaskId || newProtocolItemId;
@@ -2866,6 +2868,7 @@ export function TodayExperience() {
                   key={`protocol-${protocolRun?.id || "home"}`}
                   protocol={protocol}
                   completedProtocol={completedProtocol}
+                  phaseRecords={phaseRecords}
                   canBegin={canBeginProtocolRun(protocolRun)}
                   editingItemId={newProtocolItemId}
                   onStart={startProtocol}

@@ -356,6 +356,15 @@ Used for charts, weekly views, and other things worth reading again.
 - The App Box owns background, border, radius, clipping and shadow. Until its
   week Page exists, Log shows no back control.
 
+## Protocol home
+
+- With no running phase, Protocol home is front. With a running phase, the
+  phase is front and home is the `Phases` back.
+- Home reads completed and early-ended runs from existing local records. It
+  stores no aggregate and presents only within-phase counts, dates and terms.
+- Starting from home uses the existing one-run draft path. A second draft is
+  never created to satisfy navigation.
+
 ## Admin previews and access
 
 - Chapter Workshop and Button Studio render the production App Box and Page

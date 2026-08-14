@@ -42,6 +42,23 @@ export type ProtocolSealView = {
   terms: Array<Pick<ProtocolItemView, "id" | "text" | "kind">>;
 };
 
+export type ProtocolPhaseRecord = {
+  id: string;
+  name: string;
+  days: number;
+  status: "completed" | "ended";
+  endedEarly: boolean;
+  keptDays: number;
+  startDateKey: string | null;
+  endDateKey: string | null;
+  terms: Array<{
+    id: string;
+    text: string;
+    kind: "non-negotiable" | "negotiable";
+    keptDays: number;
+  }>;
+};
+
 export function ProtocolKeptPage({ seal }: { seal: ProtocolSealView }) {
   return (
     <PageLayout
@@ -69,6 +86,7 @@ export function ProtocolKeptPage({ seal }: { seal: ProtocolSealView }) {
 type ProtocolPageProps = {
   protocol: ProtocolView;
   completedProtocol: CompletedProtocolView;
+  phaseRecords: ProtocolPhaseRecord[];
   canBegin: boolean;
   editingItemId: string | null;
   onStart: () => void;
@@ -83,6 +101,120 @@ type ProtocolPageProps = {
   onSealToday: () => void;
   onEndRun: () => void;
 };
+
+function ProtocolHome({
+  className = "",
+  completedProtocol,
+  onReturnToPhase,
+  onStart,
+  onToggleCompletedItem,
+  phaseRecords,
+  running = false,
+}: {
+  className?: string;
+  completedProtocol: CompletedProtocolView;
+  onReturnToPhase?: (event: MouseEvent<HTMLButtonElement>) => void;
+  onStart?: () => void;
+  onToggleCompletedItem: ProtocolPageProps["onToggleCompletedItem"];
+  phaseRecords: ProtocolPhaseRecord[];
+  running?: boolean;
+}) {
+  const completedItems = completedProtocol
+    ? [...completedProtocol.nonNegotiable, ...completedProtocol.negotiable]
+    : [];
+  return (
+    <PageLayout
+      className={`os-protocol os-protocol-home ${className}`.trim()}
+      footer={
+        !running && onStart ? (
+          <button className="os-protocol-begin" onClick={onStart} type="button">
+            Start a phase
+          </button>
+        ) : undefined
+      }
+      heading={<p className="os-protocol-home-heading">Past phases</p>}
+      headerLeft={
+        running ? (
+          <button
+            aria-pressed
+            className="os-card-label os-protocol-mode-toggle"
+            onClick={onReturnToPhase}
+            type="button"
+          >
+            Phases
+          </button>
+        ) : (
+          <p className="os-card-label">Protocol</p>
+        )
+      }
+      theme="orange"
+    >
+      <div className="os-page-main os-protocol-home-records">
+        {phaseRecords.length ? phaseRecords.map((record) => {
+          const canCorrect = completedProtocol?.run.id === record.id;
+          return (
+            <article className="os-protocol-record" key={record.id}>
+              <div className="os-protocol-record-head">
+                <h3>{record.name}</h3>
+                <span>{record.endedEarly ? "Ended early" : "Finished"}</span>
+              </div>
+              <p className="os-protocol-record-kept">
+                {record.keptDays} of {record.days} days kept
+              </p>
+              <p className="os-protocol-record-dates">
+                {record.startDateKey && record.endDateKey
+                  ? `${record.startDateKey} — ${record.endDateKey}`
+                  : record.startDateKey || record.endDateKey || "Not started"}
+              </p>
+              {record.terms.length ? (
+                <div className="os-protocol-record-terms">
+                  {record.terms.map((term) => {
+                    const completedItem = completedItems.find(
+                      (item) => item.id === term.id,
+                    );
+                    const contents = (
+                      <>
+                        <span>{term.text}</span>
+                        <small>{term.keptDays} of {record.days} days</small>
+                      </>
+                    );
+                    return canCorrect && completedItem && completedProtocol ? (
+                      <button
+                        aria-label={`${completedItem.completed ? "Undo" : "Mark"} last day: ${term.text}`}
+                        className="os-protocol-record-term"
+                        key={term.id}
+                        onClick={() =>
+                          onToggleCompletedItem(
+                            record.id,
+                            term.id,
+                            completedProtocol.dateKey,
+                          )
+                        }
+                        type="button"
+                      >
+                        {contents}
+                      </button>
+                    ) : (
+                      <div className="os-protocol-record-term" key={term.id}>
+                        {contents}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="os-protocol-record-empty">No terms were started.</p>
+              )}
+            </article>
+          );
+        }) : (
+          <p className="os-protocol-invite">
+            Finished and stopped phases will stay here.
+          </p>
+        )}
+      </div>
+    </PageLayout>
+  );
+}
 
 /**
  * The second page of the Habit App Box.
@@ -104,6 +236,7 @@ type ProtocolPageProps = {
 export function ProtocolPage({
   protocol,
   completedProtocol,
+  phaseRecords,
   canBegin,
   editingItemId,
   onStart,
@@ -164,99 +297,30 @@ export function ProtocolPage({
   }
 
   if (!protocol) {
-    const finished = completedProtocol;
     return (
-      <PageLayout
-        className="os-protocol"
-        headerLeft={label}
-        headerRight={
-          finished ? (
-            <span className="os-protocol-progress">Finished · {finished.run.days} days</span>
-          ) : undefined
-        }
-        theme="orange"
-        footer={
-          <button className="os-protocol-begin" onClick={onStart} type="button">
-            Start a protocol
-          </button>
-        }
-      >
-        <div className="os-page-main os-protocol-identity">
-          {finished ? (
-            <p className="os-protocol-name">{finished.run.name}</p>
-          ) : (
-            <p className="os-protocol-invite">
-              A protocol is a short stretch of days you agree with yourself, kept
-              the same every day until it ends.
-            </p>
-          )}
-        </div>
-        {finished ? (
-          <div className="os-page-sub os-protocol-terms">
-            {finished.nonNegotiable.length ? (
-              <>
-                <p className="os-record-label">Last day</p>
-                {finished.nonNegotiable.map((item) => (
-                  <ProtocolBlock
-                    item={item}
-                    key={item.id}
-                    onToggle={(itemId) =>
-                      onToggleCompletedItem(finished.run.id, itemId, finished.dateKey)
-                    }
-                  />
-                ))}
-              </>
-            ) : null}
-            {finished.negotiable.map((item) => (
-              <ProtocolBlock
-                item={item}
-                key={item.id}
-                onToggle={(itemId) =>
-                  onToggleCompletedItem(finished.run.id, itemId, finished.dateKey)
-                }
-              />
-            ))}
-          </div>
-        ) : null}
-      </PageLayout>
+      <ProtocolHome
+        completedProtocol={completedProtocol}
+        onStart={onStart}
+        onToggleCompletedItem={onToggleCompletedItem}
+        phaseRecords={phaseRecords}
+      />
     );
   }
 
   const { run, day, isDraft, isOver, keptAll, sealed, nonNegotiable, negotiable } = protocol;
 
   if (run.status === "active" && protocolBack.side === "home") {
-    const finished = completedProtocol;
     return (
-      <PageLayout
-        className={`os-protocol os-protocol-home ${protocolBack.className}`.trim()}
-        headerLeft={
-          <button
-            aria-pressed
-            className="os-card-label os-protocol-mode-toggle"
-            onClick={(event: MouseEvent<HTMLButtonElement>) =>
-              protocolBack.flip("phase", undefined, event.currentTarget)
-            }
-            type="button"
-          >
-            Phases
-          </button>
+      <ProtocolHome
+        className={protocolBack.className}
+        completedProtocol={completedProtocol}
+        onReturnToPhase={(event) =>
+          protocolBack.flip("phase", undefined, event.currentTarget)
         }
-        theme="orange"
-      >
-        <div className="os-page-main os-protocol-identity">
-          {finished ? (
-            <p className="os-protocol-name">{finished.run.name}</p>
-          ) : (
-            <p className="os-protocol-name">No finished phases yet.</p>
-          )}
-        </div>
-        {finished ? (
-          <div className="os-page-sub os-protocol-terms">
-            <p className="os-record-label">Last finished phase</p>
-            <p className="os-protocol-invite">{finished.run.days} days</p>
-          </div>
-        ) : null}
-      </PageLayout>
+        onToggleCompletedItem={onToggleCompletedItem}
+        phaseRecords={phaseRecords}
+        running
+      />
     );
   }
 
