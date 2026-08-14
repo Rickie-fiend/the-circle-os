@@ -77,6 +77,12 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - Real added rows may extend a fluid App Box while the Footer remains below
   them. Habit tasks stay visible in one continuous Sub Body; they do not move
   into an inner scrolling panel.
+- A fluid App Box commits its first measured height only after child editors
+  have sized and the font state has settled. It remeasures when fonts finish or
+  fail and when an in-Page side changes; the CSS minimum carries first paint.
+- Main-text centring is a declared Page layout. A content list such as Protocol
+  home opts out, begins directly under Heading, and must never be measured from
+  a nested record title.
 - A content-heavy App may define a slightly larger stable minimum so its Main
   action and Footer never collide on a narrow phone.
 
@@ -206,10 +212,12 @@ Used for charts, weekly views, and other things worth reading again.
   into the Body tracks by position, which is how the Protocol name alone came
   to be stretched to fill the Main track.
 - The four durations are one even row, not a wrapping list.
-- Ending a run early asks once. The terms were agreed before the run began and
-  the days do not come back, so the action states what the next press does and
-  the question expires rather than waiting all day. Closing a run that has
-  already finished asks nothing; there is nothing left to lose.
+- Ending a run early lives inside the editor reached by `Edit phase` and asks
+  once. The terms were agreed before the run began and the days do not come
+  back, so the action states what the next press does and the question expires
+  rather than waiting all day. The running front keeps one Footer action.
+  Closing a run that has already finished asks nothing; there is nothing left
+  to lose.
 
 ## Idle rotation
 
@@ -364,6 +372,12 @@ Used for charts, weekly views, and other things worth reading again.
   stores no aggregate and presents only within-phase counts, dates and terms.
 - Starting from home uses the existing one-run draft path. A second draft is
   never created to satisfy navigation.
+- Removing a finished or early-ended record archives its run with a newer
+  timestamp. Archived runs stay out of the Page and its read models but remain
+  present for local-first merge. A draft or running phase cannot be archived.
+- Phase records and their dividers fill the Body width. Their name, outcome,
+  kept days, dates and term counts stay grouped as one reading rhythm rather
+  than being pushed to opposite edges.
 
 ## Admin previews and access
 

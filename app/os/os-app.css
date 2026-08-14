@@ -6870,6 +6870,8 @@
 
 .circle-os .os-protocol-home-records {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: 0.35rem;
   width: 100%;
 }
 
@@ -6886,8 +6888,9 @@
 .circle-os .os-protocol-record-head {
   align-items: baseline;
   display: flex;
-  gap: 0.75rem;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.65rem;
+  justify-content: flex-start;
 }
 
 .circle-os .os-protocol-record-head h3 {
@@ -6910,14 +6913,22 @@
   color: var(--c-warm-50);
   font-size: var(--text-sm);
   font-weight: 650;
-  margin: 0.35rem 0 0;
+  margin: 0;
+}
+
+.circle-os .os-protocol-record-meta {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.65rem;
+  margin-top: 0.35rem;
 }
 
 .circle-os .os-protocol-record-dates,
 .circle-os .os-protocol-record-empty {
   color: rgb(255 248 241 / 0.62);
   font-size: var(--text-2xs);
-  margin: 0.22rem 0 0;
+  margin: 0;
 }
 
 .circle-os .os-protocol-record-terms {
@@ -6933,9 +6944,10 @@
   border-bottom: 1px solid rgb(255 248 241 / 0.2);
   color: var(--c-warm-50);
   display: flex;
+  flex-wrap: wrap;
   font-family: inherit;
-  gap: 0.75rem;
-  justify-content: space-between;
+  gap: 0.2rem 0.6rem;
+  justify-content: flex-start;
   min-height: var(--touch-min);
   padding: 0.55rem 0;
   text-align: left;
@@ -6959,6 +6971,24 @@
   color: rgb(255 248 241 / 0.62);
   flex: none;
   font-size: var(--text-2xs);
+}
+
+.circle-os .os-protocol-record-remove {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: rgb(255 248 241 / 0.54);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-2xs);
+  font-weight: 650;
+  min-height: var(--touch-min);
+  padding: 0.6rem 0 0;
+  text-align: left;
+}
+
+.circle-os .os-protocol-record-remove.is-confirming {
+  color: var(--c-warm-50);
 }
 
 .circle-os .os-protocol-second-label {
@@ -7249,16 +7279,10 @@
   text-align: left;
 }
 
-.circle-os .os-protocol-end-demoted {
+.circle-os .os-protocol-editor-end {
   color: rgb(255 248 241 / 0.5);
   font-size: var(--text-xs);
-  margin-top: 0.4rem;
-}
-
-.circle-os .os-protocol-front-links {
-  align-items: center;
-  display: flex;
-  gap: 0.8rem;
+  margin-top: 0.85rem;
 }
 
 .circle-os .os-protocol-edit-link {

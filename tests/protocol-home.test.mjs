@@ -5,9 +5,11 @@ import test from "node:test";
 import {
   activeProtocolRun,
   addProtocolItem,
+  archiveProtocolRun,
   beginProtocolRun,
   createEmptyState,
   endProtocolRun,
+  mergeServerState,
   protocolPhaseRecords,
   sealProtocolDay,
   setProtocolDays,
@@ -70,6 +72,33 @@ test("a phase ended early remains an honest record", () => {
   assert.equal(activeProtocolRun(state), null);
 });
 
+test("removing a finished phase archives it through reload and server merge", () => {
+  const server = endProtocolRun(phaseWithOneTerm("noise", 7), "noise");
+  const phone = archiveProtocolRun(server, "noise");
+
+  assert.ok(phone.protocol.runs.noise.archivedAt);
+  assert.equal(protocolPhaseRecords(phone).length, 0);
+
+  const reloaded = structuredClone(phone);
+  assert.equal(protocolPhaseRecords(reloaded).length, 0);
+
+  const synced = mergeServerState(phone, server);
+  assert.ok(synced.protocol.runs.noise.archivedAt);
+  assert.equal(
+    protocolPhaseRecords(synced).length,
+    0,
+    "the older server run cannot return to Phases",
+  );
+});
+
+test("only finished or ended phases can be archived", () => {
+  const running = phaseWithOneTerm("running", 7);
+  assert.equal(archiveProtocolRun(running, "running"), running);
+
+  const draft = startProtocolDraft(createEmptyState(), "draft").state;
+  assert.equal(archiveProtocolRun(draft, "draft"), draft);
+});
+
 test("starting from home reuses the existing draft", () => {
   const first = startProtocolDraft(createEmptyState(), "draft-one");
   const second = startProtocolDraft(first.state, "draft-two");
@@ -88,4 +117,18 @@ test("Protocol home is the front at rest and one flip from a running phase", () 
   assert.match(source, /Ended early/);
   assert.match(source, /\{record\.keptDays\} of \{record\.days\} days kept/);
   assert.doesNotMatch(source, /streak|percentage|score|grade/i);
+});
+
+test("the running phase keeps one Footer action and ending lives in its editor", () => {
+  const source = readFileSync("app/os/protocol-page.tsx", "utf8");
+  const editorStart = source.indexOf("if (editing)");
+  const runningStart = source.lastIndexOf("  return (", source.indexOf("/** The block"));
+  const running = source.slice(runningStart, source.indexOf("/** The block"));
+  const editor = source.slice(editorStart, runningStart);
+
+  assert.match(editor, /End this protocol/);
+  assert.match(editor, /Tap again to end it/);
+  assert.doesNotMatch(running, /End this protocol/);
+  assert.match(running, /footer=\{[\s\S]*Completed today[\s\S]*Edit phase/);
+  assert.match(source, /if \(isOver\)[\s\S]*onClick=\{onEndRun\}[\s\S]*Close this protocol/);
 });

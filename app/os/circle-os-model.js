@@ -2464,6 +2464,29 @@ export function endProtocolRun(state, runId, status = "ended") {
   });
 }
 
+// A phase record is evidence, so removing it from the Page archives the run
+// rather than deleting its key. The newer timestamp lets the phone's ordinary
+// record merge defeat an older server copy instead of resurrecting the phase.
+export function archiveProtocolRun(state, runId) {
+  const run = state.protocol?.runs?.[runId];
+  if (
+    !run ||
+    (run.status !== "completed" && run.status !== "ended") ||
+    run.archivedAt
+  ) {
+    return state;
+  }
+  const timestamp = now();
+  return queueProfileUpdate(
+    writeRun(state, {
+      ...run,
+      archivedAt: timestamp,
+      updatedAt: timestamp,
+    }),
+    "protocol",
+  );
+}
+
 // Which day of the run a date is, counting the first day as day one.
 export function protocolDay(run, dateKey) {
   if (!run?.startDateKey) return 0;
@@ -2629,7 +2652,9 @@ export function protocolToday(state, dateKey) {
 export function latestCompletedProtocol(state) {
   const run =
     Object.values(state.protocol?.runs || {})
-      .filter((candidate) => candidate.status === "completed")
+      .filter(
+        (candidate) => candidate.status === "completed" && !candidate.archivedAt,
+      )
       .sort((left, right) =>
         String(right.endedAt || right.updatedAt || "").localeCompare(
           String(left.endedAt || left.updatedAt || ""),
@@ -2674,7 +2699,11 @@ export function protocolPhaseRecords(state) {
   const completions = Object.values(state.protocol?.completions || {});
   const seals = Object.values(state.protocol?.seals || {});
   return Object.values(state.protocol?.runs || {})
-    .filter((run) => run.status === "completed" || run.status === "ended")
+    .filter(
+      (run) =>
+        (run.status === "completed" || run.status === "ended") &&
+        !run.archivedAt,
+    )
     .map((run) => {
       const runCompletions = completions.filter(
         (completion) => completion.runId === run.id,

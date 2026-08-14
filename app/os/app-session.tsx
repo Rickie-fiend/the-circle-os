@@ -346,21 +346,57 @@ export function SwipeSession({
     if (frameHeight || !currentPageRef.current) return;
 
     const page = currentPageRef.current;
-    const measure = () => {
-      const nextHeight = Math.ceil(page.scrollHeight);
+    let active = true;
+    let measureFrame = 0;
+    let settleFrame = 0;
+
+    const commitMeasurement = () => {
+      if (!active) return;
+      const surface = page.firstElementChild as HTMLElement | null;
+      const nextHeight = Math.ceil(
+        Math.max(
+          page.scrollHeight,
+          surface?.scrollHeight || 0,
+          surface?.getBoundingClientRect().height || 0,
+        ),
+      );
       if (nextHeight <= 0) return;
       setContentHeight((currentHeight) =>
         currentHeight === nextHeight ? currentHeight : nextHeight,
       );
     };
 
-    measure();
-    if (typeof ResizeObserver === "undefined") return;
+    // Child layout effects size editable rows, and a webfont can replace the
+    // fallback after the first layout. Two frames let both settle before the
+    // App Box commits a height; the shared CSS minimum carries first paint.
+    const measure = () => {
+      if (!active) return;
+      window.cancelAnimationFrame(measureFrame);
+      window.cancelAnimationFrame(settleFrame);
+      measureFrame = window.requestAnimationFrame(() => {
+        settleFrame = window.requestAnimationFrame(commitMeasurement);
+      });
+    };
 
-    const observer = new ResizeObserver(measure);
-    observer.observe(page);
-    return () => observer.disconnect();
-  }, [activeIndex, frameHeight]);
+    measure();
+    void document.fonts.ready.then(measure);
+    document.fonts.addEventListener?.("loadingdone", measure);
+    document.fonts.addEventListener?.("loadingerror", measure);
+    window.addEventListener("load", measure);
+
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(page);
+    return () => {
+      active = false;
+      window.cancelAnimationFrame(measureFrame);
+      window.cancelAnimationFrame(settleFrame);
+      observer?.disconnect();
+      document.fonts.removeEventListener?.("loadingdone", measure);
+      document.fonts.removeEventListener?.("loadingerror", measure);
+      window.removeEventListener("load", measure);
+    };
+  }, [activeIndex, easeKey, frameHeight]);
 
   useEffect(
     () => () => {
@@ -787,6 +823,7 @@ export function PageLayout({
   headerLeft,
   headerRight,
   theme = "light",
+  textLayout = "auto",
   variant = "app",
 }: {
   children: ReactNode;
@@ -796,6 +833,7 @@ export function PageLayout({
   headerLeft?: ReactNode;
   headerRight?: ReactNode;
   theme?: "light" | "orange" | "dark";
+  textLayout?: "auto" | "content";
   variant?: "app" | "chapter" | "cover";
 }) {
   const pageRef = useRef<HTMLDivElement | null>(null);
@@ -807,6 +845,12 @@ export function PageLayout({
     const page = pageRef.current;
     const body = bodyRef.current;
     if (!page || !body) return;
+    if (textLayout === "content") {
+      delete body.dataset.osTextLayout;
+      body.style.removeProperty("--os-measured-body-min-height");
+      body.style.removeProperty("--os-measured-main-top");
+      return;
+    }
     const main = body.querySelector<HTMLElement>(
       ".os-page-main, .os-info-page-main",
     );
@@ -866,7 +910,7 @@ export function PageLayout({
       window.cancelAnimationFrame(frame);
       window.removeEventListener("resize", measure);
     };
-  }, [children, footer, heading, headerLeft, headerRight]);
+  }, [children, footer, heading, headerLeft, headerRight, textLayout]);
 
   return (
     <div

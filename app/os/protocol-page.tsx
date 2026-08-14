@@ -98,6 +98,7 @@ type ProtocolPageProps = {
   onBegin: () => void;
   onToggleItem: (itemId: string) => void;
   onToggleCompletedItem: (runId: string, itemId: string, dateKey: string) => void;
+  onArchiveRecord: (runId: string) => void;
   onSealToday: () => void;
   onEndRun: () => void;
 };
@@ -107,6 +108,7 @@ function ProtocolHome({
   completedProtocol,
   onReturnToPhase,
   onStart,
+  onArchiveRecord,
   onToggleCompletedItem,
   phaseRecords,
   running = false,
@@ -115,13 +117,39 @@ function ProtocolHome({
   completedProtocol: CompletedProtocolView;
   onReturnToPhase?: (event: MouseEvent<HTMLButtonElement>) => void;
   onStart?: () => void;
+  onArchiveRecord: ProtocolPageProps["onArchiveRecord"];
   onToggleCompletedItem: ProtocolPageProps["onToggleCompletedItem"];
   phaseRecords: ProtocolPhaseRecord[];
   running?: boolean;
 }) {
+  const [confirmingRemoval, setConfirmingRemoval] = useState<string | null>(null);
+  const removalTimer = useRef<number | null>(null);
   const completedItems = completedProtocol
     ? [...completedProtocol.nonNegotiable, ...completedProtocol.negotiable]
     : [];
+
+  useEffect(
+    () => () => {
+      if (removalTimer.current) window.clearTimeout(removalTimer.current);
+    },
+    [],
+  );
+
+  function removeRecord(runId: string) {
+    if (removalTimer.current) window.clearTimeout(removalTimer.current);
+    if (confirmingRemoval === runId) {
+      removalTimer.current = null;
+      setConfirmingRemoval(null);
+      onArchiveRecord(runId);
+      return;
+    }
+    setConfirmingRemoval(runId);
+    removalTimer.current = window.setTimeout(() => {
+      setConfirmingRemoval(null);
+      removalTimer.current = null;
+    }, 4000);
+  }
+
   return (
     <PageLayout
       className={`os-protocol os-protocol-home ${className}`.trim()}
@@ -148,6 +176,7 @@ function ProtocolHome({
         )
       }
       theme="orange"
+      textLayout="content"
     >
       <div className="os-page-main os-protocol-home-records">
         {phaseRecords.length ? phaseRecords.map((record) => {
@@ -158,14 +187,16 @@ function ProtocolHome({
                 <h3>{record.name}</h3>
                 <span>{record.endedEarly ? "Ended early" : "Finished"}</span>
               </div>
-              <p className="os-protocol-record-kept">
-                {record.keptDays} of {record.days} days kept
-              </p>
-              <p className="os-protocol-record-dates">
-                {record.startDateKey && record.endDateKey
-                  ? `${record.startDateKey} — ${record.endDateKey}`
-                  : record.startDateKey || record.endDateKey || "Not started"}
-              </p>
+              <div className="os-protocol-record-meta">
+                <p className="os-protocol-record-kept">
+                  {record.keptDays} of {record.days} days kept
+                </p>
+                <p className="os-protocol-record-dates">
+                  {record.startDateKey && record.endDateKey
+                    ? `${record.startDateKey} — ${record.endDateKey}`
+                    : record.startDateKey || record.endDateKey || "Not started"}
+                </p>
+              </div>
               {record.terms.length ? (
                 <div className="os-protocol-record-terms">
                   {record.terms.map((term) => {
@@ -204,6 +235,16 @@ function ProtocolHome({
               ) : (
                 <p className="os-protocol-record-empty">No terms were started.</p>
               )}
+              <button
+                aria-label={`Remove phase record: ${record.name}`}
+                className={`os-protocol-record-remove${
+                  confirmingRemoval === record.id ? " is-confirming" : ""
+                }`}
+                onClick={() => removeRecord(record.id)}
+                type="button"
+              >
+                {confirmingRemoval === record.id ? "Tap again to remove" : "Remove"}
+              </button>
             </article>
           );
         }) : (
@@ -248,6 +289,7 @@ export function ProtocolPage({
   onBegin,
   onToggleItem,
   onToggleCompletedItem,
+  onArchiveRecord,
   onSealToday,
   onEndRun,
 }: ProtocolPageProps) {
@@ -296,10 +338,18 @@ export function ProtocolPage({
     }, 4000);
   }
 
+  function finishEditing() {
+    if (confirmTimer.current) window.clearTimeout(confirmTimer.current);
+    confirmTimer.current = null;
+    setConfirmingEnd(false);
+    setEditing(false);
+  }
+
   if (!protocol) {
     return (
       <ProtocolHome
         completedProtocol={completedProtocol}
+        onArchiveRecord={onArchiveRecord}
         onStart={onStart}
         onToggleCompletedItem={onToggleCompletedItem}
         phaseRecords={phaseRecords}
@@ -314,6 +364,7 @@ export function ProtocolPage({
       <ProtocolHome
         className={protocolBack.className}
         completedProtocol={completedProtocol}
+        onArchiveRecord={onArchiveRecord}
         onReturnToPhase={(event) =>
           protocolBack.flip("phase", undefined, event.currentTarget)
         }
@@ -445,7 +496,7 @@ export function ProtocolPage({
         footer={
           <button
             className="os-protocol-begin"
-            onClick={() => setEditing(false)}
+            onClick={finishEditing}
             type="button"
           >
             Done
@@ -488,6 +539,15 @@ export function ProtocolPage({
             onChangeItem={onChangeItem}
             onFinishItemEdit={onFinishItemEdit}
           />
+          <button
+            className={`os-protocol-end os-protocol-editor-end${
+              confirmingEnd ? " is-confirming" : ""
+            }`}
+            onClick={endRun}
+            type="button"
+          >
+            {confirmingEnd ? "Tap again to end it" : "End this protocol"}
+          </button>
         </div>
       </PageLayout>
     );
@@ -554,26 +614,15 @@ export function ProtocolPage({
           </>
         ) : null}
 
-        <div className="os-protocol-front-links">
-          {keptAll && !sealed ? (
-            <button
-              className="os-protocol-edit-link"
-              onClick={() => setEditing(true)}
-              type="button"
-            >
-              Edit phase
-            </button>
-          ) : null}
+        {keptAll && !sealed ? (
           <button
-            className={`os-protocol-end os-protocol-end-demoted${
-              confirmingEnd ? " is-confirming" : ""
-            }`}
-            onClick={endRun}
+            className="os-protocol-edit-link"
+            onClick={() => setEditing(true)}
             type="button"
           >
-            {confirmingEnd ? "Tap again to end it" : "End this protocol"}
+            Edit phase
           </button>
-        </div>
+        ) : null}
       </div>
     </PageLayout>
   );

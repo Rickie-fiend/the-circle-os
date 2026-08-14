@@ -25,6 +25,7 @@ import {
   activeProtocolRun,
   addProtocolItem,
   appSessionIndex,
+  archiveProtocolRun,
   beginProtocolRun,
   canBeginProtocolRun,
   completeTask,
@@ -2895,6 +2896,9 @@ export function TodayExperience() {
                     updateState((current) =>
                       toggleProtocolRecordItem(current, runId, itemId, completedDateKey)
                     )
+                  }
+                  onArchiveRecord={(runId) =>
+                    updateState((current) => archiveProtocolRun(current, runId))
                   }
                   onSealToday={completeProtocolToday}
                   onEndRun={() =>
