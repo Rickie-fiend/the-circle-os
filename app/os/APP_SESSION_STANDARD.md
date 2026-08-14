@@ -281,20 +281,22 @@ Used for charts, weekly views, and other things worth reading again.
   remain left-aligned.
 - A Note Page keeps its Main text on the same centre or three-line pin as a
   Cover Page. Optional Sub text begins beneath Main without moving it.
-- Habit App Pages place `Your habit today` in Heading, the main habit in Main
-  Body, added habits and tasks in Sub Body, and Add task in Footer. The divider
-  appears only when Sub Body has an item.
-- Repeated habits form one continuous Sub Body stack. Each added habit uses one
+- Routine App Pages place the editable app identity in Main Body, habits then
+  Tasks in one continuous Sub Body, and Add task in Footer.
+- Repeated habits form one continuous Sub Body stack. Each habit uses one
   quiet divider and one row rhythm; it never creates a nested card or double gap.
-- When Habit has no Sub Body items, that empty region collapses so the main
-  action meets the Add task Footer without a dead gap.
+- Routine is the first Page and Protocol is one swipe across. Their Headers are
+  equal and their editable identities begin on the same line.
+- When Routine has no rows, the empty Sub Body collapses and the Page rests at
+  the shared default height.
 - Full-width actions use the same black button language across apps.
 - Text answers use borderless editable typography, not a separate form-box or
   underline visual. The App Box grows for a paragraph; the text does not shrink.
 - Choice, slider, and short-answer Chapter Pages remain at the default App Box
   height. Empty form geometry must never make a short page taller.
-- Note, Thoughts, short Chapter, and empty Habit Pages all use the same default
-  App Box height. Only real added content may request a larger stable height.
+- Note, Thoughts, short Chapter, empty Routine and resting Protocol Pages all
+  use the same default App Box height. Only real added content may request a
+  larger stable height.
 
 ## State
 

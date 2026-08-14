@@ -51,6 +51,7 @@ import {
   setDayLogRange,
   toggleHabitForDay,
   updateHabitDefinition,
+  updateRoutineIdentity,
   updateTask,
   upsertTimeBlock,
 } from "./circle-os-model.js";
@@ -181,6 +182,12 @@ export function PublishedChapterDelivery({
       run={run}
     />
   );
+}
+
+function freshInlineEditorId(prefix: string) {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 type CheckIn = {
@@ -441,6 +448,10 @@ export type CircleState = {
     }
   >;
   habits: {
+    identity: {
+      text: string;
+      updatedAt: string | null;
+    };
     definitions: Record<
       string,
       {
@@ -1637,11 +1648,9 @@ export function TodayExperience() {
       setNewHabitId(existing.id);
       return;
     }
-    updateState((current) => {
-      const added = addHabitDefinition(current);
-      setNewHabitId(added.id);
-      return added.state;
-    });
+    const id = freshInlineEditorId("habit");
+    updateState((current) => addHabitDefinition(current, id).state);
+    setNewHabitId(id);
   }
 
   function beginNewTask() {
@@ -1650,11 +1659,9 @@ export function TodayExperience() {
       setNewTaskId(existing.id);
       return;
     }
-    updateState((current) => {
-      const added = addTask(current);
-      setNewTaskId(added.id);
-      return added.state;
-    });
+    const id = freshInlineEditorId("task");
+    updateState((current) => addTask(current, id).state);
+    setNewTaskId(id);
   }
 
   function changeHabit(id: string, text: string) {
@@ -1708,7 +1715,8 @@ export function TodayExperience() {
     updateState((current) => completeTask(current, id));
     setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
     // The row stays put long enough to undo an accidental press before it
-    // begins to fade, and the fade itself is unhurried for the same reason.
+    // begins to leave. The five-second undo pause is the safety window; once
+    // that has passed, the row and frame settle together in one short motion.
     const fade = window.setTimeout(() => {
       setFadingMissionIds((ids) => [...new Set([...ids, id])]);
     }, 5_000);
@@ -1716,7 +1724,7 @@ export function TodayExperience() {
       setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
       setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
       delete taskExitTimers.current[id];
-    }, 9_000);
+    }, 5_340);
     taskExitTimers.current[id] = { fade, remove };
   }
 
@@ -1738,11 +1746,11 @@ export function TodayExperience() {
 
   function addProtocolTerm(kind: "non-negotiable" | "negotiable") {
     if (!protocolRun) return;
-    updateState((current) => {
-      const added = addProtocolItem(current, protocolRun.id, kind);
-      if (added.id) setNewProtocolItemId(added.id);
-      return added.state;
-    });
+    const id = freshInlineEditorId("pitem");
+    updateState((current) =>
+      addProtocolItem(current, protocolRun.id, kind, id).state,
+    );
+    setNewProtocolItemId(id);
   }
 
   function changeProtocolTerm(itemId: string, text: string) {
@@ -2618,16 +2626,16 @@ export function TodayExperience() {
         </section>
 
         {habitPublication ? (
-          <section className="os-habit" aria-label="Habit session">
+          <section className="os-habit" aria-label="Routine session">
             <PublishedChapterDelivery
               className="os-habit-session"
               hideIdleHeading
-              label="Habit chapter"
+              label="Routine chapter"
               publication={habitPublication}
             />
           </section>
         ) : activeHabitChapter && activeHabitRun ? (
-          <section className="os-habit" aria-label="Habit session">
+          <section className="os-habit" aria-label="Routine session">
             <ChapterPlayer
               className={`os-habit-session${habitModeRefreshing ? " mode-refreshing" : ""}`}
               definition={activeHabitChapter}
@@ -2639,7 +2647,7 @@ export function TodayExperience() {
                   onClick={toggleHabitMode}
                   type="button"
                 >
-                  {habitMode === "yesterday" ? "Record" : "Habit"}
+                  {habitMode === "yesterday" ? "Record" : "Routine"}
                 </button>
               }
               idleBody={habitMode === "yesterday" ? (
@@ -2697,80 +2705,94 @@ export function TodayExperience() {
                   )}
                 </section>
               ) : (
-                <section className="os-habit-body-session" aria-label="Habits">
-                  <div className="os-repeated-habits">
-                    {habits.map((habit) => {
-                      const completed = Boolean(habitCompletion(habit.id)?.completed);
-                      return (
+                <input
+                  aria-label="Routine identity"
+                  className="os-protocol-name-edit os-routine-name-edit"
+                  maxLength={60}
+                  onChange={(event) =>
+                    updateState((current) =>
+                      updateRoutineIdentity(current, event.target.value),
+                    )
+                  }
+                  placeholder="Habits"
+                  value={state.habits.identity.text}
+                />
+              )}
+              idleContent={habitMode === "yesterday" ? undefined : (
+                <div className="os-routine-body">
+                  <section className="os-habit-body-session" aria-label="Habits">
+                    <div className="os-repeated-habits">
+                      {habits.map((habit) => {
+                        const completed = Boolean(habitCompletion(habit.id)?.completed);
+                        return (
+                          <article
+                            className={`os-extra-mission os-repeated-habit${completed ? " completed" : ""}`}
+                            key={habit.id}
+                          >
+                            <textarea
+                              aria-label={`Edit habit: ${habit.text || "New Habit"}`}
+                              autoFocus={newHabitId === habit.id}
+                              data-inline-editor-id={habit.id}
+                              className={`os-extra-mission-copy os-mission-text-edit${completed ? " completed" : ""}`}
+                              maxLength={240}
+                              onBlur={() => finishHabitEdit(habit.id)}
+                              onChange={(event) => changeHabit(habit.id, event.target.value)}
+                              placeholder="New Habit"
+                              rows={1}
+                              value={habit.text}
+                            />
+                            <CreativeButton
+                              aria-label={`${completed ? "Undo" : "Mark done"}: ${habit.text || "New Habit"}`}
+                              aria-pressed={completed}
+                              className="os-row-tick os-row-tick-habit"
+                              disabled={!habit.text.trim()}
+                              keepMountedOnSuccess
+                              onClick={() => toggleHabit(habit.id)}
+                              role="habit"
+                              styleId="soft-clay"
+                              type="button"
+                            />
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </section>
+                  <section className="os-task-body-session" aria-labelledby="task-session-title">
+                    <p className="os-task-session-label" id="task-session-title">Tasks</p>
+                    <div className="os-one-time-tasks">
+                      {oneTimeTasks.map((task) => (
                         <article
-                          className={`os-extra-mission os-repeated-habit${completed ? " completed" : ""}`}
-                          key={habit.id}
+                          className={`os-extra-mission os-task-row${task.status === "completed" ? " completed" : ""}${fadingMissionIds.includes(task.id) ? " leaving" : ""}`}
+                          key={task.id}
                         >
                           <textarea
-                            aria-label={`Edit habit: ${habit.text || "New Habit"}`}
-                            autoFocus={newHabitId === habit.id}
-                            data-inline-editor-id={habit.id}
-                            className={`os-extra-mission-copy os-mission-text-edit${completed ? " completed" : ""}`}
+                            aria-label={`Edit task: ${task.text || "New Task"}`}
+                            autoFocus={newTaskId === task.id}
+                            data-inline-editor-id={task.id}
+                            className={`os-extra-mission-copy os-mission-text-edit${task.status === "completed" ? " completed" : ""}`}
                             maxLength={240}
-                            onBlur={() => finishHabitEdit(habit.id)}
-                            onChange={(event) => changeHabit(habit.id, event.target.value)}
-                            placeholder="New Habit"
+                            onBlur={() => finishTaskEdit(task.id)}
+                            onChange={(event) => changeTask(task.id, event.target.value)}
+                            placeholder="New Task"
                             rows={1}
-                            value={habit.text}
+                            value={task.text}
                           />
                           <CreativeButton
-                            aria-label={`${completed ? "Undo" : "Mark done"}: ${habit.text || "New Habit"}`}
-                            aria-pressed={completed}
-                            className="os-row-tick os-row-tick-habit"
-                            disabled={!habit.text.trim()}
+                            aria-label={`${task.status === "completed" ? "Undo" : "Complete"} task: ${task.text || "New Task"}`}
+                            aria-pressed={task.status === "completed"}
+                            className="os-row-tick os-row-tick-task"
+                            disabled={!task.text.trim()}
                             keepMountedOnSuccess
-                            onClick={() => toggleHabit(habit.id)}
+                            onClick={() => finishTask(task.id)}
                             role="habit"
                             styleId="soft-clay"
                             type="button"
                           />
                         </article>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-              idleContent={habitMode === "yesterday" ? undefined : (
-                <section className="os-task-body-session" aria-labelledby="task-session-title">
-                  <p className="os-task-session-label" id="task-session-title">Tasks</p>
-                  <div className="os-one-time-tasks">
-                    {oneTimeTasks.map((task) => (
-                      <article
-                        className={`os-extra-mission os-task-row${task.status === "completed" ? " completed" : ""}${fadingMissionIds.includes(task.id) ? " leaving" : ""}`}
-                        key={task.id}
-                      >
-                        <textarea
-                          aria-label={`Edit task: ${task.text || "New Task"}`}
-                          autoFocus={newTaskId === task.id}
-                          data-inline-editor-id={task.id}
-                          className={`os-extra-mission-copy os-mission-text-edit${task.status === "completed" ? " completed" : ""}`}
-                          maxLength={240}
-                          onBlur={() => finishTaskEdit(task.id)}
-                          onChange={(event) => changeTask(task.id, event.target.value)}
-                          placeholder="New Task"
-                          rows={1}
-                          value={task.text}
-                        />
-                        <CreativeButton
-                          aria-label={`${task.status === "completed" ? "Undo" : "Complete"} task: ${task.text || "New Task"}`}
-                          aria-pressed={task.status === "completed"}
-                          className="os-row-tick os-row-tick-task"
-                          disabled={!task.text.trim()}
-                          keepMountedOnSuccess
-                          onClick={() => finishTask(task.id)}
-                          role="habit"
-                          styleId="soft-clay"
-                          type="button"
-                        />
-                      </article>
-                    ))}
-                  </div>
-                </section>
+                      ))}
+                    </div>
+                  </section>
+                </div>
               )}
               idleHeaderAction={habitMode === "yesterday" ? undefined : (
                 <button className="os-new-habit" type="button" onClick={beginNewHabit}>
@@ -2824,7 +2846,7 @@ export function TodayExperience() {
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={saveHabitAppIndex}
               rotateIdleApps
-              label="Habit chapter"
+              label="Routine chapter"
               run={activeHabitRun}
               onRunChange={saveHabitBuildingRun}
             />

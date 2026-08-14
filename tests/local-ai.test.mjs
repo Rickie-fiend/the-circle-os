@@ -228,6 +228,22 @@ test("chapter answers remain readable in the Obsidian profile", () => {
   assert.match(markdown, /A reader/);
 });
 
+test("server keeps a newer empty Routine identity instead of restoring a name", () => {
+  const server = createEmptyState();
+  const phone = createEmptyState();
+  server.habits.identity = {
+    text: "Leader",
+    updatedAt: "2026-08-14T08:00:00.000Z",
+  };
+  phone.habits.identity = {
+    text: "",
+    updatedAt: "2026-08-14T09:00:00.000Z",
+  };
+
+  const merged = mergeClientState(server, phone);
+  assert.deepEqual(merged.habits.identity, phone.habits.identity);
+});
+
 test("dated declaration versions remain readable in the Obsidian profile", () => {
   let state = firstVision();
   state = declareLife(

@@ -352,6 +352,12 @@
 
 .circle-os .os-app-window.fluid-height {
   min-height: var(--os-app-box-min-height);
+}
+
+/* Content edits resize the frame in the same frame as the Page. Only a Page
+   change earns the shared height ease; otherwise ResizeObserver would restart
+   a 440ms transition on every row and textarea measurement. */
+.circle-os .os-app-window.fluid-height.page-resizing {
   transition: height 440ms cubic-bezier(0.22, 0.82, 0.22, 1);
   will-change: height;
 }
@@ -860,14 +866,15 @@
   column-gap: 0.75rem;
   display: grid;
   grid-template-columns: 1fr auto;
-  max-height: 1000px;
+  grid-template-rows: minmax(0, 1fr);
   min-height: var(--touch-min);
   padding: 0.6rem 0;
   transition:
-    max-height 1800ms cubic-bezier(0.22, 0.82, 0.22, 1),
-    opacity 1700ms ease,
-    padding 1800ms cubic-bezier(0.22, 0.82, 0.22, 1),
-    transform 1800ms cubic-bezier(0.22, 0.82, 0.22, 1);
+    grid-template-rows 320ms cubic-bezier(0.22, 0.82, 0.22, 1),
+    min-height 320ms cubic-bezier(0.22, 0.82, 0.22, 1),
+    opacity 260ms ease,
+    padding 320ms cubic-bezier(0.22, 0.82, 0.22, 1),
+    transform 320ms cubic-bezier(0.22, 0.82, 0.22, 1);
 }
 
 /* Row ticks
@@ -1040,11 +1047,17 @@
 }
 
 .circle-os .os-extra-mission.leaving {
-  max-height: 0;
+  grid-template-rows: minmax(0, 0fr);
+  min-height: 0;
   opacity: 0;
   overflow: hidden;
   padding-top: 0;
   transform: translate3d(0, -3px, 0);
+}
+
+.circle-os .os-extra-mission.leaving > * {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .circle-os .os-extra-mission.leaving .os-mission-text-edit {
@@ -1103,14 +1116,18 @@
 }
 
 .circle-os .os-new-habit {
-  background: var(--c-ink);
+  appearance: none;
+  background: transparent;
   border: 0;
-  border-radius: var(--r-full);
-  color: var(--c-warm-50);
-  font-size: var(--text-xs);
+  color: var(--c-neutral-600);
+  cursor: pointer;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  min-height: 36px;
-  padding: 0.4rem 0.78rem;
+  letter-spacing: 0.13em;
+  line-height: 1;
+  min-height: 44px;
+  padding: 1rem 0;
+  text-transform: uppercase;
 }
 
 .circle-os .os-session-intro {
@@ -2206,6 +2223,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .circle-os .os-app-window.fluid-height.page-resizing,
+  .circle-os .os-extra-mission {
+    transition-duration: 1ms !important;
+  }
+
   .circle-os .os-creative-button-shell,
   .circle-os .os-creative-button,
   .circle-os .os-creative-button-shell * {
@@ -4523,6 +4545,10 @@
     font-size: clamp(2rem, 9vw, 2.7rem) !important;
   }
 
+  .circle-os .os-info-page textarea.os-inline-checkin-title {
+    font-size: clamp(2rem, 8vw, 2.7rem) !important;
+  }
+
   .circle-os .os-info-page .os-session-detail {
     font-size: var(--text-base);
   }
@@ -6147,8 +6173,36 @@
   background: transparent;
   border-color: rgb(25 24 19 / 0.7);
   color: var(--c-ink);
-  min-height: 42px;
+  min-height: 44px;
   padding-block: 0.55rem;
+}
+
+/* Routine keeps its 44px text action outside the Header's measured line, so
+   the label aligns with Protocol while the whole padded target remains live. */
+.circle-os .os-habit .os-chapter-idle .os-page-header {
+  position: relative;
+}
+
+.circle-os .os-habit .os-chapter-idle .os-new-habit {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.circle-os .os-routine-body {
+  align-self: start;
+  display: grid;
+  min-width: 0;
+  width: 100%;
+}
+
+/* The Routine identity and Protocol name begin on the same line. Without this,
+   the shared body centring moved a short, empty Routine down while the longer
+   Protocol draft overflowed upward to the body's start. */
+.circle-os .os-habit .os-chapter-idle .os-page-body,
+.circle-os .os-protocol .os-page-body {
+  justify-content: flex-start;
 }
 
 /* Daily Trust: Habits are a bold repeated practice; Tasks remain a quiet list. */
@@ -6168,9 +6222,9 @@
 /* Habits and Tasks are two parts of one Page, so the seam between them is a
  * real line rather than the quiet rule used between rows. */
 .circle-os .os-task-body-session {
-  border-top: 2px solid var(--c-ink);
-  margin-top: 1rem;
-  padding-top: 1rem;
+  border-top: 1px solid rgb(25 24 19 / 0.34);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
 }
 
 .circle-os .os-habit-session-label,
@@ -6608,7 +6662,7 @@
 
 .circle-os .os-protocol-name {
   color: var(--c-warm-50);
-  font-size: var(--text-2xl);
+  font-size: var(--text-3xl);
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.2;
@@ -6801,9 +6855,10 @@
   border: 0;
   color: var(--c-warm-50);
   font-family: inherit;
-  font-size: var(--text-2xl);
+  font-size: var(--text-3xl) !important;
   font-weight: 700;
   letter-spacing: -0.015em;
+  line-height: 1.2;
   margin: 0;
   min-width: 0;
   outline: none;
@@ -6907,5 +6962,5 @@
   font-size: var(--text-lg);
   font-weight: 540;
   line-height: 1.4;
-  margin: 0.35rem 0 0.6rem;
+  margin: 0;
 }

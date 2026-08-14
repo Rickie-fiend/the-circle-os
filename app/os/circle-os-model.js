@@ -424,6 +424,10 @@ export function createEmptyState() {
     },
     appSessions: {},
     habits: {
+      identity: {
+        text: "",
+        updatedAt: null,
+      },
       definitions: {},
       completions: {},
     },
@@ -519,6 +523,13 @@ export function normalizeState(state) {
     state.habits?.completions && typeof state.habits.completions === "object"
       ? state.habits.completions
       : {};
+  const storedHabitIdentity =
+    state.habits?.identity && typeof state.habits.identity === "object"
+      ? {
+          text: String(state.habits.identity.text || "").slice(0, 60),
+          updatedAt: state.habits.identity.updatedAt || null,
+        }
+      : empty.habits.identity;
   const storedTasks =
     state.tasks?.items && typeof state.tasks.items === "object"
       ? state.tasks.items
@@ -577,6 +588,7 @@ export function normalizeState(state) {
       completions: { ...(state.protocol?.completions || {}) },
     },
     habits: {
+      identity: storedHabitIdentity,
       definitions: mergeRecordMaps(
         migratedPractice.definitions,
         storedHabitDefinitions,
@@ -975,6 +987,12 @@ export function mergeServerState(state, serverState) {
       ...mergeUpdatedRecords(remote.appSessions, local.appSessions),
     },
     habits: {
+      identity:
+        String(local.habits.identity.updatedAt || "").localeCompare(
+          String(remote.habits.identity.updatedAt || ""),
+        ) >= 0
+          ? local.habits.identity
+          : remote.habits.identity,
       definitions: mergeUpdatedRecords(
         remote.habits.definitions,
         local.habits.definitions,
@@ -1065,6 +1083,22 @@ export function addHabitDefinition(state, id = freshRecordId("habit")) {
     },
     id,
   };
+}
+
+export function updateRoutineIdentity(state, text) {
+  const next = {
+    ...state,
+    habits: {
+      ...state.habits,
+      identity: {
+        text: String(text || "").slice(0, 60),
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  };
+  // An empty edit is a dated value too. Removing the field would let an older
+  // server copy restore the name on the next merge.
+  return queueProfileUpdate(next, "routine-identity");
 }
 
 export function updateHabitDefinition(state, id, text) {

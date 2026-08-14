@@ -51,6 +51,7 @@ import {
   toggleHabitForDay,
   toggleProtocolItem,
   updateHabitDefinition,
+  updateRoutineIdentity,
   updateProtocolItem,
   updateTask,
   upsertTimeBlock,
@@ -99,6 +100,36 @@ test("habits persist while their completion remains scoped to one Circle day", (
   assert.equal(state.habits.definitions[created.id].text, "Meditate");
   assert.equal(state.habits.completions["2026-08-04:habit-steady"].completed, true);
   assert.equal(state.habits.completions["2026-08-05:habit-steady"], undefined);
+});
+
+test("Routine identity is dated, locally queued, and a clearing edit persists", () => {
+  let state = createEmptyState();
+  state = updateRoutineIdentity(state, "Leader");
+
+  assert.equal(state.habits.identity.text, "Leader");
+  assert.ok(state.habits.identity.updatedAt);
+  assert.ok(state.outbox.some((item) => item.reason === "routine-identity"));
+
+  const firstUpdate = state.habits.identity.updatedAt;
+  state = updateRoutineIdentity(state, "");
+  assert.equal(state.habits.identity.text, "");
+  assert.ok(state.habits.identity.updatedAt >= firstUpdate);
+});
+
+test("Routine identity merge keeps the newest dated value, including empty", () => {
+  const phone = createEmptyState();
+  const server = createEmptyState();
+  phone.habits.identity = {
+    text: "",
+    updatedAt: "2026-08-14T09:00:00.000Z",
+  };
+  server.habits.identity = {
+    text: "Leader",
+    updatedAt: "2026-08-14T08:00:00.000Z",
+  };
+
+  const merged = mergeServerState(phone, server);
+  assert.deepEqual(merged.habits.identity, phone.habits.identity);
 });
 
 test("open tasks cross the day boundary and completed tasks remain records", () => {

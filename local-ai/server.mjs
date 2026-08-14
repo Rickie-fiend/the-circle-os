@@ -252,6 +252,12 @@ export function mergeClientState(serverValue, phoneValue) {
       phone.appSessions,
     ),
     habits: {
+      identity:
+        String(phone.habits.identity.updatedAt || "").localeCompare(
+          String(server.habits.identity.updatedAt || ""),
+        ) >= 0
+          ? phone.habits.identity
+          : server.habits.identity,
       definitions: mergeUpdatedRecords(
         server.habits.definitions,
         phone.habits.definitions,

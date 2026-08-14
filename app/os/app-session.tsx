@@ -99,6 +99,7 @@ export function SwipeSession({
   const blockedTimer = useRef<number | null>(null);
   const commitFrame = useRef<number | null>(null);
   const externalMotionTimer = useRef<number | null>(null);
+  const frameEaseTimer = useRef<number | null>(null);
   const previousActiveIndex = useRef(activeIndex);
   const internalCommit = useRef(false);
   const wheelTimer = useRef<number | null>(null);
@@ -112,6 +113,7 @@ export function SwipeSession({
   const [committing, setCommitting] = useState(false);
   const [showingBlockedCue, setShowingBlockedCue] = useState(false);
   const [externalMotion, setExternalMotion] = useState("");
+  const [frameEasing, setFrameEasing] = useState(false);
   const attentionIsNew = Boolean(
     attentionKey &&
     activeIndex === attentionIndex &&
@@ -248,6 +250,12 @@ export function SwipeSession({
     const previousIndex = previousActiveIndex.current;
     if (previousIndex === activeIndex) return;
     previousActiveIndex.current = activeIndex;
+    if (frameEaseTimer.current) window.clearTimeout(frameEaseTimer.current);
+    setFrameEasing(true);
+    frameEaseTimer.current = window.setTimeout(() => {
+      setFrameEasing(false);
+      frameEaseTimer.current = null;
+    }, 460);
     if (internalCommit.current) {
       internalCommit.current = false;
       return;
@@ -346,6 +354,9 @@ export function SwipeSession({
       }
       if (externalMotionTimer.current) {
         window.clearTimeout(externalMotionTimer.current);
+      }
+      if (frameEaseTimer.current) {
+        window.clearTimeout(frameEaseTimer.current);
       }
       if (blockedTimer.current) {
         window.clearTimeout(blockedTimer.current);
@@ -636,7 +647,9 @@ export function SwipeSession({
       <div
         className={`os-app-window${
           frameHeight ? " fixed-height" : " fluid-height"
-        }${attentionArmed ? " update-armed" : ""}${
+        }${frameEasing ? " page-resizing" : ""}${
+          attentionArmed ? " update-armed" : ""
+        }${
           attentionShowing ? " update-arrival" : ""
         }`}
         ref={windowRef}

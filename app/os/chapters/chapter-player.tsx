@@ -446,7 +446,6 @@ export function ChapterPlayer({
   hideIdleHeading = false,
   idleApps = [],
   idleAppIndex = 0,
-  idleAppsFirst = false,
   onIdleAppIndexChange,
   rotateIdleApps = false,
   backApp,
@@ -475,8 +474,6 @@ export function ChapterPlayer({
   hideIdleHeading?: boolean;
   idleApps?: ReactNode[];
   idleAppIndex?: number;
-  /** Puts the extra Apps before the chapter's own idle Page. */
-  idleAppsFirst?: boolean;
   onIdleAppIndexChange?: (index: number) => void;
   rotateIdleApps?: boolean;
   backApp?: ReactNode;
@@ -610,7 +607,7 @@ export function ChapterPlayer({
         onEdit={onEditPage}
       />,
     ];
-    const orderedApps = idleAppsFirst ? [...idleApps, ...apps] : [...apps, ...idleApps];
+    const orderedApps = [...apps, ...idleApps];
     return (
       <SwipeSession
         attentionKey={attentionKey}
