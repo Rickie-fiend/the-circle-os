@@ -54,6 +54,7 @@ import {
   setDayLogRange,
   toggleHabitForDay,
   updateHabitDefinition,
+  updateHabitDefinitionParts,
   updateRoutineIdentity,
   updateTask,
   upsertTimeBlock,
@@ -465,6 +466,9 @@ export type CircleState = {
       {
         id: string;
         text: string;
+        action: string;
+        cue: string;
+        identity: string;
         status: "active" | "archived";
         createdAt: string;
         updatedAt: string;
@@ -2150,10 +2154,17 @@ export function TodayExperience() {
           idlePage?.body || habitBuildingChapter.title,
           nextRun,
         );
+        const action = chapterAnswerText(nextRun, "habit-action");
+        const cue = chapterAnswerText(nextRun, "habit-time-place");
         const identity =
           chapterAnswerText(nextRun, "habit-identity") || "Yourself";
         const added = addHabitDefinition(next);
-        next = updateHabitDefinition(added.state, added.id, missionText);
+        next = updateHabitDefinitionParts(added.state, added.id, {
+          action,
+          cue,
+          identity,
+          text: missionText,
+        });
         next = {
           ...next,
           profile: { ...next.profile, identityFocus: identity },
@@ -2745,25 +2756,39 @@ export function TodayExperience() {
                     <div className="os-repeated-habits">
                       {habits.map((habit) => {
                         const completed = Boolean(habitCompletion(habit.id)?.completed);
+                        const action = habit.action || habit.text;
+                        const identity = habit.identity.trim();
                         return (
                           <article
                             className={`os-extra-mission os-repeated-habit${completed ? " completed" : ""}`}
                             key={habit.id}
                           >
-                            <textarea
-                              aria-label={`Edit habit: ${habit.text || "New Habit"}`}
-                              autoFocus={newHabitId === habit.id}
-                              data-inline-editor-id={habit.id}
-                              className={`os-extra-mission-copy os-mission-text-edit${completed ? " completed" : ""}`}
-                              maxLength={240}
-                              onBlur={() => finishHabitEdit(habit.id)}
-                              onChange={(event) => changeHabit(habit.id, event.target.value)}
-                              placeholder="New Habit"
-                              rows={1}
-                              value={habit.text}
-                            />
+                            <div
+                              className={`os-habit-copy-swap${completed && identity ? " show-identity" : ""}`}
+                            >
+                              <div className="os-habit-action-copy">
+                                <textarea
+                                  aria-label={`Edit habit: ${action || "New Habit"}`}
+                                  autoFocus={newHabitId === habit.id}
+                                  data-inline-editor-id={habit.id}
+                                  className="os-extra-mission-copy os-mission-text-edit"
+                                  maxLength={240}
+                                  onBlur={() => finishHabitEdit(habit.id)}
+                                  onChange={(event) => changeHabit(habit.id, event.target.value)}
+                                  placeholder="New Habit"
+                                  rows={1}
+                                  value={action}
+                                />
+                                {habit.cue ? (
+                                  <span className="os-habit-cue">{habit.cue}</span>
+                                ) : null}
+                              </div>
+                              {identity ? (
+                                <p className="os-habit-identity-copy">{identity}</p>
+                              ) : null}
+                            </div>
                             <CreativeButton
-                              aria-label={`${completed ? "Undo" : "Mark done"}: ${habit.text || "New Habit"}`}
+                              aria-label={`${completed ? "Undo" : "Mark done"}: ${action || "New Habit"}`}
                               aria-pressed={completed}
                               className="os-row-tick os-row-tick-habit"
                               disabled={!habit.text.trim()}

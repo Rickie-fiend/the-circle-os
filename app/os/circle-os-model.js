@@ -190,6 +190,60 @@ function mergeRecordMaps(left = {}, right = {}) {
   return records;
 }
 
+function cleanHabitPart(value, maximum = 240) {
+  return String(value || "").replace(/\s+/g, " ").trim().slice(0, maximum);
+}
+
+export function composeHabitText({ action = "", cue = "", identity = "" } = {}) {
+  const cleanAction = cleanHabitPart(action);
+  const cleanCue = cleanHabitPart(cue);
+  const cleanIdentity = cleanHabitPart(identity);
+  if (!cleanCue && !cleanIdentity) return cleanAction;
+  if (!cleanAction) return "";
+  return `I will ${cleanAction}${cleanCue ? `, ${cleanCue}` : ""}${
+    cleanIdentity ? `${cleanCue ? "," : ""} so I can become ${cleanIdentity}` : ""
+  }.`;
+}
+
+export function habitActionText(habit) {
+  const action = cleanHabitPart(habit?.action || habit?.text);
+  const cue = cleanHabitPart(habit?.cue);
+  return [action, cue].filter(Boolean).join(" ");
+}
+
+export function habitRowText(habit, completed) {
+  const identity = cleanHabitPart(habit?.identity);
+  return completed && identity ? identity : habitActionText(habit);
+}
+
+function normalizeHabitDefinitions(definitions) {
+  return Object.fromEntries(
+    Object.entries(definitions || {}).map(([id, definition]) => {
+      const text = cleanHabitPart(definition?.text);
+      const action = cleanHabitPart(
+        definition && Object.hasOwn(definition, "action")
+          ? definition.action
+          : text,
+      );
+      return [
+        id,
+        {
+          ...definition,
+          id: definition?.id || id,
+          text: text || composeHabitText({
+            action,
+            cue: definition?.cue,
+            identity: definition?.identity,
+          }),
+          action,
+          cue: cleanHabitPart(definition?.cue),
+          identity: cleanHabitPart(definition?.identity),
+        },
+      ];
+    }),
+  );
+}
+
 export function habitCompletionId(habitId, dateKey) {
   return `${dateKey}:${habitId}`;
 }
@@ -591,9 +645,11 @@ export function normalizeState(state) {
     },
     habits: {
       identity: storedHabitIdentity,
-      definitions: mergeRecordMaps(
-        migratedPractice.definitions,
-        storedHabitDefinitions,
+      definitions: normalizeHabitDefinitions(
+        mergeRecordMaps(
+          migratedPractice.definitions,
+          storedHabitDefinitions,
+        ),
       ),
       completions: mergeRecordMaps(
         migratedPractice.completions,
@@ -1080,6 +1136,9 @@ export function addHabitDefinition(state, id = freshRecordId("habit")) {
           [id]: {
             id,
             text: "",
+            action: "",
+            cue: "",
+            identity: "",
             status: "active",
             createdAt: timestamp,
             updatedAt: timestamp,
@@ -1108,9 +1167,24 @@ export function updateRoutineIdentity(state, text) {
 }
 
 export function updateHabitDefinition(state, id, text) {
+  return updateHabitDefinitionParts(state, id, { action: text });
+}
+
+export function updateHabitDefinitionParts(state, id, parts) {
   const current = state.habits.definitions[id];
   if (!current) return state;
-  const cleanText = String(text || "").slice(0, 240);
+  const action = cleanHabitPart(
+    Object.hasOwn(parts || {}, "action") ? parts.action : current.action || current.text,
+  );
+  const cue = cleanHabitPart(
+    Object.hasOwn(parts || {}, "cue") ? parts.cue : current.cue,
+  );
+  const identity = cleanHabitPart(
+    Object.hasOwn(parts || {}, "identity") ? parts.identity : current.identity,
+  );
+  const cleanText = Object.hasOwn(parts || {}, "text")
+    ? cleanHabitPart(parts.text)
+    : composeHabitText({ action, cue, identity });
   const next = {
     ...state,
     habits: {
@@ -1120,6 +1194,9 @@ export function updateHabitDefinition(state, id, text) {
         [id]: {
           ...current,
           text: cleanText,
+          action,
+          cue,
+          identity,
           updatedAt: new Date().toISOString(),
         },
       },
@@ -1560,7 +1637,11 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
         (item) => item.questionId === "habit-identity",
       )?.answer || "Yourself";
     const added = addHabitDefinition(next);
-    next = updateHabitDefinition(added.state, added.id, cleanAnswer);
+    next = updateHabitDefinitionParts(added.state, added.id, {
+      action: cleanAnswer,
+      identity,
+      text: cleanAnswer,
+    });
     next = {
       ...next,
       profile: {
