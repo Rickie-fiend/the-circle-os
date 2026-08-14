@@ -353,9 +353,12 @@ Used for charts, weekly views, and other things worth reading again.
 - An optional App back is a side change inside the same stable App Box. Its
   front is what is needed today; its back is what the App holds.
 - Thoughts / Deep Thoughts, Routine / Record and Protocol / Phases use the same
-  controller and timings: 260ms to leave, 620ms for the full handoff.
-- The controller holds the measured frame height for the whole handoff.
-  Reduced-motion mode changes sides immediately without an animation phase.
+  controller and timings: 260ms to leave, a 500ms calm arrival and 840ms for the
+  complete handoff.
+- The controller holds the old measured height through the leave, then eases
+  the frame to the fully measured incoming Page over 440ms while that Page
+  arrives. Copy and geometry settle together instead of flashing first and
+  resizing afterwards. Reduced-motion mode changes sides immediately.
 - A mode label names the visible side. It is never an edit or completion
   action. Returning to an already known side does not replay a staged arrival.
 

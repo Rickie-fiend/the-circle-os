@@ -33,7 +33,8 @@ test("Thoughts, Routine and Protocol use one App back controller", () => {
   assert.match(protocol, /useAppBack<"phase" \| "home">/);
   assert.doesNotMatch(shell, /thoughtModeTimer|habitModeTimer|mode-refreshing/);
   assert.match(controller, /APP_FLIP_EXIT_MS = 260/);
-  assert.match(controller, /APP_FLIP_TOTAL_MS = 620/);
+  assert.match(controller, /APP_FLIP_RESIZE_MS = 440/);
+  assert.match(controller, /APP_FLIP_TOTAL_MS = 840/);
 });
 
 test("the shared flip holds geometry and becomes immediate for reduced motion", () => {
@@ -41,6 +42,11 @@ test("the shared flip holds geometry and becomes immediate for reduced motion", 
   assert.match(controller, /prefers-reduced-motion: reduce/);
   assert.match(css, /\.os-app-flip-hold \.os-app-window/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.os-app-flip-leaving/);
+  assert.match(controller, /easeFrameToIncomingSide\(\)/);
+  assert.match(controller, /releaseFrameThree/);
+  assert.match(controller, /--os-app-flip-height/);
+  assert.match(css, /os-app-flip-resizing[\s\S]*height 440ms/);
+  assert.match(css, /os-app-flip-arrival 500ms/);
 });
 
 test("Protocol labels its sides and keeps editing as an action", () => {

@@ -6699,6 +6699,12 @@
   min-height: var(--os-app-flip-height) !important;
 }
 
+.circle-os .os-app-flip-resizing .os-app-window {
+  min-height: var(--os-app-box-min-height) !important;
+  transition: height 440ms cubic-bezier(0.22, 0.82, 0.22, 1);
+  will-change: height;
+}
+
 .circle-os .os-app-flip-leaving .os-page-layout,
 .circle-os .os-page-layout.os-app-flip-leaving {
   opacity: 0;
@@ -6707,7 +6713,7 @@
 
 .circle-os .os-app-flip-arriving .os-page-layout,
 .circle-os .os-page-layout.os-app-flip-arriving {
-  animation: os-app-flip-arrival 360ms var(--ease-out) both;
+  animation: os-app-flip-arrival 500ms var(--ease-out) both;
 }
 
 @keyframes os-app-flip-arrival {
