@@ -845,10 +845,13 @@ export function PageLayout({
     const page = pageRef.current;
     const body = bodyRef.current;
     if (!page || !body) return;
-    if (textLayout === "content") {
+    const clearMeasurement = () => {
       delete body.dataset.osTextLayout;
       body.style.removeProperty("--os-measured-body-min-height");
       body.style.removeProperty("--os-measured-main-top");
+    };
+    if (textLayout === "content") {
+      clearMeasurement();
       return;
     }
     const main = body.querySelector<HTMLElement>(
@@ -857,7 +860,10 @@ export function PageLayout({
     const mainText = main?.querySelector<HTMLElement>(
       "textarea, h1, h2, h3, p, [data-os-main-text]",
     );
-    if (!main || !mainText) return;
+    if (!main || !mainText) {
+      clearMeasurement();
+      return;
+    }
 
     let active = true;
     let frame = 0;

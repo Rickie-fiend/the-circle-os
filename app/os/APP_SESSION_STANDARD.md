@@ -80,9 +80,12 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - A fluid App Box commits its first measured height only after child editors
   have sized and the font state has settled. It remeasures when fonts finish or
   fail and when an in-Page side changes; the CSS minimum carries first paint.
-- Main-text centring is a declared Page layout. A content list such as Protocol
-  home opts out, begins directly under Heading, and must never be measured from
-  a nested record title.
+- Main-text centring is a declared Page layout. Content Pages such as Routine,
+  Record and Protocol home opt out, begin directly under Heading, and must never
+  be measured from nested row text.
+- When a reused Page stops qualifying for Main-text centring, it clears the old
+  measured offset immediately. An App-back handoff may reuse a surface, but it
+  may not reuse the previous side's geometry.
 - A content-heavy App may define a slightly larger stable minimum so its Main
   action and Footer never collide on a narrow phone.
 

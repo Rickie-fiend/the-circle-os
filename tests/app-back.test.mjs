@@ -14,6 +14,14 @@ const protocol = readFileSync(
   new URL("../app/os/protocol-page.tsx", import.meta.url),
   "utf8",
 );
+const chapterPlayer = readFileSync(
+  new URL("../app/os/chapters/chapter-player.tsx", import.meta.url),
+  "utf8",
+);
+const appSession = readFileSync(
+  new URL("../app/os/app-session.tsx", import.meta.url),
+  "utf8",
+);
 const css = readFileSync(
   new URL("../app/os/os-app.css", import.meta.url),
   "utf8",
@@ -40,4 +48,10 @@ test("Protocol labels its sides and keeps editing as an action", () => {
   assert.match(protocol, />\s*Protocol\s*</);
   assert.match(protocol, />\s*Edit phase\s*</);
   assert.doesNotMatch(protocol, />\s*Done\s*:\s*Protocol\s*</);
+});
+
+test("Routine and Record declare content layout and stale text offsets are cleared", () => {
+  assert.match(shell, /idleTextLayout="content"/);
+  assert.match(chapterPlayer, /textLayout=\{isIdle \? idleTextLayout : undefined\}/);
+  assert.match(appSession, /if \(!main \|\| !mainText\) \{\s*clearMeasurement\(\);/);
 });

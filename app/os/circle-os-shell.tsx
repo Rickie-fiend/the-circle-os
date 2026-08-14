@@ -2844,6 +2844,7 @@ export function TodayExperience() {
                   </section>
                 </div>
               )}
+              idleTextLayout="content"
               idleHeaderAction={habitMode === "yesterday" ? undefined : (
                 <button className="os-new-habit" type="button" onClick={beginNewHabit}>
                   New habit

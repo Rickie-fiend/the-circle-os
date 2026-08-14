@@ -109,6 +109,7 @@ function ChapterPageView({
   idleBody,
   idleContent,
   idleFooter,
+  idleTextLayout,
   hideIdleHeading,
   onEdit,
 }: {
@@ -127,6 +128,7 @@ function ChapterPageView({
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
+  idleTextLayout?: "auto" | "content";
   hideIdleHeading?: boolean;
   onEdit?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
@@ -249,6 +251,7 @@ function ChapterPageView({
         headerLeft={isIdle ? (idleLabel ?? <p className="os-card-label">{chapter.session}</p>) : undefined}
         headerRight={isIdle ? idleHeaderAction : !isCompletionPage ? progress : undefined}
         theme={chapter.theme}
+        textLayout={isIdle ? idleTextLayout : undefined}
         variant={isIdle ? "app" : "chapter"}
       >
         <div className="os-page-main">
@@ -443,6 +446,7 @@ export function ChapterPlayer({
   idleBody,
   idleContent,
   idleFooter,
+  idleTextLayout = "auto",
   hideIdleHeading = false,
   idleApps = [],
   idleAppIndex = 0,
@@ -472,6 +476,8 @@ export function ChapterPlayer({
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
+  /** Declares whether the idle Page centres Main text or lays out app content. */
+  idleTextLayout?: "auto" | "content";
   hideIdleHeading?: boolean;
   idleApps?: ReactNode[];
   idleAppIndex?: number;
@@ -606,6 +612,7 @@ export function ChapterPlayer({
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
+        idleTextLayout={idleTextLayout}
         hideIdleHeading={hideIdleHeading}
         onEdit={onEditPage}
       />,
@@ -674,6 +681,7 @@ export function ChapterPlayer({
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
+        idleTextLayout={idleTextLayout}
         onEdit={onEditPage}
         onComplete={(submission) =>
           onRunChange(
@@ -767,6 +775,7 @@ export function ChapterPlayer({
           idleBody={idleBody}
           idleContent={idleContent}
           idleFooter={idleFooter}
+          idleTextLayout={idleTextLayout}
           hideIdleHeading={hideIdleHeading}
           onEdit={onEditPage}
           onComplete={(submission) =>
