@@ -285,6 +285,10 @@ export function mergeClientState(serverValue, phoneValue) {
         server.protocol?.completions,
         phone.protocol?.completions,
       ),
+      seals: mergeUpdatedRecords(
+        server.protocol?.seals,
+        phone.protocol?.seals,
+      ),
     },
     evidence: {
       localRevision: Math.max(

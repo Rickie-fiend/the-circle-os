@@ -115,9 +115,11 @@ test("a breaking style takes several presses before it commits", () => {
   assert.equal(isButtonBroken(nextButtonDamage(0, 1), 1), true);
 });
 
-test("a breaking style is never dealt by the everyday rotation", () => {
+test("earned styles are never dealt by the everyday rotation", () => {
   assert.ok(BUTTON_STYLE_IDS.includes("fractured-glass"), "still a valid style");
+  assert.ok(BUTTON_STYLE_IDS.includes("ink-wash"), "the Protocol reward is valid");
   assert.ok(!BUTTON_ROTATION_STYLE_IDS.includes("fractured-glass"));
+  assert.ok(!BUTTON_ROTATION_STYLE_IDS.includes("ink-wash"));
 
   // Deal many full bags; a style that must be broken four times should never
   // arrive by chance on an ordinary action.
@@ -131,9 +133,11 @@ test("a breaking style is never dealt by the everyday rotation", () => {
     }
   }
   assert.ok(!dealt.has("fractured-glass"), "never dealt at random");
+  assert.ok(!dealt.has("ink-wash"), "earned only by closing a kept day");
   assert.equal(dealt.size, BUTTON_ROTATION_STYLE_IDS.length);
 
   // It stays usable when chosen deliberately.
   assert.equal(normalizeButtonStyleId("fractured-glass"), "fractured-glass");
+  assert.equal(normalizeButtonStyleId("ink-wash"), "ink-wash");
   assert.equal(buttonPressesToBreak("fractured-glass"), 4);
 });

@@ -34,6 +34,7 @@ import {
   getDateKey,
   getDayPeriod,
   hasReadableProfileCase,
+  latestCompletedProtocol,
   mergeServerState,
   minutesBetween,
   normalizeState,
@@ -46,10 +47,12 @@ import {
   setAppSessionIndex,
   setDayLogRange,
   setProtocolDays,
+  sealProtocolDay,
   startProtocolDraft,
   summarizeWeek,
   toggleHabitForDay,
   toggleProtocolItem,
+  toggleProtocolRecordItem,
   updateHabitDefinition,
   updateRoutineIdentity,
   updateProtocolItem,
@@ -1077,6 +1080,108 @@ test("missing a non-negotiable costs nothing, and a run ends without failing", (
   assert.equal(after, state);
 });
 
+test("a kept Protocol day seals once, stays editable, and ignores negotiables", () => {
+  let state = startProtocolDraft(createEmptyState(), "run-close").state;
+  state = setProtocolDays(state, "run-close", 3);
+  for (const [id, kind, text] of [
+    ["i-write", "non-negotiable", "Write one line"],
+    ["i-walk", "non-negotiable", "Walk outside"],
+    ["i-read", "negotiable", "Read a chapter"],
+  ]) {
+    state = addProtocolItem(state, "run-close", kind, id).state;
+    state = updateProtocolItem(state, "run-close", id, text);
+  }
+  state = beginProtocolRun(state, "run-close", "2026-08-12");
+
+  state = toggleProtocolItem(state, "i-write", "2026-08-12");
+  assert.equal(protocolToday(state, "2026-08-12").keptAll, false);
+  assert.equal(
+    sealProtocolDay(state, "2026-08-12"),
+    state,
+    "the action cannot seal before the last non-negotiable",
+  );
+
+  state = toggleProtocolItem(state, "i-walk", "2026-08-12");
+  assert.equal(protocolToday(state, "2026-08-12").keptAll, true);
+  assert.equal(protocolToday(state, "2026-08-12").sealed, false);
+
+  state = toggleProtocolItem(state, "i-read", "2026-08-12");
+  assert.equal(
+    protocolToday(state, "2026-08-12").keptAll,
+    true,
+    "a negotiable never changes whether the day can close",
+  );
+  state = sealProtocolDay(state, "2026-08-12");
+  const sealed = protocolToday(state, "2026-08-12");
+  assert.equal(sealed.sealed, true);
+  assert.equal(sealed.seal.day, 1);
+  assert.equal(sealed.seal.totalDays, 3);
+  assert.deepEqual(
+    sealed.seal.terms.map((term) => term.text),
+    ["Write one line", "Walk outside", "Read a chapter"],
+    "the closing Page receives the real kept terms",
+  );
+
+  state = toggleProtocolItem(state, "i-read", "2026-08-12");
+  assert.equal(
+    protocolToday(state, "2026-08-12").sealed,
+    true,
+    "changing an extra does not reopen a kept day",
+  );
+  state = toggleProtocolItem(state, "i-walk", "2026-08-12");
+  assert.equal(protocolToday(state, "2026-08-12").keptAll, false);
+  assert.equal(protocolToday(state, "2026-08-12").sealed, false);
+  state = toggleProtocolItem(state, "i-walk", "2026-08-12");
+  assert.equal(protocolToday(state, "2026-08-12").keptAll, true);
+  assert.equal(
+    protocolToday(state, "2026-08-12").sealed,
+    false,
+    "reticking offers Completed today again instead of silently resealing",
+  );
+});
+
+test("the last kept day lands home with the finished phase and remains reversible", () => {
+  let state = startProtocolDraft(createEmptyState(), "run-finish").state;
+  state = setProtocolDays(state, "run-finish", 3);
+  state = updateProtocolItem(
+    addProtocolItem(state, "run-finish", "non-negotiable", "i-sit").state,
+    "run-finish", "i-sit", "Sit for five minutes",
+  );
+  state = beginProtocolRun(state, "run-finish", "2026-08-12");
+  state = toggleProtocolItem(state, "i-sit", "2026-08-14");
+  state = sealProtocolDay(state, "2026-08-14");
+
+  assert.equal(activeProtocolRun(state), null, "the completed run leaves the active slot");
+  const finished = latestCompletedProtocol(state);
+  assert.equal(finished.run.name, "Monk Mode");
+  assert.equal(finished.day, 3);
+  assert.equal(finished.dateKey, "2026-08-14");
+  assert.equal(finished.nonNegotiable[0].completed, true);
+
+  state = toggleProtocolRecordItem(
+    state,
+    "run-finish",
+    "i-sit",
+    "2026-08-14",
+  );
+  const corrected = latestCompletedProtocol(state);
+  assert.equal(corrected.nonNegotiable[0].completed, false);
+  assert.equal(corrected.sealed, false, "the dated seal is reversed, not deleted");
+
+  const server = structuredClone(state);
+  server.protocol.seals["run-finish:2026-08-14"] = {
+    ...server.protocol.seals["run-finish:2026-08-14"],
+    sealed: true,
+    updatedAt: "2026-08-14T00:00:00.000Z",
+  };
+  const merged = mergeServerState(state, server);
+  assert.equal(
+    merged.protocol.seals["run-finish:2026-08-14"].sealed,
+    false,
+    "an older server seal cannot restore a correction",
+  );
+});
+
 test("clearing a protocol term survives the server merge", () => {
   let state = startProtocolDraft(createEmptyState(), "run-1").state;
   state = updateProtocolItem(
@@ -1094,6 +1199,6 @@ test("clearing a protocol term survives the server merge", () => {
 
 test("an older saved state receives a protocol slice", () => {
   const migrated = normalizeState({ version: 4, profile: {}, days: {} });
-  assert.deepEqual(migrated.protocol, { runs: {}, completions: {} });
+  assert.deepEqual(migrated.protocol, { runs: {}, completions: {}, seals: {} });
   assert.equal(activeProtocolRun(migrated), null);
 });

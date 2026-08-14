@@ -3,6 +3,7 @@ export const BUTTON_STYLE_IDS = Object.freeze([
   "ink-burst",
   "soft-clay",
   "liquid-capsule",
+  "ink-wash",
   "fractured-glass",
 ]);
 
@@ -35,6 +36,15 @@ export const BUTTON_STYLE_DEFINITIONS = Object.freeze({
     tags: Object.freeze(["draw", "ripple", "morph"]),
     haptic: Object.freeze([6, 28, 8]),
   }),
+  // Earned by closing a kept Protocol day. Like Fractured Glass it is never
+  // dealt into an ordinary button rotation.
+  "ink-wash": Object.freeze({
+    id: "ink-wash",
+    name: "Ink Wash",
+    world: "paper",
+    tags: Object.freeze(["wash", "settle", "earned"]),
+    haptic: Object.freeze([10, 24, 12]),
+  }),
   // The only style that does not act on the first press. Each tap fractures it
   // further and the last one breaks it, so the action costs a little effort and
   // the breaking becomes the moment rather than a decoration on top of it.
@@ -58,11 +68,11 @@ function randomIndex(random, length) {
   return Math.min(length - 1, Math.max(0, Math.floor(value * length)));
 }
 
-// Styles that appear in the everyday rotation. Fractured Glass is deliberately
-// absent: it is chosen for a moment that has earned it, never dealt at random,
-// because a button that must be broken four times is not a neutral default.
+// Earned styles are chosen by their moments, never dealt at random.
 export const BUTTON_ROTATION_STYLE_IDS = Object.freeze(
-  BUTTON_STYLE_IDS.filter((id) => id !== "fractured-glass"),
+  BUTTON_STYLE_IDS.filter(
+    (id) => id !== "fractured-glass" && id !== "ink-wash",
+  ),
 );
 
 export function shuffleButtonStyles(random = Math.random) {

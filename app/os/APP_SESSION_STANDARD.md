@@ -297,6 +297,8 @@ Used for charts, weekly views, and other things worth reading again.
 - Note, Thoughts, short Chapter, empty Routine and resting Protocol Pages all
   use the same default App Box height. Only real added content may request a
   larger stable height.
+- A running or finished Protocol holds that default height and scrolls its
+  terms inside the Body. Draft editing remains fluid.
 
 ## State
 
@@ -321,6 +323,10 @@ Used for charts, weekly views, and other things worth reading again.
   one-time journeys. Completion retires them and restores the normal App.
   Dismissal, when that App offers it, also retires the delivery rather than
   adding it to a recall queue.
+- Closing a kept Protocol day writes a dated seal but never locks its ticks. A
+  newer correction records an explicit unseal. The factual kept-day Page is
+  transient, occupies the Protocol slot, pauses idle rotation, and one swipe
+  removes it without adding a stack or chapter run.
 
 ## Page arrival
 

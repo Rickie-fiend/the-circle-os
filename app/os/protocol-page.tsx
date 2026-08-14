@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PageLayout } from "./app-session";
-import { CreativeButton } from "./button-engine";
+import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import { PROTOCOL_DURATIONS } from "./circle-os-model.js";
 
 export type ProtocolItemView = {
@@ -18,12 +18,56 @@ export type ProtocolView = {
   isDraft: boolean;
   isOver: boolean;
   keptAll: boolean;
+  sealed: boolean;
   nonNegotiable: ProtocolItemView[];
   negotiable: ProtocolItemView[];
 } | null;
 
+export type CompletedProtocolView = {
+  run: { id: string; name: string; days: number; status: string };
+  day: number;
+  dateKey: string;
+  sealed: boolean;
+  nonNegotiable: ProtocolItemView[];
+  negotiable: ProtocolItemView[];
+} | null;
+
+export type ProtocolSealView = {
+  runId: string;
+  dateKey: string;
+  day: number;
+  totalDays: number;
+  phaseName: string;
+  terms: Array<Pick<ProtocolItemView, "id" | "text" | "kind">>;
+};
+
+export function ProtocolKeptPage({ seal }: { seal: ProtocolSealView }) {
+  return (
+    <PageLayout
+      className="os-protocol os-protocol-kept"
+      headerLeft={<p className="os-card-label">Protocol</p>}
+      headerRight={<span>{seal.phaseName}</span>}
+      theme="orange"
+      footer={<span className="os-protocol-close-hint">Swipe to close</span>}
+    >
+      <div className="os-page-main os-protocol-identity">
+        <p className="os-protocol-kept-title">
+          Day {seal.day} of {seal.totalDays} kept
+        </p>
+      </div>
+      <div className="os-page-sub os-protocol-kept-terms">
+        <p className="os-record-label">Terms kept</p>
+        {seal.terms.map((term) => (
+          <p className="os-protocol-kept-term" key={term.id}>{term.text}</p>
+        ))}
+      </div>
+    </PageLayout>
+  );
+}
+
 type ProtocolPageProps = {
   protocol: ProtocolView;
+  completedProtocol: CompletedProtocolView;
   canBegin: boolean;
   editingItemId: string | null;
   onStart: () => void;
@@ -34,6 +78,8 @@ type ProtocolPageProps = {
   onFinishItemEdit: (itemId: string) => void;
   onBegin: () => void;
   onToggleItem: (itemId: string) => void;
+  onToggleCompletedItem: (runId: string, itemId: string, dateKey: string) => void;
+  onSealToday: () => void;
   onEndRun: () => void;
 };
 
@@ -56,6 +102,7 @@ type ProtocolPageProps = {
  */
 export function ProtocolPage({
   protocol,
+  completedProtocol,
   canBegin,
   editingItemId,
   onStart,
@@ -66,6 +113,8 @@ export function ProtocolPage({
   onFinishItemEdit,
   onBegin,
   onToggleItem,
+  onToggleCompletedItem,
+  onSealToday,
   onEndRun,
 }: ProtocolPageProps) {
   const label = <p className="os-card-label">Protocol</p>;
@@ -73,14 +122,27 @@ export function ProtocolPage({
   // were agreed before it began and the days do not come back. It asks once.
   const [confirmingEnd, setConfirmingEnd] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [rewarding, setRewarding] = useState(false);
   const confirmTimer = useRef<number | null>(null);
+  const rewardTimer = useRef<number | null>(null);
 
   useEffect(
     () => () => {
       if (confirmTimer.current) window.clearTimeout(confirmTimer.current);
+      if (rewardTimer.current) window.clearTimeout(rewardTimer.current);
     },
     [],
   );
+
+  function completeToday() {
+    if (rewarding) return;
+    setRewarding(true);
+    rewardTimer.current = window.setTimeout(() => {
+      onSealToday();
+      setRewarding(false);
+      rewardTimer.current = null;
+    }, 900);
+  }
 
   function endRun() {
     if (confirmTimer.current) window.clearTimeout(confirmTimer.current);
@@ -100,10 +162,16 @@ export function ProtocolPage({
   }
 
   if (!protocol) {
+    const finished = completedProtocol;
     return (
       <PageLayout
         className="os-protocol"
         headerLeft={label}
+        headerRight={
+          finished ? (
+            <span className="os-protocol-progress">Finished · {finished.run.days} days</span>
+          ) : undefined
+        }
         theme="orange"
         footer={
           <button className="os-protocol-begin" onClick={onStart} type="button">
@@ -112,16 +180,47 @@ export function ProtocolPage({
         }
       >
         <div className="os-page-main os-protocol-identity">
-          <p className="os-protocol-invite">
-            A protocol is a short stretch of days you agree with yourself, kept
-            the same every day until it ends.
-          </p>
+          {finished ? (
+            <p className="os-protocol-name">{finished.run.name}</p>
+          ) : (
+            <p className="os-protocol-invite">
+              A protocol is a short stretch of days you agree with yourself, kept
+              the same every day until it ends.
+            </p>
+          )}
         </div>
+        {finished ? (
+          <div className="os-page-sub os-protocol-terms">
+            {finished.nonNegotiable.length ? (
+              <>
+                <p className="os-record-label">Last day</p>
+                {finished.nonNegotiable.map((item) => (
+                  <ProtocolBlock
+                    item={item}
+                    key={item.id}
+                    onToggle={(itemId) =>
+                      onToggleCompletedItem(finished.run.id, itemId, finished.dateKey)
+                    }
+                  />
+                ))}
+              </>
+            ) : null}
+            {finished.negotiable.map((item) => (
+              <ProtocolBlock
+                item={item}
+                key={item.id}
+                onToggle={(itemId) =>
+                  onToggleCompletedItem(finished.run.id, itemId, finished.dateKey)
+                }
+              />
+            ))}
+          </div>
+        ) : null}
       </PageLayout>
     );
   }
 
-  const { run, day, isDraft, isOver, nonNegotiable, negotiable } = protocol;
+  const { run, day, isDraft, isOver, keptAll, sealed, nonNegotiable, negotiable } = protocol;
 
   if (isDraft) {
     return (
@@ -302,15 +401,33 @@ export function ProtocolPage({
       }
       theme="orange"
       footer={
-        <button
-          className={`os-protocol-end${confirmingEnd ? " is-confirming" : ""}`}
-          onClick={endRun}
-          type="button"
-        >
-          {confirmingEnd ? "Tap again to end it" : "End this protocol"}
-        </button>
+        keptAll && !sealed ? (
+          <button
+            className="os-protocol-begin os-protocol-complete"
+            disabled={rewarding}
+            onClick={completeToday}
+            type="button"
+          >
+            Completed today
+          </button>
+        ) : (
+          <button
+            className={`os-protocol-end${confirmingEnd ? " is-confirming" : ""}`}
+            onClick={endRun}
+            type="button"
+          >
+            {confirmingEnd ? "Tap again to end it" : "End this protocol"}
+          </button>
+        )
       }
     >
+      <ButtonRewardBackdrop active={rewarding} styleId="ink-wash" />
+      <span
+        aria-live="polite"
+        className={`os-protocol-reward-copy${rewarding ? " is-visible" : ""}`}
+      >
+        {rewarding ? "You did it" : ""}
+      </span>
       <div className="os-page-main os-protocol-identity">
         <p className="os-protocol-name">{run.name}</p>
       </div>
@@ -332,6 +449,18 @@ export function ProtocolPage({
               <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} />
             ))}
           </>
+        ) : null}
+
+        {keptAll && !sealed ? (
+          <button
+            className={`os-protocol-end os-protocol-end-demoted${
+              confirmingEnd ? " is-confirming" : ""
+            }`}
+            onClick={endRun}
+            type="button"
+          >
+            {confirmingEnd ? "Tap again to end it" : "End this protocol"}
+          </button>
         ) : null}
       </div>
     </PageLayout>

@@ -125,6 +125,29 @@ test("server keeps the newest app page without reviving an old cover", () => {
   assert.equal(merged.appSessions["vision-profile"].index, 1);
 });
 
+test("server keeps the newest Protocol day seal correction", () => {
+  const server = createEmptyState();
+  const phone = createEmptyState();
+  const id = "run-1:2026-08-14";
+  server.protocol.seals[id] = {
+    id,
+    runId: "run-1",
+    dateKey: "2026-08-14",
+    sealed: true,
+    updatedAt: "2026-08-14T08:00:00.000Z",
+  };
+  phone.protocol.seals[id] = {
+    ...server.protocol.seals[id],
+    sealed: false,
+    unsealedAt: "2026-08-14T09:00:00.000Z",
+    updatedAt: "2026-08-14T09:00:00.000Z",
+  };
+
+  const merged = mergeClientState(server, phone);
+  assert.equal(merged.protocol.seals[id].sealed, false);
+  assert.equal(merged.protocol.seals[id].unsealedAt, "2026-08-14T09:00:00.000Z");
+});
+
 test("answering a profile question clears the old question", () => {
   const server = firstVision();
   server.profile.profileCase.survey.nextQuestion = {

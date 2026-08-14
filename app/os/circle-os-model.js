@@ -440,6 +440,7 @@ export function createEmptyState() {
     protocol: {
       runs: {},
       completions: {},
+      seals: {},
     },
     evidence: {
       localRevision: 0,
@@ -586,6 +587,7 @@ export function normalizeState(state) {
     protocol: {
       runs: { ...(state.protocol?.runs || {}) },
       completions: { ...(state.protocol?.completions || {}) },
+      seals: { ...(state.protocol?.seals || {}) },
     },
     habits: {
       identity: storedHabitIdentity,
@@ -1016,6 +1018,10 @@ export function mergeServerState(state, serverState) {
       completions: mergeUpdatedRecords(
         remote.protocol.completions,
         local.protocol.completions,
+      ),
+      seals: mergeUpdatedRecords(
+        remote.protocol.seals,
+        local.protocol.seals,
       ),
     },
     evidence: {
@@ -2184,6 +2190,10 @@ export function protocolCompletionId(itemId, dateKey) {
   return `${dateKey}:${itemId}`;
 }
 
+export function protocolSealId(runId, dateKey) {
+  return `${runId}:${dateKey}`;
+}
+
 function writeRun(state, run) {
   return {
     ...state,
@@ -2382,20 +2392,42 @@ export function protocolDay(run, dateKey) {
   return Math.floor((current - start) / 86400000) + 1;
 }
 
-export function toggleProtocolItem(state, itemId, dateKey) {
-  const run = activeProtocolRun(state);
+export function toggleProtocolRecordItem(state, runId, itemId, dateKey) {
+  const run = state.protocol?.runs?.[runId];
   const item = run?.items?.[itemId];
-  if (!run || !item || run.status !== "active" || item.status !== "active") {
+  if (
+    !run ||
+    !item ||
+    (run.status !== "active" && run.status !== "completed") ||
+    item.status !== "active"
+  ) {
     return state;
   }
   const key = protocolCompletionId(itemId, dateKey);
   const current = state.protocol.completions[key];
   const timestamp = now();
+  const sealKey = protocolSealId(run.id, dateKey);
+  const currentSeal = state.protocol.seals?.[sealKey];
+  // A negotiable is extra by definition. Correcting it never reopens a day
+  // that was honestly kept; correcting a non-negotiable does.
+  const seals =
+    item.kind === "non-negotiable" && currentSeal?.sealed
+      ? {
+          ...state.protocol.seals,
+          [sealKey]: {
+            ...currentSeal,
+            sealed: false,
+            unsealedAt: timestamp,
+            updatedAt: timestamp,
+          },
+        }
+      : state.protocol.seals;
   return queueProfileUpdate(
     {
       ...state,
       protocol: {
         ...state.protocol,
+        seals,
         completions: {
           ...state.protocol.completions,
           [key]: {
@@ -2405,6 +2437,72 @@ export function toggleProtocolItem(state, itemId, dateKey) {
             dateKey,
             completed: !current?.completed,
             completedAt: current?.completed ? null : timestamp,
+            updatedAt: timestamp,
+          },
+        },
+      },
+    },
+    "protocol",
+  );
+}
+
+export function toggleProtocolItem(state, itemId, dateKey) {
+  const run = activeProtocolRun(state);
+  return run ? toggleProtocolRecordItem(state, run.id, itemId, dateKey) : state;
+}
+
+// Sealing is a dated assertion about one day, not a lock. The completed terms
+// are copied into the record so the closing Page can tell the truth even if the
+// run is edited later. A later correction writes an unsealed version instead of
+// deleting it, which keeps the local-first merge honest.
+export function sealProtocolDay(state, dateKey) {
+  const today = protocolToday(state, dateKey);
+  if (
+    !today ||
+    today.run.status !== "active" ||
+    today.day < 1 ||
+    today.day > today.run.days ||
+    !today.keptAll ||
+    today.sealed
+  ) {
+    return state;
+  }
+  const timestamp = now();
+  const id = protocolSealId(today.run.id, dateKey);
+  const terms = [...today.nonNegotiable, ...today.negotiable]
+    .filter((item) => item.completed)
+    .map((item) => ({ id: item.id, text: item.text, kind: item.kind }));
+  const completedRun =
+    today.day === today.run.days
+      ? {
+          ...today.run,
+          status: "completed",
+          endedAt: timestamp,
+          updatedAt: timestamp,
+        }
+      : today.run;
+  return queueProfileUpdate(
+    {
+      ...state,
+      protocol: {
+        ...state.protocol,
+        runs: {
+          ...state.protocol.runs,
+          [completedRun.id]: completedRun,
+        },
+        seals: {
+          ...state.protocol.seals,
+          [id]: {
+            id,
+            runId: today.run.id,
+            dateKey,
+            day: today.day,
+            totalDays: today.run.days,
+            phaseName: today.run.name,
+            terms,
+            sealed: true,
+            sealedAt: timestamp,
+            unsealedAt: null,
             updatedAt: timestamp,
           },
         },
@@ -2427,6 +2525,7 @@ export function protocolToday(state, dateKey) {
   });
   const nonNegotiable = protocolItems(run, "non-negotiable").map(decorate);
   const negotiable = protocolItems(run, "negotiable").map(decorate);
+  const seal = state.protocol.seals?.[protocolSealId(run.id, dateKey)] || null;
   return {
     run,
     day,
@@ -2436,7 +2535,43 @@ export function protocolToday(state, dateKey) {
     isOver: run.status === "active" && day > run.days,
     keptAll:
       nonNegotiable.length > 0 && nonNegotiable.every((item) => item.completed),
+    sealed: Boolean(seal?.sealed),
+    seal,
     nonNegotiable,
     negotiable,
+  };
+}
+
+// The Protocol home keeps the most recently finished phase in view. It reads
+// the current completion records rather than freezing the controls, so even the
+// last day can still be corrected after it has been sealed.
+export function latestCompletedProtocol(state) {
+  const run =
+    Object.values(state.protocol?.runs || {})
+      .filter((candidate) => candidate.status === "completed")
+      .sort((left, right) =>
+        String(right.endedAt || right.updatedAt || "").localeCompare(
+          String(left.endedAt || left.updatedAt || ""),
+        ),
+      )[0] || null;
+  if (!run) return null;
+  const seals = Object.values(state.protocol?.seals || {})
+    .filter((seal) => seal.runId === run.id)
+    .sort((left, right) => right.dateKey.localeCompare(left.dateKey));
+  const seal = seals[0] || null;
+  const dateKey = seal?.dateKey || run.startDateKey;
+  const decorate = (item) => ({
+    ...item,
+    completed: Boolean(
+      state.protocol.completions[protocolCompletionId(item.id, dateKey)]?.completed,
+    ),
+  });
+  return {
+    run,
+    day: seal?.day || run.days,
+    dateKey,
+    sealed: Boolean(seal?.sealed),
+    nonNegotiable: protocolItems(run, "non-negotiable").map(decorate),
+    negotiable: protocolItems(run, "negotiable").map(decorate),
   };
 }

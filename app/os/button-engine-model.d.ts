@@ -2,7 +2,9 @@ export type ButtonStyleId =
   | "default"
   | "ink-burst"
   | "soft-clay"
-  | "liquid-capsule";
+  | "liquid-capsule"
+  | "ink-wash"
+  | "fractured-glass";
 export type ButtonLifecycle =
   | "hidden"
   | "entering"

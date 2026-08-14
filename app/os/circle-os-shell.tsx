@@ -31,11 +31,14 @@ import {
   dayRecord,
   discardEmptyProtocolItem,
   endProtocolRun,
+  latestCompletedProtocol,
   protocolToday,
   renameProtocolRun,
   setProtocolDays,
   startProtocolDraft,
+  sealProtocolDay,
   toggleProtocolItem,
+  toggleProtocolRecordItem,
   updateProtocolItem,
   previousDateKey,
   reopenTask,
@@ -84,7 +87,11 @@ import {
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
-import { ProtocolPage } from "./protocol-page";
+import {
+  ProtocolKeptPage,
+  ProtocolPage,
+  type ProtocolSealView,
+} from "./protocol-page";
 import {
   chapterRunId,
   chapterAnswerText,
@@ -499,6 +506,11 @@ export type CircleState = {
         targetAt?: string | null;
       }
     >;
+  };
+  protocol: {
+    runs: Record<string, Record<string, unknown>>;
+    completions: Record<string, Record<string, unknown>>;
+    seals: Record<string, Record<string, unknown>>;
   };
   evidence: {
     localRevision: number;
@@ -1279,6 +1291,8 @@ export function TodayExperience() {
   const [habitModeRefreshing, setHabitModeRefreshing] = useState(false);
   const habitModeTimer = useRef<number | null>(null);
   const [newProtocolItemId, setNewProtocolItemId] = useState<string | null>(null);
+  const [sealedProtocolDay, setSealedProtocolDay] =
+    useState<ProtocolSealView | null>(null);
   const [newHabitId, setNewHabitId] = useState<string | null>(null);
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
@@ -1607,6 +1621,7 @@ export function TodayExperience() {
   );
   const protocol = protocolToday(state, dateKey);
   const protocolRun = activeProtocolRun(state);
+  const completedProtocol = latestCompletedProtocol(state);
 
   useEffect(() => {
     const editorId = newHabitId || newTaskId || newProtocolItemId;
@@ -1762,6 +1777,38 @@ export function TodayExperience() {
     if (!protocolRun) return;
     updateState((current) => discardEmptyProtocolItem(current, protocolRun.id, itemId));
     setNewProtocolItemId((current) => (current === itemId ? null : current));
+  }
+
+  function completeProtocolToday() {
+    if (!protocol || !protocol.keptAll || protocol.sealed) return;
+    const seal: ProtocolSealView = {
+      runId: protocol.run.id,
+      dateKey,
+      day: protocol.day,
+      totalDays: protocol.run.days,
+      phaseName: protocol.run.name,
+      terms: [...protocol.nonNegotiable, ...protocol.negotiable]
+        .filter((item) => item.completed)
+        .map((item) => ({
+          id: item.id,
+          text: item.text,
+          kind: item.kind,
+        })),
+    };
+    updateState((current) => sealProtocolDay(current, dateKey));
+    setSealedProtocolDay(seal);
+  }
+
+  function changeHabitAppPage(index: number) {
+    if (!sealedProtocolDay) {
+      saveHabitAppIndex(index);
+      return;
+    }
+    if (index === 1) return;
+    setSealedProtocolDay(null);
+    // The transient Page occupies the Protocol slot. Forward closes onto the
+    // Protocol home/front at index one; backward returns to Routine at zero.
+    saveHabitAppIndex(index > 1 ? 1 : 0);
   }
 
   function toggleHabitMode() {
@@ -2813,9 +2860,13 @@ export function TodayExperience() {
               }
               hideIdleHeading
               idleApps={[
+                ...(sealedProtocolDay ? [
+                  <ProtocolKeptPage key="protocol-kept" seal={sealedProtocolDay} />,
+                ] : []),
                 <ProtocolPage
                   key="protocol"
                   protocol={protocol}
+                  completedProtocol={completedProtocol}
                   canBegin={canBeginProtocolRun(protocolRun)}
                   editingItemId={newProtocolItemId}
                   onStart={startProtocol}
@@ -2837,6 +2888,12 @@ export function TodayExperience() {
                   onToggleItem={(itemId) =>
                     updateState((current) => toggleProtocolItem(current, itemId, dateKey))
                   }
+                  onToggleCompletedItem={(runId, itemId, completedDateKey) =>
+                    updateState((current) =>
+                      toggleProtocolRecordItem(current, runId, itemId, completedDateKey)
+                    )
+                  }
+                  onSealToday={completeProtocolToday}
                   onEndRun={() =>
                     protocolRun &&
                     updateState((current) => endProtocolRun(current, protocolRun.id))
@@ -2844,8 +2901,8 @@ export function TodayExperience() {
                 />,
               ]}
               idleAppIndex={habitAppIndex}
-              onIdleAppIndexChange={saveHabitAppIndex}
-              rotateIdleApps
+              onIdleAppIndexChange={changeHabitAppPage}
+              rotateIdleApps={!sealedProtocolDay}
               label="Routine chapter"
               run={activeHabitRun}
               onRunChange={saveHabitBuildingRun}
