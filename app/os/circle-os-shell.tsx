@@ -72,6 +72,7 @@ import {
   SwipeSession,
 } from "./app-session";
 import { sizeTextAreaToContent } from "./text-area-size";
+import { useAppBack } from "./app-back";
 import linePool from "./lines/lines.json";
 import { selectLine } from "./lines/line-pool.js";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
@@ -1253,7 +1254,8 @@ export function TodayExperience() {
   const checkInRefreshTimer = useRef<number | null>(null);
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
-  const [thoughtMode, setThoughtMode] = useState<"regular" | "deep">("regular");
+  const thoughtBack = useAppBack<"regular" | "deep">("regular");
+  const thoughtMode = thoughtBack.side;
   const [regularThoughtDraft, setRegularThoughtDraft] = useState("");
   const [deepThoughtDraft, setDeepThoughtDraft] = useState("");
   const [deepThoughtPrompt, setDeepThoughtPrompt] = useState<DeepThoughtPrompt | null>(null);
@@ -1270,7 +1272,6 @@ export function TodayExperience() {
   const [thoughtTransition, setThoughtTransition] = useState<
     "idle" | "clicked" | "paused" | "exiting"
   >("idle");
-  const [thoughtModeRefreshing, setThoughtModeRefreshing] = useState(false);
   const [thoughtRefreshKey, setThoughtRefreshKey] = useState("");
   const [thoughtLabelVisible, setThoughtLabelVisible] = useState(false);
   const [holdThoughtsAfterSend, setHoldThoughtsAfterSend] = useState(false);
@@ -1286,10 +1287,8 @@ export function TodayExperience() {
   const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
   const thoughtLabelTimer = useRef<number | null>(null);
   const thoughtResetTimer = useRef<number | null>(null);
-  const thoughtModeTimer = useRef<number | null>(null);
-  const [habitMode, setHabitMode] = useState<"habit" | "yesterday">("habit");
-  const [habitModeRefreshing, setHabitModeRefreshing] = useState(false);
-  const habitModeTimer = useRef<number | null>(null);
+  const routineBack = useAppBack<"habit" | "yesterday">("habit");
+  const habitMode = routineBack.side;
   const [newProtocolItemId, setNewProtocolItemId] = useState<string | null>(null);
   const [sealedProtocolDay, setSealedProtocolDay] =
     useState<ProtocolSealView | null>(null);
@@ -1343,12 +1342,6 @@ export function TodayExperience() {
       }
       if (thoughtLabelTimer.current) {
         window.clearTimeout(thoughtLabelTimer.current);
-      }
-      if (thoughtModeTimer.current) {
-        window.clearTimeout(thoughtModeTimer.current);
-      }
-      if (habitModeTimer.current) {
-        window.clearTimeout(habitModeTimer.current);
       }
     },
     [],
@@ -1811,19 +1804,9 @@ export function TodayExperience() {
     saveHabitAppIndex(index > 1 ? 1 : 0);
   }
 
-  function toggleHabitMode() {
-    if (habitModeRefreshing) return;
+  function toggleHabitMode(event: ReactMouseEvent<HTMLButtonElement>) {
     const nextMode = habitMode === "yesterday" ? "habit" : "yesterday";
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    setHabitModeRefreshing(true);
-    if (habitModeTimer.current) window.clearTimeout(habitModeTimer.current);
-    habitModeTimer.current = window.setTimeout(() => {
-      setHabitMode(nextMode);
-      setHabitModeRefreshing(false);
-      habitModeTimer.current = null;
-    }, reducedMotion ? 40 : 620);
+    routineBack.flip(nextMode, undefined, event.currentTarget);
   }
 
   function resetLogForm() {
@@ -2251,8 +2234,8 @@ export function TodayExperience() {
     deepWritingFocusStartedAt.current = null;
   }
 
-  function openDeepThoughts() {
-    if (thoughtModeRefreshing || thoughtTransition !== "idle") return;
+  function openDeepThoughts(event: ReactMouseEvent<HTMLButtonElement>) {
+    if (thoughtBack.flipping || thoughtTransition !== "idle") return;
     const nextMode = thoughtMode === "deep" ? "regular" : "deep";
     const answers = state.profile.profileCase.survey.answers;
     const athenaPrompt = state.profile.profileCase.deepThoughtPrompt;
@@ -2267,12 +2250,7 @@ export function TodayExperience() {
       : createLocalDeepThoughtPrompt(state, dateKey, deepAnswersToday);
     pauseDeepWriting();
     concealThoughtButton();
-    setThoughtModeRefreshing(true);
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    if (thoughtModeTimer.current) window.clearTimeout(thoughtModeTimer.current);
-    thoughtModeTimer.current = window.setTimeout(() => {
+    thoughtBack.flip(nextMode, () => {
       if (nextMode === "deep") {
         setDeepThoughtPrompt(prompt);
         setDeepFollowUpUsed(false);
@@ -2281,12 +2259,8 @@ export function TodayExperience() {
         setDeepThoughtPrompt(null);
         setDeepFollowUpUsed(false);
       }
-      setThoughtMode(nextMode);
-      setThoughtLabelVisible(reducedMotion);
-      setThoughtRefreshKey(`thought-mode:${nextMode}:${Date.now()}`);
-      setThoughtModeRefreshing(false);
-      thoughtModeTimer.current = null;
-    }, reducedMotion ? 40 : 900);
+      setThoughtLabelVisible(true);
+    }, event.currentTarget);
   }
 
   async function sendThought(event: FormEvent<HTMLFormElement>) {
@@ -2383,7 +2357,7 @@ export function TodayExperience() {
             setDeepThoughtPrompt(deepThoughtFollowUp(deepThoughtPrompt));
             setDeepFollowUpUsed(true);
           } else {
-            setThoughtMode("regular");
+            thoughtBack.reset("regular");
             setDeepThoughtPrompt(null);
             setDeepFollowUpUsed(false);
           }
@@ -2642,7 +2616,7 @@ export function TodayExperience() {
             }${
               thoughtTransition === "exiting" ? " update-exit" : ""
             }${
-              thoughtModeRefreshing ? " update-exit" : ""
+              thoughtBack.className ? ` ${thoughtBack.className}` : ""
             }`}
             index={visibleCheckInApp}
             label="Check-in session"
@@ -2684,7 +2658,7 @@ export function TodayExperience() {
         ) : activeHabitChapter && activeHabitRun ? (
           <section className="os-habit" aria-label="Routine session">
             <ChapterPlayer
-              className={`os-habit-session${habitModeRefreshing ? " mode-refreshing" : ""}`}
+              className={`os-habit-session${routineBack.className ? ` ${routineBack.className}` : ""}`}
               definition={activeHabitChapter}
               key={activeHabitChapter.id}
               idleLabel={
@@ -2864,7 +2838,7 @@ export function TodayExperience() {
                   <ProtocolKeptPage key="protocol-kept" seal={sealedProtocolDay} />,
                 ] : []),
                 <ProtocolPage
-                  key="protocol"
+                  key={`protocol-${protocolRun?.id || "home"}`}
                   protocol={protocol}
                   completedProtocol={completedProtocol}
                   canBegin={canBeginProtocolRun(protocolRun)}

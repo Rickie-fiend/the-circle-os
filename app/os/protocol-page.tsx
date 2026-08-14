@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { PageLayout } from "./app-session";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import { PROTOCOL_DURATIONS } from "./circle-os-model.js";
+import { useAppBack } from "./app-back";
 
 export type ProtocolItemView = {
   id: string;
@@ -123,6 +124,7 @@ export function ProtocolPage({
   const [confirmingEnd, setConfirmingEnd] = useState(false);
   const [editing, setEditing] = useState(false);
   const [rewarding, setRewarding] = useState(false);
+  const protocolBack = useAppBack<"phase" | "home">("phase");
   const confirmTimer = useRef<number | null>(null);
   const rewardTimer = useRef<number | null>(null);
 
@@ -222,6 +224,42 @@ export function ProtocolPage({
 
   const { run, day, isDraft, isOver, keptAll, sealed, nonNegotiable, negotiable } = protocol;
 
+  if (run.status === "active" && protocolBack.side === "home") {
+    const finished = completedProtocol;
+    return (
+      <PageLayout
+        className={`os-protocol os-protocol-home ${protocolBack.className}`.trim()}
+        headerLeft={
+          <button
+            aria-pressed
+            className="os-card-label os-protocol-mode-toggle"
+            onClick={(event: MouseEvent<HTMLButtonElement>) =>
+              protocolBack.flip("phase", undefined, event.currentTarget)
+            }
+            type="button"
+          >
+            Phases
+          </button>
+        }
+        theme="orange"
+      >
+        <div className="os-page-main os-protocol-identity">
+          {finished ? (
+            <p className="os-protocol-name">{finished.run.name}</p>
+          ) : (
+            <p className="os-protocol-name">No finished phases yet.</p>
+          )}
+        </div>
+        {finished ? (
+          <div className="os-page-sub os-protocol-terms">
+            <p className="os-record-label">Last finished phase</p>
+            <p className="os-protocol-invite">{finished.run.days} days</p>
+          </div>
+        ) : null}
+      </PageLayout>
+    );
+  }
+
   if (isDraft) {
     return (
       <PageLayout
@@ -314,17 +352,18 @@ export function ProtocolPage({
     );
   }
 
-  // The label is the mode control, the way it is on Habit and Thoughts. A block
-  // is the button that keeps a term, so it cannot also be the way to rewrite
-  // one; changing a running protocol is a mode, not a second tap target.
+  // Protocol names the daily front. Phases names the back. Editing is an action
+  // on the front rather than pretending to be another side of the App.
   const runningLabel = (
     <button
-      aria-pressed={editing}
+      aria-pressed={false}
       className="os-card-label os-protocol-mode-toggle"
-      onClick={() => setEditing((open) => !open)}
+      onClick={(event: MouseEvent<HTMLButtonElement>) =>
+        protocolBack.flip("home", undefined, event.currentTarget)
+      }
       type="button"
     >
-      {editing ? "Done" : "Protocol"}
+      Protocol
     </button>
   );
 
@@ -332,7 +371,7 @@ export function ProtocolPage({
     return (
       <PageLayout
         className="os-protocol os-protocol-draft os-protocol-editing"
-        headerLeft={runningLabel}
+        headerLeft={<p className="os-card-label">Protocol</p>}
         headerRight={
           <span className="os-protocol-progress">
             Day {day} of {run.days}
@@ -392,7 +431,7 @@ export function ProtocolPage({
 
   return (
     <PageLayout
-      className="os-protocol"
+      className={`os-protocol ${protocolBack.className}`.trim()}
       headerLeft={runningLabel}
       headerRight={
         <span className="os-protocol-progress">
@@ -412,11 +451,11 @@ export function ProtocolPage({
           </button>
         ) : (
           <button
-            className={`os-protocol-end${confirmingEnd ? " is-confirming" : ""}`}
-            onClick={endRun}
+            className="os-protocol-begin os-protocol-edit"
+            onClick={() => setEditing(true)}
             type="button"
           >
-            {confirmingEnd ? "Tap again to end it" : "End this protocol"}
+            Edit phase
           </button>
         )
       }
@@ -451,7 +490,16 @@ export function ProtocolPage({
           </>
         ) : null}
 
-        {keptAll && !sealed ? (
+        <div className="os-protocol-front-links">
+          {keptAll && !sealed ? (
+            <button
+              className="os-protocol-edit-link"
+              onClick={() => setEditing(true)}
+              type="button"
+            >
+              Edit phase
+            </button>
+          ) : null}
           <button
             className={`os-protocol-end os-protocol-end-demoted${
               confirmingEnd ? " is-confirming" : ""
@@ -461,7 +509,7 @@ export function ProtocolPage({
           >
             {confirmingEnd ? "Tap again to end it" : "End this protocol"}
           </button>
-        ) : null}
+        </div>
       </div>
     </PageLayout>
   );

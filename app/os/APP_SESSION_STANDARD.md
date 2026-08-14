@@ -336,6 +336,17 @@ Used for charts, weekly views, and other things worth reading again.
 - Completion leaves with a flat fade; its idle App Page enters Body, Header,
   Footer. Reduced-motion mode renders all groups immediately.
 
+## App back
+
+- An optional App back is a side change inside the same stable App Box. Its
+  front is what is needed today; its back is what the App holds.
+- Thoughts / Deep Thoughts, Routine / Record and Protocol / Phases use the same
+  controller and timings: 260ms to leave, 620ms for the full handoff.
+- The controller holds the measured frame height for the whole handoff.
+  Reduced-motion mode changes sides immediately without an animation phase.
+- A mode label names the visible side. It is never an edit or completion
+  action. Returning to an already known side does not replay a staged arrival.
+
 ## Admin previews and access
 
 - Chapter Workshop and Button Studio render the production App Box and Page
