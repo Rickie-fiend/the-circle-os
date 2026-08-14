@@ -95,7 +95,10 @@ export async function writeImmutableChapterPublication(
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const existing = request.result as StoredChapterPublication | undefined;
-      if (existing && existing.source && existing.source !== publication.source) {
+      if (
+        existing &&
+        JSON.stringify(existing.chapter) !== JSON.stringify(publication.chapter)
+      ) {
         transaction.abort();
         reject(new Error("That chapter version already exists. Create a new version."));
         return;
@@ -113,6 +116,17 @@ export async function writeImmutableChapterPublication(
     transaction.oncomplete = () => database.close();
     transaction.onabort = () => database.close();
   });
+}
+
+export async function writeSyncedChapterPublications(
+  publications: ChapterPublication[],
+) {
+  await Promise.all(
+    publications.map((publication) =>
+      writeImmutableChapterPublication(publication),
+    ),
+  );
+  if (publications.length) announceChapterPublication();
 }
 
 export function normalizeChapterPublication(

@@ -6,6 +6,7 @@ import {
   readFileSync,
   readdirSync,
   renameSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
@@ -24,6 +25,7 @@ import {
   normalizeAthenaMemory,
   serializeAthenaMemoryMarkdown,
 } from "../app/os/athena-memory-model.js";
+import { parseDailyChaptersMarkdown } from "../scripts/chapter-compiler.mjs";
 
 const profileIdPattern = /^p_[A-Za-z0-9_-]{16}$/;
 const chapterIdPattern = /^[a-z0-9][a-z0-9-]*$/;
@@ -767,6 +769,37 @@ function readPublicChapterManifest(vaultPath) {
   };
 }
 
+export function readProfileChapterPublications(
+  vaultPath,
+  profileId,
+  at = new Date(),
+) {
+  const dailyPath = join(
+    profileDirectory(vaultPath, profileId),
+    "Daily Chapters.md",
+  );
+  if (!existsSync(dailyPath)) return [];
+  const parsed = parseDailyChaptersMarkdown(
+    readFileSync(dailyPath, "utf8"),
+    dailyPath,
+  );
+  if (parsed.profileId !== profileId) {
+    throw new Error("Daily Chapters.md belongs to another profile.");
+  }
+  const publishedAt = statSync(dailyPath).mtime.toISOString();
+  return parsed.chapters
+    .filter((chapter) => new Date(chapter.expiresAt) > at)
+    .map((chapter) => ({
+      chapter,
+      targetApp: "note",
+      audienceProfileId: profileId,
+      visibility: "private",
+      delivery: "on-view",
+      source: "athena",
+      publishedAt,
+    }));
+}
+
 function validPublishedChapter(chapter) {
   return Boolean(
     chapter &&
@@ -1254,7 +1287,7 @@ export function createCircleAiServer(options = {}) {
       }
 
       const profileMatch = request.url?.match(
-        /^\/profiles\/(p_[A-Za-z0-9_-]{16})(?:\/(sync|attach))?$/,
+        /^\/profiles\/(p_[A-Za-z0-9_-]{16})(?:\/(sync|attach|chapters))?$/,
       );
       if (profileMatch) {
         const profileId = profileMatch[1];
@@ -1293,6 +1326,20 @@ export function createCircleAiServer(options = {}) {
             response,
             201,
             { profileId, accessKey, state: publicState(state) },
+            origin,
+          );
+          return;
+        }
+        if (request.method === "GET" && profileMatch[2] === "chapters") {
+          json(
+            response,
+            200,
+            {
+              publications: readProfileChapterPublications(
+                vaultPath,
+                profileId,
+              ),
+            },
             origin,
           );
           return;

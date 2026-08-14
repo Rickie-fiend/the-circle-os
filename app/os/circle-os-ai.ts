@@ -1,5 +1,8 @@
 import type { CircleState } from "./circle-os-shell";
-import type { ChapterDefinition } from "./chapters/chapter-types";
+import type {
+  ChapterDefinition,
+  ChapterPublication,
+} from "./chapters/chapter-types";
 
 function baseUrl(state: CircleState) {
   const value = state.ai.baseUrl.trim().replace(/\/+$/, "");
@@ -41,7 +44,14 @@ export async function readCircleState(state: CircleState) {
       typeof data.error === "string" ? data.error : "Your profile is offline.",
     );
   }
-  return data.state ?? null;
+  return {
+    state: data.state ?? null,
+    chapterPublications: await readProfileChapterPublications({
+      baseUrl: state.ai.baseUrl,
+      profileId: state.ai.profileId,
+      token: state.ai.token,
+    }),
+  };
 }
 
 export async function syncCircleState(state: CircleState) {
@@ -63,10 +73,17 @@ export async function syncCircleState(state: CircleState) {
       typeof data.error === "string" ? data.error : "Your profile is offline.",
     );
   }
+  const profileId = data.profileId || state.ai.profileId;
+  const accessKey = data.accessKey || state.ai.token;
   return {
     state: data.state,
-    profileId: data.profileId || state.ai.profileId,
-    accessKey: data.accessKey || state.ai.token,
+    profileId,
+    accessKey,
+    chapterPublications: await readProfileChapterPublications({
+      baseUrl: state.ai.baseUrl,
+      profileId,
+      token: accessKey,
+    }),
     acknowledgedEvidenceRevision: Number(
       data.acknowledgedEvidenceRevision || 0,
     ),
@@ -74,6 +91,37 @@ export async function syncCircleState(state: CircleState) {
       ? data.acknowledgedOutboxIds
       : [],
   };
+}
+
+async function readProfileChapterPublications(connection: {
+  baseUrl: string;
+  profileId: string;
+  token: string;
+}) {
+  if (!connection.profileId || !connection.token) return [];
+  const cleanUrl = connection.baseUrl.trim().replace(/\/+$/, "");
+  if (!cleanUrl) return [];
+  const response = await fetch(
+    `${cleanUrl}/profiles/${encodeURIComponent(connection.profileId)}/chapters`,
+    {
+      headers: {
+        Authorization: `Bearer ${connection.token}`,
+        "Content-Type": "application/json",
+      },
+      signal: AbortSignal.timeout(10_000),
+    },
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(
+      typeof data.error === "string"
+        ? data.error
+        : "Daily chapters are offline.",
+    );
+  }
+  return Array.isArray(data.publications)
+    ? (data.publications as ChapterPublication[])
+    : [];
 }
 
 export async function recoverCircleProfile(
@@ -100,6 +148,11 @@ export async function recoverCircleProfile(
     state: data.state as CircleState,
     profileId: data.profileId as string,
     accessKey: data.accessKey as string,
+    chapterPublications: await readProfileChapterPublications({
+      baseUrl: cleanUrl,
+      profileId: data.profileId as string,
+      token: data.accessKey as string,
+    }),
   };
 }
 

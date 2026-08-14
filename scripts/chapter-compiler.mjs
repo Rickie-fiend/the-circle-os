@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import {
   mkdir,
@@ -47,6 +48,9 @@ const INPUT_TYPES = new Set([
 ]);
 const THEMES = new Set(["light", "orange", "dark"]);
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+const DAILY_PROFILE_PATTERN = /^p_[A-Za-z0-9_-]{16}$/;
+const DAILY_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const CIRCLE_TIME_ZONE_OFFSET = "+07:00";
 
 function clean(value = "") {
   return String(value).trim().replace(/^["']|["']$/g, "");
@@ -95,6 +99,7 @@ function parsePage(id, source, filename) {
         min_label: "minLabel",
         max_label: "maxLabel",
         required: "required",
+        question_or_information: "question",
       };
       const outputKey = map[key];
       if (!outputKey) {
@@ -120,7 +125,128 @@ function parsePage(id, source, filename) {
     throw new Error(`${filename} / ${page.id}: cannot read "${line}"`);
   }
   if (!page.options.length) delete page.options;
+  if (page.type === "info" && page.question) {
+    page.title = page.question;
+    delete page.question;
+  }
   return page;
+}
+
+function datePlusDays(dateKey, days) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function dailyWindow(dateKey, slot) {
+  return {
+    earliestAt: `${dateKey}T${slot === "morning" ? "06:00" : "18:00"}:00${CIRCLE_TIME_ZONE_OFFSET}`,
+    // A Circle day ends at 06:00. The following day therefore finishes at
+    // 06:00 two calendar dates after the plan date.
+    expiresAt: `${datePlusDays(dateKey, 2)}T06:00:00${CIRCLE_TIME_ZONE_OFFSET}`,
+  };
+}
+
+function contentHashVersion(chapter) {
+  const content = { ...chapter };
+  delete content.version;
+  const digest = createHash("sha256")
+    .update(JSON.stringify(content))
+    .digest("hex");
+  // Twelve hex digits fit safely inside JavaScript's exact integer range.
+  // The value is an identity, not a sequence; publication time decides which
+  // rewrite is current while the hash keeps every answered definition intact.
+  return Number.parseInt(digest.slice(0, 12), 16) || 1;
+}
+
+function parseDailySection(slot, source, metadata, filename) {
+  const purposeMatch = source.match(/^Purpose:\s*(.+?)\s*$/m);
+  if (!purposeMatch) {
+    throw new Error(`${filename} / ${slot}: Purpose is required`);
+  }
+  const purpose = clean(purposeMatch[1]);
+  const heading = /^### Page\s+(.+?)\s*$/gm;
+  const matches = [...source.matchAll(heading)];
+  if (!matches.length) {
+    throw new Error(`${filename} / ${slot}: at least one Page is required`);
+  }
+  const authoredPages = matches.map((match, index) => {
+    const start = match.index + match[0].length;
+    const end = matches[index + 1]?.index ?? source.length;
+    return parsePage(
+      `${slot}-page-${clean(match[1]).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      source.slice(start, end),
+      filename,
+    );
+  });
+  const window = dailyWindow(metadata.date, slot);
+  const chapter = {
+    schemaVersion: 1,
+    id: `athena-daily-${slot}`,
+    version: 1,
+    status: "published",
+    session: "check-in",
+    app: "note",
+    theme: "light",
+    title: purpose,
+    purpose,
+    estimatedMinutes: Math.max(
+      1,
+      authoredPages.filter((page) => INPUT_TYPES.has(page.type)).length,
+    ),
+    kind: "check-in",
+    voice: "athena",
+    ...window,
+    pages: [
+      { id: `${slot}-cover`, type: "cover", title: purpose },
+      ...authoredPages,
+      { id: `${slot}-complete`, type: "result", title: "Thank you." },
+    ],
+  };
+  chapter.version = contentHashVersion(chapter);
+  return validateChapter(chapter, `${filename} / ${slot}`);
+}
+
+export function parseDailyChaptersMarkdown(
+  source,
+  filename = "Daily Chapters.md",
+) {
+  const { values, body } = parseFrontmatter(source, filename);
+  if (values.type !== "circle-os-daily-chapters") {
+    throw new Error(`${filename}: type must be circle-os-daily-chapters`);
+  }
+  if (!DAILY_PROFILE_PATTERN.test(values.profile_id || "")) {
+    throw new Error(`${filename}: profile_id is invalid`);
+  }
+  if (!DAILY_DATE_PATTERN.test(values.date || "")) {
+    throw new Error(`${filename}: date must be YYYY-MM-DD`);
+  }
+  const slotHeading = /^## (Morning|Night)\s*$/gm;
+  const matches = [...body.matchAll(slotHeading)];
+  const sections = new Map(
+    matches.map((match, index) => {
+      const start = match.index + match[0].length;
+      const end = matches[index + 1]?.index ?? body.length;
+      return [match[1].toLowerCase(), body.slice(start, end)];
+    }),
+  );
+  const metadata = {
+    profileId: values.profile_id,
+    date: values.date,
+    createdAt: values.created,
+  };
+  return {
+    ...metadata,
+    chapters: ["morning", "night"]
+      .filter((slot) => sections.has(slot))
+      .map((slot) =>
+        parseDailySection(slot, sections.get(slot), metadata, filename),
+      ),
+  };
 }
 
 export function parseChapterMarkdown(source, filename = "chapter.md") {

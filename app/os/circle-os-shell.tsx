@@ -98,6 +98,7 @@ import {
   normalizeChapterPublication,
   publicationIsNewerThanRun,
   selectPendingAppPublication,
+  writeSyncedChapterPublications,
 } from "./chapters/chapter-publication-store";
 import {
   chapterFacts,
@@ -109,7 +110,6 @@ import {
 } from "./chapters/chapter-scheduler.js";
 import { useChapterPublications } from "./chapters/use-chapter-publications";
 import type {
-  ChapterDefinition,
   ChapterPublication,
   ChapterRun,
   ChapterSubmission,
@@ -341,16 +341,24 @@ type CircleDay = {
   } | null;
 };
 
-function latestPublishedChapters(chapters: ChapterDefinition[]) {
+function latestPublishedChapters(publications: ChapterPublication[]) {
   return Object.values(
-    chapters
-    .reduce<Record<string, ChapterDefinition>>((latest, chapter) => {
-      if (!latest[chapter.id] || latest[chapter.id].version < chapter.version) {
-        latest[chapter.id] = chapter;
-      }
-      return latest;
-    }, {}),
-  );
+    publications.reduce<Record<string, ChapterPublication>>(
+      (latest, publication) => {
+        const previous = latest[publication.chapter.id];
+        if (
+          !previous ||
+          previous.publishedAt < publication.publishedAt ||
+          (previous.publishedAt === publication.publishedAt &&
+            previous.chapter.version < publication.chapter.version)
+        ) {
+          latest[publication.chapter.id] = publication;
+        }
+        return latest;
+      },
+      {},
+    ),
+  ).map((publication) => publication.chapter);
 }
 
 export type CircleState = {
@@ -664,12 +672,15 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
       if (next.ai.baseUrl) {
         try {
           const remote = await readCircleState(next);
-          if (remote) {
-            next = ensureDay(mergeServerState(next, remote), getDateKey());
+          if (remote?.state) {
+            next = ensureDay(mergeServerState(next, remote.state), getDateKey());
             lastServerSignature.current = serverSignature(
-              normalizeState(remote),
+              normalizeState(remote.state),
             );
           }
+          await writeSyncedChapterPublications(
+            remote?.chapterPublications || [],
+          );
         } catch {
           next = {
             ...next,
@@ -714,7 +725,8 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
       const sentState = stateRef.current;
       const sentSignature = serverSignature(sentState);
       void syncCircleState(sentState)
-        .then((result) => {
+        .then(async (result) => {
+          await writeSyncedChapterPublications(result.chapterPublications);
           setState((current) => {
             if (serverSignature(current) !== sentSignature) {
               syncPending.current = true;
@@ -776,19 +788,20 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
       }
       syncing.current = true;
       void readCircleState(current)
-        .then((remote) => {
-          if (!remote) return;
+        .then(async (remote) => {
+          if (!remote?.state) return;
+          await writeSyncedChapterPublications(remote.chapterPublications);
           setState((latest) => {
             if (serverSignature(latest) !== lastServerSignature.current) {
               syncPending.current = true;
               return latest;
             }
             const next = ensureDay(
-              mergeServerState(latest, remote),
+              mergeServerState(latest, remote.state),
               getDateKey(),
             );
             lastServerSignature.current = serverSignature(
-              normalizeState(remote),
+              normalizeState(remote.state),
             );
             stateRef.current = next;
             return next;
@@ -854,6 +867,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
   async function connectAi(baseUrl: string, token: string) {
     const connected = connectLocalAi(stateRef.current, baseUrl, token);
     const result = await syncCircleState(connected);
+    await writeSyncedChapterPublications(result.chapterPublications);
     const next = applySyncResult(connected, result);
     lastServerSignature.current = serverSignature(next);
     stateRef.current = next;
@@ -864,6 +878,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
   async function recoverProfile(profileId: string) {
     const current = stateRef.current;
     const result = await recoverCircleProfile(current.ai.baseUrl, profileId);
+    await writeSyncedChapterPublications(result.chapterPublications);
     const restored = ensureDay(normalizeState(result.state), getDateKey());
     const next = {
       ...restored,
@@ -1168,7 +1183,7 @@ export function TodayExperience() {
   const { publications } = useChapterPublications(ready);
   const profileSparkChapters = useMemo(() => {
     const profileId = state.ai.profileId || "local";
-    const chapters = publications
+    const eligiblePublications = publications
       .map(normalizeChapterPublication)
       .filter(
         (publication) =>
@@ -1177,9 +1192,8 @@ export function TodayExperience() {
             publication.audienceProfileId === profileId ||
             publication.audienceProfileId === "local"),
       )
-      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-      .map((publication) => publication.chapter);
-    return latestPublishedChapters(chapters);
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    return latestPublishedChapters(eligiblePublications);
   }, [publications, state.ai.profileId]);
   const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const schedulerFacts = useMemo(() => chapterFacts(state), [state]);

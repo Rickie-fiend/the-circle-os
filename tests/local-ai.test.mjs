@@ -379,6 +379,55 @@ test("public phones receive separate private Obsidian profiles", async () => {
       /# Athena Memory/,
     );
 
+    const circleDate = new Date(Date.now() + 7 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    writeFileSync(
+      join(vaultPath, "Profiles", created.profileId, "Daily Chapters.md"),
+      `---
+type: circle-os-daily-chapters
+profile_id: ${created.profileId}
+date: ${circleDate}
+created: ${circleDate}T06:15:00+07:00
+---
+
+# Daily Chapters
+
+## Morning
+
+Purpose: Help you notice this morning.
+
+### Page 1
+Type: short-text
+Question or Information: What feels true right now?
+Answer: morning-truth
+
+## Night
+
+Purpose: Help you keep one real moment.
+
+### Page 1
+Type: short-text
+Question or Information: What happened in that moment?
+Answer: night-moment
+`,
+      "utf8",
+    );
+    const privateDeckResponse = await fetch(
+      `${baseUrl}/profiles/${created.profileId}/chapters`,
+      { headers: { Authorization: `Bearer ${created.accessKey}` } },
+    );
+    assert.equal(privateDeckResponse.status, 200);
+    const privateDeck = await privateDeckResponse.json();
+    assert.equal(privateDeck.publications.length, 2);
+    assert.ok(
+      privateDeck.publications.every(
+        (publication) =>
+          publication.visibility === "private" &&
+          publication.audienceProfileId === created.profileId,
+      ),
+    );
+
     const recoveryResponse = await fetch(`${baseUrl}/profiles/recover`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
