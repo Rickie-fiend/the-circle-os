@@ -50,8 +50,9 @@ test("Protocol labels its sides and keeps editing as an action", () => {
   assert.doesNotMatch(protocol, />\s*Done\s*:\s*Protocol\s*</);
 });
 
-test("Routine and Record declare content layout and stale text offsets are cleared", () => {
-  assert.match(shell, /idleTextLayout="content"/);
+test("Routine centres its identity while Record clears stale text offsets", () => {
+  assert.match(shell, /data-os-main-text/);
+  assert.match(shell, /idleTextLayout=\{habitMode === "yesterday" \? "content" : "auto"\}/);
   assert.match(chapterPlayer, /textLayout=\{isIdle \? idleTextLayout : undefined\}/);
   assert.match(appSession, /if \(!main \|\| !mainText\) \{\s*clearMeasurement\(\);/);
 });

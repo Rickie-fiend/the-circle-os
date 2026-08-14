@@ -2743,6 +2743,7 @@ export function TodayExperience() {
                 <input
                   aria-label="Routine identity"
                   className="os-protocol-name-edit os-routine-name-edit"
+                  data-os-main-text
                   maxLength={60}
                   onChange={(event) =>
                     updateState((current) =>
@@ -2844,7 +2845,7 @@ export function TodayExperience() {
                   </section>
                 </div>
               )}
-              idleTextLayout="content"
+              idleTextLayout={habitMode === "yesterday" ? "content" : "auto"}
               idleHeaderAction={habitMode === "yesterday" ? undefined : (
                 <button className="os-new-habit" type="button" onClick={beginNewHabit}>
                   New habit
