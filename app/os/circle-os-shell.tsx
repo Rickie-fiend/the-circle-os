@@ -2939,7 +2939,6 @@ export function TodayExperience() {
         <section className="os-log-section" aria-labelledby="day-heading">
           <SwipeSession
             className="os-log-session"
-            frameHeight="var(--os-app-box-min-height)"
             index={0}
             label="Log"
             onIndexChange={() => {}}

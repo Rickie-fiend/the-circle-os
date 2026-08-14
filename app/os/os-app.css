@@ -27,6 +27,9 @@
    *
    * One token, because three separate rules used to declare these tracks and
    * they drifted apart. */
+  /* min-content, not zero. With a zero floor the Body track is sized purely by
+   * leftover space, so a Page that gained a row did not get taller: the content
+   * simply grew past the bottom of the App Box and under the Footer. */
   --os-page-rows: auto min-content minmax(min-content, 1fr) auto;
   align-items: flex-start;
   background: var(--c-ink-deep);
@@ -2766,18 +2769,14 @@
 
 .circle-os .os-log-page .os-page-body {
   justify-content: stretch;
-  min-height: 0;
-  overflow: hidden;
   transform: none;
 }
 
+/* No inner scroll. The hours are the content, and content grows the App Box
+   downward; reading a day through a slot the size of an empty Note is what made
+   Log feel shrunken. */
 .circle-os .os-log-page .os-timeline {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-color: var(--c-charcoal) transparent;
-  scrollbar-width: thin;
+  flex: 0 0 auto;
 }
 
 .circle-os .os-log-add-current {
@@ -6323,6 +6322,7 @@
 }
 
 .circle-os .os-habit .os-chapter-idle .os-new-habit {
+  color: var(--c-ink);
   position: absolute;
   right: 0;
   top: 50%;
@@ -6849,6 +6849,15 @@
   text-transform: uppercase;
 }
 
+.circle-os .os-protocol-home .os-page-body,
+.circle-os .os-protocol-home .os-page-main {
+  align-items: stretch;
+  align-self: stretch;
+  justify-content: flex-start;
+  max-width: none;
+  width: 100%;
+}
+
 .circle-os .os-protocol-home-records {
   display: grid;
   width: 100%;
@@ -7259,17 +7268,11 @@
   position: relative;
 }
 
-.circle-os .os-page-layout.os-protocol:not(.os-protocol-draft) {
-  --os-page-rows: auto min-content minmax(0, 1fr) auto;
-  height: var(--os-app-box-min-height);
-}
-
+/* No fixed height and no inner scroll. A running phase was pinned to the
+   default box with its Body scrolling inside, which clipped the last term under
+   the Footer. Content grows the App Box downward; that is the whole standard. */
 .circle-os .os-protocol:not(.os-protocol-draft) .os-page-body {
   justify-content: flex-start;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
 }
 
 .circle-os .os-protocol:not(.os-protocol-draft) .os-page-body::-webkit-scrollbar {
