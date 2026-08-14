@@ -22,6 +22,7 @@ import {
   moveChapterRun,
   renderChapterTemplate,
 } from "./chapter-model.js";
+import { chapterCompletion } from "./chapter-capabilities.js";
 import type {
   ChapterAnswerValue,
   ChapterDefinition,
@@ -454,7 +455,6 @@ export function ChapterPlayer({
   startOnBackApp = false,
   onLongPress,
   attentionKey,
-  exitOnFinalCompletion = false,
   previewMode = false,
   onEditPage,
 }: {
@@ -485,10 +485,10 @@ export function ChapterPlayer({
   startOnBackApp?: boolean;
   onLongPress?: () => void;
   attentionKey?: string;
-  exitOnFinalCompletion?: boolean;
   previewMode?: boolean;
   onEditPage?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
+  const completionMode = chapterCompletion(definition);
   const [showingBackApp, setShowingBackApp] = useState(startOnBackApp);
   const [leavingCompletionKey, setLeavingCompletionKey] = useState("");
   const runChangeRef = useRef(onRunChange);
@@ -540,16 +540,15 @@ export function ChapterPlayer({
   const completionKey = `${run.runId}:${currentPage.id}:${run.updatedAt}`;
   const completionLeaving = leavingCompletionKey === completionKey;
   const canExitFinalCompletion = Boolean(
-    exitOnFinalCompletion &&
+    completionMode === "swipe" &&
     !previewMode &&
     run.status !== "completed" &&
-    isCompletionPage &&
-    idleIndex < 0,
+    isCompletionPage,
   );
 
   useEffect(() => {
     if (
-      definition.session !== "check-in" ||
+      completionMode !== "dwell" ||
       previewMode ||
       run.status === "completed" ||
       !isCompletionPage
@@ -574,6 +573,7 @@ export function ChapterPlayer({
   }, [
     currentPage,
     completionKey,
+    completionMode,
     definition,
     isCompletionPage,
     run,

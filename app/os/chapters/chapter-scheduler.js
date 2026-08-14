@@ -48,29 +48,33 @@ const KIND_ORDER = Object.freeze([
   "probe",
 ]);
 
-const KIND_BY_SESSION = Object.freeze({
-  "check-in": "check-in",
-  habit: "lesson",
-  protocol: "lesson",
-  log: "check-in",
-});
-
-const APP_BY_SESSION = Object.freeze({
-  "check-in": "note",
-  note: "note",
-  reflection: "note",
-  thoughts: "thoughts",
-  "deep-thoughts": "deep-thoughts",
-  habit: "habit",
-  protocol: "protocol",
-  log: "log",
-  vision: "vision",
-  "seven-days": "seven-days",
-  athena: "athena",
-  "declaration-vision": "vision",
-  "declaration-mission-statement": "vision",
-  "declaration-typical-tuesday": "vision",
-  "declaration-dreamline": "vision",
+// These ids were published before App was a declared capability. Their content
+// is immutable, so this exact compatibility table is the migration boundary.
+// A new id does not inherit behavior from its session name: it must name App.
+const LEGACY_APP_BY_CHAPTER_ID = Object.freeze({
+  "athena-checkin-color": "note",
+  "athena-checkin-happy": "note",
+  "athena-checkin-hard": "note",
+  "athena-checkin-miss": "note",
+  "athena-checkin-time": "note",
+  "declare-dreamline": "vision",
+  "declare-mission-statement": "vision",
+  "declare-typical-tuesday": "vision",
+  "declare-vision": "vision",
+  "habit-building": "habit",
+  "log-setup": "log",
+  "profile-spark-01": "note",
+  "profile-spark-02": "note",
+  "profile-spark-03": "note",
+  "profile-spark-04": "note",
+  "profile-spark-05": "note",
+  "profile-spark-06": "note",
+  "profile-spark-07": "note",
+  "profile-spark-08": "note",
+  "profile-spark-09": "note",
+  "profile-spark-10": "note",
+  "profile-spark-11": "note",
+  "profile-spark-12": "note",
 });
 
 export const CHAPTER_APPS = Object.freeze([
@@ -86,9 +90,13 @@ export const CHAPTER_APPS = Object.freeze([
 ]);
 
 export function chapterKind(chapter) {
-  return CHAPTER_KINDS.includes(chapter?.kind)
-    ? chapter.kind
-    : KIND_BY_SESSION[chapter?.session] || "check-in";
+  if (chapter?.kind === undefined || chapter.kind === "") return "check-in";
+  if (!CHAPTER_KINDS.includes(chapter.kind)) {
+    throw new Error(
+      `Chapter ${chapter?.id || "(unknown)"} names unknown kind "${chapter.kind}".`,
+    );
+  }
+  return chapter.kind;
 }
 
 export function chapterApp(chapter) {
@@ -101,10 +109,10 @@ export function chapterApp(chapter) {
     }
     return explicitApp;
   }
-  const mappedApp = APP_BY_SESSION[chapter?.session];
+  const mappedApp = LEGACY_APP_BY_CHAPTER_ID[chapter?.id];
   if (mappedApp) return mappedApp;
   throw new Error(
-    `Chapter ${chapter?.id || "(unknown)"} session "${chapter?.session || "(missing)"}" has no app routing. Add App frontmatter or a deliberate session mapping.`,
+    `Chapter ${chapter?.id || "(unknown)"} session "${chapter?.session || "(missing)"}" has no app routing. Add App frontmatter.`,
   );
 }
 

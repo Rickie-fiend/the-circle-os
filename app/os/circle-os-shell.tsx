@@ -173,7 +173,6 @@ export function PublishedChapterDelivery({
       backApp={backApp}
       className={className}
       definition={chapter}
-      exitOnFinalCompletion
       hideIdleHeading={hideIdleHeading}
       key={chapterRunId(chapter)}
       label={label}

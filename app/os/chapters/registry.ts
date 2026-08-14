@@ -1,7 +1,7 @@
 import published from "./published/index.json";
 import sparks from "./published/sparks.json";
 import type { ChapterDefinition } from "./chapter-types";
-import { assertPublishedChapterRouting } from "./chapter-registry-check.js";
+import { assertPublishedChapterCapabilities } from "./chapter-registry-check.js";
 
 const PAGE_TYPES = new Set([
   "cover",
@@ -41,7 +41,7 @@ function isChapter(value: unknown): value is ChapterDefinition {
 // The compiler owns index.json. The spark pack is hand-written and committed
 // beside it: it is the evergreen floor, so the app always has something to give
 // even when the nightly deck is empty or the server has been down for a week.
-export const publishedChapters: ChapterDefinition[] = assertPublishedChapterRouting([
+export const publishedChapters: ChapterDefinition[] = assertPublishedChapterCapabilities([
   ...(published.chapters as unknown[]),
   ...(sparks.chapters as unknown[]),
 ].map((chapter, index) => {

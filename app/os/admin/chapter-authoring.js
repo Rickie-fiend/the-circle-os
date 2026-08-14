@@ -1,3 +1,6 @@
+import { chapterCompletion } from "../chapters/chapter-capabilities.js";
+import { chapterApp, chapterKind } from "../chapters/chapter-scheduler.js";
+
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
 export const CHAPTER_PAGE_TYPES = [
@@ -87,6 +90,9 @@ export function createChapterDraft(now = new Date().toISOString()) {
       version: 1,
       status: "published",
       session: "note",
+      app: "note",
+      kind: "check-in",
+      completion: "swipe",
       theme: "light",
       title: "Untitled chapter",
       purpose: "Describe what this chapter helps the person understand or do.",
@@ -203,13 +209,17 @@ export function createFirstUseChapterDraft(appSpace, now = new Date().toISOStrin
   draft.category = "First Time Use";
   draft.classification = "Foundation";
   draft.tags = ["first-time-use", appSpace];
-  draft.appSpaces = [appSpace];
+  const app = ["check-in", "reflection"].includes(appSpace) ? "note" : appSpace;
+  draft.appSpaces = [app];
   draft.chapter = {
     schemaVersion: 1,
     id: `first-${appSpace}`,
     version: 1,
     status: "published",
     session: appSpace,
+    app,
+    kind: appSpace === "habit" ? "lesson" : "check-in",
+    completion: "swipe",
     theme: starter.theme,
     title: starter.title,
     purpose: starter.purpose,
@@ -230,7 +240,7 @@ export function chapterDefinitionToDraft(chapter, now = new Date().toISOString()
     category: foundation ? "First Time Use" : "Published Library",
     classification: foundation ? "Foundation" : chapter.id.startsWith("profile-spark-") ? "Short" : "Reflection",
     tags: [chapter.session, chapter.id],
-    appSpaces: [chapter.session],
+    appSpaces: [chapter.app || chapterApp(chapter)],
     authorNotes: [],
     updatedAt: now,
     chapter: structuredClone(chapter),
@@ -244,6 +254,9 @@ export function createNextVersionDraft(source, now = new Date().toISOString()) {
   copy.updatedAt = now;
   copy.chapter.version = source.chapter.version + 1;
   if (copy.chapter.pages.at(-1)?.type === "idle") copy.chapter.pages.pop();
+  copy.chapter.app = source.chapter.app || chapterApp(source.chapter);
+  copy.chapter.kind = source.chapter.kind || chapterKind(source.chapter);
+  copy.chapter.completion = "swipe";
   if (["confirm", "result"].includes(copy.chapter.pages.at(-1)?.type)) {
     copy.chapter.pages.at(-1).body = "";
   }
@@ -258,6 +271,9 @@ export function duplicateChapterDraft(source, now = new Date().toISOString()) {
   copy.chapter.id = `${source.chapter.id}-copy`;
   copy.chapter.title = `${source.chapter.title} copy`;
   copy.chapter.version = 1;
+  copy.chapter.app = source.chapter.app || chapterApp(source.chapter);
+  copy.chapter.kind = source.chapter.kind || chapterKind(source.chapter);
+  copy.chapter.completion = copy.chapter.pages.at(-1)?.type === "idle" ? "dwell" : "swipe";
   return copy;
 }
 
@@ -268,6 +284,17 @@ export function validateChapterDraft(draft) {
   if (!ID_PATTERN.test(chapter.id || "")) errors.push("Chapter ID must use lowercase words and hyphens.");
   if (!Number.isInteger(chapter.version) || chapter.version < 1) errors.push("Version must be a positive whole number.");
   if (!ID_PATTERN.test(chapter.session || "")) errors.push("Session must use lowercase words and hyphens.");
+  const capabilityDefinition = {
+    ...chapter,
+    app: draft.appSpaces?.[0] || chapter.app,
+  };
+  try {
+    chapterApp(capabilityDefinition);
+    chapterKind(capabilityDefinition);
+    chapterCompletion(capabilityDefinition);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
+  }
   if (!chapter.title?.trim()) errors.push("Title is required.");
   if (!chapter.purpose?.trim()) errors.push("Purpose is required.");
   if (!Number.isInteger(chapter.estimatedMinutes) || chapter.estimatedMinutes < 1) errors.push("Estimated minutes must be a positive whole number.");
@@ -307,6 +334,9 @@ export function chapterDraftToMarkdown(draft) {
     line("version", chapter.version),
     line("status", draft.workflowStatus === "published" ? "published" : "draft"),
     line("session", chapter.session),
+    line("App", chapter.app || draft.appSpaces?.[0]),
+    line("Kind", chapter.kind),
+    line("Completion", chapter.completion),
     line("theme", chapter.theme),
     line("title", chapter.title),
     line("purpose", chapter.purpose),
@@ -348,6 +378,9 @@ export function chapterDraftToPreview(draft) {
     status: "published",
   };
   if (preview.pages.at(-1)?.type === "idle") preview.pages.pop();
+  preview.app = draft.appSpaces?.[0] || preview.app;
+  preview.kind ||= "check-in";
+  preview.completion = "swipe";
   if (["confirm", "result"].includes(preview.pages.at(-1)?.type)) {
     preview.pages.at(-1).body = "";
   }

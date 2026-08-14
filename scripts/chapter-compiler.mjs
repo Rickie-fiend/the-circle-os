@@ -8,7 +8,11 @@ import {
 } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chapterApp } from "../app/os/chapters/chapter-scheduler.js";
+import { chapterCompletion } from "../app/os/chapters/chapter-capabilities.js";
+import {
+  chapterApp,
+  chapterKind,
+} from "../app/os/chapters/chapter-scheduler.js";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CHAPTERS_ROOT = resolve(
@@ -265,6 +269,8 @@ export function parseChapterMarkdown(source, filename = "chapter.md") {
     status: values.status,
     session: values.session,
     ...(values.app ? { app: values.app } : {}),
+    ...(values.kind ? { kind: values.kind } : {}),
+    ...(values.completion ? { completion: values.completion } : {}),
     theme: values.theme,
     title: values.title,
     purpose: values.purpose,
@@ -281,6 +287,8 @@ export function validateChapter(chapter, filename = "chapter.md") {
   if (!ID_PATTERN.test(chapter.session || "")) errors.push("session must use lowercase words and hyphens");
   try {
     chapterApp(chapter);
+    chapterKind(chapter);
+    chapterCompletion(chapter);
   } catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
   }

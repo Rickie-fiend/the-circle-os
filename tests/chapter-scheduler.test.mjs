@@ -22,7 +22,7 @@ import {
   previousDateKey,
 } from "../app/os/circle-os-model.js";
 import { validateChapter } from "../scripts/chapter-compiler.mjs";
-import { assertPublishedChapterRouting } from "../app/os/chapters/chapter-registry-check.js";
+import { assertPublishedChapterCapabilities } from "../app/os/chapters/chapter-registry-check.js";
 import { selectThoughtPrompt } from "../app/os/thought-prompt-model.js";
 
 const sparks = JSON.parse(
@@ -77,22 +77,24 @@ function run(target, extra = {}) {
   };
 }
 
-test("known sessions and explicit apps route deliberately", () => {
+test("kind and app capabilities do not inherit behavior from session", () => {
   assert.equal(chapterKind(chapter("plain")), "check-in");
-  assert.equal(chapterKind(chapter("h", { session: "habit" })), "lesson");
-  assert.equal(chapterApp(chapter("h", { session: "habit" })), "habit");
+  assert.equal(chapterKind(chapter("plain-habit", { session: "habit" })), "check-in");
+  assert.equal(chapterKind(chapter("h", { kind: "lesson" })), "lesson");
+  assert.equal(chapterApp(chapter("h", { app: "habit" })), "habit");
   assert.equal(chapterKind(chapter("s", { kind: "spark" })), "spark");
   assert.equal(chapterApp(chapter("p", { app: "protocol" })), "protocol");
+  assert.throws(() => chapterKind(chapter("bad", { kind: "unknown" })), /unknown kind/);
 });
 
 test("chapterApp routes every declaration to Vision", () => {
-  for (const session of [
-    "declaration-vision",
-    "declaration-mission-statement",
-    "declaration-typical-tuesday",
-    "declaration-dreamline",
+  for (const [id, session] of [
+    ["declare-vision", "declaration-vision"],
+    ["declare-mission-statement", "declaration-mission-statement"],
+    ["declare-typical-tuesday", "declaration-typical-tuesday"],
+    ["declare-dreamline", "declaration-dreamline"],
   ]) {
-    assert.equal(chapterApp(chapter(session, { session })), "vision");
+    assert.equal(chapterApp(chapter(id, { session })), "vision");
   }
 });
 
@@ -128,7 +130,7 @@ test("the chapter compiler rejects an unknown session with no app", () => {
 
 test("the published registry rejects an unknown session with no app", () => {
   assert.throws(
-    () => assertPublishedChapterRouting([
+    () => assertPublishedChapterCapabilities([
       chapter("registry-unknown", { session: "unknown-session" }),
     ]),
     /unknown-session.*has no app routing/,
@@ -387,8 +389,8 @@ test("a rotation that has begun outranks the kind order", () => {
 });
 
 test("the App Box signal is only fresh when something has never been opened", () => {
-  const fresh = chapter("fresh");
-  const seen = chapter("seen");
+  const fresh = chapter("fresh", { app: "note" });
+  const seen = chapter("seen", { app: "note" });
   assert.deepEqual(
     (({ count, hasFresh }) => ({ count, hasFresh }))(
       chapterDeckSignal([fresh], {}, { now: NOW, app: "note" }),

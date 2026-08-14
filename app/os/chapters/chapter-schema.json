@@ -53,6 +53,12 @@
       "type": "integer",
       "minimum": 1
     },
+    "completion": {
+      "enum": [
+        "dwell",
+        "swipe"
+      ]
+    },
     "kind": {
       "enum": [
         "spark",

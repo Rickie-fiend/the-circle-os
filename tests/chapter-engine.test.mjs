@@ -241,6 +241,9 @@ id: morning-check
 version: 1
 status: draft
 session: check-in
+app: note
+kind: check-in
+completion: dwell
 theme: light
 title: Begin the morning.
 purpose: Learn how the morning feels.

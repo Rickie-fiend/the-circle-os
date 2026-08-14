@@ -49,6 +49,8 @@ export type ChapterKind =
 
 export type ChapterVoice = "athena" | "oscar";
 
+export type ChapterCompletionMode = "dwell" | "swipe";
+
 // Conditions the phone can check offline, with no reading of its own. Athena
 // attaches them when she writes the chapter; the device only does arithmetic.
 export type ChapterRequirement = {
@@ -69,6 +71,7 @@ export type ChapterDefinition = {
   title: string;
   purpose: string;
   estimatedMinutes: number;
+  completion?: ChapterCompletionMode;
   showPageNumbers?: boolean;
   kind?: ChapterKind;
   app?: AppTarget;

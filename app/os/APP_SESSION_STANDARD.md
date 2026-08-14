@@ -99,12 +99,17 @@ Used for questions, teaching, setup, and habit creation.
 - Answered pages remain available while the chapter is an open draft.
 - Before confirmation, the person may move backward and edit any answer.
 - The last question leads to a separate completion page.
-- A short Check-in completion leaves by a quiet timed fade, and only by that.
+- A completion followed by an Idle Page leaves by a quiet timed fade, whatever
+  the chapter's Session is. This ending is the declared `dwell` capability.
   It cannot be swiped forward: the last page is usually the payoff, and a
   forward swipe there skipped it and retired the chapter in one gesture, which
   is what put a joke out of reach before it was read. Backward stays open, so
   the setup can be read again while the page is up.
 - The last page holds long enough to be read, not merely seen.
+- A chapter whose Result or Confirm is the final Page declares `swipe`; a
+  deliberate forward swipe completes it. Page anatomy supplies these defaults
+  for immutable chapters, while an unknown or conflicting ending fails the
+  build. Session names never choose the ending.
 - Page numbers appear only when there is more than one page to count. A chapter
   with one question showed "1/1", which is not progress.
 - After completion, the draft pages retire and only the useful idle app
