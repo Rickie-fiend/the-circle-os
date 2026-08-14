@@ -32,6 +32,11 @@ const seenAttentionKeys = new Set<string>();
  */
 export const IDLE_PAGE_DWELL_MS = 30000;
 
+export type AppPagePlacement =
+  | "balanced"
+  | "identity-stack"
+  | "content-flow";
+
 export function SwipeSession({
   children,
   index,
@@ -45,7 +50,6 @@ export function SwipeSession({
   onForwardBoundary,
   attentionKey,
   attentionIndex = 0,
-  easeKey,
   rotateMs,
   rotatePaused = false,
 }: {
@@ -61,8 +65,6 @@ export function SwipeSession({
   onForwardBoundary?: () => void;
   attentionKey?: string;
   attentionIndex?: number;
-  /** Changes when a Page swaps its content without changing index: a flip. */
-  easeKey?: string;
   rotateMs?: number;
   rotatePaused?: boolean;
 }) {
@@ -117,7 +119,6 @@ export function SwipeSession({
   const [showingBlockedCue, setShowingBlockedCue] = useState(false);
   const [externalMotion, setExternalMotion] = useState("");
   const [frameEasing, setFrameEasing] = useState(false);
-  const lastEaseKey = useRef<string | undefined>(undefined);
   const attentionIsNew = Boolean(
     attentionKey &&
     activeIndex === attentionIndex &&
@@ -249,20 +250,6 @@ export function SwipeSession({
       if (timer) window.clearTimeout(timer);
     };
   }, [activeIndex, attentionIndex, attentionKey]);
-
-  // A flip changes what the Page holds without changing which Page it is, so
-  // it earns the same height ease a swipe does. Without this the frame resized
-  // in the same frame as the new copy and the box jumped instead of easing.
-  useLayoutEffect(() => {
-    if (easeKey === undefined || easeKey === lastEaseKey.current) return;
-    lastEaseKey.current = easeKey;
-    if (frameEaseTimer.current) window.clearTimeout(frameEaseTimer.current);
-    setFrameEasing(true);
-    frameEaseTimer.current = window.setTimeout(() => {
-      setFrameEasing(false);
-      frameEaseTimer.current = null;
-    }, 460);
-  }, [easeKey]);
 
   useLayoutEffect(() => {
     const previousIndex = previousActiveIndex.current;
@@ -396,7 +383,7 @@ export function SwipeSession({
       document.fonts.removeEventListener?.("loadingerror", measure);
       window.removeEventListener("load", measure);
     };
-  }, [activeIndex, easeKey, frameHeight]);
+  }, [activeIndex, frameHeight]);
 
   useEffect(
     () => () => {
@@ -823,7 +810,7 @@ export function PageLayout({
   headerLeft,
   headerRight,
   theme = "light",
-  textLayout = "auto",
+  placement = "balanced",
   variant = "app",
 }: {
   children: ReactNode;
@@ -833,13 +820,14 @@ export function PageLayout({
   headerLeft?: ReactNode;
   headerRight?: ReactNode;
   theme?: "light" | "orange" | "dark";
-  textLayout?: "auto" | "content";
+  placement?: AppPagePlacement;
   variant?: "app" | "chapter" | "cover";
 }) {
   const pageRef = useRef<HTMLDivElement | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const variantClass =
     variant === "app" ? "os-app-content-page" : `os-${variant}-page`;
+  const placementClass = `os-placement-${placement}`;
 
   useLayoutEffect(() => {
     const page = pageRef.current;
@@ -850,16 +838,18 @@ export function PageLayout({
       body.style.removeProperty("--os-measured-body-min-height");
       body.style.removeProperty("--os-measured-main-top");
     };
-    if (textLayout === "content") {
+    if (placement === "content-flow") {
       clearMeasurement();
       return;
     }
     const main = body.querySelector<HTMLElement>(
       ".os-page-main, .os-info-page-main",
     );
-    const mainText = main?.querySelector<HTMLElement>(
-      "textarea, h1, h2, h3, p, [data-os-main-text]",
-    );
+    const mainText = placement === "identity-stack"
+      ? body.querySelector<HTMLElement>("[data-os-app-heading]")
+      : main?.querySelector<HTMLElement>(
+          "textarea, h1, h2, h3, p, [data-os-main-text]",
+        );
     if (!main || !mainText) {
       clearMeasurement();
       return;
@@ -894,7 +884,10 @@ export function PageLayout({
         const metrics = pageTextLayout({
           baseBodyHeight,
           lineHeight,
-          mainHeight: main.getBoundingClientRect().height,
+          mainHeight:
+            placement === "identity-stack"
+              ? mainText.getBoundingClientRect().height
+              : main.getBoundingClientRect().height,
           opticalShift,
         });
 
@@ -916,11 +909,12 @@ export function PageLayout({
       window.cancelAnimationFrame(frame);
       window.removeEventListener("resize", measure);
     };
-  }, [children, footer, heading, headerLeft, headerRight, textLayout]);
+  }, [children, footer, heading, headerLeft, headerRight, placement]);
 
   return (
     <div
-      className={`os-page-layout ${variantClass} os-session-intro theme-${theme} ${className}`.trim()}
+      className={`os-page-layout ${variantClass} ${placementClass} os-session-intro theme-${theme} ${className}`.trim()}
+      data-os-placement={placement}
       ref={pageRef}
     >
       <div className="os-page-header">

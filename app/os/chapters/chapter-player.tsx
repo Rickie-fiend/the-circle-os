@@ -14,6 +14,7 @@ import {
   PageLayout,
   SessionIntro,
   SwipeSession,
+  type AppPagePlacement,
 } from "../app-session";
 import { sizeTextAreaToContent } from "../text-area-size";
 import {
@@ -109,7 +110,7 @@ function ChapterPageView({
   idleBody,
   idleContent,
   idleFooter,
-  idleTextLayout,
+  idlePlacement,
   hideIdleHeading,
   onEdit,
 }: {
@@ -128,7 +129,7 @@ function ChapterPageView({
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
-  idleTextLayout?: "auto" | "content";
+  idlePlacement?: AppPagePlacement;
   hideIdleHeading?: boolean;
   onEdit?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
@@ -251,13 +252,19 @@ function ChapterPageView({
         headerLeft={isIdle ? (idleLabel ?? <p className="os-card-label">{chapter.session}</p>) : undefined}
         headerRight={isIdle ? idleHeaderAction : !isCompletionPage ? progress : undefined}
         theme={chapter.theme}
-        textLayout={isIdle ? idleTextLayout : undefined}
+        placement={isIdle ? idlePlacement : undefined}
         variant={isIdle ? "app" : "chapter"}
       >
         <div className="os-page-main">
           {mainContent}
         </div>
-        <div className="os-page-sub">
+        <div
+          className={`os-page-sub${
+            isIdle && idlePlacement === "identity-stack"
+              ? " os-app-page-stacks"
+              : ""
+          }`}
+        >
           {isIdle
             ? idleContent
             : onEdit && !isCompletionPage
@@ -446,11 +453,10 @@ export function ChapterPlayer({
   idleBody,
   idleContent,
   idleFooter,
-  idleTextLayout = "auto",
+  idlePlacement = "balanced",
   hideIdleHeading = false,
   idleApps = [],
   idleAppIndex = 0,
-  idleEaseKey,
   onIdleAppIndexChange,
   rotateIdleApps = false,
   backApp,
@@ -476,13 +482,11 @@ export function ChapterPlayer({
   idleBody?: ReactNode;
   idleContent?: ReactNode;
   idleFooter?: ReactNode;
-  /** Declares whether the idle Page centres Main text or lays out app content. */
-  idleTextLayout?: "auto" | "content";
+  /** Names how the idle App Page places its heading and content stacks. */
+  idlePlacement?: AppPagePlacement;
   hideIdleHeading?: boolean;
   idleApps?: ReactNode[];
   idleAppIndex?: number;
-  /** Changes when the idle Page flips to its other side. */
-  idleEaseKey?: string;
   onIdleAppIndexChange?: (index: number) => void;
   rotateIdleApps?: boolean;
   backApp?: ReactNode;
@@ -612,7 +616,7 @@ export function ChapterPlayer({
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
-        idleTextLayout={idleTextLayout}
+        idlePlacement={idlePlacement}
         hideIdleHeading={hideIdleHeading}
         onEdit={onEditPage}
       />,
@@ -626,7 +630,6 @@ export function ChapterPlayer({
         index={Math.max(0, Math.min(orderedApps.length - 1, idleAppIndex))}
         label={label}
         onLongPress={onLongPress}
-        easeKey={idleEaseKey}
         rotateMs={rotateIdleApps ? IDLE_PAGE_DWELL_MS : undefined}
         onIndexChange={(index) => onIdleAppIndexChange?.(index)}
       >
@@ -681,7 +684,7 @@ export function ChapterPlayer({
         idleBody={idleBody}
         idleContent={idleContent}
         idleFooter={idleFooter}
-        idleTextLayout={idleTextLayout}
+        idlePlacement={idlePlacement}
         onEdit={onEditPage}
         onComplete={(submission) =>
           onRunChange(
@@ -775,7 +778,7 @@ export function ChapterPlayer({
           idleBody={idleBody}
           idleContent={idleContent}
           idleFooter={idleFooter}
-          idleTextLayout={idleTextLayout}
+          idlePlacement={idlePlacement}
           hideIdleHeading={hideIdleHeading}
           onEdit={onEditPage}
           onComplete={(submission) =>

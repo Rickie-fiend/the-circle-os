@@ -196,13 +196,13 @@ Used for charts, weekly views, and other things worth reading again.
 
 ## Protocol
 
-- Protocol is the first Page of its App Box and Habit is one swipe across. A
-  protocol is the agreement a habit is built inside, so it is what the box
-  opens on.
-- A running protocol can be changed. Its label is the mode control: tapping it
-  turns the Page into an editor for the name and the terms, and tapping Done
-  turns it back. A block is the button that keeps a term, so it cannot also be
-  the way to rewrite one; editing is a mode rather than a second tap target.
+- Routine is the first Page of its App Box and Protocol is one swipe across.
+  The current Protocol phase is its front; `Phases` opens Protocol home on the
+  shared App back.
+- A running protocol can be changed through the explicit `Edit phase` action.
+  Its App-back label names the visible side and never doubles as an editor.
+  A block is the button that keeps a term, so it cannot also be the way to
+  rewrite one.
 - An edited term keeps its id, so the days already marked against it stay
   attached. A term taken out is archived, never deleted.
 - Length is the one thing a running protocol cannot change. The day counter and
@@ -248,9 +248,9 @@ Used for charts, weekly views, and other things worth reading again.
 - A swipe completes inside the clipped frame before state changes.
 - Ordinary page travel stays quick enough for consecutive swipes. Ceremonial
   update motion never slows browsing through an existing app stack.
-- An in-place app mode change uses that same ceremonial update transition:
-  the current Page fades, the stable surface settles, then the new Page copy
-  arrives. Thoughts to Deep Thoughts is the reference behavior.
+- Every in-place App side change uses the shared App-back controller. Feature
+  code supplies only its two sides and never supplies another transition class,
+  timer or height ease.
 - The active page is always kept in the navigation map while permissions or
   saved progress change. It never falls back to the cover by position.
 - A required first-use cover has a hard right boundary. An optional Check-in
@@ -364,6 +364,22 @@ Used for charts, weekly views, and other things worth reading again.
   resizing afterwards. Reduced-motion mode changes sides immediately.
 - A mode label names the visible side. It is never an edit or completion
   action. Returning to an already known side does not replay a staged arrival.
+
+## Named placement
+
+- `AppPagePlacement` is the Page placement contract. A Page declares
+  `balanced`, `identity-stack` or `content-flow`; feature CSS does not borrow
+  another App's placement class.
+- `identity-stack` owns one Header track, an optional absolute right action,
+  the shared `.os-app-page-heading`, labelled `.os-app-page-stacks`, and the
+  direct Footer action geometry.
+- Routine and a running Protocol both declare `identity-stack`. Log, Record and
+  Protocol home declare `content-flow`. Moving a shared heading or Footer rule
+  moves every Page that names the contract.
+- A Vision declaration versions only through `Save declaration`. Blur, route
+  reload and ordinary typing never create a declaration. The four current
+  kinds stay on the front; superseded immutable records stay behind `History`
+  on the shared App back.
 
 ## Fixed evidence Apps
 

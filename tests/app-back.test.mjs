@@ -47,6 +47,9 @@ test("the shared flip holds geometry and becomes immediate for reduced motion", 
   assert.match(controller, /--os-app-flip-height/);
   assert.match(css, /os-app-flip-resizing[\s\S]*height 440ms/);
   assert.match(css, /os-app-flip-arrival 500ms/);
+  assert.doesNotMatch(appSession, /easeKey/);
+  assert.doesNotMatch(chapterPlayer, /idleEaseKey/);
+  assert.doesNotMatch(shell, /idleEaseKey/);
 });
 
 test("Protocol labels its sides and keeps editing as an action", () => {
@@ -56,42 +59,30 @@ test("Protocol labels its sides and keeps editing as an action", () => {
   assert.doesNotMatch(protocol, />\s*Done\s*:\s*Protocol\s*</);
 });
 
-test("Routine centres its identity while Record clears stale text offsets", () => {
-  assert.match(shell, /data-os-main-text/);
-  assert.match(shell, /idleTextLayout=\{habitMode === "yesterday" \? "content" : "auto"\}/);
-  assert.match(chapterPlayer, /textLayout=\{isIdle \? idleTextLayout : undefined\}/);
+test("Routine declares identity-stack placement while Record declares content flow", () => {
+  assert.match(shell, /data-os-app-heading/);
+  assert.match(shell, /idlePlacement=\{[\s\S]*?"content-flow"[\s\S]*?"identity-stack"/);
+  assert.match(chapterPlayer, /placement=\{isIdle \? idlePlacement : undefined\}/);
   assert.match(appSession, /if \(!main \|\| !mainText\) \{\s*clearMeasurement\(\);/);
 });
 
-test("Routine mirrors Protocol title and Footer geometry", () => {
-  const routineFooter = css.match(
-    /\.circle-os \.os-habit \.os-chapter-idle \.os-page-footer \{([^}]*)\}/,
-  )?.[1];
-  const protocolName = css.match(
-    /\.circle-os \.os-protocol-name \{([^}]*)\}/,
-  )?.[1];
-  const routineName = css.match(
-    /\.circle-os \.os-routine-name-edit \{([^}]*)\}/,
-  )?.[1];
-  const routineBody = css.match(
-    /\.circle-os \.os-routine-body \{([^}]*)\}/,
-  )?.[1];
-  const routineAction = css.match(
-    /\.circle-os \.os-habit \.os-chapter-idle \.os-add-habit-row \{([^}]*)\}/,
-  )?.[1];
+test("Routine and Protocol share named heading, stack, header and Footer placement", () => {
+  assert.doesNotMatch(shell, /className="os-protocol-name-edit os-routine-name-edit"/);
+  assert.match(shell, /className="os-app-page-heading os-routine-name-edit"/);
+  assert.match(protocol, /className="os-app-page-heading os-protocol-name-edit"/);
+  assert.match(chapterPlayer, /idlePlacement === "identity-stack"[\s\S]*?os-app-page-stacks/);
+  assert.match(shell, /className="os-routine-body"/);
+  assert.match(protocol, /os-page-sub os-app-page-stacks os-protocol-terms/);
+  assert.match(css, /\.os-page-layout\.os-placement-identity-stack \.os-page-header/);
+  assert.match(css, /\.os-app-page-heading \{[\s\S]*?margin: 0\.35rem 0 1rem;/);
+  assert.match(css, /\.os-app-page-stacks \{[\s\S]*?display: grid;/);
+  assert.match(css, /\.os-page-layout\.os-placement-identity-stack > \.os-page-footer > button/);
+});
 
-  assert.ok(routineFooter);
-  assert.ok(protocolName);
-  assert.ok(routineName);
-  assert.ok(routineBody);
-  assert.ok(routineAction);
-  assert.doesNotMatch(routineFooter, /min-height|padding-top/);
-  assert.match(css, /\.circle-os \.os-page-footer \{[\s\S]*?min-height: 52px;[\s\S]*?padding-top: var\(--os-body-footer-gap\);/);
-  assert.match(protocolName, /margin: 0\.35rem 0 1rem;/);
-  assert.match(routineName, /margin: 0\.35rem 0 1rem;/);
-  assert.match(routineBody, /padding-top: 0;/);
-  assert.match(routineAction, /font-size: var\(--text-md\);/);
-  assert.match(routineAction, /margin-top: 0\.4rem;/);
-  assert.match(routineAction, /min-height: var\(--touch-min\);/);
-  assert.match(routineAction, /padding: 0\.6rem 0\.7rem;/);
+test("Routine, Protocol and Log name the shared Page placement contract", () => {
+  assert.match(appSession, /export type AppPagePlacement/);
+  assert.match(appSession, /"balanced"[\s\S]*"identity-stack"[\s\S]*"content-flow"/);
+  assert.match(protocol, /placement="identity-stack"/);
+  assert.match(protocol, /placement="content-flow"/);
+  assert.match(shell, /className="os-log-page"[\s\S]*placement="content-flow"/);
 });

@@ -6,8 +6,9 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
-  type FocusEvent,
   type FormEvent,
+  type KeyboardEvent,
+  type MouseEvent,
 } from "react";
 import {
   answerSurveyQuestion,
@@ -35,6 +36,7 @@ import {
   SwipeSession,
 } from "../app-session";
 import { sizeTextAreaToContent } from "../text-area-size";
+import { useAppBack } from "../app-back";
 import {
   normalizeChapterPublication,
   publicationIsNewerThanRun,
@@ -244,48 +246,59 @@ function DeclarationPage({
   empty,
   record,
   current,
+  historyAvailable,
   onCommit,
   onSetup,
+  onToggleHistory,
 }: {
   kind: DeclarationKind;
   label: string;
   empty: string;
   record?: DeclarationRecord;
   current: boolean;
+  historyAvailable: boolean;
   onCommit: (content: Record<string, string>) => void;
   onSetup: () => void;
+  onToggleHistory: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   const pageRef = useRef<HTMLDivElement | null>(null);
-  const [draft, setDraft] = useState<Record<string, string>>(
-    () => ({ ...(record?.content || {}) }),
-  );
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>({});
   const fields = DECLARATION_FIELDS[kind];
 
   useLayoutEffect(() => {
     for (const editor of pageRef.current?.querySelectorAll("textarea") || []) {
       sizeTextAreaToContent(editor);
     }
-  }, [draft]);
+  }, [draft, editing]);
 
-  function commitWhenLeaving(event: FocusEvent<HTMLDivElement>) {
-    if (
-      event.relatedTarget instanceof Node &&
-      event.currentTarget.contains(event.relatedTarget)
-    ) {
-      return;
-    }
-    if (!record || !current) return;
-    const clean = Object.fromEntries(
-      fields.map((field) => [field.key, String(draft[field.key] || "").trim()]),
-    );
-    if (fields.some((field) => !clean[field.key])) {
-      setDraft({ ...record.content });
-      return;
-    }
-    const changed = fields.some(
+  const clean = Object.fromEntries(
+    fields.map((field) => [field.key, String(draft[field.key] || "").trim()]),
+  );
+  const complete = fields.every((field) => clean[field.key]);
+  const changed = Boolean(
+    record && fields.some(
       (field) => clean[field.key] !== String(record.content[field.key] || "").trim(),
-    );
-    if (changed) onCommit(clean);
+    ),
+  );
+
+  function beginEditing() {
+    if (!record || !current) return;
+    setDraft({ ...record.content });
+    setEditing(true);
+  }
+
+  function beginEditingFromKeyboard(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    beginEditing();
+  }
+
+  function saveDeclaration() {
+    if (!record || !current || !complete || !changed) return;
+    onCommit(clean);
+    setDraft(clean);
+    setEditing(false);
   }
 
   if (!record) {
@@ -308,8 +321,10 @@ function DeclarationPage({
   }
 
   const fieldViews = fields.map((field, index) => {
-    const value = draft[field.key] || "";
-    if (!current) {
+    const value = editing
+      ? draft[field.key] || ""
+      : record.content[field.key] || "";
+    if (!current || !editing) {
       return (
         <div className="vision-declaration-field" key={field.key}>
           {index ? <span>{field.label}</span> : null}
@@ -323,12 +338,13 @@ function DeclarationPage({
         <textarea
           aria-label={`Edit ${label}: ${field.label}`}
           maxLength={1600}
-          onChange={(event) =>
+          onChange={(event) => {
+            const nextValue = event.currentTarget.value;
             setDraft((value) => ({
               ...value,
-              [field.key]: event.currentTarget.value,
-            }))
-          }
+              [field.key]: nextValue,
+            }));
+          }}
           rows={1}
           value={value}
         />
@@ -340,18 +356,57 @@ function DeclarationPage({
     <PageLayout
       className={`vision-declaration-page${current ? " is-current" : " is-earlier"}`}
       footer={
-        <span className="vision-declaration-date">
-          {current ? "Declared" : "Earlier"} {declarationDate(record.declaredAt)}
-        </span>
+        current && editing ? (
+          <button
+            className="vision-declaration-save os-page-primary-action"
+            disabled={!complete || !changed}
+            onClick={saveDeclaration}
+            type="button"
+          >
+            Save declaration
+          </button>
+        ) : (
+          <span className="vision-declaration-date">
+            {current ? "Declared" : "Earlier"} {declarationDate(record.declaredAt)}
+          </span>
+        )
       }
       headerLeft={
-        <p className="os-card-label">
-          {label}{current ? "" : " · Earlier"}
-        </p>
+        current ? (
+          <p className="os-card-label">{label}</p>
+        ) : (
+          <button
+            className="os-card-label vision-history-toggle"
+            onClick={onToggleHistory}
+            type="button"
+          >
+            History
+          </button>
+        )
+      }
+      headerRight={
+        current && historyAvailable ? (
+          <button
+            className="vision-history-toggle"
+            onClick={onToggleHistory}
+            type="button"
+          >
+            History
+          </button>
+        ) : !current ? (
+          <span>{label}</span>
+        ) : undefined
       }
       theme="light"
     >
-      <div onBlurCapture={commitWhenLeaving} ref={pageRef} className="vision-declaration-copy">
+      <div
+        className={`vision-declaration-copy${current && !editing ? " is-tappable" : ""}`}
+        onClick={current && !editing ? beginEditing : undefined}
+        onKeyDown={current && !editing ? beginEditingFromKeyboard : undefined}
+        ref={pageRef}
+        role={current && !editing ? "button" : undefined}
+        tabIndex={current && !editing ? 0 : undefined}
+      >
         <div className="os-page-main">{fieldViews[0]}</div>
         {fieldViews.length > 1 ? (
           <div className="os-page-sub">{fieldViews.slice(1)}</div>
@@ -501,6 +556,8 @@ export default function CircleOSMirror() {
     name: "",
     age: "",
   });
+  const lifeBack = useAppBack<"current" | "history">("current");
+  const [declarationHistoryIndex, setDeclarationHistoryIndex] = useState(0);
   const summary = summarizeWeek(state);
   const weekClaims = buildWeekClaims(state);
   const profileCase = state.profile.profileCase;
@@ -595,7 +652,15 @@ export default function CircleOSMirror() {
     state.evidence.acknowledgedRevision,
     profileCase.status,
   ].join("|");
-  const declarationPageRecords = DECLARATION_PAGES.reduce<
+  const currentDeclarationPages = DECLARATION_PAGES.map((page) => {
+    const versions = declarationVersions(state, page.kind) as DeclarationRecord[];
+    return {
+      ...page,
+      record: versions[0],
+      current: true,
+    };
+  });
+  const declarationHistoryPages = DECLARATION_PAGES.reduce<
     Array<
       (typeof DECLARATION_PAGES)[number] & {
         record?: DeclarationRecord;
@@ -604,19 +669,19 @@ export default function CircleOSMirror() {
     >
   >((pages, page) => {
     const versions = declarationVersions(state, page.kind) as DeclarationRecord[];
-    if (versions.length) {
-      pages.push(
-        ...versions.map((record, index) => ({
-          ...page,
-          record,
-          current: index === 0,
-        })),
-      );
-    } else {
-      pages.push({ ...page, current: true });
-    }
+    pages.push(
+      ...versions.slice(1).map((record) => ({
+        ...page,
+        record,
+        current: false,
+      })),
+    );
     return pages;
   }, []);
+  const declarationPageRecords =
+    lifeBack.side === "history"
+      ? declarationHistoryPages
+      : currentDeclarationPages;
   const athenaPrompt = profileCase.deepThoughtPrompt;
   const athenaAnswer = athenaPrompt
     ? profileCase.survey.answers.find(
@@ -624,16 +689,18 @@ export default function CircleOSMirror() {
       )?.answer || ""
     : "";
   const lifePageCount = declarationPageRecords.length;
-  const lifeJourneyVersion = [
-    "declarations-v1",
-    ...declarationPageRecords.map((page) => page.record?.id || `${page.kind}-empty`),
-  ].join("|");
+  // The current deck always has the same four kinds. A new immutable record
+  // changes the words on the current Page, not the Page collection or index.
+  const lifeJourneyVersion = "declarations-current-v2";
   const visibleLifeApp = appSessionIndex(
     state,
     "vision-life",
     lifeJourneyVersion,
     0,
   );
+  const visibleDeclarationPage = lifeBack.side === "history"
+    ? Math.max(0, Math.min(declarationHistoryPages.length - 1, declarationHistoryIndex))
+    : visibleLifeApp;
   const visibleWeekApp = appSessionIndex(
     state,
     "vision-week",
@@ -754,6 +821,24 @@ export default function CircleOSMirror() {
     content: Record<string, string>,
   ) {
     updateState((current) => declareLife(current, kind, content));
+  }
+
+  function toggleDeclarationHistory(
+    kind: DeclarationKind,
+    event: MouseEvent<HTMLButtonElement>,
+  ) {
+    const nextSide = lifeBack.side === "current" ? "history" : "current";
+    lifeBack.flip(
+      nextSide,
+      () => {
+        if (nextSide !== "history") return;
+        const matchingIndex = declarationHistoryPages.findIndex(
+          (page) => page.kind === kind,
+        );
+        setDeclarationHistoryIndex(Math.max(0, matchingIndex));
+      },
+      event.currentTarget,
+    );
   }
 
   function completeDeclaration(
@@ -938,12 +1023,16 @@ export default function CircleOSMirror() {
               { length: lifePageCount },
               (_, index) => index,
             )}
-            className="vision-life-apps"
-            index={visibleLifeApp}
+            className={`vision-life-apps${lifeBack.className ? ` ${lifeBack.className}` : ""}`}
+            index={visibleDeclarationPage}
             label="The life you want apps"
             maxIndex={Math.max(0, lifePageCount - 1)}
-            rotateMs={IDLE_PAGE_DWELL_MS}
-            onIndexChange={(nextIndex) =>
+            rotateMs={lifeBack.side === "current" ? IDLE_PAGE_DWELL_MS : undefined}
+            onIndexChange={(nextIndex) => {
+              if (lifeBack.side === "history") {
+                setDeclarationHistoryIndex(nextIndex);
+                return;
+              }
               updateState((current) =>
                 setAppSessionIndex(
                   current,
@@ -951,18 +1040,22 @@ export default function CircleOSMirror() {
                   lifeJourneyVersion,
                   nextIndex,
                 ),
-              )
-            }
+              );
+            }}
           >
             {declarationPageRecords.map((page) => (
               <DeclarationPage
                 current={page.current}
                 empty={page.empty}
-                key={page.record?.id || `${page.kind}-empty`}
+                historyAvailable={declarationHistoryPages.length > 0}
+                key={page.current ? `current-${page.kind}` : page.record?.id}
                 kind={page.kind}
                 label={page.label}
                 onCommit={(content) => commitDeclaration(page.kind, content)}
                 onSetup={() => router.push(`/os/mirror?declare=${page.kind}`)}
+                onToggleHistory={(event) =>
+                  toggleDeclarationHistory(page.kind, event)
+                }
                 record={page.record}
               />
             ))}

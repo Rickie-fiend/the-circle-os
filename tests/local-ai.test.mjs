@@ -371,6 +371,25 @@ test("profile mission comments never appear inside the app mission", () => {
   assert.doesNotMatch(today.mission.text, /user-edited|<!--/);
 });
 
+test("Windows autostart is boot-capable, hidden, and duplicate-safe", () => {
+  const starter = readFileSync(
+    new URL("../local-ai/start-local-ai.ps1", import.meta.url),
+    "utf8",
+  );
+  const installer = readFileSync(
+    new URL("../local-ai/install-local-ai-autostart.ps1", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(installer, /New-ScheduledTaskTrigger -AtStartup/);
+  assert.match(installer, /LogonType S4U/);
+  assert.match(installer, /CurrentVersion\\Run/);
+  assert.match(installer, /CircleOSLocalAI/);
+  assert.match(installer, /-WindowStyle Hidden/);
+  assert.match(starter, /127\.0\.0\.1:4317\/health/);
+  assert.match(starter, /already running/);
+});
+
 test("public phones receive separate private Obsidian profiles", async () => {
   const vaultPath = mkdtempSync(join(tmpdir(), "circle-os-vault-"));
   const accessPath = join(
@@ -383,6 +402,14 @@ test("public phones receive separate private Obsidian profiles", async () => {
   const baseUrl = `http://127.0.0.1:${address.port}`;
 
   try {
+    const initialHealth = await fetch(`${baseUrl}/health`).then((response) =>
+      response.json(),
+    );
+    assert.equal(initialHealth.analysis, "external-scheduler");
+    assert.equal(initialHealth.analysisOwner, "claude-scheduled-task");
+    assert.ok(initialHealth.startedAt);
+    assert.equal(initialHealth.lastProfileSyncAt, null);
+
     const createResponse = await fetch(`${baseUrl}/profiles`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -392,6 +419,10 @@ test("public phones receive separate private Obsidian profiles", async () => {
     const created = await createResponse.json();
     assert.match(created.profileId, /^p_/);
     assert.ok(created.accessKey.length > 30);
+    const syncedHealth = await fetch(`${baseUrl}/health`).then((response) =>
+      response.json(),
+    );
+    assert.ok(syncedHealth.lastProfileSyncAt);
 
     const denied = await fetch(`${baseUrl}/profiles/${created.profileId}`, {
       headers: { Authorization: "Bearer wrong" },

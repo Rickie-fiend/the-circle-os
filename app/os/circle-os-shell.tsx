@@ -2742,8 +2742,8 @@ export function TodayExperience() {
               ) : (
                 <input
                   aria-label="Routine identity"
-                  className="os-protocol-name-edit os-routine-name-edit"
-                  data-os-main-text
+                  className="os-app-page-heading os-routine-name-edit"
+                  data-os-app-heading
                   maxLength={60}
                   onChange={(event) =>
                     updateState((current) =>
@@ -2845,7 +2845,9 @@ export function TodayExperience() {
                   </section>
                 </div>
               )}
-              idleTextLayout={habitMode === "yesterday" ? "content" : "auto"}
+              idlePlacement={
+                habitMode === "yesterday" ? "content-flow" : "identity-stack"
+              }
               idleHeaderAction={habitMode === "yesterday" ? undefined : (
                 <button className="os-new-habit" type="button" onClick={beginNewHabit}>
                   New habit
@@ -2909,7 +2911,6 @@ export function TodayExperience() {
                   }
                 />,
               ]}
-              idleEaseKey={habitMode}
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={changeHabitAppPage}
               rotateIdleApps={!sealedProtocolDay}
@@ -2964,6 +2965,7 @@ export function TodayExperience() {
               }
               heading={<h2 id="day-heading">Your day, hour by hour</h2>}
               headerLeft={<p className="os-card-label">Log</p>}
+              placement="content-flow"
               theme="dark"
             >
               <div className="os-timeline" ref={timelineRef}>

@@ -1063,12 +1063,20 @@ export function createCircleAiServer(options = {}) {
   const vaultPath = resolveVaultPath(options);
   const accessPath = resolveAccessPath(options);
   const maxProfiles = Number(process.env.CIRCLE_OS_MAX_PROFILES || 25);
+  const startedAt = now();
   mkdirSync(join(vaultPath, "Profiles"), { recursive: true });
   mkdirSync(dirname(accessPath), { recursive: true });
   let access = readJson(accessPath, {});
 
   function saveAccess() {
     writeAtomic(accessPath, `${JSON.stringify(access, null, 2)}\n`);
+  }
+
+  function lastProfileSyncAt() {
+    return Object.values(access)
+      .map((entry) => entry?.lastSyncAt || "")
+      .filter(Boolean)
+      .sort((left, right) => String(right).localeCompare(String(left)))[0] || null;
   }
 
   function migrateLegacy() {
@@ -1149,7 +1157,10 @@ export function createCircleAiServer(options = {}) {
           200,
           {
             ok: true,
-            analysis: "nightly-codex",
+            analysis: "external-scheduler",
+            analysisOwner: "claude-scheduled-task",
+            startedAt,
+            lastProfileSyncAt: lastProfileSyncAt(),
             storesData: true,
           },
           origin,
@@ -1193,6 +1204,7 @@ export function createCircleAiServer(options = {}) {
 
         const accessKey = randomKey(32);
         access[profileId].keyHash = hash(accessKey);
+        access[profileId].lastSyncAt = now();
         delete access[profileId].legacyProofHash;
         saveAccess();
         const state = mergeClientState(
@@ -1415,6 +1427,8 @@ export function createCircleAiServer(options = {}) {
               readExistingMetadata(vaultPath, profileId).analysis_pending ===
                 "true",
           });
+          access[profileId].lastSyncAt = now();
+          saveAccess();
           writeIndex(vaultPath);
           json(response, 200, {
             state: publicState(saved),

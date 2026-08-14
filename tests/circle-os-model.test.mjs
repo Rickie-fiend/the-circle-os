@@ -295,6 +295,27 @@ test("declarations append, date, and supersede without changing the old version"
   );
 });
 
+test("declaring preserves sibling declaration and task state", () => {
+  let state = createEmptyState();
+  state.declarations.sync = { cursor: "declaration-cursor" };
+  state.tasks.sync = { cursor: "task-cursor" };
+
+  state = declareLife(
+    state,
+    "dreamline",
+    {
+      dream: "Publish a small useful book.",
+      now: "Write the first paragraph.",
+      tomorrow: "Outline three chapters.",
+      dayAfter: "Share the outline.",
+    },
+    { id: "dream-siblings", declaredAt: "2026-08-15T09:00:00.000Z" },
+  );
+
+  assert.deepEqual(state.declarations.sync, { cursor: "declaration-cursor" });
+  assert.deepEqual(state.tasks.sync, { cursor: "task-cursor" });
+});
+
 test("two deliberately different declarations stay different in the app model", () => {
   let state = createEmptyState();
   state = declareLife(

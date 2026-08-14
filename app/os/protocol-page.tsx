@@ -64,6 +64,7 @@ export function ProtocolKeptPage({ seal }: { seal: ProtocolSealView }) {
     <PageLayout
       className="os-protocol os-protocol-kept"
       headerLeft={<p className="os-card-label">Protocol</p>}
+      placement="content-flow"
       headerRight={<span>{seal.phaseName}</span>}
       theme="orange"
       footer={<span className="os-protocol-close-hint">Swipe to close</span>}
@@ -175,8 +176,8 @@ function ProtocolHome({
           <p className="os-card-label">Protocol</p>
         )
       }
+      placement="content-flow"
       theme="orange"
-      textLayout="content"
     >
       <div className="os-page-main os-protocol-home-records">
         {phaseRecords.length ? phaseRecords.map((record) => {
@@ -380,6 +381,7 @@ export function ProtocolPage({
       <PageLayout
         className="os-protocol os-protocol-draft"
         headerLeft={label}
+        placement="identity-stack"
         theme="orange"
         footer={
           <button
@@ -399,7 +401,8 @@ export function ProtocolPage({
         <div className="os-page-main os-protocol-identity">
           <input
             aria-label="Protocol name"
-            className="os-protocol-name-edit"
+            className="os-app-page-heading os-protocol-name-edit"
+            data-os-app-heading
             maxLength={60}
             onChange={(event) => onRename(event.target.value)}
             placeholder="Monk Mode"
@@ -421,7 +424,7 @@ export function ProtocolPage({
           </div>
         </div>
 
-        <div className="os-page-sub os-protocol-terms">
+        <div className="os-page-sub os-app-page-stacks os-protocol-terms">
           <ProtocolDraftGroup
             items={nonNegotiable}
             editingItemId={editingItemId}
@@ -450,6 +453,7 @@ export function ProtocolPage({
       <PageLayout
         className="os-protocol os-protocol-over"
         headerLeft={label}
+        placement="identity-stack"
         theme="orange"
         footer={
           <button className="os-protocol-begin" onClick={onEndRun} type="button">
@@ -458,7 +462,9 @@ export function ProtocolPage({
         }
       >
         <div className="os-page-main os-protocol-identity">
-          <p className="os-protocol-name">{run.name}</p>
+          <p className="os-app-page-heading os-protocol-name" data-os-app-heading>
+            {run.name}
+          </p>
           <p className="os-protocol-invite">
             {run.days} days finished. What you kept is in your record.
           </p>
@@ -487,6 +493,7 @@ export function ProtocolPage({
       <PageLayout
         className="os-protocol os-protocol-draft os-protocol-editing"
         headerLeft={<p className="os-card-label">Protocol</p>}
+        placement="identity-stack"
         headerRight={
           <span className="os-protocol-progress">
             Day {day} of {run.days}
@@ -506,7 +513,8 @@ export function ProtocolPage({
         <div className="os-page-main os-protocol-identity">
           <input
             aria-label="Protocol name"
-            className="os-protocol-name-edit"
+            className="os-app-page-heading os-protocol-name-edit"
+            data-os-app-heading
             maxLength={60}
             onChange={(event) => onRename(event.target.value)}
             placeholder="Monk Mode"
@@ -520,7 +528,7 @@ export function ProtocolPage({
           </p>
         </div>
 
-        <div className="os-page-sub os-protocol-terms">
+        <div className="os-page-sub os-app-page-stacks os-protocol-terms">
           <ProtocolDraftGroup
             items={nonNegotiable}
             editingItemId={editingItemId}
@@ -557,6 +565,7 @@ export function ProtocolPage({
     <PageLayout
       className={`os-protocol ${protocolBack.className}`.trim()}
       headerLeft={runningLabel}
+      placement="identity-stack"
       headerRight={
         <span className="os-protocol-progress">
           Day {day} of {run.days}
@@ -592,10 +601,12 @@ export function ProtocolPage({
         {rewarding ? "You did it" : ""}
       </span>
       <div className="os-page-main os-protocol-identity">
-        <p className="os-protocol-name">{run.name}</p>
+        <p className="os-app-page-heading os-protocol-name" data-os-app-heading>
+          {run.name}
+        </p>
       </div>
 
-      <div className="os-page-sub os-protocol-terms">
+      <div className="os-page-sub os-app-page-stacks os-protocol-terms">
         {nonNegotiable.length ? (
           <>
             <p className="os-record-label">Non-negotiable</p>

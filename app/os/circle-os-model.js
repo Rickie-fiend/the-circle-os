@@ -742,6 +742,7 @@ export function declareLife(
   let next = {
     ...state,
     declarations: {
+      ...(state.declarations || {}),
       records: {
         ...(state.declarations?.records || {}),
         [recordId]: record,
@@ -763,6 +764,7 @@ export function declareLife(
     next = {
       ...next,
       tasks: {
+        ...(next.tasks || {}),
         items: {
           ...items,
           [taskId]: {

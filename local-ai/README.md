@@ -23,7 +23,8 @@ is limited to clearly named facts such as a watched film or finished book.
 Deeper interpretation belongs to Athena's 06:15 preparation and must keep its
 source references.
 
-Codex analyzes only profiles marked `analysis_pending: true`. The nightly
+The profile server stores and syncs evidence. It does not analyze a person.
+Athena's current external scheduler owns the morning analysis, and the nightly
 instructions live in Obsidian at:
 
 `C:\Brain\10 Projects\The Circle\Circle OS\Nightly Profile Analysis.md`
@@ -36,4 +37,17 @@ Chapter sources and the authoring guide live in:
 
 `C:\Brain\10 Projects\The Circle\Circle OS\Chapters`
 
-Keep the computer and Codex app running for the nightly analysis.
+`GET /health` reports the server start time and the newest successful phone
+sync. The analysis must name that timestamp and stop when evidence freshness
+cannot be confirmed.
+
+Install the current-user boot entry with:
+
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File local-ai/install-local-ai-autostart.ps1`
+
+The installer first attempts an S4U boot task and falls back to the current-user
+Run key when Windows does not grant permission for a boot trigger. It starts the
+server invisibly, records lifecycle events in
+`%LOCALAPPDATA%\Circle OS\local-ai-startup.log`, records server output beside it
+in `local-ai-server.log`, and exits without creating a duplicate when port 4317
+is already healthy.
