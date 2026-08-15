@@ -29,3 +29,13 @@ test("a declaration versions only through its explicit Save action", () => {
   assert.match(mirror, /\[field\.key\]: nextValue/);
   assert.doesNotMatch(mirror, /\[field\.key\]: event\.currentTarget\.value/);
 });
+
+test("an empty declaration can retry an immutable completed setup chapter", () => {
+  assert.match(mirror, /attempt=\$\{Date\.now\(\)\}/);
+  assert.match(mirror, /if \(requestedSetupAttempt\) \{\s*return true;/);
+  assert.match(
+    mirror,
+    /`\$\{chapterRunId\(desiredDeclarationPublication\.chapter\)\}:setup:\$\{requestedSetupAttempt\}`/,
+  );
+  assert.match(mirror, /runId=\{declarationSetupRunId\}/);
+});

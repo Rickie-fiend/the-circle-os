@@ -134,6 +134,7 @@ export function PublishedChapterDelivery({
   hideIdleHeading = false,
   label,
   onCompleted,
+  runId,
 }: {
   publication: ChapterPublication;
   className: string;
@@ -141,13 +142,19 @@ export function PublishedChapterDelivery({
   hideIdleHeading?: boolean;
   label: string;
   onCompleted?: (state: CircleState, run: ChapterRun) => CircleState;
+  runId?: string;
 }) {
   const { state, updateState } = useCircleState();
   const chapter = publication.chapter;
-  const storedRun = state.chapters.runs[chapterRunId(chapter)];
+  const activeRunId = runId || chapterRunId(chapter);
+  const createActiveRun = () => ({
+    ...createChapterRun(chapter),
+    runId: activeRunId,
+  });
+  const storedRun = state.chapters.runs[activeRunId];
   const run = publicationIsNewerThanRun(publication, storedRun)
-    ? createChapterRun(chapter)
-    : storedRun || createChapterRun(chapter);
+    ? createActiveRun()
+    : storedRun || createActiveRun();
 
   function saveRun(nextRun: ChapterRun) {
     updateState((current) => {
@@ -186,7 +193,7 @@ export function PublishedChapterDelivery({
       className={className}
       definition={chapter}
       hideIdleHeading={hideIdleHeading}
-      key={chapterRunId(chapter)}
+      key={activeRunId}
       label={label}
       onBackAppShown={backApp ? dismiss : undefined}
       onRunChange={saveRun}

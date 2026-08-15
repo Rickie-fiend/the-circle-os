@@ -567,7 +567,9 @@ export default function CircleOSMirror() {
     mirrorLocationSearch,
     serverMirrorLocationSearch,
   );
-  const requested = new URLSearchParams(locationSearch).get("declare");
+  const declarationSearch = new URLSearchParams(locationSearch);
+  const requested = declarationSearch.get("declare");
+  const requestedAttempt = declarationSearch.get("attempt");
   const requestedDeclaration = DECLARATION_PAGES.some(
     (page) => page.kind === requested,
   )
@@ -580,6 +582,13 @@ export default function CircleOSMirror() {
     requestedDeclaration && !declarationVersions(state, requestedDeclaration).length
       ? requestedDeclaration
       : firstMissingDeclaration;
+  const requestedSetupAttempt =
+    requestedDeclaration &&
+    desiredDeclaration === requestedDeclaration &&
+    requestedAttempt &&
+    /^\d+$/.test(requestedAttempt)
+      ? requestedAttempt
+      : null;
   const desiredDeclarationPublication = desiredDeclaration
     ? publications
         .map(normalizeChapterPublication)
@@ -594,6 +603,9 @@ export default function CircleOSMirror() {
           ) {
             return false;
           }
+          if (requestedSetupAttempt) {
+            return true;
+          }
           const run = state.chapters.runs[chapterRunId(publication.chapter)];
           return (
             publicationIsNewerThanRun(publication, run) ||
@@ -601,6 +613,10 @@ export default function CircleOSMirror() {
           );
         }) || null
     : null;
+  const declarationSetupRunId =
+    desiredDeclarationPublication && requestedSetupAttempt
+      ? `${chapterRunId(desiredDeclarationPublication.chapter)}:setup:${requestedSetupAttempt}`
+      : undefined;
   const visionPublication = desiredDeclarationPublication || selectPendingAppPublication(
     publications,
     "vision",
@@ -1015,6 +1031,7 @@ export default function CircleOSMirror() {
               label="Vision chapter"
               onCompleted={completeDeclaration}
               publication={visionPublication}
+              runId={declarationSetupRunId}
             />
           ) : (
           <SwipeSession
@@ -1052,7 +1069,11 @@ export default function CircleOSMirror() {
                 kind={page.kind}
                 label={page.label}
                 onCommit={(content) => commitDeclaration(page.kind, content)}
-                onSetup={() => router.push(`/os/mirror?declare=${page.kind}`)}
+                onSetup={() =>
+                  router.push(
+                    `/os/mirror?declare=${page.kind}&attempt=${Date.now()}`,
+                  )
+                }
                 onToggleHistory={(event) =>
                   toggleDeclarationHistory(page.kind, event)
                 }

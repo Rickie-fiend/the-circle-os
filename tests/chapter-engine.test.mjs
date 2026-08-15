@@ -89,6 +89,34 @@ test("chapter progress is stored without replacing the rest of Circle state", ()
   assert.equal(next.outbox[0].reason, "chapter-progress");
 });
 
+test("a setup retry preserves the immutable completed chapter run", () => {
+  const canonicalRun = {
+    ...createChapterRun(logSetup),
+    status: "completed",
+    completedAt: "2026-08-14T12:00:00.000Z",
+  };
+  const retryRunId = `${chapterRunId(logSetup)}:setup:1755230400000`;
+  const retryRun = {
+    ...createChapterRun(logSetup),
+    runId: retryRunId,
+  };
+  const state = {
+    evidence: { localRevision: 1 },
+    profile: { profileCase: { status: "ready" } },
+    chapters: {
+      runs: { [canonicalRun.runId]: canonicalRun },
+      sessions: {},
+    },
+    outbox: [],
+  };
+
+  const next = storeChapterRun(state, retryRun, logSetup.session);
+
+  assert.equal(next.chapters.runs[canonicalRun.runId], canonicalRun);
+  assert.equal(next.chapters.runs[retryRunId], retryRun);
+  assert.equal(next.chapters.sessions.log.activeRunId, retryRunId);
+});
+
 test("chapter pages can repeat a person's saved answers", () => {
   const run = {
     ...createChapterRun(logSetup),
