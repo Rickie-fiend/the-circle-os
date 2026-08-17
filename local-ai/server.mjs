@@ -1072,11 +1072,29 @@ export function createCircleAiServer(options = {}) {
     writeAtomic(accessPath, `${JSON.stringify(access, null, 2)}\n`);
   }
 
-  function lastProfileSyncAt() {
-    return Object.values(access)
-      .map((entry) => entry?.lastSyncAt || "")
-      .filter(Boolean)
-      .sort((left, right) => String(right).localeCompare(String(left)))[0] || null;
+  function profileSyncFreshness(profileId) {
+    const entry = access[profileId];
+    if (!entry) return null;
+    const storedState = readProfileState(vaultPath, profileId);
+    if (!storedState) return null;
+    return {
+      profileId,
+      lastSuccessfulPhoneSyncAt: entry.lastSyncAt || null,
+      evidenceRevision: Number(
+        entry.lastEvidenceRevision ??
+          storedState?.evidence?.acknowledgedRevision ??
+          0,
+      ),
+    };
+  }
+
+  function recordProfileSync(profileId, evidenceRevision) {
+    access[profileId] = {
+      ...access[profileId],
+      lastSyncAt: now(),
+      lastEvidenceRevision: Number(evidenceRevision || 0),
+    };
+    saveAccess();
   }
 
   function migrateLegacy() {
@@ -1160,7 +1178,6 @@ export function createCircleAiServer(options = {}) {
             analysis: "external-scheduler",
             analysisOwner: "claude-scheduled-task",
             startedAt,
-            lastProfileSyncAt: lastProfileSyncAt(),
             storesData: true,
           },
           origin,
@@ -1204,9 +1221,7 @@ export function createCircleAiServer(options = {}) {
 
         const accessKey = randomKey(32);
         access[profileId].keyHash = hash(accessKey);
-        access[profileId].lastSyncAt = now();
         delete access[profileId].legacyProofHash;
-        saveAccess();
         const state = mergeClientState(
           readProfileState(vaultPath, profileId),
           phoneState,
@@ -1227,6 +1242,7 @@ export function createCircleAiServer(options = {}) {
           analysisPending: true,
         });
         writeIndex(vaultPath);
+        recordProfileSync(profileId, acknowledgedEvidenceRevision);
         json(
           response,
           201,
@@ -1305,6 +1321,19 @@ export function createCircleAiServer(options = {}) {
         const input = await readBody(request);
         const chapter = publishChapter(vaultPath, input.chapter, input.source);
         json(response, 201, { chapter }, origin);
+        return;
+      }
+
+      const freshnessMatch = request.url?.match(
+        /^\/profiles\/(p_[A-Za-z0-9_-]{16})\/freshness$/,
+      );
+      if (request.method === "GET" && freshnessMatch) {
+        const freshness = profileSyncFreshness(freshnessMatch[1]);
+        if (!freshness) {
+          json(response, 404, { error: "Profile not found." }, origin);
+          return;
+        }
+        json(response, 200, { ok: true, ...freshness }, origin);
         return;
       }
 
@@ -1427,9 +1456,8 @@ export function createCircleAiServer(options = {}) {
               readExistingMetadata(vaultPath, profileId).analysis_pending ===
                 "true",
           });
-          access[profileId].lastSyncAt = now();
-          saveAccess();
           writeIndex(vaultPath);
+          recordProfileSync(profileId, acknowledgedEvidenceRevision);
           json(response, 200, {
             state: publicState(saved),
             acknowledgedEvidenceRevision,

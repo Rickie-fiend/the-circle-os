@@ -390,6 +390,100 @@ test("Windows autostart is boot-capable, hidden, and duplicate-safe", () => {
   assert.match(starter, /already running/);
 });
 
+test("phone freshness is isolated per profile and survives a server restart", async () => {
+  const vaultPath = mkdtempSync(join(tmpdir(), "circle-os-freshness-vault-"));
+  const accessPath = join(
+    mkdtempSync(join(tmpdir(), "circle-os-freshness-access-")),
+    "access.json",
+  );
+
+  async function listen() {
+    const server = createCircleAiServer({ vaultPath, accessPath });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    return { server, baseUrl: `http://127.0.0.1:${address.port}` };
+  }
+
+  async function close(server) {
+    await new Promise((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+
+  const firstServer = await listen();
+  let first;
+  let second;
+  let firstFreshness;
+  let secondFreshness;
+  try {
+    const create = async (name) => {
+      const response = await fetch(`${firstServer.baseUrl}/profiles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state: firstVision(name) }),
+      });
+      assert.equal(response.status, 201);
+      return response.json();
+    };
+    first = await create("First profile");
+    second = await create("Second profile");
+    firstFreshness = await fetch(
+      `${firstServer.baseUrl}/profiles/${first.profileId}/freshness`,
+    ).then((response) => response.json());
+
+    const secondUpdate = answerSurveyQuestion(
+      second.state,
+      { id: "freshness-proof", text: "What arrived?" },
+      "Only the second profile changed.",
+      "thought",
+    );
+    const sync = await fetch(
+      `${firstServer.baseUrl}/profiles/${second.profileId}/sync`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${second.accessKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ state: secondUpdate }),
+      },
+    );
+    assert.equal(sync.status, 200);
+
+    const firstAfterSecondSync = await fetch(
+      `${firstServer.baseUrl}/profiles/${first.profileId}/freshness`,
+    ).then((response) => response.json());
+    secondFreshness = await fetch(
+      `${firstServer.baseUrl}/profiles/${second.profileId}/freshness`,
+    ).then((response) => response.json());
+    assert.deepEqual(firstAfterSecondSync, firstFreshness);
+    assert.equal(
+      secondFreshness.evidenceRevision,
+      secondUpdate.evidence.localRevision,
+    );
+    assert.notEqual(
+      secondFreshness.evidenceRevision,
+      firstFreshness.evidenceRevision,
+    );
+  } finally {
+    await close(firstServer.server);
+  }
+
+  const restarted = await listen();
+  try {
+    const firstAfterRestart = await fetch(
+      `${restarted.baseUrl}/profiles/${first.profileId}/freshness`,
+    ).then((response) => response.json());
+    const secondAfterRestart = await fetch(
+      `${restarted.baseUrl}/profiles/${second.profileId}/freshness`,
+    ).then((response) => response.json());
+    assert.deepEqual(firstAfterRestart, firstFreshness);
+    assert.deepEqual(secondAfterRestart, secondFreshness);
+  } finally {
+    await close(restarted.server);
+  }
+});
+
 test("public phones receive separate private Obsidian profiles", async () => {
   const vaultPath = mkdtempSync(join(tmpdir(), "circle-os-vault-"));
   const accessPath = join(
@@ -408,7 +502,7 @@ test("public phones receive separate private Obsidian profiles", async () => {
     assert.equal(initialHealth.analysis, "external-scheduler");
     assert.equal(initialHealth.analysisOwner, "claude-scheduled-task");
     assert.ok(initialHealth.startedAt);
-    assert.equal(initialHealth.lastProfileSyncAt, null);
+    assert.equal(Object.hasOwn(initialHealth, "lastProfileSyncAt"), false);
 
     const createResponse = await fetch(`${baseUrl}/profiles`, {
       method: "POST",
@@ -419,10 +513,17 @@ test("public phones receive separate private Obsidian profiles", async () => {
     const created = await createResponse.json();
     assert.match(created.profileId, /^p_/);
     assert.ok(created.accessKey.length > 30);
-    const syncedHealth = await fetch(`${baseUrl}/health`).then((response) =>
+    const profileFreshness = await fetch(
+      `${baseUrl}/profiles/${created.profileId}/freshness`,
+    ).then((response) =>
       response.json(),
     );
-    assert.ok(syncedHealth.lastProfileSyncAt);
+    assert.ok(profileFreshness.lastSuccessfulPhoneSyncAt);
+    assert.equal(profileFreshness.profileId, created.profileId);
+    assert.equal(
+      profileFreshness.evidenceRevision,
+      created.state.evidence.acknowledgedRevision,
+    );
 
     const denied = await fetch(`${baseUrl}/profiles/${created.profileId}`, {
       headers: { Authorization: "Bearer wrong" },

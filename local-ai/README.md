@@ -37,9 +37,13 @@ Chapter sources and the authoring guide live in:
 
 `C:\Brain\10 Projects\The Circle\Circle OS\Chapters`
 
-`GET /health` reports the server start time and the newest successful phone
-sync. The analysis must name that timestamp and stop when evidence freshness
-cannot be confirmed.
+`GET /health` reports whether the profile server is alive and when this process
+started. It does not claim that any person's evidence is fresh.
+
+`GET /profiles/{profileId}/freshness` reports that profile's last successful
+phone sync and acknowledged evidence revision. Athena must check the target
+profile's response and stop when that person's freshness cannot be confirmed.
+A sync from one profile never makes another profile look current.
 
 Install the current-user boot entry with:
 
