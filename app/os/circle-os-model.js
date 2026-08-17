@@ -194,6 +194,21 @@ function cleanHabitPart(value, maximum = 240) {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, maximum);
 }
 
+/**
+ * What a habit part is worth keeping as it is being typed.
+ *
+ * Storage must not trim. Normalising runs on every state update, so a trailing
+ * space was removed between the keystroke and the render, the controlled
+ * textarea read the trimmed value back, and no habit could contain a space at
+ * all. Newlines and tabs still collapse, because a habit is one line.
+ *
+ * `cleanHabitPart` still trims, and is still right for composing and for
+ * display, where the value has stopped changing.
+ */
+function keepHabitPart(value, maximum = 240) {
+  return String(value || "").replace(/[^\S ]+/g, " ").slice(0, maximum);
+}
+
 export function composeHabitText({ action = "", cue = "", identity = "" } = {}) {
   const cleanAction = cleanHabitPart(action);
   const cleanCue = cleanHabitPart(cue);
@@ -221,8 +236,8 @@ export function habitRowText(habit, completed) {
 function normalizeHabitDefinitions(definitions) {
   return Object.fromEntries(
     Object.entries(definitions || {}).map(([id, definition]) => {
-      const text = cleanHabitPart(definition?.text);
-      const action = cleanHabitPart(
+      const text = keepHabitPart(definition?.text);
+      const action = keepHabitPart(
         definition && Object.hasOwn(definition, "action")
           ? definition.action
           : text,
@@ -238,8 +253,8 @@ function normalizeHabitDefinitions(definitions) {
             identity: definition?.identity,
           }),
           action,
-          cue: cleanHabitPart(definition?.cue),
-          identity: cleanHabitPart(definition?.identity),
+          cue: keepHabitPart(definition?.cue),
+          identity: keepHabitPart(definition?.identity),
         },
       ];
     }),
