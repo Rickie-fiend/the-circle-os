@@ -127,6 +127,15 @@ import type {
   ChapterSubmission,
 } from "./chapters/chapter-types";
 
+/**
+ * How long a Line's last Page holds before it leaves.
+ *
+ * Matches the chapter payoff dwell. A Line is read, not answered, so the only
+ * way out is time; it is deliberately not swipeable forward and carries no
+ * button.
+ */
+const LINE_DWELL_MS = 6000;
+
 export function PublishedChapterDelivery({
   publication,
   className,
@@ -2085,13 +2094,31 @@ export function TodayExperience() {
     }, event.currentTarget);
   }
 
-  function closeNoteLine(event: ReactMouseEvent<HTMLButtonElement>) {
+  function closeNoteLine(source?: HTMLElement | null) {
     if (noteBack.flipping) return;
     noteBack.flip("note", () => {
       setRevealedLine(null);
       setRevealedLinePage(0);
-    }, event.currentTarget);
+    }, source);
   }
+
+  // A Line's last Page holds long enough to be read and then leaves by itself,
+  // the same way a chapter's payoff does. It cannot be swiped forward, so
+  // without this timer the only way back was a button that should not exist on
+  // a reading surface.
+  const closeLine = useRef(closeNoteLine);
+
+  useEffect(() => {
+    closeLine.current = closeNoteLine;
+  });
+
+  useEffect(() => {
+    if (!revealedLine) return;
+    const lastPage = revealedLine.kind === "quote" ? 0 : 1;
+    if (revealedLinePage !== lastPage) return;
+    const timer = window.setTimeout(() => closeLine.current(), LINE_DWELL_MS);
+    return () => window.clearTimeout(timer);
+  }, [revealedLine, revealedLinePage]);
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
@@ -2409,20 +2436,10 @@ export function TodayExperience() {
   function noteLineCards() {
     if (!revealedLine) return [];
     const kindLabel = revealedLine.kind.toUpperCase();
-    const lineHeader = (
-      <button
-        className="os-card-label os-note-mode-toggle"
-        type="button"
-        onClick={closeNoteLine}
-      >
-        Note
-      </button>
-    );
+    // The kind sits where an App Label sits, because on this side it is the
+    // label. There is no button back: a Line leaves on its own.
     const kind = (
-      <span
-        aria-label={`Line kind: ${kindLabel}`}
-        className="os-line-kind"
-      >
+      <span aria-label={`Line kind: ${kindLabel}`} className="os-line-kind">
         {kindLabel}
       </span>
     );
@@ -2434,8 +2451,7 @@ export function TodayExperience() {
             <span className="os-line-cue">Swipe to reveal</span>
           )
         }
-        headerLeft={lineHeader}
-        headerRight={kind}
+        headerLeft={kind}
         key={`${revealedLine.id}:setup`}
         theme="light"
       >
@@ -2454,8 +2470,7 @@ export function TodayExperience() {
       setup,
       <PageLayout
         className="os-line-page os-line-reveal-page"
-        headerLeft={lineHeader}
-        headerRight={kind}
+        headerLeft={kind}
         key={`${revealedLine.id}:reveal`}
         theme="light"
       >

@@ -72,11 +72,33 @@ test("a new-page reveal decorates but never blocks pointer or trackpad input", (
   }
 });
 
-test("Lines keep setup behind the reveal and never disappear on a timer", () => {
-  assert.doesNotMatch(shell, /LINE_COMPLETION_DWELL_MS/);
+test("a Line keeps its setup behind the reveal and leaves on its own", () => {
   assert.match(shell, /useAppBack<"note" \| "line">\("note"\)/);
   assert.match(shell, /revealedLine\?\.kind === "quote" \? \[0\] : \[0, 1\]/);
   assert.match(shell, /setRevealedLinePage\(nextIndex\)/);
   assert.doesNotMatch(shell, /Swipe to close/);
-  assert.match(css, /> \.os-line-page \{[\s\S]*?box-shadow: inset 0 0 0 2px var\(--c-charcoal\)/);
+
+  // The last Page cannot be swiped forward, so time is the only way out. Left
+  // without a timer a Line trapped the box and the only escape was a button
+  // that does not belong on a reading surface.
+  assert.match(shell, /const LINE_DWELL_MS = \d+/);
+  assert.match(shell, /closeLine\.current\(\), LINE_DWELL_MS/);
+});
+
+test("a Line carries no edge, only its kind at the top left", () => {
+  const rule =
+    css.match(/> \.os-line-page \{[\s\S]*?\n}/)?.[0] ?? "";
+  assert.doesNotMatch(rule, /box-shadow/);
+  assert.match(shell, /headerLeft=\{kind\}/);
+  assert.doesNotMatch(shell, /headerRight=\{kind\}/);
+});
+
+test("an empty Note shows its caption in full", () => {
+  // scrollHeight ignores a placeholder, so an explicit height measured from an
+  // empty value clipped every caption that wrapped.
+  assert.match(
+    readFileSync("app/os/text-area-size.ts", "utf8"),
+    /if \(!editor\.value\)[\s\S]*?removeProperty\("height"\)/,
+  );
+  assert.match(css, /os-inline-checkin-title::placeholder \{[\s\S]*?opacity: 1/);
 });

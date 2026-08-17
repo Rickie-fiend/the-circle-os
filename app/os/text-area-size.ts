@@ -1,6 +1,15 @@
 export function sizeTextAreaToContent(editor: HTMLTextAreaElement | null) {
   if (!editor) return;
 
+  // An empty editor measures one line, because scrollHeight ignores the
+  // placeholder. Setting that as an explicit height overrode the reserve and
+  // clipped every placeholder that wrapped, which is why a caption showed only
+  // its first line. With no value, let the stylesheet own the height.
+  if (!editor.value) {
+    editor.style.removeProperty("height");
+    return;
+  }
+
   const previousMinHeight = editor.style.minHeight;
   editor.style.minHeight = "0px";
   editor.style.height = "0px";

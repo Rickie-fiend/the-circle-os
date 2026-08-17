@@ -539,15 +539,8 @@
   max-width: 12ch;
 }
 
-/* A Line is Note's back. The neutral inset edge separates the arriving Page
-   without encoding its kind; the top-right word carries that meaning. */
-.circle-os
-  .os-swipe-session
-  > .os-app-window
-  > .os-app-page
-  > .os-line-page {
-  box-shadow: inset 0 0 0 2px var(--c-charcoal);
-}
+/* A Line is Note's back. It carries no edge: the word at the top left says
+   which kind it is, and an inset border read as a second card. */
 
 .circle-os .os-note-mode-toggle {
   appearance: none;
@@ -1759,6 +1752,13 @@
   display: grid;
   margin-top: 1rem;
   width: 100%;
+}
+
+/* With nothing written, the placeholder is the caption. It reads at full
+   strength rather than as a hint, because it is the only thing on the Page. */
+.circle-os .os-inline-checkin-title::placeholder {
+  color: var(--c-ink);
+  opacity: 1;
 }
 
 .circle-os .os-inline-checkin-title,
