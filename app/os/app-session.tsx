@@ -449,8 +449,6 @@ export function SwipeSession({
 
   function startSwipe(event: PointerEvent<HTMLDivElement>) {
     if (
-      attentionArmed ||
-      attentionShowing ||
       settling ||
       committing ||
       blocksSwipe(event.target)
@@ -603,8 +601,6 @@ export function SwipeSession({
     if (
       settling ||
       committing ||
-      attentionArmed ||
-      attentionShowing ||
       event.ctrlKey ||
       blocksSwipe(event.target) ||
       Math.abs(event.deltaX) <= Math.abs(event.deltaY)

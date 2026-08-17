@@ -56,6 +56,7 @@ import {
   setDayLogRange,
   toggleHabitForDay,
   updateHabitDefinition,
+  updateHabitDefinitionDraft,
   updateHabitDefinitionParts,
   updateRoutineIdentity,
   updateTask,
@@ -126,6 +127,8 @@ import type {
   ChapterRun,
   ChapterSubmission,
 } from "./chapters/chapter-types";
+
+const LINE_COMPLETION_DWELL_MS = 6000;
 
 export function PublishedChapterDelivery({
   publication,
@@ -1339,6 +1342,17 @@ export function TodayExperience() {
     [],
   );
 
+  useEffect(() => {
+    if (!revealedLine) return;
+    const terminalPage = revealedLine.kind === "quote" ? 0 : 1;
+    if (revealedLinePage !== terminalPage) return;
+    const timer = window.setTimeout(() => {
+      setRevealedLine(null);
+      setRevealedLinePage(0);
+    }, LINE_COMPLETION_DWELL_MS);
+    return () => window.clearTimeout(timer);
+  }, [revealedLine, revealedLinePage]);
+
   useEffect(
     () => () => {
       if (checkInRefreshTimer.current) {
@@ -1687,11 +1701,20 @@ export function TodayExperience() {
   }
 
   function changeHabit(id: string, text: string) {
-    updateState((current) => updateHabitDefinition(current, id, text));
+    updateState((current) =>
+      updateHabitDefinitionDraft(current, id, { action: text }),
+    );
   }
 
   function finishHabitEdit(id: string) {
-    updateState((current) => discardEmptyHabit(current, id));
+    updateState((current) => {
+      const habit = current.habits.definitions[id];
+      if (!habit) return current;
+      return discardEmptyHabit(
+        updateHabitDefinition(current, id, habit.action || ""),
+        id,
+      );
+    });
     setNewHabitId((current) => (current === id ? null : current));
   }
 
@@ -2577,29 +2600,22 @@ export function TodayExperience() {
           ) : revealedLine ? (
             <SwipeSession
               availableIndices={
-                revealedLine.kind === "quote" ? [0, 1] : [0, 1, 2]
+                revealedLine.kind === "quote" ? [0] : [0, 1]
               }
               className="os-checkin-session"
               index={revealedLinePage}
               label="A line"
-              maxIndex={revealedLine.kind === "quote" ? 1 : 2}
-              onIndexChange={(nextIndex) => {
-                if (revealedLine.kind !== "quote" && nextIndex === 1) {
-                  setRevealedLinePage(1);
-                  return;
-                }
-                setRevealedLine(null);
-                setRevealedLinePage(0);
-              }}
+              maxIndex={revealedLine.kind === "quote" ? 0 : 1}
+              onIndexChange={setRevealedLinePage}
             >
               <PageLayout
                 className="os-line-page"
                 theme="light"
                 variant="cover"
                 footer={
-                  <span className="os-line-cue">
-                    {revealedLine.kind === "quote" ? "Swipe to close" : "Swipe to reveal"}
-                  </span>
+                  revealedLine.kind === "quote" ? undefined : (
+                    <span className="os-line-cue">Swipe to reveal</span>
+                  )
                 }
               >
                 <div className="os-info-page-main">
@@ -2614,7 +2630,6 @@ export function TodayExperience() {
               {revealedLine.kind !== "quote" ? (
                 <PageLayout
                   className="os-line-page os-line-reveal-page"
-                  footer={<span className="os-line-cue">Swipe to close</span>}
                   theme="light"
                   variant="cover"
                 >
@@ -2623,7 +2638,6 @@ export function TodayExperience() {
                   </div>
                 </PageLayout>
               ) : null}
-              {checkInIdleCard()}
             </SwipeSession>
           ) : (
           <SwipeSession
@@ -2768,7 +2782,9 @@ export function TodayExperience() {
                     <div className="os-repeated-habits">
                       {habits.map((habit) => {
                         const completed = Boolean(habitCompletion(habit.id)?.completed);
-                        const action = habit.action || habit.text;
+                        const action = Object.hasOwn(habit, "action")
+                          ? habit.action
+                          : habit.text;
                         const identity = habit.identity.trim();
                         return (
                           <article

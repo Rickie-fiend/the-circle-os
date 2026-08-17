@@ -206,7 +206,9 @@ export function composeHabitText({ action = "", cue = "", identity = "" } = {}) 
 }
 
 export function habitActionText(habit) {
-  const action = cleanHabitPart(habit?.action || habit?.text);
+  const action = cleanHabitPart(
+    habit && Object.hasOwn(habit, "action") ? habit.action : habit?.text,
+  );
   const cue = cleanHabitPart(habit?.cue);
   return [action, cue].filter(Boolean).join(" ");
 }
@@ -1170,6 +1172,37 @@ export function updateRoutineIdentity(state, text) {
 
 export function updateHabitDefinition(state, id, text) {
   return updateHabitDefinitionParts(state, id, { action: text });
+}
+
+// A controlled editor must be allowed to hold the exact draft the person is
+// typing. In particular, a trailing space is still part of the edit: cleaning
+// it here makes React render the old value back into the textarea before the
+// next character arrives. The blur boundary below commits and cleans the draft.
+export function updateHabitDefinitionDraft(state, id, parts) {
+  const current = state.habits.definitions[id];
+  if (!current) return state;
+  return {
+    ...state,
+    habits: {
+      ...state.habits,
+      definitions: {
+        ...state.habits.definitions,
+        [id]: {
+          ...current,
+          action: Object.hasOwn(parts || {}, "action")
+            ? String(parts.action || "").slice(0, 240)
+            : current.action || current.text,
+          cue: Object.hasOwn(parts || {}, "cue")
+            ? String(parts.cue || "").slice(0, 240)
+            : current.cue,
+          identity: Object.hasOwn(parts || {}, "identity")
+            ? String(parts.identity || "").slice(0, 240)
+            : current.identity,
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    },
+  };
 }
 
 export function updateHabitDefinitionParts(state, id, parts) {

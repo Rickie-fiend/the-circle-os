@@ -9,6 +9,7 @@ import {
   normalizeState,
   toggleHabitForDay,
   updateHabitDefinition,
+  updateHabitDefinitionDraft,
   updateHabitDefinitionParts,
 } from "../app/os/circle-os-model.js";
 import { selectThoughtPrompt } from "../app/os/thought-prompt-model.js";
@@ -93,6 +94,26 @@ test("editing action preserves cue and identity, while identityFocus still perso
     selectThoughtPrompt(state, "2026-08-12", new Date(2026, 7, 12, hour)),
   );
   assert.ok(prompts.some((prompt) => prompt.includes("calm builder")));
+});
+
+test("habit typing keeps spaces verbatim until blur commits the value", () => {
+  const added = addHabitDefinition(createEmptyState(), "spaced");
+  const revision = added.state.evidence.localRevision;
+  let state = updateHabitDefinitionDraft(added.state, added.id, {
+    action: "a b c ",
+  });
+
+  assert.equal(state.habits.definitions.spaced.action, "a b c ");
+  assert.equal(state.evidence.localRevision, revision, "a draft is not synced mid-keystroke");
+
+  state = updateHabitDefinition(
+    state,
+    added.id,
+    state.habits.definitions.spaced.action,
+  );
+  assert.equal(state.habits.definitions.spaced.action, "a b c");
+  assert.equal(normalizeState(state).habits.definitions.spaced.action, "a b c");
+  assert.equal(state.evidence.localRevision, revision + 1);
 });
 
 test("the published habit completion is wired to all three stored fields", () => {
