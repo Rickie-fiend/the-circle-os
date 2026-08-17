@@ -42,14 +42,7 @@ const INPUT_TYPES = new Set([
   "time",
 ]);
 const COMPLETION_TYPES = new Set(["confirm", "result"]);
-
-// How long the last page of a chapter holds before it retires itself.
-//
-// It used to be 2400ms, which is long enough to see that a page arrived and not
-// long enough to read it. The page is usually the payoff, and a payoff that
-// leaves before it lands takes the whole chapter with it, because retiring is
-// what makes it unreachable afterwards.
-const COMPLETION_DWELL_MS = 6000;
+export const CHAPTER_TERMINAL_GUARD_MS = 1200;
 
 function displayValue(value: ChapterAnswerValue) {
   return Array.isArray(value) ? value.join(", ") : String(value);
@@ -112,6 +105,7 @@ function ChapterPageView({
   idleFooter,
   idlePlacement,
   hideIdleHeading,
+  completionReady = false,
   onEdit,
 }: {
   chapter: ChapterDefinition;
@@ -131,6 +125,7 @@ function ChapterPageView({
   idleFooter?: ReactNode;
   idlePlacement?: AppPagePlacement;
   hideIdleHeading?: boolean;
+  completionReady?: boolean;
   onEdit?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
   const required = Boolean(page.required);
@@ -233,8 +228,13 @@ function ChapterPageView({
     ) : (
       <h2>{title}</h2>
     );
-    const quietFooter =
-      !isIdle && page.type !== "info" && !isCompletionPage ? (
+    const quietFooter = isCompletionPage ? (
+      completionReady ? (
+        <span aria-live="polite" className="os-chapter-terminal-cue">
+          Swipe when ready
+        </span>
+      ) : undefined
+    ) : !isIdle && page.type !== "info" ? (
         <button
           className="os-chapter-continue os-page-primary-action"
           type="button"
@@ -498,13 +498,11 @@ export function ChapterPlayer({
   previewMode?: boolean;
   onEditPage?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
-  const completionMode = chapterCompletion(definition);
+  // Validation remains capability-driven even though every valid terminal Page
+  // now shares one protected-swipe interaction.
+  chapterCompletion(definition);
   const [showingBackApp, setShowingBackApp] = useState(startOnBackApp);
-  const [leavingCompletionKey, setLeavingCompletionKey] = useState("");
-  const runChangeRef = useRef(onRunChange);
-  useEffect(() => {
-    runChangeRef.current = onRunChange;
-  }, [onRunChange]);
+  const [readyCompletionKey, setReadyCompletionKey] = useState("");
   const currentIndex = Math.max(
     0,
     definition.pages.findIndex((page) => page.id === run.currentPageId),
@@ -548,17 +546,16 @@ export function ChapterPlayer({
   );
   const isCompletionPage = COMPLETION_TYPES.has(currentPage.type);
   const completionKey = `${run.runId}:${currentPage.id}:${run.updatedAt}`;
-  const completionLeaving = leavingCompletionKey === completionKey;
+  const completionReady = readyCompletionKey === completionKey;
   const canExitFinalCompletion = Boolean(
-    completionMode === "swipe" &&
     !previewMode &&
     run.status !== "completed" &&
-    isCompletionPage,
+    isCompletionPage &&
+    completionReady,
   );
 
   useEffect(() => {
     if (
-      completionMode !== "dwell" ||
       previewMode ||
       run.status === "completed" ||
       !isCompletionPage
@@ -566,35 +563,19 @@ export function ChapterPlayer({
       return;
     }
 
-    let finishTimer: number | null = null;
-    const pauseTimer = window.setTimeout(() => {
-      setLeavingCompletionKey(completionKey);
-      finishTimer = window.setTimeout(() => {
-        runChangeRef.current(
-          advanceChapterRun(definition, run, { page: currentPage }),
-        );
-      }, 900);
-    }, COMPLETION_DWELL_MS);
-
-    return () => {
-      window.clearTimeout(pauseTimer);
-      if (finishTimer) window.clearTimeout(finishTimer);
-    };
+    const guardTimer = window.setTimeout(() => {
+      setReadyCompletionKey(completionKey);
+    }, CHAPTER_TERMINAL_GUARD_MS);
+    return () => window.clearTimeout(guardTimer);
   }, [
-    currentPage,
     completionKey,
-    completionMode,
-    definition,
     isCompletionPage,
-    run,
     run.status,
     previewMode,
   ]);
 
   const sessionClassName =
-    `os-chapter-session theme-${definition.theme} ${className}${
-      completionLeaving ? " completion-exit" : ""
-    }`.trim();
+    `os-chapter-session theme-${definition.theme} ${className}`.trim();
 
   if (!previewMode && run.status === "completed" && idleApps.length) {
     const idlePage = definition.pages[idleIndex >= 0 ? idleIndex : currentIndex];
@@ -618,6 +599,7 @@ export function ChapterPlayer({
         idleFooter={idleFooter}
         idlePlacement={idlePlacement}
         hideIdleHeading={hideIdleHeading}
+        completionReady={false}
         onEdit={onEditPage}
       />,
     ];
@@ -685,6 +667,9 @@ export function ChapterPlayer({
         idleContent={idleContent}
         idleFooter={idleFooter}
         idlePlacement={idlePlacement}
+        completionReady={
+          page.id === currentPage.id && completionReady
+        }
         onEdit={onEditPage}
         onComplete={(submission) =>
           onRunChange(
@@ -694,7 +679,7 @@ export function ChapterPlayer({
         }
       />
       )),
-      ...(isCompletionPage
+      ...(isCompletionPage && completionReady
         ? [<Fragment key="idle-after">{backApp}</Fragment>]
         : []),
     ];
@@ -704,7 +689,7 @@ export function ChapterPlayer({
       ...availableIndices
         .filter((item) => item !== idleIndex)
         .map((item) => item + 1),
-      ...(isCompletionPage ? [completionIdleIndex] : []),
+      ...(isCompletionPage && completionReady ? [completionIdleIndex] : []),
     ];
     return (
       <SwipeSession
@@ -716,6 +701,9 @@ export function ChapterPlayer({
         label={label}
         onLongPress={onLongPress}
         maxIndex={stackedAvailableIndices.at(-1) ?? currentIndex + 1}
+        onForwardBoundary={
+          isCompletionPage && !completionReady ? () => undefined : undefined
+        }
         onIndexChange={(index) => {
           if (isCompletionPage && index === completionIdleIndex) {
             onRunChange(
@@ -757,7 +745,9 @@ export function ChapterPlayer({
               onRunChange(
                 advanceChapterRun(definition, run, { page: currentPage }),
               )
-          : undefined
+          : isCompletionPage && !completionReady
+            ? () => undefined
+            : undefined
       }
       onIndexChange={changeIndex}
     >
@@ -780,6 +770,9 @@ export function ChapterPlayer({
           idleFooter={idleFooter}
           idlePlacement={idlePlacement}
           hideIdleHeading={hideIdleHeading}
+          completionReady={
+            page.id === currentPage.id && completionReady
+          }
           onEdit={onEditPage}
           onComplete={(submission) =>
             onRunChange(

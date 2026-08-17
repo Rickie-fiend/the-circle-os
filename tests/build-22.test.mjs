@@ -72,13 +72,11 @@ test("a new-page reveal decorates but never blocks pointer or trackpad input", (
   }
 });
 
-test("Lines keep their previous Page, hold the payoff, and leave by dwell", () => {
-  assert.match(shell, /const LINE_COMPLETION_DWELL_MS = 6000/);
-  assert.match(shell, /const terminalPage = revealedLine\.kind === "quote" \? 0 : 1/);
-  assert.match(shell, /LINE_COMPLETION_DWELL_MS/);
-  assert.match(shell, /revealedLine\.kind === "quote" \? \[0\] : \[0, 1\]/);
-  assert.match(shell, /maxIndex=\{revealedLine\.kind === "quote" \? 0 : 1\}/);
-  assert.match(shell, /onIndexChange=\{setRevealedLinePage\}/);
+test("Lines keep setup behind the reveal and never disappear on a timer", () => {
+  assert.doesNotMatch(shell, /LINE_COMPLETION_DWELL_MS/);
+  assert.match(shell, /useAppBack<"note" \| "line">\("note"\)/);
+  assert.match(shell, /revealedLine\?\.kind === "quote" \? \[0\] : \[0, 1\]/);
+  assert.match(shell, /setRevealedLinePage\(nextIndex\)/);
   assert.doesNotMatch(shell, /Swipe to close/);
   assert.match(css, /> \.os-line-page \{[\s\S]*?box-shadow: inset 0 0 0 2px var\(--c-charcoal\)/);
 });

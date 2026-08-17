@@ -56,7 +56,6 @@ const CHAPTER_THEMES: { label: string; value: ChapterTheme; color: string }[] = 
 ];
 const BUTTON_STUDIO_STORAGE_KEY = "circle-os-button-studio-draft-v1";
 const APP_TARGETS: { label: string; value: AppTarget }[] = [
-  { label: "Note", value: "note" },
   { label: "Thoughts", value: "thoughts" },
   { label: "Habit", value: "habit" },
   { label: "Log", value: "log" },

@@ -37,6 +37,7 @@ import {
 } from "../app-session";
 import { sizeTextAreaToContent } from "../text-area-size";
 import { useAppBack } from "../app-back";
+import { useStableRouteAnchor } from "../stable-route-anchor";
 import {
   normalizeChapterPublication,
   publicationIsNewerThanRun,
@@ -552,11 +553,14 @@ export default function CircleOSMirror() {
   const [suggestionDraft, setSuggestionDraft] = useState("");
   const [suggestionSaved, setSuggestionSaved] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const visionSessionRef = useRef<HTMLElement>(null);
+  const athenaSessionRef = useRef<HTMLElement>(null);
   const [draft, setDraft] = useState({
     name: "",
     age: "",
   });
   const lifeBack = useAppBack<"current" | "history">("current");
+  useStableRouteAnchor(visionSessionRef, athenaSessionRef);
   const [declarationHistoryIndex, setDeclarationHistoryIndex] = useState(0);
   const summary = summarizeWeek(state);
   const weekClaims = buildWeekClaims(state);
@@ -1024,7 +1028,11 @@ export default function CircleOSMirror() {
           </div>
         </header>
 
-        <section className="vision-profile-case" aria-label="The life you want">
+        <section
+          className="vision-profile-case"
+          aria-label="The life you want"
+          ref={visionSessionRef}
+        >
           {visionPublication ? (
             <PublishedChapterDelivery
               className="vision-life-apps"
@@ -1163,6 +1171,7 @@ export default function CircleOSMirror() {
         <section
           className="vision-between-session"
           aria-label="The space between"
+          ref={athenaSessionRef}
         >
           {athenaPublication ? (
             <PublishedChapterDelivery

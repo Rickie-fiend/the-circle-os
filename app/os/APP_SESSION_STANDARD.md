@@ -109,17 +109,14 @@ Used for questions, teaching, setup, and habit creation.
 - Answered pages remain available while the chapter is an open draft.
 - Before confirmation, the person may move backward and edit any answer.
 - The last question leads to a separate completion page.
-- A completion followed by an Idle Page leaves by a quiet timed fade, whatever
-  the chapter's Session is. This ending is the declared `dwell` capability.
-  It cannot be swiped forward: the last page is usually the payoff, and a
-  forward swipe there skipped it and retired the chapter in one gesture, which
-  is what put a joke out of reach before it was read. Backward stays open, so
-  the setup can be read again while the page is up.
-- The last page holds long enough to be read, not merely seen.
-- A chapter whose Result or Confirm is the final Page declares `swipe`; a
-  deliberate forward swipe completes it. Page anatomy supplies these defaults
-  for immutable chapters, while an unknown or conflicting ending fails the
-  build. Session names never choose the ending.
+- Every Result or Confirm Page has the same terminal interaction. For its first
+  1.2 seconds, forward travel is closed and backward travel stays open. Then a
+  quiet `Swipe when ready` cue appears and one deliberate forward swipe either
+  reaches the chapter's Idle Page or gives the App back. It never fades itself.
+- The old `dwell` and `swipe` declarations still validate the immutable Page
+  anatomy and destination of published chapters; they no longer produce two
+  different gestures. An unknown or conflicting ending still fails the build,
+  and Session names never choose the ending.
 - Page numbers appear only when there is more than one page to count. A chapter
   with one question showed "1/1", which is not progress.
 - After completion, the draft pages retire and only the useful idle app
@@ -158,13 +155,19 @@ Used for charts, weekly views, and other things worth reading again.
 - Content that gives is unrationed. Content that asks stays rationed. Being
   asked constantly is what stops a person answering honestly, and honest
   answers are the whole input to Athena; a quote costs nothing to see.
-- The Note label therefore always has an answer: a Chapter when the hour allows
-  one, a Line when it does not.
-- A Line takes the App Box the way a Chapter does and leaves the same way, on
-  one swipe forward. It records only that it was read, so the pool rotates.
+- The Note label flips the same App Box to its Line back. It never summons a
+  Chapter. Chapters arrive on their own in Thoughts and return to Thoughts when
+  completed or dismissed.
+- A quote is one Line Page. A fact or joke keeps setup and reveal as two
+  adjacent Pages. Those Pages may rotate through the shared idle dwell, and the
+  Line stays until the person presses Note to return.
+- The neutral inset edge says that the arriving Page is not the person's Note.
+  The top-right `FACT`, `JOKE`, or `QUOTE` label says what kind it is; colour
+  does not encode kind.
 - Lines are white. The App Box paints Bone and owns that surface; the Page
   declares no colour of its own.
-- Two-beat jokes stay Chapters. A punchline needs its own Page.
+- Facts and jokes keep their reveal shape. Jokes are exactly setup and
+  punchline; a Line with a third clause is removed rather than padded out.
 
 ## Editions
 
@@ -193,6 +196,9 @@ Used for charts, weekly views, and other things worth reading again.
   the next thing that happens is writing.
 - Clear is only present while writing. It never appears on a Note at rest,
   where the only thing to press would be a way to lose what is there.
+- An empty Note shows one short phrase from the separate Note placeholder pool.
+  Clear advances to a different phrase. Placeholder words never become saved
+  evidence and never use Line runs, cooldowns, or completion.
 
 ## Protocol
 
@@ -319,9 +325,10 @@ Used for charts, weekly views, and other things worth reading again.
 
 - Journey progress is stored by chapter id and immutable version.
 - Library position is stored by session id and data version.
-- Note opens on its idle Note Page. No built-in chapter replaces it. The newest
-  unfinished private publication assigned to Note enters only when the person
-  taps the Note mode label. Dismissing means not now; it never deletes delivery.
+- Note opens on its editable front and its label flips to a Line. New chapters
+  target Thoughts and arrive there on their own. Legacy immutable publications
+  already assigned to Note remain readable, but authoring and compilation no
+  longer create new Note deliveries.
 - A private published chapter is immutable by id and version in this browser
   and remains available offline. A public published chapter is written as an
   immutable Markdown source through the connected Circle OS server, then
@@ -331,11 +338,10 @@ Used for charts, weekly views, and other things worth reading again.
   chapter elsewhere creates another immutable publication version.
 - Admin publications default to manual delivery. Athena publications default to
   on-view delivery. Public publication always needs explicit approval.
-- A pending publication renders directly inside its assigned App Box. Note is
-  the only recallable destination in this testing release: its mode label can
-  reopen the newest unfinished or dismissed Note journey.
-- Thoughts, Habit, Log, Vision, Seven Days, and Athena publications are
-  one-time journeys. Completion retires them and restores the normal App.
+- A pending Thoughts publication visits the whole App Box rather than becoming
+  a Thoughts or Deep Thoughts face. Completion or dismissal restores the
+  Thoughts front. Habit, Log, Vision, Seven Days, and Athena publications are
+  likewise one-time journeys that retire back to their normal App.
   Dismissal, when that App offers it, also retires the delivery rather than
   adding it to a recall queue.
 - Closing a kept Protocol day writes a dated seal but never locks its ticks. A
@@ -348,16 +354,17 @@ Used for charts, weekly views, and other things worth reading again.
 - Leaving is one flat content-layer fade. The App Box background stays stable.
 - New or refreshed content enters Body first, Header second, Footer last.
 - Ordinary swipes remain quick and never replay the refresh sequence.
-- Completion leaves with a flat fade; its idle App Page enters Body, Header,
-  Footer. Reduced-motion mode renders all groups immediately.
+- A terminal Page never fades itself. After its protected pause, the person's
+  deliberate swipe uses ordinary Page travel. Reduced-motion removes the cue's
+  small arrival animation but not the 1.2-second accidental-swipe guard.
 
 ## App back
 
 - An optional App back is a side change inside the same stable App Box. Its
   front is what is needed today; its back is what the App holds.
-- Thoughts / Deep Thoughts, Routine / Record and Protocol / Phases use the same
-  controller and timings: 260ms to leave, a 500ms calm arrival and 840ms for the
-  complete handoff.
+- Note / Line, Thoughts / Deep Thoughts, Routine / Record and Protocol / Phases
+  use the same controller and timings: 260ms to leave, a 500ms calm arrival and
+  840ms for the complete handoff.
 - The controller holds the old measured height through the leave, then eases
   the frame to the fully measured incoming Page over 440ms while that Page
   arrives. Copy and geometry settle together instead of flashing first and

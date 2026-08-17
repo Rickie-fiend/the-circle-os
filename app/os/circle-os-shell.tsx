@@ -79,6 +79,8 @@ import { sizeTextAreaToContent } from "./text-area-size";
 import { useAppBack } from "./app-back";
 import linePool from "./lines/lines.json";
 import { selectLine } from "./lines/line-pool.js";
+import notePlaceholderPool from "./note-placeholders/note-placeholders.json";
+import { nextNotePlaceholder } from "./note-placeholders/note-placeholder-pool.js";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import {
   revealButtonStyle,
@@ -115,10 +117,7 @@ import {
 } from "./chapters/chapter-publication-store";
 import {
   chapterFacts,
-  countChaptersStartedInHour,
   countChaptersStartedOn,
-  HOURLY_CHAPTER_BUDGET,
-  millisecondsUntilNextHour,
   selectScheduledChapter,
 } from "./chapters/chapter-scheduler.js";
 import { useChapterPublications } from "./chapters/use-chapter-publications";
@@ -128,14 +127,14 @@ import type {
   ChapterSubmission,
 } from "./chapters/chapter-types";
 
-const LINE_COMPLETION_DWELL_MS = 6000;
-
 export function PublishedChapterDelivery({
   publication,
   className,
   backApp,
   hideIdleHeading = false,
   label,
+  onDismissed,
+  onCompletedReturn,
   onCompleted,
   runId,
 }: {
@@ -144,6 +143,8 @@ export function PublishedChapterDelivery({
   backApp?: ReactNode;
   hideIdleHeading?: boolean;
   label: string;
+  onDismissed?: () => void;
+  onCompletedReturn?: () => void;
   onCompleted?: (state: CircleState, run: ChapterRun) => CircleState;
   runId?: string;
 }) {
@@ -160,6 +161,9 @@ export function PublishedChapterDelivery({
     : storedRun || createActiveRun();
 
   function saveRun(nextRun: ChapterRun) {
+    if (nextRun.status === "completed" && run.status !== "completed") {
+      onCompletedReturn?.();
+    }
     updateState((current) => {
       const previous = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(current, nextRun, chapter.session);
@@ -173,6 +177,7 @@ export function PublishedChapterDelivery({
   }
 
   function dismiss() {
+    onDismissed?.();
     const timestamp = new Date().toISOString();
     updateState((current) =>
       storeChapterRun(
@@ -243,6 +248,7 @@ function InlineCheckInEditor({
   note,
   onCommit,
   onEditingChange,
+  placeholder,
   title,
 }: {
   /** Increments when the Page's Clear action is pressed. */
@@ -250,6 +256,7 @@ function InlineCheckInEditor({
   note: string;
   onCommit: (title: string, note: string) => void;
   onEditingChange?: (editing: boolean) => void;
+  placeholder: string;
   title: string;
 }) {
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
@@ -267,13 +274,12 @@ function InlineCheckInEditor({
   }, [note, title]);
 
   // Clear empties both bodies and leaves the caret in the main one, so the next
-  // thing that happens is writing. It commits empty rather than the "Keep
-  // going." default, because the point is a blank page to write on.
+  // thing that happens is writing. The rotating words stay a placeholder; they
+  // are never committed as if the person wrote them.
   //
   // It also stays in editing. On a phone the press blurs the note, and that
   // blur is the tail of the clear rather than a separate edit: left alone it
-  // committed an empty title, the parent turned that back into "Keep going.",
-  // and the words the person just cleared reappeared.
+  // could otherwise race the explicit empty commit.
   useLayoutEffect(() => {
     if (clearSignal === lastClearSignal.current) return;
     lastClearSignal.current = clearSignal;
@@ -298,14 +304,14 @@ function InlineCheckInEditor({
 
   function commit() {
     // The blur that a press on Clear causes belongs to the clear. Writing here
-    // would put the default title back over the blank page it just made.
+    // would race the blank value it just committed.
     if (Date.now() - clearedAt.current < 600) {
       titleRef.current?.focus();
       return;
     }
     editingRef.current = false;
     onEditingChange?.(false);
-    const nextTitle = titleDraft.trim() || "Keep going.";
+    const nextTitle = titleDraft.trim();
     const nextNote = noteDraft.trim();
     setTitleDraft(nextTitle);
     setNoteDraft(nextNote);
@@ -321,7 +327,7 @@ function InlineCheckInEditor({
           onBlur={commit}
           onChange={(event) => setTitleDraft(event.currentTarget.value)}
           onFocus={beginEditing}
-          placeholder="Keep going."
+          placeholder={placeholder}
           ref={titleRef}
           rows={1}
           value={titleDraft}
@@ -1199,12 +1205,20 @@ export function TodayExperience() {
   const sleepHour =
     sleepClockHour <= wakeHour ? sleepClockHour + 24 : sleepClockHour;
   const checkInIdleTitle =
-    surveyAnswer(surveyAnswers, "checkin-idle-title") || "Keep going.";
+    surveyAnswer(surveyAnswers, "checkin-idle-title");
   const checkInNote = surveyAnswer(surveyAnswers, "checkin-note");
   // Clear is a Page action, so it lives in the Header and only while writing.
   const [noteEditing, setNoteEditing] = useState(false);
   const [noteClearSignal, setNoteClearSignal] = useState(0);
   const noteClearedAt = useRef(0);
+  const firstNotePlaceholder = nextNotePlaceholder(notePlaceholderPool);
+  const [notePlaceholderId, setNotePlaceholderId] = useState(
+    firstNotePlaceholder?.id || "",
+  );
+  const notePlaceholder =
+    notePlaceholderPool.placeholders.find(
+      (placeholder) => placeholder.id === notePlaceholderId,
+    )?.text || firstNotePlaceholder?.text || "";
 
   // Pointerdown clears and click is the keyboard path, so one press can call
   // this twice. The second call inside the same press is the same press.
@@ -1212,6 +1226,9 @@ export function TodayExperience() {
     const now = Date.now();
     if (now - noteClearedAt.current < 500) return;
     noteClearedAt.current = now;
+    setNotePlaceholderId((currentId) =>
+      nextNotePlaceholder(notePlaceholderPool, currentId)?.id || currentId,
+    );
     setNoteClearSignal((signal) => signal + 1);
   }
   const [dateLabel, setDateLabel] = useState("");
@@ -1226,7 +1243,8 @@ export function TodayExperience() {
       .map(normalizeChapterPublication)
       .filter(
         (publication) =>
-          publication.targetApp === "note" &&
+          (publication.targetApp === "note" ||
+            publication.targetApp === "thoughts") &&
           (publication.visibility === "public" ||
             publication.audienceProfileId === profileId ||
             publication.audienceProfileId === "local"),
@@ -1234,7 +1252,6 @@ export function TodayExperience() {
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
     return latestPublishedChapters(eligiblePublications);
   }, [publications, state.ai.profileId]);
-  const [forcedProfileSparkId, setForcedProfileSparkId] = useState("");
   const schedulerFacts = useMemo(() => chapterFacts(state), [state]);
   // A republished chapter is offered again, so its finished run must not block
   // it. Dropping the run here keeps that behaviour without teaching the
@@ -1250,26 +1267,19 @@ export function TodayExperience() {
   const scheduledSpark = useMemo(
     () =>
       selectScheduledChapter(profileSparkChapters, scheduledRuns, {
-        app: "note",
         facts: schedulerFacts,
       }),
     [profileSparkChapters, schedulerFacts, scheduledRuns],
   );
-  const [manualProfileSparkRunId, setManualProfileSparkRunId] = useState("");
-  const [checkInAttention, setCheckInAttention] = useState(0);
-  const [checkInRefreshing, setCheckInRefreshing] = useState(false);
   const [checkInIdleEntering, setCheckInIdleEntering] = useState(false);
-  // What the Note Page says when its label found nothing to open.
-  const [noteDeckNote, setNoteDeckNote] = useState("");
-  const noteDeckNoteTimer = useRef<number | null>(null);
-  // The line currently taking the box, if the label had no chapter to give.
+  // The Line currently shown as Note's back.
   const [revealedLine, setRevealedLine] = useState<
     { id: string; kind: string; text: string; sub: string } | null
   >(null);
   const [revealedLinePage, setRevealedLinePage] = useState(0);
-  const checkInRefreshTimer = useRef<number | null>(null);
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
+  const noteBack = useAppBack<"note" | "line">("note");
   const thoughtBack = useAppBack<"regular" | "deep">("regular");
   const thoughtMode = thoughtBack.side;
   const [regularThoughtDraft, setRegularThoughtDraft] = useState("");
@@ -1342,27 +1352,10 @@ export function TodayExperience() {
     [],
   );
 
-  useEffect(() => {
-    if (!revealedLine) return;
-    const terminalPage = revealedLine.kind === "quote" ? 0 : 1;
-    if (revealedLinePage !== terminalPage) return;
-    const timer = window.setTimeout(() => {
-      setRevealedLine(null);
-      setRevealedLinePage(0);
-    }, LINE_COMPLETION_DWELL_MS);
-    return () => window.clearTimeout(timer);
-  }, [revealedLine, revealedLinePage]);
-
   useEffect(
     () => () => {
-      if (checkInRefreshTimer.current) {
-        window.clearTimeout(checkInRefreshTimer.current);
-      }
       if (checkInIdleTimer.current) {
         window.clearTimeout(checkInIdleTimer.current);
-      }
-      if (noteDeckNoteTimer.current) {
-        window.clearTimeout(noteDeckNoteTimer.current);
       }
       if (thoughtResetTimer.current) {
         window.clearTimeout(thoughtResetTimer.current);
@@ -1466,37 +1459,21 @@ export function TodayExperience() {
         .total)
       ? scheduledSpark
       : null;
-  const profileSparkChapter =
-    profileSparkChapters.find(
-      (chapter) => chapter.id === forcedProfileSparkId,
-    ) ||
-    arrivingSpark ||
-    null;
+  const profileSparkChapter = arrivingSpark || null;
   const profileSparkPublication = useMemo(() => {
     if (!profileSparkChapter) return null;
     return publications
       .map(normalizeChapterPublication)
       .filter(
         (publication) =>
-          publication.targetApp === "note" &&
+          (publication.targetApp === "note" ||
+            publication.targetApp === "thoughts") &&
           chapterRunId(publication.chapter) === chapterRunId(profileSparkChapter),
       )
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0] || null;
   }, [profileSparkChapter, publications]);
   const profileSparkRun = useMemo(() => {
     if (!profileSparkChapter) return null;
-    if (
-      manualProfileSparkRunId.startsWith(
-        `${chapterRunId(profileSparkChapter)}:manual:`,
-      )
-    ) {
-      return (
-        state.chapters.runs[manualProfileSparkRunId] || {
-          ...createChapterRun(profileSparkChapter),
-          runId: manualProfileSparkRunId,
-        }
-      );
-    }
     const storedRun = state.chapters.runs[chapterRunId(profileSparkChapter)];
     if (
       profileSparkPublication &&
@@ -1509,7 +1486,6 @@ export function TodayExperience() {
       createChapterRun(profileSparkChapter)
     );
   }, [
-    manualProfileSparkRunId,
     profileSparkChapter,
     profileSparkPublication,
     state.chapters.runs,
@@ -2033,6 +2009,7 @@ export function TodayExperience() {
     const completedNow =
       nextRun.status === "completed" && profileSparkRun?.status !== "completed";
     if (completedNow) {
+      setCheckInApp(checkInThoughtsApp);
       setCheckInIdleEntering(true);
       if (checkInIdleTimer.current) window.clearTimeout(checkInIdleTimer.current);
       checkInIdleTimer.current = window.setTimeout(() => {
@@ -2052,6 +2029,12 @@ export function TodayExperience() {
         previousRun?.status !== "completed"
       ) {
         next = queueProfileUpdate(next, "survey-answer");
+        next = setAppSessionIndex(
+          next,
+          "today-checkin",
+          checkInJourneyVersion,
+          checkInThoughtsApp,
+        );
       }
       return next;
     });
@@ -2059,112 +2042,55 @@ export function TodayExperience() {
 
   function deferProfileSparkRun() {
     if (!profileSparkRun) return;
+    setCheckInApp(checkInThoughtsApp);
     updateState((current) =>
-      storeChapterRun(
-        current,
-        {
-          ...profileSparkRun,
-          deferCount: (profileSparkRun.deferCount || 0) + 1,
-          deferredAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        "check-in",
-      ),
-    );
-  }
-
-  function refreshProfileSpark() {
-    const refreshedAt = new Date().toISOString();
-    if (profileSparkRun?.status === "in-progress") {
-      updateState((current) =>
+      setAppSessionIndex(
         storeChapterRun(
           current,
           {
             ...profileSparkRun,
             deferCount: (profileSparkRun.deferCount || 0) + 1,
-            deferredAt: refreshedAt,
-            updatedAt: refreshedAt,
+            deferredAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           },
           "check-in",
         ),
-      );
-    }
-    const chapter = scheduledSpark;
-    if (!chapter) return false;
-    const selectedRun = state.chapters.runs[chapterRunId(chapter)];
-    if (selectedRun?.deferredAt) {
-      updateState((current) =>
-        storeChapterRun(
-          current,
-          {
-            ...selectedRun,
-            deferredAt: null,
-            updatedAt: refreshedAt,
-          },
-          "check-in",
-        ),
-      );
-    }
-    setManualProfileSparkRunId("");
-    setForcedProfileSparkId(chapter.id);
-    setCheckInAttention((current) => current + 1);
-    return true;
-  }
-
-  function revealProfileSpark() {
-    if (checkInRefreshing) return;
-    setCheckInRefreshing(true);
-    setNoteDeckNote("");
-    setRevealedLine(null);
-    setRevealedLinePage(0);
-    checkInRefreshTimer.current = window.setTimeout(() => {
-      const loaded = refreshProfileSpark();
-      setCheckInRefreshing(false);
-      if (!loaded) {
-        const line = selectLine(linePool, state.seenLines);
-        if (line) {
-          setRevealedLine(line);
-          setRevealedLinePage(0);
-          updateState((current) => markLineSeen(current, line.id));
-        } else {
-          // Only reachable with an empty pool, which would be a build fault
-          // rather than a decision, so it says the plainer thing.
-          setNoteDeckNote(emptyNoteDeckReason());
-          if (noteDeckNoteTimer.current) window.clearTimeout(noteDeckNoteTimer.current);
-          noteDeckNoteTimer.current = window.setTimeout(() => {
-            setNoteDeckNote("");
-            noteDeckNoteTimer.current = null;
-          }, 5000);
-        }
-        setCheckInIdleEntering(true);
-        if (checkInIdleTimer.current) window.clearTimeout(checkInIdleTimer.current);
-        checkInIdleTimer.current = window.setTimeout(() => {
-          setCheckInIdleEntering(false);
-          checkInIdleTimer.current = null;
-        }, 1100);
-      }
-      checkInRefreshTimer.current = null;
-    }, 900);
-  }
-
-/**
-   * Why the Note label found nothing.
-   *
-   * Having spent the hour is the ordinary answer and should read as one, with
-   * the wait named in minutes so coming back is a real instruction rather than
-   * a shrug. Anything else means the deck itself is empty, which is a different
-   * thing and worth saying differently.
-   */
-  function emptyNoteDeckReason() {
-    const spent = countChaptersStartedInHour(
-      profileSparkChapters,
-      state.chapters.runs,
+        "today-checkin",
+        checkInJourneyVersion,
+        checkInThoughtsApp,
+      ),
     );
-    if (spent.hour >= HOURLY_CHAPTER_BUDGET) {
-      const minutes = Math.max(1, Math.round(millisecondsUntilNextHour() / 60_000));
-      return `That is three this hour. More in ${minutes} min.`;
-    }
-    return "Nothing new right now. Check back in a bit.";
+  }
+
+  function returnToThoughtsAfterChapter() {
+    setCheckInApp(checkInThoughtsApp);
+    updateState((current) =>
+      setAppSessionIndex(
+        current,
+        "today-checkin",
+        checkInJourneyVersion,
+        checkInThoughtsApp,
+      ),
+    );
+  }
+
+  function openNoteLine(event: ReactMouseEvent<HTMLButtonElement>) {
+    if (noteBack.flipping) return;
+    const line = selectLine(linePool, state.seenLines);
+    if (!line) return;
+    noteBack.flip("line", () => {
+      setRevealedLine(line);
+      setRevealedLinePage(0);
+      updateState((current) => markLineSeen(current, line.id));
+    }, event.currentTarget);
+  }
+
+  function closeNoteLine(event: ReactMouseEvent<HTMLButtonElement>) {
+    if (noteBack.flipping) return;
+    noteBack.flip("note", () => {
+      setRevealedLine(null);
+      setRevealedLinePage(0);
+    }, event.currentTarget);
   }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
@@ -2436,10 +2362,10 @@ export function TodayExperience() {
         className="os-note-page os-survey-card os-survey-complete"
         header={
           <button
-            aria-label="Load a private Note chapter"
+            aria-label="Show a Line"
             className="os-card-label os-checkin-refresh-label"
             type="button"
-            onClick={revealProfileSpark}
+            onClick={openNoteLine}
           >
             Note
           </button>
@@ -2467,23 +2393,77 @@ export function TodayExperience() {
             </button>
           ) : undefined
         }
-        footer={
-          noteDeckNote ? (
-            <p aria-live="polite" className="os-note-deck-note" role="status">
-              {noteDeckNote}
-            </p>
-          ) : undefined
-        }
       >
         <InlineCheckInEditor
           clearSignal={noteClearSignal}
           note={checkInNote}
           onCommit={commitCheckInNote}
           onEditingChange={setNoteEditing}
+          placeholder={notePlaceholder}
           title={checkInIdleTitle}
         />
       </InfoPage>
     );
+  }
+
+  function noteLineCards() {
+    if (!revealedLine) return [];
+    const kindLabel = revealedLine.kind.toUpperCase();
+    const lineHeader = (
+      <button
+        className="os-card-label os-note-mode-toggle"
+        type="button"
+        onClick={closeNoteLine}
+      >
+        Note
+      </button>
+    );
+    const kind = (
+      <span
+        aria-label={`Line kind: ${kindLabel}`}
+        className="os-line-kind"
+      >
+        {kindLabel}
+      </span>
+    );
+    const setup = (
+      <PageLayout
+        className="os-line-page"
+        footer={
+          revealedLine.kind === "quote" ? undefined : (
+            <span className="os-line-cue">Swipe to reveal</span>
+          )
+        }
+        headerLeft={lineHeader}
+        headerRight={kind}
+        key={`${revealedLine.id}:setup`}
+        theme="light"
+      >
+        <div className="os-page-main">
+          <h2>{revealedLine.text}</h2>
+        </div>
+        {revealedLine.kind === "quote" && revealedLine.sub ? (
+          <div className="os-page-sub">
+            <p className="os-line-sub">{revealedLine.sub}</p>
+          </div>
+        ) : null}
+      </PageLayout>
+    );
+    if (revealedLine.kind === "quote") return [setup];
+    return [
+      setup,
+      <PageLayout
+        className="os-line-page os-line-reveal-page"
+        headerLeft={lineHeader}
+        headerRight={kind}
+        key={`${revealedLine.id}:reveal`}
+        theme="light"
+      >
+        <div className="os-page-main">
+          <h2>{revealedLine.sub}</h2>
+        </div>
+      </PageLayout>,
+    ];
   }
 
   function checkInThoughtsCard() {
@@ -2564,6 +2544,19 @@ export function TodayExperience() {
     );
   }
 
+  const noteLineActive = noteBack.side === "line" && Boolean(revealedLine);
+  const checkInCards = noteLineActive
+    ? noteLineCards()
+    : [checkInIdleCard(), checkInThoughtsCard()];
+  const checkInIndex = noteLineActive
+    ? revealedLinePage
+    : visibleCheckInApp;
+  const checkInAvailableIndices = noteLineActive
+    ? revealedLine?.kind === "quote" ? [0] : [0, 1]
+    : thoughtSent
+      ? [checkInThoughtsApp]
+      : [checkInIdleApp, checkInThoughtsApp];
+
   return (
       <main className="os-today">
         <section className="os-checkin" aria-label="Check-in questions">
@@ -2580,13 +2573,13 @@ export function TodayExperience() {
           profileSparkRun.status !== "completed" &&
           !profileSparkRun.deferredAt ? (
             <ChapterPlayer
-              attentionKey={`check-in:${profileSparkChapter.id}:${profileSparkChapter.version}:${checkInAttention}`}
+              attentionKey={`check-in:${profileSparkChapter.id}:${profileSparkChapter.version}`}
               className="os-checkin-session"
               definition={profileSparkChapter}
               key={profileSparkRun.runId}
               label="Check-in chapter"
               run={profileSparkRun}
-              backApp={checkInIdleCard()}
+              backApp={checkInThoughtsCard()}
               onBackAppShown={deferProfileSparkRun}
               onRunChange={saveProfileSparkRun}
             />
@@ -2595,70 +2588,34 @@ export function TodayExperience() {
               backApp={checkInThoughtsCard()}
               className="os-checkin-session"
               label="Thoughts chapter"
+              onCompletedReturn={returnToThoughtsAfterChapter}
+              onDismissed={returnToThoughtsAfterChapter}
               publication={thoughtsPublication}
             />
-          ) : revealedLine ? (
-            <SwipeSession
-              availableIndices={
-                revealedLine.kind === "quote" ? [0] : [0, 1]
-              }
-              className="os-checkin-session"
-              index={revealedLinePage}
-              label="A line"
-              maxIndex={revealedLine.kind === "quote" ? 0 : 1}
-              onIndexChange={setRevealedLinePage}
-            >
-              <PageLayout
-                className="os-line-page"
-                theme="light"
-                variant="cover"
-                footer={
-                  revealedLine.kind === "quote" ? undefined : (
-                    <span className="os-line-cue">Swipe to reveal</span>
-                  )
-                }
-              >
-                <div className="os-info-page-main">
-                  <h2>{revealedLine.text}</h2>
-                </div>
-                {revealedLine.kind === "quote" && revealedLine.sub ? (
-                  <div className="os-info-page-sub">
-                    <p className="os-line-sub">{revealedLine.sub}</p>
-                  </div>
-                ) : null}
-              </PageLayout>
-              {revealedLine.kind !== "quote" ? (
-                <PageLayout
-                  className="os-line-page os-line-reveal-page"
-                  theme="light"
-                  variant="cover"
-                >
-                  <div className="os-info-page-main">
-                    <h2>{revealedLine.sub}</h2>
-                  </div>
-                </PageLayout>
-              ) : null}
-            </SwipeSession>
           ) : (
           <SwipeSession
-            availableIndices={thoughtSent ? [checkInThoughtsApp] : [checkInIdleApp, checkInThoughtsApp]}
+            availableIndices={checkInAvailableIndices}
             attentionIndex={checkInThoughtsApp}
             attentionKey={thoughtRefreshKey || undefined}
             className={`os-checkin-session${
-              checkInRefreshing ? " update-exit" : ""
-            }${
               checkInIdleEntering ? " idle-arrival" : ""
             }${
               thoughtTransition === "exiting" ? " update-exit" : ""
             }${
               thoughtBack.className ? ` ${thoughtBack.className}` : ""
+            }${
+              noteBack.className ? ` ${noteBack.className}` : ""
             }`}
-            index={visibleCheckInApp}
-            label="Check-in session"
-            maxIndex={checkInThoughtsApp}
+            index={checkInIndex}
+            label={noteLineActive ? "A Line" : "Check-in session"}
+            maxIndex={Math.max(...checkInAvailableIndices)}
             rotateMs={IDLE_PAGE_DWELL_MS}
-            rotatePaused={Boolean(thoughtDraft.trim())}
+            rotatePaused={!noteLineActive && Boolean(thoughtDraft.trim())}
             onIndexChange={(nextIndex) => {
+              if (noteLineActive) {
+                setRevealedLinePage(nextIndex);
+                return;
+              }
               setThoughtLabelVisible(false);
               if (nextIndex !== checkInThoughtsApp) {
                 concealThoughtButton();
@@ -2675,8 +2632,7 @@ export function TodayExperience() {
               );
             }}
           >
-            {checkInIdleCard()}
-            {checkInThoughtsCard()}
+            {checkInCards}
           </SwipeSession>
           )}
         </section>

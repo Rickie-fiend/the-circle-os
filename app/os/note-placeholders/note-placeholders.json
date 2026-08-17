@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "note": "Quiet words shown only when a Note is empty. Clearing advances the pool; these are not Lines and never create evidence.",
+  "placeholders": [
+    { "id": "keep-going", "text": "Keep going." },
+    { "id": "be-patient", "text": "Be patient." },
+    { "id": "breathe-alive", "text": "Breathe. You are alive." },
+    { "id": "this-too", "text": "This too shall pass." },
+    { "id": "easier-every-day", "text": "It gets easier every day." }
+  ]
+}

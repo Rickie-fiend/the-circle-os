@@ -194,7 +194,7 @@ function parseDailySection(slot, source, metadata, filename) {
     version: 1,
     status: "published",
     session: "check-in",
-    app: "note",
+    app: "thoughts",
     theme: "light",
     title: purpose,
     purpose,

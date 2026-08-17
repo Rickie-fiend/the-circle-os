@@ -71,7 +71,7 @@ function budgetChapter(id) {
     version: 1,
     status: "published",
     session: "check-in",
-    app: "note",
+    app: "thoughts",
     theme: "light",
     title: id,
     purpose: id,
