@@ -19,7 +19,9 @@ test("superseded declarations stay behind the shared App back", () => {
   assert.match(mirror, /versions\.slice\(1\)/);
   assert.match(mirror, /lifeBack\.flip\(/);
   assert.match(mirror, /aria-label=\{current \? `Show history for \$\{label\}`/);
-  assert.match(mirror, /!current \? <span>History<\/span> : undefined/);
+  // An indicator, not an action: it says which face this is, and it carries the
+  // shared label type so it lines up with the label opposite it.
+  assert.match(mirror, /<span className="os-card-label vision-history-indicator">/);
   assert.doesNotMatch(mirror, /<button[^>]*>\s*History\s*<\/button>/s);
 });
 

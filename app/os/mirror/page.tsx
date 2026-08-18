@@ -452,7 +452,9 @@ function DeclarationPage({
         )
       }
       headerRight={
-        !current ? <span>History</span> : undefined
+        !current ? (
+          <span className="os-card-label vision-history-indicator">History</span>
+        ) : undefined
       }
       theme="light"
     >

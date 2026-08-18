@@ -320,7 +320,10 @@ function InlineCheckInEditor({
     }
     editingRef.current = false;
     onEditingChange?.(false);
-    const nextTitle = titleDraft.trim();
+    // Nothing written means the caption was the sentence. It is committed as
+    // real, editable text rather than staying a hint that disappears the moment
+    // anything else is typed.
+    const nextTitle = titleDraft.trim() || placeholder.trim();
     const nextNote = noteDraft.trim();
     setTitleDraft(nextTitle);
     setNoteDraft(nextNote);

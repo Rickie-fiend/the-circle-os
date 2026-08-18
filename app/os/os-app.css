@@ -3240,10 +3240,21 @@
   padding: 0;
 }
 
+/* The touch target is 44px and the word sits at the top of it. Left to centre
+   itself the label dropped to the middle of its target while the indicator
+   opposite stayed on the header's line, so the two never lined up. */
 .circle-os .vision-history-toggle.os-card-label {
+  align-items: flex-start;
   color: var(--c-orange);
+  display: inline-flex;
   min-height: var(--touch-min);
   text-align: left;
+}
+
+/* The right side says which face this is. It is a label, not an action, so it
+   is quiet and shares the label's size and tracking. */
+.circle-os .vision-history-indicator.os-card-label {
+  color: var(--c-neutral-600);
 }
 
 .circle-os .vision-declaration-copy > .os-page-main {
