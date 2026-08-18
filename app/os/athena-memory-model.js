@@ -143,7 +143,7 @@ export const ATHENA_EDITION_LIMIT = 60;
 
 /** Athena's authored prose, one group of sections for each Reading page. */
 export function createAthenaReadingDraft() {
-  return { days: [], alive: [], shape: [] };
+  return { cover: "", days: [], alive: [], shape: [] };
 }
 
 const READING_PAGES = ["days", "alive", "shape"];
@@ -184,18 +184,22 @@ export function buildAthenaReadingReplyPrompt(page, sections, editionId = null) 
 function readingContentKey(reading) {
   return stableHash(
     JSON.stringify(
-      READING_PAGES.map((page) =>
-        (reading[page] || []).map((section) => [
-          section.heading,
-          section.paragraphs,
-        ]),
-      ),
+      [
+        reading.cover || "",
+        ...READING_PAGES.map((page) =>
+          (reading[page] || []).map((section) => [
+            section.heading,
+            section.paragraphs,
+          ]),
+        ),
+      ],
     ),
   );
 }
 
 function readingHasWords(reading) {
-  return READING_PAGES.some((page) => (reading[page] || []).length > 0);
+  return Boolean(reading.cover) ||
+    READING_PAGES.some((page) => (reading[page] || []).length > 0);
 }
 
 function normalizeAthenaEdition(value) {
@@ -268,6 +272,7 @@ function normalizeReadingSection(value) {
 export function normalizeAthenaReading(value) {
   const reading = value && typeof value === "object" ? value : {};
   const normalized = createAthenaReadingDraft();
+  normalized.cover = cleanText(reading.cover, 240);
   for (const page of READING_PAGES) {
     normalized[page] = (Array.isArray(reading[page]) ? reading[page] : [])
       .map(normalizeReadingSection)
@@ -379,6 +384,7 @@ export function buildAthenaReading(memoryValue) {
   const editions = memory.editions.map((edition) => ({
     id: edition.id,
     publishedAt: edition.publishedAt,
+    cover: edition.cover,
     pages: Object.fromEntries(
       READING_PAGES.map((page) => [page, authoredSections(edition, page)]),
     ),
@@ -391,6 +397,7 @@ export function buildAthenaReading(memoryValue) {
     lastEvidenceAt: memory.lastEvidenceAt || null,
     preparedEvidenceRevision: Number(memory.preparedEvidenceRevision || 0),
     ready: Object.values(pages).some((sections) => sections.length > 0),
+    cover: memory.reading.cover,
     pages,
     editions,
     latestEditionId: editions[0]?.id || null,
@@ -458,7 +465,7 @@ export function mergeAthenaMemory(leftValue, rightValue) {
 function readingWeight(reading) {
   return READING_PAGES.reduce(
     (total, page) => total + (reading?.[page]?.length || 0),
-    0,
+    reading?.cover ? 1 : 0,
   );
 }
 
@@ -726,15 +733,17 @@ const READING_PAGE_TITLES = {
 
 function serializeAthenaReading(reading) {
   const pages = READING_PAGES.filter((page) => reading[page]?.length);
-  if (!pages.length) return "Athena has not written a reading yet.";
-  return pages
-    .map((page) =>
+  if (!reading.cover && !pages.length) return "Athena has not written a reading yet.";
+  return [
+    ...(reading.cover ? ["### Cover", reading.cover] : []),
+    ...pages.map((page) =>
       [
         `### ${READING_PAGE_TITLES[page]}`,
         ...reading[page].map((section) =>
           [`**${section.heading}**`, ...section.paragraphs].join("\n\n"),
         ),
       ].join("\n\n"),
-    )
+    ),
+  ]
     .join("\n\n");
 }

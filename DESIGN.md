@@ -64,7 +64,7 @@ geometry and hierarchy.
 - Note remains the one deliberate, recallable destination: its idle Page stays
   visible until the person taps the Note mode label, and that label can recall
   the newest unfinished or dismissed Note chapter.
-- Thoughts, Habit, Log, Vision, Seven Days, and Athena use one-time deliveries
+- Thoughts, Habit, Log, Vision, Week Review, and Athena use one-time deliveries
   in this testing release. After completion or dismissal, their ordinary App
   content returns and the chapter is not recalled from the mode label.
 - Private publications stay on that browser and work offline. Public
@@ -123,13 +123,15 @@ Reflect is where a person reads about their life. It has three parts: the life
 you want, the life you are living, and the space between. Athena's voice runs
 through all three rather than sitting beside them.
 
-Her reading is published as dated editions that accumulate, so there is such a
-thing as a new one, and such a thing as reading back. A morning that says the
-same thing publishes nothing.
+Her reading is published as dated editions that accumulate in state. Reflect
+shows only the current four-Page reading; its archive is not another Page in
+the session. A morning that says the same thing publishes nothing.
 
 The latest authored Reading may end with a real question and accept one reply
-as evidence. Older editions are read-only. Seven Days is local arithmetic: its
-plain pattern sentences always name how many recorded days support them.
+as evidence. Week Review is local arithmetic: its seven Pages hold a cover, a
+recurring daily pattern, four distinct parts of the day, and what held or did
+not hold during the week. Its counts stay in local working except when a count
+is itself the point of the final week Page.
 
 ## Page types
 

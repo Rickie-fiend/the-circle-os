@@ -50,9 +50,23 @@ test("an empty declaration can retry an immutable completed setup chapter", () =
   assert.match(mirror, /runId=\{declarationSetupRunId\}/);
 });
 
-test("Reflect contains the named Seven Days surface without rendering its working counts", () => {
-  assert.match(mirror, />Seven Days</);
-  assert.match(mirror, /aria-label="Seven Days session"/);
-  assert.match(mirror, /buildSevenDayClaims\(state\)/);
+test("Reflect presents Week Review in the required seven-Page order without working counts", () => {
+  assert.match(mirror, />Week Review</);
+  assert.match(mirror, /aria-label="Week Review session"/);
+  assert.match(mirror, /buildWeekReview\(state\)/);
+  assert.match(mirror, /weekReview\.dailyPattern,\s*\.\.\.weekReview\.periods,\s*weekReview\.week/s);
   assert.doesNotMatch(mirror, /claim\.working/);
+});
+
+test("Athena's Reading is four Pages with replies but no archive or question Page", () => {
+  assert.match(mirror, /aria-label="Athena's Reading"/);
+  assert.match(mirror, /const betweenPageCount = profileReady \? 4 : 1/);
+  assert.match(mirror, /function AthenaReadingReply/);
+  assert.match(mirror, /<AthenaReadingReply/);
+  assert.doesNotMatch(mirror, /Earlier readings|Athena asks|AthenaAnswerPage/);
+  assert.match(mirror, /Athena has not written this morning\./);
+});
+
+test("Reflect no longer names the old weekly or reading surfaces", () => {
+  assert.doesNotMatch(mirror, /Seven Days|The space between/);
 });

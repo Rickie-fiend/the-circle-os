@@ -13,7 +13,7 @@ import {
 import {
   answerSurveyQuestion,
   appSessionIndex,
-  buildSevenDayClaims,
+  buildWeekReview,
   declarationVersions,
   declareLife,
   editProfileSession,
@@ -49,7 +49,7 @@ import {
   buildAthenaReadingReplyPrompt,
 } from "../athena-memory-model.js";
 
-const READING_PAGES = ["days", "alive", "shape"] as const;
+type AthenaReadingPage = "days" | "alive" | "shape";
 
 function formatUpdated(value: string | null) {
   if (!value) return "Not updated yet";
@@ -76,30 +76,9 @@ type AthenaReadingSection = {
 type AthenaEdition = {
   id: string;
   publishedAt: string | null;
-  pages: Record<(typeof READING_PAGES)[number], AthenaReadingSection[]>;
+  cover: string;
+  pages: Record<AthenaReadingPage, AthenaReadingSection[]>;
 };
-
-/** The morning an edition was written, as a person would say it. */
-function editionDateLabel(edition: AthenaEdition | null) {
-  if (!edition?.publishedAt) return "Undated";
-  const date = new Date(edition.publishedAt);
-  if (Number.isNaN(date.getTime())) return "Undated";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-/** What a past edition says for a part Athena did not write that day. */
-function editionSilenceNote(edition: AthenaEdition | null) {
-  return `Athena did not write this part on ${editionDateLabel(edition)}.`;
-}
-
-/** The first thing an edition says, so the archive reads as writing, not dates. */
-function editionLeadLine(edition: AthenaEdition) {
-  for (const page of READING_PAGES) {
-    const section = edition.pages[page][0];
-    if (section) return section.heading;
-  }
-  return "A reading";
-}
 
 function athenaFreshnessLabel(
   state: ReturnType<typeof useCircleState>["state"],
@@ -474,84 +453,6 @@ function DeclarationPage({
   );
 }
 
-function AthenaAnswerPage({
-  answer,
-  label,
-  onSend,
-  prompt,
-  theme = "light",
-}: {
-  answer: string;
-  label: string;
-  onSend: (answer: string) => void;
-  prompt: { id: string; text: string; target: string };
-  theme?: "light" | "orange";
-}) {
-  const editorRef = useRef<HTMLTextAreaElement | null>(null);
-  const [draft, setDraft] = useState(answer);
-  const [sent, setSent] = useState(Boolean(answer));
-
-  useLayoutEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    sizeTextAreaToContent(editor);
-  }, [draft]);
-
-  if (answer.trim()) {
-    return (
-      <PageLayout
-        className="vision-athena-answer is-sent"
-        footer={<span>Athena reads this tonight.</span>}
-        headerLeft={<p className="os-card-label">{label}</p>}
-        theme={theme}
-      >
-        <div className="os-page-main">
-          <h2>Your answer is with Athena.</h2>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  return (
-    <PageLayout
-      className="vision-athena-answer"
-      footer={
-        <button
-          className="vision-athena-send"
-          disabled={!draft.trim()}
-          onClick={() => {
-            onSend(draft);
-            setSent(true);
-          }}
-          type="button"
-        >
-          {sent && draft.trim() === answer.trim() ? "Sent" : "Send"}
-        </button>
-      }
-      headerLeft={<p className="os-card-label">{label}</p>}
-      theme={theme}
-    >
-      <div className="os-page-main">
-        <h2>{prompt.text}</h2>
-      </div>
-      <div className="os-page-sub">
-        <textarea
-          aria-label="Answer Athena"
-          maxLength={1600}
-          onChange={(event) => {
-            setDraft(event.currentTarget.value);
-            setSent(false);
-          }}
-          placeholder="Write what comes up..."
-          ref={editorRef}
-          rows={2}
-          value={draft}
-        />
-      </div>
-    </PageLayout>
-  );
-}
-
 export default function CircleOSMirror() {
   const {
     state,
@@ -579,7 +480,12 @@ export default function CircleOSMirror() {
   useStableRouteAnchor(visionSessionRef, athenaSessionRef);
   const [declarationHistoryIndex, setDeclarationHistoryIndex] = useState(0);
   const summary = summarizeWeek(state);
-  const weekClaims = buildSevenDayClaims(state);
+  const weekReview = buildWeekReview(state);
+  const weekReviewPages = [
+    weekReview.dailyPattern,
+    ...weekReview.periods,
+    weekReview.week,
+  ];
   const profileCase = state.profile.profileCase;
   const publicationProfileId = state.ai.profileId || "local";
   const locationSearch = useSyncExternalStore(
@@ -666,12 +572,7 @@ export default function CircleOSMirror() {
     athenaReading,
     profileCase.updatedAt,
   );
-  const weekJourneyVersion = [
-    "seven-days-claims-v1",
-    ...weekClaims.map((claim: { key: string; sentence: string }) =>
-      `${claim.key}:${claim.sentence}`,
-    ),
-  ].join("|");
+  const weekJourneyVersion = weekReview.version;
   const profileJourneyVersion = [
     readingUpdatedAt,
     athenaReading.preparedAt,
@@ -708,12 +609,6 @@ export default function CircleOSMirror() {
     lifeBack.side === "history"
       ? declarationHistoryPages
       : currentDeclarationPages;
-  const athenaPrompt = profileCase.deepThoughtPrompt;
-  const athenaAnswer = athenaPrompt
-    ? profileCase.survey.answers.find(
-        (answer) => answer.questionId === athenaPrompt.id,
-      )?.answer || ""
-    : "";
   const lifePageCount = declarationPageRecords.length;
   // The current deck always has the same four kinds. A new immutable record
   // changes the words on the current Page, not the Page collection or index.
@@ -744,28 +639,19 @@ export default function CircleOSMirror() {
     betweenJourneyVersion,
     0,
   );
-  // Which edition is open. Nothing chosen means the newest one.
-  const [openEditionId, setOpenEditionId] = useState<string | null>(null);
-  const editions: AthenaEdition[] = athenaReading.editions;
-  const openEdition =
-    editions.find((edition) => edition.id === openEditionId) || editions[0] || null;
-  const readingLatest = !openEdition || openEdition.id === athenaReading.latestEditionId;
-  // The live reading falls back to derived observations for a page Athena has
-  // not written. That fallback belongs to today only: showing it beside an
-  // older edition would mix this week's evidence into words written last month.
-  const readingPages = Object.fromEntries(
-    READING_PAGES.map((page) => [
-      page,
-      openEdition && openEdition.pages[page].length
-        ? openEdition.pages[page]
-        : readingLatest
-          ? athenaReading.pages[page]
-          : [],
-    ]),
-  ) as typeof athenaReading.pages;
-  const betweenPageCount = profileReady
-    ? 4 + (editions.length > 1 ? 1 : 0) + (athenaPrompt ? 1 : 0)
-    : 1;
+  const latestEdition = athenaReading.editions[0] as AthenaEdition | undefined;
+  const latestEditionIsToday = Boolean(
+    latestEdition?.publishedAt &&
+      getDateKey(new Date(latestEdition.publishedAt)) === getDateKey(),
+  );
+  // The cover never borrows yesterday's authored line. The three reading Pages
+  // may still use today's source-linked observations when prose is quiet.
+  const readingCoverLine =
+    latestEditionIsToday && latestEdition?.cover
+      ? latestEdition.cover
+      : "Athena has not written this morning.";
+  const readingPages = athenaReading.pages;
+  const betweenPageCount = profileReady ? 4 : 1;
   const setupComplete = Boolean(
     ready &&
       state.profile.name &&
@@ -882,18 +768,6 @@ export default function CircleOSMirror() {
       : current;
   }
 
-  function sendAthenaAnswer(answer: string) {
-    if (!athenaPrompt) return;
-    updateState((current) =>
-      answerSurveyQuestion(
-        current,
-        athenaPrompt,
-        answer,
-        "deep-thought",
-      ),
-    );
-  }
-
   function sendAthenaReadingReply(
     prompt: AthenaReadingPrompt,
     answer: string,
@@ -951,20 +825,17 @@ export default function CircleOSMirror() {
    * edition it would quietly mix this week's evidence into last month's words.
    */
   function athenaReaderApp(
-    page: (typeof READING_PAGES)[number],
+    page: AthenaReadingPage,
     label: string,
     title: string,
     memorySections: Array<{ heading: string; text: string; paragraphs?: string[] }>,
     fallbackKeys: Array<[string, string]>,
-    emptyNote?: string,
   ) {
-    const prompt: AthenaReadingPrompt | null = readingLatest
-      ? buildAthenaReadingReplyPrompt(
-          page,
-          memorySections,
-          athenaReading.latestEditionId,
-        )
-      : null;
+    const prompt: AthenaReadingPrompt | null = buildAthenaReadingReplyPrompt(
+      page,
+      memorySections,
+      athenaReading.latestEditionId,
+    );
     const answer = prompt
       ? profileCase.survey.answers.find(
           (item) => item.questionId === prompt.id,
@@ -977,9 +848,7 @@ export default function CircleOSMirror() {
           <h2>{title}</h2>
         </header>
         <div className="athena-reader-copy">
-          {!memorySections.length && emptyNote ? (
-            <p className="athena-memory-copy athena-reader-quiet">{emptyNote}</p>
-          ) : memorySections.length
+          {memorySections.length
             ? memorySections.map((section) => (
                 <section className="profile-article-part" key={section.heading}>
                   <div>
@@ -1131,19 +1000,22 @@ export default function CircleOSMirror() {
 
         <header className="mirror-intro mirror-week-intro">
           <div>
-            <p className="os-eyebrow">Seven Days</p>
+            <p className="os-eyebrow">Week Review</p>
             <h1>How you are living</h1>
           </div>
         </header>
 
-        <section className="vision-week-session" aria-label="Seven Days session">
+        <section className="vision-week-session" aria-label="Week Review session">
           <SwipeSession
             attentionKey={`vision-week:${weekJourneyVersion}`}
-            availableIndices={weekClaims.map((_: unknown, index: number) => index)}
+            availableIndices={Array.from(
+              { length: weekReviewPages.length + 1 },
+              (_, index) => index,
+            )}
             className="vision-week-apps"
             index={visibleWeekApp}
-            label="Seven Days apps"
-            maxIndex={Math.max(0, weekClaims.length - 1)}
+            label="Week Review apps"
+            maxIndex={weekReviewPages.length}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -1155,16 +1027,22 @@ export default function CircleOSMirror() {
               )
             }
           >
-            {weekClaims.map((claim: {
+            <PageLayout
+              className="vision-week-cover"
+              footer={<span>Swipe to see</span>}
+              headerLeft={<p className="os-card-label">Week Review</p>}
+              key="week-review-cover"
+              theme="dark"
+            >
+              <div className="os-page-main">
+                <h2>What held. What did not.</h2>
+              </div>
+            </PageLayout>
+            {weekReviewPages.map((claim: {
               key: string;
               label: string;
               sentence: string;
-              working?: {
-                recordedDays?: number;
-                minutes?: number;
-                weekdayDays?: number;
-                weekendDays?: number;
-              };
+              working?: Record<string, unknown>;
               evidence: Array<{
                 label: string;
                 shortLabel: string;
@@ -1204,15 +1082,15 @@ export default function CircleOSMirror() {
 
         <header className="mirror-intro between-intro">
           <div>
-            <p className="os-eyebrow">The space between</p>
-            <h1>What sits between</h1>
+            <p className="os-eyebrow">Athena&apos;s Reading</p>
+            <h1>A reading of your life</h1>
             <p className="profile-updated">{updateLabel}</p>
           </div>
         </header>
 
         <section
           className="vision-between-session"
-          aria-label="The space between"
+          aria-label="Athena's Reading"
           ref={athenaSessionRef}
         >
           {athenaPublication ? (
@@ -1229,7 +1107,7 @@ export default function CircleOSMirror() {
             }
             className="vision-between-apps athena-reader-session"
             index={visibleBetweenApp}
-            label="The space between apps"
+            label="Athena's Reading apps"
             maxIndex={betweenPageCount - 1}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
@@ -1243,83 +1121,35 @@ export default function CircleOSMirror() {
             }
           >
             <div className="gap-cover">
-              <p className="os-card-label">The space between</p>
-              <h2>
-                {profileReady
-                  ? "Some parts meet. Some do not."
-                  : "Athena is still learning."}
-              </h2>
+              <p className="os-card-label">Athena&apos;s Reading</p>
+              <h2>{profileReady ? readingCoverLine : "Athena is still learning."}</h2>
               <span>{profileReady ? "Swipe to see" : "Still learning"}</span>
             </div>
 
             {athenaReaderApp(
               "days",
-              readingLatest ? "Your days" : `Your days · ${editionDateLabel(openEdition)}`,
+              "Your days",
               "The life you are living.",
               readingPages.days,
               [["currentLife", "Current life"]],
-              readingLatest ? undefined : editionSilenceNote(openEdition),
             )}
             {athenaReaderApp(
               "alive",
-              readingLatest
-                ? "What feels alive"
-                : `What feels alive · ${editionDateLabel(openEdition)}`,
+              "What feels alive",
               "What matters to you.",
               readingPages.alive,
               [
                 ["whatMatters", "What matters"],
                 ["interests", "Interests"],
               ],
-              readingLatest ? undefined : editionSilenceNote(openEdition),
             )}
             {athenaReaderApp(
               "shape",
-              readingLatest ? "Your shape" : `Your shape · ${editionDateLabel(openEdition)}`,
+              "Your shape",
               "How you may move through life.",
               readingPages.shape,
               [["personality", "Personality"]],
-              readingLatest ? undefined : editionSilenceNote(openEdition),
             )}
-
-            {editions.length > 1 ? (
-              <article className="athena-archive-app" key="archive">
-                <header>
-                  <p className="os-card-label">Earlier readings</p>
-                  <h2>What Athena wrote before.</h2>
-                </header>
-                <div className="athena-archive-list">
-                  {editions.map((edition) => (
-                    <button
-                      aria-pressed={edition.id === openEdition?.id}
-                      className={`athena-archive-row${
-                        edition.id === openEdition?.id ? " is-open" : ""
-                      }`}
-                      key={edition.id}
-                      type="button"
-                      onClick={() => setOpenEditionId(edition.id)}
-                    >
-                      <span className="athena-archive-date">
-                        {editionDateLabel(edition)}
-                      </span>
-                      <span className="athena-archive-lead">
-                        {editionLeadLine(edition)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </article>
-            ) : null}
-            {athenaPrompt ? (
-              <AthenaAnswerPage
-                answer={athenaAnswer}
-                key={`athena-question-${athenaPrompt.id}`}
-                label="Athena asks"
-                onSend={sendAthenaAnswer}
-                prompt={athenaPrompt}
-                theme="orange"
-              />
-            ) : null}
           </SwipeSession>
           )}
         </section>

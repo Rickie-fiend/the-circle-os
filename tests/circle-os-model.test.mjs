@@ -16,6 +16,7 @@ import {
   beginProtocolRun,
   buildVisionAnalysis,
   buildSevenDayClaims,
+  buildWeekReview,
   buildWeekClaims,
   canBeginProtocolRun,
   completeTask,
@@ -987,6 +988,70 @@ test("the week activity tally keeps Other visible as a vocabulary floor", () => 
     { group: "Other recorded time", blocks: 1 },
     { group: "Time with other people", blocks: 1 },
   ]);
+});
+
+test("Week Review orders a recurring pattern, four periods, and one honest week", () => {
+  let state = createEmptyState();
+  const dateKeys = [
+    "2026-08-08",
+    "2026-08-09",
+    "2026-08-10",
+    "2026-08-11",
+    "2026-08-12",
+    "2026-08-13",
+    "2026-08-14",
+  ];
+  state.habits.definitions.kept = {
+    id: "kept",
+    text: "Write after coffee",
+    action: "Write after coffee",
+    status: "active",
+  };
+  state.habits.definitions.dropped = {
+    id: "dropped",
+    text: "Wear socks",
+    action: "Wear socks",
+    status: "active",
+  };
+  for (const [index, dateKey] of dateKeys.entries()) {
+    state = ensureDay(state, dateKey);
+    state.days[dateKey].timeBlocks.push(
+      { id: `${dateKey}-wake`, start: "10:00", end: "11:00", title: "Wake up", activity: "Wake" },
+      { id: `${dateKey}-project`, start: "13:00", end: "15:00", title: "Project", activity: "Project" },
+      { id: `${dateKey}-walk`, start: "15:00", end: "17:00", title: "Walk", activity: "Walk" },
+      { id: `${dateKey}-shower`, start: "20:00", end: "21:00", title: "Shower", activity: "Shower" },
+      { id: `${dateKey}-sleep`, start: "03:00", end: "04:00", title: "Sleep", activity: "Sleep" },
+    );
+    state.habits.completions[`kept-${dateKey}`] = {
+      id: `kept-${dateKey}`,
+      habitId: "kept",
+      dateKey,
+      completed: true,
+    };
+    if (index < 4) {
+      state.habits.completions[`dropped-${dateKey}`] = {
+        id: `dropped-${dateKey}`,
+        habitId: "dropped",
+        dateKey,
+        completed: true,
+      };
+    }
+  }
+  const review = buildWeekReview(state, new Date("2026-08-14T12:00:00.000Z"));
+  assert.match(review.dailyPattern.sentence, /project work|walking/i);
+  assert.deepEqual(review.periods.map((claim) => claim.key), ["morning", "afternoon", "evening", "night"]);
+  assert.equal(new Set(review.periods.map((claim) => claim.sentence)).size, 4);
+  assert.match(review.week.sentence, /kept Write after coffee on 7 days/i);
+  assert.match(review.week.sentence, /Wear socks stopped after 4 days/i);
+  assert.ok(review.groupTally.length > 0);
+  assert.equal("weekReview" in state, false);
+});
+
+test("Week Review keeps all seven Pages when recorded life is still sparse", () => {
+  const review = buildWeekReview(createEmptyState(), new Date("2026-08-14T12:00:00.000Z"));
+  assert.deepEqual(review.periods.map((claim) => claim.key), ["morning", "afternoon", "evening", "night"]);
+  assert.match(review.dailyPattern.sentence, /not enough recorded life/i);
+  assert.match(review.week.sentence, /Nothing was clearly kept yet/i);
 });
 
 test("Seven Days is recomputed from one week and stores no aggregate", () => {

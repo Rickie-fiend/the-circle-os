@@ -231,19 +231,19 @@ Used for charts, weekly views, and other things worth reading again.
 
 ## Idle rotation
 
-- An idle App Box turns its own pages. A Page nobody swiped to still comes
-  past, so a habit is not left unticked all day because its Page was behind
-  Protocol and nothing on screen said so.
-- Note and Thoughts turn between themselves. Habit and Protocol turn between
-  themselves. One dwell, `IDLE_PAGE_DWELL_MS`, is shared by both.
+- The Today check-in session is the only App session that turns its own Page.
+  Note and Thoughts turn between themselves after one
+  `IDLE_PAGE_DWELL_MS` dwell.
+- Routine, Protocol, Log, Vision, Week Review, and Athena stay on the Page the
+  person chose. A hidden action is a placement defect, not a reason to turn a
+  working App while the person is reading it.
 - Turning never interrupts. The dwell restarts on any touch or key inside the
   box, it waits while anything inside the box has focus, it holds while a
   thought is part written, and it does not run while the app is in the
   background.
 - A turned Page arrives with the ordinary quick page travel, not the ceremonial
   update reveal. Nothing new has arrived; the box is only showing what it holds.
-- A journey, a Chapter and a pending publication never rotate. Only an idle App
-  with more than one Page does.
+- A journey, a Chapter and a pending publication never rotate.
 
 ## Interaction
 

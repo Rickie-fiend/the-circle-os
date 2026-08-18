@@ -186,6 +186,43 @@ test("a morning that says the same thing publishes nothing new", () => {
   assert.equal(reading.editions[0].publishedAt, "2026-08-12T04:00:00.000Z");
 });
 
+test("a fresh authored cover belongs to its immutable edition identity", () => {
+  const pages = { days: [{ heading: "Your days", paragraphs: ["Walking held."] }] };
+  const monday = {
+    updatedAt: "2026-08-12T04:00:00.000Z",
+    reading: { cover: "The walk stayed when the plan changed.", ...pages },
+  };
+  const tuesday = {
+    updatedAt: "2026-08-13T04:00:00.000Z",
+    reading: { cover: "The project returned, but the morning stayed quiet.", ...pages },
+  };
+  const reading = buildAthenaReading(mergeAthenaMemory(monday, tuesday));
+
+  assert.equal(reading.editions.length, 2);
+  assert.equal(reading.cover, "The project returned, but the morning stayed quiet.");
+  assert.deepEqual(
+    reading.editions.map((edition) => edition.cover),
+    [
+      "The project returned, but the morning stayed quiet.",
+      "The walk stayed when the plan changed.",
+    ],
+  );
+  assert.notEqual(reading.editions[0].id, reading.editions[1].id);
+});
+
+test("an older edition without a cover stays readable without borrowing one", () => {
+  const reading = buildAthenaReading({
+    updatedAt: "2026-08-13T04:00:00.000Z",
+    editions: [{
+      id: "edition-old",
+      publishedAt: "2026-08-01T04:00:00.000Z",
+      days: [{ heading: "Older", paragraphs: ["These words stay."] }],
+    }],
+  });
+  assert.equal(reading.editions[0].cover, "");
+  assert.equal(reading.editions[0].pages.days[0].paragraphs[0], "These words stay.");
+});
+
 test("an edition already read on the phone is not lost to an older sync", () => {
   const phone = {
     updatedAt: "2026-08-13T04:00:00.000Z",

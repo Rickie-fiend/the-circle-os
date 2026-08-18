@@ -2281,9 +2281,224 @@ export function buildSevenDayClaims(state, now = new Date()) {
   return claims;
 }
 
-// Kept for older callers and tests. Seven Days is the product name; the model
-// remains a seven-Circle-day read with no stored aggregate.
+// Kept for older callers and tests. Week Review remains a seven-Circle-day
+// read with no stored aggregate.
 export const buildWeekClaims = buildSevenDayClaims;
+
+const WEEK_ACTIVITY_PHRASES = Object.freeze({
+  "Time with other people": "time with people",
+  "Reading and reflection": "reading and reflection",
+  "Waking up": "waking up",
+  "Sleep and rest": "sleep and rest",
+  "Personal care": "personal care",
+  Smoking: "smoking",
+  Entertainment: "entertainment",
+  "Errands and travel": "errands and travel",
+  "Project and creative work": "project work",
+  "Movement and outside time": "walking",
+  "Meals and coffee": "meals and coffee",
+});
+
+function naturalList(values) {
+  if (values.length < 2) return values[0] || "";
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
+}
+
+function capitalized(value) {
+  const text = String(value || "").trim();
+  return text ? `${text[0].toUpperCase()}${text.slice(1)}` : "";
+}
+
+function weekHabitLabel(habit) {
+  return weekStatementLabel(habit?.action || habit?.text || "");
+}
+
+function weekStatementLabel(value) {
+  return cleanHabitPart(value).replace(/[.!?]+$/g, "");
+}
+
+/**
+ * The seven-page Week Review read model. It recomputes from current evidence,
+ * keeps all numeric working local, and never persists a weekly aggregate.
+ */
+export function buildWeekReview(state, now = new Date()) {
+  const summary = summarizeWeek(state, now);
+  const claims = buildSevenDayClaims(state, now);
+  const periodClaims = WEEK_PERIODS.map((period) =>
+    claims.find((claim) => claim.key === period.key) || {
+      key: period.key,
+      label: period.label,
+      sentence: `There is not enough recorded ${period.key} time to call a pattern yet.`,
+      working: { recordedDays: 0, minutes: 0 },
+      evidence: summary.days.map((item) =>
+        weekEvidenceDay(item, "quiet", "quiet"),
+      ),
+    },
+  );
+  const timeDays = summary.days.filter((item) => item.day.timeBlocks.length);
+  const recordedDays = summary.days.filter(({ key, day }) => {
+    const habitTouched = Object.values(state.habits?.completions || {}).some(
+      (completion) => completion?.dateKey === key,
+    );
+    return Boolean(
+      day.timeBlocks.length ||
+        day.checkIns.length ||
+        day.mission?.completed ||
+        day.missions?.length ||
+        habitTouched,
+    );
+  });
+
+  const activityDays = new Map();
+  for (const item of timeDays) {
+    for (const block of item.day.timeBlocks) {
+      const group = weekActivityGroup(block.title || block.activity);
+      const seen = activityDays.get(group) || new Set();
+      seen.add(item.key);
+      activityDays.set(group, seen);
+    }
+  }
+  const recurringMinimum = Math.max(2, Math.ceil(timeDays.length * 0.7));
+  const recurring = [...activityDays.entries()]
+    .filter(
+      ([group, days]) =>
+        group !== "Other recorded time" &&
+        group !== "Waking up" &&
+        group !== "Sleep and rest" &&
+        days.size >= recurringMinimum,
+    )
+    .sort(
+      (left, right) =>
+        right[1].size - left[1].size || left[0].localeCompare(right[0]),
+    )
+    .slice(0, 3);
+  const recurringGroups = recurring.map(([group]) => group);
+  const recurringPhrases = recurringGroups.map(
+    (group) => WEEK_ACTIVITY_PHRASES[group] || activityFinding(group),
+  );
+  const recurringDays = new Set(
+    recurring.flatMap(([, days]) => [...days]),
+  );
+  const dailyPattern = {
+    key: "daily-pattern",
+    label: "Daily pattern",
+    sentence:
+      recordedDays.length < 3
+        ? "There is not enough recorded life to call a daily pattern yet."
+        : recurringPhrases.length
+          ? `${capitalized(naturalList(recurringPhrases))} ${recurringPhrases.length === 1 ? "keeps" : "keep"} returning through your week.`
+          : "No activity repeats enough to call it a daily pattern yet.",
+    working: {
+      recordedDays: recordedDays.length,
+      recurringMinimum,
+      recurringGroups: recurring.map(([group, days]) => ({
+        group,
+        recordedDays: days.size,
+      })),
+    },
+    evidence: sevenDayEvidence(summary.days, recurringDays),
+  };
+
+  const dateKeys = new Set(summary.days.map((item) => item.key));
+  const lastRecordedKey = recordedDays.at(-1)?.key || summary.days.at(-1)?.key || "";
+  const habitRows = Object.values(state.habits?.definitions || {})
+    .filter((habit) => habit?.status !== "archived" && weekHabitLabel(habit))
+    .map((habit) => {
+      const completionKeys = Object.values(state.habits?.completions || {})
+        .filter(
+          (completion) =>
+            completion?.habitId === habit.id &&
+            completion.completed &&
+            dateKeys.has(completion.dateKey),
+        )
+        .map((completion) => completion.dateKey)
+        .sort();
+      return {
+        habit,
+        label: weekHabitLabel(habit),
+        completionKeys: [...new Set(completionKeys)],
+      };
+    });
+  const keptHabit = [...habitRows]
+    .filter((row) => row.completionKeys.length >= 2)
+    .sort(
+      (left, right) =>
+        right.completionKeys.length - left.completionKeys.length ||
+        left.label.localeCompare(right.label),
+    )[0] || null;
+  const droppedHabit = [...habitRows]
+    .filter(
+      (row) =>
+        row.habit.id !== keptHabit?.habit.id &&
+        row.completionKeys.length >= 2 &&
+        row.completionKeys.at(-1) < lastRecordedKey,
+    )
+    .sort(
+      (left, right) =>
+        String(right.completionKeys.at(-1)).localeCompare(
+          String(left.completionKeys.at(-1)),
+        ) || right.completionKeys.length - left.completionKeys.length,
+    )[0] || null;
+  const completedTask = Object.values(state.tasks?.items || {})
+    .filter(
+      (task) =>
+        task?.status === "completed" &&
+        dateKeys.has(String(task.completedAt || "").slice(0, 10)) &&
+        String(task.text || "").trim(),
+    )
+    .sort((left, right) =>
+      String(right.completedAt || "").localeCompare(String(left.completedAt || "")),
+    )[0] || null;
+  const sealedDays = Object.values(state.protocol?.seals || {}).filter(
+    (seal) => seal?.sealed && dateKeys.has(seal.dateKey),
+  );
+
+  const keptSentence = keptHabit
+    ? `You kept ${keptHabit.label} on ${keptHabit.completionKeys.length} days.`
+    : completedTask
+      ? `You finished ${weekStatementLabel(completedTask.text)}.`
+      : sealedDays.length
+        ? `You kept ${weekStatementLabel(sealedDays.at(-1).phaseName || "your protocol")} on ${sealedDays.length} days.`
+        : "Nothing was clearly kept yet.";
+  const notKeptSentence = droppedHabit
+    ? `${capitalized(droppedHabit.label)} stopped after ${droppedHabit.completionKeys.length} days.`
+    : "Nothing you began was clearly dropped.";
+  const week = {
+    key: "week",
+    label: "The week",
+    sentence: `${keptSentence} ${notKeptSentence}`,
+    working: {
+      recordedDays: recordedDays.length,
+      keptHabitDays: keptHabit?.completionKeys.length || 0,
+      droppedHabitDays: droppedHabit?.completionKeys.length || 0,
+      completedTasks: completedTask ? 1 : 0,
+      sealedProtocolDays: sealedDays.length,
+    },
+    evidence: [
+      {
+        label: "What held",
+        shortLabel: "Kept",
+        value: keptHabit?.label || weekStatementLabel(completedTask?.text || sealedDays.at(-1)?.phaseName || "still learning"),
+        tone: keptHabit || completedTask || sealedDays.length ? "held" : "quiet",
+      },
+      {
+        label: "What did not hold",
+        shortLabel: "Not kept",
+        value: droppedHabit?.label || "nothing clear",
+        tone: droppedHabit ? "plain" : "quiet",
+      },
+    ],
+  };
+
+  return {
+    version: `week-review-v1:${summary.days.at(-1)?.key || "empty"}:${Number(state.evidence?.localRevision || 0)}`,
+    dailyPattern,
+    periods: periodClaims,
+    week,
+    groupTally: weekActivityTally(state),
+  };
+}
 
 export function buildVisionAnalysis(state, now = new Date()) {
   const summary = summarizeWeek(state, now);

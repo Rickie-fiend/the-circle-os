@@ -2902,7 +2902,7 @@ export function TodayExperience() {
               ]}
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={changeHabitAppPage}
-              rotateIdleApps={!sealedProtocolDay}
+              rotateIdleApps={false}
               label="Routine chapter"
               run={activeHabitRun}
               onRunChange={saveHabitBuildingRun}
