@@ -1754,10 +1754,11 @@
   width: 100%;
 }
 
-/* With nothing written, the placeholder is the caption. It reads at full
-   strength rather than as a hint, because it is the only thing on the Page. */
+/* Until the person leaves it untouched, the rotating caption is an offer, not
+   their words. Blur commits it as real Ink; while it is still a placeholder it
+   stays visibly quieter. */
 .circle-os .os-inline-checkin-title::placeholder {
-  color: var(--c-ink);
+  color: var(--c-neutral-500);
   opacity: 1;
 }
 

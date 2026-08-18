@@ -30,7 +30,6 @@ import {
   type CircleState,
 } from "../circle-os-shell";
 import {
-  IDLE_PAGE_DWELL_MS,
   PageLayout,
   SwipeSession,
 } from "../app-session";
@@ -1091,7 +1090,6 @@ export default function CircleOSMirror() {
             index={visibleDeclarationPage}
             label="The life you want apps"
             maxIndex={Math.max(0, lifePageCount - 1)}
-            rotateMs={lifeBack.side === "current" ? IDLE_PAGE_DWELL_MS : undefined}
             onIndexChange={(nextIndex) => {
               if (lifeBack.side === "history") {
                 setDeclarationHistoryIndex(nextIndex);
@@ -1146,7 +1144,6 @@ export default function CircleOSMirror() {
             index={visibleWeekApp}
             label="Last seven days apps"
             maxIndex={Math.max(0, weekClaims.length - 1)}
-            rotateMs={IDLE_PAGE_DWELL_MS}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(

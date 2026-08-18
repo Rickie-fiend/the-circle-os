@@ -93,12 +93,15 @@ test("a Line carries no edge, only its kind at the top left", () => {
   assert.doesNotMatch(shell, /headerRight=\{kind\}/);
 });
 
-test("an empty Note shows its caption in full", () => {
+test("an empty Note shows its whole offered caption as a dimmed hint", () => {
   // scrollHeight ignores a placeholder, so an explicit height measured from an
   // empty value clipped every caption that wrapped.
   assert.match(
     readFileSync("app/os/text-area-size.ts", "utf8"),
     /if \(!editor\.value\)[\s\S]*?removeProperty\("height"\)/,
   );
-  assert.match(css, /os-inline-checkin-title::placeholder \{[\s\S]*?opacity: 1/);
+  assert.match(
+    css,
+    /os-inline-checkin-title::placeholder \{[\s\S]*?color: var\(--c-neutral-500\)[\s\S]*?opacity: 1/,
+  );
 });
