@@ -3227,15 +3227,15 @@
   position: relative;
 }
 
+/* Reset what a button adds and nothing more. Declaring font-family or
+   font-size here takes back the size and tracking .os-card-label gives every
+   other App Label, which is why Vision read as a different typeface. The
+   Protocol and Habit toggles were both fixed for exactly this. */
 .circle-os .vision-history-toggle {
   appearance: none;
   background: transparent;
   border: 0;
-  color: var(--c-neutral-600);
   cursor: pointer;
-  font-family: inherit;
-  font-size: var(--text-xs);
-  font-weight: 700;
   margin: 0;
   padding: 0;
 }
