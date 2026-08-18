@@ -147,6 +147,30 @@ export function createAthenaReadingDraft() {
 }
 
 const READING_PAGES = ["days", "alive", "shape"];
+const READING_TARGETS = {
+  days: "currentLife",
+  alive: "whatMatters",
+  shape: "personality",
+};
+
+export function buildAthenaReadingReplyPrompt(page, sections, editionId = null) {
+  if (!READING_TARGETS[page] || !Array.isArray(sections)) return null;
+  const paragraphs = sections.flatMap((section) =>
+    Array.isArray(section?.paragraphs) && section.paragraphs.length
+      ? section.paragraphs
+      : [section?.text],
+  );
+  const text = [...paragraphs]
+    .reverse()
+    .map((paragraph) => cleanText(paragraph, 1_200))
+    .find((paragraph) => /\?\s*$/.test(paragraph));
+  if (!text) return null;
+  return {
+    id: `athena-reading-${cleanText(editionId, 120) || "live"}-${page}`,
+    text,
+    target: READING_TARGETS[page],
+  };
+}
 
 /**
  * The words of a reading, reduced to one stable key.

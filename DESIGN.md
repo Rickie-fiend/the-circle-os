@@ -127,6 +127,10 @@ Her reading is published as dated editions that accumulate, so there is such a
 thing as a new one, and such a thing as reading back. A morning that says the
 same thing publishes nothing.
 
+The latest authored Reading may end with a real question and accept one reply
+as evidence. Older editions are read-only. Seven Days is local arithmetic: its
+plain pattern sentences always name how many recorded days support them.
+
 ## Page types
 
 ### Cover Page

@@ -385,8 +385,17 @@ Used for charts, weekly views, and other things worth reading again.
   moves every Page that names the contract.
 - A Vision declaration versions only through `Save declaration`. Blur, route
   reload and ordinary typing never create a declaration. The four current
-  kinds stay on the front; superseded immutable records stay behind `History`
-  on the shared App back.
+  kinds stay on the front. Tapping the declaration's top-left kind label flips
+  to superseded immutable records on the shared App back. On that back,
+  `History` is a passive top-right state label rather than a second action.
+
+## Athena Reading replies
+
+- An authored Reading paragraph may end with one real question. Only the
+  latest Reading can be replied to; an older immutable edition stays read-only.
+- `Reply` opens one textarea on that Reading Page. Sending uses the shared
+  survey and evidence queue with kind `athena-reading`; it does not create a
+  score, count, reaction, or separate feedback store.
 
 ## Fixed evidence Apps
 

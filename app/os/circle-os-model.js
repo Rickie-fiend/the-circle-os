@@ -1669,7 +1669,12 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
     },
   };
 
-  if ((kind === "thought" || kind === "deep-thought") && cleanAnswer) {
+  if (
+    (kind === "thought" ||
+      kind === "deep-thought" ||
+      kind === "athena-reading") &&
+    cleanAnswer
+  ) {
     next = {
       ...next,
       athenaMemory: captureAthenaThought(next.athenaMemory, {
@@ -1959,23 +1964,9 @@ export function summarizeWeek(state, now = new Date()) {
   };
 }
 
-function weekTimeLabel(value) {
-  const minutes = Number(value) % (24 * 60);
-  const hour = Math.floor(minutes / 60);
-  const minute = minutes % 60;
-  const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${String(minute).padStart(2, "0")} ${period}`;
-}
-
-function weekList(values) {
-  if (values.length < 2) return values[0] || "";
-  if (values.length === 2) return `${values[0]} and ${values[1]}`;
-  return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
-}
-
 function weekActivityGroup(value = "") {
   const text = String(value).toLowerCase();
+  if (/wake/.test(text)) return "Waking up";
   if (/sleep|bed|nap/.test(text)) return "Sleep and rest";
   if (/lunch|dinner|breakfast|meal|eat|coffee/.test(text)) return "Meals and coffee";
   if (/walk|gym|outdoor|samrong|patio|exercise/.test(text)) return "Movement and outside time";
@@ -1990,6 +1981,34 @@ function weekActivityGroup(value = "") {
 
 function weekEvidenceDay(item, value, tone = "plain") {
   return { label: item.fullLabel, shortLabel: item.label, value, tone };
+}
+
+const WEEK_PERIODS = [
+  { key: "morning", label: "Morning", start: 6 * 60, end: 12 * 60 },
+  { key: "afternoon", label: "Afternoon", start: 12 * 60, end: 18 * 60 },
+  { key: "evening", label: "Evening", start: 18 * 60, end: 22 * 60 },
+  { key: "night", label: "Night", start: 22 * 60, end: 30 * 60 },
+];
+
+function blockCircleRange(block) {
+  const start = circleTimeValue(block.start);
+  let end = circleTimeValue(block.end);
+  if (end <= start) end += 24 * 60;
+  return { start, end };
+}
+
+function overlapMinutes(leftStart, leftEnd, rightStart, rightEnd) {
+  return Math.max(0, Math.min(leftEnd, rightEnd) - Math.max(leftStart, rightStart));
+}
+
+function topActivity(rows) {
+  return [...rows.entries()].sort((left, right) => right[1] - left[1])[0] || null;
+}
+
+function recordedDayEvidence(days, values) {
+  return days
+    .filter((item) => values.has(item.key))
+    .map((item) => weekEvidenceDay(item, formatDuration(values.get(item.key))));
 }
 
 /**
@@ -2026,96 +2045,86 @@ export function buildWeekClaims(state, now = new Date()) {
   }
 
   const claims = [];
-  const starts = days
-    .map((item) => {
-      const first = [...item.day.timeBlocks]
-        .filter((block) => block.start)
-        .sort((left, right) => circleTimeValue(left.start) - circleTimeValue(right.start))[0];
-      return first ? { item, minutes: circleTimeValue(first.start) % (24 * 60) } : null;
-    })
-    .filter(Boolean);
-  if (starts.length >= 3) {
-    const counts = new Map();
-    for (const start of starts) counts.set(start.minutes, (counts.get(start.minutes) || 0) + 1);
-    const [commonStart, commonCount] = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
-    const minimum = Math.min(...starts.map((start) => start.minutes));
-    const maximum = Math.max(...starts.map((start) => start.minutes));
-    const sentence = commonCount >= Math.ceil(starts.length / 2)
-      ? `${commonCount} of ${starts.length} recorded days began at ${weekTimeLabel(commonStart)}.`
-      : `Your recorded days began between ${weekTimeLabel(minimum)} and ${weekTimeLabel(maximum)}.`;
-    claims.push({
-      key: "day-start",
-      label: "Day start",
-      sentence,
-      evidence: starts.map(({ item, minutes }) => weekEvidenceDay(item, weekTimeLabel(minutes))),
-    });
-  }
-
-  const habits = Object.values(state.habits?.definitions || {})
-    .filter((habit) => habit?.status === "active" && habit.text?.trim())
-    .map((habit) => {
-      const eligible = days.filter((item) => {
-        const completion = state.habits.completions[habitCompletionId(habit.id, item.key)];
-        return Boolean(completion) || item.key >= getDateKey(new Date(habit.createdAt));
+  const timeDays = days.filter((item) => item.day.timeBlocks.length > 0);
+  for (const period of WEEK_PERIODS) {
+    const activityMinutes = new Map();
+    const dayMinutes = new Map();
+    for (const item of timeDays) {
+      for (const block of item.day.timeBlocks) {
+        const range = blockCircleRange(block);
+        const minutes = overlapMinutes(range.start, range.end, period.start, period.end);
+        if (!minutes) continue;
+        const group = weekActivityGroup(block.title || block.activity);
+        activityMinutes.set(group, (activityMinutes.get(group) || 0) + minutes);
+        dayMinutes.set(item.key, (dayMinutes.get(item.key) || 0) + minutes);
+      }
+    }
+    const top = topActivity(activityMinutes);
+    if (dayMinutes.size < 3 || !top) {
+      claims.push({
+        key: period.key,
+        label: period.label,
+        sentence: `${dayMinutes.size} recorded day${dayMinutes.size === 1 ? " includes" : "s include"} ${period.key} time, so there is not enough to call a ${period.key} pattern.`,
+        evidence: dayMinutes.size
+          ? recordedDayEvidence(days, dayMinutes)
+          : days.map((item) => weekEvidenceDay(item, "not recorded", "quiet")),
       });
-      return { habit, eligible };
-    })
-    .filter(({ eligible }) => eligible.length >= 3)
-    .sort((left, right) => right.eligible.length - left.eligible.length);
-  const habitReading = habits[0];
-  if (habitReading) {
-    const held = habitReading.eligible.filter((item) =>
-      state.habits.completions[habitCompletionId(habitReading.habit.id, item.key)]?.completed,
-    );
-    const slipped = habitReading.eligible.filter((item) => !held.includes(item));
-    const habitName = habitReading.habit.text.trim().replace(/[.!?]+$/, "");
-    const status = [
-      held.length ? `held on ${weekList(held.map((item) => item.fullLabel))}` : "did not hold on a recorded day",
-      slipped.length ? `slipped on ${weekList(slipped.map((item) => item.fullLabel))}` : "did not slip on a recorded day",
-    ];
+      continue;
+    }
     claims.push({
-      key: "habit",
-      label: "Habit",
-      sentence: `${habitName} ${status[0]}, and ${status[1]}.`,
-      evidence: habitReading.eligible.map((item) =>
-        weekEvidenceDay(item, held.includes(item) ? "held" : "slipped", held.includes(item) ? "held" : "slipped"),
-      ),
+      key: period.key,
+      label: period.label,
+      sentence: `${top[0]} took the most recorded ${period.key} time across ${dayMinutes.size} recorded days: ${formatDuration(top[1])}.`,
+      evidence: recordedDayEvidence(days, dayMinutes),
     });
   }
 
-  const mealKinds = [
-    { label: "Lunch", pattern: /lunch/i },
-    { label: "Dinner", pattern: /dinner/i },
-    { label: "Breakfast", pattern: /breakfast/i },
-  ].map((meal) => ({
-    ...meal,
-    events: days.flatMap((item) => {
-      const matching = item.day.timeBlocks
-        .filter((block) =>
-          meal.pattern.test(
-            [block.title || block.activity || "", ...(block.moments || [])].join(" "),
-          ),
-        )
-        .sort((left, right) => circleTimeValue(left.start) - circleTimeValue(right.start));
-      return matching[0]
-        ? [{ item, minutes: circleTimeValue(matching[0].start) % (24 * 60) }]
-        : [];
-    }),
-  })).sort((left, right) => right.events.length - left.events.length);
-  const meal = mealKinds[0];
-  if (meal?.events.length >= 3) {
-    const minimum = Math.min(...meal.events.map((event) => event.minutes));
-    const maximum = Math.max(...meal.events.map((event) => event.minutes));
+  const dayKinds = { weekday: [], weekend: [] };
+  for (const item of timeDays) {
+    const weekday = new Date(`${item.key}T12:00:00`).getDay();
+    dayKinds[weekday === 0 || weekday === 6 ? "weekend" : "weekday"].push(item);
+  }
+  const allocations = {};
+  for (const [kind, kindDays] of Object.entries(dayKinds)) {
+    const rows = new Map();
+    for (const item of kindDays) {
+      for (const block of item.day.timeBlocks) {
+        const group = weekActivityGroup(block.title || block.activity);
+        rows.set(group, (rows.get(group) || 0) + minutesBetween(block.start, block.end));
+      }
+    }
+    allocations[kind] = topActivity(rows);
+  }
+  const weekdayCount = dayKinds.weekday.length;
+  const weekendCount = dayKinds.weekend.length;
+  if (weekdayCount >= 2 && weekendCount >= 2 && allocations.weekday && allocations.weekend) {
+    const weekdayTop = allocations.weekday[0];
+    const weekendTop = allocations.weekend[0];
     claims.push({
-      key: "eating",
-      label: "Eating",
-      sentence: `${meal.label} appeared on ${meal.events.length} of ${days.length} recorded days, between ${weekTimeLabel(minimum)} and ${weekTimeLabel(maximum)}.`,
-      evidence: meal.events.map(({ item, minutes }) => weekEvidenceDay(item, weekTimeLabel(minutes))),
+      key: "weekday-weekend",
+      label: "Week and weekend",
+      sentence: weekdayTop === weekendTop
+        ? `Across ${weekdayCount} recorded weekdays and ${weekendCount} recorded weekend days, ${weekdayTop.toLowerCase()} took the most time in both.`
+        : `Across ${weekdayCount} recorded weekdays, ${weekdayTop.toLowerCase()} took the most time; across ${weekendCount} recorded weekend days, it was ${weekendTop.toLowerCase()}.`,
+      evidence: [
+        { label: "Recorded weekdays", shortLabel: "Weekdays", value: `${weekdayCount} days`, tone: "plain" },
+        { label: "Recorded weekend days", shortLabel: "Weekend", value: `${weekendCount} days`, tone: "plain" },
+      ],
+    });
+  } else {
+    claims.push({
+      key: "weekday-weekend",
+      label: "Week and weekend",
+      sentence: `${weekdayCount} recorded weekday${weekdayCount === 1 ? "" : "s"} and ${weekendCount} recorded weekend day${weekendCount === 1 ? "" : "s"} are not enough to compare yet.`,
+      evidence: [
+        { label: "Recorded weekdays", shortLabel: "Weekdays", value: `${weekdayCount} days`, tone: "quiet" },
+        { label: "Recorded weekend days", shortLabel: "Weekend", value: `${weekendCount} days`, tone: "quiet" },
+      ],
     });
   }
 
   const allocation = new Map();
-  for (const { day } of days) {
+  for (const { day } of timeDays) {
     for (const block of day.timeBlocks) {
       const group = weekActivityGroup(block.title || block.activity);
       allocation.set(group, (allocation.get(group) || 0) + minutesBetween(block.start, block.end));
@@ -2126,47 +2135,14 @@ export function buildWeekClaims(state, now = new Date()) {
     const [group, minutes] = allocationRows[0];
     claims.push({
       key: "hours",
-      label: "Hours",
-      sentence: `${group} took the most recorded time: ${formatDuration(minutes)}.`,
+      label: "Where time went",
+      sentence: `Across ${timeDays.length} recorded days, ${group.toLowerCase()} took the most recorded time: ${formatDuration(minutes)}.`,
       evidence: allocationRows.slice(0, 4).map(([label, value]) => ({
         label,
         shortLabel: label,
         value: formatDuration(value),
         tone: label === group ? "held" : "plain",
       })),
-    });
-  }
-
-  const energyDays = days
-    .map((item) => {
-      const values = item.day.checkIns.map((checkIn) => checkIn.energy).filter(Number.isFinite);
-      return values.length
-        ? { item, value: values.reduce((total, value) => total + value, 0) / values.length }
-        : null;
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.value - a.value);
-  if (energyDays.length >= 3) {
-    const highest = energyDays.slice(0, 2);
-    const common = highest[0].item.day.timeBlocks
-      .map((block) => weekActivityGroup(block.title || block.activity))
-      .find((group) => highest[1].item.day.timeBlocks.some(
-        (block) => weekActivityGroup(block.title || block.activity) === group,
-      ));
-    claims.push({
-      key: "best-days",
-      label: "Best days",
-      sentence: common
-        ? `Your two highest-energy recorded days both included ${common.toLowerCase()}.`
-        : "Your two highest-energy recorded days did not share one logged activity.",
-      evidence: energyDays.map(({ item, value }) => weekEvidenceDay(item, value.toFixed(1), highest.some((day) => day.item.key === item.key) ? "held" : "plain")),
-    });
-  } else {
-    claims.push({
-      key: "best-days",
-      label: "Best days",
-      sentence: "There are not enough energy check-ins to say what your best days had in common.",
-      evidence: days.map((item) => weekEvidenceDay(item, "no check-in", "quiet")),
     });
   }
   return claims;

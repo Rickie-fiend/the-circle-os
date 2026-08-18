@@ -18,7 +18,15 @@ test("superseded declarations stay behind the shared App back", () => {
   assert.match(mirror, /useAppBack<"current" \| "history">\("current"\)/);
   assert.match(mirror, /versions\.slice\(1\)/);
   assert.match(mirror, /lifeBack\.flip\(/);
-  assert.match(mirror, />\s*History\s*</);
+  assert.match(mirror, /aria-label=\{current \? `Show history for \$\{label\}`/);
+  assert.match(mirror, /!current \? <span>History<\/span> : undefined/);
+  assert.doesNotMatch(mirror, /<button[^>]*>\s*History\s*<\/button>/s);
+});
+
+test("Athena's reading has no rough heuristic and can receive evidence replies", () => {
+  assert.doesNotMatch(mirror, /Rough view|gap-orbits|gapVisualReading/);
+  assert.match(mirror, /function AthenaReadingReply/);
+  assert.match(mirror, /answerSurveyQuestion\(current, prompt, answer, "athena-reading"\)/);
 });
 
 test("a declaration versions only through its explicit Save action", () => {

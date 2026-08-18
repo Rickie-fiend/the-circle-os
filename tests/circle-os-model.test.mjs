@@ -901,6 +901,39 @@ test("weekly claims are sentences backed by local evidence", () => {
   assert.ok(claims.every((claim) => /[.!?]$/.test(claim.sentence)));
   assert.ok(claims.every((claim) => claim.evidence.length > 0));
   assert.equal(claims.some((claim) => claim.key === "silence"), false);
+  assert.deepEqual(
+    claims.slice(0, 4).map((claim) => claim.key),
+    ["morning", "afternoon", "evening", "night"],
+  );
+  assert.ok(claims.some((claim) => claim.key === "weekday-weekend"));
+  assert.ok(claims.some((claim) => claim.key === "hours"));
+  assert.ok(
+    claims.every((claim) => /\b\d+ recorded (?:day|days|weekday|weekdays)/.test(claim.sentence)),
+    "every pattern names the number of recorded days behind it",
+  );
+});
+
+test("a reply to Athena's reading becomes source-linked evidence", () => {
+  const question = {
+    id: "athena-reading-edition-1-days",
+    text: "What changed in your mornings?",
+    target: "currentLife",
+  };
+  const state = answerSurveyQuestion(
+    createEmptyState(),
+    question,
+    "I stopped reaching for my phone first.",
+    "athena-reading",
+  );
+  const answer = state.profile.profileCase.survey.answers.find(
+    (item) => item.questionId === question.id,
+  );
+  assert.equal(answer.kind, "athena-reading");
+  assert.equal(answer.answer, "I stopped reaching for my phone first.");
+  assert.ok(
+    state.athenaMemory.processedEvidenceIds.includes(question.id),
+    "the reply enters Athena's evidence memory",
+  );
 });
 
 test("a task finished by accident can be reopened", () => {

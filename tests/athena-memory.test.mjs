@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   ATHENA_EDITION_LIMIT,
   buildAthenaReading,
+  buildAthenaReadingReplyPrompt,
   captureAthenaThought,
   createAthenaMemory,
   extractAthenaFacts,
@@ -14,6 +15,42 @@ import {
   serializeAthenaMemoryMarkdown,
   suppressAthenaObservation,
 } from "../app/os/athena-memory-model.js";
+
+test("an authored Reading question becomes one reply prompt", () => {
+  const reading = buildAthenaReading({
+    updatedAt: "2026-08-18T06:15:00.000Z",
+    reading: {
+      days: [{
+        heading: "When the days start",
+        paragraphs: [
+          "Your recorded days began late.",
+          "Is midnight still the life you want?",
+        ],
+      }],
+      alive: [],
+      shape: [],
+    },
+  });
+  const prompt = buildAthenaReadingReplyPrompt(
+    "days",
+    reading.pages.days,
+    reading.latestEditionId,
+  );
+  assert.equal(prompt.text, "Is midnight still the life you want?");
+  assert.equal(prompt.target, "currentLife");
+  assert.match(prompt.id, /^athena-reading-edition-/);
+});
+
+test("a Reading statement does not invent a reply prompt", () => {
+  assert.equal(
+    buildAthenaReadingReplyPrompt(
+      "alive",
+      [{ heading: "Moving", paragraphs: ["Walking held through the week."] }],
+      "edition-one",
+    ),
+    null,
+  );
+});
 
 test("builds Athena Reading from active source-linked memory", () => {
   const reading = buildAthenaReading({

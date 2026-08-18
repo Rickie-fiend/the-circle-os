@@ -26,3 +26,49 @@ test("local deep questions may use reviewed mission evidence", () => {
   assert.match(followUp.id, /follow-up$/);
   assert.equal(followUp.source, "follow-up");
 });
+
+test("source-linked Athena curiosity is asked before the static list", () => {
+  const state = {
+    athenaMemory: {
+      curiosity: [{
+        id: "quiet-mornings",
+        question: "What makes a quiet morning feel alive to you?",
+        sourceRefs: [{ sourceType: "day", sourceId: "day:2026-08-17" }],
+        status: "active",
+      }],
+    },
+    profile: {
+      identityFocus: "Yourself",
+      profileCase: { survey: { answers: [] } },
+    },
+    days: {},
+  };
+  const prompt = createLocalDeepThoughtPrompt(state, "2026-08-18", 0);
+  assert.equal(prompt.id, "deep-curiosity-quiet-mornings");
+  assert.equal(prompt.text, "What makes a quiet morning feel alive to you?");
+  assert.equal(prompt.source, "athena");
+});
+
+test("curiosity without evidence or already answered is not asked again", () => {
+  const state = {
+    athenaMemory: {
+      curiosity: [
+        { id: "invented", question: "A question without evidence?", sourceRefs: [] },
+        {
+          id: "answered",
+          question: "A sourced question already answered?",
+          sourceRefs: [{ sourceType: "thought", sourceId: "thought-1" }],
+        },
+      ],
+    },
+    profile: {
+      identityFocus: "Yourself",
+      profileCase: {
+        survey: { answers: [{ questionId: "deep-curiosity-answered" }] },
+      },
+    },
+    days: {},
+  };
+  const prompt = createLocalDeepThoughtPrompt(state, "2026-08-18", 0);
+  assert.equal(prompt.source, "local");
+});

@@ -42,6 +42,34 @@ function short(value, maximum = 64) {
 }
 
 export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
+  const answers = state?.profile?.profileCase?.survey?.answers || [];
+  const curiosity = (Array.isArray(state?.athenaMemory?.curiosity)
+    ? state.athenaMemory.curiosity
+    : [])
+    .filter((item) => {
+      const id = String(item?.id || "").trim();
+      const question = String(item?.question || "").trim();
+      const sourceRefs = Array.isArray(item?.sourceRefs) ? item.sourceRefs : [];
+      return Boolean(
+        id &&
+          question &&
+          item?.status !== "suppressed" &&
+          sourceRefs.length &&
+          !answers.some((answer) => answer.questionId === `deep-curiosity-${id}`),
+      );
+    });
+  if (curiosity.length) {
+    const item = curiosity[Math.max(0, Number(offset) || 0) % curiosity.length];
+    return {
+      id: `deep-curiosity-${item.id}`,
+      text: short(item.question, 280),
+      target: short(item.target, 40) || "whatMatters",
+      dateKey,
+      source: "athena",
+      preparedAt: new Date().toISOString(),
+    };
+  }
+
   const identity = short(state?.profile?.identityFocus);
   const mission = short(state?.days?.[dateKey]?.mission?.text);
   const personalized = [];

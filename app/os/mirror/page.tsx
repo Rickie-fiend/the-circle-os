@@ -14,7 +14,6 @@ import {
   answerSurveyQuestion,
   appSessionIndex,
   buildWeekClaims,
-  compareVisionDeclarations,
   declarationVersions,
   declareLife,
   editProfileSession,
@@ -46,7 +45,10 @@ import {
 import { chapterAnswerText, chapterRunId } from "../chapters/chapter-model.js";
 import type { ChapterRun } from "../chapters/chapter-types";
 import { useChapterPublications } from "../chapters/use-chapter-publications";
-import { buildAthenaReading } from "../athena-memory-model.js";
+import {
+  buildAthenaReading,
+  buildAthenaReadingReplyPrompt,
+} from "../athena-memory-model.js";
 
 const READING_PAGES = ["days", "alive", "shape"] as const;
 
@@ -135,6 +137,69 @@ type DeclarationRecord = {
   supersedesId: string | null;
   targetAt?: string | null;
 };
+
+type AthenaReadingPrompt = {
+  id: string;
+  text: string;
+  target: string;
+};
+
+function AthenaReadingReply({
+  answer,
+  onSend,
+  prompt,
+}: {
+  answer: string;
+  onSend: (answer: string) => void;
+  prompt: AthenaReadingPrompt;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(answer);
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (editing && editorRef.current) sizeTextAreaToContent(editorRef.current);
+  }, [draft, editing]);
+
+  if (!editing) {
+    return (
+      <button
+        className="athena-reading-reply-open"
+        onClick={() => {
+          setDraft(answer);
+          setEditing(true);
+        }}
+        type="button"
+      >
+        {answer ? "Replied" : "Reply"}
+      </button>
+    );
+  }
+
+  return (
+    <form
+      className="athena-reading-reply-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!draft.trim()) return;
+        onSend(draft.trim());
+        setEditing(false);
+      }}
+    >
+      <textarea
+        aria-label={`Reply to Athena: ${prompt.text}`}
+        autoFocus
+        maxLength={1600}
+        onChange={(event) => setDraft(event.currentTarget.value)}
+        placeholder="Write what comes up..."
+        ref={editorRef}
+        rows={2}
+        value={draft}
+      />
+      <button disabled={!draft.trim()} type="submit">Send</button>
+    </form>
+  );
+}
 
 const DECLARATION_PAGES: Array<{
   kind: DeclarationKind;
@@ -373,30 +438,21 @@ function DeclarationPage({
         )
       }
       headerLeft={
-        current ? (
-          <p className="os-card-label">{label}</p>
-        ) : (
+        historyAvailable || !current ? (
           <button
             className="os-card-label vision-history-toggle"
             onClick={onToggleHistory}
+            aria-label={current ? `Show history for ${label}` : `Show current ${label}`}
             type="button"
           >
-            History
+            {label}
           </button>
+        ) : (
+          <p className="os-card-label">{label}</p>
         )
       }
       headerRight={
-        current && historyAvailable ? (
-          <button
-            className="vision-history-toggle"
-            onClick={onToggleHistory}
-            type="button"
-          >
-            History
-          </button>
-        ) : !current ? (
-          <span>{label}</span>
-        ) : undefined
+        !current ? <span>History</span> : undefined
       }
       theme="light"
     >
@@ -493,47 +549,6 @@ function AthenaAnswerPage({
       </div>
     </PageLayout>
   );
-}
-
-type GapVisualMode = "unclear" | "close" | "mixed" | "far";
-
-function gapVisualReading(text: string, recordedDays: number) {
-  const normalized = text.toLowerCase();
-  if (
-    !recordedDays ||
-    /not enough|too early|cannot say|unclear|more logged days|still learning/.test(
-      normalized,
-    )
-  ) {
-    return {
-      mode: "unclear" as GapVisualMode,
-      label: "Still taking shape.",
-    };
-  }
-
-  const soundsClose =
-    /close|match|align|already|overlap|same place|fits/.test(normalized);
-  const soundsFar =
-    /far|apart|wide|different|missing|rarely|not match|does not/.test(
-      normalized,
-    );
-
-  if (soundsClose && !soundsFar) {
-    return {
-      mode: "close" as GapVisualMode,
-      label: "Some parts seem close.",
-    };
-  }
-  if (soundsFar && !soundsClose) {
-    return {
-      mode: "far" as GapVisualMode,
-      label: "Some parts seem far.",
-    };
-  }
-  return {
-    mode: "mixed" as GapVisualMode,
-    label: "Some parts meet. Some do not.",
-  };
 }
 
 export default function CircleOSMirror() {
@@ -650,18 +665,8 @@ export default function CircleOSMirror() {
     athenaReading,
     profileCase.updatedAt,
   );
-  const declarationComparison = compareVisionDeclarations(state);
-  const gapReading =
-    declarationComparison.different === null
-      ? gapVisualReading(profileCase.sessions.gap.text, loggedPastDays)
-      : {
-          mode: declarationComparison.different
-            ? ("far" as GapVisualMode)
-            : ("close" as GapVisualMode),
-          label: declarationComparison.text,
-        };
   const weekJourneyVersion = [
-    "week-claims-v1",
+    "week-claims-v2",
     ...weekClaims.map((claim: { key: string; sentence: string }) =>
       `${claim.key}:${claim.sentence}`,
     ),
@@ -757,6 +762,9 @@ export default function CircleOSMirror() {
           : [],
     ]),
   ) as typeof athenaReading.pages;
+  const betweenPageCount = profileReady
+    ? 4 + (editions.length > 1 ? 1 : 0) + (athenaPrompt ? 1 : 0)
+    : 1;
   const setupComplete = Boolean(
     ready &&
       state.profile.name &&
@@ -885,6 +893,15 @@ export default function CircleOSMirror() {
     );
   }
 
+  function sendAthenaReadingReply(
+    prompt: AthenaReadingPrompt,
+    answer: string,
+  ) {
+    updateState((current) =>
+      answerSurveyQuestion(current, prompt, answer, "athena-reading"),
+    );
+  }
+
   function saveSuggestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!suggestionDraft.trim()) return;
@@ -933,12 +950,25 @@ export default function CircleOSMirror() {
    * edition it would quietly mix this week's evidence into last month's words.
    */
   function athenaReaderApp(
+    page: (typeof READING_PAGES)[number],
     label: string,
     title: string,
     memorySections: Array<{ heading: string; text: string; paragraphs?: string[] }>,
     fallbackKeys: Array<[string, string]>,
     emptyNote?: string,
   ) {
+    const prompt: AthenaReadingPrompt | null = readingLatest
+      ? buildAthenaReadingReplyPrompt(
+          page,
+          memorySections,
+          athenaReading.latestEditionId,
+        )
+      : null;
+    const answer = prompt
+      ? profileCase.survey.answers.find(
+          (item) => item.questionId === prompt.id,
+        )?.answer || ""
+      : "";
     return (
       <article className="athena-reader-app" key={label}>
         <header>
@@ -968,6 +998,13 @@ export default function CircleOSMirror() {
                 profileArticleSection(key, heading),
               )}
         </div>
+        {prompt ? (
+          <AthenaReadingReply
+            answer={answer}
+            onSend={(value) => sendAthenaReadingReply(prompt, value)}
+            prompt={prompt}
+          />
+        ) : null}
       </article>
     );
   }
@@ -1183,26 +1220,12 @@ export default function CircleOSMirror() {
           <SwipeSession
             attentionKey={`between:${athenaReading.latestEditionId || betweenJourneyVersion}`}
             availableIndices={
-              profileReady
-                ? [
-                    0,
-                    1,
-                    2,
-                    3,
-                    4,
-                    ...(editions.length > 1 ? [5] : []),
-                    ...(athenaPrompt ? [editions.length > 1 ? 6 : 5] : []),
-                  ]
-                : [0, 1]
+              Array.from({ length: betweenPageCount }, (_, index) => index)
             }
             className="vision-between-apps athena-reader-session"
             index={visibleBetweenApp}
             label="The space between apps"
-            maxIndex={
-              profileReady
-                ? (editions.length > 1 ? 5 : 4) + (athenaPrompt ? 1 : 0)
-                : 1
-            }
+            maxIndex={betweenPageCount - 1}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -1224,27 +1247,8 @@ export default function CircleOSMirror() {
               <span>{profileReady ? "Swipe to see" : "Still learning"}</span>
             </div>
 
-            <article className={`gap-visual-app is-${gapReading.mode}`}>
-              <div className="gap-visual-head">
-                <p className="os-card-label">Rough view</p>
-                <span>Not a score</span>
-              </div>
-              <div
-                className="gap-orbits"
-                aria-label={`Athena's rough view: ${gapReading.label}`}
-              >
-                <div className="gap-orbit gap-orbit-wanted">
-                  <span>Life you want</span>
-                </div>
-                <div className="gap-orbit gap-orbit-lived">
-                  <span>Life now</span>
-                </div>
-              </div>
-              <h2>{gapReading.label}</h2>
-              <p>Athena is making a rough guess from the days you recorded.</p>
-            </article>
-
             {athenaReaderApp(
+              "days",
               readingLatest ? "Your days" : `Your days · ${editionDateLabel(openEdition)}`,
               "The life you are living.",
               readingPages.days,
@@ -1252,6 +1256,7 @@ export default function CircleOSMirror() {
               readingLatest ? undefined : editionSilenceNote(openEdition),
             )}
             {athenaReaderApp(
+              "alive",
               readingLatest
                 ? "What feels alive"
                 : `What feels alive · ${editionDateLabel(openEdition)}`,
@@ -1264,6 +1269,7 @@ export default function CircleOSMirror() {
               readingLatest ? undefined : editionSilenceNote(openEdition),
             )}
             {athenaReaderApp(
+              "shape",
               readingLatest ? "Your shape" : `Your shape · ${editionDateLabel(openEdition)}`,
               "How you may move through life.",
               readingPages.shape,
