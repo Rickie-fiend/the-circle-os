@@ -195,11 +195,6 @@ const DECLARATION_PAGES: Array<{
     label: "Typical Tuesday",
     empty: "What does an ordinary day in that life look like?",
   },
-  {
-    kind: "dreamline",
-    label: "Dreamline",
-    empty: "What do you want to make real in six months?",
-  },
 ];
 
 const DECLARATION_CHAPTERS: Record<DeclarationKind, string> = {
@@ -610,9 +605,10 @@ export default function CircleOSMirror() {
       ? declarationHistoryPages
       : currentDeclarationPages;
   const lifePageCount = declarationPageRecords.length;
-  // The current deck always has the same four kinds. A new immutable record
-  // changes the words on the current Page, not the Page collection or index.
-  const lifeJourneyVersion = "declarations-current-v2";
+  // The current deck always has the same three kinds. Legacy Dreamline
+  // declaration records remain immutable in state, but desired lifestyle now
+  // belongs to the finite Dreamline App behind Log.
+  const lifeJourneyVersion = "declarations-current-v3";
   const visibleLifeApp = appSessionIndex(
     state,
     "vision-life",

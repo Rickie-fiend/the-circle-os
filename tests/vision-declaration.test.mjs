@@ -9,9 +9,16 @@ const mirror = readFileSync(
 
 test("Vision keeps one stable current Page per declaration kind", () => {
   assert.match(mirror, /const currentDeclarationPages = DECLARATION_PAGES\.map/);
-  assert.match(mirror, /const lifeJourneyVersion = "declarations-current-v2"/);
+  assert.match(mirror, /const lifeJourneyVersion = "declarations-current-v3"/);
   assert.match(mirror, /key=\{page\.current \? `current-\$\{page\.kind\}`/);
   assert.doesNotMatch(mirror, /\.\.\.versions\.map\(\(record, index\)/);
+});
+
+test("Vision keeps legacy Dreamline data but no longer renders it as a declaration Page", () => {
+  const declarationPages = mirror.match(/const DECLARATION_PAGES:[\s\S]*?\n\];/)?.[0] || "";
+  assert.doesNotMatch(declarationPages, /kind: "dreamline"/);
+  assert.match(mirror, /dreamline: "declare-dreamline"/);
+  assert.match(mirror, /dreamline-dream/);
 });
 
 test("superseded declarations stay behind the shared App back", () => {

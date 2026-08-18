@@ -277,6 +277,12 @@ export function mergeClientState(serverValue, phoneValue) {
         phone.declarations.records,
       ),
     },
+    dreamlines: {
+      records: mergeUpdatedRecords(
+        server.dreamlines.records,
+        phone.dreamlines.records,
+      ),
+    },
     // A protocol is a container of time and its terms are locked, so a run
     // merges whole by updatedAt. Without this the server copy would win by
     // spread and a protocol started on the phone would vanish on sync.

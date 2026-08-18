@@ -17,6 +17,10 @@ export const DECLARATION_KINDS = Object.freeze([
   "dreamline",
 ]);
 
+export const DREAMLINE_CATEGORIES = Object.freeze(["having", "being", "doing"]);
+export const DREAMLINE_STEP_KEYS = Object.freeze(["now", "tomorrow", "dayAfter"]);
+export const DREAMLINE_STAR_LIMIT = 4;
+
 export const PROFILE_SESSION_KEYS = [
   "typicalTuesday",
   "currentLife",
@@ -462,9 +466,98 @@ function normalizeDeclarations(value) {
   return { records };
 }
 
+function validMoment(value) {
+  return typeof value === "string" && !Number.isNaN(new Date(value).getTime())
+    ? value
+    : null;
+}
+
+function dreamlineMonths(value) {
+  const months = Math.round(Number(value));
+  return Number.isFinite(months) ? Math.max(1, Math.min(60, months)) : 6;
+}
+
+function dreamlineCents(value) {
+  const cents = Math.round(Number(value));
+  return Number.isFinite(cents) ? Math.max(0, cents) : 0;
+}
+
+function addUtcMonths(value, months) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setUTCMonth(date.getUTCMonth() + dreamlineMonths(months));
+  return date.toISOString();
+}
+
+function normalizeDreamlineItem(key, value) {
+  if (!value || !DREAMLINE_CATEGORIES.includes(value.category)) return null;
+  const id = cleanHabitPart(value.id || key, 160);
+  const text = cleanHabitPart(value.text, 480);
+  if (!id || !text) return null;
+  const steps = Object.fromEntries(
+    DREAMLINE_STEP_KEYS.map((step) => [step, cleanHabitPart(value.steps?.[step], 600)]),
+  );
+  return {
+    id,
+    category: value.category,
+    text,
+    convertedDoing:
+      value.category === "being"
+        ? cleanHabitPart(value.convertedDoing, 480)
+        : "",
+    costCents: dreamlineCents(value.costCents),
+    cadence: value.cadence === "one-time" ? "one-time" : "monthly",
+    starred: Boolean(value.starred),
+    steps,
+    createdAt: validMoment(value.createdAt) || validMoment(value.updatedAt) || "",
+    updatedAt: validMoment(value.updatedAt) || validMoment(value.createdAt) || "",
+  };
+}
+
+function normalizeDreamlines(value) {
+  const records = {};
+  for (const [key, candidate] of Object.entries(value?.records || {})) {
+    if (!candidate || typeof candidate !== "object") continue;
+    const id = cleanHabitPart(candidate.id || key, 160);
+    const createdAt = validMoment(candidate.createdAt);
+    const updatedAt = validMoment(candidate.updatedAt) || createdAt;
+    if (!id || !createdAt || !updatedAt) continue;
+    const status = ["active", "concluded"].includes(candidate.status)
+      ? candidate.status
+      : "active";
+    const months = dreamlineMonths(candidate.months);
+    const startedAt = validMoment(candidate.startedAt) || createdAt;
+    const targetAt = validMoment(candidate.targetAt) || addUtcMonths(startedAt, months);
+    const items = Object.fromEntries(
+      Object.entries(candidate.items || {})
+        .map(([itemId, item]) => {
+          const normalized = normalizeDreamlineItem(itemId, item);
+          return normalized ? [normalized.id, normalized] : null;
+        })
+        .filter(Boolean),
+    );
+    records[id] = {
+      id,
+      status,
+      months,
+      monthlyExpensesCents: dreamlineCents(candidate.monthlyExpensesCents),
+      items,
+      createdAt,
+      startedAt,
+      targetAt,
+      concludedAt:
+        status === "concluded"
+          ? validMoment(candidate.concludedAt) || targetAt || updatedAt
+          : null,
+      updatedAt,
+    };
+  }
+  return { records };
+}
+
 export function createEmptyState() {
   return {
-    version: 6,
+    version: 7,
     ai: {
       baseUrl: CIRCLE_OS_SERVER_URL,
       token: "",
@@ -506,6 +599,9 @@ export function createEmptyState() {
       items: {},
     },
     declarations: {
+      records: {},
+    },
+    dreamlines: {
       records: {},
     },
     protocol: {
@@ -610,7 +706,7 @@ export function normalizeState(state) {
   return {
     ...empty,
     ...state,
-    version: 6,
+    version: 7,
     ai: {
       ...empty.ai,
       ...state.ai,
@@ -677,6 +773,7 @@ export function normalizeState(state) {
       items: mergeRecordMaps(migratedPractice.tasks, storedTasks),
     },
     declarations: normalizeDeclarations(state.declarations),
+    dreamlines: normalizeDreamlines(state.dreamlines),
     evidence: {
       ...empty.evidence,
       ...(state.evidence || {}),
@@ -800,6 +897,281 @@ export function declareLife(
   }
 
   return queueProfileUpdate(next, `declaration-${kind}`);
+}
+
+function dreamlineIsExpired(record, now = new Date()) {
+  const target = new Date(record?.targetAt || "");
+  return (
+    record?.status === "active" &&
+    !Number.isNaN(target.getTime()) &&
+    target.getTime() <= now.getTime()
+  );
+}
+
+function dreamlineView(record, now = new Date()) {
+  if (!record) return null;
+  if (!dreamlineIsExpired(record, now)) return record;
+  return {
+    ...record,
+    status: "concluded",
+    concludedAt: record.targetAt,
+  };
+}
+
+export function dreamlineRecords(state, now = new Date()) {
+  return Object.values(state.dreamlines?.records || {})
+    .map((record) => dreamlineView(record, now))
+    .filter(Boolean)
+    .sort((left, right) =>
+      String(right.createdAt || "").localeCompare(String(left.createdAt || "")),
+    );
+}
+
+export function currentDreamline(state, now = new Date()) {
+  return dreamlineRecords(state, now).find((record) => record.status === "active") || null;
+}
+
+function withDreamlineRecord(state, record, reason) {
+  return queueProfileUpdate(
+    {
+      ...state,
+      dreamlines: {
+        ...(state.dreamlines || {}),
+        records: {
+          ...(state.dreamlines?.records || {}),
+          [record.id]: record,
+        },
+      },
+    },
+    reason,
+  );
+}
+
+export function startDreamline(
+  state,
+  {
+    id = "",
+    months = 6,
+    monthlyExpensesCents = 0,
+    startedAt = new Date().toISOString(),
+  } = {},
+) {
+  if (currentDreamline(state, new Date(startedAt))) {
+    return { state, error: "Finish the current Dreamline before starting another." };
+  }
+  const recordId = id || freshRecordId(`dreamline-${new Date(startedAt).getTime()}`);
+  if (state.dreamlines?.records?.[recordId]) return { state, error: "" };
+  const cleanMonths = dreamlineMonths(months);
+  const record = {
+    id: recordId,
+    status: "active",
+    months: cleanMonths,
+    monthlyExpensesCents: dreamlineCents(monthlyExpensesCents),
+    items: {},
+    createdAt: startedAt,
+    startedAt,
+    targetAt: addUtcMonths(startedAt, cleanMonths),
+    concludedAt: null,
+    updatedAt: startedAt,
+  };
+  return {
+    state: withDreamlineRecord(state, record, "dreamline-started"),
+    record,
+    error: "",
+  };
+}
+
+/**
+ * @param {object} state
+ * @param {string} recordId
+ * @param {{months?: number | null, monthlyExpensesCents?: number | null, updatedAt?: string}} [options]
+ */
+export function updateDreamlineSetup(
+  state,
+  recordId,
+  {
+    months = null,
+    monthlyExpensesCents = null,
+    updatedAt = new Date().toISOString(),
+  } = {},
+) {
+  const record = state.dreamlines?.records?.[recordId];
+  if (!record || record.status !== "active" || dreamlineIsExpired(record, new Date(updatedAt))) {
+    return { state, error: "This Dreamline has concluded." };
+  }
+  const cleanMonths = dreamlineMonths(months ?? record.months);
+  const next = {
+    ...record,
+    months: cleanMonths,
+    monthlyExpensesCents: dreamlineCents(
+      monthlyExpensesCents ?? record.monthlyExpensesCents,
+    ),
+    targetAt: addUtcMonths(record.startedAt, cleanMonths),
+    updatedAt,
+  };
+  return { state: withDreamlineRecord(state, next, "dreamline-setup"), record: next, error: "" };
+}
+
+export function saveDreamlineItem(
+  state,
+  recordId,
+  value,
+  { id = "", updatedAt = new Date().toISOString() } = {},
+) {
+  const record = state.dreamlines?.records?.[recordId];
+  if (!record || record.status !== "active" || dreamlineIsExpired(record, new Date(updatedAt))) {
+    return { state, error: "This Dreamline has concluded." };
+  }
+  const category = DREAMLINE_CATEGORIES.includes(value?.category)
+    ? value.category
+    : "";
+  const text = cleanHabitPart(value?.text, 480);
+  const convertedDoing =
+    category === "being" ? cleanHabitPart(value?.convertedDoing, 480) : "";
+  if (!category || !text) return { state, error: "Name the dream before saving it." };
+  if (category === "being" && !convertedDoing) {
+    return {
+      state,
+      error: "A Being needs the Doing that would make it real.",
+    };
+  }
+  const itemId = id || cleanHabitPart(value?.id, 160) || freshRecordId(`dreamline-${category}`);
+  const existing = record.items?.[itemId];
+  if (!existing) {
+    const categoryCount = Object.values(record.items || {}).filter(
+      (item) => item.category === category,
+    ).length;
+    if (categoryCount >= 5) {
+      return { state, error: `Keep ${category} to five lines.` };
+    }
+  }
+  const item = {
+    id: itemId,
+    category,
+    text,
+    convertedDoing,
+    costCents: dreamlineCents(value?.costCents),
+    cadence: value?.cadence === "one-time" ? "one-time" : "monthly",
+    starred: Boolean(existing?.starred),
+    steps: existing?.steps || { now: "", tomorrow: "", dayAfter: "" },
+    createdAt: existing?.createdAt || updatedAt,
+    updatedAt,
+  };
+  const next = {
+    ...record,
+    items: { ...(record.items || {}), [itemId]: item },
+    updatedAt,
+  };
+  return {
+    state: withDreamlineRecord(state, next, "dreamline-line"),
+    record: next,
+    item,
+    error: "",
+  };
+}
+
+export function setDreamlineStarred(
+  state,
+  recordId,
+  itemId,
+  starred,
+  { updatedAt = new Date().toISOString() } = {},
+) {
+  const record = state.dreamlines?.records?.[recordId];
+  const item = record?.items?.[itemId];
+  if (!record || !item || record.status !== "active" || dreamlineIsExpired(record, new Date(updatedAt))) {
+    return { state, error: "This Dreamline has concluded." };
+  }
+  if (starred && item.category === "being" && !cleanHabitPart(item.convertedDoing)) {
+    return { state, error: "Turn this Being into a Doing before you star it." };
+  }
+  const starredCount = Object.values(record.items || {}).filter(
+    (candidate) => candidate.starred && candidate.id !== itemId,
+  ).length;
+  if (starred && starredCount >= DREAMLINE_STAR_LIMIT) {
+    return { state, error: "Choose no more than four dreams. The stars are your 80/20." };
+  }
+  const nextItem = { ...item, starred: Boolean(starred), updatedAt };
+  const next = {
+    ...record,
+    items: { ...record.items, [itemId]: nextItem },
+    updatedAt,
+  };
+  return { state: withDreamlineRecord(state, next, "dreamline-star"), item: nextItem, error: "" };
+}
+
+export function updateDreamlineStep(
+  state,
+  recordId,
+  itemId,
+  step,
+  text,
+  { updatedAt = new Date().toISOString() } = {},
+) {
+  const record = state.dreamlines?.records?.[recordId];
+  const item = record?.items?.[itemId];
+  if (!record || !item || record.status !== "active" || dreamlineIsExpired(record, new Date(updatedAt))) {
+    return { state, error: "This Dreamline has concluded." };
+  }
+  if (!item.starred) return { state, error: "Star a dream before giving it steps." };
+  if (!DREAMLINE_STEP_KEYS.includes(step)) return { state, error: "Unknown Dreamline step." };
+  const nextItem = {
+    ...item,
+    steps: { ...(item.steps || {}), [step]: cleanHabitPart(text, 600) },
+    updatedAt,
+  };
+  const next = {
+    ...record,
+    items: { ...record.items, [itemId]: nextItem },
+    updatedAt,
+  };
+  return { state: withDreamlineRecord(state, next, "dreamline-step"), item: nextItem, error: "" };
+}
+
+export function dreamlineIncome(record) {
+  const months = dreamlineMonths(record?.months);
+  const totals = { having: 0, being: 0, doing: 0 };
+  for (const item of Object.values(record?.items || {})) {
+    if (!item.starred || !DREAMLINE_CATEGORIES.includes(item.category)) continue;
+    const cost = dreamlineCents(item.costCents) / 100;
+    totals[item.category] += item.cadence === "one-time" ? cost / months : cost;
+  }
+  const expenseBuffer = (dreamlineCents(record?.monthlyExpensesCents) / 100) * 1.3;
+  const monthly = totals.having + totals.being + totals.doing + expenseBuffer;
+  return {
+    months,
+    having: totals.having,
+    being: totals.being,
+    doing: totals.doing,
+    expenseBuffer,
+    monthly,
+    daily: monthly / 30,
+  };
+}
+
+export function concludeExpiredDreamlines(state, now = new Date()) {
+  const timestamp = now.toISOString();
+  let changed = false;
+  const records = Object.fromEntries(
+    Object.entries(state.dreamlines?.records || {}).map(([id, record]) => {
+      if (!dreamlineIsExpired(record, now)) return [id, record];
+      changed = true;
+      return [
+        id,
+        {
+          ...record,
+          status: "concluded",
+          concludedAt: record.targetAt || timestamp,
+          updatedAt: timestamp,
+        },
+      ];
+    }),
+  );
+  if (!changed) return state;
+  return queueProfileUpdate(
+    { ...state, dreamlines: { records } },
+    "dreamline-concluded",
+  );
 }
 
 function comparisonWords(value) {
@@ -1086,6 +1458,12 @@ export function mergeServerState(state, serverState) {
       records: mergeRecordMaps(
         remote.declarations.records,
         local.declarations.records,
+      ),
+    },
+    dreamlines: {
+      records: mergeUpdatedRecords(
+        remote.dreamlines.records,
+        local.dreamlines.records,
       ),
     },
     protocol: {

@@ -21,6 +21,10 @@ import {
   answerSurveyQuestion,
   connectLocalAi,
   createEmptyState,
+  concludeExpiredDreamlines,
+  currentDreamline,
+  dreamlineIncome,
+  dreamlineRecords,
   ensureDay,
   activeProtocolRun,
   addProtocolItem,
@@ -39,6 +43,9 @@ import {
   setProtocolDays,
   startProtocolDraft,
   sealProtocolDay,
+  saveDreamlineItem,
+  setDreamlineStarred,
+  startDreamline,
   toggleProtocolItem,
   toggleProtocolRecordItem,
   updateProtocolItem,
@@ -59,6 +66,8 @@ import {
   updateHabitDefinitionDraft,
   updateHabitDefinitionParts,
   updateRoutineIdentity,
+  updateDreamlineSetup,
+  updateDreamlineStep,
   updateTask,
   upsertTimeBlock,
 } from "./circle-os-model.js";
@@ -77,6 +86,16 @@ import {
 } from "./app-session";
 import { sizeTextAreaToContent } from "./text-area-size";
 import { useAppBack } from "./app-back";
+import {
+  DreamlineIncomePage,
+  DreamlineLinesPage,
+  DreamlineSetupPage,
+  DreamlineStepsPage,
+  type DreamlineCategory,
+  type DreamlineItem,
+  type DreamlineRecord,
+  type DreamlineStep,
+} from "./dreamline-pages";
 import linePool from "./lines/lines.json";
 import { selectLine } from "./lines/line-pool.js";
 import notePlaceholderPool from "./note-placeholders/note-placeholders.json";
@@ -543,6 +562,37 @@ export type CircleState = {
       }
     >;
   };
+  dreamlines: {
+    records: Record<
+      string,
+      {
+        id: string;
+        status: "active" | "concluded";
+        months: number;
+        monthlyExpensesCents: number;
+        items: Record<
+          string,
+          {
+            id: string;
+            category: "having" | "being" | "doing";
+            text: string;
+            convertedDoing: string;
+            costCents: number;
+            cadence: "monthly" | "one-time";
+            starred: boolean;
+            steps: { now: string; tomorrow: string; dayAfter: string };
+            createdAt: string;
+            updatedAt: string;
+          }
+        >;
+        createdAt: string;
+        startedAt: string;
+        targetAt: string | null;
+        concludedAt: string | null;
+        updatedAt: string;
+      }
+    >;
+  };
   protocol: {
     runs: Record<string, Record<string, unknown>>;
     completions: Record<string, Record<string, unknown>>;
@@ -638,6 +688,7 @@ function serverSignature(state: CircleState) {
     habits: payload.habits,
     tasks: payload.tasks,
     declarations: payload.declarations,
+    dreamlines: payload.dreamlines,
     evidence: payload.evidence,
     outbox: payload.outbox,
   });
@@ -1327,6 +1378,7 @@ export function TodayExperience() {
   const thoughtLabelTimer = useRef<number | null>(null);
   const thoughtResetTimer = useRef<number | null>(null);
   const routineBack = useAppBack<"habit" | "yesterday">("habit");
+  const dreamlineBack = useAppBack<"dream" | "steps">("dream");
   const habitMode = routineBack.side;
   const [newProtocolItemId, setNewProtocolItemId] = useState<string | null>(null);
   const [sealedProtocolDay, setSealedProtocolDay] =
@@ -1666,6 +1718,124 @@ export function TodayExperience() {
   const logSetupDone = logSetupRun
     ? logSetupRun.status === "completed"
     : routineTimesKnown;
+  const activeDreamline = currentDreamline(state, liveNow) as DreamlineRecord | null;
+  const pastDreamlines = dreamlineRecords(state, liveNow).filter(
+    (record) => record.status === "concluded",
+  ) as DreamlineRecord[];
+  const dreamlineRecordId = activeDreamline?.id || pastDreamlines[0]?.id || "setup";
+  const logAppVersion = `log-dreamline-v1:${dreamlineBack.side}:${dreamlineRecordId}`;
+  const logAppMaxIndex = activeDreamline
+    ? dreamlineBack.side === "dream"
+      ? 5
+      : 3
+    : 1;
+  const logAppIndex = Math.min(
+    appSessionIndex(state, "today-log", logAppVersion),
+    logAppMaxIndex,
+  );
+  const starredDreamlineItems = activeDreamline
+    ? (Object.values(activeDreamline.items)
+        .filter((item) => item.starred)
+        .sort((left, right) => left.createdAt.localeCompare(right.createdAt)) as DreamlineItem[])
+    : [];
+  const dreamlineIncomeView = dreamlineIncome(activeDreamline);
+
+  useEffect(() => {
+    updateState((current) => concludeExpiredDreamlines(current, liveNow));
+  }, [liveNow, state.dreamlines.records, updateState]);
+
+  function logVersionFor(side: "dream" | "steps", recordId = dreamlineRecordId) {
+    return `log-dreamline-v1:${side}:${recordId}`;
+  }
+
+  function saveLogAppIndex(index: number) {
+    updateState((current) =>
+      setAppSessionIndex(current, "today-log", logAppVersion, index),
+    );
+  }
+
+  function flipDreamline(nextSide: "dream" | "steps", source: HTMLElement) {
+    if (!activeDreamline) return;
+    dreamlineBack.flip(
+      nextSide,
+      () =>
+        updateState((current) =>
+          setAppSessionIndex(
+            current,
+            "today-log",
+            logVersionFor(nextSide, activeDreamline.id),
+            1,
+          ),
+        ),
+      source,
+    );
+  }
+
+  function beginDreamline(months: number, monthlyExpensesCents: number) {
+    const result = startDreamline(state, { months, monthlyExpensesCents });
+    if (result.error || !result.record) return result.error || "The Dreamline could not begin.";
+    const next = setAppSessionIndex(
+      result.state,
+      "today-log",
+      logVersionFor("dream", result.record.id),
+      1,
+    );
+    updateState(() => next);
+    return "";
+  }
+
+  function saveDreamlineSetup(months: number, monthlyExpensesCents: number) {
+    if (!activeDreamline) return "Begin the Dreamline first.";
+    const result = updateDreamlineSetup(state, activeDreamline.id, {
+      months,
+      monthlyExpensesCents,
+    });
+    if (!result.error) updateState(() => result.state);
+    return result.error;
+  }
+
+  function saveDreamlineLine(
+    value: {
+      category: DreamlineCategory;
+      text: string;
+      convertedDoing: string;
+      costCents: number;
+      cadence: "monthly" | "one-time";
+    },
+    itemId?: string,
+  ) {
+    if (!activeDreamline) return "Begin the Dreamline first.";
+    const result = saveDreamlineItem(state, activeDreamline.id, value, {
+      ...(itemId ? { id: itemId } : {}),
+    });
+    if (!result.error) updateState(() => result.state);
+    return result.error;
+  }
+
+  function starDreamlineLine(item: DreamlineItem, starred: boolean) {
+    if (!activeDreamline) return "Begin the Dreamline first.";
+    const result = setDreamlineStarred(
+      state,
+      activeDreamline.id,
+      item.id,
+      starred,
+    );
+    if (!result.error) updateState(() => result.state);
+    return result.error;
+  }
+
+  function saveDreamlineStep(itemId: string, step: DreamlineStep, value: string) {
+    if (!activeDreamline) return "Begin the Dreamline first.";
+    const result = updateDreamlineStep(
+      state,
+      activeDreamline.id,
+      itemId,
+      step,
+      value,
+    );
+    if (!result.error) updateState(() => result.state);
+    return result.error;
+  }
 
   function beginNewHabit() {
     const existing = habits.find((habit) => !habit.text.trim());
@@ -2936,10 +3106,16 @@ export function TodayExperience() {
         ) : (
         <section className="os-log-section" aria-labelledby="day-heading">
           <SwipeSession
-            className="os-log-session"
-            index={0}
-            label="Log"
-            onIndexChange={() => {}}
+            attentionKey={`today-log:${logAppVersion}`}
+            availableIndices={Array.from(
+              { length: logAppMaxIndex + 1 },
+              (_, index) => index,
+            )}
+            className={`os-log-session ${dreamlineBack.className}`.trim()}
+            index={logAppIndex}
+            label="Log apps"
+            maxIndex={logAppMaxIndex}
+            onIndexChange={saveLogAppIndex}
           >
             <PageLayout
               className="os-log-page"
@@ -3141,6 +3317,59 @@ export function TodayExperience() {
             ) : null}
               </div>
             </PageLayout>
+            {!activeDreamline || dreamlineBack.side === "dream" ? (
+              <DreamlineSetupPage
+                history={pastDreamlines}
+                key={`dreamline-setup-${activeDreamline?.id || "new"}-${
+                  activeDreamline?.months || 6
+                }-${activeDreamline?.monthlyExpensesCents || 0}`}
+                onFlip={(source) => flipDreamline("steps", source)}
+                onSave={saveDreamlineSetup}
+                onStart={beginDreamline}
+                record={activeDreamline}
+              />
+            ) : null}
+            {activeDreamline && dreamlineBack.side === "dream"
+              ? (["having", "being", "doing"] as DreamlineCategory[]).map(
+                  (category) => (
+                    <DreamlineLinesPage
+                      category={category}
+                      key={`dreamline-${category}`}
+                      onFlip={(source) => flipDreamline("steps", source)}
+                      onSave={saveDreamlineLine}
+                      onStar={starDreamlineLine}
+                      record={activeDreamline}
+                    />
+                  ),
+                )
+              : null}
+            {activeDreamline && dreamlineBack.side === "dream" ? (
+              <DreamlineIncomePage
+                income={dreamlineIncomeView}
+                key="dreamline-income"
+                onFlip={(source) => flipDreamline("steps", source)}
+              />
+            ) : null}
+            {activeDreamline && dreamlineBack.side === "steps"
+              ? (
+                  [
+                    ["now", "Now"],
+                    ["tomorrow", "Tomorrow"],
+                    ["dayAfter", "Day After"],
+                  ] as Array<[DreamlineStep, string]>
+                ).map(([step, label]) => (
+                  <DreamlineStepsPage
+                    items={starredDreamlineItems}
+                    key={`dreamline-step-${step}`}
+                    label={label}
+                    onFlip={(source) => flipDreamline("dream", source)}
+                    onSave={(itemId, value) =>
+                      saveDreamlineStep(itemId, step, value)
+                    }
+                    step={step}
+                  />
+                ))
+              : null}
           </SwipeSession>
         </section>
         )}

@@ -22,12 +22,16 @@ import {
   completeTask,
   compareVisionDeclarations,
   connectLocalAi,
+  concludeExpiredDreamlines,
   createEmptyState,
   createSampleState,
   currentDeclaration,
+  currentDreamline,
   dayRecord,
   declarationVersions,
   declareLife,
+  dreamlineIncome,
+  dreamlineRecords,
   discardEmptyHabit,
   discardEmptyProtocolItem,
   discardEmptyTask,
@@ -50,13 +54,17 @@ import {
   setDayLogRange,
   setProtocolDays,
   sealProtocolDay,
+  saveDreamlineItem,
   startProtocolDraft,
+  startDreamline,
   summarizeWeek,
   toggleHabitForDay,
   toggleProtocolItem,
   toggleProtocolRecordItem,
+  setDreamlineStarred,
   updateHabitDefinition,
   updateRoutineIdentity,
+  updateDreamlineStep,
   updateProtocolItem,
   updateTask,
   upsertTimeBlock,
@@ -386,6 +394,144 @@ test("a dreamline sends its now step to Today and a new version replaces the ope
   assert.equal(state.tasks.items["dreamline-now-dream-one"].status, "archived");
   assert.equal(state.tasks.items["dreamline-now-dream-two"].status, "open");
   assert.equal(state.tasks.items["dreamline-now-dream-two"].sourceDeclarationId, "dream-two");
+});
+
+test("the Dreamline App starts a separate finite record without migrating Vision writing", () => {
+  let state = declareLife(
+    createEmptyState(),
+    "dreamline",
+    {
+      dream: "Publish the first small book.",
+      now: "Write the first page.",
+      tomorrow: "Read it out loud.",
+      dayAfter: "Send it to one friend.",
+    },
+    { id: "legacy-dream", declaredAt: "2026-08-01T09:00:00.000Z" },
+  );
+  const started = startDreamline(state, {
+    id: "lifestyle-one",
+    months: 6,
+    monthlyExpensesCents: 200000,
+    startedAt: "2026-08-19T09:00:00.000Z",
+  });
+  state = started.state;
+
+  assert.equal(currentDreamline(state, new Date("2026-08-20T09:00:00.000Z")).id, "lifestyle-one");
+  assert.equal(state.dreamlines.records["lifestyle-one"].targetAt, "2027-02-19T09:00:00.000Z");
+  assert.equal(state.declarations.records["legacy-dream"].content.dream, "Publish the first small book.");
+  assert.equal(Object.keys(state.dreamlines.records).length, 1);
+});
+
+test("a Being is refused until it names the Doing that makes it real", () => {
+  const started = startDreamline(createEmptyState(), {
+    id: "being-test",
+    startedAt: "2026-08-19T09:00:00.000Z",
+  });
+  const refused = saveDreamlineItem(
+    started.state,
+    "being-test",
+    { category: "being", text: "An excellent storyteller", costCents: 0 },
+    { id: "storyteller", updatedAt: "2026-08-19T09:01:00.000Z" },
+  );
+  assert.match(refused.error, /Doing that would make it real/i);
+  assert.equal(started.state.dreamlines.records["being-test"].items.storyteller, undefined);
+
+  const saved = saveDreamlineItem(
+    started.state,
+    "being-test",
+    {
+      category: "being",
+      text: "An excellent storyteller",
+      convertedDoing: "Give a one-minute story about anything",
+      costCents: 0,
+    },
+    { id: "storyteller", updatedAt: "2026-08-19T09:02:00.000Z" },
+  );
+  assert.equal(saved.error, "");
+  assert.equal(saved.item.convertedDoing, "Give a one-minute story about anything");
+});
+
+test("Dreamline costs carry one-time precision into A, B, C, TMI and TDI", () => {
+  let state = startDreamline(createEmptyState(), {
+    id: "worksheet",
+    months: 6,
+    monthlyExpensesCents: 200000,
+    startedAt: "2026-08-19T09:00:00.000Z",
+  }).state;
+  const rows = [
+    ["car", "having", "A car", 200300, "monthly"],
+    ["assistant", "having", "An assistant", 40000, "monthly"],
+    ["airfare", "doing", "Fly somewhere", 51400, "one-time"],
+    ["rent", "doing", "Stay for a month", 42000, "one-time"],
+  ];
+  for (const [id, category, text, costCents, cadence] of rows) {
+    state = saveDreamlineItem(
+      state,
+      "worksheet",
+      { category, text, costCents, cadence },
+      { id, updatedAt: `2026-08-19T09:0${rows.findIndex((row) => row[0] === id) + 1}:00.000Z` },
+    ).state;
+    state = setDreamlineStarred(state, "worksheet", id, true, {
+      updatedAt: `2026-08-19T09:1${rows.findIndex((row) => row[0] === id)}:00.000Z`,
+    }).state;
+  }
+  const income = dreamlineIncome(state.dreamlines.records.worksheet);
+  assert.equal(income.having, 2403);
+  assert.equal(income.being, 0);
+  assert.ok(Math.abs(income.doing - 155.66666666666666) < 1e-9);
+  assert.equal(income.expenseBuffer, 2600);
+  assert.ok(Math.abs(income.monthly - 5158.666666666667) < 1e-9);
+  assert.ok(Math.abs(income.daily - 171.95555555555558) < 1e-9);
+});
+
+test("only starred dreams take steps and unstarring preserves their writing", () => {
+  let state = startDreamline(createEmptyState(), {
+    id: "steps",
+    startedAt: "2026-08-19T09:00:00.000Z",
+  }).state;
+  state = saveDreamlineItem(
+    state,
+    "steps",
+    { category: "doing", text: "See Kyoto", costCents: 90000, cadence: "one-time" },
+    { id: "kyoto", updatedAt: "2026-08-19T09:01:00.000Z" },
+  ).state;
+  const refused = updateDreamlineStep(state, "steps", "kyoto", "now", "Find the flight.", {
+    updatedAt: "2026-08-19T09:02:00.000Z",
+  });
+  assert.match(refused.error, /Star a dream/i);
+  state = setDreamlineStarred(state, "steps", "kyoto", true, {
+    updatedAt: "2026-08-19T09:03:00.000Z",
+  }).state;
+  state = updateDreamlineStep(state, "steps", "kyoto", "now", "Find the flight.", {
+    updatedAt: "2026-08-19T09:04:00.000Z",
+  }).state;
+  state = setDreamlineStarred(state, "steps", "kyoto", false, {
+    updatedAt: "2026-08-19T09:05:00.000Z",
+  }).state;
+  assert.equal(state.dreamlines.records.steps.items.kyoto.steps.now, "Find the flight.");
+  assert.equal(state.dreamlines.records.steps.items.kyoto.starred, false);
+});
+
+test("an expired Dreamline reads concluded, persists once, and allows a new one", () => {
+  let state = startDreamline(createEmptyState(), {
+    id: "old-line",
+    months: 1,
+    startedAt: "2026-01-01T09:00:00.000Z",
+  }).state;
+  const now = new Date("2026-02-02T09:00:00.000Z");
+  assert.equal(currentDreamline(state, now), null);
+  assert.equal(dreamlineRecords(state, now)[0].status, "concluded");
+  state = concludeExpiredDreamlines(state, now);
+  assert.equal(state.dreamlines.records["old-line"].status, "concluded");
+  assert.equal(state.dreamlines.records["old-line"].concludedAt, "2026-02-01T09:00:00.000Z");
+  const next = startDreamline(state, {
+    id: "new-line",
+    months: 6,
+    startedAt: "2026-02-02T09:01:00.000Z",
+  });
+  assert.equal(next.error, "");
+  assert.equal(next.state.dreamlines.records["old-line"].status, "concluded");
+  assert.equal(next.state.dreamlines.records["new-line"].status, "active");
 });
 
 test("declaration versions from two devices merge as an immutable union", () => {

@@ -22,6 +22,8 @@ import {
   declareLife,
   queueProfileUpdate,
   queueSuggestion,
+  saveDreamlineItem,
+  startDreamline,
 } from "../app/os/circle-os-model.js";
 
 function firstVision(name = "Sai") {
@@ -291,6 +293,33 @@ test("dated declaration versions remain readable in the Obsidian profile", () =>
   assert.match(markdown, /declaration-id: vision-two; declared: 2026-08-14T09:00:00.000Z; supersedes: vision-one/);
   assert.match(markdown, /### Vision - Earlier version/);
   assert.match(markdown, /A small creative house by the water\./);
+});
+
+test("server sync keeps the newest separate Dreamline App record", () => {
+  let server = startDreamline(createEmptyState(), {
+    id: "dreamline-app",
+    startedAt: "2026-08-19T09:00:00.000Z",
+  }).state;
+  let phone = structuredClone(server);
+  server = saveDreamlineItem(
+    server,
+    "dreamline-app",
+    { category: "doing", text: "Older words", costCents: 10000 },
+    { id: "one", updatedAt: "2026-08-19T09:01:00.000Z" },
+  ).state;
+  phone = saveDreamlineItem(
+    phone,
+    "dreamline-app",
+    { category: "doing", text: "See the northern lights", costCents: 90000, cadence: "one-time" },
+    { id: "one", updatedAt: "2026-08-19T09:02:00.000Z" },
+  ).state;
+
+  const merged = mergeClientState(server, phone);
+  assert.equal(
+    merged.dreamlines.records["dreamline-app"].items.one.text,
+    "See the northern lights",
+  );
+  assert.equal(merged.declarations.records["dreamline-app"], undefined);
 });
 
 test("Vision reads Codex output directly from Profile.md", () => {

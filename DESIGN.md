@@ -207,6 +207,17 @@ is itself the point of the final week Page.
 - A breaking button is a reward, not a toll. It appears when the person has
   written a real sentence; a single word keeps the ordinary press.
 
+## Dreamline
+
+- Dreamline lives after the hour-by-hour timeline inside Log's single saved
+  journey. Log does not idle-rotate.
+- Its front order is Setup, Having, Being, Doing and Income. Its shared App
+  back is Now, Tomorrow and Day After.
+- Being requires the Doing that proves it. Only starred lines receive steps
+  or enter the income calculation.
+- Dreamline is dated, costed and finite. Vision declarations remain separate
+  and timeless.
+
 ## Content and AI
 
 - Ask one thing at a time.

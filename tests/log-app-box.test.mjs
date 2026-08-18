@@ -6,7 +6,10 @@ const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
 const css = readFileSync("app/os/os-app.css", "utf8");
 
 test("Log uses the shared App Box and Page anatomy, and grows", () => {
-  assert.match(shell, /className="os-log-session"/);
+  assert.match(
+    shell,
+    /className=\{`os-log-session \$\{dreamlineBack\.className\}`\.trim\(\)\}/,
+  );
   // No frame height. Log grows downward like every other App Box; pinning it
   // to the default height made a day readable only through a slot.
   assert.doesNotMatch(shell, /frameHeight/);

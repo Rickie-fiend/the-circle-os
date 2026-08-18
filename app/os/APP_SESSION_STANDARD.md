@@ -404,7 +404,16 @@ Used for charts, weekly views, and other things worth reading again.
 - A long timeline uses `minmax(0, 1fr)` for Body and scrolls within that Body.
   The route and swipe page remain still.
 - The App Box owns background, border, radius, clipping and shadow. Until its
-  week Page exists, Log shows no back control.
+  second App exists, Log shows no back control.
+- Log owns one persisted outer `SwipeSession` and never rotates itself. Its
+  first Page remains the hour-by-hour timeline. Its saved Dreamline journey
+  follows as Setup, Having, Being, Doing and Income.
+- Dreamline uses the shared App-back controller. Its back contains Now,
+  Tomorrow and Day After only. The top-left `Dreamline` mode label flips the
+  current record; it does not start, save, conclude or edit one.
+- A Dreamline is separate from Vision declarations. It is dated, costed and
+  finite; a concluded record remains immutable and readable while a new
+  Dreamline begins with a new id.
 
 ## Protocol home
 
