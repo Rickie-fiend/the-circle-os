@@ -1494,13 +1494,13 @@ export function TodayExperience() {
     if (thoughtLabelTimer.current) {
       window.clearTimeout(thoughtLabelTimer.current);
     }
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    // The label arrives with its Page, not after it. This waited 760ms and
+    // then animated for another 520, so the App Label landed more than a
+    // second behind the words underneath it.
     thoughtLabelTimer.current = window.setTimeout(() => {
       setThoughtLabelVisible(true);
       thoughtLabelTimer.current = null;
-    }, reducedMotion ? 0 : 760);
+    }, 0);
     return () => {
       if (thoughtLabelTimer.current) {
         window.clearTimeout(thoughtLabelTimer.current);
@@ -2198,7 +2198,7 @@ export function TodayExperience() {
       checkInIdleTimer.current = window.setTimeout(() => {
         setCheckInIdleEntering(false);
         checkInIdleTimer.current = null;
-      }, 1100);
+      }, 420);
     }
     updateState((current) => {
       const previousRun = current.chapters.runs[nextRun.runId];

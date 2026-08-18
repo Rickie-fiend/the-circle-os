@@ -14,6 +14,7 @@ import {
   answerSurveyQuestion,
   appSessionIndex,
   buildWeekReview,
+  buildYesterdayReview,
   declarationVersions,
   declareLife,
   editProfileSession,
@@ -475,6 +476,9 @@ export default function CircleOSMirror() {
   useStableRouteAnchor(visionSessionRef, athenaSessionRef);
   const [declarationHistoryIndex, setDeclarationHistoryIndex] = useState(0);
   const summary = summarizeWeek(state);
+  // The day just gone, ahead of the week, so Reflect reads day, week, life.
+  const yesterday = buildYesterdayReview(state);
+  const yesterdayPages = [yesterday.did, yesterday.achieved];
   const weekReview = buildWeekReview(state);
   const weekReviewPages = [
     weekReview.dailyPattern,
@@ -622,6 +626,12 @@ export default function CircleOSMirror() {
     state,
     "vision-week",
     weekJourneyVersion,
+    0,
+  );
+  const visibleYesterdayApp = appSessionIndex(
+    state,
+    "vision-yesterday",
+    yesterday.version,
     0,
   );
   // Athena's reading and the gap were two sections asking the same question.
@@ -992,6 +1002,79 @@ export default function CircleOSMirror() {
             ))}
           </SwipeSession>
           )}
+        </section>
+
+        <header className="mirror-intro mirror-yesterday-intro">
+          <div>
+            <p className="os-eyebrow">Yesterday</p>
+            <h1>The day just gone</h1>
+          </div>
+        </header>
+
+        <section className="vision-week-session" aria-label="Yesterday session">
+          <SwipeSession
+            attentionKey={`vision-yesterday:${yesterday.version}`}
+            availableIndices={Array.from(
+              { length: yesterdayPages.length + 1 },
+              (_, index) => index,
+            )}
+            className="vision-week-apps"
+            index={visibleYesterdayApp}
+            label="Yesterday apps"
+            maxIndex={yesterdayPages.length}
+            onIndexChange={(nextIndex) =>
+              updateState((current) =>
+                setAppSessionIndex(
+                  current,
+                  "vision-yesterday",
+                  yesterday.version,
+                  nextIndex,
+                ),
+              )
+            }
+          >
+            <PageLayout
+              className="vision-week-cover"
+              footer={<span>{yesterday.recorded ? "Swipe to see" : "Nothing recorded"}</span>}
+              headerLeft={<p className="os-card-label">Yesterday</p>}
+              key="yesterday-cover"
+              theme="dark"
+            >
+              <div className="os-page-main">
+                <h2>What you did. What you achieved.</h2>
+              </div>
+            </PageLayout>
+            {yesterdayPages.map((claim) => (
+              <PageLayout
+                className="vision-week-claim"
+                headerLeft={<p className="os-card-label">{claim.label}</p>}
+                key={claim.key}
+                theme="dark"
+              >
+                <div className="os-page-main">
+                  <h2>{claim.sentence}</h2>
+                </div>
+                {claim.evidence.length ? (
+                  <div
+                    aria-label={`Evidence for ${claim.label}`}
+                    className="os-page-sub week-claim-evidence"
+                  >
+                    {claim.evidence.map((item, index) => (
+                      <span
+                        className={`is-${item.tone}`}
+                        key={`${item.label}-${index}`}
+                        title={item.label}
+                      >
+                        <i aria-hidden="true" />
+                        <b>{item.shortLabel}</b>
+                        <small>{item.value}</small>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </PageLayout>
+            ))}
+          </SwipeSession>
         </section>
 
         <header className="mirror-intro mirror-week-intro">

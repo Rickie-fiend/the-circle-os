@@ -226,7 +226,9 @@ export function SwipeSession({
     const reveal = () => {
       seenAttentionKeys.add(attentionKey);
       setShowingAttentionKey(attentionKey);
-      timer = window.setTimeout(() => setShowingAttentionKey(""), 2400);
+      // Just past the arrival in `--os-arrival-ms`. This held the class for
+      // 2.4s to cover a staggered reveal that no longer exists.
+      timer = window.setTimeout(() => setShowingAttentionKey(""), 420);
     };
 
     if (typeof IntersectionObserver === "undefined") {
@@ -767,7 +769,7 @@ export function SessionIntro({
     const timer = window.setTimeout(() => {
       setDisplay({ title, detail });
       setRefreshing(false);
-    }, 600);
+    }, 200);
     return () => window.clearTimeout(timer);
   }, [detail, refreshKey, title]);
 

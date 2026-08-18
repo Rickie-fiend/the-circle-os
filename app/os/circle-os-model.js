@@ -2878,6 +2878,204 @@ export function buildWeekReview(state, now = new Date()) {
   };
 }
 
+/** "at night", not "in the night". */
+const YESTERDAY_PREPOSITIONS = Object.freeze({
+  morning: "in the morning",
+  afternoon: "in the afternoon",
+  evening: "in the evening",
+  night: "at night",
+});
+
+/**
+ * A reading names a thing; it does not quote it whole. Sai writes tasks that
+ * are sometimes a paragraph of bug report, and dropping one of those in turns
+ * the reading into the task list it was meant to summarise. The Log is where
+ * the full text lives; this is the reading of it.
+ */
+function yesterdayLabel(value, maximum = 40) {
+  const text = weekStatementLabel(value);
+  if (text.length <= maximum) return text;
+  const cut = text.slice(0, maximum);
+  const boundary = cut.lastIndexOf(" ");
+  return `${(boundary > maximum * 0.6 ? cut.slice(0, boundary) : cut).trim()}…`;
+}
+
+const YESTERDAY_WEEKDAYS = Object.freeze([
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+]);
+
+/**
+ * The day just gone, read rather than tallied.
+ *
+ * Sai: "when i reflect, i sometimes want to know what i did and achieve
+ * yesterday." Week Review answers that for a week and Athena's Reading answers
+ * it for a life; nothing answered it for a day. This is the same mirror at the
+ * finest grain it has, and it reads the same evidence: the hours he logged,
+ * the habits he ticked, the tasks he finished and whether the protocol sealed.
+ *
+ * Two Pages, because he asked two questions. What he did, in the order the day
+ * happened. What he achieved, which is a different question and often has a
+ * different answer.
+ */
+export function buildYesterdayReview(state, now = new Date()) {
+  const dateKey = previousDateKey(getDateKey(now));
+  const day = state.days?.[dateKey] ?? createDay(dateKey);
+  const record = dayRecord(state, dateKey);
+  const sealed = Object.values(state.protocol?.seals || {}).find(
+    (seal) => seal?.sealed && seal.dateKey === dateKey,
+  );
+  const [year, month, dayOfMonth] = dateKey.split("-").map(Number);
+  const dateLabel =
+    YESTERDAY_WEEKDAYS[
+      new Date(Date.UTC(year, month - 1, dayOfMonth)).getUTCDay()
+    ] || "Yesterday";
+
+  // What he did, in the order it happened. Not the biggest thing in the day —
+  // the day read forwards, so it sounds like a day rather than a leaderboard.
+  const periodPhrases = [];
+  for (const period of WEEK_PERIODS) {
+    const minutes = new Map();
+    for (const block of day.timeBlocks) {
+      const range = blockCircleRange(block);
+      const overlap = overlapMinutes(
+        range.start,
+        range.end,
+        period.start,
+        period.end,
+      );
+      if (!overlap) continue;
+      const group = weekActivityGroup(block.title || block.activity);
+      minutes.set(group, (minutes.get(group) || 0) + overlap);
+    }
+    const top = topActivity(minutes);
+    if (!top) continue;
+    periodPhrases.push({
+      period: period.key,
+      label: period.label,
+      phrase: WEEK_ACTIVITY_PHRASES[top[0]] || activityFinding(top[0]),
+    });
+  }
+
+  // Neighbouring parts of the day that held the same thing are said once.
+  // "walking in the afternoon, walking in the evening" is the same fact twice.
+  const runs = [];
+  for (const item of periodPhrases) {
+    const last = runs.at(-1);
+    if (last && last.phrase === item.phrase) last.periods.push(item.period);
+    else runs.push({ phrase: item.phrase, periods: [item.period] });
+  }
+  const runClauses = runs.map((run) =>
+    run.periods.length === 1
+      ? `${run.phrase} ${YESTERDAY_PREPOSITIONS[run.periods[0]] || `in the ${run.periods[0]}`}`
+      : `${run.phrase} in the ${naturalList(run.periods)}`,
+  );
+  const didSentence = !day.timeBlocks.length
+    ? `You did not log any hours on ${dateLabel}.`
+    : runs.length === 1
+      ? `${dateLabel} went almost entirely to ${runs[0].phrase}.`
+      : `${dateLabel} went to ${naturalList(runClauses)}.`;
+
+  // Two of each, named. A reading that lists everything is the record again.
+  const kept = record.habits
+    .map((habit) => yesterdayLabel(habit.text))
+    .filter(Boolean);
+  const finished = record.tasks
+    .map((task) => yesterdayLabel(task.text))
+    .filter(Boolean);
+  const missed = Object.values(state.habits?.definitions || {})
+    .filter(
+      (habit) =>
+        habit?.status === "active" &&
+        !record.habits.some((done) => done.id === habit.id) &&
+        weekHabitLabel(habit),
+    )
+    .map((habit) => weekHabitLabel(habit));
+
+  // Two things, named. Four made a sentence that ran the App Box to 442px and
+  // read as a list rather than as an answer to "what did I achieve".
+  const achievements = [
+    ...kept.map((label) => ({ verb: "kept", label })),
+    ...finished.map((label) => ({ verb: "finished", label })),
+    ...(sealed
+      ? [
+          {
+            verb: "sealed",
+            label: yesterdayLabel(sealed.phaseName || "your protocol"),
+          },
+        ]
+      : []),
+  ].slice(0, 2);
+  const achievedParts = [];
+  for (const item of achievements) {
+    const last = achievedParts.at(-1);
+    if (last?.verb === item.verb) last.labels.push(item.label);
+    else achievedParts.push({ verb: item.verb, labels: [item.label] });
+  }
+  const achievedSentence = achievedParts.length
+    ? // A trimmed label already ends in an ellipsis; it does not also take a
+      // full stop.
+      `${capitalized(
+        naturalList(
+          achievedParts.map(
+            (part) => `you ${part.verb} ${naturalList(part.labels)}`,
+          ),
+        ),
+      )}.`.replace(/…\.$/, "…")
+    : day.timeBlocks.length
+      ? `Nothing was ticked on ${dateLabel}, though the hours were logged.`
+      : `Nothing was recorded on ${dateLabel}.`;
+
+  return {
+    version: `yesterday-v1:${dateKey}:${Number(state.evidence?.localRevision || 0)}`,
+    dateKey,
+    dateLabel,
+    recorded: Boolean(day.timeBlocks.length || record.total || sealed),
+    did: {
+      key: "did",
+      label: "What you did",
+      sentence: didSentence,
+      working: { loggedHours: day.timeBlocks.length },
+      evidence: periodPhrases.map((item) => ({
+        label: item.label,
+        shortLabel: item.label.slice(0, 1),
+        value: item.phrase,
+        tone: "held",
+      })),
+    },
+    achieved: {
+      key: "achieved",
+      label: "What you achieved",
+      sentence: achievedSentence,
+      working: {
+        keptHabits: kept.length,
+        completedTasks: finished.length,
+        sealedProtocol: Boolean(sealed),
+      },
+      // Three rows at most: two things that held and the one that did not.
+      // Listing every tick made the Page 466px against a 344px App Box, and an
+      // App Box full of ticks is the Record again rather than a reading of it.
+      evidence: [
+        ...[
+          ...kept.map((label) => ({ label: "Kept", shortLabel: "Kept", value: label, tone: "held" })),
+          ...finished.map((label) => ({ label: "Finished", shortLabel: "Done", value: label, tone: "held" })),
+        ].slice(0, 2),
+        ...missed.slice(0, 1).map((label) => ({
+          label: "Not kept",
+          shortLabel: "Not kept",
+          value: label,
+          tone: "plain",
+        })),
+      ],
+    },
+  };
+}
+
 export function buildVisionAnalysis(state, now = new Date()) {
   const summary = summarizeWeek(state, now);
   const vision = state.profile?.vision?.description?.trim() ?? "";

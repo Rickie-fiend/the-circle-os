@@ -31,6 +31,10 @@
    * leftover space, so a Page that gained a row did not get taller: the content
    * simply grew past the bottom of the App Box and under the Footer. */
   --os-page-rows: auto min-content minmax(min-content, 1fr) auto;
+
+  /* How long an App Box takes to appear. One number for every arrival, so a
+   * Page cannot drift back into revealing itself a part at a time. */
+  --os-arrival-ms: 180ms;
   align-items: flex-start;
   background: var(--c-ink-deep);
   display: flex;
@@ -1236,10 +1240,12 @@
   text-transform: uppercase;
 }
 
+/* A cover that swaps its words fades out and back in. At 600ms each way that
+ * was a 1.2s round trip to change one line. */
 .circle-os .os-session-intro {
   transition:
-    opacity 600ms ease,
-    transform 600ms cubic-bezier(0.16, 0.78, 0.2, 1);
+    opacity var(--os-arrival-ms) ease,
+    transform var(--os-arrival-ms) cubic-bezier(0.22, 0.72, 0.22, 1);
 }
 
 .circle-os .os-session-intro.is-refreshing {
@@ -1259,17 +1265,6 @@
   }
 }
 
-@keyframes os-update-copy-arrival {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 8px, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
 
 @keyframes os-idle-page-arrival {
   from {
@@ -1327,37 +1322,27 @@
   opacity: 0;
 }
 
+/* A Page arrives all at once.
+ *
+ * It used to reveal its body at 260ms, its header at 620ms and its footer at
+ * 1180ms, so the last label landed 1.9s after the first word. Sai asked for
+ * that gone from every App: "make sure all app are not like that." There is
+ * one fade now, on the whole window, and no Page part animates on its own. */
 .circle-os .os-app-window.update-arrival {
-  animation: os-update-surface-arrival 950ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
-}
-
-.circle-os .os-app-window.update-arrival .os-app-page.current .os-page-heading,
-.circle-os .os-app-window.update-arrival .os-app-page.current .os-page-body {
-  opacity: 0;
-  animation: os-update-copy-arrival 720ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
-  animation-delay: 260ms;
-}
-
-.circle-os .os-app-window.update-arrival .os-app-page.current .os-page-header {
-  opacity: 0;
-  animation: os-update-copy-arrival 720ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
-  animation-delay: 620ms;
-}
-
-.circle-os .os-app-window.update-arrival .os-app-page.current .os-page-footer {
-  opacity: 0;
-  animation: os-update-copy-arrival 720ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
-  animation-delay: 1180ms;
+  animation: os-update-surface-arrival var(--os-arrival-ms)
+    cubic-bezier(0.22, 0.72, 0.22, 1) both;
 }
 
 .circle-os .os-swipe-session.update-exit .os-app-window {
-  animation: os-update-page-exit 900ms ease-in both;
+  animation: os-update-page-exit var(--os-arrival-ms) ease-in both;
   pointer-events: none;
 }
 
+/* No `pointer-events: none` here. This ran for a full second on every idle
+ * arrival and swallowed whatever was tapped during it. */
 .circle-os .os-swipe-session.idle-arrival .os-app-window {
-  animation: os-idle-page-arrival 1000ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
-  pointer-events: none;
+  animation: os-idle-page-arrival var(--os-arrival-ms)
+    cubic-bezier(0.22, 0.72, 0.22, 1) both;
 }
 
 .circle-os .os-habit .os-chapter-idle-action[aria-pressed="true"],
@@ -1864,7 +1849,8 @@
 }
 
 .circle-os .os-thoughts-mode-toggle.is-visible {
-  animation: os-thoughts-label-arrival 520ms cubic-bezier(0.16, 0.78, 0.2, 1) both;
+  animation: os-thoughts-label-arrival var(--os-arrival-ms)
+    cubic-bezier(0.22, 0.72, 0.22, 1) both;
 }
 
 @keyframes os-thoughts-label-arrival {
