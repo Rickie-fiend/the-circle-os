@@ -1965,19 +1965,48 @@ export function summarizeWeek(state, now = new Date()) {
   };
 }
 
-function weekActivityGroup(value = "") {
-  const text = String(value).toLowerCase();
-  if (/wake/.test(text)) return "Waking up";
-  if (/sleep|bed|nap/.test(text)) return "Sleep and rest";
-  if (/lunch|dinner|breakfast|meal|eat|coffee/.test(text)) return "Meals and coffee";
-  if (/walk|gym|outdoor|samrong|patio|exercise/.test(text)) return "Movement and outside time";
-  if (/project|computer|focus|work|edit|video|codex|build/.test(text)) return "Project and computer work";
-  if (/friend|family|mom|cousin|talk|dota/.test(text)) return "Time with other people";
-  if (/shower|brush|wind down/.test(text)) return "Personal care";
-  if (/movie|game|entertain/.test(text)) return "Entertainment";
-  if (/immigration|market|class|come back|home/.test(text)) return "Errands and travel";
-  if (/read|journal|reflect/.test(text)) return "Reading and reflection";
-  return "Other recorded time";
+const WEEK_ACTIVITY_RULES = Object.freeze([
+  // The particular reason for the time wins over what carried it. Being with
+  // someone is more specific than the walk, meal, market or game around it.
+  ["Time with other people", /\b(?:friend|friends|family|mom|cousin|bros|talk|dota)\b/],
+  // Reading or writing is the point of coffee-and-journaling, not the coffee.
+  ["Reading and reflection", /\b(?:read|reading|journal|journaling|reflect|reflection|meditation|meditate)\b|\bwrite one thing down\b/],
+  ["Waking up", /\b(?:wake|wakeup|woke)\b/],
+  ["Sleep and rest", /\b(?:sleep|bed|nap|rest)\b/],
+  ["Personal care", /\b(?:shower|brush|wind down)\b/],
+  // Smoking is more particular than the walk that sometimes accompanies it.
+  ["Smoking", /\b(?:smoke|smoking)\b/],
+  ["Entertainment", /\b(?:movie|game|entertainment|widow's bay|minions and monsters)\b/],
+  ["Errands and travel", /\b(?:immigration|immegration|market|class|come back|back home|home)\b/],
+  ["Project and creative work", /\b(?:project|computer|focus|work|working|edit|video|codex|build|content|practice|speaking|app|chapters|engine|os)\b/],
+  ["Movement and outside time", /\b(?:walk|walking|gym|outdoor|outside|samrong|patio|exercise)\b/],
+  ["Meals and coffee", /\b(?:lunch|dinner|breakfast|meal|eat|eating|coffee)\b/],
+]);
+
+function weekActivityText(value = "") {
+  return String(value)
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[‘’]/g, "'");
+}
+
+export function weekActivityGroup(value = "") {
+  const text = weekActivityText(value);
+  return WEEK_ACTIVITY_RULES.find(([, pattern]) => pattern.test(text))?.[0] ||
+    "Other recorded time";
+}
+
+export function weekActivityTally(state) {
+  const tally = new Map();
+  for (const day of Object.values(state?.days || {})) {
+    for (const block of day?.timeBlocks || []) {
+      const group = weekActivityGroup(block.title || block.activity);
+      tally.set(group, (tally.get(group) || 0) + 1);
+    }
+  }
+  return [...tally.entries()]
+    .map(([group, blocks]) => ({ group, blocks }))
+    .sort((left, right) => right.blocks - left.blocks || left.group.localeCompare(right.group));
 }
 
 function weekEvidenceDay(item, value, tone = "plain") {
@@ -2004,6 +2033,50 @@ function overlapMinutes(leftStart, leftEnd, rightStart, rightEnd) {
 
 function topActivity(rows) {
   return [...rows.entries()].sort((left, right) => right[1] - left[1])[0] || null;
+}
+
+const DISTINCTIVE_LIFT_MIN = 1.15;
+const DISTINCTIVE_RECORDED_DAYS_MIN = 2;
+
+function distinctiveActivity(
+  activityMinutes,
+  activityDays,
+  periodMinutes,
+  overallMinutes,
+  overallTotalMinutes,
+  excludedGroups,
+) {
+  return [...activityMinutes.entries()]
+    .map(([group, minutes]) => {
+      const periodShare = periodMinutes ? minutes / periodMinutes : 0;
+      const overallShare = overallTotalMinutes
+        ? (overallMinutes.get(group) || 0) / overallTotalMinutes
+        : 0;
+      return {
+        group,
+        minutes,
+        recordedDays: activityDays.get(group)?.size || 0,
+        lift: overallShare ? periodShare / overallShare : 0,
+      };
+    })
+    .filter(
+      (row) =>
+        row.group !== "Other recorded time" &&
+        !excludedGroups.has(row.group) &&
+        row.recordedDays >= DISTINCTIVE_RECORDED_DAYS_MIN &&
+        row.lift >= DISTINCTIVE_LIFT_MIN,
+    )
+    .sort(
+      (left, right) => {
+        const liftOrder = right.lift - left.lift;
+        if (Math.abs(liftOrder) > 1e-9) return liftOrder;
+        return (
+          right.recordedDays - left.recordedDays ||
+          right.minutes - left.minutes ||
+          left.group.localeCompare(right.group)
+        );
+      },
+    )[0] || null;
 }
 
 function sevenDayEvidence(days, values) {
@@ -2056,8 +2129,20 @@ export function buildSevenDayClaims(state, now = new Date()) {
 
   const claims = [];
   const timeDays = days.filter((item) => item.day.timeBlocks.length > 0);
+  const overallMinutes = new Map();
+  let overallTotalMinutes = 0;
+  for (const { day } of timeDays) {
+    for (const block of day.timeBlocks) {
+      const group = weekActivityGroup(block.title || block.activity);
+      const minutes = minutesBetween(block.start, block.end);
+      overallMinutes.set(group, (overallMinutes.get(group) || 0) + minutes);
+      overallTotalMinutes += minutes;
+    }
+  }
+  const usedPeriodGroups = new Set();
   for (const period of WEEK_PERIODS) {
     const activityMinutes = new Map();
+    const activityDays = new Map();
     const dayMinutes = new Map();
     for (const item of timeDays) {
       for (const block of item.day.timeBlocks) {
@@ -2066,11 +2151,25 @@ export function buildSevenDayClaims(state, now = new Date()) {
         if (!minutes) continue;
         const group = weekActivityGroup(block.title || block.activity);
         activityMinutes.set(group, (activityMinutes.get(group) || 0) + minutes);
+        const groupDays = activityDays.get(group) || new Set();
+        groupDays.add(item.key);
+        activityDays.set(group, groupDays);
         dayMinutes.set(item.key, (dayMinutes.get(item.key) || 0) + minutes);
       }
     }
-    const top = topActivity(activityMinutes);
-    if (dayMinutes.size < 3 || !top) {
+    const periodTotalMinutes = [...activityMinutes.values()].reduce(
+      (total, minutes) => total + minutes,
+      0,
+    );
+    const distinctive = distinctiveActivity(
+      activityMinutes,
+      activityDays,
+      periodTotalMinutes,
+      overallMinutes,
+      overallTotalMinutes,
+      usedPeriodGroups,
+    );
+    if (dayMinutes.size < 3 || !activityMinutes.size) {
       claims.push({
         key: period.key,
         label: period.label,
@@ -2082,11 +2181,30 @@ export function buildSevenDayClaims(state, now = new Date()) {
       });
       continue;
     }
+    if (!distinctive) {
+      claims.push({
+        key: period.key,
+        label: period.label,
+        sentence: `Your ${period.key}s look much like the rest of your day.`,
+        working: {
+          recordedDays: dayMinutes.size,
+          minutes: periodTotalMinutes,
+          lift: 1,
+        },
+        evidence: sevenDayEvidence(summary.days, dayMinutes),
+      });
+      continue;
+    }
+    usedPeriodGroups.add(distinctive.group);
     claims.push({
       key: period.key,
       label: period.label,
-      sentence: `Your ${period.key}s are mostly for ${activityFinding(top[0])}.`,
-      working: { recordedDays: dayMinutes.size, minutes: top[1] },
+      sentence: `Your ${period.key}s are where ${activityFinding(distinctive.group)} stands apart.`,
+      working: {
+        recordedDays: dayMinutes.size,
+        minutes: distinctive.minutes,
+        lift: distinctive.lift,
+      },
       evidence: sevenDayEvidence(summary.days, dayMinutes),
     });
   }

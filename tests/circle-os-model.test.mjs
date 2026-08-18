@@ -59,6 +59,8 @@ import {
   updateProtocolItem,
   updateTask,
   upsertTimeBlock,
+  weekActivityGroup,
+  weekActivityTally,
 } from "../app/os/circle-os-model.js";
 
 test("profile and habit cards save structured answers immediately", () => {
@@ -931,6 +933,60 @@ test("weekly claims are sentences backed by local evidence", () => {
   assert.ok(claims.every((claim) => !/\d/.test(claim.sentence)));
   assert.ok(claims.every((claim) => !/\b(?:hour|hours|day|days)\b/i.test(claim.sentence)));
   assert.ok(claims.every((claim) => claim.working && Object.values(claim.working).every(Number.isFinite)));
+  assert.equal(new Set(claims.map((claim) => claim.sentence)).size, claims.length);
+});
+
+test("week activity vocabulary matches words and lets the particular meaning win", () => {
+  assert.equal(weekActivityGroup("Have a great talk with cousin"), "Time with other people");
+  assert.equal(weekActivityGroup("Woke up late"), "Waking up");
+  assert.equal(weekActivityGroup("Coffee and journaling"), "Reading and reflection");
+  assert.equal(weekActivityGroup("Walk with mom"), "Time with other people");
+  assert.equal(weekActivityGroup("Walk and smoke"), "Smoking");
+  assert.equal(weekActivityGroup("Eat a small meal"), "Meals and coffee");
+});
+
+test("period claims use distinctive recurring activities instead of four largest buckets", () => {
+  let state = createEmptyState();
+  const dateKeys = [
+    "2026-08-08",
+    "2026-08-09",
+    "2026-08-10",
+    "2026-08-11",
+    "2026-08-12",
+    "2026-08-13",
+    "2026-08-14",
+  ];
+  for (const dateKey of dateKeys) {
+    state = ensureDay(state, dateKey);
+    state.days[dateKey].timeBlocks.push(
+      { id: `${dateKey}-wake`, start: "10:00", end: "11:00", title: "Woke up", activity: "Woke up" },
+      { id: `${dateKey}-project`, start: "13:00", end: "16:00", title: "Work on project", activity: "Work" },
+      { id: `${dateKey}-walk`, start: "16:00", end: "18:00", title: "Walk", activity: "Walk" },
+      { id: `${dateKey}-shower`, start: "20:00", end: "21:00", title: "Shower", activity: "Shower" },
+      { id: `${dateKey}-sleep`, start: "03:00", end: "04:00", title: "Sleep", activity: "Sleep" },
+    );
+  }
+  const claims = buildSevenDayClaims(state, new Date("2026-08-14T12:00:00.000Z"));
+  const periods = claims.slice(0, 4);
+  assert.deepEqual(periods.map((claim) => claim.key), ["morning", "afternoon", "evening", "night"]);
+  assert.equal(new Set(periods.map((claim) => claim.sentence)).size, 4);
+  assert.match(periods[0].sentence, /waking up/i);
+  assert.match(periods[1].sentence, /project/i);
+  assert.match(periods[2].sentence, /personal care/i);
+  assert.match(periods[3].sentence, /sleep and rest/i);
+});
+
+test("the week activity tally keeps Other visible as a vocabulary floor", () => {
+  let state = createEmptyState();
+  state = ensureDay(state, "2026-08-14");
+  state.days["2026-08-14"].timeBlocks.push(
+    { id: "known", start: "12:00", end: "13:00", title: "Walk with mom", activity: "Walk" },
+    { id: "unknown", start: "13:00", end: "14:00", title: "Sit common room", activity: "Other" },
+  );
+  assert.deepEqual(weekActivityTally(state), [
+    { group: "Other recorded time", blocks: 1 },
+    { group: "Time with other people", blocks: 1 },
+  ]);
 });
 
 test("Seven Days is recomputed from one week and stores no aggregate", () => {
