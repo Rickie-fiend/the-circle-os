@@ -25,6 +25,7 @@ import {
   normalizeAthenaMemory,
   serializeAthenaMemoryMarkdown,
 } from "../app/os/athena-memory-model.js";
+import { deepThoughtSourceLabel } from "../app/os/deep-thought-model.js";
 import { parseDailyChaptersMarkdown } from "../scripts/chapter-compiler.mjs";
 
 const profileIdPattern = /^p_[A-Za-z0-9_-]{16}$/;
@@ -470,7 +471,7 @@ function formatAnswers(answers) {
 
 ${markdownText(answer.answer, "No answer.")}
 
-_${answer.kind === "habit" ? "Habit" : answer.kind === "codex" ? "Codex" : answer.kind === "routine" ? "Log setup" : answer.kind === "note" ? "Note" : answer.kind === "deep-thought" ? "Deep Thought" : answer.kind === "thought" ? "Thought" : "Check-in"} · Answered ${
+_${answer.kind === "habit" ? "Habit" : answer.kind === "codex" ? "Codex" : answer.kind === "routine" ? "Log setup" : answer.kind === "note" ? "Note" : answer.kind === "deep-thought" ? "Deep Thought" : answer.kind === "thought" ? "Thought" : "Check-in"}${answer.kind === "deep-thought" ? ` · Source: ${deepThoughtSourceLabel(answer.source, answer.questionId)}` : ""} · Answered ${
   answer.answeredAt || "without a date"
 }._`,
     )

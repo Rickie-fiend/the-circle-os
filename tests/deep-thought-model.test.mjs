@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { countDeepThoughtWords, createLocalDeepThoughtPrompt, deepThoughtFollowUp, isDeepThoughtRewardEligible } from "../app/os/deep-thought-model.js";
+import { countDeepThoughtWords, createLocalDeepThoughtPrompt, deepThoughtFollowUp, isDeepThoughtRewardEligible, selectDeepThoughtPrompt } from "../app/os/deep-thought-model.js";
 
 test("deep reward follows a sentence, not an essay", () => {
   const sentence = "I love this day, I am grateful for today";
@@ -24,7 +24,8 @@ test("local deep questions may use reviewed mission evidence", () => {
   assert.equal(prompt.source, "local-personalized");
   const followUp = deepThoughtFollowUp(prompt);
   assert.match(followUp.id, /follow-up$/);
-  assert.equal(followUp.source, "follow-up");
+  assert.equal(followUp.source, "local-personalized");
+  assert.equal(followUp.stage, "follow-up");
 });
 
 test("source-linked Athena curiosity is asked before the static list", () => {
@@ -43,10 +44,10 @@ test("source-linked Athena curiosity is asked before the static list", () => {
     },
     days: {},
   };
-  const prompt = createLocalDeepThoughtPrompt(state, "2026-08-18", 0);
+  const prompt = selectDeepThoughtPrompt(state, "2026-08-18", 0);
   assert.equal(prompt.id, "deep-curiosity-quiet-mornings");
   assert.equal(prompt.text, "What makes a quiet morning feel alive to you?");
-  assert.equal(prompt.source, "athena");
+  assert.equal(prompt.source, "curiosity");
 });
 
 test("curiosity without evidence or already answered is not asked again", () => {
@@ -69,6 +70,84 @@ test("curiosity without evidence or already answered is not asked again", () => 
     },
     days: {},
   };
-  const prompt = createLocalDeepThoughtPrompt(state, "2026-08-18", 0);
+  const prompt = selectDeepThoughtPrompt(state, "2026-08-18", 0);
   assert.equal(prompt.source, "local");
+});
+
+test("one selector keeps Athena daily, Curiosity, personalised, static order", () => {
+  const state = {
+    athenaMemory: {
+      curiosity: [{
+        id: "software-help",
+        question: "What do you want your software to help someone feel or do?",
+        sourceRefs: [{ sourceType: "thought", sourceId: "thought-1" }],
+      }],
+    },
+    profile: {
+      identityFocus: "A clear teacher",
+      profileCase: {
+        deepThoughtPrompt: {
+          id: "deep-2026-08-18-daily",
+          text: "What changed today?",
+          target: "currentLife",
+          dateKey: "2026-08-18",
+          source: "athena",
+          preparedAt: "2026-08-18T00:00:00.000Z",
+        },
+        survey: { answers: [] },
+      },
+    },
+    days: {},
+  };
+  assert.equal(selectDeepThoughtPrompt(state, "2026-08-18", 0).id, "deep-2026-08-18-daily");
+  state.profile.profileCase.survey.answers.push({
+    questionId: "deep-2026-08-18-daily",
+    question: "What changed today?",
+    answer: "I noticed it.",
+    kind: "deep-thought",
+  });
+  assert.equal(
+    selectDeepThoughtPrompt(state, "2026-08-18", 1).id,
+    "deep-curiosity-software-help",
+  );
+  state.profile.profileCase.survey.answers.push({
+    questionId: "deep-curiosity-software-help",
+    question: "What do you want your software to help someone feel or do?",
+    answer: "Feel seen.",
+    kind: "deep-thought",
+  });
+  assert.equal(selectDeepThoughtPrompt(state, "2026-08-18", 2).source, "local-personalized");
+});
+
+test("Curiosity does not repeat a question Athena already asked under another id", () => {
+  const state = {
+    athenaMemory: {
+      curiosity: [
+        {
+          id: "same-words",
+          question: "What made the last two days feel so beautiful?",
+          sourceRefs: [{ sourceType: "day", sourceId: "2026-08-12" }],
+        },
+        {
+          id: "new-words",
+          question: "What do you want your software to help someone feel or do?",
+          sourceRefs: [{ sourceType: "thought", sourceId: "thought-1" }],
+        },
+      ],
+    },
+    profile: {
+      identityFocus: "Yourself",
+      profileCase: {
+        deepThoughtPrompt: null,
+        survey: { answers: [{
+          questionId: "deep-2026-08-12-beautiful-days",
+          question: "What made the last two days feel so beautiful?",
+          answer: "The people.",
+          kind: "deep-thought",
+        }] },
+      },
+    },
+    days: {},
+  };
+  assert.equal(selectDeepThoughtPrompt(state, "2026-08-18", 0).id, "deep-curiosity-new-words");
 });

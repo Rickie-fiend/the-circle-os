@@ -41,8 +41,18 @@ function short(value, maximum = 64) {
   return clean.length > maximum ? `${clean.slice(0, maximum - 3).trim()}...` : clean;
 }
 
-export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
+function questionKey(value) {
+  return String(value || "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
+}
+
+function unansweredCuriosityPrompt(state, dateKey) {
   const answers = state?.profile?.profileCase?.survey?.answers || [];
+  const answeredQuestions = new Set(
+    answers
+      .filter((answer) => answer?.kind === "deep-thought")
+      .map((answer) => questionKey(answer?.question))
+      .filter(Boolean),
+  );
   const curiosity = (Array.isArray(state?.athenaMemory?.curiosity)
     ? state.athenaMemory.curiosity
     : [])
@@ -55,20 +65,25 @@ export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
           question &&
           item?.status !== "suppressed" &&
           sourceRefs.length &&
-          !answers.some((answer) => answer.questionId === `deep-curiosity-${id}`),
+          !answers.some((answer) => answer.questionId === `deep-curiosity-${id}`) &&
+          !answeredQuestions.has(questionKey(question)),
       );
     });
   if (curiosity.length) {
-    const item = curiosity[Math.max(0, Number(offset) || 0) % curiosity.length];
+    const item = curiosity[0];
     return {
       id: `deep-curiosity-${item.id}`,
       text: short(item.question, 280),
       target: short(item.target, 40) || "whatMatters",
       dateKey,
-      source: "athena",
+      source: "curiosity",
       preparedAt: new Date().toISOString(),
     };
   }
+  return null;
+}
+
+export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
 
   const identity = short(state?.profile?.identityFocus);
   const mission = short(state?.days?.[dateKey]?.mission?.text);
@@ -91,6 +106,41 @@ export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
   };
 }
 
+// One selector owns the full order. Athena's dated prompt gets the first turn;
+// her sourced Curiosity Queue gets the next; the phone's personalised lines
+// and static floor remain the same local source and are separated only so the
+// report can say which fallback was used.
+export function selectDeepThoughtPrompt(state, dateKey) {
+  const answers = state?.profile?.profileCase?.survey?.answers || [];
+  const athenaPrompt = state?.profile?.profileCase?.deepThoughtPrompt;
+  if (
+    athenaPrompt?.dateKey === dateKey &&
+    !answers.some((answer) => answer?.questionId === athenaPrompt.id)
+  ) {
+    return { ...athenaPrompt, source: "athena" };
+  }
+  const localOffset = answers.filter((answer) =>
+    String(answer?.questionId || "").startsWith(`deep-local-${dateKey}-`),
+  ).length;
+  return (
+    unansweredCuriosityPrompt(state, dateKey) ||
+    createLocalDeepThoughtPrompt(state, dateKey, localOffset)
+  );
+}
+
+export function deepThoughtSourceLabel(source, questionId = "") {
+  if (source === "curiosity" || String(questionId).startsWith("deep-curiosity-")) {
+    return "Athena Curiosity Queue";
+  }
+  if (source === "athena" || /^deep-\d{4}-\d{2}-\d{2}-/.test(String(questionId))) {
+    return "Athena daily";
+  }
+  if (source === "local-personalized") return "Local personalised";
+  if (source === "local") return "Local static floor";
+  if (String(questionId).startsWith("deep-local-")) return "Legacy local detail unreported";
+  return "Legacy source unreported";
+}
+
 export function deepThoughtFollowUp(prompt) {
   const byTarget = {
     gap: "What part of that feels hardest to name honestly?",
@@ -104,7 +154,8 @@ export function deepThoughtFollowUp(prompt) {
     text: byTarget[prompt.target] || "What feels most important underneath that answer?",
     target: prompt.target || "currentLife",
     dateKey: prompt.dateKey,
-    source: "follow-up",
+    source: prompt.source,
+    stage: "follow-up",
     preparedAt: prompt.preparedAt,
   };
 }

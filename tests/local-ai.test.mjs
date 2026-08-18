@@ -371,6 +371,24 @@ test("profile mission comments never appear inside the app mission", () => {
   assert.doesNotMatch(today.mission.text, /user-edited|<!--/);
 });
 
+test("Profile.md reports the source of a deep-thought answer", () => {
+  const state = answerSurveyQuestion(
+    firstVision(),
+    {
+      id: "deep-curiosity-software-help",
+      text: "What do you want your software to help someone feel or do?",
+      target: "whatMatters",
+      source: "curiosity",
+    },
+    "Help them feel seen.",
+    "deep-thought",
+  );
+  const markdown = serializeProfileMarkdown(state, {
+    profileId: "p_1234567890abcdef",
+  });
+  assert.match(markdown, /Deep Thought · Source: Athena Curiosity Queue · Answered/);
+});
+
 test("Windows autostart is boot-capable, hidden, and duplicate-safe", () => {
   const starter = readFileSync(
     new URL("../local-ai/start-local-ai.ps1", import.meta.url),

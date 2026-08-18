@@ -87,9 +87,9 @@ import {
   type ButtonStyleId,
 } from "./button-engine-model.js";
 import {
-  createLocalDeepThoughtPrompt,
   deepThoughtFollowUp,
   isDeepThoughtRewardEligible,
+  selectDeepThoughtPrompt,
   type DeepThoughtPrompt,
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
@@ -448,6 +448,7 @@ export type CircleState = {
           answer: string;
           target: string;
           kind?: string;
+          source?: "athena" | "curiosity" | "local" | "local-personalized";
           answeredAt: string;
         }>;
         nextQuestion: {
@@ -461,7 +462,7 @@ export type CircleState = {
         text: string;
         target: string;
         dateKey: string;
-        source: "athena" | "local" | "local-personalized" | "follow-up";
+        source: "athena" | "curiosity" | "local" | "local-personalized";
         preparedAt: string;
       } | null;
     };
@@ -2237,17 +2238,7 @@ export function TodayExperience() {
   function openDeepThoughts(event: ReactMouseEvent<HTMLButtonElement>) {
     if (thoughtBack.flipping || thoughtTransition !== "idle") return;
     const nextMode = thoughtMode === "deep" ? "regular" : "deep";
-    const answers = state.profile.profileCase.survey.answers;
-    const athenaPrompt = state.profile.profileCase.deepThoughtPrompt;
-    const athenaAnswered = Boolean(
-      athenaPrompt && answers.some((answer) => answer.questionId === athenaPrompt.id),
-    );
-    const deepAnswersToday = answers.filter(
-      (answer) => answer.kind === "deep-thought" && getDateKey(new Date(answer.answeredAt)) === dateKey,
-    ).length;
-    const prompt = athenaPrompt?.dateKey === dateKey && !athenaAnswered
-      ? athenaPrompt
-      : createLocalDeepThoughtPrompt(state, dateKey, deepAnswersToday);
+    const prompt = selectDeepThoughtPrompt(state, dateKey);
     pauseDeepWriting();
     concealThoughtButton();
     thoughtBack.flip(nextMode, () => {
@@ -2304,6 +2295,7 @@ export function TodayExperience() {
           text: prompt?.text || "A thought I wanted to keep",
           type: "text",
           target: prompt?.target || "currentLife",
+          source: prompt?.source,
         },
         thought,
         deep ? "deep-thought" : "thought",

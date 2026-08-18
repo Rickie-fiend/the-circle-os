@@ -706,6 +706,25 @@ test("a free thought becomes profile evidence", () => {
   assert.equal(saved.target, "currentLife");
 });
 
+test("a deep-thought answer keeps the source of the question", () => {
+  const state = answerSurveyQuestion(
+    createEmptyState(),
+    {
+      id: "deep-curiosity-software-help",
+      text: "What do you want your software to help someone feel or do?",
+      target: "whatMatters",
+      source: "curiosity",
+    },
+    "Help them feel that their life is theirs.",
+    "deep-thought",
+  );
+  const answer = state.profile.profileCase.survey.answers.find(
+    (item) => item.questionId === "deep-curiosity-software-help",
+  );
+  assert.equal(answer.source, "curiosity");
+  assert.match(answer.questionId, /^deep-curiosity-/);
+});
+
 test("a cleared check-in subtitle stays clear after server merge", () => {
   const note = {
     id: "checkin-note",

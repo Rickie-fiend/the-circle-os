@@ -1660,6 +1660,7 @@ export function answerSurveyQuestion(state, question, answer, kind = "profile") 
                   answer: cleanAnswer,
                   target: question.target || "whatMatters",
                   kind,
+                  ...(question.source ? { source: question.source } : {}),
                   answeredAt,
                 },
               ]
