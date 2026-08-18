@@ -15,6 +15,7 @@ import {
   applyProfileResult,
   beginProtocolRun,
   buildVisionAnalysis,
+  buildSevenDayClaims,
   buildWeekClaims,
   canBeginProtocolRun,
   completeTask,
@@ -910,7 +911,8 @@ test("two recorded days produce one honest silence and no pattern claims", () =>
   }
   const claims = buildWeekClaims(state, new Date("2026-08-14T12:00:00.000Z"));
   assert.deepEqual(claims.map((claim) => claim.key), ["silence"]);
-  assert.equal(claims[0].sentence, "2 recorded days are not enough to call a weekly pattern.");
+  assert.equal(claims[0].sentence, "There is not enough recorded life here to call a seven-day pattern yet.");
+  assert.equal(claims[0].working.recordedDays, 2);
 });
 
 test("weekly claims are sentences backed by local evidence", () => {
@@ -926,10 +928,20 @@ test("weekly claims are sentences backed by local evidence", () => {
   );
   assert.ok(claims.some((claim) => claim.key === "weekday-weekend"));
   assert.ok(claims.some((claim) => claim.key === "hours"));
-  assert.ok(
-    claims.every((claim) => /\b\d+ recorded (?:day|days|weekday|weekdays)/.test(claim.sentence)),
-    "every pattern names the number of recorded days behind it",
-  );
+  assert.ok(claims.every((claim) => !/\d/.test(claim.sentence)));
+  assert.ok(claims.every((claim) => !/\b(?:hour|hours|day|days)\b/i.test(claim.sentence)));
+  assert.ok(claims.every((claim) => claim.working && Object.values(claim.working).every(Number.isFinite)));
+});
+
+test("Seven Days is recomputed from one week and stores no aggregate", () => {
+  const state = createSampleState(new Date("2026-08-14T12:00:00.000Z"));
+  const before = JSON.stringify(state);
+  const first = buildSevenDayClaims(state, new Date("2026-08-14T12:00:00.000Z"));
+  const next = buildSevenDayClaims(state, new Date("2026-08-21T12:00:00.000Z"));
+  assert.notDeepEqual(first.map((claim) => claim.working), next.map((claim) => claim.working));
+  assert.equal(JSON.stringify(state), before);
+  assert.equal("sevenDays" in state, false);
+  assert.equal("weekClaims" in state, false);
 });
 
 test("a reply to Athena's reading becomes source-linked evidence", () => {

@@ -2006,10 +2006,18 @@ function topActivity(rows) {
   return [...rows.entries()].sort((left, right) => right[1] - left[1])[0] || null;
 }
 
-function recordedDayEvidence(days, values) {
-  return days
-    .filter((item) => values.has(item.key))
-    .map((item) => weekEvidenceDay(item, formatDuration(values.get(item.key))));
+function sevenDayEvidence(days, values) {
+  return days.map((item) =>
+    weekEvidenceDay(
+      item,
+      values.has(item.key) ? "seen" : "quiet",
+      values.has(item.key) ? "held" : "quiet",
+    ),
+  );
+}
+
+function activityFinding(group) {
+  return String(group || "other recorded time").toLowerCase();
 }
 
 /**
@@ -2017,7 +2025,7 @@ function recordedDayEvidence(days, values) {
  * prose. Fewer than three recorded days produces one explicit silence and no
  * pattern-shaped output.
  */
-export function buildWeekClaims(state, now = new Date()) {
+export function buildSevenDayClaims(state, now = new Date()) {
   const summary = summarizeWeek(state, now);
   const days = summary.days.filter(({ key, day }) => {
     const habitTouched = Object.values(state.habits?.completions || {}).some(
@@ -2037,8 +2045,9 @@ export function buildWeekClaims(state, now = new Date()) {
       key: "silence",
       label: "Still learning",
       sentence: count === 0
-        ? "There are no recorded days to call a weekly pattern."
-        : `${count} recorded day${count === 1 ? " is" : "s are"} not enough to call a weekly pattern.`,
+        ? "There is no recorded life here to call a seven-day pattern."
+        : "There is not enough recorded life here to call a seven-day pattern yet.",
+      working: { recordedDays: count },
       evidence: summary.days.map((item) =>
         weekEvidenceDay(item, days.some((day) => day.key === item.key) ? "recorded" : "quiet", days.some((day) => day.key === item.key) ? "held" : "quiet"),
       ),
@@ -2065,18 +2074,20 @@ export function buildWeekClaims(state, now = new Date()) {
       claims.push({
         key: period.key,
         label: period.label,
-        sentence: `${dayMinutes.size} recorded day${dayMinutes.size === 1 ? " includes" : "s include"} ${period.key} time, so there is not enough to call a ${period.key} pattern.`,
+        sentence: `There is not enough recorded ${period.key} time to call a pattern yet.`,
+        working: { recordedDays: dayMinutes.size, minutes: 0 },
         evidence: dayMinutes.size
-          ? recordedDayEvidence(days, dayMinutes)
-          : days.map((item) => weekEvidenceDay(item, "not recorded", "quiet")),
+          ? sevenDayEvidence(summary.days, dayMinutes)
+          : summary.days.map((item) => weekEvidenceDay(item, "quiet", "quiet")),
       });
       continue;
     }
     claims.push({
       key: period.key,
       label: period.label,
-      sentence: `${top[0]} took the most recorded ${period.key} time across ${dayMinutes.size} recorded days: ${formatDuration(top[1])}.`,
-      evidence: recordedDayEvidence(days, dayMinutes),
+      sentence: `Your ${period.key}s are mostly for ${activityFinding(top[0])}.`,
+      working: { recordedDays: dayMinutes.size, minutes: top[1] },
+      evidence: sevenDayEvidence(summary.days, dayMinutes),
     });
   }
 
@@ -2105,21 +2116,23 @@ export function buildWeekClaims(state, now = new Date()) {
       key: "weekday-weekend",
       label: "Week and weekend",
       sentence: weekdayTop === weekendTop
-        ? `Across ${weekdayCount} recorded weekdays and ${weekendCount} recorded weekend days, ${weekdayTop.toLowerCase()} took the most time in both.`
-        : `Across ${weekdayCount} recorded weekdays, ${weekdayTop.toLowerCase()} took the most time; across ${weekendCount} recorded weekend days, it was ${weekendTop.toLowerCase()}.`,
+        ? `Your weekdays and weekends are mostly for ${activityFinding(weekdayTop)}.`
+        : `Your weekdays are mostly for ${activityFinding(weekdayTop)}, while your weekends are mostly for ${activityFinding(weekendTop)}.`,
+      working: { weekdayDays: weekdayCount, weekendDays: weekendCount },
       evidence: [
-        { label: "Recorded weekdays", shortLabel: "Weekdays", value: `${weekdayCount} days`, tone: "plain" },
-        { label: "Recorded weekend days", shortLabel: "Weekend", value: `${weekendCount} days`, tone: "plain" },
+        { label: "Recorded weekdays", shortLabel: "Weekdays", value: weekdayTop, tone: "plain" },
+        { label: "Recorded weekend days", shortLabel: "Weekend", value: weekendTop, tone: "plain" },
       ],
     });
   } else {
     claims.push({
       key: "weekday-weekend",
       label: "Week and weekend",
-      sentence: `${weekdayCount} recorded weekday${weekdayCount === 1 ? "" : "s"} and ${weekendCount} recorded weekend day${weekendCount === 1 ? "" : "s"} are not enough to compare yet.`,
+      sentence: "There is not enough weekday and weekend time to compare yet.",
+      working: { weekdayDays: weekdayCount, weekendDays: weekendCount },
       evidence: [
-        { label: "Recorded weekdays", shortLabel: "Weekdays", value: `${weekdayCount} days`, tone: "quiet" },
-        { label: "Recorded weekend days", shortLabel: "Weekend", value: `${weekendCount} days`, tone: "quiet" },
+        { label: "Recorded weekdays", shortLabel: "Weekdays", value: "still learning", tone: "quiet" },
+        { label: "Recorded weekend days", shortLabel: "Weekend", value: "still learning", tone: "quiet" },
       ],
     });
   }
@@ -2137,11 +2150,12 @@ export function buildWeekClaims(state, now = new Date()) {
     claims.push({
       key: "hours",
       label: "Where time went",
-      sentence: `Across ${timeDays.length} recorded days, ${group.toLowerCase()} took the most recorded time: ${formatDuration(minutes)}.`,
-      evidence: allocationRows.slice(0, 4).map(([label, value]) => ({
+      sentence: `More of your recorded time goes to ${activityFinding(group)} than anything else.`,
+      working: { recordedDays: timeDays.length, minutes },
+      evidence: allocationRows.slice(0, 4).map(([label]) => ({
         label,
         shortLabel: label,
-        value: formatDuration(value),
+        value: label === group ? "most" : "also present",
         tone: label === group ? "held" : "plain",
       })),
     });
@@ -2149,13 +2163,9 @@ export function buildWeekClaims(state, now = new Date()) {
   return claims;
 }
 
-function formatDuration(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  if (!hours) return `${remainder} minutes`;
-  if (!remainder) return `${hours} hour${hours === 1 ? "" : "s"}`;
-  return `${hours} hour${hours === 1 ? "" : "s"} ${remainder} minutes`;
-}
+// Kept for older callers and tests. Seven Days is the product name; the model
+// remains a seven-Circle-day read with no stored aggregate.
+export const buildWeekClaims = buildSevenDayClaims;
 
 export function buildVisionAnalysis(state, now = new Date()) {
   const summary = summarizeWeek(state, now);

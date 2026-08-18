@@ -49,3 +49,10 @@ test("an empty declaration can retry an immutable completed setup chapter", () =
   );
   assert.match(mirror, /runId=\{declarationSetupRunId\}/);
 });
+
+test("Reflect contains the named Seven Days surface without rendering its working counts", () => {
+  assert.match(mirror, />Seven Days</);
+  assert.match(mirror, /aria-label="Seven Days session"/);
+  assert.match(mirror, /buildSevenDayClaims\(state\)/);
+  assert.doesNotMatch(mirror, /claim\.working/);
+});

@@ -13,7 +13,7 @@ import {
 import {
   answerSurveyQuestion,
   appSessionIndex,
-  buildWeekClaims,
+  buildSevenDayClaims,
   declarationVersions,
   declareLife,
   editProfileSession,
@@ -579,7 +579,7 @@ export default function CircleOSMirror() {
   useStableRouteAnchor(visionSessionRef, athenaSessionRef);
   const [declarationHistoryIndex, setDeclarationHistoryIndex] = useState(0);
   const summary = summarizeWeek(state);
-  const weekClaims = buildWeekClaims(state);
+  const weekClaims = buildSevenDayClaims(state);
   const profileCase = state.profile.profileCase;
   const publicationProfileId = state.ai.profileId || "local";
   const locationSearch = useSyncExternalStore(
@@ -667,7 +667,7 @@ export default function CircleOSMirror() {
     profileCase.updatedAt,
   );
   const weekJourneyVersion = [
-    "week-claims-v2",
+    "seven-days-claims-v1",
     ...weekClaims.map((claim: { key: string; sentence: string }) =>
       `${claim.key}:${claim.sentence}`,
     ),
@@ -1131,18 +1131,18 @@ export default function CircleOSMirror() {
 
         <header className="mirror-intro mirror-week-intro">
           <div>
-            <p className="os-eyebrow">Last seven days</p>
+            <p className="os-eyebrow">Seven Days</p>
             <h1>How you are living</h1>
           </div>
         </header>
 
-        <section className="vision-week-session" aria-label="Last seven days session">
+        <section className="vision-week-session" aria-label="Seven Days session">
           <SwipeSession
             attentionKey={`vision-week:${weekJourneyVersion}`}
             availableIndices={weekClaims.map((_: unknown, index: number) => index)}
             className="vision-week-apps"
             index={visibleWeekApp}
-            label="Last seven days apps"
+            label="Seven Days apps"
             maxIndex={Math.max(0, weekClaims.length - 1)}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
@@ -1159,6 +1159,12 @@ export default function CircleOSMirror() {
               key: string;
               label: string;
               sentence: string;
+              working?: {
+                recordedDays?: number;
+                minutes?: number;
+                weekdayDays?: number;
+                weekendDays?: number;
+              };
               evidence: Array<{
                 label: string;
                 shortLabel: string;
