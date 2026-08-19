@@ -44,7 +44,7 @@
    * so three Apps that should have read as one family each began at a
    * different height. This sits under the Label instead, where it applies
    * whether a Heading exists or not. */
-  --os-label-gap: 24px;
+  --os-label-gap: 50px;
   /* Every App Label sits in a box this tall, so the forehead below it is the
    * same distance on every App. */
   --os-card-label-line-height: 1.72;

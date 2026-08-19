@@ -286,12 +286,14 @@ Used for charts, weekly views, and other things worth reading again.
 - Every Page keeps Header, Heading, Main Body, Sub Body, and Footer. Empty
   optional text does not move those anchors.
 - **The forehead is one number for every App.** The space between the App Label
-  and whatever comes under it is `--os-label-gap`, currently `24px`, and it
+  and whatever comes under it is `--os-label-gap`, currently `50px`, and it
   hangs off the Label rather than off the Heading track. Sai set Routine as the
-  reference: *"i want the forehead size of the routine app to apply
-  everywhere."* Every App matches it — Note, Thoughts, Routine, Protocol, Log,
-  Dreamline, Vision, Week Review, Athena's Reading, Suggestion — measured at
-  `24.9px` on Today and `24px` on Reflect.
+  reference first — *"i want the forehead size of the routine app to apply
+  everywhere"* — and then set the number: **50px**. Every App matches it: Note,
+  Thoughts, Routine, Protocol, Log, Dreamline, Vision, Week Review, Athena's
+  Reading, Suggestion, measured at `50.9px` on Today and `50px` on Reflect.
+  At phone width, where the App Box sits on its `344px` floor, the Footer still
+  clears the bottom padding and nothing is clipped.
 - **Body does not centre.** It begins at the forehead in every placement.
   Centring is what made a balanced Page put its first line wherever the text
   length left it: a short Note measured `105px` under its Label against
