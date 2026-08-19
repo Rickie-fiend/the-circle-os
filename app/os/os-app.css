@@ -1130,7 +1130,13 @@
  * settles to its new height. */
 .circle-os .os-habit-copy-swap {
   display: grid;
-  grid-template-rows: 1fr 0fr;
+  /* minmax(0, …), not a bare fr. A bare `0fr` track still keeps an automatic
+   * minimum of its content's min-content height, so the collapsed row refused
+   * to go below the four lines of action inside it: the row stayed tall, the
+   * tick stayed centred in the old height, and the identity sat above a field
+   * of empty orange. The task row already used minmax here — the lesson was in
+   * this file and I did not follow it. */
+  grid-template-rows: minmax(0, 1fr) minmax(0, 0fr);
   min-width: 0;
   transition: grid-template-rows 320ms var(--ease-out);
 }
@@ -1225,7 +1231,7 @@
  * read and to be undone, then the row becomes who it makes him. The height
  * settles 240ms after the words change, so it never moves under them. */
 .circle-os .os-habit-copy-swap.show-identity {
-  grid-template-rows: 0fr 1fr;
+  grid-template-rows: minmax(0, 0fr) minmax(0, 1fr);
   transition-delay: 3240ms;
 }
 
