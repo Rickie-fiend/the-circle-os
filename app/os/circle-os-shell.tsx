@@ -1391,6 +1391,10 @@ export function TodayExperience() {
   const [sealedProtocolDay, setSealedProtocolDay] =
     useState<ProtocolSealView | null>(null);
   const [newHabitId, setNewHabitId] = useState<string | null>(null);
+  // Sai: "identity edit, only show when i tap on text to edit. default should
+  // not show identity. only action and cue." The row opens when anything in it
+  // takes focus and closes when focus leaves it altogether.
+  const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
@@ -2991,8 +2995,18 @@ export function TodayExperience() {
                         const identity = habit.identity.trim();
                         return (
                           <article
-                            className={`os-extra-mission os-repeated-habit${completed ? " completed" : ""}`}
+                            className={`os-extra-mission os-repeated-habit${completed ? " completed" : ""}${
+                              editingHabitId === habit.id ? " is-editing" : ""
+                            }`}
                             key={habit.id}
+                            onBlurCapture={(event) => {
+                              const next = event.relatedTarget as Node | null;
+                              if (next && event.currentTarget.contains(next)) return;
+                              setEditingHabitId((current) =>
+                                current === habit.id ? null : current,
+                              );
+                            }}
+                            onFocusCapture={() => setEditingHabitId(habit.id)}
                           >
                             <div
                               className={`os-habit-copy-swap${completed && identity ? " show-identity" : ""}`}
