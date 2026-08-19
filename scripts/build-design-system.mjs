@@ -750,11 +750,6 @@ font-weight:700;margin-bottom:14px;opacity:.9}
 .pill{background:var(--c-ink);color:var(--c-bone);border-radius:var(--r-full);
 padding:7px 13px;font-size:var(--text-2xs);letter-spacing:.06em;text-transform:none;
 font-weight:600}
-/* Page dots: which page of this App Box you are on. */
-.dots{display:flex;gap:6px;justify-content:center;padding-top:14px;margin-top:auto}
-.dots i{width:6px;height:6px;border-radius:var(--r-full);background:currentColor;
-opacity:.28}
-.dots i.on{opacity:.95}
 .hrow{display:flex;align-items:center;gap:12px;min-height:44px;padding:7px 0}
 .hrow .t{flex:1;font-size:var(--text-2xl);font-weight:700;line-height:1.2;
 letter-spacing:-.015em}
@@ -816,7 +811,6 @@ const HABIT_PAGE = `<div class="app orange" style="margin-bottom:0">
 <div class="hrow task"><span class="t">Call the venue</span><span class="tick done"></span></div>
 <div class="hrow task"><span class="t">Book the room</span><span class="tick"></span></div>
 <div class="addrow">+ Add task</div>
-<div class="dots"><i class="on"></i><i></i></div>
 </div></div>`;
 
 // The same App Box, page 2: Protocol. One swipe across, never a second box.
@@ -830,7 +824,6 @@ const PROTOCOL_PAGE = `<div class="app orange" style="margin-bottom:0">
 <button class="blk"><span class="t">Meditation 5 min</span><span class="dot"></span></button>
 <p class="kind" style="margin-top:15px">Negotiable</p>
 <button class="blk nego"><span class="t">Read 1 chapter</span><span class="dot"></span></button>
-<div class="dots"><i></i><i class="on"></i></div>
 </div></div>`;
 
 add(
