@@ -1128,17 +1128,15 @@
  *
  * The order Sai asked for: crossed, then the identity fades in, then the row
  * settles to its new height. */
+/* The height is set from a measurement in HabitCopySwap; the faces stack in one
+ * cell and the frame clips to whichever is showing. A height transition is the
+ * most boringly supported animation there is, which is the point: a grid track
+ * collapsing to 0fr measured right here and would not collapse on his phone. */
 .circle-os .os-habit-copy-swap {
   display: grid;
-  /* minmax(0, …), not a bare fr. A bare `0fr` track still keeps an automatic
-   * minimum of its content's min-content height, so the collapsed row refused
-   * to go below the four lines of action inside it: the row stayed tall, the
-   * tick stayed centred in the old height, and the identity sat above a field
-   * of empty orange. The task row already used minmax here — the lesson was in
-   * this file and I did not follow it. */
-  grid-template-rows: minmax(0, 1fr) minmax(0, 0fr);
   min-width: 0;
-  transition: grid-template-rows 320ms var(--ease-out);
+  overflow: hidden;
+  transition: height 320ms var(--ease-out);
 }
 
 /* The tick stands 4px up on its leg while it is waiting, and sits down onto it
@@ -1148,10 +1146,15 @@
   transform: translateY(-4px);
 }
 
+/* align-self: start, so each face keeps its own natural height. Stretched, they
+ * both filled whatever height the frame had, and measuring one returned the
+ * height that had just been set — a measurement that could only ever agree
+ * with itself. */
 .circle-os .os-habit-action-copy,
 .circle-os .os-habit-identity-copy {
+  align-self: start;
+  grid-area: 1 / 1;
   min-height: 0;
-  overflow: hidden;
   transition: opacity 220ms var(--ease-out);
 }
 
@@ -1231,7 +1234,6 @@
  * read and to be undone, then the row becomes who it makes him. The height
  * settles 240ms after the words change, so it never moves under them. */
 .circle-os .os-habit-copy-swap.show-identity {
-  grid-template-rows: minmax(0, 0fr) minmax(0, 1fr);
   transition-delay: 3240ms;
 }
 

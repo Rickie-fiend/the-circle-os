@@ -162,6 +162,60 @@ import type {
  */
 const LINE_DWELL_MS = 6000;
 
+/**
+ * The two faces of a habit row, and the height of whichever one is showing.
+ *
+ * This was a two-row grid collapsing one track to `minmax(0, 0fr)`. It measures
+ * correctly in Chromium and did not collapse on Sai's phone across four
+ * attempts, so the row kept the height of a four-line action while showing a
+ * one-line identity, and the tick centred in the empty space.
+ *
+ * The height is measured here instead. A `height` transition is the oldest and
+ * most boringly supported animation there is, and a measured number cannot be
+ * reinterpreted by a layout engine.
+ */
+function HabitCopySwap({
+  children,
+  showIdentity,
+}: {
+  children: ReactNode;
+  showIdentity: boolean;
+}) {
+  const frame = useRef<HTMLDivElement | null>(null);
+  const [height, setHeight] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const element = frame.current;
+    if (!element) return;
+    const faces = Array.from(element.children) as HTMLElement[];
+    const face = showIdentity ? faces[1] : faces[0];
+    if (!face) return;
+
+    const measure = () => {
+      const next = Math.ceil(face.getBoundingClientRect().height);
+      if (next > 0) setHeight(next);
+    };
+
+    measure();
+    // A face grows while it is being typed into, and a webfont can replace the
+    // fallback after first layout.
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    for (const item of faces) observer?.observe(item);
+    return () => observer?.disconnect();
+  }, [children, showIdentity]);
+
+  return (
+    <div
+      className={`os-habit-copy-swap${showIdentity ? " show-identity" : ""}`}
+      ref={frame}
+      style={height === null ? undefined : { height: `${height}px` }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function PublishedChapterDelivery({
   publication,
   className,
@@ -3009,9 +3063,7 @@ export function TodayExperience() {
                             }}
                             onFocusCapture={() => setEditingHabitId(habit.id)}
                           >
-                            <div
-                              className={`os-habit-copy-swap${completed && identity ? " show-identity" : ""}`}
-                            >
+                            <HabitCopySwap showIdentity={Boolean(completed && identity)}>
                               <div className="os-habit-action-copy">
                                 <textarea
                                   aria-label={`Edit habit: ${action || "New Habit"}`}
@@ -3044,7 +3096,7 @@ export function TodayExperience() {
                               {identity ? (
                                 <p className="os-habit-identity-copy">{identity}</p>
                               ) : null}
-                            </div>
+                            </HabitCopySwap>
                             <CreativeButton
                               aria-label={`${completed ? "Undo" : "Mark done"}: ${action || "New Habit"}`}
                               aria-pressed={completed}
