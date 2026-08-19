@@ -285,6 +285,14 @@ Used for charts, weekly views, and other things worth reading again.
   a one-off Cover, Note, Thoughts, or Blog visual inside a feature.
 - Every Page keeps Header, Heading, Main Body, Sub Body, and Footer. Empty
   optional text does not move those anchors.
+- **The forehead is one number for every App.** The space between the App Label
+  and whatever comes under it is `--os-label-gap`, currently `24px`, and it
+  hangs off the Label rather than off the Heading track. Every placement gets
+  it: a balanced Page, an identity stack and a content flow all start the same
+  distance below their Label. Nothing else adds to it — the Heading track
+  contributes no padding of its own, or the two stack and the Apps drift apart
+  again. Measured, not guessed: before this rule a balanced Page started 4px
+  under its Label while Routine, Protocol and Log carried 25px.
 - Main Body alone centres in the Body region through three lines. At four or
   more its top pins to the three-line position and writing grows downward.
   Sub Body follows directly beneath Main and may grow without moving it.
@@ -297,6 +305,12 @@ Used for charts, weekly views, and other things worth reading again.
 - Cover Main text, Note Main text, the Thoughts placeholder and the Vision
   declaration editor use one shared typography token and centring rule. They
   remain left-aligned.
+- **A label is dimmed by choosing a lighter step, never by using the surface's
+  own text colour on the wrong surface.** Section labels on a dark App Box use
+  a neutral step that clears 4.5:1 against it. The Dreamline shipped its section
+  labels in Ink on `--c-neutral-950`, which measures 1.13:1 — invisible rather
+  than quiet. `--c-neutral-400` on that surface is 6.42:1 and reads as the quiet
+  signpost the label is meant to be.
 - A Note Page keeps its Main text on the same centre or three-line pin as a
   Cover Page. Optional Sub text begins beneath Main without moving it.
 - Routine App Pages place the editable app identity in Main Body, habits then

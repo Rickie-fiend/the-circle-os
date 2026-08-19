@@ -100,6 +100,7 @@ function toCents(value: string) {
 export function DreamlineSheetPage({
   history,
   income,
+  onContinue,
   onSaveLine,
   onSaveSetup,
   onStar,
@@ -108,6 +109,7 @@ export function DreamlineSheetPage({
 }: {
   history: DreamlineRecord[];
   income: DreamlineIncome | null;
+  onContinue: () => void;
   onSaveLine: (value: DreamlineLineDraft, itemId?: string) => string;
   onSaveSetup: (months: number, monthlyExpensesCents: number) => string;
   onStar: (item: DreamlineItem, starred: boolean) => string;
@@ -128,6 +130,10 @@ export function DreamlineSheetPage({
       ? onSave(cleanMonths, toCents(expenses))
       : onStart(cleanMonths, toCents(expenses));
     setError(message);
+    // Saving a sheet that already exists is not the end of anything on its own.
+    // Continue is the finish: it keeps the setup and moves to the steps, which
+    // is the next thing this Page is for.
+    if (!message && record) onContinue();
   }
 
   return (
@@ -135,7 +141,7 @@ export function DreamlineSheetPage({
       className="os-dreamline-page os-dreamline-setup"
       footer={
         <button className="os-dreamline-primary" form="dreamline-setup" type="submit">
-          {record ? "Save setup" : "Begin Dreamline"}
+          {record ? "Continue" : "Begin Dreamline"}
         </button>
       }
       headerLeft={<p className="os-card-label">Dreamline</p>}

@@ -3330,6 +3330,7 @@ export function TodayExperience() {
             <DreamlineSheetPage
               history={pastDreamlines}
               income={activeDreamline ? dreamlineIncomeView : null}
+              onContinue={() => saveLogAppIndex(2)}
               key={`dreamline-sheet-${activeDreamline?.id || "new"}`}
               onSaveLine={saveDreamlineLine}
               onSaveSetup={saveDreamlineSetup}

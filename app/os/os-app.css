@@ -3069,12 +3069,26 @@
   margin-top: var(--os-part-gap);
 }
 
+/* Ink on the dark sheet was very nearly invisible. Sai: "dark labels cant
+ * read." A section label is a quiet signpost, so it is dimmed rather than
+ * bright — but it has to be legible first. */
+.circle-os .os-dreamline-page .os-record-label {
+  color: var(--c-neutral-400);
+}
+
 .circle-os .os-dreamline-section > .os-record-label {
   margin-bottom: 0.6rem;
 }
 
+/* A starred dream is the one being pursued, so it carries the identity colour
+ * rather than sitting in the same weight as everything it was chosen over. */
+.circle-os .os-dreamline-list > article.is-starred .os-dreamline-line-copy strong {
+  color: var(--c-orange);
+}
+
 .circle-os .os-dreamline-page .os-page-heading h2 {
-  font-size: var(--text-2xl);
+  font-size: var(--text-3xl);
+  font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1.05;
 }
@@ -3220,8 +3234,10 @@
   padding-left: 1.1rem;
 }
 
-.circle-os .os-dreamline-primary,
-.circle-os .os-dreamline-add {
+/* Two weights of action. Continue is the one thing the Page is for, so it is
+ * solid. Adding a line is an open invitation you may take five times or not at
+ * all, so it is an outline — present, but not competing with the finish. */
+.circle-os .os-dreamline-primary {
   background: var(--c-bone);
   border: 0;
   border-radius: var(--r-md);
@@ -3230,6 +3246,21 @@
   font-weight: 720;
   min-height: 52px;
   width: 100%;
+}
+
+.circle-os .os-dreamline-add {
+  background: transparent;
+  border: 1px dashed rgb(241 239 232 / 0.32);
+  border-radius: var(--r-md);
+  color: var(--c-warm-50);
+  font: inherit;
+  font-weight: 650;
+  min-height: 52px;
+  width: 100%;
+}
+
+.circle-os .os-dreamline-add:hover {
+  border-color: rgb(241 239 232 / 0.5);
 }
 
 .circle-os .os-dreamline-list > article {
@@ -5205,7 +5236,6 @@
 .circle-os .os-page-heading {
   grid-row: 2;
   min-width: 0;
-  padding-top: 0.9rem;
   width: 100%;
 }
 
@@ -5259,18 +5289,23 @@
  * came from the Heading track and only one of them has a Heading. The gap
  * hangs off the Label now, and the Heading track and identity Heading stop
  * adding their own on top of it. */
-.circle-os .os-page-layout.os-placement-identity-stack > .os-page-header,
-.circle-os .os-page-layout.os-placement-content-flow > .os-page-header {
+/* The forehead: the space between the App Label and the first line under it.
+ *
+ * Sai: "all must have the forehead spacing before the main text started ... i
+ * want that forehead spacing to be in every app." It used to hang off two
+ * placements out of three, so a balanced Page — Note, Thoughts, every App on
+ * Reflect — started its text almost against the Label while Routine, Protocol
+ * and Log carried a clear 24px. It hangs off the Label itself now, so one
+ * number governs every App Box and nothing else adds to it. */
+.circle-os .os-page-layout > .os-page-header {
   padding-bottom: var(--os-label-gap);
 }
 
-.circle-os .os-page-layout.os-placement-identity-stack > .os-page-heading,
-.circle-os .os-page-layout.os-placement-content-flow > .os-page-heading {
+.circle-os .os-page-layout > .os-page-heading {
   padding-top: 0;
 }
 
-.circle-os .os-page-layout.os-placement-identity-stack .os-app-page-heading,
-.circle-os .os-page-layout.os-placement-content-flow .os-app-page-heading {
+.circle-os .os-page-layout .os-app-page-heading {
   margin-top: 0;
 }
 
