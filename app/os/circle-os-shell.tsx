@@ -1600,7 +1600,20 @@ export function TodayExperience() {
   const liveHourProgress =
     (liveNow.getMinutes() * 60 + liveNow.getSeconds()) / 3600;
 
-  useEffect(() => {
+  // Where the current-time line sits, measured from the rendered rows.
+  //
+  // Two things made this arrive late. It ran in an effect, so the Log painted
+  // once without the marker and then again with it. And `liveHourProgress`
+  // changes every time the clock ticks, so having it in the dependency list
+  // tore down the ResizeObserver and built a new one every thirty seconds,
+  // re-measuring the whole timeline each time for a sub-pixel move.
+  //
+  // The progress is read from a ref now, so the observer is created once for a
+  // given set of rows, and the measurement runs before paint.
+  const liveHourProgressRef = useRef(liveHourProgress);
+  liveHourProgressRef.current = liveHourProgress;
+
+  useLayoutEffect(() => {
     const timeline = timelineRef.current;
     if (!timeline) return;
 
@@ -1623,7 +1636,7 @@ export function TodayExperience() {
       const nextCenter =
         nextRect.top - timelineRect.top + timeline.scrollTop + nextRect.height / 2;
       setLiveMarkerTop(
-        currentCenter + (nextCenter - currentCenter) * liveHourProgress,
+        currentCenter + (nextCenter - currentCenter) * liveHourProgressRef.current,
       );
     };
 
@@ -1635,7 +1648,29 @@ export function TodayExperience() {
       observer.disconnect();
       window.removeEventListener("resize", updateMarker);
     };
-  }, [liveClockHour, liveHourProgress, logEndHour, logStartHour]);
+  }, [liveClockHour, logEndHour, logStartHour]);
+
+  // The clock still moves the marker; it just no longer rebuilds the observer
+  // to do it.
+  useEffect(() => {
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+    const current = timeline.querySelector<HTMLElement>(
+      `[data-log-hour="${liveClockHour}"] .os-time-range`,
+    );
+    const next = timeline.querySelector<HTMLElement>(
+      `[data-log-hour="${liveClockHour + 1}"] .os-time-range`,
+    );
+    if (!current || !next) return;
+    const timelineRect = timeline.getBoundingClientRect();
+    const currentRect = current.getBoundingClientRect();
+    const nextRect = next.getBoundingClientRect();
+    const currentCenter =
+      currentRect.top - timelineRect.top + timeline.scrollTop + currentRect.height / 2;
+    const nextCenter =
+      nextRect.top - timelineRect.top + timeline.scrollTop + nextRect.height / 2;
+    setLiveMarkerTop(currentCenter + (nextCenter - currentCenter) * liveHourProgress);
+  }, [liveClockHour, liveHourProgress]);
 
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
