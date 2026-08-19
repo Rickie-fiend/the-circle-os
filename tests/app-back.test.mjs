@@ -74,7 +74,10 @@ test("Routine and Protocol share named heading, stack, header and Footer placeme
   assert.match(shell, /className="os-routine-body"/);
   assert.match(protocol, /os-page-sub os-app-page-stacks os-protocol-terms/);
   assert.match(css, /\.os-page-layout\.os-placement-identity-stack \.os-page-header/);
-  assert.match(css, /\.os-app-page-heading \{[\s\S]*?margin: 0\.35rem 0 1rem;/);
+  // The heading carries no margin of its own. The space under a title is the
+  // shared 25px gap and nothing else — its old 1rem bottom margin stacked on
+  // top of that and put Routine and Protocol content 41px below their title.
+  assert.match(css, /\.os-app-page-heading \{[\s\S]*?margin: 0;/);
   assert.match(css, /\.os-app-page-stacks \{[\s\S]*?display: grid;/);
   assert.match(css, /\.os-page-layout\.os-placement-identity-stack > \.os-page-footer > button/);
 });

@@ -1133,10 +1133,12 @@
   grid-template-rows: 1fr 0fr;
   min-width: 0;
   transition: grid-template-rows 320ms var(--ease-out);
-  /* The tick stands 4px up on its own leg, with the shadow filling the space
-   * below it. Centring the copy against the button *shell* therefore reads 4px
-   * low against the button *face*, which is the part the eye lines up with.
-   * The copy stands on the same leg. */
+}
+
+/* The tick stands 4px up on its leg while it is waiting, and sits down onto it
+ * once the habit is done. The copy rides with it, or the text floats above a
+ * pressed button — which is what Sai drew a yellow line under. */
+.circle-os .os-repeated-habit:not(.completed) .os-habit-copy-swap {
   transform: translateY(-4px);
 }
 
@@ -1218,21 +1220,25 @@
 
 /* The cross lands first and is allowed to be read, then the row becomes the
  * identity. Sai: "cross the main row, delay transition into identity." */
+/* The same five seconds a completed task waits before it begins to leave.
+ * Sai: "add a little more delay for transition, just like task delaying for
+ * fading out." The crossed habit stays crossed long enough to be read, and
+ * long enough to be undone, before the row becomes who it makes him. The
+ * height settles 240ms after the words change, so it never moves under them. */
 .circle-os .os-habit-copy-swap.show-identity {
-  /* After the identity has faded in, so the row settles last. */
   grid-template-rows: 0fr 1fr;
-  transition-delay: 760ms;
+  transition-delay: 5240ms;
 }
 
 .circle-os .os-habit-copy-swap.show-identity .os-habit-action-copy {
   opacity: 0;
   pointer-events: none;
-  transition-delay: 620ms;
+  transition-delay: 5000ms;
 }
 
 .circle-os .os-habit-copy-swap.show-identity .os-habit-identity-copy {
   opacity: 1;
-  transition-delay: 620ms;
+  transition-delay: 5000ms;
 }
 
 
@@ -5429,6 +5435,9 @@
   top: 0;
 }
 
+/* No margin of its own. The space under a title is the shared 25px and nothing
+ * else: this carried a further 1rem, so Routine and Protocol sat their content
+ * 41px below the title where the token says 25. */
 .circle-os .os-app-page-heading {
   color: var(--c-warm-50);
   font-family: inherit;
@@ -5436,7 +5445,7 @@
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.2;
-  margin: 0.35rem 0 1rem;
+  margin: 0;
   min-width: 0;
   width: 100%;
 }
