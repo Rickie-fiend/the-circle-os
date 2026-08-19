@@ -1133,6 +1133,11 @@
   grid-template-rows: 1fr 0fr;
   min-width: 0;
   transition: grid-template-rows 320ms var(--ease-out);
+  /* The tick stands 4px up on its own leg, with the shadow filling the space
+   * below it. Centring the copy against the button *shell* therefore reads 4px
+   * low against the button *face*, which is the part the eye lines up with.
+   * The copy stands on the same leg. */
+  transform: translateY(-4px);
 }
 
 .circle-os .os-habit-action-copy,
@@ -7409,6 +7414,13 @@
   border-radius: var(--r-sm);
   outline: 2px solid var(--c-ink);
   outline-offset: 4px;
+}
+
+.circle-os .os-protocol-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
 }
 
 .circle-os .os-protocol-progress {

@@ -566,31 +566,38 @@ export function ProtocolPage({
       className={`os-protocol ${protocolBack.className}`.trim()}
       headerLeft={runningLabel}
       placement="identity-stack"
+      /* Edit sits top right, where New habit sits on Routine: the same class,
+       * so it lines up with the App Label opposite it the same way. */
       headerRight={
-        <span className="os-protocol-progress">
-          Day {day} of {run.days}
-        </span>
+        <button
+          className="os-new-habit"
+          onClick={() => setEditing(true)}
+          type="button"
+        >
+          Edit
+        </button>
       }
       theme="orange"
+      /* The day count moved down to where the day is actually finished. Sai:
+       * "move day 7 of 7 progress to the bottom where complete the day button
+       * will be shown." It reads as the state of the thing the button acts on
+       * rather than as a tally in the corner. */
       footer={
-        keptAll && !sealed ? (
-          <button
-            className="os-protocol-begin os-protocol-complete"
-            disabled={rewarding}
-            onClick={completeToday}
-            type="button"
-          >
-            Completed today
-          </button>
-        ) : (
-          <button
-            className="os-protocol-begin os-protocol-edit"
-            onClick={() => setEditing(true)}
-            type="button"
-          >
-            Edit phase
-          </button>
-        )
+        <div className="os-protocol-footer">
+          <span className="os-protocol-progress">
+            Day {day} of {run.days}
+          </span>
+          {keptAll && !sealed ? (
+            <button
+              className="os-protocol-begin os-protocol-complete"
+              disabled={rewarding}
+              onClick={completeToday}
+              type="button"
+            >
+              Completed today
+            </button>
+          ) : null}
+        </div>
       }
     >
       <ButtonRewardBackdrop active={rewarding} styleId="ink-wash" />
