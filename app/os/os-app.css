@@ -5380,22 +5380,6 @@
   padding-top: 0;
 }
 
-/* The forehead is measured to the text, not to the box around it.
- *
- * Every App Box already put the first element the same 80px under its Label,
- * and they still did not look equal: a line box carries half its leading above
- * the glyphs, and the leading differs by App. Vision sets 18px type on a
- * 30.96px line, so about 6.5px of empty line sat above its first word, while
- * Note's 32px type on a 31.36px line had none. Same box, different text.
- *
- * Trimming the start of the first line box removes that difference at the
- * source. Where a browser does not support it the Page renders as it did
- * before, which is the old behaviour rather than a broken one. */
-.circle-os .os-page-heading > :first-child,
-.circle-os .os-page-body > :first-child {
-  text-box-trim: trim-start;
-  text-box-edge: cap alphabetic;
-}
 
 .circle-os .os-page-layout .os-app-page-heading {
   margin-top: 0;
