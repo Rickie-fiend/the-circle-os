@@ -12,7 +12,12 @@
   /* Main alone owns the centre. Sub hangs below it; once Main reaches four
    * lines, its top stays at the three-line position and the box grows down. */
   --os-body-optical-shift: -1px;
-  --os-main-sub-gap: 0.36lh;
+  /* The space under the Main text before anything else. Sai set it: "after the
+   * main text, there should be a padding of about 25px between main text and
+   * below content ... do it for all apps, including Note app main text and sub
+   * text." A fixed number, not a fraction of a line, so it does not change with
+   * the type size of whatever sits under it. */
+  --os-main-sub-gap: 25px;
   /* The gap between the last line of Body and the Footer. Fixed: as a Page
    * grows this stays the same, so writing never opens a field of empty colour
    * above the action and never pushes the action out of the frame. */
@@ -5326,6 +5331,23 @@
 
 .circle-os .os-page-layout > .os-page-heading {
   padding-top: 0;
+}
+
+/* The forehead is measured to the text, not to the box around it.
+ *
+ * Every App Box already put the first element the same 80px under its Label,
+ * and they still did not look equal: a line box carries half its leading above
+ * the glyphs, and the leading differs by App. Vision sets 18px type on a
+ * 30.96px line, so about 6.5px of empty line sat above its first word, while
+ * Note's 32px type on a 31.36px line had none. Same box, different text.
+ *
+ * Trimming the start of the first line box removes that difference at the
+ * source. Where a browser does not support it the Page renders as it did
+ * before, which is the old behaviour rather than a broken one. */
+.circle-os .os-page-heading > :first-child,
+.circle-os .os-page-body > :first-child {
+  text-box-trim: trim-start;
+  text-box-edge: cap alphabetic;
 }
 
 .circle-os .os-page-layout .os-app-page-heading {

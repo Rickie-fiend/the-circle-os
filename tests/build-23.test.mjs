@@ -85,7 +85,10 @@ test("Reflect has a native-first fallback for a visible downstream reading", () 
   assert.match(mirror, /useStableRouteAnchor\(visionSessionRef, athenaSessionRef\)/);
 });
 
-test("Main and Sub share the slightly wider gap token", () => {
-  assert.match(css, /--os-main-sub-gap: 0\.36lh/);
+test("Main and Sub are separated by one fixed gap, not a fraction of a line", () => {
+  // Sai set the number on 2026-08-20: "after the main text, there should be a
+  // padding of about 25px between main text and below content." It was 0.36lh,
+  // which changed with the type size of whatever sat underneath.
+  assert.match(css, /--os-main-sub-gap: 25px/);
   assert.equal((css.match(/--os-main-sub-gap:/g) || []).length, 1);
 });
