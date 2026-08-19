@@ -242,13 +242,30 @@ export function SwipeSession({
       ([entry]) => {
         if (!entry?.isIntersecting) return;
         observer.disconnect();
+        window.clearTimeout(safety);
         reveal();
       },
       { threshold: 0.45 },
     );
     observer.observe(session);
+
+    // An armed App Box is invisible: `update-armed` holds it at opacity 0 until
+    // the arrival runs. That is fine for a box the reveal will reach, and it is
+    // an App that shows nothing for one it will not — Sai opened Today and the
+    // Log was an empty frame, because the Log sits below the fold and the
+    // observer only fires once 45% of it is on screen. Zooming forced a
+    // re-evaluation and it appeared, which is what the symptom was telling us.
+    //
+    // Nothing may stay invisible waiting on an observer. The arrival is an
+    // ornament; the content is the App.
+    const safety = window.setTimeout(() => {
+      observer.disconnect();
+      reveal();
+    }, 900);
+
     return () => {
       observer.disconnect();
+      window.clearTimeout(safety);
       if (timer) window.clearTimeout(timer);
     };
   }, [activeIndex, attentionIndex, attentionKey]);

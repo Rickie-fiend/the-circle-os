@@ -2296,7 +2296,11 @@ export function createDay(dateKey) {
  * day can be "Beautiful day" and mean it.
  */
 export function setDayTitle(day, title) {
-  return { ...day, title: cleanHabitPart(title, 60) };
+  // keepHabitPart, not cleanHabitPart. This is the live editor value: trimming
+  // it eats the space the moment it is typed, so a two-word title can never be
+  // written. Exactly the fault that stopped him typing a habit in Build 22, and
+  // I put it back here three days later.
+  return { ...day, title: keepHabitPart(title, 60) };
 }
 
 export function ensureDay(state, dateKey) {
