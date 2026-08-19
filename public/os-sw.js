@@ -1,4 +1,8 @@
-const CACHE = "circle-os-v4";
+// v5 clears every entry cached under v4. It has to: styles and scripts were
+// served cache-first, and the shared CSS chunk keeps its filename across
+// builds, so a phone that had once loaded it would keep that copy for ever.
+// Fixes shipped, deployed, verified live — and never arrived.
+const CACHE = "circle-os-v5";
 const SHELL = [
   "/os",
   "/os/mirror",
@@ -55,6 +59,29 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (!["script", "style", "font", "image"].includes(event.request.destination)) {
+    return;
+  }
+
+  // Code goes to the network first; a font or an image may come from the cache.
+  //
+  // A stylesheet or a script decides what the app *is*, and serving a stale one
+  // means shipping a fix that never arrives. A font or an image only decides
+  // how it looks while it loads, and those are worth having instantly offline.
+  // The cache still answers for code when the network cannot.
+  const isCode = ["script", "style"].includes(event.request.destination);
+
+  if (isCode) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            void caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request)),
+    );
     return;
   }
 

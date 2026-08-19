@@ -1322,7 +1322,9 @@
   appearance: none;
   background: transparent;
   border: 0;
-  color: var(--c-neutral-600);
+  /* Dark, as Sai asked. It sits on the orange surface, where neutral-600 is
+   * 1.99:1 and Ink is 5.08:1. */
+  color: var(--c-ink);
   cursor: pointer;
   font-size: var(--text-2xs);
   font-weight: 700;
