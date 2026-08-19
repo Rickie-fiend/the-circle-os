@@ -1118,14 +1118,27 @@
   text-decoration-thickness: 1.5px;
 }
 
+/* Two rows, not one cell.
+ *
+ * The action and the identity used to share a single grid cell, so the row
+ * stayed as tall as the taller of them: a three-line action left a completed
+ * habit with two empty lines under a one-line identity. Each has its own row
+ * now, and the row that is not showing is collapsed to 0fr. Animating fr units
+ * is what makes the height settle rather than jump.
+ *
+ * The order Sai asked for: crossed, then the identity fades in, then the row
+ * settles to its new height. */
 .circle-os .os-habit-copy-swap {
   display: grid;
+  grid-template-rows: 1fr 0fr;
   min-width: 0;
+  transition: grid-template-rows 320ms var(--ease-out);
 }
 
 .circle-os .os-habit-action-copy,
 .circle-os .os-habit-identity-copy {
-  grid-area: 1 / 1;
+  min-height: 0;
+  overflow: hidden;
   transition: opacity 220ms var(--ease-out);
 }
 
@@ -1200,6 +1213,12 @@
 
 /* The cross lands first and is allowed to be read, then the row becomes the
  * identity. Sai: "cross the main row, delay transition into identity." */
+.circle-os .os-habit-copy-swap.show-identity {
+  /* After the identity has faded in, so the row settles last. */
+  grid-template-rows: 0fr 1fr;
+  transition-delay: 760ms;
+}
+
 .circle-os .os-habit-copy-swap.show-identity .os-habit-action-copy {
   opacity: 0;
   pointer-events: none;
