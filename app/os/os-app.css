@@ -35,6 +35,23 @@
   /* How long an App Box takes to appear. One number for every arrival, so a
    * Page cannot drift back into revealing itself a part at a time. */
   --os-arrival-ms: 180ms;
+
+  /* The distance from the App Label to the first line under it.
+   *
+   * It used to come from the Heading track's own padding, which only works
+   * when a Page has a Heading. Routine puts its identity in the Body and the
+   * Heading track collapses, Record has no Heading at all, and Log has one —
+   * so three Apps that should have read as one family each began at a
+   * different height. This sits under the Label instead, where it applies
+   * whether a Heading exists or not. */
+  --os-label-gap: 24px;
+
+  /* Two gaps, so a long Page groups by eye alone and needs no rules drawn
+   * across it. `--os-group-gap` separates things inside one part; the wider
+   * `--os-part-gap` separates the parts themselves. Sai on the Dreamline
+   * sheet: "it should be glanceable as 3 parts just by spacing." */
+  --os-group-gap: 30px;
+  --os-part-gap: 48px;
   align-items: flex-start;
   background: var(--c-ink-deep);
   display: flex;
@@ -3040,6 +3057,22 @@
   min-height: 0;
 }
 
+/* The dream sheet reads as three parts and nothing draws a line between them:
+ * what it costs to set up, the dreams themselves, and the income they add up
+ * to. Having, Being and Doing sit closer together because they are one part. */
+.circle-os .os-dreamline-section {
+  margin-top: var(--os-group-gap);
+}
+
+.circle-os .os-dreamline-section:first-of-type,
+.circle-os .os-dreamline-section.os-dreamline-income {
+  margin-top: var(--os-part-gap);
+}
+
+.circle-os .os-dreamline-section > .os-record-label {
+  margin-bottom: 0.6rem;
+}
+
 .circle-os .os-dreamline-page .os-page-heading h2 {
   font-size: var(--text-2xl);
   letter-spacing: -0.035em;
@@ -5217,6 +5250,28 @@
 .circle-os .os-page-layout.os-placement-content-flow > .os-page-body {
   justify-content: flex-start;
   transform: none;
+}
+
+/* Routine, Record, Protocol and the phase Pages begin at one height.
+ *
+ * Sai marked this on the Routine and Record screens: the App Label sat a
+ * different distance above the first line on each of them, because the space
+ * came from the Heading track and only one of them has a Heading. The gap
+ * hangs off the Label now, and the Heading track and identity Heading stop
+ * adding their own on top of it. */
+.circle-os .os-page-layout.os-placement-identity-stack > .os-page-header,
+.circle-os .os-page-layout.os-placement-content-flow > .os-page-header {
+  padding-bottom: var(--os-label-gap);
+}
+
+.circle-os .os-page-layout.os-placement-identity-stack > .os-page-heading,
+.circle-os .os-page-layout.os-placement-content-flow > .os-page-heading {
+  padding-top: 0;
+}
+
+.circle-os .os-page-layout.os-placement-identity-stack .os-app-page-heading,
+.circle-os .os-page-layout.os-placement-content-flow .os-app-page-heading {
+  margin-top: 0;
 }
 
 .circle-os .os-page-layout.os-placement-identity-stack .os-page-header {
