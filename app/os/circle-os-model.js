@@ -3839,3 +3839,55 @@ export function protocolPhaseRecords(state) {
       ),
     );
 }
+
+/**
+ * Where a Dreamline stands, for the Page that asks whether he is getting
+ * closer.
+ *
+ * Sai: "The main page for the dreamline will be used to see if i am actually
+ * getting closer to my goal, my lifestyle."
+ *
+ * It counts steps rather than money, because a step is the only thing here he
+ * actually does. The target income is what the dream costs, not progress
+ * toward it, and showing it as a bar would be inventing a number the app has
+ * no evidence for.
+ */
+export function dreamlineProgress(record, now = new Date()) {
+  if (!record || record.status !== "active") return null;
+  const starred = Object.values(record.items)
+    .filter((item) => item.starred)
+    .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)));
+  const lines = starred.map((item) => {
+    const written = DREAMLINE_STEP_KEYS.filter((step) => item.steps?.[step]?.trim());
+    const done = written.filter((step) => item.stepsDoneAt?.[step]);
+    return {
+      id: item.id,
+      label: item.category === "being" ? item.convertedDoing || item.text : item.text,
+      written: written.length,
+      done: done.length,
+    };
+  });
+  const written = lines.reduce((total, line) => total + line.written, 0);
+  const done = lines.reduce((total, line) => total + line.done, 0);
+  const target = record.targetAt ? new Date(record.targetAt) : null;
+  const daysLeft = target
+    ? Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 86400000))
+    : null;
+  return {
+    lines,
+    written,
+    done,
+    daysLeft,
+    committed: Boolean(record.stepsCommittedAt),
+    // Said in words, because a fraction with nothing behind it reads as a score.
+    sentence: !record.stepsCommittedAt
+      ? "Nothing is moving yet. Save your steps and the first one becomes today's."
+      : !written
+        ? "Nothing is written to do. The dreams are named but no step carries them."
+        : done === 0
+          ? "Named and costed, and not started. The first step is still waiting."
+          : done < written
+            ? "Moving. Some of what you wrote down has been done."
+            : "Every step you wrote is done. Write the next ones.",
+  };
+}

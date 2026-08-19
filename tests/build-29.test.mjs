@@ -73,12 +73,17 @@ test("the steps sheet is one Page, and saving it unlocks Today", () => {
   // The App back is gone; these are Pages now.
   assert.doesNotMatch(shell, /useAppBack<"dream" \| "steps">/);
   assert.doesNotMatch(pages, /DreamlineModeButton/);
-  // Three Pages while planning, four once there is something to do.
-  assert.match(
-    shell,
-    /logAppMaxIndex = activeDreamline \? \(dreamlineTodayView \? 3 : 2\) : 1/,
-  );
-  assert.match(shell, /<DreamlineTodayPage/);
+  // The Dreamline lives in the Routine box now, after Protocol: the small
+  // daily, the weekly reset, the big goal. Log is one Page again.
+  assert.match(shell, /const logAppVersion = "log-v3"/);
+  assert.match(shell, /const logAppMaxIndex = 0;/);
+  assert.match(shell, /habitAppVersion = "protocol-habit-dreamline-v4"/);
+  const routineBox = shell.slice(shell.indexOf("idleApps={["), shell.indexOf("idleAppIndex={habitAppIndex}"));
+  const progressAt = routineBox.indexOf("DreamlineProgressPage");
+  const sheetAt = routineBox.indexOf("DreamlineSheetPage");
+  const stepsAt = routineBox.indexOf("DreamlineStepsPage");
+  const todayAt = routineBox.indexOf("DreamlineTodayPage");
+  assert.ok(progressAt > 0 && sheetAt > progressAt && stepsAt > sheetAt && todayAt > stepsAt);
 });
 
 test("Being names its required Doing and stars are the gate to steps", () => {

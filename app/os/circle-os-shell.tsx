@@ -25,6 +25,7 @@ import {
   concludeExpiredDreamlines,
   currentDreamline,
   dreamlineIncome,
+  dreamlineProgress,
   dreamlineRecords,
   dreamlineToday,
   ensureDay,
@@ -90,11 +91,13 @@ import {
 import { sizeTextAreaToContent } from "./text-area-size";
 import { useAppBack } from "./app-back";
 import {
+  DreamlineProgressPage,
   DreamlineSheetPage,
   DreamlineStepsPage,
   DreamlineTodayPage,
   type DreamlineCategory,
   type DreamlineItem,
+  type DreamlineProgressView,
   type DreamlineRecord,
   type DreamlineTodayView,
   type DreamlineStep,
@@ -1711,12 +1714,16 @@ export function TodayExperience() {
   // in front of him every time he opens the app.
   // The version changes with the order: a saved index from the old arrangement
   // would land on the wrong Page, and a new version returns to page zero.
-  const habitAppVersion = "protocol-habit-v3";
+  const habitAppVersion = "protocol-habit-dreamline-v4";
   const habitAppIndex = appSessionIndex(
     state,
     "today-habit",
     habitAppVersion,
   );
+  // Routine is page zero, Protocol page one, and a sealed day briefly takes the
+  // Protocol slot. The Dreamline follows, so its sheet is one past the Progress
+  // Page that opens it.
+  const dreamlineSheetIndex = (sealedProtocolDay ? 3 : 2) + 1;
   const protocol = protocolToday(state, dateKey);
   const protocolRun = activeProtocolRun(state);
   const completedProtocol = latestCompletedProtocol(state);
@@ -1766,8 +1773,11 @@ export function TodayExperience() {
   // same page. after saving that, only then we may proceed to doing the actual
   // living."
   const dreamlineTodayView = dreamlineToday(activeDreamline) as DreamlineTodayView | null;
-  const logAppVersion = `log-dreamline-v2:${dreamlineRecordId}:${dreamlineTodayView ? "living" : "planning"}`;
-  const logAppMaxIndex = activeDreamline ? (dreamlineTodayView ? 3 : 2) : 1;
+  const dreamlineProgressView = dreamlineProgress(activeDreamline) as DreamlineProgressView | null;
+  // Log is one Page again. The Dreamline moved into the Routine box, where it
+  // sits after Protocol: the small daily, the weekly reset, the big goal.
+  const logAppVersion = "log-v3";
+  const logAppMaxIndex = 0;
   const logAppIndex = Math.min(
     appSessionIndex(state, "today-log", logAppVersion),
     logAppMaxIndex,
@@ -3114,6 +3124,46 @@ export function TodayExperience() {
                     updateState((current) => endProtocolRun(current, protocolRun.id))
                   }
                 />,
+                ...(dreamlineProgressView
+                  ? [
+                      <DreamlineProgressPage
+                        key="dreamline-progress"
+                        onOpenSheet={() => changeHabitAppPage(dreamlineSheetIndex)}
+                        progress={dreamlineProgressView}
+                      />,
+                    ]
+                  : []),
+                <DreamlineSheetPage
+                  history={pastDreamlines}
+                  income={activeDreamline ? dreamlineIncomeView : null}
+                  key={`dreamline-sheet-${activeDreamline?.id || "new"}`}
+                  onContinue={() => changeHabitAppPage(dreamlineSheetIndex + 1)}
+                  onSaveLine={saveDreamlineLine}
+                  onSaveSetup={saveDreamlineSetup}
+                  onStar={starDreamlineLine}
+                  onStart={beginDreamline}
+                  record={activeDreamline}
+                />,
+                ...(activeDreamline
+                  ? [
+                      <DreamlineStepsPage
+                        committed={Boolean(activeDreamline.stepsCommittedAt)}
+                        items={starredDreamlineItems}
+                        key={`dreamline-steps-${activeDreamline.id}`}
+                        onCommit={commitDreamlineStepSheet}
+                        onSave={saveDreamlineStep}
+                      />,
+                    ]
+                  : []),
+                ...(activeDreamline && dreamlineTodayView
+                  ? [
+                      <DreamlineTodayPage
+                        key={`dreamline-today-${activeDreamline.id}`}
+                        onTick={tickDreamlineStep}
+                        today={dreamlineTodayView}
+                      />,
+                    ]
+                  : []),
               ]}
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={changeHabitAppPage}
@@ -3362,33 +3412,6 @@ export function TodayExperience() {
             ) : null}
               </div>
             </PageLayout>
-            <DreamlineSheetPage
-              history={pastDreamlines}
-              income={activeDreamline ? dreamlineIncomeView : null}
-              onContinue={() => saveLogAppIndex(2)}
-              key={`dreamline-sheet-${activeDreamline?.id || "new"}`}
-              onSaveLine={saveDreamlineLine}
-              onSaveSetup={saveDreamlineSetup}
-              onStar={starDreamlineLine}
-              onStart={beginDreamline}
-              record={activeDreamline}
-            />
-            {activeDreamline ? (
-              <DreamlineStepsPage
-                committed={Boolean(activeDreamline.stepsCommittedAt)}
-                items={starredDreamlineItems}
-                key={`dreamline-steps-${activeDreamline.id}`}
-                onCommit={commitDreamlineStepSheet}
-                onSave={saveDreamlineStep}
-              />
-            ) : null}
-            {activeDreamline && dreamlineTodayView ? (
-              <DreamlineTodayPage
-                key={`dreamline-today-${activeDreamline.id}`}
-                onTick={tickDreamlineStep}
-                today={dreamlineTodayView}
-              />
-            ) : null}
           </SwipeSession>
         </section>
         )}

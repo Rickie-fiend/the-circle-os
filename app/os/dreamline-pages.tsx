@@ -599,3 +599,66 @@ export function DreamlineTodayPage({
     </PageLayout>
   );
 }
+
+export type DreamlineProgressView = {
+  lines: Array<{ id: string; label: string; written: number; done: number }>;
+  written: number;
+  done: number;
+  daysLeft: number | null;
+  committed: boolean;
+  sentence: string;
+};
+
+/**
+ * The Dreamline's front Page: am I getting closer.
+ *
+ * It leads with a sentence rather than a number, because a fraction on its own
+ * reads as a score and this app does not score. The counts sit under it, per
+ * dream, where they answer "which one is stuck" instead of "how am I doing".
+ */
+export function DreamlineProgressPage({
+  onOpenSheet,
+  progress,
+}: {
+  onOpenSheet: () => void;
+  progress: DreamlineProgressView;
+}) {
+  return (
+    <PageLayout
+      className="os-dreamline-page os-dreamline-progress"
+      footer={
+        <button className="os-dreamline-add" onClick={onOpenSheet} type="button">
+          The dream
+        </button>
+      }
+      headerLeft={<p className="os-card-label">Dreamline</p>}
+      headerRight={
+        progress.daysLeft === null ? undefined : (
+          <span className="os-card-label">{progress.daysLeft} days left</span>
+        )
+      }
+      heading={<h2>{progress.sentence}</h2>}
+      placement="content-flow"
+      theme="dark"
+    >
+      {progress.lines.length ? (
+        <div className="os-dreamline-progress-list">
+          {progress.lines.map((line) => (
+            <article key={line.id}>
+              <strong>{line.label}</strong>
+              <span aria-label={`${line.done} of ${line.written} steps done`}>
+                {Array.from({ length: line.written }, (_, index) => (
+                  <i className={index < line.done ? "is-done" : ""} key={index} />
+                ))}
+              </span>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="os-dreamline-quiet">
+          Star the dreams you will actually pursue, and they appear here.
+        </p>
+      )}
+    </PageLayout>
+  );
+}
