@@ -48,6 +48,39 @@ function displayValue(value: ChapterAnswerValue) {
   return Array.isArray(value) ? value.join(", ") : String(value);
 }
 
+function ChapterAnswerInput({
+  label,
+  maxLength,
+  onChange,
+  placeholder,
+  rows,
+  value,
+}: {
+  label: string;
+  maxLength: number;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows: number;
+  value: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    sizeTextAreaToContent(ref.current);
+  }, [value]);
+  return (
+    <textarea
+      aria-label={label}
+      className="os-chapter-text-input"
+      maxLength={maxLength}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      ref={ref}
+      rows={rows}
+      value={value}
+    />
+  );
+}
+
 function EditableCopy({
   className,
   label,
@@ -375,14 +408,19 @@ function ChapterPageView({
     subContent = (
       <form className="os-survey-text" id={formId} onSubmit={submit}>
         {subContent}
-        <textarea
-          aria-label={page.question || page.title}
-          className="os-chapter-text-input"
-          maxLength={page.type === "long-text" ? 1200 : 180}
+        {/* Sai hit a wall answering a chapter: "there is a limit in answering.
+          * i cant write the whole paragraph." Fifty of the fifty-four text
+          * Pages are short-text, and short-text was capped at 180 characters —
+          * about two sentences. The cap is what a person might actually write
+          * when a question lands, and the box grows with them rather than
+          * asking them to scroll a one-row field. */}
+        <ChapterAnswerInput
+          label={page.question || page.title || "Your answer"}
+          maxLength={page.type === "long-text" ? 4000 : 1200}
+          onChange={setValue}
           placeholder={page.placeholder}
-          rows={page.type === "long-text" ? 4 : 1}
+          rows={page.type === "long-text" ? 4 : 2}
           value={String(value)}
-          onChange={(event) => setValue(event.target.value)}
         />
       </form>
     );

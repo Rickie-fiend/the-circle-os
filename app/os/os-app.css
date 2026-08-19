@@ -2804,6 +2804,21 @@
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.16);
 }
 
+/* The Log's title is his words now, so it is an editor rather than a line of
+ * copy, and it takes the same heading treatment as Routine's identity and a
+ * Protocol's name. Sai asked for 25px between it and the add control under it,
+ * which is the same gap the standard puts under any Main text. */
+.circle-os input.os-app-page-heading.os-day-name-edit {
+  margin-bottom: var(--os-main-sub-gap);
+}
+
+/* The add control carries an 8px margin so it sits off the hour row above it.
+ * The first one has no row above it — only the title — so that margin would be
+ * added to the 25px the title already leaves. */
+.circle-os .os-timeline > .os-expand-hour:first-child {
+  margin-top: 0;
+}
+
 .circle-os .os-page-layout.os-log-page {
   height: 100%;
   min-height: 0;

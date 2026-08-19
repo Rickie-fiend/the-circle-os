@@ -65,6 +65,7 @@ import {
   markLineSeen,
   setAppSessionIndex,
   setDayLogRange,
+  setDayTitle,
   toggleHabitForDay,
   updateHabitDefinition,
   updateHabitDefinitionDraft,
@@ -401,6 +402,7 @@ export type TimeBlock = {
 
 type CircleDay = {
   date: string;
+  title?: string;
   checkIns: CheckIn[];
   mission: Mission;
   missions?: ExtraMission[];
@@ -3223,7 +3225,20 @@ export function TodayExperience() {
                   Add this hour
                 </button>
               }
-              heading={<h2 id="day-heading">Your day, hour by hour</h2>}
+              heading={
+                <input
+                  aria-label="What this day is called"
+                  className="os-app-page-heading os-day-name-edit"
+                  data-os-app-heading
+                  id="day-heading"
+                  maxLength={60}
+                  onChange={(event) =>
+                    updateToday((day) => setDayTitle(day, event.target.value))
+                  }
+                  placeholder="Beautiful day"
+                  value={today.title || ""}
+                />
+              }
               headerLeft={<p className="os-card-label">Log</p>}
               placement="content-flow"
               theme="dark"

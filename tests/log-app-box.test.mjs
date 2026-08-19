@@ -13,7 +13,11 @@ test("Log uses the shared App Box and Page anatomy, and grows", () => {
   assert.doesNotMatch(shell, /frameHeight/);
   assert.match(shell, /className="os-log-page"/);
   assert.match(shell, /headerLeft={<p className="os-card-label">Log<\/p>}/);
-  assert.match(shell, /heading={<h2 id="day-heading">Your day, hour by hour<\/h2>}/);
+  // The Log title is his own words now, editable like Routine's identity and a
+  // Protocol's name, and it carries the shared Main-to-content gap under it.
+  assert.match(shell, /className="os-app-page-heading os-day-name-edit"/);
+  assert.match(shell, /placeholder="Beautiful day"/);
+  assert.match(css, /\.os-day-name-edit \{\s*margin-bottom: var\(--os-main-sub-gap\)/s);
   assert.match(shell, /className="os-log-add-current"/);
   assert.doesNotMatch(shell, /className="os-section-heading"/);
 });

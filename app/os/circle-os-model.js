@@ -1481,6 +1481,7 @@ export function mergeServerState(state, serverState) {
         "period",
       ),
       timeBlocks: mergeRecordArrays(remoteDay.timeBlocks, localDay.timeBlocks),
+      title: localDay.title || remoteDay.title || "",
       logRange: localDay.logRange ?? remoteDay.logRange ?? null,
     };
   }
@@ -2252,12 +2253,25 @@ export function getDayPeriod(hour = new Date().getHours()) {
 export function createDay(dateKey) {
   return {
     date: dateKey,
+    title: "",
     checkIns: [],
     mission: { ...DEFAULT_MISSION },
     missions: [],
     timeBlocks: [],
     logRange: null,
   };
+}
+
+/**
+ * What he calls the day.
+ *
+ * The Log's heading was the fixed line "Your day, hour by hour", which
+ * described the App rather than the day. Sai asked for it to be his own words,
+ * editable the way Routine's identity and a Protocol's name already are — so a
+ * day can be "Beautiful day" and mean it.
+ */
+export function setDayTitle(day, title) {
+  return { ...day, title: cleanHabitPart(title, 60) };
 }
 
 export function ensureDay(state, dateKey) {
