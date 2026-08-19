@@ -683,29 +683,30 @@ screen(
   "screens/today.html",
   "today.html",
   "Today",
-  "The real Today screen, captured from the running app with a seeded profile. This is the surface used every day: check-in, habit, tasks, and the hourly log.",
+  "The real Today screen, captured from the running app with a seeded profile. This is where the day is written.",
   [
-    "The App Box stack: Check-in, Habit, Habits, Tasks, then Log. Each is its own box rather than one scrolling page.",
+    "The App Box stack: the <b>Note and Thoughts</b> deck, <b>Routine</b> with Protocol, then <b>Log</b>. Each is its own box rather than one scrolling page.",
+    "The Note and Thoughts deck is the only session in Circle OS that turns its own Page, on a 30 second dwell. Every other App Box is still.",
+    "Routine and Protocol share the orange surface and one placement contract, so a swipe between them never resizes the frame.",
     "The hourly log runs from the recorded wake time to sleep, so the length of the day is the person's own, not a fixed 24 rows.",
-    "Empty hours still offer <b>Add main activity</b>. Most rows on a normal day are empty, which is worth designing for rather than around.",
-    "Filled hours carry an activity colour from the categorical palette. Several of those colours sit close in value, which is easiest to judge here.",
-    "Every row has a <b>+</b> affordance. On a full day that is a lot of repeated controls competing for attention.",
+    "Log's second Page is the <b>Dreamline</b>: the dream sheet, the steps, then the one thing to do today.",
   ],
-  { name: "Today", group: "The app today", subtitle: "Check-in, habit, tasks, hourly log", w: 1060, h: 900 },
+  { name: "Today", group: "The app today", subtitle: "Note, Thoughts, Routine, Protocol, Log", w: 1060, h: 900 },
 );
 
 screen(
   "screens/reflect.html",
   "reflect.html",
   "Reflect",
-  "The Reflect tab, which holds Vision, the last seven days, and Athena. Vision remains the inner white app about the life the person wants.",
+  "The Reflect tab, where the day is read rather than written. Four sessions, and nothing on this route turns its own Page.",
   [
-    "Three library sessions stacked: <b>Vision</b>, <b>Last seven days</b>, <b>Athena</b>. Each is swipeable in both directions and keeps a stable height.",
+    "Four sessions stacked: <b>Vision</b>, <b>Week Review</b>, <b>Athena's Reading</b>, <b>Suggestion</b>. Each is swipeable both ways and keeps a stable height.",
+    "<b>Week Review is the mirror.</b> Yesterday opens it, then it widens to the daily pattern, the four periods of the day, and the week that held or did not.",
+    "<b>Athena's Reading is the voice.</b> Life overall, and its cover line is written fresh each morning. The two must not blur: if the mirror starts persuading, he is told the same thing twice.",
     "Each session shows a cover first with a <b>Swipe to see</b> cue, so nothing is read before the person asks for it.",
-    "Athena observes evidence and expresses uncertainty. It never gives life advice, and every conclusion must stay editable and dismissible.",
-    "This is the surface where interpretation lives, deliberately separated from the observed data on Today.",
+    "Nothing here rotates. A surface that is read must hold still.",
   ],
-  { name: "Reflect", group: "The app today", subtitle: "Vision, seven days, Athena", w: 1060, h: 900 },
+  { name: "Reflect", group: "The app today", subtitle: "Vision, Week Review, Athena's Reading, Suggestion", w: 1060, h: 900 },
 );
 
 // ---------------------------------------------------------------------------
@@ -863,10 +864,10 @@ add(
   "screens/today-proposed.html",
   page({
     group: "The app today",
-    name: "Proposed",
-    title: "Today, proposed",
+    name: "Proposed — superseded",
+    title: "Today, as proposed on 12 August",
     lede:
-      "The whole doing surface. Three App Boxes, not four: Protocol lives inside the Habit box as its second page. Every box keeps one radius and one square-ish minimum height, so the stack reads as one system.",
+      "Kept as a record, not as a target. This proposal shipped: Protocol does live inside the Routine box, and the stack does read as one system. The geometry here is the old one — the App Box floor is 344px now, not 310px — so read the live Today card above for what the app actually is.",
     extra: PROPOSED_CSS,
     body: `<div class="frame">
 <div class="phone">
