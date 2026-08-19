@@ -112,14 +112,21 @@ test("what he achieved names two things at most, and three rows at most", () => 
   assert.equal(achieved.sentence.match(/Finish thing/g).length, 2);
 });
 
-test("Yesterday sits on Reflect ahead of Week Review, and does not rotate", () => {
-  const yesterdayAt = mirror.indexOf('aria-label="Yesterday session"');
-  const weekAt = mirror.indexOf('aria-label="Week Review session"');
-  assert.ok(yesterdayAt > 0, "Yesterday session is rendered");
-  assert.ok(yesterdayAt < weekAt, "Yesterday comes before Week Review");
-  const session = mirror.slice(yesterdayAt, weekAt);
-  assert.doesNotMatch(session, /rotateMs/);
-  assert.match(session, /setAppSessionIndex\(/);
+test("Yesterday opens Week Review rather than taking its own App Box", () => {
+  // Sai: "Yesterday, doesnt need its own app box, it should be inside the week
+  // review."
+  assert.doesNotMatch(mirror, /aria-label="Yesterday session"/);
+  assert.doesNotMatch(mirror, /mirror-yesterday-intro/);
+  const pages = mirror.slice(
+    mirror.indexOf("const weekReviewPages = ["),
+    mirror.indexOf("const weekJourneyVersion"),
+  );
+  const didAt = pages.indexOf("yesterday.did");
+  const achievedAt = pages.indexOf("yesterday.achieved");
+  const patternAt = pages.indexOf("weekReview.dailyPattern");
+  assert.ok(didAt > 0 && achievedAt > didAt && patternAt > achievedAt);
+  // The saved page position must not survive the page list changing length.
+  assert.match(mirror, /weekJourneyVersion = `\$\{weekReview\.version\}\|\$\{yesterday\.version\}`/);
 });
 
 test("a Page arrives whole, with no part of it revealed on a delay", () => {

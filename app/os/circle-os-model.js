@@ -497,6 +497,14 @@ function normalizeDreamlineItem(key, value) {
   const steps = Object.fromEntries(
     DREAMLINE_STEP_KEYS.map((step) => [step, cleanHabitPart(value.steps?.[step], 600)]),
   );
+  // When each step was actually done. A step is written once and ticked once,
+  // so the moment it was ticked is the whole record of it.
+  const stepsDoneAt = Object.fromEntries(
+    DREAMLINE_STEP_KEYS.map((step) => [
+      step,
+      validMoment(value.stepsDoneAt?.[step]) || null,
+    ]),
+  );
   return {
     id,
     category: value.category,
@@ -509,6 +517,7 @@ function normalizeDreamlineItem(key, value) {
     cadence: value.cadence === "one-time" ? "one-time" : "monthly",
     starred: Boolean(value.starred),
     steps,
+    stepsDoneAt,
     createdAt: validMoment(value.createdAt) || validMoment(value.updatedAt) || "",
     updatedAt: validMoment(value.updatedAt) || validMoment(value.createdAt) || "",
   };
@@ -542,6 +551,9 @@ function normalizeDreamlines(value) {
       months,
       monthlyExpensesCents: dreamlineCents(candidate.monthlyExpensesCents),
       items,
+      // When the Steps sheet was committed. Until this is set the Dreamline is
+      // still being planned; after it, there is a thing to do today.
+      stepsCommittedAt: validMoment(candidate.stepsCommittedAt) || null,
       createdAt,
       startedAt,
       targetAt,
@@ -968,6 +980,7 @@ export function startDreamline(
     months: cleanMonths,
     monthlyExpensesCents: dreamlineCents(monthlyExpensesCents),
     items: {},
+    stepsCommittedAt: null,
     createdAt: startedAt,
     startedAt,
     targetAt: addUtcMonths(startedAt, cleanMonths),
@@ -1126,6 +1139,113 @@ export function updateDreamlineStep(
     updatedAt,
   };
   return { state: withDreamlineRecord(state, next, "dreamline-step"), item: nextItem, error: "" };
+}
+
+/**
+ * Commit the Steps sheet, which is what turns a Dreamline from a plan into
+ * something to do today.
+ *
+ * Sai: "after saving that, only then we may proceed to doing the actual
+ * living, the first thing for today, and come and tick complete back."
+ *
+ * It refuses an empty commitment. A Dreamline with no Now step has nothing to
+ * proceed to, and letting it through would put an empty Page where the day's
+ * first action belongs.
+ */
+export function commitDreamlineSteps(
+  state,
+  recordId,
+  { committedAt = new Date().toISOString() } = {},
+) {
+  const record = state.dreamlines?.records?.[recordId];
+  if (!record || record.status !== "active" || dreamlineIsExpired(record, new Date(committedAt))) {
+    return { state, error: "This Dreamline has concluded." };
+  }
+  const starred = Object.values(record.items).filter((item) => item.starred);
+  if (!starred.length) {
+    return { state, error: "Star at least one dream before saving your steps." };
+  }
+  if (!starred.some((item) => item.steps?.now?.trim())) {
+    return {
+      state,
+      error: "Give at least one starred dream a step you can take now.",
+    };
+  }
+  const next = { ...record, stepsCommittedAt: committedAt, updatedAt: committedAt };
+  return {
+    state: withDreamlineRecord(state, next, "dreamline-steps-committed"),
+    record: next,
+    error: "",
+  };
+}
+
+/**
+ * Tick, or untick, one step. Ticking is how a Dreamline records that living
+ * happened, so it is the only write on this app that is not planning.
+ */
+export function setDreamlineStepDone(
+  state,
+  recordId,
+  itemId,
+  step,
+  done,
+  { at = new Date().toISOString() } = {},
+) {
+  const record = state.dreamlines?.records?.[recordId];
+  const item = record?.items?.[itemId];
+  if (!record || !item || record.status !== "active") {
+    return { state, error: "This Dreamline has concluded." };
+  }
+  if (!DREAMLINE_STEP_KEYS.includes(step)) {
+    return { state, error: "Unknown Dreamline step." };
+  }
+  if (!item.steps?.[step]?.trim()) {
+    return { state, error: "There is no step written here yet." };
+  }
+  const nextItem = {
+    ...item,
+    stepsDoneAt: { ...(item.stepsDoneAt || {}), [step]: done ? at : null },
+    updatedAt: at,
+  };
+  const next = {
+    ...record,
+    items: { ...record.items, [itemId]: nextItem },
+    updatedAt: at,
+  };
+  return {
+    state: withDreamlineRecord(state, next, "dreamline-step-done"),
+    item: nextItem,
+    error: "",
+  };
+}
+
+/**
+ * The one thing to do next, and nothing else.
+ *
+ * Steps are ordered Now, then Tomorrow, then Day After, and within a step by
+ * the order the dreams were written. The first written-but-unticked step is
+ * what the app asks for. Showing the whole plan here would make this a list
+ * again, and the point of the Page is that there is exactly one thing on it.
+ */
+export function dreamlineToday(record) {
+  if (!record || record.status !== "active" || !record.stepsCommittedAt) return null;
+  const starred = Object.values(record.items)
+    .filter((item) => item.starred)
+    .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)));
+  for (const step of DREAMLINE_STEP_KEYS) {
+    for (const item of starred) {
+      const text = item.steps?.[step]?.trim();
+      if (text && !item.stepsDoneAt?.[step]) {
+        return { itemId: item.id, item, step, text, done: false };
+      }
+    }
+  }
+  // Everything written has been done. That is worth saying rather than showing
+  // an empty Page.
+  const written = starred.some((item) =>
+    DREAMLINE_STEP_KEYS.some((step) => item.steps?.[step]?.trim()),
+  );
+  return written ? { itemId: "", item: null, step: null, text: "", done: true } : null;
 }
 
 export function dreamlineIncome(record) {

@@ -16,6 +16,7 @@ export type DreamlineItem = {
   cadence: "monthly" | "one-time";
   starred: boolean;
   steps: Record<DreamlineStep, string>;
+  stepsDoneAt: Record<DreamlineStep, string | null>;
   createdAt: string;
   updatedAt: string;
 };
@@ -26,11 +27,21 @@ export type DreamlineRecord = {
   months: number;
   monthlyExpensesCents: number;
   items: Record<string, DreamlineItem>;
+  stepsCommittedAt: string | null;
   createdAt: string;
   startedAt: string;
   targetAt: string | null;
   concludedAt: string | null;
   updatedAt: string;
+};
+
+/** What the Today Page shows: one step, or the fact that all of them are done. */
+export type DreamlineTodayView = {
+  itemId: string;
+  item: DreamlineItem | null;
+  step: DreamlineStep | null;
+  text: string;
+  done: boolean;
 };
 
 type DreamlineLineDraft = {
@@ -81,35 +92,29 @@ function toCents(value: string) {
   return Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0;
 }
 
-function DreamlineModeButton({
-  onFlip,
-}: {
-  onFlip: (source: HTMLElement) => void;
-}) {
-  return (
-    <button
-      className="os-card-label os-dreamline-mode"
-      onClick={(event) => onFlip(event.currentTarget)}
-      type="button"
-    >
-      Dreamline
-    </button>
-  );
-}
-
-export function DreamlineSetupPage({
+/**
+ * The dream sheet: setup, Having, Being, Doing and the income it all adds up
+ * to, on one Page. It is long and it scrolls, which is right - a worksheet is
+ * a sheet, not five cards you swipe between.
+ */
+export function DreamlineSheetPage({
   history,
-  onFlip,
-  onSave,
+  income,
+  onSaveLine,
+  onSaveSetup,
+  onStar,
   onStart,
   record,
 }: {
   history: DreamlineRecord[];
-  onFlip: (source: HTMLElement) => void;
-  onSave: (months: number, monthlyExpensesCents: number) => string;
+  income: DreamlineIncome | null;
+  onSaveLine: (value: DreamlineLineDraft, itemId?: string) => string;
+  onSaveSetup: (months: number, monthlyExpensesCents: number) => string;
+  onStar: (item: DreamlineItem, starred: boolean) => string;
   onStart: (months: number, monthlyExpensesCents: number) => string;
   record: DreamlineRecord | null;
 }) {
+  const onSave = onSaveSetup;
   const [months, setMonths] = useState(String(record?.months || 6));
   const [expenses, setExpenses] = useState(
     moneyInput(record?.monthlyExpensesCents || 0),
@@ -133,10 +138,8 @@ export function DreamlineSetupPage({
           {record ? "Save setup" : "Begin Dreamline"}
         </button>
       }
-      headerLeft={
-        record ? <DreamlineModeButton onFlip={onFlip} /> : <p className="os-card-label">Dreamline</p>
-      }
-      headerRight={<span className="os-card-label">Setup</span>}
+      headerLeft={<p className="os-card-label">Dreamline</p>}
+      headerRight={<span className="os-card-label">The dream</span>}
       heading={<h2>In {record?.months || Number(months) || 6} months I dream of.</h2>}
       placement="content-flow"
       theme="dark"
@@ -178,6 +181,49 @@ export function DreamlineSetupPage({
         ) : null}
         {error ? <p className="os-dreamline-error" role="alert">{error}</p> : null}
       </form>
+
+      {record ? (
+        <>
+          <DreamlineLinesSection
+            category="having"
+            onSave={onSaveLine}
+            onStar={onStar}
+            record={record}
+          />
+          <DreamlineLinesSection
+            category="being"
+            onSave={onSaveLine}
+            onStar={onStar}
+            record={record}
+          />
+          <DreamlineLinesSection
+            category="doing"
+            onSave={onSaveLine}
+            onStar={onStar}
+            record={record}
+          />
+
+          {income ? (
+            <section className="os-dreamline-section os-dreamline-income" aria-label="Target income">
+              <p className="os-record-label">Target monthly income</p>
+              <div className="os-dreamline-income-total">
+                <strong>{formatDreamlineMoney(income.monthly)}</strong>
+                <span>Only starred dreams enter this number.</span>
+              </div>
+              <dl className="os-dreamline-income-terms">
+                <div><dt>A · Having</dt><dd>{formatDreamlineMoney(income.having)}</dd></div>
+                <div><dt>B · Being</dt><dd>{formatDreamlineMoney(income.being)}</dd></div>
+                <div><dt>C · Doing</dt><dd>{formatDreamlineMoney(income.doing)}</dd></div>
+                <div><dt>Expenses × 1.3</dt><dd>{formatDreamlineMoney(income.expenseBuffer)}</dd></div>
+              </dl>
+              <div className="os-dreamline-daily">
+                <span>Target daily income</span>
+                <strong>{formatDreamlineMoney(income.daily)}</strong>
+              </div>
+            </section>
+          ) : null}
+        </>
+      ) : null}
 
       {history.length ? (
         <details className="os-dreamline-history">
@@ -316,15 +362,19 @@ function lineCost(item: DreamlineItem, months: number) {
     : `${formatDreamlineMoney(cost)}/month`;
 }
 
-export function DreamlineLinesPage({
+/**
+ * One column of the worksheet. A section rather than a Page: Sai asked for
+ * "setup, having, being, doing, and income all ... in the same page", which is
+ * how the paper worksheet reads too — one sheet you look down, not five cards
+ * you swipe between.
+ */
+function DreamlineLinesSection({
   category,
-  onFlip,
   onSave,
   onStar,
   record,
 }: {
   category: DreamlineCategory;
-  onFlip: (source: HTMLElement) => void;
   onSave: (value: DreamlineLineDraft, itemId?: string) => string;
   onStar: (item: DreamlineItem, starred: boolean) => string;
   record: DreamlineRecord;
@@ -337,21 +387,8 @@ export function DreamlineLinesPage({
   const label = category === "having" ? "Having" : category === "being" ? "Being" : "Doing";
 
   return (
-    <PageLayout
-      className="os-dreamline-page os-dreamline-lines"
-      footer={
-        editingId || items.length >= 5 ? null : (
-          <button className="os-dreamline-add" onClick={() => setEditingId("new")} type="button">
-            <span aria-hidden="true">+</span> Add {label}
-          </button>
-        )
-      }
-      headerLeft={<DreamlineModeButton onFlip={onFlip} />}
-      headerRight={<span className="os-card-label">{label}</span>}
-      heading={<h2>{label}</h2>}
-      placement="content-flow"
-      theme="dark"
-    >
+    <section className="os-dreamline-section" aria-label={label}>
+      <p className="os-record-label">{label}</p>
       <div className="os-dreamline-list">
         {items.map((item) =>
           editingId === item.id ? (
@@ -394,43 +431,12 @@ export function DreamlineLinesPage({
         ) : null}
         {error ? <p className="os-dreamline-error" role="alert">{error}</p> : null}
       </div>
-    </PageLayout>
-  );
-}
-
-export function DreamlineIncomePage({
-  income,
-  onFlip,
-}: {
-  income: DreamlineIncome;
-  onFlip: (source: HTMLElement) => void;
-}) {
-  return (
-    <PageLayout
-      className="os-dreamline-page os-dreamline-income"
-      footer={
-        <div className="os-dreamline-daily">
-          <span>Target daily income</span>
-          <strong>{formatDreamlineMoney(income.daily)}</strong>
-        </div>
-      }
-      headerLeft={<DreamlineModeButton onFlip={onFlip} />}
-      headerRight={<span className="os-card-label">Income</span>}
-      heading={<h2>Target monthly income</h2>}
-      placement="content-flow"
-      theme="dark"
-    >
-      <div className="os-dreamline-income-total">
-        <strong>{formatDreamlineMoney(income.monthly)}</strong>
-        <span>Only starred dreams enter this number.</span>
-      </div>
-      <dl className="os-dreamline-income-terms">
-        <div><dt>A · Having</dt><dd>{formatDreamlineMoney(income.having)}</dd></div>
-        <div><dt>B · Being</dt><dd>{formatDreamlineMoney(income.being)}</dd></div>
-        <div><dt>C · Doing</dt><dd>{formatDreamlineMoney(income.doing)}</dd></div>
-        <div><dt>Expenses × 1.3</dt><dd>{formatDreamlineMoney(income.expenseBuffer)}</dd></div>
-      </dl>
-    </PageLayout>
+      {editingId || items.length >= 5 ? null : (
+        <button className="os-dreamline-add" onClick={() => setEditingId("new")} type="button">
+          <span aria-hidden="true">+</span> Add {label}
+        </button>
+      )}
+    </section>
   );
 }
 
@@ -440,7 +446,7 @@ function DreamlineStepField({
   step,
 }: {
   item: DreamlineItem;
-  onSave: (itemId: string, value: string) => string;
+  onSave: (itemId: string, step: DreamlineStep, value: string) => string;
   step: DreamlineStep;
 }) {
   const [draft, setDraft] = useState(item.steps[step] || "");
@@ -452,7 +458,7 @@ function DreamlineStepField({
       <textarea
         aria-label={`${step} step for ${item.text}`}
         maxLength={600}
-        onBlur={() => setError(onSave(item.id, draft))}
+        onBlur={() => setError(onSave(item.id, step, draft))}
         onChange={(event) => setDraft(event.currentTarget.value)}
         placeholder={step === "now" ? "Something you can do from this chair." : "One clear next move."}
         rows={2}
@@ -463,42 +469,127 @@ function DreamlineStepField({
   );
 }
 
+const STEP_SECTIONS: Array<{ step: DreamlineStep; label: string; hint: string }> = [
+  { step: "now", label: "Now", hint: "Something you can do from this chair." },
+  { step: "tomorrow", label: "Tomorrow", hint: "One clear next move." },
+  { step: "dayAfter", label: "Day After", hint: "One clear next move." },
+];
+
+/**
+ * The steps sheet: Now, Tomorrow and Day After together on one Page, and the
+ * Save that ends the planning.
+ *
+ * Saving is the hinge of the whole app. Sai: "after saving that, only then we
+ * may proceed to doing the actual living, the first thing for today, and come
+ * and tick complete back." Until this is pressed there is no Today Page at all.
+ */
 export function DreamlineStepsPage({
+  committed,
   items,
-  label,
-  onFlip,
+  onCommit,
   onSave,
-  step,
 }: {
+  committed: boolean;
   items: DreamlineItem[];
-  label: string;
-  onFlip: (source: HTMLElement) => void;
-  onSave: (itemId: string, value: string) => string;
-  step: DreamlineStep;
+  onCommit: () => string;
+  onSave: (itemId: string, step: DreamlineStep, value: string) => string;
 }) {
+  const [error, setError] = useState("");
+
   return (
     <PageLayout
       className="os-dreamline-page os-dreamline-steps"
-      headerLeft={<DreamlineModeButton onFlip={onFlip} />}
-      headerRight={<span className="os-card-label">{label}</span>}
-      heading={<h2>Steps {label}</h2>}
+      footer={
+        items.length ? (
+          <button
+            className="os-dreamline-primary"
+            onClick={() => setError(onCommit())}
+            type="button"
+          >
+            {committed ? "Save steps" : "Save and begin"}
+          </button>
+        ) : null
+      }
+      headerLeft={<p className="os-card-label">Dreamline</p>}
+      headerRight={<span className="os-card-label">Steps</span>}
+      heading={<h2>What you do about it.</h2>}
       placement="content-flow"
       theme="dark"
     >
-      <div className="os-dreamline-step-list">
-        {items.length ? (
-          items.map((item) => (
-            <DreamlineStepField
-              item={item}
-              key={`${item.id}-${item.updatedAt}`}
-              onSave={onSave}
-              step={step}
-            />
-          ))
+      {items.length ? (
+        STEP_SECTIONS.map(({ step, label, hint }) => (
+          <section className="os-dreamline-section" aria-label={label} key={step}>
+            <p className="os-record-label">{label}</p>
+            <p className="os-dreamline-quiet">{hint}</p>
+            <div className="os-dreamline-step-list">
+              {items.map((item) => (
+                <DreamlineStepField
+                  item={item}
+                  key={`${item.id}-${step}-${item.updatedAt}`}
+                  onSave={onSave}
+                  step={step}
+                />
+              ))}
+            </div>
+          </section>
+        ))
+      ) : (
+        <p className="os-dreamline-quiet">
+          Star up to four dreams on the sheet before this. Only those take steps.
+        </p>
+      )}
+      {error ? <p className="os-dreamline-error" role="alert">{error}</p> : null}
+    </PageLayout>
+  );
+}
+
+/**
+ * One thing, and a tick. This Page does not exist until the steps are saved.
+ */
+export function DreamlineTodayPage({
+  onTick,
+  today,
+}: {
+  onTick: (itemId: string, step: DreamlineStep) => string;
+  today: DreamlineTodayView;
+}) {
+  const [error, setError] = useState("");
+  const label = STEP_SECTIONS.find((section) => section.step === today.step)?.label || "";
+
+  return (
+    <PageLayout
+      className="os-dreamline-page os-dreamline-today"
+      footer={
+        today.done || !today.step ? null : (
+          <button
+            className="os-dreamline-primary"
+            onClick={() => setError(onTick(today.itemId, today.step as DreamlineStep))}
+            type="button"
+          >
+            Done
+          </button>
+        )
+      }
+      headerLeft={<p className="os-card-label">Dreamline</p>}
+      headerRight={<span className="os-card-label">{label || "Today"}</span>}
+      heading={
+        today.done ? (
+          <h2>Every step you wrote is done.</h2>
         ) : (
-          <p className="os-dreamline-quiet">Star up to four dreams on the front. Only those take steps.</p>
-        )}
-      </div>
+          <h2>{today.text}</h2>
+        )
+      }
+      placement="content-flow"
+      theme="dark"
+    >
+      <p className="os-dreamline-quiet">
+        {today.done
+          ? "Write the next ones on the steps sheet, or let the Dreamline run."
+          : today.item?.category === "being"
+            ? today.item.convertedDoing
+            : today.item?.text || ""}
+      </p>
+      {error ? <p className="os-dreamline-error" role="alert">{error}</p> : null}
     </PageLayout>
   );
 }
