@@ -45,6 +45,9 @@
    * different height. This sits under the Label instead, where it applies
    * whether a Heading exists or not. */
   --os-label-gap: 24px;
+  /* Every App Label sits in a box this tall, so the forehead below it is the
+   * same distance on every App. */
+  --os-card-label-line-height: 1.72;
 
   /* Two gaps, so a long Page groups by eye alone and needs no rules drawn
    * across it. `--os-group-gap` separates things inside one part; the wider
@@ -282,6 +285,10 @@
   font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.13em;
+  /* Stated, not inherited. An App Label is a <p> on one App, a <button> on
+   * another and a <span> on a third; without one line-height their boxes differ
+   * and the forehead measured under them differs with it. */
+  line-height: var(--os-card-label-line-height);
   margin: 0;
   text-transform: uppercase;
 }
@@ -625,20 +632,16 @@
   color: var(--c-ink);
 }
 
+/* Resets what a button adds and nothing more. Restating the type here is how
+ * this Label drifted from the others in the first place. */
 .circle-os .os-checkin-refresh-label {
   appearance: none;
   background: transparent;
   border: 0;
-  color: var(--c-orange);
   cursor: pointer;
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  line-height: 1;
   margin: 0;
   min-height: 0;
   padding: 0;
-  text-transform: uppercase;
 }
 
 .circle-os .os-habit-session {
@@ -1251,9 +1254,16 @@
   font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.13em;
-  line-height: 1;
-  min-height: 44px;
-  padding: 1rem 0;
+  /* The shared Label line, not 1. At line-height 1 this box was 10px against
+   * the App Label's 17.2px opposite it, so the two words sat on different
+   * lines. */
+  line-height: var(--os-card-label-line-height);
+  /* The touch target stays 44px; the word sits at the top of it, on the
+   * header's line, rather than in the middle of the target. */
+  align-items: flex-start;
+  display: flex;
+  min-height: var(--touch-min);
+  padding: 0;
   text-transform: uppercase;
 }
 
@@ -1870,15 +1880,17 @@
     cubic-bezier(0.22, 0.72, 0.22, 1) both;
 }
 
+/* A fade, with no travel. The -4px start meant the App Label sat four pixels
+ * above its own line for the length of the animation, and with fill-mode both
+ * it holds there until the animation runs at all. A Label that moves is a
+ * Label that does not line up. */
 @keyframes os-thoughts-label-arrival {
   from {
     opacity: 0;
-    transform: translate3d(0, -4px, 0);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -4164,7 +4176,7 @@
 .circle-os .athena-reader-app {
   background: var(--c-orange-600);
   color: var(--c-warm-50);
-  min-height: 330px;
+  min-height: var(--os-app-box-min-height);
   padding:
     var(--os-app-box-padding-top)
     var(--os-app-box-padding-x)
@@ -4184,7 +4196,8 @@
   font-weight: 750;
   letter-spacing: -0.06em;
   line-height: 0.98;
-  margin: 0.85rem 0 0;
+  /* The forehead, same as every other App. */
+  margin: var(--os-label-gap) 0 0;
 }
 
 .circle-os .athena-reader-app > header > span {
@@ -4378,7 +4391,11 @@
   border: 1px solid rgb(241 239 232 / 0.08);
   border-radius: var(--r-box);
   color: var(--c-bone);
-  padding: 22px;
+  min-height: var(--os-app-box-min-height);
+  padding:
+    var(--os-app-box-padding-top)
+    var(--os-app-box-padding-x)
+    var(--os-app-box-padding-bottom);
 }
 
 .circle-os .vision-suggestion-app h2 {
@@ -4386,7 +4403,7 @@
   font-weight: 650;
   letter-spacing: -0.035em;
   line-height: 1.05;
-  margin: 0.8rem 0 1.4rem;
+  margin: var(--os-label-gap) 0 1.4rem;
 }
 
 .circle-os .vision-suggestion-app form {
@@ -5252,15 +5269,20 @@
   color: rgb(255 248 241 / 0.72);
 }
 
+/* Body begins at the forehead on every Page, in every placement.
+ *
+ * It used to centre, so a balanced Page put its first line wherever the text
+ * length happened to leave it — 105px under the Label on a short Note against
+ * Routine's 24px. Sai: "i want the forehead size of the routine app to apply
+ * everywhere." One distance, measured from the Label, whatever the Page holds. */
 .circle-os .os-page-body {
   align-items: stretch;
   align-self: stretch;
   display: flex;
   flex-direction: column;
   grid-row: 3;
-  justify-content: center;
+  justify-content: flex-start;
   min-width: 0;
-  transform: translateY(var(--os-body-optical-shift));
   width: 100%;
 }
 
@@ -5268,7 +5290,9 @@
   box-sizing: border-box;
   justify-content: flex-start;
   min-height: var(--os-measured-body-min-height);
-  padding-top: var(--os-measured-main-top);
+  /* No padding-top. That was the optical centring offset, and it would put the
+   * first line a different distance below the Label on every Page again. */
+  padding-top: 0;
   transform: none;
 }
 
@@ -5276,11 +5300,7 @@
    Balanced Pages centre their Main text through the measurement above.
    Identity stacks use the same measured heading line for every App, and
    content Pages begin directly beneath Heading. */
-.circle-os .os-page-layout.os-placement-identity-stack > .os-page-body,
-.circle-os .os-page-layout.os-placement-content-flow > .os-page-body {
-  justify-content: flex-start;
-  transform: none;
-}
+
 
 /* Routine, Record, Protocol and the phase Pages begin at one height.
  *
@@ -5313,11 +5333,13 @@
   position: relative;
 }
 
+/* Top of the header, not the middle of it. The right button keeps its full
+ * touch target by growing downward, so it lines up with the App Label opposite
+ * instead of hanging below it. */
 .circle-os .os-page-layout.os-placement-identity-stack .os-page-header-right > button {
   position: absolute;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
 }
 
 .circle-os .os-app-page-heading {

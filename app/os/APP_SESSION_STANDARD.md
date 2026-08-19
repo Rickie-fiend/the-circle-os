@@ -287,15 +287,37 @@ Used for charts, weekly views, and other things worth reading again.
   optional text does not move those anchors.
 - **The forehead is one number for every App.** The space between the App Label
   and whatever comes under it is `--os-label-gap`, currently `24px`, and it
-  hangs off the Label rather than off the Heading track. Every placement gets
-  it: a balanced Page, an identity stack and a content flow all start the same
-  distance below their Label. Nothing else adds to it — the Heading track
-  contributes no padding of its own, or the two stack and the Apps drift apart
-  again. Measured, not guessed: before this rule a balanced Page started 4px
-  under its Label while Routine, Protocol and Log carried 25px.
-- Main Body alone centres in the Body region through three lines. At four or
-  more its top pins to the three-line position and writing grows downward.
-  Sub Body follows directly beneath Main and may grow without moving it.
+  hangs off the Label rather than off the Heading track. Sai set Routine as the
+  reference: *"i want the forehead size of the routine app to apply
+  everywhere."* Every App matches it — Note, Thoughts, Routine, Protocol, Log,
+  Dreamline, Vision, Week Review, Athena's Reading, Suggestion — measured at
+  `24.9px` on Today and `24px` on Reflect.
+- **Body does not centre.** It begins at the forehead in every placement.
+  Centring is what made a balanced Page put its first line wherever the text
+  length left it: a short Note measured `105px` under its Label against
+  Routine's `24px`. An App Box that holds less text is shorter; it does not move
+  its first line.
+- **Three things break the forehead, and all three have.** A Label that restates
+  its own type (`line-height: 1` gave the Note Label a 10px box against every
+  other Label's 17.2px, and 4px of extra forehead under it). A Label that
+  animates from an offset (`translate3d(0, -4px, 0)` held the Thoughts Label
+  above its own line). An App Box built outside the contract (Athena's Reading
+  carried its own `330px` floor and a `0.85rem` gap; Suggestion had `22px`
+  padding and no forehead at all). Check those three before adding a rule.
+- **A Label that is also a button resets what the button adds and nothing
+  more.** It never restates font, size, weight, tracking or line height — those
+  come from `.os-card-label`, whose line height is `--os-card-label-line-height`
+  so that a `<p>`, a `<button>` and a `<span>` share one box. This exact fault
+  has shipped four times: the Habit toggle, the Protocol toggle, the Vision
+  label, and New habit.
+- **A header action sits on the header's line, not in the middle of its touch
+  target.** New habit kept a 44px target but centred its text inside it, so it
+  hung roughly 17px below the App Label opposite. The target stays; the word
+  goes to the top of it.
+- Main Body begins at the forehead and grows downward. Sub Body follows
+  directly beneath Main and may grow without moving it. Main used to centre
+  through three lines and pin at four; that is what made the forehead differ
+  from App to App, and it was removed on 2026-08-20.
 - A Page has four regions in one column: Header, Heading, Body, Footer. Body is
   the only one that flexes. Written with Heading flexible instead, spare height
   collects above the words, so a short thought sits low and jumps upward the
