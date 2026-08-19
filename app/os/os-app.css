@@ -1220,25 +1220,24 @@
 
 /* The cross lands first and is allowed to be read, then the row becomes the
  * identity. Sai: "cross the main row, delay transition into identity." */
-/* The same five seconds a completed task waits before it begins to leave.
- * Sai: "add a little more delay for transition, just like task delaying for
- * fading out." The crossed habit stays crossed long enough to be read, and
- * long enough to be undone, before the row becomes who it makes him. The
- * height settles 240ms after the words change, so it never moves under them. */
+/* The same wait a completed task takes before it begins to leave.
+ * Three seconds, set by Sai. The crossed habit stays crossed long enough to be
+ * read and to be undone, then the row becomes who it makes him. The height
+ * settles 240ms after the words change, so it never moves under them. */
 .circle-os .os-habit-copy-swap.show-identity {
   grid-template-rows: 0fr 1fr;
-  transition-delay: 5240ms;
+  transition-delay: 3240ms;
 }
 
 .circle-os .os-habit-copy-swap.show-identity .os-habit-action-copy {
   opacity: 0;
   pointer-events: none;
-  transition-delay: 5000ms;
+  transition-delay: 3000ms;
 }
 
 .circle-os .os-habit-copy-swap.show-identity .os-habit-identity-copy {
   opacity: 1;
-  transition-delay: 5000ms;
+  transition-delay: 3000ms;
 }
 
 

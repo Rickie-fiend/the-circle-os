@@ -1990,16 +1990,17 @@ export function TodayExperience() {
     updateState((current) => completeTask(current, id));
     setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
     // The row stays put long enough to undo an accidental press before it
-    // begins to leave. The five-second undo pause is the safety window; once
-    // that has passed, the row and frame settle together in one short motion.
+    // begins to leave. Three seconds, matching the habit swap, so a completed
+    // task and a completed habit wait the same amount of time before the row
+    // changes under him.
     const fade = window.setTimeout(() => {
       setFadingMissionIds((ids) => [...new Set([...ids, id])]);
-    }, 5_000);
+    }, 3_000);
     const remove = window.setTimeout(() => {
       setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
       setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
       delete taskExitTimers.current[id];
-    }, 5_340);
+    }, 3_340);
     taskExitTimers.current[id] = { fade, remove };
   }
 
