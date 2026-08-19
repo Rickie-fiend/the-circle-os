@@ -44,7 +44,7 @@
    * so three Apps that should have read as one family each began at a
    * different height. This sits under the Label instead, where it applies
    * whether a Heading exists or not. */
-  --os-label-gap: 100px;
+  --os-label-gap: 80px;
   /* Every App Label sits in a box this tall, so the forehead below it is the
    * same distance on every App. */
   --os-card-label-line-height: 1.72;
@@ -4362,14 +4362,17 @@
   color: var(--c-ink);
 }
 
+/* Athena's cover centred its heading in a 1fr row, so its forehead came out at
+ * whatever the row left — 84.9px against every other Reflect Page's 80. It
+ * starts at the forehead like the rest. */
 .circle-os .gap-cover h2 {
-  align-self: center;
+  align-self: start;
   font-family: var(--font-sans), Arial, sans-serif;
   font-size: clamp(2rem, 8vw, 2.7rem);
   font-weight: 760;
   letter-spacing: -0.055em;
   line-height: 0.98;
-  margin: 0;
+  margin: var(--os-label-gap) 0 0;
   max-width: 12ch;
 }
 

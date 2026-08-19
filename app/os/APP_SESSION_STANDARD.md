@@ -286,17 +286,17 @@ Used for charts, weekly views, and other things worth reading again.
 - Every Page keeps Header, Heading, Main Body, Sub Body, and Footer. Empty
   optional text does not move those anchors.
 - **The forehead is one number for every App.** The space between the App Label
-  and whatever comes under it is `--os-label-gap`, currently `100px`, and it
+  and whatever comes under it is `--os-label-gap`, currently `80px`, and it
   hangs off the Label rather than off the Heading track. Sai set Routine as the
   reference first — *"i want the forehead size of the routine app to apply
-  everywhere"* — and then set the number: **100px**. Every App matches it: Note,
+  everywhere"* — and then set the number: **80px**. Every App matches it: Note,
   Thoughts, Routine, Protocol, Log, Dreamline, Vision, Week Review, Athena's
-  Reading, Suggestion, measured at `100.9px` on Today and `100px` on Reflect.
-  At phone width, where the App Box sits on its `344px` floor, the Footer still
-  clears the bottom padding by 22px and nothing is clipped: the forehead comes
-  out of the Body's spare height, not out of the frame. An App whose content
-  needs the room grows instead — Suggestion, with a textarea and a send button,
-  sits at `383px`.
+  Reading, Suggestion. Measured across **every Page**, not one per session:
+  five Apps on Today at `80.9px`, and all twenty Pages on Reflect at `80px` or
+  `80.9px` — the three Vision declarations, the nine Week Review Pages, the four
+  Athena Pages and Suggestion. At phone width the App Box still sits on its
+  `344px` floor with the Footer 22px inside it and nothing clipped: the forehead
+  comes out of the Body's spare height, not out of the frame.
 - **Body does not centre.** It begins at the forehead in every placement.
   Centring is what made a balanced Page put its first line wherever the text
   length left it: a short Note measured `105px` under its Label against
@@ -308,7 +308,11 @@ Used for charts, weekly views, and other things worth reading again.
   animates from an offset (`translate3d(0, -4px, 0)` held the Thoughts Label
   above its own line). An App Box built outside the contract (Athena's Reading
   carried its own `330px` floor and a `0.85rem` gap; Suggestion had `22px`
-  padding and no forehead at all). Check those three before adding a rule.
+  padding and no forehead at all; Athena's cover centred its heading in a `1fr`
+  row, so its forehead was whatever the row left over). Check those before
+  adding a rule, and measure every Page of a session rather than the one that
+  happens to be showing — the Athena cover was the only Page of twenty that was
+  wrong, and only walking all of them found it.
 - **A Label that is also a button resets what the button adds and nothing
   more.** It never restates font, size, weight, tracking or line height — those
   come from `.os-card-label`, whose line height is `--os-card-label-line-height`
