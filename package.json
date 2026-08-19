@@ -16,7 +16,9 @@
     "chapters:publish": "node scripts/chapter-compiler.mjs --publish",
     "test": "npm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "design:build": "node scripts/build-design-system.mjs",
+    "design:check": "node scripts/build-design-system.mjs --check"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

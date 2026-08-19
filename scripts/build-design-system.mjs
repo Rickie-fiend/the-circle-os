@@ -9,7 +9,8 @@
 // design reference that silently falls back to the wrong font is worse than no
 // reference at all.
 
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, statSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -348,6 +349,49 @@ const captured = (f) => {
 // wrapper the CSS parser gives up on after three rules.
 const appCss = captured("app.css");
 
+// When a capture was taken, which commit it was taken against, and whether
+// app/os has moved since. A stale card that looks fine is the failure mode this
+// design system keeps hitting, so the card says it about itself.
+const headSha = (() => {
+  try {
+    return execSync("git rev-parse --short HEAD", { cwd: ROOT }).toString().trim();
+  } catch {
+    return "unknown";
+  }
+})();
+
+// The last COMMIT that touched app/os, not the newest file mtime. An editor
+// save, a checkout or a touch moves an mtime without changing the app, and a
+// staleness warning that cries wolf is one nobody reads.
+const newestAppChange = (() => {
+  try {
+    const at = execSync("git log -1 --format=%ct -- app/os", { cwd: ROOT })
+      .toString()
+      .trim();
+    return at ? Number(at) * 1000 : 0;
+  } catch {
+    return 0;
+  }
+})();
+
+const staleCaptures = [];
+const missingCaptures = [];
+
+const provenanceNote = (capture) => {
+  const file = join(CAPTURED, capture);
+  if (!existsSync(file)) {
+    missingCaptures.push(capture);
+    return "";
+  }
+  const taken = statSync(file).mtimeMs;
+  if (newestAppChange > taken) staleCaptures.push(capture);
+  const when = new Date(taken).toISOString().slice(0, 16).replace("T", " ");
+  const stale = newestAppChange > taken;
+  return stale
+    ? `<b style="color:var(--c-orange-800)">This capture is out of date.</b> Taken ${when} against <code>${headSha}</code>, and app/os has changed since. Re-capture before trusting it.`
+    : `Captured ${when} from the running app, against <code>${headSha}</code>. Not a redrawing \u2014 if the app does not do it, this card cannot show it.`;
+};
+
 const screen = (file, capture, title, lede, notes, meta) => {
   const markup = captured(capture);
   if (!markup || !appCss) {
@@ -392,7 +436,7 @@ color:var(--c-neutral-700)}
 srcdoc="${srcdoc}"></iframe><p class="cap">375 × 760 — iPhone width</p></div>
 <div style="flex:1;min-width:270px">
 <p class="eyebrow">What to look at</p>
-${notes.map((n) => `<p class="obs">${n}</p>`).join("")}
+${[provenanceNote(capture), ...notes].filter(Boolean).map((n) => `<p class="obs">${n}</p>`).join("")}
 </div></div>`,
     }),
     meta,
@@ -429,14 +473,89 @@ screen(
   { name: "Reflect", group: "The app today", subtitle: "Vision, Week Review, Athena's Reading, Suggestion", w: 1060, h: 900 },
 );
 
+screen(
+  "screens/today-thoughts.html",
+  "today-thoughts.html",
+  "Today — Thoughts",
+  "The second Page of the check-in deck. This is the only session in Circle OS that turns its own Page, so this is what arrives on its own after thirty seconds.",
+  [
+    "Thoughts and Note are two Pages of one App Box, not two boxes. The App Label at top left names which one you are on and is the control that flips to Deep Thoughts.",
+    "The prompt is the Main Body and carries the full Page-heading treatment; the writing area sits under it.",
+    "Compare the box height here against the Note capture. They must measure the same at rest, or a rotation would resize the frame under the reader.",
+  ],
+  { name: "Thoughts", group: "The app today", subtitle: "Check-in deck, second Page", w: 1060, h: 900 },
+);
+
+screen(
+  "screens/today-protocol.html",
+  "today-protocol.html",
+  "Today — Protocol",
+  "Protocol with an active run. It is the second Page of the Routine App Box rather than a fourth box in the stack, which is the placement the August proposal argued for and this shipped.",
+  [
+    "Same box, same surface, same measurements as Routine. Only the Page changed.",
+    "The run shown is a real one: Monk Mode, with its phase and its terms.",
+    "A protocol is a container of time — it starts, it ends, its terms were agreed before it began. Missing a non-negotiable is recorded and costs nothing; there is no reset and no failure state.",
+  ],
+  { name: "Protocol", group: "The app today", subtitle: "Routine box, second Page, active run", w: 1060, h: 900 },
+);
+
+screen(
+  "screens/today-back.html",
+  "today-back.html",
+  "Today — a card back",
+  "The Routine App Box flipped to its Record back. Every App Box has exactly one back, and the App Label at top left is what flips it.",
+  [
+    "The label reads <b>Record</b> here and <b>Routine</b> on the front. The label is the control; there is no separate button.",
+    "The back is the record: what was completed today, and what was completed yesterday.",
+    "The box does not resize across the flip. A back that measured differently would make the whole stack jump.",
+  ],
+  { name: "A card back", group: "The app today", subtitle: "Routine flipped to Record", w: 1060, h: 900 },
+);
+
+screen(
+  "screens/today-dreamline.html",
+  "today-dreamline.html",
+  "Today — Dreamline",
+  "Log's second Page. The dream sheet: setup, Having, Being, Doing and the income they add up to, on one Page that scrolls, because a worksheet is a sheet rather than five cards.",
+  [
+    "The right-hand label reads <b>The dream</b>. Its siblings are <b>Steps</b> and, once the steps are saved, <b>Today</b>.",
+    "A one-time cost shows both numbers — what it costs and what it costs per month across the timeline — because an inflated target makes the dream feel further away, which is the opposite of the point.",
+    "Only starred lines enter the income and only starred lines take steps. That is where 80/20 stops being a slogan in this app.",
+  ],
+  { name: "Dreamline", group: "The app today", subtitle: "Log box, second Page", w: 1060, h: 900 },
+);
+
 // ---------------------------------------------------------------------------
 // Emit
 // ---------------------------------------------------------------------------
+// A design system that has quietly aged is the failure this project keeps
+// hitting, so say it out loud at the end of every build. `--check` turns the
+// warning into a non-zero exit for anything that wants to gate on it; the
+// ordinary build only warns, because the app must stay deployable whether or
+// not its design reference has been re-captured.
+const reportCaptureAge = () => {
+  const checking = process.argv.includes("--check");
+  if (missingCaptures.length) {
+    console.warn(`\nmissing captures: ${missingCaptures.join(", ")}`);
+    console.warn("run the capture step, then build again.");
+  }
+  if (staleCaptures.length) {
+    console.warn(`\n${staleCaptures.length} capture(s) older than the last app/os commit:`);
+    for (const c of staleCaptures) console.warn(`  ${c}`);
+    console.warn("those cards say so on their own face. re-capture to clear it.");
+  }
+  if (!missingCaptures.length && !staleCaptures.length) {
+    console.log("every capture is newer than the last app/os commit.");
+  }
+  if (checking && (missingCaptures.length || staleCaptures.length)) process.exit(1);
+};
+
 for (const c of cards) {
   const full = join(OUT, c.path);
   mkdirSync(dirname(full), { recursive: true });
   writeFileSync(full, c.html, "utf8");
 }
+reportCaptureAge();
 // The Design pane indexes cards from this manifest. It is compiled by the app's
 // own self-check, which does not re-run for an incremental push, so cards can
 // upload successfully and still never appear. Emit it here and push it with the
