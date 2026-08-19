@@ -1136,7 +1136,9 @@
   display: grid;
   min-width: 0;
   overflow: hidden;
-  transition: height 320ms var(--ease-out);
+  /* The same curve and duration the App Box uses for its own height, so the row
+   * and the frame around it read as one movement rather than two. */
+  transition: height 440ms cubic-bezier(0.22, 0.82, 0.22, 1);
 }
 
 /* The tick stands 4px up on its leg while it is waiting, and sits down onto it
@@ -1233,9 +1235,7 @@
  * Three seconds, set by Sai. The crossed habit stays crossed long enough to be
  * read and to be undone, then the row becomes who it makes him. The height
  * settles 240ms after the words change, so it never moves under them. */
-.circle-os .os-habit-copy-swap.show-identity {
-  transition-delay: 3240ms;
-}
+
 
 .circle-os .os-habit-copy-swap.show-identity .os-habit-action-copy {
   opacity: 0;

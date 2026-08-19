@@ -184,26 +184,53 @@ function HabitCopySwap({
   const frame = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState<number | null>(null);
 
+  // Only `showIdentity` belongs here. `children` is a fresh value on every
+  // render, so depending on it re-ran this effect constantly and cleared the
+  // three-second timer before it could ever fire — the row simply never
+  // resized. Content changes are caught by the observer instead, which is what
+  // it is for.
   useLayoutEffect(() => {
     const element = frame.current;
     if (!element) return;
-    const faces = Array.from(element.children) as HTMLElement[];
-    const face = showIdentity ? faces[1] : faces[0];
-    if (!face) return;
+    const faces = () => Array.from(element.children) as HTMLElement[];
 
     const measure = () => {
+      const face = faces()[showIdentity ? 1 : 0];
+      if (!face) return;
       const next = Math.ceil(face.getBoundingClientRect().height);
       if (next > 0) setHeight(next);
     };
 
-    measure();
     // A face grows while it is being typed into, and a webfont can replace the
     // fallback after first layout.
     const observer =
       typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
-    for (const item of faces) observer?.observe(item);
-    return () => observer?.disconnect();
-  }, [children, showIdentity]);
+    let timer = 0;
+
+    if (showIdentity) {
+      // Turning into the identity is one deliberate motion: it waits out the
+      // three seconds the crossed row stays readable, then moves once.
+      timer = window.setTimeout(() => {
+        // The App Box eases its own height for a Page change and snaps for a
+        // content edit, so typing never lags behind the finger. This is
+        // neither — it is one settling move — and without borrowing that ease
+        // the row glided while the frame jumped underneath it.
+        const box = element.closest(".os-app-window");
+        box?.classList.add("page-resizing");
+        window.setTimeout(() => box?.classList.remove("page-resizing"), 620);
+        measure();
+        for (const item of faces()) observer?.observe(item);
+      }, 3240);
+    } else {
+      measure();
+      for (const item of faces()) observer?.observe(item);
+    }
+
+    return () => {
+      window.clearTimeout(timer);
+      observer?.disconnect();
+    };
+  }, [showIdentity]);
 
   return (
     <div
