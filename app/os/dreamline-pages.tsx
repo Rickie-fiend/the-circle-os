@@ -26,6 +26,7 @@ export type DreamlineRecord = {
   status: "active" | "concluded";
   months: number;
   monthlyExpensesCents: number;
+  currency: string;
   items: Record<string, DreamlineItem>;
   stepsCommittedAt: string | null;
   createdAt: string;
@@ -61,15 +62,27 @@ type DreamlineIncome = {
   daily: number;
 };
 
-const money = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+export const DREAMLINE_CURRENCY_CODES = ["USD", "MMK", "THB"] as const;
+export type DreamlineCurrency = (typeof DREAMLINE_CURRENCY_CODES)[number];
 
-export function formatDreamlineMoney(value: number) {
-  return money.format(Number.isFinite(value) ? value : 0);
+/* Kyat has no minor unit in practice, so it is shown whole. Formatters are
+ * built once each rather than per render. */
+const moneyFormatters: Record<DreamlineCurrency, Intl.NumberFormat> = {
+  USD: new Intl.NumberFormat("en-US", {
+    style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2,
+  }),
+  MMK: new Intl.NumberFormat("en-US", {
+    style: "currency", currency: "MMK", minimumFractionDigits: 0, maximumFractionDigits: 0,
+  }),
+  THB: new Intl.NumberFormat("en-US", {
+    style: "currency", currency: "THB", minimumFractionDigits: 2, maximumFractionDigits: 2,
+  }),
+};
+
+export function formatDreamlineMoney(value: number, currency: string = "USD") {
+  const formatter =
+    moneyFormatters[(currency as DreamlineCurrency)] ?? moneyFormatters.USD;
+  return formatter.format(Number.isFinite(value) ? value : 0);
 }
 
 function dateLabel(value: string | null) {
@@ -81,6 +94,10 @@ function dateLabel(value: string | null) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function currencySymbol(code: string) {
+  return ({ USD: "$", MMK: "K", THB: "\u0e3f" } as Record<string, string>)[code] || "$";
 }
 
 function moneyInput(cents: number) {
@@ -111,9 +128,9 @@ export function DreamlineSheetPage({
   income: DreamlineIncome | null;
   onContinue: () => void;
   onSaveLine: (value: DreamlineLineDraft, itemId?: string) => string;
-  onSaveSetup: (months: number, monthlyExpensesCents: number) => string;
+  onSaveSetup: (months: number, monthlyExpensesCents: number, currency: string) => string;
   onStar: (item: DreamlineItem, starred: boolean) => string;
-  onStart: (months: number, monthlyExpensesCents: number) => string;
+  onStart: (months: number, monthlyExpensesCents: number, currency: string) => string;
   record: DreamlineRecord | null;
 }) {
   const onSave = onSaveSetup;
@@ -121,14 +138,15 @@ export function DreamlineSheetPage({
   const [expenses, setExpenses] = useState(
     moneyInput(record?.monthlyExpensesCents || 0),
   );
+  const [currency, setCurrency] = useState(record?.currency || "USD");
   const [error, setError] = useState("");
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanMonths = Math.max(1, Math.min(60, Math.round(Number(months) || 6)));
     const message = record
-      ? onSave(cleanMonths, toCents(expenses))
-      : onStart(cleanMonths, toCents(expenses));
+      ? onSave(cleanMonths, toCents(expenses), currency)
+      : onStart(cleanMonths, toCents(expenses), currency);
     setError(message);
     // Saving a sheet that already exists is not the end of anything on its own.
     // Continue is the finish: it keeps the setup and moves to the steps, which
@@ -167,9 +185,21 @@ export function DreamlineSheetPage({
           </span>
         </label>
         <label>
+          <span>Currency</span>
+          <select
+            aria-label="Currency"
+            onChange={(event) => setCurrency(event.currentTarget.value)}
+            value={currency}
+          >
+            {DREAMLINE_CURRENCY_CODES.map((code) => (
+              <option key={code} value={code}>{code}</option>
+            ))}
+          </select>
+        </label>
+        <label>
           <span>Monthly expenses</span>
           <span className="os-dreamline-money-field">
-            <span aria-hidden="true">$</span>
+            <span aria-hidden="true">{currencySymbol(currency)}</span>
             <input
               aria-label="Monthly expenses"
               inputMode="decimal"
@@ -213,18 +243,18 @@ export function DreamlineSheetPage({
             <section className="os-dreamline-section os-dreamline-income" aria-label="Target income">
               <p className="os-record-label">Target monthly income</p>
               <div className="os-dreamline-income-total">
-                <strong>{formatDreamlineMoney(income.monthly)}</strong>
+                <strong>{formatDreamlineMoney(income.monthly, record.currency)}</strong>
                 <span>Only starred dreams enter this number.</span>
               </div>
               <dl className="os-dreamline-income-terms">
-                <div><dt>A · Having</dt><dd>{formatDreamlineMoney(income.having)}</dd></div>
-                <div><dt>B · Being</dt><dd>{formatDreamlineMoney(income.being)}</dd></div>
-                <div><dt>C · Doing</dt><dd>{formatDreamlineMoney(income.doing)}</dd></div>
-                <div><dt>Expenses × 1.3</dt><dd>{formatDreamlineMoney(income.expenseBuffer)}</dd></div>
+                <div><dt>A · Having</dt><dd>{formatDreamlineMoney(income.having, record.currency)}</dd></div>
+                <div><dt>B · Being</dt><dd>{formatDreamlineMoney(income.being, record.currency)}</dd></div>
+                <div><dt>C · Doing</dt><dd>{formatDreamlineMoney(income.doing, record.currency)}</dd></div>
+                <div><dt>Expenses × 1.3</dt><dd>{formatDreamlineMoney(income.expenseBuffer, record.currency)}</dd></div>
               </dl>
               <div className="os-dreamline-daily">
                 <span>Target daily income</span>
-                <strong>{formatDreamlineMoney(income.daily)}</strong>
+                <strong>{formatDreamlineMoney(income.daily, record.currency)}</strong>
               </div>
             </section>
           ) : null}
@@ -361,11 +391,11 @@ function DreamlineLineForm({
   );
 }
 
-function lineCost(item: DreamlineItem, months: number) {
+function lineCost(item: DreamlineItem, months: number, currency: string) {
   const cost = item.costCents / 100;
   return item.cadence === "one-time"
-    ? `${formatDreamlineMoney(cost)} once · ${formatDreamlineMoney(cost / months)}/month`
-    : `${formatDreamlineMoney(cost)}/month`;
+    ? `${formatDreamlineMoney(cost, currency)} once · ${formatDreamlineMoney(cost / months, currency)}/month`
+    : `${formatDreamlineMoney(cost, currency)}/month`;
 }
 
 /**
@@ -419,7 +449,7 @@ function DreamlineLinesSection({
               <button className="os-dreamline-line-copy" onClick={() => setEditingId(item.id)} type="button">
                 <strong>{item.text}</strong>
                 {category === "being" ? <span>→ {item.convertedDoing}</span> : null}
-                <small>{lineCost(item, record.months)}</small>
+                <small>{lineCost(item, record.months, record.currency)}</small>
               </button>
             </article>
           ),

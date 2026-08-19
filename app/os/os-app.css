@@ -1150,8 +1150,12 @@
   margin-left: 0.28em;
 }
 
+/* Black, because a kept habit is the one thing on this Page that has actually
+ * happened, and because Ink is 5.08:1 on the orange surface where white is
+ * 3.33:1. Sai: "the crossed line turn to 'i am a reader' in black color with a
+ * completed tick beside that." */
 .circle-os .os-habit-identity-copy {
-  color: var(--c-warm-50);
+  color: var(--c-ink);
   font-size: var(--text-2xl);
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -1159,6 +1163,33 @@
   margin: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+/* The identity is written while the habit is being made and then gets out of
+ * the way. It is not a second heading; it is the quiet line under the action. */
+.circle-os .os-habit-identity-edit {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: rgb(25 24 19 / 0.72);
+  display: block;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-top: 0.35rem;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+
+.circle-os .os-habit-identity-edit::placeholder {
+  color: rgb(25 24 19 / 0.42);
+}
+
+/* Once the habit is done for the day the row says who it makes him, so the
+ * editor steps aside with the action it belongs to. */
+.circle-os .os-habit-copy-swap.show-identity .os-habit-identity-edit {
+  display: none;
 }
 
 .circle-os .os-habit-copy-swap.show-identity .os-habit-action-copy {
@@ -3105,7 +3136,8 @@
  * read." A section label is a quiet signpost, so it is dimmed rather than
  * bright — but it has to be legible first. */
 .circle-os .os-dreamline-page .os-record-label {
-  color: var(--c-neutral-400);
+  color: var(--c-ink);
+  font-weight: 800;
 }
 
 .circle-os .os-dreamline-section > .os-record-label {
@@ -3115,7 +3147,7 @@
 /* A starred dream is the one being pursued, so it carries the identity colour
  * rather than sitting in the same weight as everything it was chosen over. */
 .circle-os .os-dreamline-list > article.is-starred .os-dreamline-line-copy strong {
-  color: var(--c-orange);
+  color: var(--c-ink);
 }
 
 .circle-os .os-dreamline-page .os-page-heading h2 {
@@ -3129,7 +3161,7 @@
   appearance: none;
   background: transparent;
   border: 0;
-  color: var(--c-orange);
+  color: var(--c-ink);
   cursor: pointer;
   min-height: var(--touch-min);
   padding: 0;
@@ -3162,7 +3194,7 @@
 .circle-os .os-dreamline-setup-form label > span:first-child,
 .circle-os .os-dreamline-line-form label > span:first-child,
 .circle-os .os-dreamline-step-field > span:first-child {
-  color: rgb(241 239 232 / 0.62);
+  color: rgb(25 24 19 / 0.68);
   font-size: var(--text-2xs);
   font-weight: 720;
   letter-spacing: 0.1em;
@@ -3172,8 +3204,8 @@
 .circle-os .os-dreamline-number-field,
 .circle-os .os-dreamline-money-field {
   align-items: center;
-  border-bottom: 1px solid rgb(241 239 232 / 0.2);
-  color: rgb(241 239 232 / 0.72);
+  border-bottom: 1px solid rgb(25 24 19 / 0.18);
+  color: rgb(25 24 19 / 0.76);
   display: flex;
   gap: 0.45rem;
   min-height: var(--touch-min);
@@ -3187,7 +3219,7 @@
   appearance: none;
   background: transparent;
   border: 0;
-  color: var(--c-bone);
+  color: var(--c-ink);
   font: inherit;
   outline: 0;
   width: 100%;
@@ -3203,7 +3235,7 @@
 
 .circle-os .os-dreamline-line-form textarea,
 .circle-os .os-dreamline-step-field textarea {
-  border-bottom: 1px solid rgb(241 239 232 / 0.2);
+  border-bottom: 1px solid rgb(25 24 19 / 0.18);
   field-sizing: content;
   line-height: 1.4;
   min-height: 2.8em;
@@ -3215,7 +3247,7 @@
 .circle-os .os-dreamline-line-form textarea::placeholder,
 .circle-os .os-dreamline-step-field textarea::placeholder,
 .circle-os .os-dreamline-money-field input::placeholder {
-  color: rgb(241 239 232 / 0.32);
+  color: rgb(25 24 19 / 0.72);
 }
 
 .circle-os .os-dreamline-cost-fields {
@@ -3225,26 +3257,26 @@
 }
 
 .circle-os .os-dreamline-line-form select {
-  border-bottom: 1px solid rgb(241 239 232 / 0.2);
+  border-bottom: 1px solid rgb(25 24 19 / 0.18);
   min-height: var(--touch-min);
 }
 
 .circle-os .os-dreamline-line-form select option {
   background: var(--c-ink);
-  color: var(--c-bone);
+  color: var(--c-ink);
 }
 
 .circle-os .os-dreamline-target,
 .circle-os .os-dreamline-quiet {
-  color: rgb(241 239 232 / 0.52);
+  color: rgb(25 24 19 / 0.72);
   font-size: var(--text-sm);
   line-height: 1.45;
   margin: 0;
 }
 
 .circle-os .os-dreamline-history {
-  border-top: 1px solid rgb(241 239 232 / 0.12);
-  color: rgb(241 239 232 / 0.62);
+  border-top: 1px solid rgb(25 24 19 / 0.16);
+  color: rgb(25 24 19 / 0.68);
   margin-top: 1.3rem;
   padding-top: 0.9rem;
 }
@@ -3257,7 +3289,7 @@
 }
 
 .circle-os .os-dreamline-history article {
-  border-top: 1px solid rgb(241 239 232 / 0.08);
+  border-top: 1px solid rgb(25 24 19 / 0.16);
   padding: 0.8rem 0;
 }
 
@@ -3282,9 +3314,9 @@
 
 .circle-os .os-dreamline-add {
   background: transparent;
-  border: 1px dashed rgb(241 239 232 / 0.32);
+  border: 1px dashed rgb(25 24 19 / 0.42);
   border-radius: var(--r-md);
-  color: var(--c-warm-50);
+  color: var(--c-ink);
   font: inherit;
   font-weight: 650;
   min-height: 52px;
@@ -3292,12 +3324,12 @@
 }
 
 .circle-os .os-dreamline-add:hover {
-  border-color: rgb(241 239 232 / 0.5);
+  border-color: rgb(25 24 19 / 0.6);
 }
 
 .circle-os .os-dreamline-list > article {
   align-items: start;
-  border-bottom: 1px solid rgb(241 239 232 / 0.12);
+  border-bottom: 0;
   display: grid;
   gap: 0.55rem;
   grid-template-columns: var(--touch-min) minmax(0, 1fr);
@@ -3305,14 +3337,14 @@
 }
 
 .circle-os .os-dreamline-list > article.is-starred {
-  border-bottom-color: rgb(227 107 55 / 0.5);
+  border-bottom-color: transparent;
 }
 
 .circle-os .os-dreamline-star {
   align-items: center;
   background: transparent;
   border: 0;
-  color: var(--c-orange);
+  color: var(--c-ink);
   display: flex;
   font-size: var(--text-xl);
   justify-content: flex-start;
@@ -3323,7 +3355,7 @@
 .circle-os .os-dreamline-line-copy {
   background: transparent;
   border: 0;
-  color: var(--c-bone);
+  color: var(--c-ink);
   display: grid;
   gap: 0.28rem;
   min-height: var(--touch-min);
@@ -3338,7 +3370,7 @@
 
 .circle-os .os-dreamline-line-copy span,
 .circle-os .os-dreamline-line-copy small {
-  color: rgb(241 239 232 / 0.58);
+  color: rgb(25 24 19 / 0.72);
   line-height: 1.35;
 }
 
@@ -3352,7 +3384,7 @@
   background: transparent;
   border: 1px solid rgb(241 239 232 / 0.24);
   border-radius: var(--r-sm);
-  color: var(--c-bone);
+  color: var(--c-ink);
   font: inherit;
   font-weight: 700;
   min-height: var(--touch-min);
@@ -3364,7 +3396,7 @@
 }
 
 .circle-os .os-dreamline-error {
-  color: var(--c-orange);
+  color: var(--c-ink);
   font-size: var(--text-sm);
   line-height: 1.4;
   margin: 0;
@@ -3378,14 +3410,14 @@
 }
 
 .circle-os .os-dreamline-income-total strong {
-  color: var(--c-bone);
+  color: var(--c-ink);
   font-size: clamp(2.2rem, 10vw, 3.25rem);
   letter-spacing: -0.06em;
   line-height: 0.95;
 }
 
 .circle-os .os-dreamline-income-total span {
-  color: rgb(241 239 232 / 0.55);
+  color: rgb(25 24 19 / 0.72);
   font-size: var(--text-sm);
 }
 
@@ -3406,11 +3438,11 @@
 
 .circle-os .os-dreamline-income-terms dt,
 .circle-os .os-dreamline-daily span {
-  color: rgb(241 239 232 / 0.62);
+  color: rgb(25 24 19 / 0.68);
 }
 
 .circle-os .os-dreamline-income-terms dd {
-  color: var(--c-bone);
+  color: var(--c-ink);
   font-weight: 700;
   margin: 0;
 }
@@ -3425,7 +3457,7 @@
 }
 
 .circle-os .os-dreamline-step-field {
-  border-bottom: 1px solid rgb(241 239 232 / 0.12);
+  border-bottom: 0;
   padding-bottom: 0.8rem;
 }
 

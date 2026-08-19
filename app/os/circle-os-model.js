@@ -21,6 +21,26 @@ export const DREAMLINE_CATEGORIES = Object.freeze(["having", "being", "doing"]);
 export const DREAMLINE_STEP_KEYS = Object.freeze(["now", "tomorrow", "dayAfter"]);
 export const DREAMLINE_STAR_LIMIT = 4;
 
+/**
+ * The currencies a Dreamline can be priced in.
+ *
+ * Sai lives between Myanmar and Thailand and thinks in all three, so a target
+ * income in the wrong one is not a target he can act on. Kyat has no minor
+ * unit in practice, so it is shown whole.
+ */
+export const DREAMLINE_CURRENCIES = Object.freeze([
+  { code: "USD", symbol: "$", minorDigits: 2 },
+  { code: "MMK", symbol: "K", minorDigits: 0 },
+  { code: "THB", symbol: "\u0e3f", minorDigits: 2 },
+]);
+
+export function dreamlineCurrency(code) {
+  return (
+    DREAMLINE_CURRENCIES.find((item) => item.code === code) ||
+    DREAMLINE_CURRENCIES[0]
+  );
+}
+
 export const PROFILE_SESSION_KEYS = [
   "typicalTuesday",
   "currentLife",
@@ -550,6 +570,7 @@ function normalizeDreamlines(value) {
       status,
       months,
       monthlyExpensesCents: dreamlineCents(candidate.monthlyExpensesCents),
+      currency: dreamlineCurrency(candidate.currency).code,
       items,
       // When the Steps sheet was committed. Until this is set the Dreamline is
       // still being planned; after it, there is a thing to do today.
@@ -965,6 +986,7 @@ export function startDreamline(
     id = "",
     months = 6,
     monthlyExpensesCents = 0,
+    currency = "USD",
     startedAt = new Date().toISOString(),
   } = {},
 ) {
@@ -979,6 +1001,7 @@ export function startDreamline(
     status: "active",
     months: cleanMonths,
     monthlyExpensesCents: dreamlineCents(monthlyExpensesCents),
+    currency: dreamlineCurrency(currency).code,
     items: {},
     stepsCommittedAt: null,
     createdAt: startedAt,
@@ -997,7 +1020,7 @@ export function startDreamline(
 /**
  * @param {object} state
  * @param {string} recordId
- * @param {{months?: number | null, monthlyExpensesCents?: number | null, updatedAt?: string}} [options]
+ * @param {{months?: number | null, monthlyExpensesCents?: number | null, currency?: string | null, updatedAt?: string}} [options]
  */
 export function updateDreamlineSetup(
   state,
@@ -1005,6 +1028,7 @@ export function updateDreamlineSetup(
   {
     months = null,
     monthlyExpensesCents = null,
+    currency = null,
     updatedAt = new Date().toISOString(),
   } = {},
 ) {
@@ -1019,6 +1043,7 @@ export function updateDreamlineSetup(
     monthlyExpensesCents: dreamlineCents(
       monthlyExpensesCents ?? record.monthlyExpensesCents,
     ),
+    currency: dreamlineCurrency(currency ?? record.currency).code,
     targetAt: addUtcMonths(record.startedAt, cleanMonths),
     updatedAt,
   };

@@ -1616,7 +1616,6 @@ export function TodayExperience() {
   // The progress is read from a ref now, so the observer is created once for a
   // given set of rows, and the measurement runs before paint.
   const liveHourProgressRef = useRef(liveHourProgress);
-  liveHourProgressRef.current = liveHourProgress;
 
   useLayoutEffect(() => {
     const timeline = timelineRef.current;
@@ -1658,6 +1657,7 @@ export function TodayExperience() {
   // The clock still moves the marker; it just no longer rebuilds the observer
   // to do it.
   useEffect(() => {
+    liveHourProgressRef.current = liveHourProgress;
     const timeline = timelineRef.current;
     if (!timeline) return;
     const current = timeline.querySelector<HTMLElement>(
@@ -1768,7 +1768,6 @@ export function TodayExperience() {
   const pastDreamlines = dreamlineRecords(state, liveNow).filter(
     (record) => record.status === "concluded",
   ) as DreamlineRecord[];
-  const dreamlineRecordId = activeDreamline?.id || pastDreamlines[0]?.id || "setup";
   // Three Pages, not six, and the third only once the steps are saved.
   // Sai: "setup, having, being, doing, and income all should be in the same
   // page. Next page, Steps now, tomorrow, and next day, all should be in the
@@ -1801,8 +1800,8 @@ export function TodayExperience() {
     );
   }
 
-  function beginDreamline(months: number, monthlyExpensesCents: number) {
-    const result = startDreamline(state, { months, monthlyExpensesCents });
+  function beginDreamline(months: number, monthlyExpensesCents: number, currency: string) {
+    const result = startDreamline(state, { months, monthlyExpensesCents, currency });
     if (result.error || !result.record) return result.error || "The Dreamline could not begin.";
     // Land on the dream sheet, which is where the newly begun Dreamline is
     // actually filled in.
@@ -1816,11 +1815,12 @@ export function TodayExperience() {
     return "";
   }
 
-  function saveDreamlineSetup(months: number, monthlyExpensesCents: number) {
+  function saveDreamlineSetup(months: number, monthlyExpensesCents: number, currency: string) {
     if (!activeDreamline) return "Begin the Dreamline first.";
     const result = updateDreamlineSetup(state, activeDreamline.id, {
       months,
       monthlyExpensesCents,
+      currency,
     });
     if (!result.error) updateState(() => result.state);
     return result.error;
@@ -1919,6 +1919,16 @@ export function TodayExperience() {
   function changeHabit(id: string, text: string) {
     updateState((current) =>
       updateHabitDefinitionDraft(current, id, { action: text }),
+    );
+  }
+
+  // The identity is why the habit is worth keeping: "read 1 page after dinner"
+  // is what he does, "I am a reader" is what it makes him. It is written while
+  // the habit is being made and then gets out of the way, until the habit is
+  // done for the day and it is the only thing the row says.
+  function changeHabitIdentity(id: string, text: string) {
+    updateState((current) =>
+      updateHabitDefinitionDraft(current, id, { identity: text }),
     );
   }
 
@@ -3003,6 +3013,18 @@ export function TodayExperience() {
                                 {habit.cue ? (
                                   <span className="os-habit-cue">{habit.cue}</span>
                                 ) : null}
+                                <textarea
+                                  aria-label={`Who this makes you: ${action || "New Habit"}`}
+                                  className="os-habit-identity-edit"
+                                  maxLength={120}
+                                  onBlur={() => finishHabitEdit(habit.id)}
+                                  onChange={(event) =>
+                                    changeHabitIdentity(habit.id, event.target.value)
+                                  }
+                                  placeholder="I am a reader"
+                                  rows={1}
+                                  value={habit.identity}
+                                />
                               </div>
                               {identity ? (
                                 <p className="os-habit-identity-copy">{identity}</p>
