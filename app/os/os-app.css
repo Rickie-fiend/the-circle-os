@@ -7306,6 +7306,9 @@
   min-height: var(--touch-min);
 }
 
+/* Dimmed, not struck out. Sai: "all context in it, be dimmed white without
+ * crossing out with the line." A done thing on the Record is something he did,
+ * not something cancelled, and the tick beside it already says so. */
 .circle-os .os-record-text {
   color: var(--c-warm-50);
   font-size: var(--text-xl);
@@ -7314,8 +7317,6 @@
   line-height: 1.3;
   margin: 0;
   opacity: 0.52;
-  text-decoration: line-through;
-  text-decoration-thickness: 1.5px;
 }
 
 .circle-os .os-record-row.is-task .os-record-text {
