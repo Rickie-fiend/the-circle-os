@@ -126,9 +126,16 @@ test("the running phase keeps one Footer action and ending lives in its editor",
   const running = source.slice(runningStart, source.indexOf("/** The block"));
   const editor = source.slice(editorStart, runningStart);
 
-  assert.match(editor, /End this protocol/);
-  assert.match(editor, /Tap again to end it/);
+  // Ending a protocol moved to the editor's top right, beside the App Label,
+  // and the day count moved down to the Footer where the day is finished.
+  assert.match(editor, /onClick=\{endRun\}/);
+  assert.match(editor, /Tap again/);
+  assert.match(editor, /headerRight=\{[\s\S]*?os-protocol-editor-end/);
+  assert.match(editor, /footer=\{[\s\S]*?Day \{day\} of \{run\.days\}/);
   assert.doesNotMatch(running, /End this protocol/);
-  assert.match(running, /footer=\{[\s\S]*Completed today[\s\S]*Edit phase/);
+  // The running Footer carries the day count and, when the day is kept, the one
+  // action that finishes it. Editing is no longer a Footer link.
+  assert.match(running, /footer=\{[\s\S]*Day \{day\} of \{run\.days\}[\s\S]*Completed today/);
+  assert.doesNotMatch(running, /os-protocol-edit-link/);
   assert.match(source, /if \(isOver\)[\s\S]*onClick=\{onEndRun\}[\s\S]*Close this protocol/);
 });

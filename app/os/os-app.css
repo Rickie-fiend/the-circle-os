@@ -50,6 +50,10 @@
    * different height. This sits under the Label instead, where it applies
    * whether a Heading exists or not. */
   --os-label-gap: 80px;
+  /* One height for a Page's primary action. Sai: "Completed Today button and
+   * Start a Phase button are very thin. it should follow the button standard."
+   * They had no height at all and collapsed onto their own line box. */
+  --os-action-height: 52px;
   /* Every App Label sits in a box this tall, so the forehead below it is the
    * same distance on every App. */
   --os-card-label-line-height: 1.72;
@@ -3374,7 +3378,7 @@
   color: var(--c-ink);
   font: inherit;
   font-weight: 720;
-  min-height: 52px;
+  min-height: var(--os-action-height);
   width: 100%;
 }
 
@@ -3385,7 +3389,7 @@
   color: var(--c-ink);
   font: inherit;
   font-weight: 650;
-  min-height: 52px;
+  min-height: var(--os-action-height);
   width: 100%;
 }
 
@@ -5498,12 +5502,17 @@
   width: 100%;
 }
 
-.circle-os .os-page-layout.os-placement-identity-stack > .os-page-footer > button {
+/* A Page's primary action is one height everywhere, and it is not the minimum
+ * touch target. This pinned an exact 44px, which is the floor for something
+ * being tappable rather than the size of the thing a Page is for — Sai:
+ * "Completed Today button and Start a Phase button are very thin." The height
+ * is a floor now, not a cap, so a two-line label still fits. */
+.circle-os .os-page-layout.os-placement-identity-stack > .os-page-footer > button,
+.circle-os .os-page-layout.os-placement-identity-stack .os-protocol-footer > button {
   font-size: var(--text-md);
-  height: var(--touch-min);
   line-height: 1.2;
   margin-top: 0.4rem;
-  min-height: var(--touch-min);
+  min-height: var(--os-action-height);
   padding: 0.6rem 0.7rem;
 }
 
@@ -7829,14 +7838,17 @@
 
 .circle-os .os-protocol-add,
 .circle-os .os-protocol-begin {
+  align-items: center;
   background: none;
   border: 1px dashed rgb(25 24 19 / 0.45);
   border-radius: var(--r-md);
   color: var(--c-warm-50);
   cursor: pointer;
-  display: block;
+  display: flex;
   font-family: inherit;
   font-weight: 600;
+  justify-content: center;
+  min-height: var(--os-action-height);
   text-align: center;
   width: 100%;
 }

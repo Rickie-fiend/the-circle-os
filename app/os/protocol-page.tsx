@@ -495,19 +495,30 @@ export function ProtocolPage({
         headerLeft={<p className="os-card-label">Protocol</p>}
         placement="identity-stack"
         headerRight={
-          <span className="os-protocol-progress">
-            Day {day} of {run.days}
-          </span>
+          <button
+            className={`os-new-habit os-protocol-editor-end${
+              confirmingEnd ? " is-confirming" : ""
+            }`}
+            onClick={endRun}
+            type="button"
+          >
+            {confirmingEnd ? "Tap again" : "End"}
+          </button>
         }
         theme="orange"
         footer={
-          <button
-            className="os-protocol-begin"
-            onClick={finishEditing}
-            type="button"
-          >
-            Done
-          </button>
+          <div className="os-protocol-footer">
+            <span className="os-protocol-progress">
+              Day {day} of {run.days}
+            </span>
+            <button
+              className="os-protocol-begin"
+              onClick={finishEditing}
+              type="button"
+            >
+              Done
+            </button>
+          </div>
         }
       >
         <div className="os-page-main os-protocol-identity">
@@ -547,15 +558,6 @@ export function ProtocolPage({
             onChangeItem={onChangeItem}
             onFinishItemEdit={onFinishItemEdit}
           />
-          <button
-            className={`os-protocol-end os-protocol-editor-end${
-              confirmingEnd ? " is-confirming" : ""
-            }`}
-            onClick={endRun}
-            type="button"
-          >
-            {confirmingEnd ? "Tap again to end it" : "End this protocol"}
-          </button>
         </div>
       </PageLayout>
     );
@@ -632,15 +634,6 @@ export function ProtocolPage({
           </>
         ) : null}
 
-        {keptAll && !sealed ? (
-          <button
-            className="os-protocol-edit-link"
-            onClick={() => setEditing(true)}
-            type="button"
-          >
-            Edit phase
-          </button>
-        ) : null}
       </div>
     </PageLayout>
   );

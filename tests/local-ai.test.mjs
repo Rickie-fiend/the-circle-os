@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -807,6 +808,60 @@ Answer: night-moment
     assert.equal(chapterResponse.status, 200);
     const chapterData = await chapterResponse.json();
     assert.equal(chapterData.chapters[0].id, "quiet-check-in");
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    rmSync(vaultPath, { recursive: true, force: true });
+    rmSync(dirname(accessPath), { recursive: true, force: true });
+  }
+});
+
+test("server refuses to register a device that already has a day history, instead of cloning it into a duplicate profile", async () => {
+  const vaultPath = mkdtempSync(join(tmpdir(), "circle-os-duplicate-vault-"));
+  const accessPath = join(
+    mkdtempSync(join(tmpdir(), "circle-os-duplicate-access-")),
+    "access.json",
+  );
+  const server = createCircleAiServer({ vaultPath, accessPath });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+
+  try {
+    const genuineFirstRun = await fetch(`${baseUrl}/profiles`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state: firstVision("Genuinely new") }),
+    });
+    assert.equal(genuineFirstRun.status, 201);
+    const profilesBefore = readdirSync(join(vaultPath, "Profiles")).sort();
+    assert.equal(profilesBefore.length, 1);
+
+    // A client that lost its saved profileId/accessKey but kept its local
+    // day history (a multi-tab race, a wiped store, a restart mid-sync) will
+    // call this same endpoint next, carrying weeks of evidence rather than a
+    // clean slate.
+    const returningClient = firstVision("Same person, lost credentials");
+    returningClient.days = {
+      "2026-07-29": {},
+      "2026-07-30": {},
+      "2026-07-31": {},
+      "2026-08-01": {},
+    };
+    returningClient.evidence = {
+      ...returningClient.evidence,
+      localRevision: 120,
+    };
+    const duplicateAttempt = await fetch(`${baseUrl}/profiles`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state: returningClient }),
+    });
+    assert.equal(duplicateAttempt.status, 409);
+    const duplicateBody = await duplicateAttempt.json();
+    assert.match(duplicateBody.error, /recovery code/);
+
+    const profilesAfter = readdirSync(join(vaultPath, "Profiles")).sort();
+    assert.deepEqual(profilesAfter, profilesBefore);
   } finally {
     await new Promise((resolve) => server.close(resolve));
     rmSync(vaultPath, { recursive: true, force: true });

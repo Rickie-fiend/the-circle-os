@@ -55,6 +55,27 @@ function randomKey(bytes = 24) {
   return randomBytes(bytes).toString("base64url");
 }
 
+// A genuine first registration happens right after Name and Age, before any
+// day is lived through the app, so it arrives with an empty or near-empty
+// evidence log. A client that shows up at this endpoint already carrying a
+// real day history has almost certainly registered before and simply lost
+// its saved profileId/accessKey (a multi-tab race, a wiped local store, or
+// similar) rather than truly starting fresh. Minting it a new profile would
+// silently clone that whole history into a duplicate person. Refuse instead,
+// so the loss is loud and someone can reconnect it with a recovery code
+// rather than the vault quietly growing a twin.
+const SUSPICIOUS_REGISTRATION_DAY_COUNT = 2;
+const SUSPICIOUS_REGISTRATION_EVIDENCE_REVISION = 5;
+
+function looksLikeReturningClient(phoneState) {
+  const dayCount = Object.keys(phoneState.days || {}).length;
+  const evidenceRevision = Number(phoneState.evidence?.localRevision || 0);
+  return (
+    dayCount > SUSPICIOUS_REGISTRATION_DAY_COUNT ||
+    evidenceRevision > SUSPICIOUS_REGISTRATION_EVIDENCE_REVISION
+  );
+}
+
 function now() {
   return new Date().toISOString();
 }
@@ -1212,6 +1233,18 @@ export function createCircleAiServer(options = {}) {
         if (legacy) {
           profileId = legacy[0];
         } else {
+          if (looksLikeReturningClient(phoneState)) {
+            json(
+              response,
+              409,
+              {
+                error:
+                  "This device already has recorded days but no saved connection to a profile. Recover the existing profile with its recovery code instead of starting a new one, to avoid creating a duplicate.",
+              },
+              origin,
+            );
+            return;
+          }
           if (profileIds(vaultPath).length >= maxProfiles) {
             json(response, 429, { error: "Profile limit reached." }, origin);
             return;

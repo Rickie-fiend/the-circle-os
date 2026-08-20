@@ -55,7 +55,9 @@ test("the shared flip holds geometry and becomes immediate for reduced motion", 
 test("Protocol labels its sides and keeps editing as an action", () => {
   assert.match(protocol, />\s*Phases\s*</);
   assert.match(protocol, />\s*Protocol\s*</);
-  assert.match(protocol, />\s*Edit phase\s*</);
+  // Editing is reached from the header now, the way New habit is on Routine,
+  // so the words "Edit phase" no longer appear anywhere in the body.
+  assert.match(protocol, />\s*Edit\s*</);
   assert.doesNotMatch(protocol, />\s*Done\s*:\s*Protocol\s*</);
 });
 
