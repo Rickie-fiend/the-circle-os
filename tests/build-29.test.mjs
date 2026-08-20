@@ -75,7 +75,14 @@ test("the Dreamline rests on one Page and opens its sheets from Edit", () => {
   assert.match(pages, /step: "now"[\s\S]*?step: "tomorrow"[\s\S]*?step: "dayAfter"/);
   // The idle Page is the Dreamline at rest, with the due steps as blocks.
   assert.match(pages, /export function DreamlineIdlePage/);
-  assert.match(pages, /os-protocol-block/);
+  // Its own form: a numbered track, not Routine's tick and not Protocol's block.
+  assert.match(pages, /os-dreamline-track/);
+  assert.doesNotMatch(pages, /os-protocol-block/);
+  // Every step is visible and only one is live.
+  assert.match(pages, /disabled=\{!pressable\}/);
+  assert.match(pages, /is-\$\{item\.state\}/);
+  // A step taken by accident can be given back.
+  assert.match(shell, /function tickDreamlineStep\(itemId: string, step: DreamlineStep, done = true\)/);
   assert.match(shell, /<DreamlineIdlePage/);
   assert.match(shell, /setEditingDreamline\(true\)/);
   // The two Pages it replaced are gone rather than hidden.

@@ -25,9 +25,9 @@ import {
   concludeExpiredDreamlines,
   currentDreamline,
   dreamlineIncome,
-  dreamlineDueSteps,
   dreamlineProgress,
   dreamlineRecords,
+  dreamlineStrategy,
   ensureDay,
   activeProtocolRun,
   addProtocolItem,
@@ -99,6 +99,7 @@ import {
   type DreamlineItem,
   type DreamlineProgressView,
   type DreamlineRecord,
+  type DreamlineStrategyLine,
   type DreamlineStep,
 } from "./dreamline-pages";
 import linePool from "./lines/lines.json";
@@ -1879,13 +1880,7 @@ export function TodayExperience() {
   // same page. after saving that, only then we may proceed to doing the actual
   // living."
   const dreamlineProgressView = dreamlineProgress(activeDreamline) as DreamlineProgressView | null;
-  const dreamlineDue = dreamlineDueSteps(activeDreamline) as Array<{
-    itemId: string;
-    step: DreamlineStep;
-    label: string;
-    text: string;
-    done: boolean;
-  }>;
+  const dreamlineStrategyView = dreamlineStrategy(activeDreamline) as DreamlineStrategyLine[];
   // Sai: "after continue, leads to idle app ... and we will have edit button
   // somewhere, and it will reveal The Dream and Steps if needed." So the sheets
   // are not Pages he swipes past every day; they are what Edit opens.
@@ -1985,9 +1980,11 @@ export function TodayExperience() {
     return result.error;
   }
 
-  function tickDreamlineStep(itemId: string, step: DreamlineStep) {
+  // Both ways. A step taken by accident has to be givable back, or the Page
+  // punishes a mis-tap with a plan that is permanently wrong.
+  function tickDreamlineStep(itemId: string, step: DreamlineStep, done = true) {
     if (!activeDreamline) return "Begin the Dreamline first.";
-    const result = setDreamlineStepDone(state, activeDreamline.id, itemId, step, true);
+    const result = setDreamlineStepDone(state, activeDreamline.id, itemId, step, done);
     if (!result.error) updateState(() => result.state);
     return result.error;
   }
@@ -3275,8 +3272,8 @@ export function TodayExperience() {
                         daysLeft={dreamlineProgressView?.daysLeft ?? null}
                         key="dreamline-idle"
                         onEdit={() => setEditingDreamline(true)}
-                        onTick={tickDreamlineStep}
-                        steps={dreamlineDue}
+                        onStep={tickDreamlineStep}
+                        strategy={dreamlineStrategyView}
                       />,
                     ]),
                 ...(!dreamlineEditing ? [] : [
@@ -3294,7 +3291,6 @@ export function TodayExperience() {
                 ...(activeDreamline
                   ? [
                       <DreamlineStepsPage
-                        committed={Boolean(activeDreamline.stepsCommittedAt)}
                         items={starredDreamlineItems}
                         key={`dreamline-steps-${activeDreamline.id}`}
                         onCommit={commitDreamlineStepSheet}

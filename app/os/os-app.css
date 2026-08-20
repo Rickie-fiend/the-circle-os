@@ -3184,6 +3184,148 @@
 
 /* Dreamline is Log's finite desired-lifestyle App. It uses the Log frame and
    the shared content-flow placement; rows are dividers, never nested cards. */
+/* The Dreamline's own form.
+ *
+ * Routine ticks a circle and Protocol fills a block; this is a track. Each step
+ * is numbered and threaded to the next, so the shape on the Page is the shape
+ * of the plan: three marks from where he is to the thing he wants. Sai asked
+ * for "a creative different style but same variation" — same surface, same
+ * press, a different figure.
+ */
+.circle-os .os-dreamline-strategy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--os-part-gap);
+}
+
+.circle-os .os-dreamline-goal-name {
+  color: var(--c-warm-50);
+  font-size: var(--text-xl);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 0.9rem;
+}
+
+.circle-os .os-dreamline-goal-name > span {
+  color: rgb(25 24 19 / 0.62);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.circle-os .os-dreamline-goal.is-complete .os-dreamline-goal-name {
+  color: var(--c-ink);
+}
+
+.circle-os .os-dreamline-track {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.circle-os .os-dreamline-step-row {
+  align-items: center;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: 30px minmax(0, 1fr);
+  padding: 0.35rem 0;
+  position: relative;
+}
+
+/* The thread. It joins one mark to the next and stops at the last. */
+.circle-os .os-dreamline-step-row::before {
+  background: rgb(25 24 19 / 0.28);
+  content: "";
+  height: calc(100% - 30px);
+  left: 14px;
+  position: absolute;
+  top: calc(50% + 15px);
+  width: 2px;
+}
+
+.circle-os .os-dreamline-step-row:last-child::before {
+  display: none;
+}
+
+.circle-os .os-dreamline-step-mark {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 2px solid rgb(25 24 19 / 0.42);
+  border-radius: var(--r-full);
+  color: rgb(25 24 19 / 0.66);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  padding: 0;
+  transition:
+    background 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    color 180ms var(--ease-out);
+  width: 30px;
+}
+
+/* Taken. */
+.circle-os .os-dreamline-step-row.is-done .os-dreamline-step-mark,
+.circle-os .os-dreamline-step-row.is-undoable .os-dreamline-step-mark {
+  background: var(--c-ink);
+  border-color: var(--c-ink);
+  color: var(--c-warm-50);
+}
+
+/* The one to take next: the only one that looks like it wants pressing. */
+.circle-os .os-dreamline-step-row.is-active .os-dreamline-step-mark {
+  background: var(--c-warm-50);
+  border-color: var(--c-warm-50);
+  box-shadow: 0 3px 0 var(--c-orange-900);
+  color: var(--c-ink);
+  transform: translateY(-3px);
+}
+
+.circle-os .os-dreamline-step-row.is-active .os-dreamline-step-mark:active {
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+/* Ahead of him. Shown, so the plan is visible, and not offered. */
+.circle-os .os-dreamline-step-row.is-locked .os-dreamline-step-mark {
+  border-style: dashed;
+  cursor: default;
+  opacity: 0.5;
+}
+
+.circle-os .os-dreamline-step-text {
+  color: var(--c-warm-50);
+  font-size: var(--text-md);
+  font-weight: 620;
+  line-height: 1.35;
+}
+
+.circle-os .os-dreamline-step-row.is-done .os-dreamline-step-text,
+.circle-os .os-dreamline-step-row.is-undoable .os-dreamline-step-text {
+  color: rgb(25 24 19 / 0.78);
+}
+
+.circle-os .os-dreamline-step-row.is-locked .os-dreamline-step-text {
+  color: rgb(255 248 241 / 0.62);
+}
+
+.circle-os .os-dreamline-days-left {
+  color: rgb(25 24 19 / 0.72);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
 .circle-os .os-dreamline-page {
   box-sizing: border-box;
   height: 100%;

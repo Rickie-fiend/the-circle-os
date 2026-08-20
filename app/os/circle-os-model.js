@@ -3936,30 +3936,52 @@ export function dreamlineProgress(record, now = new Date()) {
 }
 
 /**
- * The steps that are actually due, one per starred dream.
+ * The whole strategy: every starred dream, and every step under it.
  *
- * The Dreamline at rest asks for what today wants, not for the whole plan. For
- * each starred dream that is the next step still undone — Now, then Tomorrow,
- * then Day After — or the last one if they are all done, so a finished dream
- * still shows what finished it rather than vanishing.
+ * Sai: "those all 3 steps be visible and only able to click one after another
+ * ... so that we can see the whole strategy and our goal."
+ *
+ * A dream is not a task, it is a short sequence, and seeing the sequence is the
+ * point — a watch takes three steps and you can see all three. Only one step is
+ * live at a time: the first one not yet done. The steps behind it are done and
+ * the ones ahead are not offered, because offering step three before step one
+ * is how a plan becomes a list.
+ *
+ * The most recent done step stays live so it can be undone. Sai: "when i
+ * accidently click on it, and no way to revert."
  */
-export function dreamlineDueSteps(record) {
-  if (!record || record.status !== "active" || !record.stepsCommittedAt) return [];
+export function dreamlineStrategy(record) {
+  if (!record || record.status !== "active") return [];
   const labels = { now: "Now", tomorrow: "Tomorrow", dayAfter: "Day After" };
+  const groups = { having: "Having", being: "Being", doing: "Doing" };
   return Object.values(record.items)
     .filter((item) => item.starred)
     .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)))
     .map((item) => {
       const written = DREAMLINE_STEP_KEYS.filter((step) => item.steps?.[step]?.trim());
-      if (!written.length) return null;
-      const next = written.find((step) => !item.stepsDoneAt?.[step]) || written.at(-1);
+      const activeIndex = written.findIndex((step) => !item.stepsDoneAt?.[step]);
+      const lastDone = activeIndex === -1 ? written.length - 1 : activeIndex - 1;
       return {
-        itemId: item.id,
-        step: next,
-        label: labels[next] || next,
-        text: item.steps[next].trim(),
-        done: Boolean(item.stepsDoneAt?.[next]),
+        id: item.id,
+        group: groups[item.category] || item.category,
+        name: item.category === "being" ? item.convertedDoing || item.text : item.text,
+        complete: written.length > 0 && activeIndex === -1,
+        steps: written.map((step, index) => ({
+          step,
+          label: labels[step] || step,
+          text: item.steps[step].trim(),
+          done: Boolean(item.stepsDoneAt?.[step]),
+          // Live: the one to take next, or the one just taken, so it can go back.
+          state:
+            index === activeIndex
+              ? "active"
+              : index === lastDone
+                ? "undoable"
+                : index < activeIndex || activeIndex === -1
+                  ? "done"
+                  : "locked",
+        })),
       };
     })
-    .filter(Boolean);
+    .filter((line) => line.steps.length);
 }

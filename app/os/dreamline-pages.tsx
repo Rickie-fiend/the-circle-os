@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from "react";
 
 import { PageLayout } from "./app-session";
-import { CreativeButton } from "./button-engine";
 
 export type DreamlineCategory = "having" | "being" | "doing";
 export type DreamlineStep = "now" | "tomorrow" | "dayAfter";
@@ -103,36 +102,52 @@ function toCents(value: string) {
 }
 
 
-/**
- * The Dreamline at rest: the steps that are actually due, as things to press.
- *
- * Sai: "where things i set in Now session, will be able to click and completed.
- * like the boxes in monk mode." So this is the same block Monk Mode uses, for
- * the same reason — a term you keep and a step you take are the same kind of
- * act, and they should feel the same under the finger.
- *
- * It shows one step per starred dream: whichever of Now, Tomorrow and Day After
- * is the next one still undone. Everything else waits behind Edit.
- */
-export function DreamlineIdlePage({
-  daysLeft,
-  onEdit,
-  onTick,
-  steps,
-}: {
-  daysLeft: number | null;
-  onEdit: () => void;
-  onTick: (itemId: string, step: DreamlineStep) => string;
+export type DreamlineStrategyLine = {
+  id: string;
+  group: string;
+  name: string;
+  complete: boolean;
   steps: Array<{
-    itemId: string;
     step: DreamlineStep;
     label: string;
     text: string;
     done: boolean;
+    state: "done" | "active" | "undoable" | "locked";
   }>;
+};
+
+/**
+ * The Dreamline at rest: the whole strategy, and the one step that is live.
+ *
+ * Sai: "those all 3 steps be visible and only able to click one after another
+ * ... so that we can see the whole strategy and our goal."
+ *
+ * A dream is a short sequence rather than a task, and seeing the sequence is
+ * the point — a watch takes three steps and all three are on the Page. Only
+ * one is live: the next one not yet taken. The steps ahead of it are shown but
+ * not offered, because offering step three before step one turns a plan into a
+ * list, which is what made this Page confusing to read.
+ *
+ * The step just taken stays live so it can be given back. Sai: "when i
+ * accidently click on it, and no way to revert."
+ *
+ * The form is deliberately its own. Routine ticks a circle, Protocol fills a
+ * block, and this is a track: each step numbered and threaded to the next, so
+ * the shape on the Page is the shape of the plan.
+ */
+export function DreamlineIdlePage({
+  daysLeft,
+  onEdit,
+  onStep,
+  strategy,
+}: {
+  daysLeft: number | null;
+  onEdit: () => void;
+  onStep: (itemId: string, step: DreamlineStep, done: boolean) => string;
+  strategy: DreamlineStrategyLine[];
 }) {
   const [error, setError] = useState("");
-  const outstanding = steps.filter((step) => !step.done).length;
+  const live = strategy.filter((line) => !line.complete).length;
 
   return (
     <PageLayout
@@ -150,40 +165,55 @@ export function DreamlineIdlePage({
       }
       heading={
         <h2>
-          {!steps.length
-            ? "Nothing to do yet."
-            : outstanding
-              ? "What today asks of the dream."
-              : "Every step you wrote is done."}
+          {!strategy.length
+            ? "Nothing planned yet."
+            : live
+              ? "The way there."
+              : "Every step is taken."}
         </h2>
       }
       placement="content-flow"
       theme="orange"
     >
-      {steps.length ? (
-        <div className="os-dreamline-step-blocks">
-          {steps.map((step) => (
-            <div className="os-dreamline-step-block" key={`${step.itemId}-${step.step}`}>
-              <p className="os-record-label">{step.label}</p>
-              <CreativeButton
-                aria-label={`${step.done ? "Undo" : "Done"}: ${step.text}`}
-                aria-pressed={step.done}
-                className={`os-protocol-block${step.done ? " is-kept" : ""}`}
-                keepMountedOnSuccess
-                onClick={() => setError(onTick(step.itemId, step.step))}
-                role="habit"
-                styleId="soft-clay"
-                type="button"
-              >
-                <span className="os-protocol-block-text">{step.text}</span>
-                <span aria-hidden="true" className="os-protocol-block-dot" />
-              </CreativeButton>
-            </div>
+      {strategy.length ? (
+        <div className="os-dreamline-strategy">
+          {strategy.map((line) => (
+            <section
+              className={`os-dreamline-goal${line.complete ? " is-complete" : ""}`}
+              key={line.id}
+            >
+              <p className="os-dreamline-goal-name">
+                <span>{line.group}</span> {line.name}
+              </p>
+              <ol className="os-dreamline-track">
+                {line.steps.map((item, index) => {
+                  const pressable = item.state === "active" || item.state === "undoable";
+                  return (
+                    <li
+                      className={`os-dreamline-step-row is-${item.state}`}
+                      key={item.step}
+                    >
+                      <button
+                        aria-label={`${item.done ? "Undo" : "Done"}: ${item.text}`}
+                        aria-pressed={item.done}
+                        className="os-dreamline-step-mark"
+                        disabled={!pressable}
+                        onClick={() => setError(onStep(line.id, item.step, !item.done))}
+                        type="button"
+                      >
+                        <span aria-hidden="true">{index + 1}</span>
+                      </button>
+                      <span className="os-dreamline-step-text">{item.text}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
           ))}
         </div>
       ) : (
         <p className="os-dreamline-quiet">
-          Open Edit, name what you want, and give it a step you can take today.
+          Open Edit, name what you want, and give it the steps that get you there.
         </p>
       )}
       {error ? <p className="os-dreamline-error" role="alert">{error}</p> : null}
@@ -602,12 +632,10 @@ const STEP_SECTIONS: Array<{ step: DreamlineStep; label: string; hint: string }>
  * and tick complete back." Until this is pressed there is no Today Page at all.
  */
 export function DreamlineStepsPage({
-  committed,
   items,
   onCommit,
   onSave,
 }: {
-  committed: boolean;
   items: DreamlineItem[];
   onCommit: () => string;
   onSave: (itemId: string, step: DreamlineStep, value: string) => string;
