@@ -125,5 +125,8 @@ test("the published habit completion is wired to all three stored fields", () =>
   assert.match(shell, /updateHabitDefinitionParts\(added\.state, added\.id, \{[\s\S]*?action,[\s\S]*?cue,[\s\S]*?identity,/);
   assert.match(css, /\.os-habit-action-copy,[\s\S]*?\.os-habit-identity-copy[\s\S]*?transition: opacity 220ms/);
   assert.match(css, /\.os-habit-copy-swap\.show-identity \.os-habit-action-copy[\s\S]*?opacity: 0/);
-  assert.match(css, /\.os-habit-copy-swap\.show-identity \.os-habit-identity-copy[\s\S]*?opacity: 1/);
+  // The identity is shown once the row has finished making room for it, not on
+  // a delay of its own — a delay counted from the tick drifted away from the
+  // timer that moves the height, and the identity could arrive before the space.
+  assert.match(css, /\.os-habit-copy-swap\.show-identity\.has-settled \.os-habit-identity-copy[\s\S]*?opacity: 1/);
 });

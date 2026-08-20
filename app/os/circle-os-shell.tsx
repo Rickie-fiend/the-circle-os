@@ -183,6 +183,16 @@ function HabitCopySwap({
 }) {
   const frame = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState<number | null>(null);
+  // Whether this row has been on screen before. Swiping away unmounts the Page
+  // and coming back mounts it fresh, so a habit that was already showing its
+  // identity would otherwise sit through the three-second wait again with no
+  // height set — which is why the alignment was gone every time he came back.
+  const firstRun = useRef(true);
+  // The identity is shown by this flag, not by a delay of its own. A CSS delay
+  // is counted from the tick, while the row's height is moved by a timer here,
+  // and the two drifted apart by enough that the identity sometimes arrived
+  // before the space for it did.
+  const [settled, setSettled] = useState(false);
 
   // Only `showIdentity` belongs here. `children` is a fresh value on every
   // render, so depending on it re-ran this effect constantly and cleared the
@@ -207,10 +217,13 @@ function HabitCopySwap({
       typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
     let timer = 0;
 
-    if (showIdentity) {
+    // A row that is already settled when it appears just measures. The wait is
+    // for the change itself, not for the state.
+    if (showIdentity && !firstRun.current) {
       // Turning into the identity is one deliberate motion: it waits out the
       // three seconds the crossed row stays readable, then moves once.
       timer = window.setTimeout(() => {
+        window.setTimeout(() => setSettled(true), 480);
         // The App Box eases its own height for a Page change and snaps for a
         // content edit, so typing never lags behind the finger. This is
         // neither — it is one settling move — and without borrowing that ease
@@ -222,9 +235,15 @@ function HabitCopySwap({
         for (const item of faces()) observer?.observe(item);
       }, 3240);
     } else {
+      // Either the row is going back to its action, or it arrived already
+      // settled — a Page that was swiped away and came back. Neither is a
+      // change to animate.
+      setSettled(showIdentity);
       measure();
       for (const item of faces()) observer?.observe(item);
     }
+
+    firstRun.current = false;
 
     return () => {
       window.clearTimeout(timer);
@@ -234,7 +253,9 @@ function HabitCopySwap({
 
   return (
     <div
-      className={`os-habit-copy-swap${showIdentity ? " show-identity" : ""}`}
+      className={`os-habit-copy-swap${showIdentity ? " show-identity" : ""}${
+        settled ? " has-settled" : ""
+      }`}
       ref={frame}
       style={height === null ? undefined : { height: `${height}px` }}
     >

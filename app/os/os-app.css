@@ -1243,9 +1243,23 @@
   transition-delay: 3000ms;
 }
 
-.circle-os .os-habit-copy-swap.show-identity .os-habit-identity-copy {
+/* The identity arrives last.
+ *
+ * Sai: "i think its better be adjust first, then the identity come up." It
+ * used to fade in at the same moment the action faded out, so the new line
+ * appeared and the row then shifted underneath it. Now the action goes, the
+ * row closes to the height of one line, and the identity arrives into a space
+ * already the right size. 3000 crossed out, 3240 the row moves, 440ms to
+ * settle, and the identity from 3700. */
+/* The identity arrives last, and only once there is room for it.
+ *
+ * Sai: "i think its better be adjust first, then the identity come up." The
+ * action goes, the row closes to the height of one line, and the identity
+ * fades into a space that is already the right size. `has-settled` is set when
+ * the row has finished moving, so this never runs early no matter how the
+ * timing drifts. */
+.circle-os .os-habit-copy-swap.show-identity.has-settled .os-habit-identity-copy {
   opacity: 1;
-  transition-delay: 3000ms;
 }
 
 
