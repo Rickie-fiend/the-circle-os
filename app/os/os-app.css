@@ -1257,9 +1257,15 @@
  * action goes, the row closes to the height of one line, and the identity
  * fades into a space that is already the right size. `has-settled` is set when
  * the row has finished moving, so this never runs early no matter how the
- * timing drifts. */
+ * timing drifts.
+ *
+ * It arrives slowly. Sai: "i want identity to reveal slowly ... the reveal is
+ * too sharp." This is the sentence that says what keeping the habit made of
+ * him, so it is the one thing in the row allowed to take its time: 720ms on a
+ * curve that starts almost still and never snaps. */
 .circle-os .os-habit-copy-swap.show-identity.has-settled .os-habit-identity-copy {
   opacity: 1;
+  transition: opacity 720ms cubic-bezier(0.32, 0, 0.28, 1);
 }
 
 
