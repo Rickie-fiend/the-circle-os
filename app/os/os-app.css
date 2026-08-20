@@ -3362,6 +3362,11 @@
   color: var(--c-ink);
 }
 
+/* The shared gap under a Page's main text. */
+.circle-os .os-dreamline-page > .os-page-heading {
+  padding-bottom: var(--os-main-sub-gap);
+}
+
 .circle-os .os-dreamline-page .os-page-heading h2 {
   font-size: var(--text-3xl);
   font-weight: 700;
@@ -5597,14 +5602,21 @@
   margin-top: 0;
 }
 
-.circle-os .os-page-layout.os-placement-identity-stack .os-page-header {
+/* A header is the height of its Label, on every Page.
+ *
+ * A header action carries a 44px touch target, and in normal flow that made the
+ * header 26px taller than the Label in it — so the Dreamline's forehead
+ * measured 105.9px where every other App measured 80.9px. The action is taken
+ * out of flow instead: it keeps its full target and stops deciding how far down
+ * the Page begins. */
+.circle-os .os-page-layout .os-page-header {
   position: relative;
 }
 
 /* Top of the header, not the middle of it. The right button keeps its full
  * touch target by growing downward, so it lines up with the App Label opposite
  * instead of hanging below it. */
-.circle-os .os-page-layout.os-placement-identity-stack .os-page-header-right > button {
+.circle-os .os-page-layout .os-page-header-right > button {
   position: absolute;
   right: 0;
   top: 0;
@@ -7127,10 +7139,10 @@
 
 /* Habits and Tasks are two parts of one Page, so the seam between them is a
  * real line rather than the quiet rule used between rows. */
+/* No rule above Tasks. The label already says the part has changed, and the
+ * gap does the separating — a line as well was saying it twice. */
 .circle-os .os-task-body-session {
-  border-top: 1px solid rgb(25 24 19 / 0.34);
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
+  margin-top: var(--os-part-gap);
 }
 
 .circle-os .os-habit-session-label,

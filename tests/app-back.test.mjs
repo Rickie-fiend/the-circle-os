@@ -75,7 +75,10 @@ test("Routine and Protocol share named heading, stack, header and Footer placeme
   assert.match(chapterPlayer, /idlePlacement === "identity-stack"[\s\S]*?os-app-page-stacks/);
   assert.match(shell, /className="os-routine-body"/);
   assert.match(protocol, /os-page-sub os-app-page-stacks os-protocol-terms/);
-  assert.match(css, /\.os-page-layout\.os-placement-identity-stack \.os-page-header/);
+  // A header action is out of flow on every placement now, not just this one:
+  // its 44px touch target was making the header taller than its Label and
+  // pushing the forehead down by 26px on any Page that used normal flow.
+  assert.match(css, /\.os-page-layout \.os-page-header-right > button \{[^}]*position: absolute/s);
   // The heading carries no margin of its own. The space under a title is the
   // shared 25px gap and nothing else — its old 1rem bottom margin stacked on
   // top of that and put Routine and Protocol content 41px below their title.
