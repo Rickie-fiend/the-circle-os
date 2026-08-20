@@ -107,6 +107,7 @@ type ProtocolPageProps = {
 function ProtocolHome({
   className = "",
   completedProtocol,
+  currentPhase,
   onReturnToPhase,
   onStart,
   onArchiveRecord,
@@ -114,6 +115,13 @@ function ProtocolHome({
   phaseRecords,
   running = false,
 }: {
+  currentPhase?: {
+    name: string;
+    day: number;
+    days: number;
+    keptToday: number;
+    termsToday: number;
+  } | null;
   className?: string;
   completedProtocol: CompletedProtocolView;
   onReturnToPhase?: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -161,7 +169,11 @@ function ProtocolHome({
           </button>
         ) : undefined
       }
-      heading={<p className="os-protocol-home-heading">Past phases</p>}
+      heading={
+        <p className="os-protocol-home-heading">
+          {currentPhase ? "Phases" : "Past phases"}
+        </p>
+      }
       headerLeft={
         running ? (
           <button
@@ -179,6 +191,27 @@ function ProtocolHome({
       placement="content-flow"
       theme="orange"
     >
+      {currentPhase ? (
+        <section className="os-protocol-home-part" aria-label="Current phase">
+          <p className="os-record-label">Current phase</p>
+          <button
+            className="os-protocol-current"
+            onClick={onReturnToPhase}
+            type="button"
+          >
+            <span className="os-protocol-current-name">{currentPhase.name}</span>
+            <span className="os-protocol-current-meta">
+              Day {currentPhase.day} of {currentPhase.days}
+              {currentPhase.termsToday
+                ? ` · ${currentPhase.keptToday} of ${currentPhase.termsToday} kept today`
+                : ""}
+            </span>
+          </button>
+        </section>
+      ) : null}
+
+      <section className="os-protocol-home-part" aria-label="Past phases">
+        {currentPhase ? <p className="os-record-label">Past phases</p> : null}
       <div className="os-page-main os-protocol-home-records">
         {phaseRecords.length ? phaseRecords.map((record) => {
           const canCorrect = completedProtocol?.run.id === record.id;
@@ -254,6 +287,7 @@ function ProtocolHome({
           </p>
         )}
       </div>
+      </section>
     </PageLayout>
   );
 }
@@ -365,6 +399,13 @@ export function ProtocolPage({
       <ProtocolHome
         className={protocolBack.className}
         completedProtocol={completedProtocol}
+        currentPhase={{
+          name: run.name,
+          day,
+          days: run.days,
+          keptToday: [...nonNegotiable, ...negotiable].filter((item) => item.completed).length,
+          termsToday: nonNegotiable.length + negotiable.length,
+        }}
         onArchiveRecord={onArchiveRecord}
         onReturnToPhase={(event) =>
           protocolBack.flip("phase", undefined, event.currentTarget)

@@ -7496,6 +7496,47 @@
   width: 100%;
 }
 
+/* The home Page reads as two parts: the run he is inside, and the ones behind
+ * him. Sai asked for it to be shaped like its family — Routine and the
+ * Dreamline both name their sections this way. */
+.circle-os .os-protocol-home-part + .os-protocol-home-part {
+  margin-top: var(--os-part-gap);
+}
+
+.circle-os .os-protocol-home-part > .os-record-label {
+  margin-bottom: 0.6rem;
+}
+
+/* An overview, and a way back into the run it describes. */
+.circle-os .os-protocol-current {
+  appearance: none;
+  background: rgb(25 24 19 / 0.14);
+  border: 0;
+  border-radius: var(--r-md);
+  color: var(--c-warm-50);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  gap: 0.3rem;
+  min-height: var(--os-action-height);
+  padding: 0.9rem 1rem;
+  text-align: left;
+  width: 100%;
+}
+
+.circle-os .os-protocol-current-name {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.circle-os .os-protocol-current-meta {
+  color: rgb(25 24 19 / 0.76);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
 .circle-os .os-protocol-home-records {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
