@@ -25,9 +25,9 @@ import {
   concludeExpiredDreamlines,
   currentDreamline,
   dreamlineIncome,
+  dreamlineDueSteps,
   dreamlineProgress,
   dreamlineRecords,
-  dreamlineToday,
   ensureDay,
   activeProtocolRun,
   addProtocolItem,
@@ -92,15 +92,13 @@ import {
 import { sizeTextAreaToContent } from "./text-area-size";
 import { useAppBack } from "./app-back";
 import {
-  DreamlineProgressPage,
+  DreamlineIdlePage,
   DreamlineSheetPage,
   DreamlineStepsPage,
-  DreamlineTodayPage,
   type DreamlineCategory,
   type DreamlineItem,
   type DreamlineProgressView,
   type DreamlineRecord,
-  type DreamlineTodayView,
   type DreamlineStep,
 } from "./dreamline-pages";
 import linePool from "./lines/lines.json";
@@ -1498,6 +1496,7 @@ export function TodayExperience() {
   // takes focus and closes when focus leaves it altogether.
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
+  const [editingDreamline, setEditingDreamline] = useState(false);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
   const taskExitTimers = useRef<
@@ -1879,8 +1878,18 @@ export function TodayExperience() {
   // page. Next page, Steps now, tomorrow, and next day, all should be in the
   // same page. after saving that, only then we may proceed to doing the actual
   // living."
-  const dreamlineTodayView = dreamlineToday(activeDreamline) as DreamlineTodayView | null;
   const dreamlineProgressView = dreamlineProgress(activeDreamline) as DreamlineProgressView | null;
+  const dreamlineDue = dreamlineDueSteps(activeDreamline) as Array<{
+    itemId: string;
+    step: DreamlineStep;
+    label: string;
+    text: string;
+    done: boolean;
+  }>;
+  // Sai: "after continue, leads to idle app ... and we will have edit button
+  // somewhere, and it will reveal The Dream and Steps if needed." So the sheets
+  // are not Pages he swipes past every day; they are what Edit opens.
+  const dreamlineEditing = editingDreamline || !dreamlineProgressView;
   // Log is one Page again. The Dreamline moved into the Routine box, where it
   // sits after Protocol: the small daily, the weekly reset, the big goal.
   const logAppVersion = "log-v3";
@@ -1967,15 +1976,11 @@ export function TodayExperience() {
   function commitDreamlineStepSheet() {
     if (!activeDreamline) return "Begin the Dreamline first.";
     const result = commitDreamlineSteps(state, activeDreamline.id);
+    // Saving the steps is what ends the planning, so it is also what closes the
+    // sheets and leaves him on the Page he actually uses.
     if (!result.error) {
-      updateState(() =>
-        setAppSessionIndex(
-          result.state,
-          "today-log",
-          `log-dreamline-v2:${activeDreamline.id}:living`,
-          3,
-        ),
-      );
+      updateState(() => result.state);
+      setEditingDreamline(false);
     }
     return result.error;
   }
@@ -3263,15 +3268,18 @@ export function TodayExperience() {
                     updateState((current) => endProtocolRun(current, protocolRun.id))
                   }
                 />,
-                ...(dreamlineProgressView
-                  ? [
-                      <DreamlineProgressPage
-                        key="dreamline-progress"
-                        onOpenSheet={() => changeHabitAppPage(dreamlineSheetIndex)}
-                        progress={dreamlineProgressView}
+                ...(dreamlineEditing
+                  ? []
+                  : [
+                      <DreamlineIdlePage
+                        daysLeft={dreamlineProgressView?.daysLeft ?? null}
+                        key="dreamline-idle"
+                        onEdit={() => setEditingDreamline(true)}
+                        onTick={tickDreamlineStep}
+                        steps={dreamlineDue}
                       />,
-                    ]
-                  : []),
+                    ]),
+                ...(!dreamlineEditing ? [] : [
                 <DreamlineSheetPage
                   history={pastDreamlines}
                   income={activeDreamline ? dreamlineIncomeView : null}
@@ -3294,15 +3302,7 @@ export function TodayExperience() {
                       />,
                     ]
                   : []),
-                ...(activeDreamline && dreamlineTodayView
-                  ? [
-                      <DreamlineTodayPage
-                        key={`dreamline-today-${activeDreamline.id}`}
-                        onTick={tickDreamlineStep}
-                        today={dreamlineTodayView}
-                      />,
-                    ]
-                  : []),
+                ]),
               ]}
               idleAppIndex={habitAppIndex}
               onIdleAppIndexChange={changeHabitAppPage}

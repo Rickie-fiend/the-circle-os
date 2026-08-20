@@ -61,29 +61,26 @@ test("the dream sheet is one Page: setup, Having, Being, Doing, income", () => {
   assert.match(sheet, /id="dreamline-setup"/);
 });
 
-test("the steps sheet is one Page, and saving it unlocks Today", () => {
+test("the Dreamline rests on one Page and opens its sheets from Edit", () => {
+  // Sai: "after continue, leads to idle app ... and we will have edit button
+  // somewhere, and it will reveal The Dream and Steps if needed." The sheets
+  // are not Pages he swipes past every day.
   const steps = pages.slice(
     pages.indexOf("export function DreamlineStepsPage"),
-    pages.indexOf("export function DreamlineTodayPage"),
+    pages.indexOf("export function DreamlineIdlePage") > 0
+      ? pages.length
+      : pages.length,
   );
-  // Now, Tomorrow and Day After together rather than three Pages.
   assert.match(steps, /STEP_SECTIONS\.map/);
   assert.match(pages, /step: "now"[\s\S]*?step: "tomorrow"[\s\S]*?step: "dayAfter"/);
-  assert.match(steps, /onCommit/);
-  // The App back is gone; these are Pages now.
-  assert.doesNotMatch(shell, /useAppBack<"dream" \| "steps">/);
-  assert.doesNotMatch(pages, /DreamlineModeButton/);
-  // The Dreamline lives in the Routine box now, after Protocol: the small
-  // daily, the weekly reset, the big goal. Log is one Page again.
-  assert.match(shell, /const logAppVersion = "log-v3"/);
-  assert.match(shell, /const logAppMaxIndex = 0;/);
-  assert.match(shell, /habitAppVersion = "protocol-habit-dreamline-v4"/);
-  const routineBox = shell.slice(shell.indexOf("idleApps={["), shell.indexOf("idleAppIndex={habitAppIndex}"));
-  const progressAt = routineBox.indexOf("DreamlineProgressPage");
-  const sheetAt = routineBox.indexOf("DreamlineSheetPage");
-  const stepsAt = routineBox.indexOf("DreamlineStepsPage");
-  const todayAt = routineBox.indexOf("DreamlineTodayPage");
-  assert.ok(progressAt > 0 && sheetAt > progressAt && stepsAt > sheetAt && todayAt > stepsAt);
+  // The idle Page is the Dreamline at rest, with the due steps as blocks.
+  assert.match(pages, /export function DreamlineIdlePage/);
+  assert.match(pages, /os-protocol-block/);
+  assert.match(shell, /<DreamlineIdlePage/);
+  assert.match(shell, /setEditingDreamline\(true\)/);
+  // The two Pages it replaced are gone rather than hidden.
+  assert.doesNotMatch(pages, /DreamlineProgressPage|DreamlineTodayPage/);
+  assert.doesNotMatch(shell, /DreamlineTodayPage/);
 });
 
 test("Being names its required Doing and stars are the gate to steps", () => {

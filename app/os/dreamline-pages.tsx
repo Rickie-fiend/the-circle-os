@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 
 import { PageLayout } from "./app-session";
+import { CreativeButton } from "./button-engine";
 
 export type DreamlineCategory = "having" | "being" | "doing";
 export type DreamlineStep = "now" | "tomorrow" | "dayAfter";
@@ -36,14 +37,6 @@ export type DreamlineRecord = {
   updatedAt: string;
 };
 
-/** What the Today Page shows: one step, or the fact that all of them are done. */
-export type DreamlineTodayView = {
-  itemId: string;
-  item: DreamlineItem | null;
-  step: DreamlineStep | null;
-  text: string;
-  done: boolean;
-};
 
 type DreamlineLineDraft = {
   category: DreamlineCategory;
@@ -107,6 +100,95 @@ function moneyInput(cents: number) {
 function toCents(value: string) {
   const amount = Number(value);
   return Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0;
+}
+
+
+/**
+ * The Dreamline at rest: the steps that are actually due, as things to press.
+ *
+ * Sai: "where things i set in Now session, will be able to click and completed.
+ * like the boxes in monk mode." So this is the same block Monk Mode uses, for
+ * the same reason — a term you keep and a step you take are the same kind of
+ * act, and they should feel the same under the finger.
+ *
+ * It shows one step per starred dream: whichever of Now, Tomorrow and Day After
+ * is the next one still undone. Everything else waits behind Edit.
+ */
+export function DreamlineIdlePage({
+  daysLeft,
+  onEdit,
+  onTick,
+  steps,
+}: {
+  daysLeft: number | null;
+  onEdit: () => void;
+  onTick: (itemId: string, step: DreamlineStep) => string;
+  steps: Array<{
+    itemId: string;
+    step: DreamlineStep;
+    label: string;
+    text: string;
+    done: boolean;
+  }>;
+}) {
+  const [error, setError] = useState("");
+  const outstanding = steps.filter((step) => !step.done).length;
+
+  return (
+    <PageLayout
+      className="os-dreamline-page os-dreamline-idle"
+      footer={
+        daysLeft === null ? undefined : (
+          <span className="os-dreamline-days-left">{daysLeft} days left</span>
+        )
+      }
+      headerLeft={<p className="os-card-label">Dreamline</p>}
+      headerRight={
+        <button className="os-new-habit" onClick={onEdit} type="button">
+          Edit
+        </button>
+      }
+      heading={
+        <h2>
+          {!steps.length
+            ? "Nothing to do yet."
+            : outstanding
+              ? "What today asks of the dream."
+              : "Every step you wrote is done."}
+        </h2>
+      }
+      placement="content-flow"
+      theme="orange"
+    >
+      {steps.length ? (
+        <div className="os-dreamline-step-blocks">
+          {steps.map((step) => (
+            <div className="os-dreamline-step-block" key={`${step.itemId}-${step.step}`}>
+              <p className="os-record-label">{step.label}</p>
+              <CreativeButton
+                aria-label={`${step.done ? "Undo" : "Done"}: ${step.text}`}
+                aria-pressed={step.done}
+                className={`os-protocol-block${step.done ? " is-kept" : ""}`}
+                keepMountedOnSuccess
+                onClick={() => setError(onTick(step.itemId, step.step))}
+                role="habit"
+                styleId="soft-clay"
+                type="button"
+              >
+                <span className="os-protocol-block-text">{step.text}</span>
+                <span aria-hidden="true" className="os-protocol-block-dot" />
+              </CreativeButton>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="os-dreamline-quiet">
+          Open Edit, name what you want, and give it a step you can take today.
+        </p>
+      )}
+      {error ? <p className="os-dreamline-error" role="alert">{error}</p> : null}
+    </PageLayout>
+  );
 }
 
 /**
@@ -542,7 +624,7 @@ export function DreamlineStepsPage({
             onClick={() => setError(onCommit())}
             type="button"
           >
-            {committed ? "Save steps" : "Save and begin"}
+            Continue
           </button>
         ) : null
       }
@@ -579,57 +661,6 @@ export function DreamlineStepsPage({
   );
 }
 
-/**
- * One thing, and a tick. This Page does not exist until the steps are saved.
- */
-export function DreamlineTodayPage({
-  onTick,
-  today,
-}: {
-  onTick: (itemId: string, step: DreamlineStep) => string;
-  today: DreamlineTodayView;
-}) {
-  const [error, setError] = useState("");
-  const label = STEP_SECTIONS.find((section) => section.step === today.step)?.label || "";
-
-  return (
-    <PageLayout
-      className="os-dreamline-page os-dreamline-today"
-      footer={
-        today.done || !today.step ? null : (
-          <button
-            className="os-dreamline-primary"
-            onClick={() => setError(onTick(today.itemId, today.step as DreamlineStep))}
-            type="button"
-          >
-            Done
-          </button>
-        )
-      }
-      headerLeft={<p className="os-card-label">Dreamline</p>}
-      headerRight={<span className="os-card-label">{label || "Today"}</span>}
-      heading={
-        today.done ? (
-          <h2>Every step you wrote is done.</h2>
-        ) : (
-          <h2>{today.text}</h2>
-        )
-      }
-      placement="content-flow"
-      theme="dark"
-    >
-      <p className="os-dreamline-quiet">
-        {today.done
-          ? "Write the next ones on the steps sheet, or let the Dreamline run."
-          : today.item?.category === "being"
-            ? today.item.convertedDoing
-            : today.item?.text || ""}
-      </p>
-      {error ? <p className="os-dreamline-error" role="alert">{error}</p> : null}
-    </PageLayout>
-  );
-}
-
 export type DreamlineProgressView = {
   lines: Array<{ id: string; label: string; written: number; done: number }>;
   written: number;
@@ -638,57 +669,3 @@ export type DreamlineProgressView = {
   committed: boolean;
   sentence: string;
 };
-
-/**
- * The Dreamline's front Page: am I getting closer.
- *
- * It leads with a sentence rather than a number, because a fraction on its own
- * reads as a score and this app does not score. The counts sit under it, per
- * dream, where they answer "which one is stuck" instead of "how am I doing".
- */
-export function DreamlineProgressPage({
-  onOpenSheet,
-  progress,
-}: {
-  onOpenSheet: () => void;
-  progress: DreamlineProgressView;
-}) {
-  return (
-    <PageLayout
-      className="os-dreamline-page os-dreamline-progress"
-      footer={
-        <button className="os-dreamline-add" onClick={onOpenSheet} type="button">
-          The dream
-        </button>
-      }
-      headerLeft={<p className="os-card-label">Dreamline</p>}
-      headerRight={
-        progress.daysLeft === null ? undefined : (
-          <span className="os-card-label">{progress.daysLeft} days left</span>
-        )
-      }
-      heading={<h2>{progress.sentence}</h2>}
-      placement="content-flow"
-      theme="dark"
-    >
-      {progress.lines.length ? (
-        <div className="os-dreamline-progress-list">
-          {progress.lines.map((line) => (
-            <article key={line.id}>
-              <strong>{line.label}</strong>
-              <span aria-label={`${line.done} of ${line.written} steps done`}>
-                {Array.from({ length: line.written }, (_, index) => (
-                  <i className={index < line.done ? "is-done" : ""} key={index} />
-                ))}
-              </span>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <p className="os-dreamline-quiet">
-          Star the dreams you will actually pursue, and they appear here.
-        </p>
-      )}
-    </PageLayout>
-  );
-}

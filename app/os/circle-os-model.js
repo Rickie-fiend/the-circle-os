@@ -3934,3 +3934,32 @@ export function dreamlineProgress(record, now = new Date()) {
             : "Every step you wrote is done. Write the next ones.",
   };
 }
+
+/**
+ * The steps that are actually due, one per starred dream.
+ *
+ * The Dreamline at rest asks for what today wants, not for the whole plan. For
+ * each starred dream that is the next step still undone — Now, then Tomorrow,
+ * then Day After — or the last one if they are all done, so a finished dream
+ * still shows what finished it rather than vanishing.
+ */
+export function dreamlineDueSteps(record) {
+  if (!record || record.status !== "active" || !record.stepsCommittedAt) return [];
+  const labels = { now: "Now", tomorrow: "Tomorrow", dayAfter: "Day After" };
+  return Object.values(record.items)
+    .filter((item) => item.starred)
+    .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)))
+    .map((item) => {
+      const written = DREAMLINE_STEP_KEYS.filter((step) => item.steps?.[step]?.trim());
+      if (!written.length) return null;
+      const next = written.find((step) => !item.stepsDoneAt?.[step]) || written.at(-1);
+      return {
+        itemId: item.id,
+        step: next,
+        label: labels[next] || next,
+        text: item.steps[next].trim(),
+        done: Boolean(item.stepsDoneAt?.[next]),
+      };
+    })
+    .filter(Boolean);
+}
