@@ -175,9 +175,11 @@ const LINE_DWELL_MS = 6000;
  */
 function HabitCopySwap({
   children,
+  completed,
   showIdentity,
 }: {
   children: ReactNode;
+  completed: boolean;
   showIdentity: boolean;
 }) {
   const frame = useRef<HTMLDivElement | null>(null);
@@ -187,6 +189,16 @@ function HabitCopySwap({
   // identity would otherwise sit through the three-second wait again with no
   // height set — which is why the alignment was gone every time he came back.
   const firstRun = useRef(true);
+  // The wait belongs to the tick, not to the identity being on screen.
+  //
+  // Sai: "identity flashes everytime i view the page." Three states all used to
+  // arrive here as `showIdentity` going true, and only one of them is a change
+  // worth animating: the habit being ticked. Coming back to the Page, and
+  // closing the editor after a tap, are both just the row being what it already
+  // is. Tracking `completed` separately is what tells them apart.
+  const wasCompleted = useRef(completed);
+  // Set when the identity is simply already here, so nothing fades.
+  const [immediate, setImmediate] = useState(false);
   // The identity is shown by this flag, not by a delay of its own. A CSS delay
   // is counted from the tick, while the row's height is moved by a timer here,
   // and the two drifted apart by enough that the identity sometimes arrived
@@ -216,9 +228,15 @@ function HabitCopySwap({
       typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
     let timer = 0;
 
+    // Only a tick earns the wait. Arriving on the Page already done, or closing
+    // the editor again, are not changes — they are the row's resting state.
+    const justCompleted = completed && !wasCompleted.current;
+    wasCompleted.current = completed;
+
     // A row that is already settled when it appears just measures. The wait is
     // for the change itself, not for the state.
-    if (showIdentity && !firstRun.current) {
+    if (showIdentity && justCompleted && !firstRun.current) {
+      setImmediate(false);
       // Turning into the identity is one deliberate motion: it waits out the
       // three seconds the crossed row stays readable, then moves once.
       timer = window.setTimeout(() => {
@@ -234,9 +252,12 @@ function HabitCopySwap({
         for (const item of faces()) observer?.observe(item);
       }, 3240);
     } else {
-      // Either the row is going back to its action, or it arrived already
-      // settled — a Page that was swiped away and came back. Neither is a
-      // change to animate.
+      // Either the row is going back to its action, or the identity is already
+      // what it says — a Page swiped away and returned to, or the editor
+      // closing. None of these is a change to animate, and animating them is
+      // what made the identity flash on arrival: the action sat there for three
+      // seconds while the identity faded in over the top of it.
+      setImmediate(showIdentity);
       setSettled(showIdentity);
       measure();
       for (const item of faces()) observer?.observe(item);
@@ -248,13 +269,13 @@ function HabitCopySwap({
       window.clearTimeout(timer);
       observer?.disconnect();
     };
-  }, [showIdentity]);
+  }, [completed, showIdentity]);
 
   return (
     <div
       className={`os-habit-copy-swap${showIdentity ? " show-identity" : ""}${
         settled ? " has-settled" : ""
-      }`}
+      }${immediate ? " is-immediate" : ""}`}
       ref={frame}
       style={height === null ? undefined : { height: `${height}px` }}
     >
@@ -3113,7 +3134,17 @@ export function TodayExperience() {
                             }}
                             onFocusCapture={() => setEditingHabitId(habit.id)}
                           >
-                            <HabitCopySwap showIdentity={Boolean(completed && identity)}>
+                            <HabitCopySwap
+                              completed={completed}
+                              // Editing wins over the identity. Sai: "i want to
+                              // be able to tap on the identity to see the full
+                              // action cue and identity edit." A done habit
+                              // reads as who it makes him until he asks for the
+                              // words behind it, and then it is a habit again.
+                              showIdentity={Boolean(
+                                completed && identity && editingHabitId !== habit.id,
+                              )}
+                            >
                               <div className="os-habit-action-copy">
                                 <textarea
                                   aria-label={`Edit habit: ${action || "New Habit"}`}
@@ -3144,7 +3175,35 @@ export function TodayExperience() {
                                 />
                               </div>
                               {identity ? (
-                                <p className="os-habit-identity-copy">{identity}</p>
+                                // A button, not a line of text. It is the way
+                                // back to the habit behind the identity, and
+                                // focus is put in the identity field so the
+                                // editor closes again on blur the way every
+                                // other inline editor in the App does.
+                                <button
+                                  aria-label={`Edit habit behind: ${identity}`}
+                                  className="os-habit-identity-copy"
+                                  onClick={(event) => {
+                                    setEditingHabitId(habit.id);
+                                    const row = event.currentTarget.closest("article");
+                                    // After the commit, not on the next frame.
+                                    // The identity field is display:none until
+                                    // the row is editing, and focusing a hidden
+                                    // field does nothing — which left the row
+                                    // open with focus still on the body, so it
+                                    // never closed again on blur.
+                                    window.setTimeout(() => {
+                                      row
+                                        ?.querySelector<HTMLTextAreaElement>(
+                                          ".os-habit-identity-edit",
+                                        )
+                                        ?.focus();
+                                    }, 0);
+                                  }}
+                                  type="button"
+                                >
+                                  {identity}
+                                </button>
                               ) : null}
                             </HabitCopySwap>
                             <CreativeButton

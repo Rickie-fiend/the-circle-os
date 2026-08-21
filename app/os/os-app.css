@@ -62,7 +62,12 @@
    * across it. `--os-group-gap` separates things inside one part; the wider
    * `--os-part-gap` separates the parts themselves. Sai on the Dreamline
    * sheet: "it should be glanceable as 3 parts just by spacing." */
-  --os-group-gap: 30px;
+  /* 25px, the same number as the gap under a Main text. Sai has now set this
+   * distance twice from two different Pages — "do 25 px between habits and
+   * tasks" and "having doing being those session spacing also 25px" — and
+   * asked for one consistent language, so the App has one rhythm rather than
+   * three numbers that each looked right on the Page they were chosen on. */
+  --os-group-gap: var(--os-main-sub-gap);
   --os-part-gap: 48px;
   align-items: flex-start;
   background: var(--c-ink-deep);
@@ -1190,14 +1195,29 @@
  * 3.33:1. Sai: "the crossed line turn to 'i am a reader' in black color with a
  * completed tick beside that." */
 .circle-os .os-habit-identity-copy {
+  appearance: none;
+  background: transparent;
+  border: 0;
   color: var(--c-ink);
+  cursor: pointer;
+  display: block;
+  font-family: inherit;
   font-size: var(--text-2xl);
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.2;
   margin: 0;
   opacity: 0;
+  padding: 0;
   pointer-events: none;
+  text-align: left;
+  width: 100%;
+}
+
+/* Tappable only once it is the face being shown, so the hidden one never
+ * intercepts a tap meant for the action underneath it. */
+.circle-os .os-habit-copy-swap.show-identity .os-habit-identity-copy {
+  pointer-events: auto;
 }
 
 /* The identity is written while the habit is being made and then gets out of
@@ -1244,7 +1264,24 @@
 .circle-os .os-habit-copy-swap.show-identity .os-habit-action-copy {
   opacity: 0;
   pointer-events: none;
+}
+
+/* The three seconds belong to the tick alone. `has-settled` is already true
+ * when the row arrives showing its identity, so this delay applies only while
+ * the row is actually turning — never on a Page he has just swiped back to. */
+.circle-os .os-habit-copy-swap.show-identity:not(.has-settled) .os-habit-action-copy {
   transition-delay: 3000ms;
+}
+
+/* Nothing moves when the identity is simply already there.
+ *
+ * Sai: "identity flashes everytime i view the page." Coming back to Routine is
+ * not an event; the row should be found the way it was left, with no fade to
+ * sit through and nothing crossing over anything else. */
+.circle-os .os-habit-copy-swap.is-immediate,
+.circle-os .os-habit-copy-swap.is-immediate .os-habit-action-copy,
+.circle-os .os-habit-copy-swap.is-immediate .os-habit-identity-copy {
+  transition: none;
 }
 
 /* The identity arrives last.
@@ -1269,6 +1306,15 @@
  * curve that starts almost still and never snaps. */
 .circle-os .os-habit-copy-swap.show-identity.has-settled .os-habit-identity-copy {
   opacity: 1;
+}
+
+/* The slow reveal belongs to the tick, and only to the tick. Left unscoped it
+ * also ran every time the Page was opened, so the identity faded up from
+ * nothing on arrival — which is the flash Sai kept seeing. `is-immediate` says
+ * the row is not changing, and a row that is not changing does not animate. */
+.circle-os
+  .os-habit-copy-swap.show-identity.has-settled:not(.is-immediate)
+  .os-habit-identity-copy {
   transition: opacity 720ms cubic-bezier(0.32, 0, 0.28, 1);
 }
 
@@ -3229,23 +3275,35 @@
   padding: 0;
 }
 
+/* The mark sits on the right, where every other tappable thing in the App is.
+ * Sai: "all the family app clicks are on the right." Routine's tick, Protocol's
+ * block and this all fall under the same thumb, so the eye reads the words down
+ * the left and the hand works down the right. */
 .circle-os .os-dreamline-step-row {
   align-items: center;
   display: grid;
   gap: 0.85rem;
-  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--touch-min);
   padding: 0.35rem 0;
   position: relative;
+}
+
+.circle-os .os-dreamline-step-text {
+  grid-area: 1 / 1;
+}
+
+.circle-os .os-dreamline-step-mark {
+  grid-area: 1 / 2;
 }
 
 /* The thread. It joins one mark to the next and stops at the last. */
 .circle-os .os-dreamline-step-row::before {
   background: rgb(25 24 19 / 0.28);
   content: "";
-  height: calc(100% - 30px);
-  left: 14px;
+  height: calc(100% - var(--touch-min));
   position: absolute;
-  top: calc(50% + 15px);
+  right: calc(var(--touch-min) / 2 - 1px);
+  top: calc(50% + var(--touch-min) / 2);
   width: 2px;
 }
 
@@ -3263,16 +3321,18 @@
   cursor: pointer;
   display: flex;
   font: inherit;
-  font-size: var(--text-sm);
+  /* Full touch size. Sai: "make a little bigger" — and at 30px it was under
+   * the minimum every other control in the App already meets. */
+  font-size: var(--text-md);
   font-weight: 800;
-  height: 30px;
+  height: var(--touch-min);
   justify-content: center;
   padding: 0;
   transition:
     background 180ms var(--ease-out),
     border-color 180ms var(--ease-out),
     color 180ms var(--ease-out);
-  width: 30px;
+  width: var(--touch-min);
 }
 
 /* Taken. */
@@ -7117,9 +7177,14 @@
   color: var(--c-ink);
 }
 
+/* One gap between Habits and Tasks, declared once.
+ *
+ * It used to be two: 16px of grid gap here plus a margin on Tasks, which added
+ * up to 41px and made the 25px set on the margin a lie. Sai: "do 25 px between
+ * habits and tasks, the gap feels wide." */
 .circle-os .os-routine-body {
   display: grid;
-  gap: 1rem;
+  gap: var(--os-main-sub-gap);
   width: 100%;
 }
 
@@ -7139,11 +7204,10 @@
 
 /* Habits and Tasks are two parts of one Page, so the seam between them is a
  * real line rather than the quiet rule used between rows. */
-/* No rule above Tasks. The label already says the part has changed, and the
- * gap does the separating — a line as well was saying it twice. */
-.circle-os .os-task-body-session {
-  margin-top: var(--os-part-gap);
-}
+/* No rule above Tasks, and no margin either. The label already says the part
+ * has changed, and the single grid gap on `.os-routine-body` does the
+ * separating — a line as well was saying it twice, and a margin as well made
+ * the gap 41px while claiming to be 25. */
 
 .circle-os .os-habit-session-label,
 .circle-os .os-task-session-label {
@@ -8085,10 +8149,13 @@
   text-align: left;
 }
 
+/* No margin. Header actions are positioned from the top of the header now, so
+ * a margin here pushed End 13.6px below the Protocol label it sits beside —
+ * which is the misalignment Sai saw on the edit Page. Every header action
+ * starts where the header starts. */
 .circle-os .os-protocol-editor-end {
   color: rgb(255 248 241 / 0.5);
   font-size: var(--text-xs);
-  margin-top: 0.85rem;
 }
 
 .circle-os .os-protocol-edit-link {

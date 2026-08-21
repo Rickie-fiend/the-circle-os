@@ -130,3 +130,43 @@ test("the published habit completion is wired to all three stored fields", () =>
   // timer that moves the height, and the identity could arrive before the space.
   assert.match(css, /\.os-habit-copy-swap\.show-identity\.has-settled \.os-habit-identity-copy[\s\S]*?opacity: 1/);
 });
+
+test("arriving on the Page is not an event the identity animates through", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const css = readFileSync("app/os/os-app.css", "utf8");
+
+  // Three things used to reach the swap as `showIdentity` going true, and only
+  // one of them is a change: the tick. Coming back to Routine, and closing the
+  // editor after a tap, are the row being what it already is. Sai: "identity
+  // flashes everytime i view the page."
+  assert.match(shell, /const justCompleted = completed && !wasCompleted\.current/);
+  assert.match(shell, /if \(showIdentity && justCompleted && !firstRun\.current\)/);
+  assert.match(shell, /setImmediate\(showIdentity\)/);
+
+  // The slow reveal and the three-second wait are both scoped to the change.
+  // Unscoped, the 720ms fade also ran on arrival, which is the flash itself.
+  assert.match(
+    css,
+    /\.os-habit-copy-swap\.show-identity\.has-settled:not\(\.is-immediate\)[\s\S]*?transition: opacity 720ms/,
+  );
+  assert.match(
+    css,
+    /\.os-habit-copy-swap\.show-identity:not\(\.has-settled\) \.os-habit-action-copy[\s\S]*?transition-delay: 3000ms/,
+  );
+
+  // The identity is the way back to the habit behind it.
+  assert.match(shell, /className="os-habit-identity-copy"[\s\S]*?onClick=/);
+  assert.match(shell, /showIdentity=\{Boolean\([\s\S]*?editingHabitId !== habit\.id/);
+});
+
+test("one gap separates Habits from Tasks, declared once", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  // 16px of grid gap plus a 25px margin added up to 41px while claiming 25.
+  // Sai: "do 25 px between habits and tasks, the gap feels wide."
+  assert.match(css, /\.circle-os \.os-routine-body \{[^}]*gap: var\(--os-main-sub-gap\)/);
+  assert.doesNotMatch(
+    css,
+    /\.circle-os \.os-task-body-session \{[^}]*margin-top/,
+    "Tasks must not add a margin on top of the routine body's gap",
+  );
+});
