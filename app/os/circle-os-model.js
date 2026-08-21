@@ -509,22 +509,47 @@ function addUtcMonths(value, months) {
   return date.toISOString();
 }
 
+/**
+ * The steps under one dream, in the order they are to be taken.
+ *
+ * They used to be three fixed slots — Now, Tomorrow, Day After — which is how
+ * the paper worksheet prints them and is wrong for how the thing is actually
+ * lived. Sai: "after the last step, there has to be a quiet option to add on
+ * next step, and continuously ... we will be doing small steps toward the goal
+ * everyday." A dream does not run out of steps on the third day.
+ *
+ * An ordered list, then. The three old keys migrate into the first three
+ * places and keep their names as ids, so nothing written on the old shape is
+ * lost and a step keeps its identity across the change.
+ */
+function normalizeDreamlineSteps(value) {
+  const source = Array.isArray(value?.steps)
+    ? value.steps
+    : DREAMLINE_STEP_KEYS.map((step) => ({
+        id: step,
+        text: value?.steps?.[step],
+        doneAt: value?.stepsDoneAt?.[step],
+      }));
+  const seen = new Set();
+  return source
+    .map((step, index) => {
+      const text = cleanHabitPart(step?.text, 600);
+      if (!text) return null;
+      let id = cleanHabitPart(step?.id, 160) || `step-${index + 1}`;
+      while (seen.has(id)) id = `${id}-${index + 1}`;
+      seen.add(id);
+      // A step is written once and ticked once, so the moment it was ticked is
+      // the whole record of it.
+      return { id, text, doneAt: validMoment(step?.doneAt) || null };
+    })
+    .filter(Boolean);
+}
+
 function normalizeDreamlineItem(key, value) {
   if (!value || !DREAMLINE_CATEGORIES.includes(value.category)) return null;
   const id = cleanHabitPart(value.id || key, 160);
   const text = cleanHabitPart(value.text, 480);
   if (!id || !text) return null;
-  const steps = Object.fromEntries(
-    DREAMLINE_STEP_KEYS.map((step) => [step, cleanHabitPart(value.steps?.[step], 600)]),
-  );
-  // When each step was actually done. A step is written once and ticked once,
-  // so the moment it was ticked is the whole record of it.
-  const stepsDoneAt = Object.fromEntries(
-    DREAMLINE_STEP_KEYS.map((step) => [
-      step,
-      validMoment(value.stepsDoneAt?.[step]) || null,
-    ]),
-  );
   return {
     id,
     category: value.category,
@@ -536,8 +561,11 @@ function normalizeDreamlineItem(key, value) {
     costCents: dreamlineCents(value.costCents),
     cadence: value.cadence === "one-time" ? "one-time" : "monthly",
     starred: Boolean(value.starred),
-    steps,
-    stepsDoneAt,
+    steps: normalizeDreamlineSteps(value),
+    // When the dream itself was reached. Sai: "we need a way to indicate we
+    // have reached it." Steps can run out without the dream arriving, and the
+    // dream can arrive with steps still unticked; they are different facts.
+    reachedAt: validMoment(value.reachedAt) || null,
     createdAt: validMoment(value.createdAt) || validMoment(value.updatedAt) || "",
     updatedAt: validMoment(value.updatedAt) || validMoment(value.createdAt) || "",
   };
@@ -1091,7 +1119,10 @@ export function saveDreamlineItem(
     costCents: dreamlineCents(value?.costCents),
     cadence: value?.cadence === "one-time" ? "one-time" : "monthly",
     starred: Boolean(existing?.starred),
-    steps: existing?.steps || { now: "", tomorrow: "", dayAfter: "" },
+    // An ordered ladder, and a new dream starts with none. Editing the words of
+    // a dream never touches the steps already written under it.
+    steps: Array.isArray(existing?.steps) ? existing.steps : [],
+    reachedAt: validMoment(existing?.reachedAt) || null,
     createdAt: existing?.createdAt || updatedAt,
     updatedAt,
   };
@@ -1152,10 +1183,51 @@ export function updateDreamlineStep(
     return { state, error: "This Dreamline has concluded." };
   }
   if (!item.starred) return { state, error: "Star a dream before giving it steps." };
-  if (!DREAMLINE_STEP_KEYS.includes(step)) return { state, error: "Unknown Dreamline step." };
+  const clean = cleanHabitPart(text, 600);
+  const steps = item.steps || [];
+  const at = steps.findIndex((entry) => entry.id === step);
+  if (at === -1) return { state, error: "Unknown Dreamline step." };
+  // Emptying a step removes it rather than leaving a numbered blank in the
+  // track. The ones after it keep their ids, so nothing already ticked moves.
+  const nextSteps = clean
+    ? steps.map((entry) => (entry.id === step ? { ...entry, text: clean } : entry))
+    : steps.filter((entry) => entry.id !== step);
+  const nextItem = { ...item, steps: nextSteps, updatedAt };
+  const next = {
+    ...record,
+    items: { ...record.items, [itemId]: nextItem },
+    updatedAt,
+  };
+  return { state: withDreamlineRecord(state, next, "dreamline-step"), item: nextItem, error: "" };
+}
+
+/**
+ * Add the next step to a dream, at the end of what is already there.
+ *
+ * Sai: "after the last step, there has to be a quiet option to add on next
+ * step, and continuously." The ladder is not a fixed length — it goes on until
+ * the dream is reached, which is a separate thing to say.
+ */
+export function addDreamlineStep(
+  state,
+  recordId,
+  itemId,
+  text = "",
+  { updatedAt = new Date().toISOString(), id = freshRecordId("step") } = {},
+) {
+  const record = state.dreamlines?.records?.[recordId];
+  const item = record?.items?.[itemId];
+  if (!record || !item || record.status !== "active" || dreamlineIsExpired(record, new Date(updatedAt))) {
+    return { state, error: "This Dreamline has concluded." };
+  }
+  if (!item.starred) return { state, error: "Star a dream before giving it steps." };
+  // The words come first, then the step. An empty step would be a numbered
+  // blank in the track, and a blank rung is not a plan.
+  const clean = cleanHabitPart(text, 600);
+  if (!clean) return { state, error: "Write the step before adding it." };
   const nextItem = {
     ...item,
-    steps: { ...(item.steps || {}), [step]: cleanHabitPart(text, 600) },
+    steps: [...(item.steps || []), { id, text: clean, doneAt: null }],
     updatedAt,
   };
   const next = {
@@ -1163,7 +1235,45 @@ export function updateDreamlineStep(
     items: { ...record.items, [itemId]: nextItem },
     updatedAt,
   };
-  return { state: withDreamlineRecord(state, next, "dreamline-step"), item: nextItem, error: "" };
+  return {
+    state: withDreamlineRecord(state, next, "dreamline-step-added"),
+    item: nextItem,
+    stepId: id,
+    error: "",
+  };
+}
+
+/**
+ * Say that the dream itself has been reached.
+ *
+ * Sai: "we need a way to indicate we have reached it." This is not the same as
+ * ticking the last step — a ladder can run out before the thing arrives, and
+ * the thing can arrive while a step is still unticked. Reaching it is the end
+ * of the dream, so it is recorded on the dream and not on any step.
+ */
+export function setDreamlineReached(
+  state,
+  recordId,
+  itemId,
+  reached,
+  { at = new Date().toISOString() } = {},
+) {
+  const record = state.dreamlines?.records?.[recordId];
+  const item = record?.items?.[itemId];
+  if (!record || !item || record.status !== "active") {
+    return { state, error: "This Dreamline has concluded." };
+  }
+  const nextItem = { ...item, reachedAt: reached ? at : null, updatedAt: at };
+  const next = {
+    ...record,
+    items: { ...record.items, [itemId]: nextItem },
+    updatedAt: at,
+  };
+  return {
+    state: withDreamlineRecord(state, next, "dreamline-reached"),
+    item: nextItem,
+    error: "",
+  };
 }
 
 /**
@@ -1190,7 +1300,7 @@ export function commitDreamlineSteps(
   if (!starred.length) {
     return { state, error: "Star at least one dream before saving your steps." };
   }
-  if (!starred.some((item) => item.steps?.now?.trim())) {
+  if (!starred.some((item) => item.steps?.some((step) => step.text.trim()))) {
     return {
       state,
       error: "Give at least one starred dream a step you can take now.",
@@ -1221,15 +1331,19 @@ export function setDreamlineStepDone(
   if (!record || !item || record.status !== "active") {
     return { state, error: "This Dreamline has concluded." };
   }
-  if (!DREAMLINE_STEP_KEYS.includes(step)) {
+  const steps = item.steps || [];
+  const target = steps.find((entry) => entry.id === step);
+  if (!target) {
     return { state, error: "Unknown Dreamline step." };
   }
-  if (!item.steps?.[step]?.trim()) {
+  if (!target.text.trim()) {
     return { state, error: "There is no step written here yet." };
   }
   const nextItem = {
     ...item,
-    stepsDoneAt: { ...(item.stepsDoneAt || {}), [step]: done ? at : null },
+    steps: steps.map((entry) =>
+      entry.id === step ? { ...entry, doneAt: done ? at : null } : entry,
+    ),
     updatedAt: at,
   };
   const next = {
@@ -1247,28 +1361,31 @@ export function setDreamlineStepDone(
 /**
  * The one thing to do next, and nothing else.
  *
- * Steps are ordered Now, then Tomorrow, then Day After, and within a step by
- * the order the dreams were written. The first written-but-unticked step is
- * what the app asks for. Showing the whole plan here would make this a list
- * again, and the point of the Page is that there is exactly one thing on it.
+ * Steps are taken in the order they were written, and the dreams in the order
+ * they were named. The first written-but-unticked step is what the app asks
+ * for. Showing the whole plan here would make this a list again, and the point
+ * of the Page is that there is exactly one thing on it.
+ *
+ * A dream already reached is finished asking. Sai: "we need a way to indicate
+ * we have reached it" — and a reached dream that kept handing out steps would
+ * make reaching it mean nothing.
  */
 export function dreamlineToday(record) {
   if (!record || record.status !== "active" || !record.stepsCommittedAt) return null;
   const starred = Object.values(record.items)
-    .filter((item) => item.starred)
+    .filter((item) => item.starred && !item.reachedAt)
     .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)));
-  for (const step of DREAMLINE_STEP_KEYS) {
-    for (const item of starred) {
-      const text = item.steps?.[step]?.trim();
-      if (text && !item.stepsDoneAt?.[step]) {
-        return { itemId: item.id, item, step, text, done: false };
+  for (const item of starred) {
+    for (const step of item.steps || []) {
+      if (step.text.trim() && !step.doneAt) {
+        return { itemId: item.id, item, step: step.id, text: step.text.trim(), done: false };
       }
     }
   }
   // Everything written has been done. That is worth saying rather than showing
   // an empty Page.
   const written = starred.some((item) =>
-    DREAMLINE_STEP_KEYS.some((step) => item.steps?.[step]?.trim()),
+    (item.steps || []).some((step) => step.text.trim()),
   );
   return written ? { itemId: "", item: null, step: null, text: "", done: true } : null;
 }
@@ -3901,13 +4018,14 @@ export function dreamlineProgress(record, now = new Date()) {
     .filter((item) => item.starred)
     .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)));
   const lines = starred.map((item) => {
-    const written = DREAMLINE_STEP_KEYS.filter((step) => item.steps?.[step]?.trim());
-    const done = written.filter((step) => item.stepsDoneAt?.[step]);
+    const written = (item.steps || []).filter((step) => step.text.trim());
+    const done = written.filter((step) => step.doneAt);
     return {
       id: item.id,
       label: item.category === "being" ? item.convertedDoing || item.text : item.text,
       written: written.length,
       done: done.length,
+      reached: Boolean(item.reachedAt),
     };
   });
   const written = lines.reduce((total, line) => total + line.written, 0);
@@ -3952,33 +4070,39 @@ export function dreamlineProgress(record, now = new Date()) {
  */
 export function dreamlineStrategy(record) {
   if (!record || record.status !== "active") return [];
-  const labels = { now: "Now", tomorrow: "Tomorrow", dayAfter: "Day After" };
   const groups = { having: "Having", being: "Being", doing: "Doing" };
   return Object.values(record.items)
     .filter((item) => item.starred)
     .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)))
     .map((item) => {
-      const written = DREAMLINE_STEP_KEYS.filter((step) => item.steps?.[step]?.trim());
-      const activeIndex = written.findIndex((step) => !item.stepsDoneAt?.[step]);
+      const written = (item.steps || []).filter((step) => step.text.trim());
+      const activeIndex = written.findIndex((step) => !step.doneAt);
+      // The most recent done step, which stays live so it can be given back.
       const lastDone = activeIndex === -1 ? written.length - 1 : activeIndex - 1;
+      const reached = Boolean(item.reachedAt);
       return {
         id: item.id,
         group: groups[item.category] || item.category,
         name: item.category === "being" ? item.convertedDoing || item.text : item.text,
         complete: written.length > 0 && activeIndex === -1,
+        reached,
+        // A reached dream stops asking for anything; the ladder under it is
+        // history rather than a plan.
         steps: written.map((step, index) => ({
-          step,
-          label: labels[step] || step,
-          text: item.steps[step].trim(),
-          done: Boolean(item.stepsDoneAt?.[step]),
-          // Live: the one to take next, or the one just taken, so it can go back.
-          state:
-            index === activeIndex
+          step: step.id,
+          label: `Step ${index + 1}`,
+          text: step.text.trim(),
+          done: Boolean(step.doneAt),
+          state: reached
+            ? "achieved"
+            : index === activeIndex
               ? "active"
               : index === lastDone
                 ? "undoable"
                 : index < activeIndex || activeIndex === -1
-                  ? "done"
+                  ? // Done and behind him. Sai: "after we sat the forth one, the
+                    // previous done 3 days will be faded and achieved."
+                    "achieved"
                   : "locked",
         })),
       };

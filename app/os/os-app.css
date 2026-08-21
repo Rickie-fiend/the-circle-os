@@ -3364,20 +3364,126 @@
   opacity: 0.5;
 }
 
-.circle-os .os-dreamline-step-text {
+/* Behind him. Sai: "after we sat the forth one, the previous done 3 days will
+ * be faded and achieved." A step already taken is not the plan any more — it is
+ * what the plan has cost so far, and it should read that way without being
+ * struck out or thrown away. */
+.circle-os .os-dreamline-step-row.is-achieved .os-dreamline-step-mark {
+  background: rgb(25 24 19 / 0.34);
+  border-color: transparent;
   color: var(--c-warm-50);
+  cursor: default;
+}
+
+.circle-os .os-dreamline-step-row.is-achieved .os-dreamline-step-text {
+  opacity: 0.5;
+}
+
+/* The words are an editor, because this is where the plan is kept. Sai: "the
+ * main page, we can edit directly, add steps, tick complete." It carries no
+ * field furniture — it looks like the line it is until it is typed into. */
+.circle-os .os-dreamline-step-text {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--c-warm-50);
+  display: block;
+  field-sizing: content;
+  font-family: inherit;
   font-size: var(--text-md);
   font-weight: 620;
   line-height: 1.35;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  resize: none;
+  width: 100%;
 }
 
-.circle-os .os-dreamline-step-row.is-done .os-dreamline-step-text,
 .circle-os .os-dreamline-step-row.is-undoable .os-dreamline-step-text {
   color: rgb(25 24 19 / 0.78);
 }
 
 .circle-os .os-dreamline-step-row.is-locked .os-dreamline-step-text {
   color: rgb(255 248 241 / 0.62);
+}
+
+/* The two things a goal can be told, kept quiet.
+ *
+ * Neither is the work. The work is the numbered mark on the right, and these
+ * sit under the track at label weight so they are there when wanted and never
+ * compete with the step that is actually live. */
+.circle-os .os-dreamline-goal-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--os-main-sub-gap);
+  margin-top: 0.75rem;
+}
+
+.circle-os .os-dreamline-next-step,
+.circle-os .os-dreamline-reached,
+.circle-os .os-dreamline-reached-undo {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: rgb(25 24 19 / 0.72);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+.circle-os .os-dreamline-next-step span {
+  font-size: var(--text-md);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+  vertical-align: -1px;
+}
+
+.circle-os .os-dreamline-next-step-form {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.circle-os .os-dreamline-next-step-form textarea {
+  appearance: none;
+  background: rgb(255 248 241 / 0.14);
+  border: 0;
+  border-radius: var(--r-md);
+  color: var(--c-warm-50);
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 620;
+  line-height: 1.35;
+  padding: 0.6rem 0.7rem;
+  resize: none;
+  width: 100%;
+}
+
+/* Reached, and undoable. A dream that could be closed by one tap and never
+ * reopened would make the tap frightening. */
+.circle-os .os-dreamline-goal.is-reached .os-dreamline-goal-name,
+.circle-os .os-dreamline-goal.is-reached .os-dreamline-track {
+  opacity: 0.62;
+}
+
+.circle-os .os-dreamline-reached-note {
+  color: var(--c-ink);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  margin: 0.75rem 0 0;
+  text-transform: uppercase;
+}
+
+.circle-os .os-dreamline-reached-undo {
+  color: rgb(25 24 19 / 0.55);
+  margin-left: 0.5rem;
 }
 
 .circle-os .os-dreamline-days-left {

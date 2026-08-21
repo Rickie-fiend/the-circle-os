@@ -21,6 +21,7 @@ import {
   answerSurveyQuestion,
   connectLocalAi,
   createEmptyState,
+  addDreamlineStep,
   commitDreamlineSteps,
   concludeExpiredDreamlines,
   currentDreamline,
@@ -47,6 +48,7 @@ import {
   startProtocolDraft,
   sealProtocolDay,
   saveDreamlineItem,
+  setDreamlineReached,
   setDreamlineStarred,
   setDreamlineStepDone,
   startDreamline,
@@ -94,7 +96,6 @@ import { useAppBack } from "./app-back";
 import {
   DreamlineIdlePage,
   DreamlineSheetPage,
-  DreamlineStepsPage,
   type DreamlineCategory,
   type DreamlineItem,
   type DreamlineProgressView,
@@ -1849,10 +1850,6 @@ export function TodayExperience() {
     "today-habit",
     habitAppVersion,
   );
-  // Routine is page zero, Protocol page one, and a sealed day briefly takes the
-  // Protocol slot. The Dreamline follows, so its sheet is one past the Progress
-  // Page that opens it.
-  const dreamlineSheetIndex = (sealedProtocolDay ? 3 : 2) + 1;
   const protocol = protocolToday(state, dateKey);
   const protocolRun = activeProtocolRun(state);
   const completedProtocol = latestCompletedProtocol(state);
@@ -1914,11 +1911,6 @@ export function TodayExperience() {
     appSessionIndex(state, "today-log", logAppVersion),
     logAppMaxIndex,
   );
-  const starredDreamlineItems = activeDreamline
-    ? (Object.values(activeDreamline.items)
-        .filter((item) => item.starred)
-        .sort((left, right) => left.createdAt.localeCompare(right.createdAt)) as DreamlineItem[])
-    : [];
   const dreamlineIncomeView = dreamlineIncome(activeDreamline);
 
   useEffect(() => {
@@ -1987,18 +1979,16 @@ export function TodayExperience() {
     return result.error;
   }
 
-  // Saving the steps is what ends the planning. Landing on the Today Page
-  // afterwards is the point: the app should visibly become a thing to do.
-  function commitDreamlineStepSheet() {
-    if (!activeDreamline) return "Begin the Dreamline first.";
-    const result = commitDreamlineSteps(state, activeDreamline.id);
-    // Saving the steps is what ends the planning, so it is also what closes the
-    // sheets and leaves him on the Page he actually uses.
-    if (!result.error) {
-      updateState(() => result.state);
-      setEditingDreamline(false);
+  // Leaving the editor. The sheet is where the dream and its money are set;
+  // the steps are written on the Page that shows them. Committing the steps
+  // still happens here, quietly, because it is what turns a plan into
+  // something the day can ask for — it just no longer needs its own Page.
+  function closeDreamlineEditor() {
+    if (activeDreamline) {
+      const result = commitDreamlineSteps(state, activeDreamline.id);
+      if (!result.error) updateState(() => result.state);
     }
-    return result.error;
+    setEditingDreamline(false);
   }
 
   // Both ways. A step taken by accident has to be givable back, or the Page
@@ -2019,6 +2009,24 @@ export function TodayExperience() {
       step,
       value,
     );
+    if (!result.error) updateState(() => result.state);
+    return result.error;
+  }
+
+  // The ladder goes on. Sai: "after the last step, there has to be a quiet
+  // option to add on next step, and continuously."
+  function addDreamlineStepToItem(itemId: string, value: string) {
+    if (!activeDreamline) return "Begin the Dreamline first.";
+    const result = addDreamlineStep(state, activeDreamline.id, itemId, value);
+    if (!result.error) updateState(() => result.state);
+    return result.error;
+  }
+
+  // Arriving is its own fact, not the last tick. Sai: "we need a way to
+  // indicate we have reached it."
+  function markDreamlineReached(itemId: string, reached: boolean) {
+    if (!activeDreamline) return "Begin the Dreamline first.";
+    const result = setDreamlineReached(state, activeDreamline.id, itemId, reached);
     if (!result.error) updateState(() => result.state);
     return result.error;
   }
@@ -3330,7 +3338,10 @@ export function TodayExperience() {
                       <DreamlineIdlePage
                         daysLeft={dreamlineProgressView?.daysLeft ?? null}
                         key="dreamline-idle"
+                        onAddStep={addDreamlineStepToItem}
                         onEdit={() => setEditingDreamline(true)}
+                        onReached={markDreamlineReached}
+                        onSaveStep={saveDreamlineStep}
                         onStep={tickDreamlineStep}
                         strategy={dreamlineStrategyView}
                       />,
@@ -3340,23 +3351,17 @@ export function TodayExperience() {
                   history={pastDreamlines}
                   income={activeDreamline ? dreamlineIncomeView : null}
                   key={`dreamline-sheet-${activeDreamline?.id || "new"}`}
-                  onContinue={() => changeHabitAppPage(dreamlineSheetIndex + 1)}
+                  // The sheet is the whole editor now. Steps are written and
+                  // ticked on the Page where they are read, so Continue and
+                  // Done both mean the same thing: back to the plan.
+                  onContinue={closeDreamlineEditor}
+                  onDone={closeDreamlineEditor}
                   onSaveLine={saveDreamlineLine}
                   onSaveSetup={saveDreamlineSetup}
                   onStar={starDreamlineLine}
                   onStart={beginDreamline}
                   record={activeDreamline}
                 />,
-                ...(activeDreamline
-                  ? [
-                      <DreamlineStepsPage
-                        items={starredDreamlineItems}
-                        key={`dreamline-steps-${activeDreamline.id}`}
-                        onCommit={commitDreamlineStepSheet}
-                        onSave={saveDreamlineStep}
-                      />,
-                    ]
-                  : []),
                 ]),
               ]}
               idleAppIndex={habitAppIndex}

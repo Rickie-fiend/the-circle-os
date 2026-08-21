@@ -7,6 +7,7 @@ import {
   PROFILE_QUESTIONS,
   PROTOCOL_DURATIONS,
   activeProtocolRun,
+  addDreamlineStep,
   addHabitDefinition,
   addProtocolItem,
   addTask,
@@ -495,21 +496,77 @@ test("only starred dreams take steps and unstarring preserves their writing", ()
     { category: "doing", text: "See Kyoto", costCents: 90000, cadence: "one-time" },
     { id: "kyoto", updatedAt: "2026-08-19T09:01:00.000Z" },
   ).state;
-  const refused = updateDreamlineStep(state, "steps", "kyoto", "now", "Find the flight.", {
+  const refused = addDreamlineStep(state, "steps", "kyoto", "Find the flight.", {
     updatedAt: "2026-08-19T09:02:00.000Z",
   });
   assert.match(refused.error, /Star a dream/i);
   state = setDreamlineStarred(state, "steps", "kyoto", true, {
     updatedAt: "2026-08-19T09:03:00.000Z",
   }).state;
-  state = updateDreamlineStep(state, "steps", "kyoto", "now", "Find the flight.", {
+  const added = addDreamlineStep(state, "steps", "kyoto", "Find the flight.", {
+    id: "flight",
     updatedAt: "2026-08-19T09:04:00.000Z",
-  }).state;
+  });
+  state = added.state;
   state = setDreamlineStarred(state, "steps", "kyoto", false, {
     updatedAt: "2026-08-19T09:05:00.000Z",
   }).state;
-  assert.equal(state.dreamlines.records.steps.items.kyoto.steps.now, "Find the flight.");
+  const [step] = state.dreamlines.records.steps.items.kyoto.steps;
+  assert.equal(step.text, "Find the flight.");
   assert.equal(state.dreamlines.records.steps.items.kyoto.starred, false);
+
+  // Editing by id, and emptying one takes it out rather than leaving a blank
+  // rung numbered in the middle of the track. Steps belong to a starred dream,
+  // so this needs the star back first.
+  state = setDreamlineStarred(state, "steps", "kyoto", true, {
+    updatedAt: "2026-08-19T09:06:00.000Z",
+  }).state;
+  state = updateDreamlineStep(state, "steps", "kyoto", "flight", "", {
+    updatedAt: "2026-08-19T09:07:00.000Z",
+  }).state;
+  assert.deepEqual(state.dreamlines.records.steps.items.kyoto.steps, []);
+});
+
+test("the three old step slots migrate into the ladder in order", () => {
+  const migrated = normalizeState({
+    ...createEmptyState(),
+    days: { "2026-08-19": { date: "2026-08-19" } },
+    profile: { name: "Sai" },
+    dreamlines: {
+      records: {
+        old: {
+          id: "old",
+          status: "active",
+          months: 6,
+          createdAt: "2026-08-19T09:00:00.000Z",
+          updatedAt: "2026-08-19T09:00:00.000Z",
+          startedAt: "2026-08-19T09:00:00.000Z",
+          items: {
+            watch: {
+              id: "watch",
+              category: "having",
+              text: "A watch",
+              starred: true,
+              steps: { now: "Find it", tomorrow: "Try it", dayAfter: "" },
+              stepsDoneAt: { now: "2026-08-20T09:00:00.000Z", tomorrow: null, dayAfter: null },
+              createdAt: "2026-08-19T09:00:00.000Z",
+              updatedAt: "2026-08-19T09:00:00.000Z",
+            },
+          },
+        },
+      },
+    },
+  });
+  const { steps } = migrated.dreamlines.records.old.items.watch;
+  // The old key names carry over as ids, so a step keeps its identity and
+  // nothing already ticked comes back undone.
+  assert.deepEqual(
+    steps.map((step) => [step.id, step.text, Boolean(step.doneAt)]),
+    [
+      ["now", "Find it", true],
+      ["tomorrow", "Try it", false],
+    ],
+  );
 });
 
 test("an expired Dreamline reads concluded, persists once, and allows a new one", () => {

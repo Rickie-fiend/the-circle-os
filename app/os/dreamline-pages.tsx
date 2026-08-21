@@ -5,7 +5,8 @@ import { useState, type FormEvent } from "react";
 import { PageLayout } from "./app-session";
 
 export type DreamlineCategory = "having" | "being" | "doing";
-export type DreamlineStep = "now" | "tomorrow" | "dayAfter";
+/** A step's id. The ladder is open-ended, so these are no longer three names. */
+export type DreamlineStep = string;
 
 export type DreamlineItem = {
   id: string;
@@ -15,8 +16,9 @@ export type DreamlineItem = {
   costCents: number;
   cadence: "monthly" | "one-time";
   starred: boolean;
-  steps: Record<DreamlineStep, string>;
-  stepsDoneAt: Record<DreamlineStep, string | null>;
+  /** Ordered, and as long as it needs to be. */
+  steps: Array<{ id: string; text: string; doneAt: string | null }>;
+  reachedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -107,14 +109,131 @@ export type DreamlineStrategyLine = {
   group: string;
   name: string;
   complete: boolean;
+  reached: boolean;
   steps: Array<{
     step: DreamlineStep;
     label: string;
     text: string;
     done: boolean;
-    state: "done" | "active" | "undoable" | "locked";
+    state: "achieved" | "active" | "undoable" | "locked";
   }>;
 };
+
+/**
+ * One rung. The words are editable where they are read, because the main Page
+ * is where the plan is actually kept. Sai: "the main page, we can edit
+ * directly, add steps, tick complete."
+ */
+function DreamlineStepRow({
+  index,
+  item,
+  lineId,
+  onSave,
+  onStep,
+  setError,
+}: {
+  index: number;
+  item: DreamlineStrategyLine["steps"][number];
+  lineId: string;
+  onSave: (itemId: string, step: DreamlineStep, value: string) => string;
+  onStep: (itemId: string, step: DreamlineStep, done: boolean) => string;
+  setError: (message: string) => void;
+}) {
+  const [draft, setDraft] = useState(item.text);
+  const pressable = item.state === "active" || item.state === "undoable";
+
+  return (
+    <li className={`os-dreamline-step-row is-${item.state}`}>
+      <textarea
+        aria-label={`Step ${index + 1}`}
+        className="os-dreamline-step-text"
+        maxLength={600}
+        onBlur={() => {
+          if (draft.trim() === item.text) return;
+          setError(onSave(lineId, item.step, draft));
+        }}
+        onChange={(event) => setDraft(event.currentTarget.value)}
+        rows={1}
+        value={draft}
+      />
+      <button
+        aria-label={`${item.done ? "Undo" : "Done"}: ${item.text}`}
+        aria-pressed={item.done}
+        className="os-dreamline-step-mark"
+        disabled={!pressable}
+        onClick={() => setError(onStep(lineId, item.step, !item.done))}
+        type="button"
+      >
+        <span aria-hidden="true">{index + 1}</span>
+      </button>
+    </li>
+  );
+}
+
+/**
+ * The quiet way on. It writes the step first and adds it second, so the track
+ * never holds a numbered blank waiting to be filled in.
+ */
+function DreamlineNextStep({
+  lineId,
+  onAdd,
+  setError,
+}: {
+  lineId: string;
+  onAdd: (itemId: string, value: string) => string;
+  setError: (message: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  if (!open) {
+    return (
+      <button
+        className="os-dreamline-next-step"
+        onClick={() => setOpen(true)}
+        type="button"
+      >
+        <span aria-hidden="true">+</span> Next step
+      </button>
+    );
+  }
+
+  return (
+    <form
+      className="os-dreamline-next-step-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const message = onAdd(lineId, draft);
+        setError(message);
+        if (message) return;
+        setDraft("");
+        setOpen(false);
+      }}
+    >
+      <textarea
+        aria-label="The next step"
+        autoFocus
+        maxLength={600}
+        onChange={(event) => setDraft(event.currentTarget.value)}
+        placeholder="The next small thing."
+        rows={2}
+        value={draft}
+      />
+      <div className="os-dreamline-form-actions">
+        <button
+          onClick={() => {
+            setDraft("");
+            setOpen(false);
+          }}
+          type="button"
+        >
+          Cancel
+        </button>
+        <button type="submit">Add</button>
+      </div>
+    </form>
+  );
+}
 
 /**
  * The Dreamline at rest: the whole strategy, and the one step that is live.
@@ -137,17 +256,23 @@ export type DreamlineStrategyLine = {
  */
 export function DreamlineIdlePage({
   daysLeft,
+  onAddStep,
   onEdit,
+  onReached,
+  onSaveStep,
   onStep,
   strategy,
 }: {
   daysLeft: number | null;
+  onAddStep: (itemId: string, value: string) => string;
   onEdit: () => void;
+  onReached: (itemId: string, reached: boolean) => string;
+  onSaveStep: (itemId: string, step: DreamlineStep, value: string) => string;
   onStep: (itemId: string, step: DreamlineStep, done: boolean) => string;
   strategy: DreamlineStrategyLine[];
 }) {
   const [error, setError] = useState("");
-  const live = strategy.filter((line) => !line.complete).length;
+  const live = strategy.filter((line) => !line.reached).length;
 
   return (
     <PageLayout
@@ -169,7 +294,7 @@ export function DreamlineIdlePage({
             ? "Nothing planned yet."
             : live
               ? "The way there."
-              : "Every step is taken."}
+              : "You got there."}
         </h2>
       }
       placement="content-flow"
@@ -179,35 +304,54 @@ export function DreamlineIdlePage({
         <div className="os-dreamline-strategy">
           {strategy.map((line) => (
             <section
-              className={`os-dreamline-goal${line.complete ? " is-complete" : ""}`}
+              className={`os-dreamline-goal${line.reached ? " is-reached" : ""}${
+                line.complete ? " is-complete" : ""
+              }`}
               key={line.id}
             >
               <p className="os-dreamline-goal-name">
                 <span>{line.group}</span> {line.name}
               </p>
               <ol className="os-dreamline-track">
-                {line.steps.map((item, index) => {
-                  const pressable = item.state === "active" || item.state === "undoable";
-                  return (
-                    <li
-                      className={`os-dreamline-step-row is-${item.state}`}
-                      key={item.step}
-                    >
-                      <button
-                        aria-label={`${item.done ? "Undo" : "Done"}: ${item.text}`}
-                        aria-pressed={item.done}
-                        className="os-dreamline-step-mark"
-                        disabled={!pressable}
-                        onClick={() => setError(onStep(line.id, item.step, !item.done))}
-                        type="button"
-                      >
-                        <span aria-hidden="true">{index + 1}</span>
-                      </button>
-                      <span className="os-dreamline-step-text">{item.text}</span>
-                    </li>
-                  );
-                })}
+                {line.steps.map((item, index) => (
+                  <DreamlineStepRow
+                    index={index}
+                    item={item}
+                    key={item.step}
+                    lineId={line.id}
+                    onSave={onSaveStep}
+                    onStep={onStep}
+                    setError={setError}
+                  />
+                ))}
               </ol>
+              {line.reached ? (
+                <p className="os-dreamline-reached-note">
+                  Reached.{" "}
+                  <button
+                    className="os-dreamline-reached-undo"
+                    onClick={() => setError(onReached(line.id, false))}
+                    type="button"
+                  >
+                    Not yet
+                  </button>
+                </p>
+              ) : (
+                <div className="os-dreamline-goal-actions">
+                  <DreamlineNextStep
+                    lineId={line.id}
+                    onAdd={onAddStep}
+                    setError={setError}
+                  />
+                  <button
+                    className="os-dreamline-reached"
+                    onClick={() => setError(onReached(line.id, true))}
+                    type="button"
+                  >
+                    Reached it
+                  </button>
+                </div>
+              )}
             </section>
           ))}
         </div>
@@ -230,6 +374,7 @@ export function DreamlineSheetPage({
   history,
   income,
   onContinue,
+  onDone,
   onSaveLine,
   onSaveSetup,
   onStar,
@@ -239,6 +384,7 @@ export function DreamlineSheetPage({
   history: DreamlineRecord[];
   income: DreamlineIncome | null;
   onContinue: () => void;
+  onDone: () => void;
   onSaveLine: (value: DreamlineLineDraft, itemId?: string) => string;
   onSaveSetup: (months: number, monthlyExpensesCents: number, currency: string) => string;
   onStar: (item: DreamlineItem, starred: boolean) => string;
@@ -275,7 +421,16 @@ export function DreamlineSheetPage({
         </button>
       }
       headerLeft={<p className="os-card-label">Dreamline</p>}
-      headerRight={<span className="os-card-label">The dream</span>}
+      headerRight={
+        // Sai: "edit page on top right, it should be a button for done." The
+        // way out sits where every other App keeps its header action, and
+        // Continue stays at the foot of the sheet for reading straight down.
+        record ? (
+          <button className="os-new-habit" onClick={onDone} type="button">
+            Done
+          </button>
+        ) : undefined
+      }
       heading={<h2>In {record?.months || Number(months) || 6} months I dream of.</h2>}
       placement="content-flow"
       theme="dark"
@@ -585,107 +740,6 @@ function DreamlineLinesSection({
         </button>
       )}
     </section>
-  );
-}
-
-function DreamlineStepField({
-  item,
-  onSave,
-  step,
-}: {
-  item: DreamlineItem;
-  onSave: (itemId: string, step: DreamlineStep, value: string) => string;
-  step: DreamlineStep;
-}) {
-  const [draft, setDraft] = useState(item.steps[step] || "");
-  const [error, setError] = useState("");
-
-  return (
-    <label className="os-dreamline-step-field">
-      <span>{item.category === "being" ? item.convertedDoing : item.text}</span>
-      <textarea
-        aria-label={`${step} step for ${item.text}`}
-        maxLength={600}
-        onBlur={() => setError(onSave(item.id, step, draft))}
-        onChange={(event) => setDraft(event.currentTarget.value)}
-        placeholder={step === "now" ? "Something you can do from this chair." : "One clear next move."}
-        rows={2}
-        value={draft}
-      />
-      {error ? <small className="os-dreamline-error">{error}</small> : null}
-    </label>
-  );
-}
-
-const STEP_SECTIONS: Array<{ step: DreamlineStep; label: string; hint: string }> = [
-  { step: "now", label: "Now", hint: "Something you can do from this chair." },
-  { step: "tomorrow", label: "Tomorrow", hint: "One clear next move." },
-  { step: "dayAfter", label: "Day After", hint: "One clear next move." },
-];
-
-/**
- * The steps sheet: Now, Tomorrow and Day After together on one Page, and the
- * Save that ends the planning.
- *
- * Saving is the hinge of the whole app. Sai: "after saving that, only then we
- * may proceed to doing the actual living, the first thing for today, and come
- * and tick complete back." Until this is pressed there is no Today Page at all.
- */
-export function DreamlineStepsPage({
-  items,
-  onCommit,
-  onSave,
-}: {
-  items: DreamlineItem[];
-  onCommit: () => string;
-  onSave: (itemId: string, step: DreamlineStep, value: string) => string;
-}) {
-  const [error, setError] = useState("");
-
-  return (
-    <PageLayout
-      className="os-dreamline-page os-dreamline-steps"
-      footer={
-        items.length ? (
-          <button
-            className="os-dreamline-primary"
-            onClick={() => setError(onCommit())}
-            type="button"
-          >
-            Continue
-          </button>
-        ) : null
-      }
-      headerLeft={<p className="os-card-label">Dreamline</p>}
-      headerRight={<span className="os-card-label">Steps</span>}
-      heading={<h2>What you do about it.</h2>}
-      placement="content-flow"
-      theme="dark"
-    >
-      {items.length ? (
-        STEP_SECTIONS.map(({ step, label, hint }) => (
-          <section className="os-dreamline-section" aria-label={label} key={step}>
-            <p className="os-record-label">{label}</p>
-            <p className="os-dreamline-quiet">{hint}</p>
-            <div className="os-dreamline-step-list">
-              {items.map((item) => (
-                <DreamlineStepField
-                  item={item}
-                  key={`${item.id}-${step}-${item.updatedAt}`}
-                  onSave={onSave}
-                  step={step}
-                />
-              ))}
-            </div>
-          </section>
-        ))
-      ) : (
-        <p className="os-dreamline-quiet">
-          Star up to four dreams on the sheet before this. Only those take steps.
-        </p>
-      )}
-      {error ? <p className="os-dreamline-error" role="alert">{error}</p> : null}
-    </PageLayout>
   );
 }
 

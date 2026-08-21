@@ -3,14 +3,16 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  addDreamlineStep,
   commitDreamlineSteps,
   createEmptyState,
+  dreamlineStrategy,
   dreamlineToday,
   saveDreamlineItem,
+  setDreamlineReached,
   setDreamlineStarred,
   setDreamlineStepDone,
   startDreamline,
-  updateDreamlineStep,
 } from "../app/os/circle-os-model.js";
 
 const shell = readFileSync(
@@ -65,14 +67,14 @@ test("the Dreamline rests on one Page and opens its sheets from Edit", () => {
   // Sai: "after continue, leads to idle app ... and we will have edit button
   // somewhere, and it will reveal The Dream and Steps if needed." The sheets
   // are not Pages he swipes past every day.
-  const steps = pages.slice(
-    pages.indexOf("export function DreamlineStepsPage"),
-    pages.indexOf("export function DreamlineIdlePage") > 0
-      ? pages.length
-      : pages.length,
-  );
-  assert.match(steps, /STEP_SECTIONS\.map/);
-  assert.match(pages, /step: "now"[\s\S]*?step: "tomorrow"[\s\S]*?step: "dayAfter"/);
+  // The steps sheet is gone. Sai: "the main page, we can edit directly, add
+  // steps, tick complete. on edit page, we can add, goals, see the prices."
+  // Writing a step on one Page and reading it on another was two places for
+  // one thing, and the ladder is no longer three named slots to lay out.
+  assert.doesNotMatch(pages, /DreamlineStepsPage|STEP_SECTIONS|DreamlineStepField/);
+  assert.doesNotMatch(pages, /step: "now"|step: "tomorrow"|step: "dayAfter"/);
+  // The editor's way out sits in the header, with Continue still at the foot.
+  assert.match(pages, /headerRight=\{[\s\S]*?onClick=\{onDone\}[\s\S]*?Done/);
   // The idle Page is the Dreamline at rest, with the due steps as blocks.
   assert.match(pages, /export function DreamlineIdlePage/);
   // Its own form: a numbered track, not Routine's tick and not Protocol's block.
@@ -94,7 +96,16 @@ test("Being names its required Doing and stars are the gate to steps", () => {
   assert.match(pages, /A Being needs the Doing that would make it real\./);
   assert.match(pages, /Becomes Doing/);
   assert.match(pages, /aria-pressed=\{item\.starred\}/);
-  assert.match(pages, /items\.length[\s\S]*?DreamlineStepField/s);
+  // Steps are written where they are read, and the ladder goes on. Sai: "after
+  // the last step, there has to be a quiet option to add on next step, and
+  // continuously."
+  assert.match(pages, /os-dreamline-next-step/);
+  assert.match(pages, /Next step/);
+  // Reaching the dream is its own statement, and it can be taken back.
+  assert.match(pages, /Reached it/);
+  assert.match(pages, /onReached\(line\.id, false\)/);
+  assert.match(shell, /function addDreamlineStepToItem/);
+  assert.match(shell, /function markDreamlineReached/);
 });
 
 test("legacy declaration Dreamlines remain implemented but leave the Vision deck", () => {
@@ -103,7 +114,7 @@ test("legacy declaration Dreamlines remain implemented but leave the Vision deck
   assert.match(mirror, /dreamline: "declare-dreamline"/);
 });
 
-test("the steps sheet refuses to commit until a Now step exists", () => {
+test("the steps sheet refuses to commit until a first step exists", () => {
   let state = createEmptyState();
   const started = startDreamline(state, { months: 6, monthlyExpensesCents: 200000 });
   state = started.state;
@@ -129,15 +140,67 @@ test("the steps sheet refuses to commit until a Now step exists", () => {
   );
   assert.equal(dreamlineToday(state.dreamlines.records[id]), null);
 
-  state = updateDreamlineStep(state, id, saved.item.id, "now", "Choose the watch").state;
+  const first = addDreamlineStep(state, id, saved.item.id, "Choose the watch");
+  assert.equal(first.error, "");
+  state = first.state;
   const committed = commitDreamlineSteps(state, id);
   assert.equal(committed.error, "");
   state = committed.state;
 
   const today = dreamlineToday(state.dreamlines.records[id]);
-  assert.equal(today.step, "now");
+  assert.equal(today.step, first.stepId);
   assert.equal(today.text, "Choose the watch");
   assert.equal(today.done, false);
+});
+
+test("the ladder goes on, and reaching the dream stops it asking", () => {
+  let state = createEmptyState();
+  const started = startDreamline(state, { months: 6 });
+  state = started.state;
+  const id = started.record.id;
+  const saved = saveDreamlineItem(state, id, { category: "having", text: "A watch" });
+  const itemId = saved.item.id;
+  state = setDreamlineStarred(saved.state, id, itemId, true).state;
+
+  // A step with no words is not a step. Sai asked for a quiet way to add the
+  // next one, not for blank rungs in the track.
+  assert.match(addDreamlineStep(state, id, itemId, "   ").error, /Write the step/);
+
+  const ids = [];
+  for (const text of ["Find the showroom", "Try it on", "Set the money aside", "Buy it"]) {
+    const added = addDreamlineStep(state, id, itemId, text);
+    assert.equal(added.error, "");
+    ids.push(added.stepId);
+    state = added.state;
+  }
+  state = commitDreamlineSteps(state, id).state;
+
+  const record = () => state.dreamlines.records[id];
+  assert.equal(record().items[itemId].steps.length, 4, "a dream is not three steps long");
+
+  // Take the first three. The one just taken stays undoable; the ones behind it
+  // read as achieved. Sai: "after we sat the forth one, the previous done 3
+  // days will be faded and achieved."
+  for (const stepId of ids.slice(0, 3)) {
+    state = setDreamlineStepDone(state, id, itemId, stepId, true).state;
+  }
+  const [line] = dreamlineStrategy(record());
+  assert.deepEqual(
+    line.steps.map((step) => step.state),
+    ["achieved", "achieved", "undoable", "active"],
+  );
+  assert.equal(line.reached, false);
+  assert.equal(dreamlineToday(record()).text, "Buy it");
+
+  // Reaching the dream is its own fact, not the last tick.
+  state = setDreamlineReached(state, id, itemId, true).state;
+  const [reachedLine] = dreamlineStrategy(record());
+  assert.equal(reachedLine.reached, true);
+  assert.ok(
+    reachedLine.steps.every((step) => step.state === "achieved"),
+    "a reached dream stops offering steps",
+  );
+  assert.equal(dreamlineToday(record()), null, "a reached dream asks for nothing");
 });
 
 test("ticking today's step moves to the next one, then says everything is done", () => {
@@ -148,14 +211,16 @@ test("ticking today's step moves to the next one, then says everything is done",
   const saved = saveDreamlineItem(state, id, { category: "doing", text: "See friends" });
   const itemId = saved.item.id;
   state = setDreamlineStarred(saved.state, id, itemId, true).state;
-  state = updateDreamlineStep(state, id, itemId, "now", "Send the invite").state;
-  state = updateDreamlineStep(state, id, itemId, "tomorrow", "Book the table").state;
+  const first = addDreamlineStep(state, id, itemId, "Send the invite");
+  state = first.state;
+  const second = addDreamlineStep(state, id, itemId, "Book the table");
+  state = second.state;
   state = commitDreamlineSteps(state, id).state;
 
   assert.equal(dreamlineToday(state.dreamlines.records[id]).text, "Send the invite");
-  state = setDreamlineStepDone(state, id, itemId, "now", true).state;
-  // Now is done, so Tomorrow is what the Page asks for.
+  state = setDreamlineStepDone(state, id, itemId, first.stepId, true).state;
+  // The first is done, so the second is what the Page asks for.
   assert.equal(dreamlineToday(state.dreamlines.records[id]).text, "Book the table");
-  state = setDreamlineStepDone(state, id, itemId, "tomorrow", true).state;
+  state = setDreamlineStepDone(state, id, itemId, second.stepId, true).state;
   assert.equal(dreamlineToday(state.dreamlines.records[id]).done, true);
 });
