@@ -394,11 +394,47 @@ Used for charts, weekly views, and other things worth reading again.
   transient, occupies the Protocol slot, pauses idle rotation, and one swipe
   removes it without adding a stack or chapter run.
 
+## The key
+
+Every pressable thing in Circle OS is one object, described once in the
+`--os-key-*` tokens and consumed everywhere: a face raised on a solid leg, lit
+along its top edge, that drives flat onto the surface when pressed and comes
+back up a little slower.
+
+- A control names its size and its leg colour. It never restates a shadow.
+- Sizes are lifts, not heights — `--os-key-lift-lg / -md / -sm`, 4px / 3px /
+  2px — so one recipe fits a 30px task tick and a 52px footer action. The leg is
+  exactly as tall as the lift, so a press removes both and the face lands where
+  the leg was.
+- A leg is never blurred. A blur reads as floating; a key is seated in the box.
+- The top light is drawn only where it can be seen: `--os-key-light` on a light
+  or orange face, `--os-key-light-soft` on Ink, `--os-key-unlit` on a Bone face
+  that is already the lightest thing on the Page. The unlit value is a
+  transparent shadow, never `none` — `none` is legal only as a whole box-shadow
+  and voids the leg with it, leaving a face floating above nothing.
+- Down is `--os-key-press-ms` (40ms). Anything slower reads as lag rather than
+  contact. Pressed and held states are sunk, so the light comes from inside the
+  hole rather than off the top edge.
+- Row ticks, Protocol terms, the button engine's default style and every plain
+  full-width Page action are built from this, and so is anything added later.
+- A ghost control is not a key. `.os-add-habit-row` stays flat, because a dotted
+  invitation that presses like a commitment claims to be one.
+- The rotating bag of button styles belongs to Button Studio. The App's own
+  actions use the standard key.
+
 ## Page arrival
 
 - Leaving is one flat content-layer fade. The App Box background stays stable.
 - New or refreshed content enters Body first, Header second, Footer last.
 - Ordinary swipes remain quick and never replay the refresh sequence.
+- **An App Box never empties and replays its arrival to confirm an action.**
+  That is what it does when a Page changes for any other reason, so it answers
+  "something happened" rather than "that went". A send is signalled by the thing
+  that was sent leaving: the written words lift and fade while the frame, the
+  Label and the Footer hold still and the action holds on its completed word.
+  Where a Page carries a question and an answer, only the answer travels.
+- **An App Label has no arrival of its own.** It is present with its Page. A
+  word that names where you are may not be the last thing on the Page to settle.
 - A terminal Page never fades itself. After its protected pause, the person's
   deliberate swipe uses ordinary Page travel. Reduced-motion removes the cue's
   small arrival animation but not the 1.2-second accidental-swipe guard.

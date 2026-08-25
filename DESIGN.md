@@ -148,7 +148,10 @@ is itself the point of the final week Page.
 ### Chapter Page
 
 - Header has progress on the right only.
-- Main Body contains one question or lesson.
+- Main Body contains one question or lesson. It uses the same shared Main type
+  token and forehead anchor as Cover, Note and Thoughts, so a published Page and
+  its authoring preview are the same words at the same size. Confirm and Result
+  keep their own closing anchor.
 - Sub Body contains one interaction: choice, slider, short input, or paragraph.
 - Footer contains the full-width Continue or Confirm action.
 - A choice, slider, or short answer stays at the default App Box height. Grow
@@ -201,13 +204,42 @@ is itself the point of the final week Page.
   written thought, and never runs in the background.
 - Every action runs through the button engine. A feature does not draw its own
   button or its own checkbox.
+- Where an action cannot go through the engine, it is still the same key. See
+  **Buttons** below.
 - One style may break instead of pressing. Fractured Glass takes four strikes:
   the first three only crack it, and the last one shatters the button and the
   surface behind it. Breaking it is the action, never a delay before it.
 - A breaking button is a reward, not a toll. It appears when the person has
   written a real sentence; a single word keeps the ordinary press.
 
+## Buttons
+
+Circle OS has one pressable object. A face raised on a solid leg, lit along its
+top edge, that drives flat onto the surface when pressed and comes back up a
+little slower. Row ticks, Protocol terms, the button engine's default style and
+every full-width Page action are the same key at different sizes.
+
+- The recipe is the `--os-key-*` tokens in `app/os/os-app.css`. A control names
+  its size and its leg colour and gets the rest. Nothing restates a shadow.
+- Sizes are lifts, not heights: 4px, 3px, 2px. The leg is exactly as tall as the
+  lift, so a press removes both and the face lands where the leg was.
+- Legs are never blurred. A blur reads as floating; these are seated in the box.
+- The top light is drawn only where it can be seen: strong on a light or orange
+  face, soft on Ink, absent on a Bone face. The absent value is a transparent
+  shadow, never `none` — `none` is legal only as a whole box-shadow and voids
+  the leg with it.
+- Down is near instant. Pressed and held states are sunk, so the light comes
+  from inside the hole rather than off the top edge.
+- A ghost control is not a key. A dotted invitation such as Add task stays flat,
+  because a control that presses like a commitment claims to be one.
+- The rotating bag of button styles belongs to Button Studio. The App sends with
+  the standard key.
+
 ## Dreamline
+
+Hidden for v1 behind `SHOW_DREAMLINE` in `app/os/circle-os-shell.tsx`. The
+record, the model and the Pages are untouched, so returning to it is a flag
+rather than a migration.
 
 - Dreamline lives after the hour-by-hour timeline inside Log's single saved
   journey. Log does not idle-rotate.
