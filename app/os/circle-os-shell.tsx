@@ -3416,13 +3416,15 @@ export function TodayExperience() {
             <PageLayout
               className="os-log-page"
               footer={
-                <button
+                <CreativeButton
                   className="os-log-add-current"
                   onClick={() => openHour(liveClockHour)}
+                  sizing="content"
+                  styleId="default"
                   type="button"
                 >
                   Add this hour
-                </button>
+                </CreativeButton>
               }
               heading={
                 <input

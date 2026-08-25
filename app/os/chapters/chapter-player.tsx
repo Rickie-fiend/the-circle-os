@@ -16,6 +16,7 @@ import {
   SwipeSession,
   type AppPagePlacement,
 } from "../app-session";
+import { CreativeButton } from "../button-engine";
 import { sizeTextAreaToContent } from "../text-area-size";
 import {
   advanceChapterRun,
@@ -245,15 +246,18 @@ function ChapterPageView({
             ? <p className="os-chapter-body">{body}</p>
             : null}
         {page.button && onIdleAction ? (
-          <button
+          <CreativeButton
             className="os-chapter-continue os-chapter-idle-action"
             type="button"
             aria-pressed={idleActionPressed}
             disabled={idleActionDisabled}
             onClick={() => onIdleAction(page, run)}
+            release="latch"
+            sizing="content"
+            styleId="default"
           >
             {idleActionLabel || page.button}
-          </button>
+          </CreativeButton>
         ) : null}
       </>
     ) : onEdit ? (
@@ -268,13 +272,15 @@ function ChapterPageView({
         </span>
       ) : undefined
     ) : !isIdle && page.type !== "info" ? (
-        <button
+        <CreativeButton
           className="os-chapter-continue os-page-primary-action"
           type="button"
           onClick={() => onComplete({ page })}
+          sizing="content"
+          styleId="default"
         >
           {page.button || "Continue"}
-        </button>
+        </CreativeButton>
       ) : undefined;
 
     return (
@@ -360,9 +366,11 @@ function ChapterPageView({
     );
     if (page.type === "multi-choice") {
       footer = (
-        <button
+        <CreativeButton
           className="os-chapter-continue os-page-primary-action"
           type="button"
+          sizing="content"
+          styleId="default"
           disabled={required && (!Array.isArray(value) || !value.length)}
           onClick={() =>
             onComplete({
@@ -373,7 +381,7 @@ function ChapterPageView({
           }
         >
           {page.button || "Continue"}
-        </button>
+        </CreativeButton>
       );
     }
   }
@@ -398,9 +406,15 @@ function ChapterPageView({
       </form>
     );
     footer = (
-      <button className="os-chapter-continue os-page-primary-action" form={formId} type="submit">
+      <CreativeButton
+        className="os-chapter-continue os-page-primary-action"
+        form={formId}
+        sizing="content"
+        styleId="default"
+        type="submit"
+      >
         {page.button || "Continue"}
-      </button>
+      </CreativeButton>
     );
   }
 
@@ -425,14 +439,16 @@ function ChapterPageView({
       </form>
     );
     footer = (
-      <button
+      <CreativeButton
         className="os-chapter-continue os-page-primary-action"
         disabled={required && !String(value).trim()}
         form={formId}
+        sizing="content"
+        styleId="default"
         type="submit"
       >
         {page.button || "Continue"}
-      </button>
+      </CreativeButton>
     );
   }
 
@@ -449,14 +465,16 @@ function ChapterPageView({
       </form>
     );
     footer = (
-      <button
+      <CreativeButton
         className="os-chapter-continue os-page-primary-action"
         disabled={required && !value}
         form={formId}
+        sizing="content"
+        styleId="default"
         type="submit"
       >
         {page.button || "Continue"}
-      </button>
+      </CreativeButton>
     );
   }
 

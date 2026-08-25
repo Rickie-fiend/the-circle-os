@@ -164,9 +164,15 @@ function ProtocolHome({
       className={`os-protocol os-protocol-home ${className}`.trim()}
       footer={
         !running && onStart ? (
-          <button className="os-protocol-begin" onClick={onStart} type="button">
+          <CreativeButton
+            className="os-protocol-begin"
+            onClick={onStart}
+            sizing="content"
+            styleId="default"
+            type="button"
+          >
             Start a phase
-          </button>
+          </CreativeButton>
         ) : undefined
       }
       heading={
@@ -425,14 +431,16 @@ export function ProtocolPage({
         placement="identity-stack"
         theme="orange"
         footer={
-          <button
+          <CreativeButton
             className="os-protocol-begin"
             disabled={!canBegin}
             onClick={onBegin}
+            sizing="content"
+            styleId="default"
             type="button"
           >
             {canBegin ? `Begin ${run.days} days` : "Add one non-negotiable"}
-          </button>
+          </CreativeButton>
         }
       >
         {/* What the protocol is goes in Main Body; its terms are the Sub Body
@@ -497,9 +505,15 @@ export function ProtocolPage({
         placement="identity-stack"
         theme="orange"
         footer={
-          <button className="os-protocol-begin" onClick={onEndRun} type="button">
+          <CreativeButton
+            className="os-protocol-begin"
+            onClick={onEndRun}
+            sizing="content"
+            styleId="default"
+            type="button"
+          >
             Close this protocol
-          </button>
+          </CreativeButton>
         }
       >
         <div className="os-page-main os-protocol-identity">
@@ -552,13 +566,15 @@ export function ProtocolPage({
             <span className="os-protocol-progress">
               Day {day} of {run.days}
             </span>
-            <button
+            <CreativeButton
               className="os-protocol-begin"
               onClick={finishEditing}
+              sizing="content"
+              styleId="default"
               type="button"
             >
               Done
-            </button>
+            </CreativeButton>
           </div>
         }
       >
@@ -631,14 +647,16 @@ export function ProtocolPage({
             Day {day} of {run.days}
           </span>
           {keptAll && !sealed ? (
-            <button
+            <CreativeButton
               className="os-protocol-begin os-protocol-complete"
               disabled={rewarding}
               onClick={completeToday}
+              sizing="content"
+              styleId="default"
               type="button"
             >
               Completed today
-            </button>
+            </CreativeButton>
           ) : null}
         </div>
       }

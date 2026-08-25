@@ -84,7 +84,10 @@ test("Routine and Protocol share named heading, stack, header and Footer placeme
   // top of that and put Routine and Protocol content 41px below their title.
   assert.match(css, /\.os-app-page-heading \{[\s\S]*?margin: 0;/);
   assert.match(css, /\.os-app-page-stacks \{[\s\S]*?display: grid;/);
-  assert.match(css, /\.os-page-layout\.os-placement-identity-stack > \.os-page-footer > button/);
+  // A descendant, not a direct child: these actions run through the button
+  // engine now, and the engine wraps its button in the shell that carries the
+  // press phase. The rule is about the action, wherever the engine puts it.
+  assert.match(css, /\.os-page-layout\.os-placement-identity-stack > \.os-page-footer button/);
 });
 
 test("Routine, Protocol and Log name the shared Page placement contract", () => {

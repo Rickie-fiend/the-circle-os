@@ -91,10 +91,21 @@ const SETTLE_MS = 240;
  */
 export type ButtonRelease = "rebound" | "latch";
 
+/**
+ * Whether the key fills the frame the shell draws, or sizes itself.
+ *
+ * `frame` is the footer slot Send lives in: a fixed 52px box with the button
+ * stretched across it. `content` is every action that has to grow for a
+ * two-line label or sit in a footer that is already laid out, which is most of
+ * them — so the shell steps out of the way and the button keeps its own box.
+ */
+export type ButtonSizing = "frame" | "content";
+
 type CreativeButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   styleId: string;
   role?: "thought" | "habit";
   release?: ButtonRelease;
+  sizing?: ButtonSizing;
   keepMountedOnSuccess?: boolean;
   onAnimationComplete?: () => void;
   onSuccessComplete?: () => void;
@@ -145,6 +156,7 @@ export function CreativeButton({
   previewMode = false,
   release = "rebound",
   role = "thought",
+  sizing = "frame",
   styleId,
   ...props
 }: CreativeButtonProps) {
@@ -309,7 +321,7 @@ export function CreativeButton({
 
   return (
     <div
-      className={`os-creative-button-shell role-${role} ${styleClass} phase-${lifecycle}`}
+      className={`os-creative-button-shell role-${role} sizing-${sizing} ${styleClass} phase-${lifecycle}`}
       data-button-release={release}
       data-button-damage={pressesToBreak > 1 ? damage : undefined}
       data-button-lifecycle={lifecycle}
@@ -336,7 +348,7 @@ export function CreativeButton({
       <button
         {...props}
         aria-busy={lifecycle === "success" || lifecycle === "exiting"}
-        className={`${role === "thought" ? "os-thoughts-send " : ""}os-creative-button ${className}`.trim()}
+        className={`os-creative-button ${className}`.trim()}
         disabled={disabled}
         onClick={(event) => {
           // The click is what the held-down key was waiting for. Whatever it

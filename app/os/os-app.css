@@ -2168,6 +2168,22 @@
   width: 100%;
 }
 
+/* A key that sizes itself. Send lives in a fixed 52px slot and stretches across
+ * it; every other action has to grow for a two-line label, or sits in a footer
+ * that is already laid out, so the shell steps out of the way and the button
+ * keeps its own box. The shell still carries the phase, which is the whole
+ * reason it is there. */
+.circle-os .os-creative-button-shell.sizing-content {
+  height: auto;
+  perspective: none;
+  width: 100%;
+}
+
+.circle-os .os-creative-button-shell.sizing-content .os-creative-button {
+  inset: auto;
+  position: relative;
+}
+
 /* Holding a key is a press, not a text selection.
  *
  * A long press on any button used to start selecting its label, and on a phone
@@ -2189,7 +2205,6 @@
   user-select: text;
 }
 
-.circle-os .os-thoughts-send,
 .circle-os .os-creative-button {
   appearance: none;
   background: var(--c-ink);
@@ -2257,9 +2272,9 @@
  * kinds of button on one Page. */
 .circle-os .os-creative-button-shell.style-default .os-creative-button {
   box-shadow:
-    var(--os-key-light-soft),
-    0 var(--os-key-lift-md) 0 var(--os-key-leg-ink);
-  transform: translateY(calc(-1 * var(--os-key-lift-md)));
+    var(--os-key-top, var(--os-key-light-soft)),
+    0 var(--os-key-lift, var(--os-key-lift-md)) 0 var(--os-key-leg, var(--os-key-leg-ink));
+  transform: translateY(calc(-1 * var(--os-key-lift, var(--os-key-lift-md))));
 }
 
 .circle-os .os-creative-button-shell.style-default .os-creative-button:active,
@@ -2272,22 +2287,18 @@
 /* Nothing to press: no leg, no light, flat on the surface. */
 .circle-os .os-creative-button-shell.style-default .os-creative-button:disabled {
   box-shadow: none;
+  cursor: default;
   transform: translateY(0);
 }
 
-/* The same key, on the actions that are not dealt through the button engine.
+/* Which key each action is.
  *
- * A Chapter's Continue, Protocol's Begin and Log's Add this hour are a Page's
- * one main action just as much as Send is, and they were flat: no leg, no
- * light, and no movement under a finger. That is the inconsistency Sai means
- * by "Make the button design standard" — the standard exists, and half the
- * actions in the App were not built to it.
+ * These all run through the button engine now, so the engine owns the press,
+ * the lift, the registration and the disabled state. All that is left here is
+ * what the key is made of: how far it stands off the surface, what its leg is,
+ * and whether a light on its top edge could be seen at all.
  *
- * A face names its leg and gets the rest. The top light is drawn only where it
- * can be seen: a Bone face on a dark or orange App Box is already the lightest
- * thing on the Page, and its leg is what makes it a key.
- *
- * `.os-add-habit-row` is deliberately not here. A dotted "Add task" is an
+ * `.os-add-habit-row` is deliberately absent. A dotted "Add task" is an
  * invitation, not a commitment, and a ghost control that presses like a solid
  * one claims more than it does. */
 .circle-os .os-page-primary-action,
@@ -2297,15 +2308,7 @@
   --os-key-lift: var(--os-key-lift-md);
   --os-key-leg: var(--os-key-leg-ink);
   --os-key-top: var(--os-key-light-soft);
-  box-shadow:
-    var(--os-key-top),
-    0 var(--os-key-lift) 0 var(--os-key-leg);
   cursor: pointer;
-  transform: translateY(calc(-1 * var(--os-key-lift)));
-  transition:
-    box-shadow 150ms var(--ease-out),
-    transform 150ms var(--os-key-ease);
-  will-change: transform;
 }
 
 /* A Bone face on an orange App Box stands on the deep orange every other
@@ -2330,24 +2333,6 @@
  * and stands on the same deep orange as the terms above it. */
 .circle-os .os-protocol-begin {
   --os-key-leg: var(--os-key-leg-orange);
-}
-
-.circle-os .os-page-primary-action:active,
-.circle-os .os-chapter-continue:active,
-.circle-os .os-protocol-begin:active,
-.circle-os .os-log-add-current:active {
-  box-shadow: var(--os-key-sunk);
-  transform: translateY(0);
-  transition-duration: var(--os-key-press-ms);
-}
-
-.circle-os .os-page-primary-action:disabled,
-.circle-os .os-chapter-continue:disabled,
-.circle-os .os-protocol-begin:disabled,
-.circle-os .os-log-add-current:disabled {
-  box-shadow: none;
-  cursor: default;
-  transform: translateY(0);
 }
 
 /* A latch is never drawn up again once it has been pressed.
@@ -5954,8 +5939,8 @@
  * being tappable rather than the size of the thing a Page is for — Sai:
  * "Completed Today button and Start a Phase button are very thin." The height
  * is a floor now, not a cap, so a two-line label still fits. */
-.circle-os .os-page-layout.os-placement-identity-stack > .os-page-footer > button,
-.circle-os .os-page-layout.os-placement-identity-stack .os-protocol-footer > button {
+.circle-os .os-page-layout.os-placement-identity-stack > .os-page-footer button,
+.circle-os .os-page-layout.os-placement-identity-stack .os-protocol-footer button {
   font-size: var(--text-md);
   line-height: 1.2;
   margin-top: 0.4rem;

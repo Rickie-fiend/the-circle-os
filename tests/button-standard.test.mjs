@@ -44,19 +44,50 @@ test("a Protocol term is lit along its top edge, like the tick beside it", () =>
   assert.match(tick, /0 var\(--os-key-lift-lg\) 0 var\(--os-key-leg-orange\)/);
 });
 
-test("a Page's main action is a key whether or not it runs through the engine", () => {
+// Continue, Begin, Completed today and Add this hour are a Page's one action
+// just as much as Send is. They were plain buttons with nothing but `:active`,
+// so none of the engine's press behaviour reached them.
+test("every Page action runs through the button engine", () => {
   const engine = rule(
     ".circle-os .os-creative-button-shell.style-default .os-creative-button",
   );
-  assert.match(engine, /var\(--os-key-light-soft\)/);
-  assert.match(engine, /0 var\(--os-key-lift-md\) 0 var\(--os-key-leg-ink\)/);
+  // The engine owns the states and reads the key's parts from variables, so a
+  // button family names its own leg and light without restating a shadow.
+  assert.match(engine, /var\(--os-key-top, var\(--os-key-light-soft\)\)/);
+  assert.match(
+    engine,
+    /0 var\(--os-key-lift, var\(--os-key-lift-md\)\) 0 var\(--os-key-leg, var\(--os-key-leg-ink\)\)/,
+  );
 
-  // Continue, Begin and Add this hour are a Page's one action just as much as
-  // Send is, and they were flat: no leg, no light, no movement under a finger.
-  const plain = rule(
+  // And those families now only declare parts — no states of their own.
+  const parts = rule(
     ".circle-os .os-page-primary-action,\n.circle-os .os-chapter-continue,\n.circle-os .os-protocol-begin,\n.circle-os .os-log-add-current",
   );
-  assert.match(plain, /box-shadow:\s*\n\s*var\(--os-key-top\),\s*\n\s*0 var\(--os-key-lift\) 0 var\(--os-key-leg\)/);
+  assert.match(parts, /--os-key-lift:/);
+  assert.match(parts, /--os-key-leg:/);
+  assert.match(parts, /--os-key-top:/);
+  assert.doesNotMatch(parts, /box-shadow|transform|transition/);
+
+  // No Page action is left as a bare button.
+  const protocol = readFileSync("app/os/protocol-page.tsx", "utf8");
+  const player = readFileSync("app/os/chapters/chapter-player.tsx", "utf8");
+  assert.doesNotMatch(protocol, /<button[^>]*os-protocol-begin/s);
+  assert.doesNotMatch(player, /<button[^>]*os-page-primary-action/s);
+  assert.doesNotMatch(shell, /<button[^>]*os-log-add-current/s);
+  assert.match(protocol, /<CreativeButton[\s\S]*?os-protocol-complete/);
+});
+
+// The shell draws a 52px frame for Send. Every other action has to grow for a
+// two-line label, so it keeps its own box and the shell only carries the phase.
+test("an action that sizes itself is not squeezed into Send's frame", () => {
+  assert.match(
+    rule(".circle-os .os-creative-button-shell.sizing-content"),
+    /height: auto/,
+  );
+  assert.match(
+    rule(".circle-os .os-creative-button-shell.sizing-content .os-creative-button"),
+    /position: relative/,
+  );
 });
 
 // `none` is only legal as a whole box-shadow. Substituting it for the top
