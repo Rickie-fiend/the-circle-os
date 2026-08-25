@@ -5,13 +5,37 @@
 export const DEEP_THOUGHT_MIN_WORDS = 6;
 export const DEEP_THOUGHT_MIN_ACTIVE_MS = 5_000;
 
+/**
+ * The floor Deep Thoughts falls back to when Athena has nothing dated and the
+ * Curiosity Queue is empty.
+ *
+ * The old list asked about attention, trust and meaning — the vocabulary of a
+ * self-help poster, which is answerable by anyone about anyone and therefore
+ * asks nothing. Sai: "still asking shit questions ... This function is for deep
+ * deep personal questions."
+ *
+ * A question earns its place here when only he can answer it, out of his own
+ * life, and a slogan will not do. So each one names something specific and
+ * costly: a thing avoided, a thing given up, a thing wanted and never said. The
+ * language stays plain. Athena asks; she does not diagnose, advise, or imply
+ * the answer she is hoping for.
+ *
+ * This is a floor, not the voice. The authored questions are Sai's writing and
+ * belong in Athena's library; these keep the App honest until they arrive.
+ */
 export const LOCAL_DEEP_THOUGHTS = Object.freeze([
-  Object.freeze({ text: "What are you pretending not to know right now?", target: "currentLife" }),
-  Object.freeze({ text: "What deserves more of your attention than it is getting?", target: "whatMatters" }),
-  Object.freeze({ text: "What would change if you trusted yourself a little more?", target: "personality" }),
-  Object.freeze({ text: "Which part of your life feels true, but unfinished?", target: "gap" }),
-  Object.freeze({ text: "What are you carrying that no longer belongs to you?", target: "currentLife" }),
-  Object.freeze({ text: "What kind of ordinary day would feel quietly meaningful?", target: "typicalTuesday" }),
+  Object.freeze({ text: "What do you want that you have never said out loud?", target: "whatMatters" }),
+  Object.freeze({ text: "Where are you lying to yourself, and how long have you known?", target: "currentLife" }),
+  Object.freeze({ text: "What did you give up to get here, and was it worth it?", target: "gap" }),
+  Object.freeze({ text: "What part of yourself did you put away to be liked?", target: "personality" }),
+  Object.freeze({ text: "What do you keep promising yourself and not doing?", target: "gap" }),
+  Object.freeze({ text: "Who do you love, and how would they know it from this week?", target: "currentLife" }),
+  Object.freeze({ text: "What are you ashamed of that was never your fault?", target: "personality" }),
+  Object.freeze({ text: "What still makes you angry that you say you are over?", target: "personality" }),
+  Object.freeze({ text: "Who taught you that rest had to be earned?", target: "currentLife" }),
+  Object.freeze({ text: "If nobody was watching, what would you stop doing tomorrow?", target: "typicalTuesday" }),
+  Object.freeze({ text: "What would someone who really knew you say about this year?", target: "gap" }),
+  Object.freeze({ text: "What are you waiting for permission to do?", target: "whatMatters" }),
 ]);
 
 export function countDeepThoughtWords(value = "") {
@@ -89,10 +113,10 @@ export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
   const mission = short(state?.days?.[dateKey]?.mission?.text);
   const personalized = [];
   if (identity && identity.toLowerCase() !== "yourself") {
-    personalized.push({ text: `What would becoming "${identity}" ask you to be honest about today?`, target: "personality" });
+    personalized.push({ text: `What does being "${identity}" cost you that nobody sees?`, target: "personality" });
   }
   if (mission && mission !== "Do one small thing that feels like you.") {
-    personalized.push({ text: `What does "${mission}" really mean to you today?`, target: "whatMatters" });
+    personalized.push({ text: `What are you avoiding by doing "${mission}" instead?`, target: "gap" });
   }
   const questions = [...personalized, ...LOCAL_DEEP_THOUGHTS];
   const index = Math.max(0, Number(offset) || 0) % questions.length;
@@ -141,21 +165,7 @@ export function deepThoughtSourceLabel(source, questionId = "") {
   return "Legacy source unreported";
 }
 
-export function deepThoughtFollowUp(prompt) {
-  const byTarget = {
-    gap: "What part of that feels hardest to name honestly?",
-    whatMatters: "Why does that matter to you more than it first appears?",
-    personality: "What would listening to that part of yourself change?",
-    typicalTuesday: "What is one detail that would make that life feel real?",
-    currentLife: "What do you think is underneath that answer?",
-  };
-  return {
-    id: `${prompt.id}-follow-up`,
-    text: byTarget[prompt.target] || "What feels most important underneath that answer?",
-    target: prompt.target || "currentLife",
-    dateKey: prompt.dateKey,
-    source: prompt.source,
-    stage: "follow-up",
-    preparedAt: prompt.preparedAt,
-  };
-}
+// There is no follow-up. A deep question used to ask a second, softer version
+// of itself for any answer short of the reward, which turned one honest
+// question into an interrogation and taught that a short answer was a wrong
+// one. Sai: "i dont think we need follow up." One question, one answer, done.

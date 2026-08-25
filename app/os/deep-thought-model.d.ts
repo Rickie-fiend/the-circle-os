@@ -4,7 +4,6 @@ export type DeepThoughtPrompt = {
   target: string;
   dateKey: string;
   source: "athena" | "curiosity" | "local" | "local-personalized";
-  stage?: "follow-up";
   preparedAt: string;
 };
 export const DEEP_THOUGHT_MIN_WORDS: number;
@@ -16,4 +15,3 @@ export function isSentenceWorthBreakingFor(text?: string): boolean;
 export function createLocalDeepThoughtPrompt(state: unknown, dateKey: string, offset?: number): DeepThoughtPrompt;
 export function selectDeepThoughtPrompt(state: unknown, dateKey: string): DeepThoughtPrompt;
 export function deepThoughtSourceLabel(source?: string, questionId?: string): string;
-export function deepThoughtFollowUp(prompt: DeepThoughtPrompt): DeepThoughtPrompt;

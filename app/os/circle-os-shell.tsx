@@ -109,11 +109,6 @@ import notePlaceholderPool from "./note-placeholders/note-placeholders.json";
 import { nextNotePlaceholder } from "./note-placeholders/note-placeholder-pool.js";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import {
-  revealButtonStyle,
-  type ButtonStyleId,
-} from "./button-engine-model.js";
-import {
-  deepThoughtFollowUp,
   isDeepThoughtRewardEligible,
   selectDeepThoughtPrompt,
   type DeepThoughtPrompt,
@@ -161,6 +156,34 @@ import type {
  * button.
  */
 const LINE_DWELL_MS = 6000;
+
+/**
+ * Whether the Dreamline is dealt into the Routine App Box.
+ *
+ * Off for v1. Sai: "can you hide the dreamline app for a while. i will come to
+ * it later with the better system." The record, the model and the Pages all
+ * stay exactly as they are — a Dreamline already in state keeps accumulating
+ * and expiring — so turning this back on restores the two Pages where they
+ * were. Nothing about the feature is being deleted or migrated here.
+ */
+const SHOW_DREAMLINE = false;
+
+/**
+ * How long a sent thought takes to leave the Page. Matches
+ * `os-thought-departure` in the stylesheet; the draft is cleared as the last
+ * of the words fade, so the placeholder never appears underneath them.
+ */
+const THOUGHT_DEPARTURE_MS = 420;
+
+/**
+ * The Send button's design.
+ *
+ * It used to be dealt from the rotating bag, so the one action Thoughts has
+ * looked like a different button every time it appeared. Sai: "Make the button
+ * design standard." The bag and its styles remain for Button Studio; the App
+ * uses the standard key.
+ */
+const THOUGHT_BUTTON_STYLE = "default";
 
 /**
  * The two faces of a habit row, and the height of whichever one is showing.
@@ -1480,7 +1503,6 @@ export function TodayExperience() {
   const [regularThoughtDraft, setRegularThoughtDraft] = useState("");
   const [deepThoughtDraft, setDeepThoughtDraft] = useState("");
   const [deepThoughtPrompt, setDeepThoughtPrompt] = useState<DeepThoughtPrompt | null>(null);
-  const [deepFollowUpUsed, setDeepFollowUpUsed] = useState(false);
   const [thoughtRewarded, setThoughtRewarded] = useState(false);
   const thoughtDraft = thoughtMode === "deep" ? deepThoughtDraft : regularThoughtDraft;
   // liveNow already ticks every thirty seconds and the prompt is bucketed by the
@@ -1490,23 +1512,19 @@ export function TodayExperience() {
     [dateKey, liveNow, state],
   );
   const [thoughtSent, setThoughtSent] = useState(false);
+  // "clicked" is the button's own success beat; "departing" is the written
+  // thought leaving the Page. There is no third state, because the App Box no
+  // longer empties and refills itself around a send.
   const [thoughtTransition, setThoughtTransition] = useState<
-    "idle" | "clicked" | "paused" | "exiting"
+    "idle" | "clicked" | "departing"
   >("idle");
-  const [thoughtRefreshKey, setThoughtRefreshKey] = useState("");
-  const [thoughtLabelVisible, setThoughtLabelVisible] = useState(false);
   const [holdThoughtsAfterSend, setHoldThoughtsAfterSend] = useState(false);
   const [thoughtButtonVisible, setThoughtButtonVisible] = useState(false);
-  const [thoughtButtonStyle, setThoughtButtonStyle] =
-    useState<ButtonStyleId | null>(null);
-  const thoughtButtonQueue = useRef<ButtonStyleId[]>([]);
-  const previousThoughtButtonStyle = useRef<ButtonStyleId | null>(null);
   const thoughtSubmissionLocked = useRef(false);
-  const thoughtOutcome = useRef({ deep: false, rewarded: false, followUpUsed: false });
+  const thoughtOutcome = useRef({ deep: false, rewarded: false });
   const deepWritingActiveMs = useRef(0);
   const deepWritingFocusStartedAt = useRef<number | null>(null);
   const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const thoughtLabelTimer = useRef<number | null>(null);
   const thoughtResetTimer = useRef<number | null>(null);
   const routineBack = useAppBack<"habit" | "yesterday">("habit");
   const habitMode = routineBack.side;
@@ -1559,9 +1577,6 @@ export function TodayExperience() {
       }
       if (thoughtResetTimer.current) {
         window.clearTimeout(thoughtResetTimer.current);
-      }
-      if (thoughtLabelTimer.current) {
-        window.clearTimeout(thoughtLabelTimer.current);
       }
     },
     [],
@@ -1624,25 +1639,10 @@ export function TodayExperience() {
   const checkInJourneyVersion = "manual-check-in-v1";
   const visibleCheckInApp = Math.min(checkInThoughtsApp, checkInApp);
 
-  useEffect(() => {
-    if (visibleCheckInApp !== checkInThoughtsApp) return;
-    if (thoughtLabelTimer.current) {
-      window.clearTimeout(thoughtLabelTimer.current);
-    }
-    // The label arrives with its Page, not after it. This waited 760ms and
-    // then animated for another 520, so the App Label landed more than a
-    // second behind the words underneath it.
-    thoughtLabelTimer.current = window.setTimeout(() => {
-      setThoughtLabelVisible(true);
-      thoughtLabelTimer.current = null;
-    }, 0);
-    return () => {
-      if (thoughtLabelTimer.current) {
-        window.clearTimeout(thoughtLabelTimer.current);
-        thoughtLabelTimer.current = null;
-      }
-    };
-  }, [thoughtRefreshKey, visibleCheckInApp]);
+  // The Thoughts App Label has no arrival of its own. It used to fade in on a
+  // timer after every page change and every send, so the one word that names
+  // the App was the last thing on the Page to settle. Sai: "the top label on
+  // both of them, still have animation, remove that." It is simply there.
   const scheduledSparkRun = scheduledSpark
     ? state.chapters.runs[chapterRunId(scheduledSpark)]
     : undefined;
@@ -1844,7 +1844,7 @@ export function TodayExperience() {
   // in front of him every time he opens the app.
   // The version changes with the order: a saved index from the old arrangement
   // would land on the wrong Page, and a new version returns to page zero.
-  const habitAppVersion = "protocol-habit-dreamline-v4";
+  const habitAppVersion = "habit-protocol-v5";
   const habitAppIndex = appSessionIndex(
     state,
     "today-habit",
@@ -2599,7 +2599,6 @@ export function TodayExperience() {
   function pauseDeepWriting() {
     if (deepWritingFocusStartedAt.current !== null) {
       // This clock is read only after direct user interaction, never during render.
-      // eslint-disable-next-line react-hooks/purity
       deepWritingActiveMs.current += Date.now() - deepWritingFocusStartedAt.current;
       deepWritingFocusStartedAt.current = null;
     }
@@ -2619,13 +2618,10 @@ export function TodayExperience() {
     thoughtBack.flip(nextMode, () => {
       if (nextMode === "deep") {
         setDeepThoughtPrompt(prompt);
-        setDeepFollowUpUsed(false);
         resetDeepWritingClock();
       } else {
         setDeepThoughtPrompt(null);
-        setDeepFollowUpUsed(false);
       }
-      setThoughtLabelVisible(true);
     }, event.currentTarget);
   }
 
@@ -2676,7 +2672,7 @@ export function TodayExperience() {
         deep ? "deep-thought" : "thought",
       ),
     );
-    thoughtOutcome.current = { deep, rewarded, followUpUsed: deepFollowUpUsed };
+    thoughtOutcome.current = { deep, rewarded };
     setThoughtRewarded(rewarded);
     setThoughtSent(true);
     setThoughtTransition("clicked");
@@ -2684,13 +2680,6 @@ export function TodayExperience() {
 
   function revealThoughtButton() {
     if (thoughtButtonVisible || thoughtSent) return;
-    const next = revealButtonStyle(
-      thoughtButtonStyle,
-      thoughtButtonQueue.current,
-      previousThoughtButtonStyle.current,
-    );
-    thoughtButtonQueue.current = next.queue;
-    setThoughtButtonStyle(next.styleId);
     setThoughtButtonVisible(true);
   }
 
@@ -2701,50 +2690,51 @@ export function TodayExperience() {
     thoughtTextareaRef.current?.blur();
   }
 
-  function beginThoughtRefreshTransition() {
+  // What a send looks like.
+  //
+  // It used to empty the whole App Box and play the arrival choreography over
+  // it, so the answer to "did that go?" was the App vanishing and coming back
+  // — the same thing that happens when a Page changes for any other reason,
+  // and a second of it. Sai: "instead of whole app box refresh, what can we do
+  // to obviously signal message sent?"
+  //
+  // The thing that was sent is the thing that leaves. The written words lift
+  // off the Page and fade while the button under them holds on "Sent"; the App
+  // Box, its Label and its Footer never move. Then the placeholder is back and
+  // the App is ready for the next one.
+  function beginThoughtDeparture() {
     if (thoughtTransition !== "clicked") return;
-    setThoughtTransition("paused");
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    setThoughtTransition("departing");
     if (thoughtResetTimer.current) {
       window.clearTimeout(thoughtResetTimer.current);
     }
     thoughtResetTimer.current = window.setTimeout(() => {
-      setThoughtTransition("exiting");
-      const reducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-      thoughtResetTimer.current = window.setTimeout(() => {
-        const outcome = thoughtOutcome.current;
-        previousThoughtButtonStyle.current = thoughtButtonStyle;
-        setThoughtButtonVisible(false);
-        setThoughtButtonStyle(null);
-        if (outcome.deep) {
-          setDeepThoughtDraft("");
-          resetDeepWritingClock();
-          if (!outcome.rewarded && !outcome.followUpUsed && deepThoughtPrompt) {
-            setDeepThoughtPrompt(deepThoughtFollowUp(deepThoughtPrompt));
-            setDeepFollowUpUsed(true);
-          } else {
-            thoughtBack.reset("regular");
-            setDeepThoughtPrompt(null);
-            setDeepFollowUpUsed(false);
-          }
-        } else {
-          setRegularThoughtDraft("");
-        }
-        setThoughtSent(false);
-        setThoughtRewarded(false);
-        setThoughtLabelVisible(reducedMotion);
-        setHoldThoughtsAfterSend(true);
-        setThoughtTransition("idle");
-        thoughtSubmissionLocked.current = false;
-        thoughtTextareaRef.current?.blur();
-        thoughtTextareaRef.current?.style.removeProperty("height");
-        if (!reducedMotion) {
-          setThoughtRefreshKey(`thought-refresh:${Date.now()}`);
-        }
-        thoughtResetTimer.current = null;
-      }, reducedMotion ? 40 : 900);
-    }, 240);
+      const outcome = thoughtOutcome.current;
+      setThoughtButtonVisible(false);
+      if (outcome.deep) {
+        setDeepThoughtDraft("");
+        resetDeepWritingClock();
+        // One question, one answer. A deep question used to ask a second time
+        // for anything short of the reward, which turned the one deep thing
+        // the day asks for into an interrogation. Sai: "i dont think we need
+        // follow up."
+        thoughtBack.reset("regular");
+        setDeepThoughtPrompt(null);
+      } else {
+        setRegularThoughtDraft("");
+      }
+      setThoughtSent(false);
+      setThoughtRewarded(false);
+      setHoldThoughtsAfterSend(true);
+      setThoughtTransition("idle");
+      thoughtSubmissionLocked.current = false;
+      thoughtTextareaRef.current?.blur();
+      thoughtTextareaRef.current?.style.removeProperty("height");
+      thoughtResetTimer.current = null;
+    }, reducedMotion ? 40 : THOUGHT_DEPARTURE_MS);
   }
 
   function defaultTitleForHour(hour: number) {
@@ -2885,7 +2875,7 @@ export function TodayExperience() {
     return (
       <InfoPage
         className={`os-thoughts-page os-survey-card${thoughtMode === "deep" ? " deep-mode" : ""}`}
-        header={<button aria-pressed={thoughtMode === "deep"} className={`os-card-label os-thoughts-mode-toggle${thoughtLabelVisible ? " is-visible" : " is-waiting"}`} type="button" onClick={openDeepThoughts}>{thoughtMode === "deep" ? "Deep Thoughts" : "Thoughts"}</button>}
+        header={<button aria-pressed={thoughtMode === "deep"} className="os-card-label os-thoughts-mode-toggle" type="button" onClick={openDeepThoughts}>{thoughtMode === "deep" ? "Deep Thoughts" : "Thoughts"}</button>}
         footer={
           <div className="os-creative-button-slot">
             {thoughtButtonVisible ? (
@@ -2893,8 +2883,8 @@ export function TodayExperience() {
                 disabled={!thoughtDraft.trim() || thoughtSent}
                 form="check-in-thought-form"
                 keepMountedOnSuccess
-                onSuccessComplete={beginThoughtRefreshTransition}
-                styleId={thoughtButtonStyle || "fallback"}
+                onSuccessComplete={beginThoughtDeparture}
+                styleId={THOUGHT_BUTTON_STYLE}
                 type="submit"
               >
                 {thoughtSent ? "Sent" : "Send"}
@@ -2906,9 +2896,11 @@ export function TodayExperience() {
           </div>
         }
       >
-        <ButtonRewardBackdrop active={thoughtSent && thoughtRewarded} styleId={thoughtButtonStyle || "default"} />
+        <ButtonRewardBackdrop active={thoughtSent && thoughtRewarded} styleId={THOUGHT_BUTTON_STYLE} />
         <form
-          className={`os-thoughts-form${deepThoughtsActive ? " deep-compose" : ""}`}
+          className={`os-thoughts-form${deepThoughtsActive ? " deep-compose" : ""}${
+            thoughtTransition === "departing" ? " is-departing" : ""
+          }`}
           id="check-in-thought-form"
           onSubmit={sendThought}
         >
@@ -2981,11 +2973,8 @@ export function TodayExperience() {
           <SwipeSession
             availableIndices={checkInAvailableIndices}
             attentionIndex={checkInThoughtsApp}
-            attentionKey={thoughtRefreshKey || undefined}
             className={`os-checkin-session${
               checkInIdleEntering ? " idle-arrival" : ""
-            }${
-              thoughtTransition === "exiting" ? " update-exit" : ""
             }${
               thoughtBack.className ? ` ${thoughtBack.className}` : ""
             }${
@@ -3001,7 +2990,6 @@ export function TodayExperience() {
                 setRevealedLinePage(nextIndex);
                 return;
               }
-              setThoughtLabelVisible(false);
               if (nextIndex !== checkInThoughtsApp) {
                 concealThoughtButton();
                 setHoldThoughtsAfterSend(false);
@@ -3332,7 +3320,7 @@ export function TodayExperience() {
                     updateState((current) => endProtocolRun(current, protocolRun.id))
                   }
                 />,
-                ...(dreamlineEditing
+                ...(!SHOW_DREAMLINE || dreamlineEditing
                   ? []
                   : [
                       <DreamlineIdlePage
@@ -3346,7 +3334,7 @@ export function TodayExperience() {
                         strategy={dreamlineStrategyView}
                       />,
                     ]),
-                ...(!dreamlineEditing ? [] : [
+                ...(!SHOW_DREAMLINE || !dreamlineEditing ? [] : [
                 <DreamlineSheetPage
                   history={pastDreamlines}
                   income={activeDreamline ? dreamlineIncomeView : null}

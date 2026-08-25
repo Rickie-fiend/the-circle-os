@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { countDeepThoughtWords, createLocalDeepThoughtPrompt, deepThoughtFollowUp, isDeepThoughtRewardEligible, selectDeepThoughtPrompt } from "../app/os/deep-thought-model.js";
+import { LOCAL_DEEP_THOUGHTS, countDeepThoughtWords, createLocalDeepThoughtPrompt, isDeepThoughtRewardEligible, selectDeepThoughtPrompt } from "../app/os/deep-thought-model.js";
+import * as deepThoughtModel from "../app/os/deep-thought-model.js";
 
 test("deep reward follows a sentence, not an essay", () => {
   const sentence = "I love this day, I am grateful for today";
@@ -22,10 +23,32 @@ test("local deep questions may use reviewed mission evidence", () => {
   const prompt = createLocalDeepThoughtPrompt({ profile: { identityFocus: "Yourself" }, days: { "2026-08-01": { mission: { text: "Call my sister" } } } }, "2026-08-01", 0);
   assert.match(prompt.text, /Call my sister/);
   assert.equal(prompt.source, "local-personalized");
-  const followUp = deepThoughtFollowUp(prompt);
-  assert.match(followUp.id, /follow-up$/);
-  assert.equal(followUp.source, "local-personalized");
-  assert.equal(followUp.stage, "follow-up");
+});
+
+// One question, one answer. A deep question used to ask a softened second
+// version of itself whenever the first answer fell short of the reward.
+test("a deep question has no follow-up", () => {
+  assert.equal(deepThoughtModel.deepThoughtFollowUp, undefined);
+});
+
+// The floor is meant to be answerable only out of the person's own life. A
+// question that names nothing specific is the failure this list was rewritten
+// to fix, so it stays measurable rather than a matter of taste.
+test("every fallback question asks for something only this person can answer", () => {
+  assert.ok(LOCAL_DEEP_THOUGHTS.length >= 8);
+  for (const question of LOCAL_DEEP_THOUGHTS) {
+    assert.match(question.text, /\?$/, `${question.text} is not a question`);
+    assert.match(
+      question.text,
+      /\byou(r|rself)?\b/i,
+      `${question.text} does not ask the person about themselves`,
+    );
+    assert.doesNotMatch(
+      question.text,
+      /\b(attention|meaningful|grateful|journey|authentic|abundance|mindful)\b/i,
+      `${question.text} reaches for self-help vocabulary instead of a real thing`,
+    );
+  }
 });
 
 test("source-linked Athena curiosity is asked before the static list", () => {

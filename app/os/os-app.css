@@ -69,6 +69,59 @@
    * three numbers that each looked right on the Page they were chosen on. */
   --os-group-gap: var(--os-main-sub-gap);
   --os-part-gap: 48px;
+
+  /* The gap between one App Box and the next.
+   *
+   * Today used 12px and Reflect 18px, which is why the two tabs did not read as
+   * one product — Sai: "the spacing between them are not matched with gaps on
+   * reflect tab." One token now, so a new section cannot invent a third number.
+   */
+  --os-app-box-gap: 18px;
+
+  /* ---------------------------------------------------------------------
+   * The key
+   *
+   * Every pressable thing in Circle OS is the same object: a face raised on a
+   * solid leg, lit along its top edge, that drives flat onto the surface when
+   * it is pressed. Row ticks, Protocol terms and the full-width Page actions
+   * were each built to that description separately and each drifted — the
+   * ticks were lit and Protocol was not, which is the difference Sai saw:
+   * "the circle button has the white highlight on the top, make it feels like
+   * a 3d ish, i want that on the protocol too."
+   *
+   * These are the parts. A control names its size and its leg colour and gets
+   * the rest; nothing restates a shadow by hand.
+   *
+   * Three sizes, and they are lifts rather than heights, so the same recipe
+   * fits a 30px tick and a 52px footer action. The face sits `lift` above the
+   * surface and the leg is exactly that tall, so pressing removes both and the
+   * face lands where the leg was.
+   * ------------------------------------------------------------------- */
+  --os-key-lift-lg: 4px;
+  --os-key-lift-md: 3px;
+  --os-key-lift-sm: 2px;
+  /* The light along the top edge. Strong on a light or orange face, soft on an
+   * Ink one, so the same edge reads at the same strength on every surface
+   * rather than glowing on black. */
+  --os-key-light: inset 0 1px 0 rgb(255 248 241 / 0.4);
+  --os-key-light-soft: inset 0 1px 0 rgb(255 248 241 / 0.22);
+  /* No light, for a face already lighter than anything that could lie on it.
+   * A transparent shadow rather than `none`, because `none` is only legal as a
+   * whole box-shadow and would take the leg with it. */
+  --os-key-unlit: inset 0 0 0 rgb(255 248 241 / 0);
+  /* The leg. Never blurred: a blur under a control reads as floating, and
+   * these are seated in the App Box. */
+  --os-key-leg-orange: var(--c-orange-900);
+  --os-key-leg-ink: rgb(25 24 19 / 0.34);
+  /* Pressed and held-down states. The face is in the surface now, so the light
+   * comes from inside the hole rather than off the top edge. */
+  --os-key-sunk: inset 0 2px 5px rgb(25 24 19 / 0.42);
+  --os-key-sunk-deep: inset 0 1px 3px rgb(25 24 19 / 0.55);
+  /* Down is near instant. Anything slower reads as lag rather than contact;
+   * coming back up is the ordinary transition, which is what separates a click
+   * from a twitch. */
+  --os-key-press-ms: 40ms;
+  --os-key-ease: cubic-bezier(0.2, 0.9, 0.3, 1);
   align-items: flex-start;
   background: var(--c-ink-deep);
   display: flex;
@@ -307,10 +360,15 @@
   text-transform: uppercase;
 }
 
+/* Today's App Boxes sit one shared gap apart, the same gap Reflect uses.
+ * Sai: "gap between all the app box, i want a little more spacing. evenly and
+ * just a touch is fine ... not matched with gaps on reflect tab." The bottom
+ * of Check-in is that gap; every section below it opens with the same one, so
+ * the three boxes are evenly spaced rather than each carrying its own number. */
 .circle-os .os-checkin {
   display: block;
   min-height: auto;
-  padding: 10px 0 12px;
+  padding: 10px 0 var(--os-app-box-gap);
 }
 
 .circle-os .os-context-row {
@@ -960,10 +1018,13 @@
 
 /* Row ticks
  *
+ * The round key. It is the same object as a Protocol term and a Page action —
+ * the recipe is written once at `--os-key-*` — and only its size and its
+ * roundness are its own.
+ *
  * Open sits proud of the surface on a solid leg. Pressing drives it down onto
  * the surface, and done keeps it there: sunk in, with the light coming from
- * inside the hole rather than from a shadow underneath. There is no blur under
- * a tick, because a blur reads as floating and these are seated in the App Box.
+ * inside the hole rather than from a shadow underneath.
  *
  * The habit is the larger key and the task the smaller one, so the two parts of
  * the Page stay legible from a glance without reading the labels. */
@@ -994,7 +1055,7 @@
   transition:
     background-color 150ms var(--ease-out),
     box-shadow 150ms var(--ease-out),
-    transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1);
+    transform 150ms var(--os-key-ease);
   will-change: transform;
 }
 
@@ -1008,21 +1069,21 @@
   width: 30px;
 }
 
-/* Open: standing up on its leg. */
+/* Open: standing up on its leg, lit along the top edge. */
 .circle-os .os-creative-button-shell.role-habit
   .os-row-tick-habit.os-creative-button {
   box-shadow:
-    inset 0 1px 0 rgb(255 248 241 / 0.4),
-    0 4px 0 var(--c-orange-900);
-  transform: translateY(-4px);
+    var(--os-key-light),
+    0 var(--os-key-lift-lg) 0 var(--os-key-leg-orange);
+  transform: translateY(calc(-1 * var(--os-key-lift-lg)));
 }
 
 .circle-os .os-creative-button-shell.role-habit
   .os-row-tick-task.os-creative-button {
   box-shadow:
-    inset 0 1px 0 rgb(255 248 241 / 0.34),
-    0 3px 0 var(--c-orange-900);
-  transform: translateY(-3px);
+    var(--os-key-light),
+    0 var(--os-key-lift-md) 0 var(--os-key-leg-orange);
+  transform: translateY(calc(-1 * var(--os-key-lift-md)));
 }
 
 /* Pressing: driven flat onto the surface, the leg gone.
@@ -1038,9 +1099,9 @@
  * Down is near instant. Anything slower reads as lag rather than contact. */
 .circle-os .os-creative-button-shell.role-habit
   .os-row-tick.os-creative-button:active {
-  box-shadow: inset 0 2px 5px rgb(25 24 19 / 0.42);
+  box-shadow: var(--os-key-sunk);
   transform: translateY(0);
-  transition-duration: 40ms;
+  transition-duration: var(--os-key-press-ms);
 }
 
 /* Done: a black disc with a bone tick, sitting flat in the surface. It reads as
@@ -1051,7 +1112,7 @@
  * than a change of state. */
 .circle-os .os-creative-button-shell.role-habit
   .os-row-tick[aria-pressed="true"].os-creative-button {
-  box-shadow: inset 0 1px 3px rgb(25 24 19 / 0.55);
+  box-shadow: var(--os-key-sunk-deep);
   transform: translateY(0);
 }
 
@@ -2022,27 +2083,39 @@
   color: var(--c-orange);
 }
 
-.circle-os .os-thoughts-mode-toggle.is-waiting {
-  opacity: 0;
+/* The App Label does not arrive. It used to hold at opacity 0 and fade in on a
+ * timer after every page change, every mode flip and every send, so the one
+ * word that names the App was the last thing on the Page to settle and the
+ * Header read as broken for a beat each time. Sai: "the top label on both of
+ * them, still have animation, remove that." Thoughts and Deep Thoughts are one
+ * control; a control that names where you are is simply there. */
+
+/* A sent thought leaves the Page.
+ *
+ * This is the whole signal now. The App Box used to empty and refill itself
+ * around a send, which is the same thing it does when a Page changes for any
+ * other reason — an expensive second that answered "something happened" rather
+ * than "that went". The words that were written lift and fade; the frame, the
+ * Label and the Footer hold perfectly still, and the button under them holds
+ * on "Sent" while they go.
+ *
+ * In Deep Thoughts only the answer travels. The question stays where it is,
+ * because the question was not the thing that was sent. */
+.circle-os .os-thoughts-form.is-departing > .os-info-page-main,
+.circle-os .os-thoughts-form.is-departing .os-deep-thought-response {
+  animation: os-thought-departure 420ms cubic-bezier(0.32, 0, 0.67, 0) both;
   pointer-events: none;
 }
 
-.circle-os .os-thoughts-mode-toggle.is-visible {
-  animation: os-thoughts-label-arrival var(--os-arrival-ms)
-    cubic-bezier(0.22, 0.72, 0.22, 1) both;
-}
-
-/* A fade, with no travel. The -4px start meant the App Label sat four pixels
- * above its own line for the length of the animation, and with fill-mode both
- * it holds there until the animation runs at all. A Label that moves is a
- * Label that does not line up. */
-@keyframes os-thoughts-label-arrival {
+@keyframes os-thought-departure {
   from {
-    opacity: 0;
+    opacity: 1;
+    transform: translateY(0);
   }
 
   to {
-    opacity: 1;
+    opacity: 0;
+    transform: translateY(-16px);
   }
 }
 
@@ -2139,23 +2212,107 @@
     both;
 }
 
-/* Every essential action presses like a row tick: down on :active so it lands
- * with the finger instead of a lifecycle phase, seated on a solid leg with no
- * blur beneath it, and near instant on the way down. */
+/* The standard key: a Page's one full-width action, and the same object as a
+ * row tick and a Protocol term at full width. Down on :active so it lands with
+ * the finger rather than a lifecycle phase, seated on a solid leg with no blur
+ * beneath it, and near instant on the way down.
+ *
+ * The face is Ink, so it takes the soft light rather than the strong one. An
+ * unlit black button is the one place a missing top edge is invisible until it
+ * sits next to a lit control, which is how the App ended up with two different
+ * kinds of button on one Page. */
 .circle-os .os-creative-button-shell.style-default .os-creative-button {
-  box-shadow: 0 3px 0 rgb(25 24 19 / 0.34);
-  transform: translateY(-3px);
+  box-shadow:
+    var(--os-key-light-soft),
+    0 var(--os-key-lift-md) 0 var(--os-key-leg-ink);
+  transform: translateY(calc(-1 * var(--os-key-lift-md)));
 }
 
 .circle-os .os-creative-button-shell.style-default .os-creative-button:active,
 .circle-os .os-creative-button-shell.style-default.phase-pressed .os-creative-button {
-  box-shadow: 0 0 0 rgb(25 24 19 / 0.34);
+  box-shadow: var(--os-key-sunk);
   transform: translateY(0);
-  transition-duration: 40ms;
+  transition-duration: var(--os-key-press-ms);
 }
 
+/* Nothing to press: no leg, no light, flat on the surface. */
 .circle-os .os-creative-button-shell.style-default .os-creative-button:disabled {
   box-shadow: none;
+  transform: translateY(0);
+}
+
+/* The same key, on the actions that are not dealt through the button engine.
+ *
+ * A Chapter's Continue, Protocol's Begin and Log's Add this hour are a Page's
+ * one main action just as much as Send is, and they were flat: no leg, no
+ * light, and no movement under a finger. That is the inconsistency Sai means
+ * by "Make the button design standard" — the standard exists, and half the
+ * actions in the App were not built to it.
+ *
+ * A face names its leg and gets the rest. The top light is drawn only where it
+ * can be seen: a Bone face on a dark or orange App Box is already the lightest
+ * thing on the Page, and its leg is what makes it a key.
+ *
+ * `.os-add-habit-row` is deliberately not here. A dotted "Add task" is an
+ * invitation, not a commitment, and a ghost control that presses like a solid
+ * one claims more than it does. */
+.circle-os .os-page-primary-action,
+.circle-os .os-chapter-continue,
+.circle-os .os-protocol-begin,
+.circle-os .os-log-add-current {
+  --os-key-lift: var(--os-key-lift-md);
+  --os-key-leg: var(--os-key-leg-ink);
+  --os-key-top: var(--os-key-light-soft);
+  box-shadow:
+    var(--os-key-top),
+    0 var(--os-key-lift) 0 var(--os-key-leg);
+  cursor: pointer;
+  transform: translateY(calc(-1 * var(--os-key-lift)));
+  transition:
+    box-shadow 150ms var(--ease-out),
+    transform 150ms var(--os-key-ease);
+  will-change: transform;
+}
+
+/* A Bone face on an orange App Box stands on the deep orange every other
+ * control there stands on; on a dark one it stands on the App Box itself.
+ * Neither is lit, because nothing on the Page is lighter than the face.
+ *
+ * The unlit value is a transparent shadow rather than `none`: `none` is only
+ * legal as a whole box-shadow, so substituting it into the list voided the leg
+ * as well and left a face floating three pixels above nothing. */
+.circle-os .theme-orange :is(.os-page-primary-action, .os-chapter-continue) {
+  --os-key-leg: var(--os-key-leg-orange);
+  --os-key-top: var(--os-key-unlit);
+}
+
+.circle-os .theme-dark :is(.os-page-primary-action, .os-chapter-continue),
+.circle-os .os-log-add-current {
+  --os-key-leg: var(--c-ink-deep);
+  --os-key-top: var(--os-key-unlit);
+}
+
+/* Protocol's Begin is an Ink face on the orange App Box, so it keeps the light
+ * and stands on the same deep orange as the terms above it. */
+.circle-os .os-protocol-begin {
+  --os-key-leg: var(--os-key-leg-orange);
+}
+
+.circle-os .os-page-primary-action:active,
+.circle-os .os-chapter-continue:active,
+.circle-os .os-protocol-begin:active,
+.circle-os .os-log-add-current:active {
+  box-shadow: var(--os-key-sunk);
+  transform: translateY(0);
+  transition-duration: var(--os-key-press-ms);
+}
+
+.circle-os .os-page-primary-action:disabled,
+.circle-os .os-chapter-continue:disabled,
+.circle-os .os-protocol-begin:disabled,
+.circle-os .os-log-add-current:disabled {
+  box-shadow: none;
+  cursor: default;
   transform: translateY(0);
 }
 
@@ -2781,7 +2938,7 @@
 }
 
 .circle-os .os-day {
-  margin-top: 12px;
+  margin-top: var(--os-app-box-gap);
   padding: 17px;
 }
 
@@ -2938,7 +3095,7 @@
 }
 
 .circle-os .os-log-section {
-  margin-top: 12px;
+  margin-top: var(--os-app-box-gap);
   width: 100%;
 }
 
@@ -4375,7 +4532,7 @@
 }
 
 .circle-os .between-intro {
-  margin-top: 18px;
+  margin-top: var(--os-app-box-gap);
 }
 
 .circle-os .vision-week-session,
@@ -4818,7 +4975,7 @@
 }
 
 .circle-os .vision-suggestion-session {
-  margin-top: 18px;
+  margin-top: var(--os-app-box-gap);
   padding: 0 !important;
 }
 
@@ -4962,7 +5119,7 @@
 }
 
 .circle-os .mirror-week-intro {
-  margin-top: 18px;
+  margin-top: var(--os-app-box-gap);
 }
 
 .circle-os .mirror-sample-note {
@@ -6062,7 +6219,22 @@
   min-height: 1rem;
 }
 
+/* One Main text, everywhere.
+ *
+ * A published chapter question rendered at 28px through the generic
+ * `.os-page-layout h2` rule while Cover, Note and the Thoughts placeholder all
+ * used the shared Main token at 32px — and the Workshop's own editable copy
+ * used the shared token too, so the authoring preview and the published Page
+ * were different sizes of the same words. Sai: "the texts on them are not
+ * align with the standard."
+ *
+ * A question is allowed more characters on a line than a cover hook, so the
+ * measure stays at 15ch; the type itself is the standard one. */
 .circle-os .os-chapter-page.os-chapter-card .os-page-main > h2 {
+  font-size: var(--os-page-main-font-size);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: var(--os-page-main-line-height);
   max-width: 15ch;
 }
 
@@ -6123,21 +6295,20 @@
   margin: 0 0 0 auto;
 }
 
-.circle-os .os-chapter-page.os-chapter-card .os-page-body {
-  justify-content: center;
-}
-
-.circle-os .os-chapter-page.os-chapter-card .os-page-main {
-  justify-content: center;
-}
-
+/* A Chapter Page begins where every other Page begins.
+ *
+ * These centred their Body and their Main in the leftover height, so a chapter
+ * question started around 121px down an App Box while Note, Thoughts, Routine
+ * and Protocol all start their first line at the forehead — and the same
+ * question moved up and down the frame as its answer grew. The App Box
+ * standard settled this on 2026-08-20: "Main Body begins at the forehead and
+ * grows downward", and chapters were the one family still centring.
+ *
+ * Confirm and Result keep their own anchor: they are the end of a run and read
+ * as a closing statement, so their Main sits against the Sub beneath it. */
 .circle-os .os-chapter-page:is(.os-chapter-confirm, .os-chapter-result) .os-page-body {
   align-items: center;
   display: flex;
-}
-
-.circle-os .os-chapter-page:is(.os-chapter-confirm, .os-chapter-result) .os-page-main {
-  justify-content: center;
 }
 
 .circle-os .os-chapter-inline-copy {
@@ -7458,9 +7629,12 @@
     transform: none;
   }
 
-  .circle-os .os-thoughts-mode-toggle.is-visible {
+  /* A sent thought still leaves, because that is the signal rather than an
+   * ornament on it. It simply goes without travelling. */
+  .circle-os .os-thoughts-form.is-departing > .os-info-page-main,
+  .circle-os .os-thoughts-form.is-departing .os-deep-thought-response {
     animation: none !important;
-    opacity: 1;
+    opacity: 0;
     transform: none;
   }
 
@@ -7988,8 +8162,13 @@
   margin-top: 0.55rem;
 }
 
-/* The block. Raised on a solid leg with no blur, like every other control in
- * this app, so it sits on the surface instead of floating above it. */
+/* The block. The wide key: the same object as a row tick, at term width.
+ *
+ * It was raised on a leg but never lit, so the two controls on the same orange
+ * surface caught the light differently and only the round one looked solid.
+ * Sai: "the circle button has the white highlight on the top ... i want that on
+ * the protocol too." It takes the shared `--os-key-*` recipe now, so the term
+ * and the tick beside it are one material. */
 .circle-os .os-creative-button-shell:has(.os-protocol-block) {
   height: auto;
   margin: 0 0 0.6rem;
@@ -8010,29 +8189,32 @@
   padding: 0.8rem 0.9rem;
   position: relative;
   text-align: left;
-  transform: translateY(-3px);
+  transform: translateY(calc(-1 * var(--os-key-lift-md)));
   /* Movement and shadow animate; the fill does not. A block going from bone to
    * Ink through a colour transition passes through muddy greys and reads as a
    * blink, the same way the row ticks did. The state lands at once. */
   transition:
     box-shadow 150ms var(--ease-out),
-    transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1);
+    transform 150ms var(--os-key-ease);
 }
 
 .circle-os .os-creative-button-shell.style-soft-clay
   .os-protocol-block.os-creative-button {
-  box-shadow: 0 3px 0 var(--c-orange-900);
+  box-shadow:
+    var(--os-key-light),
+    0 var(--os-key-lift-md) 0 var(--os-key-leg-orange);
 }
 
 .circle-os .os-creative-button-shell.style-soft-clay
   .os-protocol-block.os-creative-button:active {
-  box-shadow: inset 0 2px 5px rgb(25 24 19 / 0.4);
+  box-shadow: var(--os-key-sunk);
   transform: translateY(0);
-  transition-duration: 40ms;
+  transition-duration: var(--os-key-press-ms);
 }
 
 /* Negotiable: the same block, a lighter commitment. Needs to outrank the
- * block base rule above, which also carries four classes. */
+ * block base rule above, which also carries four classes. A lighter thing is
+ * lit more faintly and stands on a shorter leg; it is not a different object. */
 .circle-os .os-creative-button-shell
   .os-protocol-block.is-negotiable.os-creative-button {
   border-color: rgb(25 24 19 / 0.5);
@@ -8042,17 +8224,20 @@
 
 .circle-os .os-creative-button-shell.style-soft-clay
   .os-protocol-block.is-negotiable.os-creative-button {
-  box-shadow: 0 2px 0 rgb(159 63 30 / 0.55);
-  transform: translateY(-2px);
+  box-shadow:
+    var(--os-key-light-soft),
+    0 var(--os-key-lift-sm) 0 rgb(159 63 30 / 0.55);
+  transform: translateY(calc(-1 * var(--os-key-lift-sm)));
 }
 
-/* Kept: the block fills in and stays down. */
+/* Kept: the block fills in and stays down. Sunk, so the light is inside the
+ * hole rather than on the top edge. */
 .circle-os .os-creative-button-shell
   .os-protocol-block.is-kept.os-creative-button,
 .circle-os .os-creative-button-shell.style-soft-clay
   .os-protocol-block.is-kept.os-creative-button {
   background: var(--c-ink);
-  box-shadow: inset 0 1px 3px rgb(25 24 19 / 0.5);
+  box-shadow: var(--os-key-sunk-deep);
   transform: translateY(0);
 }
 
