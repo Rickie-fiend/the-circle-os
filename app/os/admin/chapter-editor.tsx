@@ -246,6 +246,10 @@ export function ChapterEditor() {
   // A chapter with no App named still has to be reachable, so it collects under
   // one honest heading rather than disappearing.
   const libraryGroups = useMemo(() => {
+    // `CHAPTER_APPS` is typed as the App names, and an authored draft's spaces
+    // are free text until it validates — so the membership test is done on a
+    // set of plain strings rather than by narrowing one to the other.
+    const namedApps = new Set<string>(CHAPTER_APPS);
     const bucket = (app: string) =>
       CHAPTER_CLASSIFICATIONS.map((classification) => ({
         classification,
@@ -253,7 +257,7 @@ export function ChapterEditor() {
           ({ draft: item }) =>
             item.classification === classification &&
             (app === UNASSIGNED_APP
-              ? !item.appSpaces.some((space) => CHAPTER_APPS.includes(space))
+              ? !item.appSpaces.some((space) => namedApps.has(space))
               : item.appSpaces.includes(app)),
         ),
       })).filter((group) => group.items.length > 0);
