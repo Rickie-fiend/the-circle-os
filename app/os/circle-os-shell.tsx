@@ -2891,6 +2891,9 @@ export function TodayExperience() {
                 form="check-in-thought-form"
                 keepMountedOnSuccess
                 onSuccessComplete={beginThoughtDeparture}
+                // What replaces Send is the flat disabled Send, so coming back
+                // up on the release and going down again would be a flinch.
+                release="latch"
                 styleId={THOUGHT_BUTTON_STYLE}
                 type="submit"
               >
@@ -3056,6 +3059,7 @@ export function TodayExperience() {
                             className="os-row-tick os-row-tick-habit"
                             keepMountedOnSuccess
                             onClick={() => toggleHabit(habit.id)}
+                            release="latch"
                             role="habit"
                             styleId="soft-clay"
                             type="button"
@@ -3071,6 +3075,7 @@ export function TodayExperience() {
                             className="os-row-tick os-row-tick-task"
                             keepMountedOnSuccess
                             onClick={() => finishTask(task.id)}
+                            release="latch"
                             role="habit"
                             styleId="soft-clay"
                             type="button"
@@ -3216,6 +3221,7 @@ export function TodayExperience() {
                               disabled={!habit.text.trim()}
                               keepMountedOnSuccess
                               onClick={() => toggleHabit(habit.id)}
+                              release="latch"
                               role="habit"
                               styleId="soft-clay"
                               type="button"
@@ -3252,6 +3258,7 @@ export function TodayExperience() {
                             disabled={!task.text.trim()}
                             keepMountedOnSuccess
                             onClick={() => finishTask(task.id)}
+                            release="latch"
                             role="habit"
                             styleId="soft-clay"
                             type="button"

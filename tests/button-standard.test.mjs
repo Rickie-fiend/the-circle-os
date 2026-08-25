@@ -109,11 +109,43 @@ test("no button animates on release", () => {
   ]) {
     assert.doesNotMatch(css, new RegExp(gone), `${gone} still bounces on release`);
   }
-  // The committed state is a held-down key, not an animation.
+  // The committed state is a held-down key, not an animation — and only for a
+  // latch, because a rebound has already come back up on the release.
   assert.match(
-    rule(".circle-os .os-creative-button-shell.style-default.phase-success .os-creative-button"),
+    rule(
+      '.circle-os .os-creative-button-shell.style-default[data-button-release="latch"].phase-success\n  .os-creative-button',
+    ),
     /box-shadow: var\(--os-key-sunk\);[\s\S]*?transform: translateY\(0\)/,
   );
+});
+
+// One press, two endings. A rebound comes back up and registers from there; a
+// latch stays where the finger left it because what replaces it is also down.
+test("a key knows whether it rebounds or latches", () => {
+  const engine = readFileSync("app/os/button-engine.tsx", "utf8");
+  assert.match(engine, /export type ButtonRelease = "rebound" \| "latch"/);
+  assert.match(engine, /release = "rebound"/, "rebound is the default ending");
+  assert.match(engine, /data-button-release=\{release\}/);
+  assert.match(engine, /if \(release === "rebound"\) dispatch\("release"\)/);
+
+  // Send and every toggle latch.
+  assert.match(shell, /release="latch"\s*\n\s*styleId=\{THOUGHT_BUTTON_STYLE\}/);
+  const habitLatches = shell.match(/release="latch"\n\s*role="habit"/g) ?? [];
+  assert.equal(habitLatches.length, 4, "every Routine toggle should latch");
+  const protocol = readFileSync("app/os/protocol-page.tsx", "utf8");
+  assert.match(protocol, /release="latch"\n\s*role="habit"/);
+});
+
+// The press finishes as a movement before anything happens because of it.
+test("a press registers a beat after it ends", () => {
+  const engine = readFileSync("app/os/button-engine.tsx", "utf8");
+  assert.match(engine, /const MIN_PRESS_MS = \d+/);
+  assert.match(engine, /const REGISTER_MS = \d+/);
+  // A tap too fast to render still shows the key go down.
+  assert.match(engine, /Math\.max\(0, MIN_PRESS_MS - held\)/);
+  // The native default is cancelled and replayed, so a submit still submits.
+  assert.match(engine, /registerTimer\.current = window\.setTimeout/);
+  assert.match(engine, /owner\?\.requestSubmit\(\)/);
 });
 
 // `pointerup` lands before `click`, and the browser drops `:active` at the same

@@ -2168,6 +2168,27 @@
   width: 100%;
 }
 
+/* Holding a key is a press, not a text selection.
+ *
+ * A long press on any button used to start selecting its label, and on a phone
+ * that also raises the copy/define callout — so holding a key, which is now a
+ * real state the engine cares about, fought the browser's own gesture. Sai:
+ * "when i sometimes hold on any button, it select the text on the button."
+ *
+ * The tap highlight goes with it: the key going down is the feedback, and a
+ * grey flash on top of it is a second, worse answer to the same question.
+ * Anything genuinely editable inside a control says so for itself. */
+.circle-os button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.circle-os button :is(input, textarea, [contenteditable]) {
+  -webkit-touch-callout: default;
+  user-select: text;
+}
+
 .circle-os .os-thoughts-send,
 .circle-os .os-creative-button {
   appearance: none;
@@ -2329,9 +2350,11 @@
   transform: translateY(0);
 }
 
-/* Committed: the key stays where the finger left it. See "A press is one
- * movement" below. */
-.circle-os .os-creative-button-shell.style-default.phase-success .os-creative-button {
+/* Committed. Only a latch stays down: what replaces it is also down, so coming
+ * up first would be a flinch. A rebound has already returned to its resting
+ * height on the release and registers from there. */
+.circle-os .os-creative-button-shell.style-default[data-button-release="latch"].phase-success
+  .os-creative-button {
   box-shadow: var(--os-key-sunk);
   transform: translateY(0);
 }

@@ -141,3 +141,14 @@ test("earned styles are never dealt by the everyday rotation", () => {
   assert.equal(normalizeButtonStyleId("ink-wash"), "ink-wash");
   assert.equal(buttonPressesToBreak("fractured-glass"), 4);
 });
+
+// Entering lasts 620ms, which is long enough for a real finger to land in. A
+// press during it used to be swallowed: the action ran but the key never moved,
+// so the tap read as ignored.
+test("a key still arriving can be pressed", () => {
+  assert.equal(reduceButtonLifecycle("entering", "press"), "pressed");
+  assert.equal(reduceButtonLifecycle("entering", "succeed"), "success");
+  // It still cannot be pressed before it exists, or after it has gone.
+  assert.equal(reduceButtonLifecycle("hidden", "press"), "hidden");
+  assert.equal(reduceButtonLifecycle("exiting", "press"), "exiting");
+});

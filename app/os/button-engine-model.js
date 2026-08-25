@@ -125,12 +125,18 @@ export function reduceButtonLifecycle(state, event) {
       return state === "hidden" ? "entering" : state;
     case "entry-complete":
       return state === "entering" ? "ready" : state;
+    // A key that is still arriving is still a key. Entering lasts 620ms, which
+    // is long enough to be tapped in, and a press that landed during it used to
+    // be swallowed: the action ran but the button never moved, so the tap read
+    // as ignored. Arriving is interrupted by being used.
     case "press":
-      return state === "ready" ? "pressed" : state;
+      return state === "ready" || state === "entering" ? "pressed" : state;
     case "release":
       return state === "pressed" ? "ready" : state;
     case "succeed":
-      return state === "ready" || state === "pressed" ? "success" : state;
+      return state === "ready" || state === "pressed" || state === "entering"
+        ? "success"
+        : state;
     case "success-complete":
       return state === "success" ? "exiting" : state;
     case "preview-reset":

@@ -697,6 +697,7 @@ function ProtocolBlock({
       }${item.completed ? " is-kept" : ""}`}
       keepMountedOnSuccess
       onClick={() => onToggle(item.id)}
+      release="latch"
       role="habit"
       styleId="soft-clay"
       type="button"

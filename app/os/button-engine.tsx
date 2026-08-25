@@ -54,9 +54,38 @@ const INK_PARTICLES = [
   [-31, 32, 7, "ink"],
 ] as const;
 
+/**
+ * The shape of one press, in milliseconds.
+ *
+ * `MIN_PRESS_MS` is the floor on how long a key is held down. A quick tap and a
+ * deliberate hold have to feel like the same object, and without a floor a fast
+ * tap never renders the down state at all — the key appears not to move. Sai:
+ * "this click should be snappy and satisfying to click, in all conditions
+ * either quick click or hold and release."
+ *
+ * `REGISTER_MS` is the beat between the release and the action firing. The
+ * press finishes as a movement before anything happens because of it, which is
+ * what makes it read as an act rather than a side effect of touching glass.
+ */
+const MIN_PRESS_MS = 90;
+const REGISTER_MS = 130;
+
+/**
+ * What a key does when the finger lifts.
+ *
+ * `rebound` comes back up and then registers — the ordinary action, where the
+ * button is still there afterwards to be pressed again.
+ *
+ * `latch` stays down, because what replaces it is also down: a ticked habit, a
+ * kept term, a spent Send. Sai on Send: "it should not be up because it would
+ * change to flat disable send button, and it should not flinch on key release."
+ */
+export type ButtonRelease = "rebound" | "latch";
+
 type CreativeButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   styleId: string;
   role?: "thought" | "habit";
+  release?: ButtonRelease;
   keepMountedOnSuccess?: boolean;
   onAnimationComplete?: () => void;
   onSuccessComplete?: () => void;
@@ -105,6 +134,7 @@ export function CreativeButton({
   onPointerUp,
   onSuccessComplete,
   previewMode = false,
+  release = "rebound",
   role = "thought",
   styleId,
   ...props
@@ -120,6 +150,8 @@ export function CreativeButton({
   const committedRef = useRef(false);
   const awaitingClick = useRef(false);
   const releaseGuard = useRef<number | undefined>(undefined);
+  const pressStartedAt = useRef(0);
+  const registerTimer = useRef<number | undefined>(undefined);
   const completionRef = useRef(onAnimationComplete);
   const successCompletionRef = useRef(onSuccessComplete);
   const pressesToBreak = buttonPressesToBreak(resolvedStyleId);
@@ -141,6 +173,9 @@ export function CreativeButton({
     () => () => {
       if (releaseGuard.current !== undefined) {
         window.clearTimeout(releaseGuard.current);
+      }
+      if (registerTimer.current !== undefined) {
+        window.clearTimeout(registerTimer.current);
       }
     },
     [],
@@ -190,24 +225,23 @@ export function CreativeButton({
     onPointerDown?.(event);
     if (event.defaultPrevented || !canActivateButton({ disabled })) return;
     awaitingClick.current = true;
+    // Read once, on a real press. Never during render.
+    pressStartedAt.current = Date.now();
     dispatch("press");
     if (definition) runHaptic(definition.haptic.slice(0, 1));
   }
 
-  // Lifting the finger is not the end of the press.
+  // Lifting the finger.
   //
-  // `pointerup` used to return the button to ready, and `pointerup` lands
-  // before `click`. The browser drops `:active` at the same moment, so for the
-  // render between the two the key was neither held down nor committed: it
-  // sprang back up on its leg and then dropped again when the click arrived.
-  // That rebound is the jump Sai sees on release — "when i release, the key
-  // should stay flat and registered the click."
+  // The key has been down for at least `MIN_PRESS_MS` by the time anything
+  // happens here, so a tap too fast to render still shows the press. What
+  // happens next is the style of the key: a `rebound` comes back up and waits
+  // to register, a `latch` stays exactly where the finger left it.
   //
-  // So the key stays down through the lift and the click decides what happens
-  // to it: committed presses go to success, which is also down, and a press
-  // that does not commit comes back up from there. The timer is only for the
-  // press whose click never arrives at all — a swipe that started on a button,
-  // for instance — so a key cannot be left stuck down.
+  // Neither one registers here. `pointerup` lands before `click`, and the
+  // browser drops `:active` at the same moment, so anything decided on the lift
+  // alone shows for one render and is then overruled — which is what used to
+  // make the key flinch. The click registers; the lift only positions.
   function lift(
     event: PointerEvent<HTMLButtonElement>,
     callback?: (event: PointerEvent<HTMLButtonElement>) => void,
@@ -217,12 +251,20 @@ export function CreativeButton({
     if (releaseGuard.current !== undefined) {
       window.clearTimeout(releaseGuard.current);
     }
+    const held = Date.now() - pressStartedAt.current;
+    const settle = Math.max(0, MIN_PRESS_MS - held);
     releaseGuard.current = window.setTimeout(() => {
-      releaseGuard.current = undefined;
-      if (!awaitingClick.current) return;
-      awaitingClick.current = false;
-      dispatch("release");
-    }, 320);
+      // A latch is already where it belongs; a rebound comes up.
+      if (release === "rebound") dispatch("release");
+      // Either way, a press whose click never arrives — a swipe that began on
+      // a button — must not leave a key stuck down.
+      releaseGuard.current = window.setTimeout(() => {
+        releaseGuard.current = undefined;
+        if (!awaitingClick.current) return;
+        awaitingClick.current = false;
+        dispatch("release");
+      }, 400);
+    }, settle);
   }
 
   // Aborting a press is different: the finger left the key or the gesture was
@@ -243,6 +285,7 @@ export function CreativeButton({
   return (
     <div
       className={`os-creative-button-shell role-${role} ${styleClass} phase-${lifecycle}`}
+      data-button-release={release}
       data-button-damage={pressesToBreak > 1 ? damage : undefined}
       data-button-lifecycle={lifecycle}
       data-button-style={resolvedStyleId || "fallback"}
@@ -297,10 +340,31 @@ export function CreativeButton({
               return;
             }
           }
+          // The press registers a beat after it finishes, not inside the
+          // release. Sai: "split sec delay > register ... this click should be
+          // snappy and satisfying to click." The native default is cancelled
+          // and replayed at the end of that beat, so a submit button still
+          // submits — just once the key has finished moving.
           committedRef.current = true;
-          dispatch("succeed");
-          if (definition) runHaptic(definition.haptic);
-          onClick?.(event);
+          event.preventDefault();
+          const button = event.currentTarget;
+          const submits = button.type === "submit";
+          const owner = submits
+            ? (button.form ??
+              (button.getAttribute("form")
+                ? (document.getElementById(button.getAttribute("form")!) as HTMLFormElement | null)
+                : null))
+            : null;
+          if (registerTimer.current !== undefined) {
+            window.clearTimeout(registerTimer.current);
+          }
+          registerTimer.current = window.setTimeout(() => {
+            registerTimer.current = undefined;
+            dispatch("succeed");
+            if (definition) runHaptic(definition.haptic);
+            onClick?.(event);
+            owner?.requestSubmit();
+          }, REGISTER_MS);
         }}
         onPointerCancel={(event) => abort(event, onPointerCancel)}
         onPointerDown={press}
