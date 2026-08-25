@@ -67,8 +67,17 @@ const INK_PARTICLES = [
  * press finishes as a movement before anything happens because of it, which is
  * what makes it read as an act rather than a side effect of touching glass.
  */
-const MIN_PRESS_MS = 90;
-const REGISTER_MS = 130;
+const MIN_PRESS_MS = 55;
+const REGISTER_MS = 70;
+
+/**
+ * How long a committed key waits before it is done being committed.
+ *
+ * This was 640ms, sized for the release animations that no longer exist. It is
+ * the beat a toggle spends between registering and letting its own state own
+ * the way it looks, so it has to be short enough that nothing is seen waiting.
+ */
+const SETTLE_MS = 240;
 
 /**
  * What a key does when the finger lifts.
@@ -208,7 +217,7 @@ export function CreativeButton({
             dispatch("success-complete");
           }
         },
-        reducedMotion ? 160 : 640,
+        reducedMotion ? 60 : SETTLE_MS,
       );
     } else if (lifecycle === "exiting") {
       timer = window.setTimeout(() => {

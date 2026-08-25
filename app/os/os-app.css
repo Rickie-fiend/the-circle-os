@@ -1110,7 +1110,7 @@
  * Down is near instant. Anything slower reads as lag rather than contact. */
 .circle-os .os-creative-button-shell.role-habit
   .os-row-tick.os-creative-button:active,
-.circle-os .os-creative-button-shell.role-habit.phase-pressed
+.circle-os .os-creative-button-shell.role-habit[data-button-release="latch"]:is(.phase-pressed, .phase-success)
   .os-row-tick.os-creative-button {
   box-shadow: var(--os-key-sunk);
   transform: translateY(0);
@@ -2350,10 +2350,16 @@
   transform: translateY(0);
 }
 
-/* Committed. Only a latch stays down: what replaces it is also down, so coming
- * up first would be a flinch. A rebound has already returned to its resting
- * height on the release and registers from there. */
-.circle-os .os-creative-button-shell.style-default[data-button-release="latch"].phase-success
+/* A latch is never drawn up again once it has been pressed.
+ *
+ * The press, the lift and the registration are all down, and so is whatever
+ * replaces it. This has to cover `success` as well as `pressed`, because the
+ * engine changes phase the moment the click registers while the state behind
+ * the button — a habit ticking, a term being kept — lands a render later. In
+ * that gap the key had nothing holding it down and sprang up for a frame, which
+ * is what Sai saw: "it quickly pressed and up, and quickly change back to
+ * pressed state." Only a rebound comes up, and it does that on the release. */
+.circle-os .os-creative-button-shell.style-default[data-button-release="latch"]:is(.phase-pressed, .phase-success)
   .os-creative-button {
   box-shadow: var(--os-key-sunk);
   transform: translateY(0);
@@ -8171,7 +8177,7 @@
 
 .circle-os .os-creative-button-shell.style-soft-clay
   .os-protocol-block.os-creative-button:active,
-.circle-os .os-creative-button-shell.style-soft-clay.phase-pressed
+.circle-os .os-creative-button-shell.style-soft-clay[data-button-release="latch"]:is(.phase-pressed, .phase-success)
   .os-protocol-block.os-creative-button {
   box-shadow: var(--os-key-sunk);
   transform: translateY(0);

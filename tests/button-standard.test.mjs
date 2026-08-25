@@ -113,10 +113,39 @@ test("no button animates on release", () => {
   // latch, because a rebound has already come back up on the release.
   assert.match(
     rule(
-      '.circle-os .os-creative-button-shell.style-default[data-button-release="latch"].phase-success\n  .os-creative-button',
+      '.circle-os .os-creative-button-shell.style-default[data-button-release="latch"]:is(.phase-pressed, .phase-success)\n  .os-creative-button',
     ),
     /box-shadow: var\(--os-key-sunk\);[\s\S]*?transform: translateY\(0\)/,
   );
+});
+
+// The engine changes phase when the click registers, but the state behind the
+// button — a habit ticking, a term being kept — lands a render later. A latch
+// with nothing holding it down in that gap springs up for a frame: pressed, up,
+// pressed. Every latching family has to cover success as well as pressed.
+test("a latch is never drawn up once it has been pressed", () => {
+  for (const held of [
+    'role-habit[data-button-release="latch"]:is(.phase-pressed, .phase-success)',
+    'style-soft-clay[data-button-release="latch"]:is(.phase-pressed, .phase-success)',
+    'style-default[data-button-release="latch"]:is(.phase-pressed, .phase-success)',
+  ]) {
+    assert.ok(
+      css.includes(`.circle-os .os-creative-button-shell.${held}`),
+      `${held.split("[")[0]} lets go of a latch between the click and the state`,
+    );
+  }
+});
+
+// A press that reads as ignored is worse than no press at all.
+test("the press is quick enough to read as an answer", () => {
+  const engine = readFileSync("app/os/button-engine.tsx", "utf8");
+  const ms = (name) => Number(engine.match(new RegExp(`const ${name} = (\\d+)`))?.[1]);
+  assert.ok(ms("MIN_PRESS_MS") <= 60, "the key is held down too long to feel snappy");
+  assert.ok(ms("REGISTER_MS") <= 80, "the action lags too far behind the finger");
+  // Worst case from finger down to the action firing.
+  assert.ok(ms("MIN_PRESS_MS") + ms("REGISTER_MS") <= 140);
+  // The settle beat was sized for release animations that no longer exist.
+  assert.ok(ms("SETTLE_MS") <= 280);
 });
 
 // One press, two endings. A rebound comes back up and registers from there; a
@@ -169,22 +198,12 @@ test("a key stays down from the finger lifting until the click resolves", () => 
   );
 });
 
-// The gap between pointerup and click is also where a toggle sprang back, and
-// those key their down state on :active rather than the phase.
-test("a tick and a term hold down through the same gap", () => {
-  for (const held of [
-    "role-habit.phase-pressed\n  .os-row-tick.os-creative-button",
-    "style-soft-clay.phase-pressed\n  .os-protocol-block.os-creative-button",
-  ]) {
-    assert.ok(
-      css.includes(`.circle-os .os-creative-button-shell.${held} {`),
-      `${held.split("\n")[0]} does not hold down between pointerup and click`,
-    );
-  }
-  // And the held-down state is the same one :active gives, not a new look.
+// A toggle keys its down state on :active as well as the phase, and the two
+// have to describe the same key — a held tick must not look like a new object.
+test("a tick holds down with the same face :active gives it", () => {
   assert.match(
     rule(
-      ".circle-os .os-creative-button-shell.role-habit\n  .os-row-tick.os-creative-button:active,\n.circle-os .os-creative-button-shell.role-habit.phase-pressed\n  .os-row-tick.os-creative-button",
+      '.circle-os .os-creative-button-shell.role-habit\n  .os-row-tick.os-creative-button:active,\n.circle-os .os-creative-button-shell.role-habit[data-button-release="latch"]:is(.phase-pressed, .phase-success)\n  .os-row-tick.os-creative-button',
     ),
     /box-shadow: var\(--os-key-sunk\);[\s\S]*?transform: translateY\(0\)/,
   );
