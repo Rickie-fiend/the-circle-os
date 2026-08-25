@@ -2702,6 +2702,10 @@ export function TodayExperience() {
   // off the Page and fade while the button under them holds on "Sent"; the App
   // Box, its Label and its Footer never move. Then the placeholder is back and
   // the App is ready for the next one.
+  //
+  // Nothing in the Footer moves either. The button is not taken away and put
+  // back — it goes flat and disabled, exactly as it sits before a word is
+  // typed, and lifts again on the next one.
   function beginThoughtDeparture() {
     if (thoughtTransition !== "clicked") return;
     const reducedMotion = window.matchMedia(
@@ -2713,7 +2717,10 @@ export function TodayExperience() {
     }
     thoughtResetTimer.current = window.setTimeout(() => {
       const outcome = thoughtOutcome.current;
-      setThoughtButtonVisible(false);
+      // The button stays. Sai: "the button should stay flat and change into
+      // disabled send button, the state before we type." Clearing the draft is
+      // what disables it, and a disabled key has no leg and no light, so it
+      // settles flat where it already is instead of leaving the Footer.
       if (outcome.deep) {
         setDeepThoughtDraft("");
         resetDeepWritingClock();

@@ -149,10 +149,16 @@ export function CreativeButton({
       timer = window.setTimeout(
         () => {
           successCompletionRef.current?.();
-          if (previewMode || role === "habit") {
+          // A button that stays on the Page returns to ready. It used to be
+          // stranded in `success` instead — still mounted, but `committedRef`
+          // never cleared, so it could not be pressed again and the only way
+          // out was for its owner to unmount it. That is what made Send
+          // disappear after a thought was sent rather than settling back into
+          // its resting state.
+          if (previewMode || role === "habit" || keepMountedOnSuccess) {
             committedRef.current = false;
             dispatch("preview-reset");
-          } else if (!keepMountedOnSuccess) {
+          } else {
             dispatch("success-complete");
           }
         },

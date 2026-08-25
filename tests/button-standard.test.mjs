@@ -97,6 +97,32 @@ test("the Thoughts label does not animate", () => {
   );
 });
 
+// A button that stays on the Page has to be able to be pressed again. Stranded
+// in `success` it could not: `committedRef` never cleared, so its owner had to
+// unmount it to clean up, which is what made Send disappear after a send.
+test("a button that stays mounted returns to ready", () => {
+  const engine = readFileSync("app/os/button-engine.tsx", "utf8");
+  assert.match(
+    engine,
+    /if \(previewMode \|\| role === "habit" \|\| keepMountedOnSuccess\) \{[\s\S]*?committedRef\.current = false;[\s\S]*?dispatch\("preview-reset"\);/,
+  );
+});
+
+// Nothing in the Footer moves across a send. The button goes flat and disabled
+// where it already is, which is exactly how it sits before a word is typed.
+test("Send stays on the Page after a thought is sent", () => {
+  const departure =
+    shell.match(/function beginThoughtDeparture\(\)[\s\S]*?\n  \}/)?.[0] ?? "";
+  assert.ok(departure, "the departure function moved");
+  assert.doesNotMatch(departure, /setThoughtButtonVisible\(false\)/);
+  // Clearing the draft is what disables it; a disabled key has no leg.
+  assert.match(departure, /setRegularThoughtDraft\(""\)/);
+  assert.match(
+    rule(".circle-os .os-creative-button-shell.style-default .os-creative-button:disabled"),
+    /box-shadow: none;[\s\S]*?transform: translateY\(0\)/,
+  );
+});
+
 // A send is signalled by the thing that was sent leaving, not by the App Box
 // emptying and refilling itself the way it does for any other page change.
 test("sending a thought leaves the App Box alone", () => {
