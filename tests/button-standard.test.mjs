@@ -97,6 +97,67 @@ test("the Thoughts label does not animate", () => {
   );
 });
 
+// A press is one movement. Rest is up, holding is down, and releasing leaves
+// the key where it is. Every style used to end its press with a 640ms flourish
+// that ran after the finger had already left.
+test("no button animates on release", () => {
+  for (const gone of [
+    "os-button-default-success",
+    "os-ink-button-success",
+    "os-clay-button-success",
+    "os-liquid-button-success",
+  ]) {
+    assert.doesNotMatch(css, new RegExp(gone), `${gone} still bounces on release`);
+  }
+  // The committed state is a held-down key, not an animation.
+  assert.match(
+    rule(".circle-os .os-creative-button-shell.style-default.phase-success .os-creative-button"),
+    /box-shadow: var\(--os-key-sunk\);[\s\S]*?transform: translateY\(0\)/,
+  );
+});
+
+// `pointerup` lands before `click`, and the browser drops `:active` at the same
+// moment. A key that returned to ready on pointerup sprang back onto its leg
+// for the render in between, then dropped again when the click arrived.
+test("a key stays down from the finger lifting until the click resolves", () => {
+  const engine = readFileSync("app/os/button-engine.tsx", "utf8");
+  assert.match(engine, /onPointerUp=\{\(event\) => lift\(event, onPointerUp\)\}/);
+  assert.match(engine, /onPointerCancel=\{\(event\) => abort\(event, onPointerCancel\)\}/);
+  assert.match(engine, /onPointerLeave=\{\(event\) => abort\(event, onPointerLeave\)\}/);
+  // Lifting must not put it back up on its own.
+  const lift = engine.match(/function lift\([\s\S]*?\n  \}/)?.[0] ?? "";
+  assert.ok(lift, "lift() moved");
+  // It may only release from inside the guard timeout, never straight away:
+  // a press whose click never arrives still has to come back up eventually,
+  // but lifting the finger on its own must leave the key exactly where it is.
+  assert.match(lift, /releaseGuard\.current = window\.setTimeout/);
+  assert.ok(
+    lift.indexOf("window.setTimeout") < lift.indexOf('dispatch("release")'),
+    "lift() releases before its guard, so the key springs back on pointerup",
+  );
+});
+
+// The gap between pointerup and click is also where a toggle sprang back, and
+// those key their down state on :active rather than the phase.
+test("a tick and a term hold down through the same gap", () => {
+  for (const held of [
+    "role-habit.phase-pressed\n  .os-row-tick.os-creative-button",
+    "style-soft-clay.phase-pressed\n  .os-protocol-block.os-creative-button",
+  ]) {
+    assert.ok(
+      css.includes(`.circle-os .os-creative-button-shell.${held} {`),
+      `${held.split("\n")[0]} does not hold down between pointerup and click`,
+    );
+  }
+  // And the held-down state is the same one :active gives, not a new look.
+  assert.match(
+    rule(
+      ".circle-os .os-creative-button-shell.role-habit\n  .os-row-tick.os-creative-button:active,\n.circle-os .os-creative-button-shell.role-habit.phase-pressed\n  .os-row-tick.os-creative-button",
+    ),
+    /box-shadow: var\(--os-key-sunk\);[\s\S]*?transform: translateY\(0\)/,
+  );
+});
+
 // A button that stays on the Page has to be able to be pressed again. Stranded
 // in `success` it could not: `committedRef` never cleared, so its owner had to
 // unmount it to clean up, which is what made Send disappear after a send.

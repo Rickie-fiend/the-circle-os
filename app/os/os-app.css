@@ -122,6 +122,17 @@
    * from a twitch. */
   --os-key-press-ms: 40ms;
   --os-key-ease: cubic-bezier(0.2, 0.9, 0.3, 1);
+  /* A press is one movement, in one direction.
+   *
+   * Rest is up. Holding is down. Releasing registers the click and leaves the
+   * key where it is: a committed press does not spring back, and nothing
+   * bounces, dips or scales on the way out. Every style used to end its press
+   * with a 640ms flourish that ran after the finger had already left, which is
+   * what read as a jump. Sai: "the engine should only handle between key up
+   * and key down, not jumping animation on key release."
+   *
+   * A toggle looks like an exception and is not one. It comes back up because
+   * its state changed, not because it was released. */
   align-items: flex-start;
   background: var(--c-ink-deep);
   display: flex;
@@ -1098,7 +1109,9 @@
  *
  * Down is near instant. Anything slower reads as lag rather than contact. */
 .circle-os .os-creative-button-shell.role-habit
-  .os-row-tick.os-creative-button:active {
+  .os-row-tick.os-creative-button:active,
+.circle-os .os-creative-button-shell.role-habit.phase-pressed
+  .os-row-tick.os-creative-button {
   box-shadow: var(--os-key-sunk);
   transform: translateY(0);
   transition-duration: var(--os-key-press-ms);
@@ -2316,9 +2329,11 @@
   transform: translateY(0);
 }
 
+/* Committed: the key stays where the finger left it. See "A press is one
+ * movement" below. */
 .circle-os .os-creative-button-shell.style-default.phase-success .os-creative-button {
-  animation: os-button-default-success 640ms cubic-bezier(0.22, 0.82, 0.22, 1)
-    both;
+  box-shadow: var(--os-key-sunk);
+  transform: translateY(0);
 }
 
 .circle-os .os-creative-button-shell.style-fallback.phase-entering {
@@ -2334,7 +2349,7 @@
 }
 
 .circle-os .os-creative-button-shell.style-ink-burst.phase-success .os-creative-button {
-  animation: os-ink-button-success 640ms ease-out both;
+  transform: scale(0.965);
 }
 
 .circle-os .os-ink-particles {
@@ -2395,7 +2410,11 @@
 }
 
 .circle-os .style-soft-clay.phase-success .os-creative-button:not(.os-row-tick):not(.os-protocol-block) {
-  animation: os-clay-button-success 640ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.2),
+    0 1px 0 var(--c-charcoal),
+    0 4px 8px rgb(25 24 19 / 0.18);
+  transform: translateY(1px) scaleX(0.992);
 }
 
 .circle-os .style-liquid-capsule .os-creative-button {
@@ -2412,7 +2431,8 @@
 }
 
 .circle-os .style-liquid-capsule.phase-success .os-creative-button {
-  animation: os-liquid-button-success 640ms ease-out both;
+  border-radius: var(--r-lg);
+  transform: scaleX(0.97) scaleY(0.92);
 }
 
 .circle-os .os-liquid-sweep {
@@ -2468,42 +2488,11 @@
   }
 }
 
-@keyframes os-button-default-success {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  28% {
-    opacity: 1;
-    transform: translateY(1px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 @keyframes os-ink-button-enter {
   0%,
   24% {
     opacity: 0;
     transform: scale(0.94);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes os-ink-button-success {
-  0% {
-    transform: scale(1);
-  }
-  18% {
-    transform: scale(0.955);
-  }
-  48% {
-    transform: scale(1.008);
   }
   100% {
     opacity: 1;
@@ -2554,34 +2543,6 @@
   }
 }
 
-@keyframes os-clay-button-success {
-  0% {
-    box-shadow:
-      inset 0 1px 0 rgb(255 248 241 / 0.18),
-      0 6px 0 var(--c-charcoal),
-      0 11px 18px rgb(25 24 19 / 0.22);
-    transform: translateY(-5px);
-  }
-  24% {
-    box-shadow:
-      inset 0 3px 5px rgb(0 0 0 / 0.24),
-      0 0 0 var(--c-charcoal),
-      0 2px 5px rgb(25 24 19 / 0.15);
-    transform: translateY(2px) scaleX(0.99);
-  }
-  62% {
-    transform: translateY(-6px) scaleX(1.002);
-  }
-  100% {
-    box-shadow:
-      inset 0 1px 0 rgb(255 248 241 / 0.18),
-      0 4px 0 var(--c-charcoal),
-      0 8px 14px rgb(25 24 19 / 0.18);
-    opacity: 1;
-    transform: translateY(-3px);
-  }
-}
-
 @keyframes os-liquid-button-enter {
   0% {
     clip-path: inset(0 50% 0 50% round 999px);
@@ -2606,26 +2567,6 @@
   100% {
     opacity: 0;
     transform: translate(340%, -50%) scale(1.05);
-  }
-}
-
-@keyframes os-liquid-button-success {
-  0% {
-    border-radius: var(--r-full);
-    transform: scale(1);
-  }
-  22% {
-    border-radius: var(--r-lg);
-    transform: scaleX(0.968) scaleY(0.9);
-  }
-  58% {
-    border-radius: var(--r-full);
-    transform: scaleX(1.006) scaleY(1.03);
-  }
-  100% {
-    border-radius: var(--r-full);
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -8206,7 +8147,9 @@
 }
 
 .circle-os .os-creative-button-shell.style-soft-clay
-  .os-protocol-block.os-creative-button:active {
+  .os-protocol-block.os-creative-button:active,
+.circle-os .os-creative-button-shell.style-soft-clay.phase-pressed
+  .os-protocol-block.os-creative-button {
   box-shadow: var(--os-key-sunk);
   transform: translateY(0);
   transition-duration: var(--os-key-press-ms);

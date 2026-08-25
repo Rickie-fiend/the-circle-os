@@ -118,6 +118,8 @@ export function CreativeButton({
     (previewMode ? "ready" : "hidden") as ButtonLifecycle,
   );
   const committedRef = useRef(false);
+  const awaitingClick = useRef(false);
+  const releaseGuard = useRef<number | undefined>(undefined);
   const completionRef = useRef(onAnimationComplete);
   const successCompletionRef = useRef(onSuccessComplete);
   const pressesToBreak = buttonPressesToBreak(resolvedStyleId);
@@ -134,6 +136,15 @@ export function CreativeButton({
   useEffect(() => {
     if (!previewMode) dispatch("reveal");
   }, [previewMode]);
+
+  useEffect(
+    () => () => {
+      if (releaseGuard.current !== undefined) {
+        window.clearTimeout(releaseGuard.current);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     let timer: number | undefined;
@@ -178,15 +189,50 @@ export function CreativeButton({
   function press(event: PointerEvent<HTMLButtonElement>) {
     onPointerDown?.(event);
     if (event.defaultPrevented || !canActivateButton({ disabled })) return;
+    awaitingClick.current = true;
     dispatch("press");
     if (definition) runHaptic(definition.haptic.slice(0, 1));
   }
 
-  function release(
+  // Lifting the finger is not the end of the press.
+  //
+  // `pointerup` used to return the button to ready, and `pointerup` lands
+  // before `click`. The browser drops `:active` at the same moment, so for the
+  // render between the two the key was neither held down nor committed: it
+  // sprang back up on its leg and then dropped again when the click arrived.
+  // That rebound is the jump Sai sees on release — "when i release, the key
+  // should stay flat and registered the click."
+  //
+  // So the key stays down through the lift and the click decides what happens
+  // to it: committed presses go to success, which is also down, and a press
+  // that does not commit comes back up from there. The timer is only for the
+  // press whose click never arrives at all — a swipe that started on a button,
+  // for instance — so a key cannot be left stuck down.
+  function lift(
     event: PointerEvent<HTMLButtonElement>,
     callback?: (event: PointerEvent<HTMLButtonElement>) => void,
   ) {
     callback?.(event);
+    if (!awaitingClick.current) return;
+    if (releaseGuard.current !== undefined) {
+      window.clearTimeout(releaseGuard.current);
+    }
+    releaseGuard.current = window.setTimeout(() => {
+      releaseGuard.current = undefined;
+      if (!awaitingClick.current) return;
+      awaitingClick.current = false;
+      dispatch("release");
+    }, 320);
+  }
+
+  // Aborting a press is different: the finger left the key or the gesture was
+  // taken away, so nothing is going to be registered and it comes straight up.
+  function abort(
+    event: PointerEvent<HTMLButtonElement>,
+    callback?: (event: PointerEvent<HTMLButtonElement>) => void,
+  ) {
+    callback?.(event);
+    awaitingClick.current = false;
     dispatch("release");
   }
 
@@ -225,19 +271,29 @@ export function CreativeButton({
         className={`${role === "thought" ? "os-thoughts-send " : ""}os-creative-button ${className}`.trim()}
         disabled={disabled}
         onClick={(event) => {
+          // The click is what the held-down key was waiting for. Whatever it
+          // decides below, the press is over and its guard stops running.
+          awaitingClick.current = false;
+          if (releaseGuard.current !== undefined) {
+            window.clearTimeout(releaseGuard.current);
+            releaseGuard.current = undefined;
+          }
           if (!canActivateButton({ disabled, committed: committedRef.current })) {
             event.preventDefault();
+            dispatch("release");
             return;
           }
           // A breaking style takes several presses. Each one fractures it a
           // little more and does nothing else; only the press that finishes it
-          // commits, so the breaking and the action are the same moment.
+          // commits, so the breaking and the action are the same moment. A
+          // strike that does not finish it comes back up, ready for the next.
           if (pressesToBreak > 1) {
             const struck = nextButtonDamage(damage, pressesToBreak);
             setDamage(struck);
             if (!isButtonBroken(struck, pressesToBreak)) {
               if (definition) runHaptic(definition.haptic.slice(0, 1));
               event.preventDefault();
+              dispatch("release");
               return;
             }
           }
@@ -246,10 +302,10 @@ export function CreativeButton({
           if (definition) runHaptic(definition.haptic);
           onClick?.(event);
         }}
-        onPointerCancel={(event) => release(event, onPointerCancel)}
+        onPointerCancel={(event) => abort(event, onPointerCancel)}
         onPointerDown={press}
-        onPointerLeave={(event) => release(event, onPointerLeave)}
-        onPointerUp={(event) => release(event, onPointerUp)}
+        onPointerLeave={(event) => abort(event, onPointerLeave)}
+        onPointerUp={(event) => lift(event, onPointerUp)}
       >
         {resolvedStyleId === "liquid-capsule" ? (
           <span aria-hidden="true" className="os-liquid-sweep" />
