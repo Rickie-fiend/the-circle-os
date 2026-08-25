@@ -335,10 +335,15 @@ function ChapterPageView({
               ? value.includes(choice.id)
               : value === choice.id;
             return (
-              <button
+              <CreativeButton
                 aria-pressed={selected}
                 className={selected ? "selected" : ""}
                 key={choice.id}
+                // Choosing is keeping: the row goes down and stays down, the
+                // same way a habit tick and a Protocol term do.
+                release="latch"
+                sizing="content"
+                styleId="default"
                 type="button"
                 onClick={() => {
                   if (page.type === "multi-choice") {
@@ -358,7 +363,7 @@ function ChapterPageView({
                 }}
               >
                 {choice.label}
-              </button>
+              </CreativeButton>
             );
           })}
         </div>

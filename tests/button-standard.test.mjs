@@ -115,6 +115,61 @@ test("Today and Reflect space their App Boxes with one shared gap", () => {
   }
 });
 
+// 52, 54, 56 and 58 were four numbers for one object: a full-width tappable row.
+// `--os-action-height` already existed and only some of them used it.
+test("every action is one height", () => {
+  for (const selector of [
+    [
+      ".circle-os .os-survey-choices button",
+      ".circle-os .os-survey-slider > button",
+      ".circle-os .os-survey-text > button",
+    ].join(",\n"),
+    [
+      ".circle-os .os-page-primary-action",
+      ".circle-os .os-page-footer > .os-add-habit-row",
+    ].join(",\n"),
+    ".circle-os .os-chapter-continue",
+    ".circle-os .os-creative-button-slot",
+    ".circle-os .os-creative-button-shell",
+  ]) {
+    assert.match(
+      rule(selector),
+      /(min-)?height: var\(--os-action-height\)/,
+      `${selector.split(",")[0]} carries its own height`,
+    );
+  }
+  // The Routine idle action is a Page action like the rest of them.
+  assert.match(
+    rule(
+      [
+        ".circle-os .os-habit .os-chapter-idle-action",
+        ".circle-os .os-extra-mission-done",
+      ].join(",\n"),
+    ),
+    /min-height: var\(--os-action-height\)/,
+  );
+});
+
+// The last tappable rows in the App with no leg, no light and no movement.
+test("a choice is a key, and choosing is keeping", () => {
+  const parts = rule(".circle-os .os-survey-choices .os-creative-button");
+  assert.match(parts, /--os-key-lift: var\(--os-key-lift-sm\)/);
+  assert.match(parts, /--os-key-leg:/);
+  const player = readFileSync("app/os/chapters/chapter-player.tsx", "utf8");
+  assert.match(player, /<CreativeButton\n\s*aria-pressed=\{selected\}/);
+  assert.match(player, /release="latch"/);
+  // Taken means down.
+  assert.match(
+    rule(
+      [
+        ".circle-os .os-creative-button-shell .os-survey-choices button.selected",
+        ".circle-os .os-survey-choices button.selected",
+      ].join(",\n"),
+    ),
+    /transform: translateY\(0\)/,
+  );
+});
+
 // The App Label is the one word that names where you are. It used to hold at
 // opacity 0 and fade in on a timer after every page change, mode flip and send.
 test("the Thoughts label does not animate", () => {
