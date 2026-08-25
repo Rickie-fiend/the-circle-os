@@ -33,7 +33,10 @@ import {
 } from "./chapter-authoring.js";
 import { readChapterDrafts, removeChapterDraft, writeChapterDraft } from "./chapter-draft-store";
 import { CHAPTER_COMPLETION_MODES } from "../chapters/chapter-capabilities.js";
-import { CHAPTER_KINDS } from "../chapters/chapter-scheduler.js";
+import { CHAPTER_APPS, CHAPTER_KINDS } from "../chapters/chapter-scheduler.js";
+
+/** Where a chapter that names no App collects, so nothing is unreachable. */
+const UNASSIGNED_APP = "unassigned";
 
 type AdminModule = "chapters" | "buttons";
 type ChapterView = "library" | "workshop";
@@ -230,15 +233,35 @@ export function ChapterEditor() {
       return [item.chapter.title, item.chapter.id, item.category, item.classification, ...item.tags, ...item.appSpaces].join(" ").toLowerCase().includes(term);
     });
   }, [appFilter, drafts, kindFilter, published, search, starters, themeFilter]);
-  const libraryGroups = useMemo(
-    () => CHAPTER_CLASSIFICATIONS
-      .map((classification) => ({
+  // The Library is organised by the App a chapter is written for, and only then
+  // by what kind of chapter it is. Sai: "i dont know how it categorize, i want
+  // it to categorize by app. Under Note app > First Time Use chapters, Quote /
+  // Facts / Jokes chapters."
+  //
+  // Grouping by classification alone put Habit's setup chapter and Note's
+  // twelve sparks under one heading called Foundation, so the question the
+  // Library could not answer was the first one an author asks: what does this
+  // App currently give the person?
+  //
+  // A chapter with no App named still has to be reachable, so it collects under
+  // one honest heading rather than disappearing.
+  const libraryGroups = useMemo(() => {
+    const bucket = (app: string) =>
+      CHAPTER_CLASSIFICATIONS.map((classification) => ({
         classification,
-        items: libraryItems.filter(({ draft: item }) => item.classification === classification),
-      }))
-      .filter((group) => group.items.length > 0),
-    [libraryItems],
-  );
+        items: libraryItems.filter(
+          ({ draft: item }) =>
+            item.classification === classification &&
+            (app === UNASSIGNED_APP
+              ? !item.appSpaces.some((space) => CHAPTER_APPS.includes(space))
+              : item.appSpaces.includes(app)),
+        ),
+      })).filter((group) => group.items.length > 0);
+
+    return [...CHAPTER_APPS, UNASSIGNED_APP]
+      .map((app) => ({ app, groups: bucket(app) }))
+      .filter((group) => group.groups.length > 0);
+  }, [libraryItems]);
 
   useEffect(() => {
     readChapterDrafts().then((stored) => {
@@ -451,15 +474,23 @@ export function ChapterEditor() {
             <Field label="Theme"><select value={themeFilter} onChange={(event) => setThemeFilter(event.target.value as typeof themeFilter)}><option value="all">All themes</option>{CHAPTER_THEMES.map((theme) => <option key={theme.value} value={theme.value}>{theme.label}</option>)}</select></Field>
           </div>
           <div className="os-admin-draft-list">
-            {libraryGroups.map((group) => (
-              <details className="os-admin-library-group" key={group.classification} open>
-                <summary className="os-admin-library-group-head">
-                  <h3>{group.classification}</h3>
-                  <span>{group.items.length}</span>
+            {libraryGroups.map(({ app, groups }) => (
+              <details className="os-admin-library-app" key={app} open>
+                <summary className="os-admin-library-app-head">
+                  <h3>{app === UNASSIGNED_APP ? "No app named" : pageLabel(app)}</h3>
+                  <span>{groups.reduce((total, group) => total + group.items.length, 0)}</span>
                 </summary>
-                <div className="os-admin-library-group-items">
-                  {group.items.map(({ draft: item, kind }) => <article key={`${kind}-${item.draftId}`}><button className="os-admin-draft-open" type="button" onClick={() => openWorkshop(item, kind)}><span>{kind === "starter" ? "First-use starter" : kind === "published" ? "Published" : item.workflowStatus} · {item.appSpaces.map(pageLabel).join(", ")}</span><strong>{item.chapter.title}</strong><small>{chapterDraftToPreview(item).pages.length} pages · v{item.chapter.version} · {item.category}</small></button><div className={kind === "draft" ? "three" : ""}><button type="button" onClick={() => kind === "draft" ? openDraftForPublish(item) : openWorkshop(item, kind)}>{kind === "draft" ? "Publish" : "Open"}</button>{kind === "draft" ? <><button type="button" onClick={() => copyDraft(item)}>Duplicate</button><button type="button" onClick={() => deleteDraft(item)}>Delete</button></> : null}{kind === "starter" ? <button type="button" onClick={() => createFromStarter(item)}>Use template</button> : null}{kind === "published" ? <button type="button" onClick={() => newPublishedVersion(item)}>Create next version</button> : null}</div></article>)}
-                </div>
+                {groups.map((group) => (
+                  <details className="os-admin-library-group" key={group.classification} open>
+                    <summary className="os-admin-library-group-head">
+                      <h4>{group.classification}</h4>
+                      <span>{group.items.length}</span>
+                    </summary>
+                    <div className="os-admin-library-group-items">
+                      {group.items.map(({ draft: item, kind }) => <article key={`${kind}-${item.draftId}`}><button className="os-admin-draft-open" type="button" onClick={() => openWorkshop(item, kind)}><span>{kind === "starter" ? "First-use starter" : kind === "published" ? "Published" : item.workflowStatus} · {item.appSpaces.map(pageLabel).join(", ")}</span><strong>{item.chapter.title}</strong><small>{chapterDraftToPreview(item).pages.length} pages · v{item.chapter.version} · {item.category}</small></button><div className={kind === "draft" ? "three" : ""}><button type="button" onClick={() => kind === "draft" ? openDraftForPublish(item) : openWorkshop(item, kind)}>{kind === "draft" ? "Publish" : "Open"}</button>{kind === "draft" ? <><button type="button" onClick={() => copyDraft(item)}>Duplicate</button><button type="button" onClick={() => deleteDraft(item)}>Delete</button></> : null}{kind === "starter" ? <button type="button" onClick={() => createFromStarter(item)}>Use template</button> : null}{kind === "published" ? <button type="button" onClick={() => newPublishedVersion(item)}>Create next version</button> : null}</div></article>)}
+                    </div>
+                  </details>
+                ))}
               </details>
             ))}
           </div>

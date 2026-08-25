@@ -6313,7 +6313,16 @@
 }
 
 .circle-os .os-admin button {
-  min-height: 44px;
+  min-height: var(--touch-min);
+}
+
+/* An Admin preview shows the production App Box, so Admin's own button density
+ * must not reach inside it. A choice row measured 44px in the Workshop and 52
+ * in the App, which makes the preview quietly untrustworthy for the one thing
+ * it exists to show. Scoped to engine buttons, so Admin's own header and page
+ * controls keep their density. */
+.circle-os .os-admin .os-app-page .os-creative-button {
+  min-height: var(--os-action-height);
 }
 
 .circle-os .os-admin-head,
@@ -6530,6 +6539,43 @@
   field-sizing: content;
 }
 
+/* The Library reads by App first, and only then by what kind of chapter it is.
+ * Grouping by classification alone put Habit's setup chapter and Note's twelve
+ * sparks under one heading called Foundation, so the Library could not answer
+ * the first question an author asks: what does this App currently give? */
+.circle-os .os-admin-library-app {
+  border: 1px solid rgb(241 239 232 / 0.12);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  min-width: 0;
+  padding: 6px 10px 12px;
+}
+
+.circle-os .os-admin-library-app-head {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 2px;
+}
+
+.circle-os .os-admin-library-app-head h3 {
+  color: var(--c-orange);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.circle-os .os-admin-library-app-head span {
+  color: var(--c-neutral-400);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
 .circle-os .os-admin-library-group,
 .circle-os .os-admin-library-group-items {
   display: grid;
@@ -6544,10 +6590,11 @@
   padding: 0 2px;
 }
 
-.circle-os .os-admin-library-group-head h3 {
+.circle-os .os-admin-library-group-head h4 {
   color: var(--c-bone);
   font-size: var(--text-md);
   margin: 0;
+  opacity: 0.82;
 }
 
 .circle-os .os-admin-library-group-head span {
