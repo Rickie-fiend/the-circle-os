@@ -148,6 +148,25 @@ test("the press is quick enough to read as an answer", () => {
   assert.ok(ms("SETTLE_MS") <= 280);
 });
 
+// A touch pointer stops existing the moment it lifts, so the browser fires
+// `pointerleave` immediately after `pointerup` — teardown, not the finger
+// sliding off. Treating it as an abort put the key back up in the gap before
+// the click, and the click pulled it down again: pressed, up, pressed. It never
+// showed on a mouse, and never in a synthetic test that omits leave.
+test("the teardown leave after a touch is not an abort", () => {
+  const engine = readFileSync("app/os/button-engine.tsx", "utf8");
+  const abort = engine.match(/function abort\([\s\S]*?\n  \}/)?.[0] ?? "";
+  assert.ok(abort, "abort() moved");
+  assert.match(
+    abort,
+    /if \(lifted\.current\) return;/,
+    "abort() still releases on the leave that follows a lift",
+  );
+  // The flag has to be set when the finger lifts and cleared on a fresh press.
+  assert.match(engine, /lifted\.current = true;/);
+  assert.match(engine, /lifted\.current = false;/);
+});
+
 // One press, two endings. A rebound comes back up and registers from there; a
 // latch stays where the finger left it because what replaces it is also down.
 test("a key knows whether it rebounds or latches", () => {

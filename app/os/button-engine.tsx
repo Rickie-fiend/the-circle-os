@@ -160,6 +160,7 @@ export function CreativeButton({
   const awaitingClick = useRef(false);
   const releaseGuard = useRef<number | undefined>(undefined);
   const pressStartedAt = useRef(0);
+  const lifted = useRef(false);
   const registerTimer = useRef<number | undefined>(undefined);
   const completionRef = useRef(onAnimationComplete);
   const successCompletionRef = useRef(onSuccessComplete);
@@ -234,6 +235,7 @@ export function CreativeButton({
     onPointerDown?.(event);
     if (event.defaultPrevented || !canActivateButton({ disabled })) return;
     awaitingClick.current = true;
+    lifted.current = false;
     // Read once, on a real press. Never during render.
     pressStartedAt.current = Date.now();
     dispatch("press");
@@ -257,6 +259,7 @@ export function CreativeButton({
   ) {
     callback?.(event);
     if (!awaitingClick.current) return;
+    lifted.current = true;
     if (releaseGuard.current !== undefined) {
       window.clearTimeout(releaseGuard.current);
     }
@@ -276,13 +279,26 @@ export function CreativeButton({
     }, settle);
   }
 
-  // Aborting a press is different: the finger left the key or the gesture was
-  // taken away, so nothing is going to be registered and it comes straight up.
+  // Aborting a press: the finger left the key before committing to it, or the
+  // gesture was taken away. Nothing will be registered, so the key comes
+  // straight up.
+  //
+  // `pointerleave` needs care here, and getting it wrong is what made every
+  // engine button bounce on a phone. A touch pointer stops existing the moment
+  // it lifts, so the browser fires `pointerleave` immediately after
+  // `pointerup` — not because the finger slid off the key, but as teardown.
+  // Treating that as an abort put the key back up in the gap before the click,
+  // and the click then pulled it down again: pressed, up, pressed. It never
+  // showed on a mouse, where leave only fires when the cursor actually leaves,
+  // and never in a synthetic test, which does not fire leave at all.
+  //
+  // A lift has already happened by then, so that is the thing to check.
   function abort(
     event: PointerEvent<HTMLButtonElement>,
     callback?: (event: PointerEvent<HTMLButtonElement>) => void,
   ) {
     callback?.(event);
+    if (lifted.current) return;
     awaitingClick.current = false;
     dispatch("release");
   }
