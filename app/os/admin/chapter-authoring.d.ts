@@ -14,6 +14,7 @@ export type ChapterDraft = {
 };
 
 export const CHAPTER_PAGE_TYPES: ChapterPageType[];
+export const FIRST_USE_CATEGORY: string;
 export const CHAPTER_CLASSIFICATIONS: ChapterDraft["classification"][];
 export const FIRST_USE_APP_SPACES: string[];
 export function chapterSlug(value?: string): string;

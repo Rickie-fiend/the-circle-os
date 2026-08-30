@@ -19,6 +19,7 @@ import {
   CHAPTER_CLASSIFICATIONS,
   CHAPTER_PAGE_TYPES,
   FIRST_USE_APP_SPACES,
+  FIRST_USE_CATEGORY,
   chapterDefinitionToDraft,
   chapterDraftToMarkdown,
   chapterDraftToPreview,
@@ -332,6 +333,10 @@ export function ChapterEditor() {
       };
       const chapter = chapterDraftToPreview(publishedDraft);
       const source = chapterDraftToMarkdown(publishedDraft);
+      // A First Time Use chapter is published as the App's setup, so it stands
+      // in place of the compiled one and finishing it seals that setup. Every
+      // other chapter is an ordinary delivery that visits and retires.
+      const firstUse = publishedDraft.category === FIRST_USE_CATEGORY;
       const state = await loadCircleState();
       const audienceProfileId = state.ai.profileId || "local";
       if (scope === "public") {
@@ -344,6 +349,7 @@ export function ChapterEditor() {
           targetApp,
           audienceProfileId: "public",
           delivery: "manual",
+          firstUse,
         });
       } else {
         await writeImmutableChapterPublication({
@@ -354,6 +360,7 @@ export function ChapterEditor() {
           targetApp,
           audienceProfileId,
           delivery: "manual",
+          firstUse,
         });
       }
       const runId = chapterRunId(chapter);

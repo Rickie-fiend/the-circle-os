@@ -18,6 +18,15 @@ export const CHAPTER_PAGE_TYPES = [
   "idle",
 ];
 
+/**
+ * The category that marks a chapter as an App's first-use setup.
+ *
+ * Publishing a draft in this category makes it the App's setup chapter rather
+ * than an ordinary delivery, so it stands in place of the compiled one and
+ * finishing it seals that setup.
+ */
+export const FIRST_USE_CATEGORY = "First Time Use";
+
 export const CHAPTER_CLASSIFICATIONS = [
   "Foundation",
   "Short",
@@ -206,7 +215,7 @@ export function createFirstUseChapterDraft(appSpace, now = new Date().toISOStrin
   if (!starter) throw new Error(`Unknown first-use app space: ${appSpace}`);
   const draft = createChapterDraft(now);
   draft.draftId = `starter-${appSpace}-${Date.now()}`;
-  draft.category = "First Time Use";
+  draft.category = FIRST_USE_CATEGORY;
   draft.classification = "Foundation";
   draft.tags = ["first-time-use", appSpace];
   const app = ["check-in", "reflection"].includes(appSpace) ? "note" : appSpace;
@@ -237,7 +246,7 @@ export function chapterDefinitionToDraft(chapter, now = new Date().toISOString()
   return {
     draftId: `published-${chapter.id}-v${chapter.version}`,
     workflowStatus: "published",
-    category: foundation ? "First Time Use" : "Published Library",
+    category: foundation ? FIRST_USE_CATEGORY : "Published Library",
     classification: foundation ? "Foundation" : chapter.id.startsWith("profile-spark-") ? "Short" : "Reflection",
     tags: [chapter.session, chapter.id],
     appSpaces: [chapter.app || chapterApp(chapter)],

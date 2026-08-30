@@ -18,6 +18,7 @@ export type StoredChapterPublication = {
   audienceProfileId?: string;
   visibility?: "private" | "public";
   delivery?: "manual" | "on-view";
+  firstUse?: boolean;
 };
 
 const DATABASE = "circle-os-chapter-publications";
@@ -139,8 +140,62 @@ export function normalizeChapterPublication(
     visibility: publication.visibility || publication.scope || "private",
     delivery: publication.delivery || "manual",
     source: publication.source === "athena" ? "athena" : "admin",
+    firstUse: Boolean(publication.firstUse),
     publishedAt: publication.publishedAt,
   };
+}
+
+/**
+ * The setup chapter an App should open on, if one has been published and is not
+ * finished yet.
+ *
+ * Separate from `selectPendingAppPublication` on purpose. An ordinary delivery
+ * visits an App and retires; a setup publication *is* the App until it is done,
+ * so it must not be filtered out by a deferral or overtaken by a newer everyday
+ * chapter waiting in the same queue.
+ */
+export function selectFirstUsePublication(
+  publications: StoredChapterPublication[],
+  targetApp: AppTarget,
+  audienceProfileId: string,
+  runs: Record<string, ChapterRun>,
+) {
+  return (
+    publications
+      .map(normalizeChapterPublication)
+      .filter(
+        (publication) =>
+          publication.firstUse &&
+          publication.targetApp === targetApp &&
+          (publication.visibility === "public" ||
+            publication.audienceProfileId === audienceProfileId ||
+            publication.audienceProfileId === "local"),
+      )
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+      .find(
+        (publication) =>
+          runs[chapterRunId(publication.chapter)]?.status !== "completed",
+      ) || null
+  );
+}
+
+/**
+ * Whether an App's first-use setup has been finished by a published chapter,
+ * whichever version of it the person actually answered.
+ */
+export function firstUsePublicationDone(
+  publications: StoredChapterPublication[],
+  targetApp: AppTarget,
+  runs: Record<string, ChapterRun>,
+) {
+  return publications
+    .map(normalizeChapterPublication)
+    .some(
+      (publication) =>
+        publication.firstUse &&
+        publication.targetApp === targetApp &&
+        runs[chapterRunId(publication.chapter)]?.status === "completed",
+    );
 }
 
 export function publicationIsNewerThanRun(
@@ -165,6 +220,7 @@ export function selectPendingAppPublication(
       .map(normalizeChapterPublication)
       .filter(
         (publication) =>
+          !publication.firstUse &&
           publication.targetApp === targetApp &&
           (publication.visibility === "public" ||
             publication.audienceProfileId === audienceProfileId ||

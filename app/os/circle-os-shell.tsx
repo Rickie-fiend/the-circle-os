@@ -134,6 +134,8 @@ import {
 import {
   normalizeChapterPublication,
   publicationIsNewerThanRun,
+  firstUsePublicationDone,
+  selectFirstUsePublication,
   selectPendingAppPublication,
   writeSyncedChapterPublications,
 } from "./chapters/chapter-publication-store";
@@ -1717,6 +1719,34 @@ export function TodayExperience() {
     publicationProfileId,
     state.chapters.runs,
   );
+  // A first-use chapter published from Admin stands in place of the compiled
+  // setup chapter for its App. Sai authors these; the App must open on what he
+  // wrote rather than on what shipped in the bundle.
+  const habitSetupPublication = selectFirstUsePublication(
+    publications,
+    "habit",
+    publicationProfileId,
+    state.chapters.runs,
+  );
+  const logSetupPublication = selectFirstUsePublication(
+    publications,
+    "log",
+    publicationProfileId,
+    state.chapters.runs,
+  );
+  // And finishing one seals that App's setup for good. Without this the
+  // published chapter retires on completion and the compiled one — still
+  // unanswered — comes straight back, so the person is set up twice.
+  const habitSetupSealed = firstUsePublicationDone(
+    publications,
+    "habit",
+    state.chapters.runs,
+  );
+  const logSetupSealed = firstUsePublicationDone(
+    publications,
+    "log",
+    state.chapters.runs,
+  );
   const defaultLogStartHour = Math.max(CIRCLE_DAY_START_HOUR, wakeHour);
   const defaultLogEndHour = Math.min(
     CIRCLE_DAY_START_HOUR + 23,
@@ -1817,11 +1847,18 @@ export function TodayExperience() {
   const habitBuildingChapter = getPublishedChapter("habit-building");
   const habitBuildingRun = useMemo(() => {
     if (!habitBuildingChapter) return null;
-    return (
+    const stored =
       state.chapters.runs[chapterRunId(habitBuildingChapter)] ||
-      createChapterRun(habitBuildingChapter)
-    );
-  }, [habitBuildingChapter, state.chapters.runs]);
+      createChapterRun(habitBuildingChapter);
+    // A published setup chapter that has been finished seals this App's setup,
+    // so the compiled chapter is done whether or not it was ever opened. It
+    // stays a run rather than disappearing, because Routine reads a completed
+    // run as "show the idle Page".
+    if (habitSetupSealed && stored.status !== "completed") {
+      return { ...stored, status: "completed" as const };
+    }
+    return stored;
+  }, [habitBuildingChapter, habitSetupSealed, state.chapters.runs]);
   const activeHabitChapter = useMemo(() => {
     if (!habitBuildingChapter) return null;
     return {
@@ -1893,9 +1930,9 @@ export function TodayExperience() {
     });
     return createChapterRun(logSetupChapter, seedAnswers);
   }, [logSetupChapter, state.chapters.runs, surveyAnswers]);
-  const logSetupDone = logSetupRun
-    ? logSetupRun.status === "completed"
-    : routineTimesKnown;
+  const logSetupDone =
+    logSetupSealed ||
+    (logSetupRun ? logSetupRun.status === "completed" : routineTimesKnown);
   const activeDreamline = currentDreamline(state, liveNow) as DreamlineRecord | null;
   const pastDreamlines = dreamlineRecords(state, liveNow).filter(
     (record) => record.status === "concluded",
@@ -3028,7 +3065,16 @@ export function TodayExperience() {
           )}
         </section>
 
-        {habitPublication ? (
+        {habitSetupPublication ? (
+          <section className="os-habit" aria-label="Routine setup">
+            <PublishedChapterDelivery
+              className="os-habit-session"
+              hideIdleHeading
+              label="Routine setup"
+              publication={habitSetupPublication}
+            />
+          </section>
+        ) : habitPublication ? (
           <section className="os-habit" aria-label="Routine session">
             <PublishedChapterDelivery
               className="os-habit-session"
@@ -3384,7 +3430,17 @@ export function TodayExperience() {
           </section>
         ) : null}
 
-        {logPublication ? (
+        {logSetupPublication ? (
+          <section className="os-day os-day-gated" aria-label="Log setup">
+            <div className="os-log-gate">
+              <PublishedChapterDelivery
+                className="os-log-setup-session"
+                label="Log setup"
+                publication={logSetupPublication}
+              />
+            </div>
+          </section>
+        ) : logPublication ? (
           <section className="os-day os-day-gated" aria-label="Log chapter">
             <PublishedChapterDelivery
               className="os-log-setup-session"

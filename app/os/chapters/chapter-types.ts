@@ -102,6 +102,13 @@ export type ChapterPublication = {
   visibility: "private" | "public";
   delivery: "manual" | "on-view";
   source: "admin" | "athena";
+  /**
+   * Whether this chapter is the App's first-use setup rather than an ordinary
+   * delivery. A setup publication stands in place of the App's compiled setup
+   * chapter, and finishing it seals that setup for good — otherwise the old one
+   * returns the moment the publication retires and the person is set up twice.
+   */
+  firstUse: boolean;
   publishedAt: string;
 };
 
