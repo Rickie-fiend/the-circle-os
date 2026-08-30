@@ -59,7 +59,10 @@ test("server-renders the functional Circle OS Today route", async () => {
 
   const html = await response.text();
   assert.match(html, /CIRCLE OS/);
-  assert.match(html, /Keep going\./);
+  // A server render is a fresh install, so Note greets rather than rotating.
+  // "Keep going." is one of the empty-Note words, which is the wrong thing to
+  // say to somebody who has not written anything yet.
+  assert.match(html, /This is your Note\. Tap here to write\./);
   assert.match(html, /Let&#x27;s set up your first habit\./);
   assert.match(html, /Set your usual day\./);
   assert.match(html, /Swipe to begin/);

@@ -114,6 +114,7 @@ import {
   type DeepThoughtPrompt,
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
+import { firstUsePlaceholder } from "./first-use.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   ProtocolKeptPage,
@@ -1434,9 +1435,12 @@ export function TodayExperience() {
     firstNotePlaceholder?.id || "",
   );
   const notePlaceholder =
+    firstUsePlaceholder(state, "note") ||
     notePlaceholderPool.placeholders.find(
       (placeholder) => placeholder.id === notePlaceholderId,
-    )?.text || firstNotePlaceholder?.text || "";
+    )?.text ||
+    firstNotePlaceholder?.text ||
+    "";
 
   // Pointerdown clears and click is the keyboard path, so one press can call
   // this twice. The second call inside the same press is the same press.
@@ -1507,8 +1511,12 @@ export function TodayExperience() {
   const thoughtDraft = thoughtMode === "deep" ? deepThoughtDraft : regularThoughtDraft;
   // liveNow already ticks every thirty seconds and the prompt is bucketed by the
   // hour, so this changes through the day without moving under the person.
+  // Before a single thought has been sent, the placeholder says what this App
+  // is rather than asking a question written for someone who already knows.
   const thoughtPlaceholder = useMemo(
-    () => selectThoughtPrompt(state, dateKey, liveNow),
+    () =>
+      firstUsePlaceholder(state, "thoughts") ||
+      selectThoughtPrompt(state, dateKey, liveNow),
     [dateKey, liveNow, state],
   );
   const [thoughtSent, setThoughtSent] = useState(false);
