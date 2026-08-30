@@ -107,7 +107,7 @@ import {
 import linePool from "./lines/lines.json";
 import { selectLine } from "./lines/line-pool.js";
 import {
-  LINE_REACTION_GLYPHS,
+  LINE_REACTION_WORDS,
   LINE_REACTION_LABELS,
   lineReaction,
   lineReactions,
@@ -2910,22 +2910,19 @@ export function TodayExperience() {
             styleId="default"
             type="button"
           >
-            <span aria-hidden="true">{LINE_REACTION_GLYPHS[reaction] || "?"}</span>
+            {LINE_REACTION_WORDS[reaction] || reaction}
           </CreativeButton>
         ))}
       </div>
     );
-    const lastPageFooter = lineFeedbackOpen ? reactions : (
-      <span className="os-line-cue">Swipe</span>
-    );
+    // Nothing in the Footer until there is something to answer. Sai: "in joke
+    // quotes and those flip side of notes, remove all the swipe to begins etc
+    // labels in footer. only the first set-up page covers will have those."
+    const lastPageFooter = lineFeedbackOpen ? reactions : undefined;
     const setup = (
       <PageLayout
         className="os-line-page"
-        footer={
-          revealedLine.kind === "quote" ? lastPageFooter : (
-            <span className="os-line-cue">Swipe to reveal</span>
-          )
-        }
+        footer={revealedLine.kind === "quote" ? lastPageFooter : undefined}
         headerLeft={kind}
         key={`${revealedLine.id}:setup`}
         theme="light"

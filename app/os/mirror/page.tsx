@@ -1066,7 +1066,17 @@ export default function CircleOSMirror() {
               key="week-days"
               theme="dark"
             >
+              {/* Main text, then the days, then what that day held — the same
+                  order every other App reads in. The strip used to sit above
+                  the name, which put navigation where a Page's first words
+                  belong. Sai: "make the week app, main text first, then the
+                  days, than the body text." */}
               <div className="os-page-main">
+                <h2 className="os-week-day-name">
+                  {chosenDay.title || chosenDay.name}
+                </h2>
+              </div>
+              <div className="os-page-sub os-week-day-body">
                 <div className="os-week-strip" role="group" aria-label="Days of this week">
                   {weekDaysView.map((day) => (
                     <button
@@ -1084,31 +1094,28 @@ export default function CircleOSMirror() {
                     </button>
                   ))}
                 </div>
-                <h2 className="os-week-day-name">
-                  {chosenDay.title || chosenDay.name}
-                </h2>
-              </div>
-              <div className="os-page-sub os-week-day-summary">
-                {chosenDay.touched ? (
-                  <dl>
-                    <div>
-                      <dt>Habits</dt>
-                      <dd>{chosenDay.kept} of {chosenDay.due}</dd>
-                    </div>
-                    <div>
-                      <dt>Tasks</dt>
-                      <dd>{chosenDay.tasks}</dd>
-                    </div>
-                    <div>
-                      <dt>Hours logged</dt>
-                      <dd>{chosenDay.hours}</dd>
-                    </div>
-                  </dl>
-                ) : (
-                  <p className="os-week-day-empty">
-                    {chosenDay.isToday ? "Nothing written down yet." : "Nothing written down."}
-                  </p>
-                )}
+                <div className="os-week-day-summary">
+                  {chosenDay.touched ? (
+                    <dl>
+                      <div>
+                        <dt>Habits</dt>
+                        <dd>{chosenDay.kept} of {chosenDay.due}</dd>
+                      </div>
+                      <div>
+                        <dt>Tasks</dt>
+                        <dd>{chosenDay.tasks}</dd>
+                      </div>
+                      <div>
+                        <dt>Hours logged</dt>
+                        <dd>{chosenDay.hours}</dd>
+                      </div>
+                    </dl>
+                  ) : (
+                    <p className="os-week-day-empty">
+                      {chosenDay.isToday ? "Nothing written down yet." : "Nothing written down."}
+                    </p>
+                  )}
+                </div>
               </div>
             </PageLayout>
 

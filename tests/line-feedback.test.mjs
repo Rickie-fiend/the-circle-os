@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
-  LINE_REACTION_GLYPHS,
+  LINE_REACTION_WORDS,
   LINE_REACTION_LABELS,
   lineReaction,
   lineReactions,
@@ -27,7 +27,13 @@ test("each kind is asked its own question", () => {
   assert.deepEqual(lineReactions("quest"), []);
   for (const reaction of ["funny", "flat", "loved", "not-for-me"]) {
     assert.ok(LINE_REACTION_LABELS[reaction], `${reaction} has no spoken label`);
-    assert.ok(LINE_REACTION_GLYPHS[reaction], `${reaction} has no glyph`);
+    assert.ok(LINE_REACTION_WORDS[reaction], `${reaction} has no word`);
+    // Words, not pictures: the App has no other pictographs anywhere.
+    assert.doesNotMatch(
+      LINE_REACTION_WORDS[reaction],
+      /\p{Extended_Pictographic}/u,
+      `${reaction} still carries an emoji`,
+    );
   }
 });
 
@@ -104,4 +110,13 @@ test("the first swipe asks and the second one leaves", () => {
   const react = shell.match(/function reactToRevealedLine\([\s\S]*?\n  \}/)?.[0] ?? "";
   assert.match(react, /reactToLineSeen\(current, line\.id, reaction\)/);
   assert.match(react, /closeNoteLine\(\)/);
+});
+
+// Only a first-use Cover tells you to swipe. A Line is a reading surface and
+// carries nothing in its Footer until there is something to answer.
+test("a Line's Footer is empty until it asks", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /const lastPageFooter = lineFeedbackOpen \? reactions : undefined;/);
+  assert.doesNotMatch(shell, /os-line-cue/);
+  assert.doesNotMatch(shell, /Swipe to reveal/);
 });

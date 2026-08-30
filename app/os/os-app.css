@@ -698,10 +698,20 @@
 }
 
 .circle-os .os-line-reactions .os-creative-button-shell {
+  flex: 0 0 auto;
+}
+
+.circle-os .os-line-reactions .os-creative-button-shell {
   height: auto;
   width: auto;
 }
 
+/* Words, not pictures.
+ *
+ * These were emoji, which Sai called out as inconsistent and ugly — and they
+ * were: the App has no other pictographs anywhere, so two of them in a Footer
+ * belonged to a different product. A word on a key is what every other control
+ * here is, and it says exactly what it means without a legend. */
 .circle-os .os-line-reaction.os-creative-button {
   --os-key-lift: var(--os-key-lift-sm);
   --os-key-leg: var(--c-neutral-300);
@@ -712,13 +722,14 @@
   border-radius: var(--r-md);
   color: var(--c-ink);
   display: flex;
-  font-size: var(--text-lg);
+  font-size: var(--text-sm);
+  font-weight: 650;
   justify-content: center;
+  letter-spacing: -0.01em;
   line-height: 1;
   min-height: var(--touch-min);
-  min-width: var(--touch-min);
-  padding: 0;
-  width: var(--touch-min);
+  padding: 0 1rem;
+  white-space: nowrap;
 }
 
 /* Answered: the key stays down, the way a kept term does. */
@@ -4619,11 +4630,17 @@
  * control of its own. A day that has something in it is marked; a day not yet
  * lived is dimmed and cannot be chosen, because there is nothing to look at and
  * a disabled key says that more honestly than an empty Page would. */
+/* The days sit under the Main text and above what that day held, so the Page
+ * reads name, days, detail — the order every other App reads in. */
+.circle-os .os-week-day-body {
+  display: grid;
+  gap: var(--os-group-gap);
+}
+
 .circle-os .os-week-strip {
   display: grid;
   gap: 6px;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  margin-bottom: var(--os-main-sub-gap);
   width: 100%;
 }
 
@@ -6115,8 +6132,15 @@
   width: 100%;
 }
 
+/* A Cover has no Label, but it still begins where every other Page begins.
+ *
+ * Hiding the Header took the forehead with it — the forehead is that Header's
+ * padding — so a Cover started its words 22px down while every other App
+ * started at 99px. Sai: "the cover text did not have the forehead, so they are
+ * different standard." The Header stays in the layout and simply has nothing
+ * in it. */
 .circle-os .os-cover-page .os-page-header {
-  display: none;
+  pointer-events: none;
 }
 
 .circle-os .os-cover-page .os-page-footer {

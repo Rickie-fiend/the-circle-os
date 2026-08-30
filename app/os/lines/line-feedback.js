@@ -29,12 +29,23 @@ export const LINE_REACTION_LABELS = Object.freeze({
   "not-for-me": "Not for me",
 });
 
-/** The glyph on each key. */
-export const LINE_REACTION_GLYPHS = Object.freeze({
-  funny: "😄",
-  flat: "😐",
-  loved: "♥",
-  "not-for-me": "✕",
+/**
+ * The word on each key.
+ *
+ * These were emoji. Sai: "i dont love the use of emojis ... it look ass and not
+ * consistent." He was right — the App has no other pictographs anywhere, so two
+ * in a Footer belonged to a different product, and an emoji renders differently
+ * on every device besides. A word is what every other control here carries, and
+ * it needs no legend.
+ *
+ * Shorter than the spoken label on purpose: the key says the answer, the label
+ * says it in full for anyone who cannot see the key.
+ */
+export const LINE_REACTION_WORDS = Object.freeze({
+  funny: "Funny",
+  flat: "Not really",
+  loved: "Loved it",
+  "not-for-me": "Not for me",
 });
 
 /** The reactions offered for a Line, or none for a kind that is not asked. */
