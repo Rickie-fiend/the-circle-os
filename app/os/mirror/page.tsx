@@ -13,8 +13,7 @@ import {
 import {
   answerSurveyQuestion,
   appSessionIndex,
-  buildWeekReview,
-  buildYesterdayReview,
+
   declarationVersions,
   declareLife,
   editProfileSession,
@@ -37,6 +36,11 @@ import {
 import { sizeTextAreaToContent } from "../text-area-size";
 import { useAppBack } from "../app-back";
 import { useStableRouteAnchor } from "../stable-route-anchor";
+import {
+  weekCoverLine,
+  weekDays,
+  weekSpan,
+} from "../week-app-model.js";
 import {
   normalizeChapterPublication,
   publicationIsNewerThanRun,
@@ -480,15 +484,26 @@ export default function CircleOSMirror() {
   // Box. Sai: "Yesterday, doesnt need its own app box, it should be inside the
   // week review." It is the same mirror at a finer grain, so the reading widens
   // from the day to the week instead of asking for a second box to do it.
-  const yesterday = buildYesterdayReview(state);
-  const weekReview = buildWeekReview(state);
-  const weekReviewPages = [
-    yesterday.did,
-    yesterday.achieved,
-    weekReview.dailyPattern,
-    ...weekReview.periods,
-    weekReview.week,
-  ];
+  // The Week App. Seven days across the top and whichever one is chosen
+  // underneath, then a few days either side. It replaces Week Review, which
+  // read as claims about the week and which Sai never went back to.
+  const todayKey = getDateKey();
+  const weekDaysView = weekDays(state, todayKey);
+  const weekSpanView = weekSpan(state, todayKey);
+  const weekCover = weekCoverLine(state, todayKey);
+  const [chosenDayKey, setChosenDayKey] = useState(todayKey);
+  // A chosen day that is no longer in this week — the app was left open across
+  // midnight, or the week turned — falls back to today rather than showing a
+  // day that is not on the strip above it.
+  const chosenDay =
+    weekDaysView.find((day) => day.dateKey === chosenDayKey) ||
+    weekDaysView.find((day) => day.dateKey === todayKey) ||
+    weekDaysView[0];
+  // Short on purpose. A Main text is a statement, not a sentence to read: the
+  // long version wrapped to seven lines and pushed the Page past 800px, which
+  // is the empty-form-space growth the App Box standard forbids. The rows
+  // underneath carry the detail.
+  const weekSpanHeading = `${weekSpanView.filter((day) => day.touched).length} of ${weekSpanView.length} days here.`;
   const profileCase = state.profile.profileCase;
   const publicationProfileId = state.ai.profileId || "local";
   const locationSearch = useSyncExternalStore(
@@ -575,7 +590,9 @@ export default function CircleOSMirror() {
     athenaReading,
     profileCase.updatedAt,
   );
-  const weekJourneyVersion = `${weekReview.version}|${yesterday.version}`;
+  // The Week App has three fixed Pages, so its saved position only has to
+  // forget the old Week Review arrangement once.
+  const weekJourneyVersion = "week-app-v1";
   const profileJourneyVersion = [
     readingUpdatedAt,
     athenaReading.preparedAt,
@@ -1004,22 +1021,19 @@ export default function CircleOSMirror() {
 
         <header className="mirror-intro mirror-week-intro">
           <div>
-            <p className="os-eyebrow">Week Review</p>
-            <h1>How you are living</h1>
+            <p className="os-eyebrow">Week</p>
+            <h1>{weekCover}</h1>
           </div>
         </header>
 
-        <section className="vision-week-session" aria-label="Week Review session">
+        <section className="vision-week-session" aria-label="Week">
           <SwipeSession
             attentionKey={`vision-week:${weekJourneyVersion}`}
-            availableIndices={Array.from(
-              { length: weekReviewPages.length + 1 },
-              (_, index) => index,
-            )}
+            availableIndices={[0, 1, 2]}
             className="vision-week-apps"
             index={visibleWeekApp}
-            label="Week Review apps"
-            maxIndex={weekReviewPages.length}
+            label="Week apps"
+            maxIndex={2}
             onIndexChange={(nextIndex) =>
               updateState((current) =>
                 setAppSessionIndex(
@@ -1032,55 +1046,104 @@ export default function CircleOSMirror() {
             }
           >
             <PageLayout
-              className="vision-week-cover"
+              className="os-week-cover"
               footer={<span>Swipe to see</span>}
-              headerLeft={<p className="os-card-label">Week Review</p>}
-              key="week-review-cover"
+              headerLeft={<p className="os-card-label">Week</p>}
+              key="week-cover"
               theme="dark"
             >
               <div className="os-page-main">
-                <h2>What held. What did not.</h2>
+                <h2>{weekCover}</h2>
               </div>
             </PageLayout>
-            {weekReviewPages.map((claim: {
-              key: string;
-              label: string;
-              sentence: string;
-              working?: Record<string, unknown>;
-              evidence: Array<{
-                label: string;
-                shortLabel: string;
-                value: string;
-                tone: string;
-              }>;
-            }) => (
-              <PageLayout
-                className="vision-week-claim"
-                headerLeft={<p className="os-card-label">{claim.label}</p>}
-                key={claim.key}
-                theme="dark"
-              >
-                <div className="os-page-main">
-                  <h2>{claim.sentence}</h2>
-                </div>
-                <div
-                  aria-label={`Evidence for ${claim.label}`}
-                  className="os-page-sub week-claim-evidence"
-                >
-                  {claim.evidence.map((item, index) => (
-                    <span
-                      className={`is-${item.tone}`}
-                      key={`${item.label}-${index}`}
-                      title={item.label}
+
+            {/* The week itself: seven days across the top, and whichever one is
+                chosen underneath. The header is the navigation, so the Page
+                never needs a control of its own. */}
+            <PageLayout
+              className="vision-week-days"
+              headerLeft={<p className="os-card-label">Week</p>}
+              key="week-days"
+              theme="dark"
+            >
+              <div className="os-page-main">
+                <div className="os-week-strip" role="group" aria-label="Days of this week">
+                  {weekDaysView.map((day) => (
+                    <button
+                      aria-label={day.name}
+                      aria-pressed={day.dateKey === chosenDayKey}
+                      className={`os-week-day${day.isToday ? " is-today" : ""}${
+                        day.isFuture ? " is-future" : ""
+                      }${day.touched ? " is-touched" : ""}`}
+                      disabled={day.isFuture}
+                      key={day.dateKey}
+                      onClick={() => setChosenDayKey(day.dateKey)}
+                      type="button"
                     >
-                      <i aria-hidden="true" />
-                      <b>{item.shortLabel}</b>
-                      <small>{item.value}</small>
-                    </span>
+                      <span aria-hidden="true">{day.letter}</span>
+                    </button>
                   ))}
                 </div>
-              </PageLayout>
-            ))}
+                <h2 className="os-week-day-name">
+                  {chosenDay.title || chosenDay.name}
+                </h2>
+              </div>
+              <div className="os-page-sub os-week-day-summary">
+                {chosenDay.touched ? (
+                  <dl>
+                    <div>
+                      <dt>Habits</dt>
+                      <dd>{chosenDay.kept} of {chosenDay.due}</dd>
+                    </div>
+                    <div>
+                      <dt>Tasks</dt>
+                      <dd>{chosenDay.tasks}</dd>
+                    </div>
+                    <div>
+                      <dt>Hours logged</dt>
+                      <dd>{chosenDay.hours}</dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="os-week-day-empty">
+                    {chosenDay.isToday ? "Nothing written down yet." : "Nothing written down."}
+                  </p>
+                )}
+              </div>
+            </PageLayout>
+
+            {/* A few days either side of today, which straddles the week edge
+                on purpose: these are the days close enough to still act on. */}
+            <PageLayout
+              className="vision-week-span"
+              headerLeft={<p className="os-card-label">These days</p>}
+              key="week-span"
+              theme="dark"
+            >
+              <div className="os-page-main">
+                <h2>{weekSpanHeading}</h2>
+              </div>
+              <div className="os-page-sub os-week-span">
+                {weekSpanView.map((day) => (
+                  <div
+                    className={`os-week-span-day${day.isToday ? " is-today" : ""}${
+                      day.isFuture ? " is-future" : ""
+                    }`}
+                    key={day.dateKey}
+                  >
+                    <b>{day.letter}</b>
+                    <span>{day.title || day.name}</span>
+                    <small>
+                      {day.isFuture
+                        ? "—"
+                        : day.touched
+                          ? `${day.kept}/${day.due}`
+                          : "nothing"}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            </PageLayout>
           </SwipeSession>
         </section>
 

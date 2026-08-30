@@ -112,21 +112,25 @@ test("what he achieved names two things at most, and three rows at most", () => 
   assert.equal(achieved.sentence.match(/Finish thing/g).length, 2);
 });
 
-test("Yesterday opens Week Review rather than taking its own App Box", () => {
-  // Sai: "Yesterday, doesnt need its own app box, it should be inside the week
-  // review."
+// The day just gone still does not take an App Box of its own. It is one key on
+// the week strip, and today is simply the day the Page opens on.
+test("a day is read from the week strip, not from its own App Box", () => {
   assert.doesNotMatch(mirror, /aria-label="Yesterday session"/);
   assert.doesNotMatch(mirror, /mirror-yesterday-intro/);
-  const pages = mirror.slice(
-    mirror.indexOf("const weekReviewPages = ["),
-    mirror.indexOf("const weekJourneyVersion"),
-  );
-  const didAt = pages.indexOf("yesterday.did");
-  const achievedAt = pages.indexOf("yesterday.achieved");
-  const patternAt = pages.indexOf("weekReview.dailyPattern");
-  assert.ok(didAt > 0 && achievedAt > didAt && patternAt > achievedAt);
-  // The saved page position must not survive the page list changing length.
-  assert.match(mirror, /weekJourneyVersion = `\$\{weekReview\.version\}\|\$\{yesterday\.version\}`/);
+
+  // Seven keys, and the one being read is the Page under them.
+  assert.match(mirror, /className="os-week-strip"/);
+  assert.match(mirror, /aria-pressed=\{day\.dateKey === chosenDayKey\}/);
+  assert.match(mirror, /onClick=\{\(\) => setChosenDayKey\(day\.dateKey\)\}/);
+  // A day not yet lived cannot be chosen: there is nothing to look at.
+  assert.match(mirror, /disabled=\{day\.isFuture\}/);
+
+  // A chosen day that falls out of the week returns to today rather than
+  // showing a day that is not on the strip above it.
+  assert.match(mirror, /weekDaysView\.find\(\(day\) => day\.dateKey === todayKey\)/);
+
+  // The saved page position forgets the old Week Review arrangement once.
+  assert.match(mirror, /weekJourneyVersion = "week-app-v1"/);
 });
 
 test("a Page arrives whole, with no part of it revealed on a delay", () => {

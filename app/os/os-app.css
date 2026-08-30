@@ -4570,15 +4570,6 @@
   border-radius: var(--r-box);
 }
 
-.circle-os .vision-week-claim {
-  background: var(--c-neutral-950);
-  color: var(--c-bone);
-}
-
-.circle-os .vision-week-claim .os-card-label {
-  color: var(--c-orange);
-}
-
 .circle-os .week-claim-evidence {
   display: grid;
   gap: 0.55rem;
@@ -4622,38 +4613,135 @@
   font-weight: 500;
 }
 
-.circle-os .vision-week-cover {
-  background: var(--c-neutral-950);
-  box-sizing: border-box;
-  color: var(--c-bone);
+/* The Week App.
+ *
+ * Seven keys across the top are the navigation, so the Page under them needs no
+ * control of its own. A day that has something in it is marked; a day not yet
+ * lived is dimmed and cannot be chosen, because there is nothing to look at and
+ * a disabled key says that more honestly than an empty Page would. */
+.circle-os .os-week-strip {
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  min-height: 360px;
-  padding:
-    var(--os-app-box-padding-top)
-    var(--os-app-box-padding-x)
-    var(--os-app-box-padding-bottom);
+  gap: 6px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: var(--os-main-sub-gap);
+  width: 100%;
 }
 
-.circle-os .vision-week-cover .os-card-label {
+.circle-os .os-week-day {
+  --os-key-lift: var(--os-key-lift-sm);
+  --os-key-leg: var(--c-ink-deep);
+  align-items: center;
+  aspect-ratio: 1;
+  background: rgb(241 239 232 / 0.07);
+  border: 1px solid rgb(241 239 232 / 0.12);
+  border-radius: var(--r-sm);
+  color: rgb(241 239 232 / 0.5);
+  cursor: pointer;
+  display: flex;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  justify-content: center;
+  min-height: 0;
+  padding: 0;
+}
+
+/* Something was written down that day. */
+.circle-os .os-week-day.is-touched {
+  background: rgb(227 107 55 / 0.22);
+  border-color: rgb(227 107 55 / 0.45);
+  color: var(--c-warm-50);
+}
+
+.circle-os .os-week-day.is-today {
+  border-color: var(--c-orange);
+}
+
+.circle-os .os-week-day.is-future {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.circle-os .os-week-day[aria-pressed="true"] {
+  background: var(--c-orange);
+  border-color: var(--c-orange);
+  color: var(--c-warm-50);
+}
+
+.circle-os .os-week-day-name {
+  margin: 0;
+}
+
+.circle-os .os-week-day-summary dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.circle-os .os-week-day-summary dl > div {
+  align-items: baseline;
+  border-bottom: 1px solid rgb(241 239 232 / 0.1);
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 8px;
+}
+
+.circle-os .os-week-day-summary dt {
+  color: var(--c-neutral-400);
+  font-size: var(--text-sm);
+}
+
+.circle-os .os-week-day-summary dd {
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  font-weight: 680;
+  margin: 0;
+}
+
+.circle-os .os-week-day-empty {
+  color: var(--c-neutral-400);
+  font-size: var(--text-md);
+  margin: 0;
+}
+
+/* A few days either side of today, read as a column rather than a chart. */
+.circle-os .os-week-span {
+  display: grid;
+  gap: 2px;
+}
+
+.circle-os .os-week-span-day {
+  align-items: baseline;
+  border-bottom: 1px solid rgb(241 239 232 / 0.08);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1.2rem 1fr auto;
+  padding: 7px 0;
+}
+
+.circle-os .os-week-span-day b {
+  color: var(--c-neutral-400);
+  font-size: var(--text-sm);
+}
+
+.circle-os .os-week-span-day span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.circle-os .os-week-span-day small {
+  color: var(--c-neutral-400);
+  font-variant-numeric: tabular-nums;
+}
+
+.circle-os .os-week-span-day.is-today b,
+.circle-os .os-week-span-day.is-today span {
   color: var(--c-orange);
 }
 
-.circle-os .vision-week-cover h2 {
-  align-self: center;
-  font-family: var(--font-sans), Arial, sans-serif;
-  font-size: clamp(2rem, 8vw, 2.7rem);
-  font-weight: 760;
-  letter-spacing: -0.055em;
-  line-height: 0.98;
-  margin: 0;
-  max-width: 13ch;
-}
-
-.circle-os .vision-week-cover > span {
-  color: rgb(241 239 232 / 0.6);
-  font-size: var(--text-xs);
-  text-align: right;
+.circle-os .os-week-span-day.is-future {
+  opacity: 0.42;
 }
 
 .circle-os .vision-week-apps .vision-week-app,

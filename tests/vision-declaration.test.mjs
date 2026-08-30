@@ -57,12 +57,26 @@ test("an empty declaration can retry an immutable completed setup chapter", () =
   assert.match(mirror, /runId=\{declarationSetupRunId\}/);
 });
 
-test("Reflect presents Week Review in the required seven-Page order without working counts", () => {
-  assert.match(mirror, />Week Review</);
-  assert.match(mirror, /aria-label="Week Review session"/);
-  assert.match(mirror, /buildWeekReview\(state\)/);
-  assert.match(mirror, /weekReview\.dailyPattern,\s*\.\.\.weekReview\.periods,\s*weekReview\.week/s);
-  assert.doesNotMatch(mirror, /claim\.working/);
+// Week Review became the Week App. It read as a set of claims about the week —
+// sentences with evidence stapled under them — and Sai never went back to it:
+// "i dont love it. i never go and read it."
+test("Reflect shows the week rather than making claims about it", () => {
+  assert.match(mirror, /aria-label="Week"/);
+  assert.match(mirror, /weekDays\(state, todayKey\)/);
+  assert.match(mirror, /weekSpan\(state, todayKey\)/);
+  assert.match(mirror, /weekCoverLine\(state, todayKey\)/);
+
+  // Three Pages: the cover, the seven days, and the days either side.
+  // The cover is its own class: `.vision-week-cover` was written for a bare
+  // div with its own grid and padding, and forced both onto the PageLayout.
+  assert.match(mirror, /className="os-week-cover"/);
+  assert.match(mirror, /className="vision-week-days"/);
+  assert.match(mirror, /className="vision-week-span"/);
+  assert.match(mirror, /availableIndices=\{\[0, 1, 2\]\}/);
+
+  // The claim Pages and their evidence rows are gone.
+  assert.doesNotMatch(mirror, /claim\.working|claim\.evidence|vision-week-claim/);
+  assert.doesNotMatch(mirror, /buildWeekReview|buildYesterdayReview/);
 });
 
 test("Athena's Reading is four Pages with replies but no archive or question Page", () => {
