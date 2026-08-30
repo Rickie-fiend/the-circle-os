@@ -159,15 +159,6 @@ import type {
 } from "./chapters/chapter-types";
 
 /**
- * How long a Line's last Page holds before it leaves.
- *
- * Matches the chapter payoff dwell. A Line is read, not answered, so the only
- * way out is time; it is deliberately not swipeable forward and carries no
- * button.
- */
-const LINE_DWELL_MS = 6000;
-
-/**
  * Whether the Dreamline is dealt into the Routine App Box.
  *
  * Off for v1. Sai: "can you hide the dreamline app for a while. i will come to
@@ -2541,26 +2532,17 @@ export function TodayExperience() {
     }, source);
   }
 
-  // A Line's last Page holds long enough to be read and then leaves by itself,
-  // the same way a chapter's payoff does. It cannot be swiped forward, so
-  // without this timer the only way back was a button that should not exist on
-  // a reading surface.
-  const closeLine = useRef(closeNoteLine);
+  // A Line waits. It used to leave by itself after a dwell, which took the
+  // words away mid-sentence and, on a joke, sometimes before the punchline had
+  // been read at all. Sai: "they should never fade away until i dismiss, react,
+  // or complete." Three ways out, all of them his: swipe forward for the
+  // reactions, answer one, or swipe back.
 
-  useEffect(() => {
-    closeLine.current = closeNoteLine;
-  });
-
-  useEffect(() => {
+  /** Swiping back off the front of a Line puts it away. */
+  function dismissLineBackward() {
     if (!revealedLine) return;
-    // Once the footer is open he is choosing, and a Page must not be taken away
-    // mid-decision. The Line then leaves by a reaction or by a second swipe.
-    if (lineFeedbackOpen) return;
-    const lastPage = revealedLine.kind === "quote" ? 0 : 1;
-    if (revealedLinePage !== lastPage) return;
-    const timer = window.setTimeout(() => closeLine.current(), LINE_DWELL_MS);
-    return () => window.clearTimeout(timer);
-  }, [lineFeedbackOpen, revealedLine, revealedLinePage]);
+    closeNoteLine();
+  }
 
   /**
    * A swipe off the end of a Line. The first one asks; the second one leaves.
@@ -3099,6 +3081,7 @@ export function TodayExperience() {
             index={checkInIndex}
             label={noteLineActive ? "A Line" : "Check-in session"}
             maxIndex={Math.max(...checkInAvailableIndices)}
+            onBackwardBoundary={noteLineActive ? dismissLineBackward : undefined}
             onForwardBoundary={noteLineActive ? passLineForward : undefined}
             rotateMs={IDLE_PAGE_DWELL_MS}
             rotatePaused={!noteLineActive && Boolean(thoughtDraft.trim())}

@@ -47,6 +47,7 @@ export function SwipeSession({
   availableIndices,
   frameHeight,
   onLongPress,
+  onBackwardBoundary,
   onForwardBoundary,
   attentionKey,
   attentionIndex = 0,
@@ -62,6 +63,8 @@ export function SwipeSession({
   availableIndices?: number[];
   frameHeight?: CSSProperties["height"];
   onLongPress?: () => void;
+  /** A swipe back off the front, where there is no previous Page. */
+  onBackwardBoundary?: () => void;
   onForwardBoundary?: () => void;
   attentionKey?: string;
   attentionIndex?: number;
@@ -560,6 +563,10 @@ export function SwipeSession({
         onForwardBoundary();
         return;
       }
+      if (distance > 0 && onBackwardBoundary) {
+        onBackwardBoundary();
+        return;
+      }
       showBoundaryCue();
       return;
     }
@@ -609,6 +616,10 @@ export function SwipeSession({
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       if (previousIndex === undefined) {
+        if (onBackwardBoundary) {
+          onBackwardBoundary();
+          return;
+        }
         showBoundaryCue();
         return;
       }
@@ -645,6 +656,10 @@ export function SwipeSession({
     if (targetIndex === undefined) {
       if (movingForward && onForwardBoundary) {
         onForwardBoundary();
+        return;
+      }
+      if (!movingForward && onBackwardBoundary) {
+        onBackwardBoundary();
         return;
       }
       showBoundaryCue();
@@ -803,15 +818,18 @@ export function SessionIntro({
         <span className="os-session-wait">Available tomorrow morning</span>
       )}
     >
+      {/* A Cover is one line.
+        *
+        * It carried a second paragraph under the title, so the first thing an
+        * App ever showed was a block of explanation. Sai: "all the cover pages,
+        * including the one for Athena, they all must be just simple one liner.
+        * not the paragraph." The authored body is still on the chapter and
+        * still editable in the Workshop; it is simply not what a Cover is for.
+        */}
       <div className="os-session-intro-copy">
         <div className="os-info-page-main">
           <h2>{display.title}</h2>
         </div>
-        {display.detail ? (
-          <div className="os-info-page-sub">
-            <p className="os-session-detail">{display.detail}</p>
-          </div>
-        ) : null}
       </div>
     </PageLayout>
   );

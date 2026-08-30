@@ -5,6 +5,7 @@ export type WeekDaySummary = {
   title: string;
   isToday: boolean;
   isFuture: boolean;
+  moments: { at: string; text: string }[];
   kept: number;
   due: number;
   tasks: number;

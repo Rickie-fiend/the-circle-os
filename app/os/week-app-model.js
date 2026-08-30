@@ -87,6 +87,33 @@ function loggedHours(state, dateKey) {
   return Array.isArray(blocks) ? blocks.length : 0;
 }
 
+/**
+ * The things he actually wrote into a day, newest last, in the order they
+ * happened. A block's title is what the hour was; its moments are what happened
+ * inside it. Both are his words, so both belong here and neither is summarised.
+ */
+function dayMoments(state, dateKey, limit = 6) {
+  const blocks = state?.days?.[dateKey]?.timeBlocks;
+  if (!Array.isArray(blocks)) return [];
+  const moments = [];
+  for (const block of [...blocks].sort((left, right) =>
+    String(left?.start || "").localeCompare(String(right?.start || "")),
+  )) {
+    const title = String(block?.title || block?.activity || "").trim();
+    if (title) moments.push({ at: String(block?.start || ""), text: title });
+    const inside = Array.isArray(block?.moments)
+      ? block.moments
+      : block?.note
+        ? [block.note]
+        : [];
+    for (const moment of inside) {
+      const text = String(moment || "").trim();
+      if (text && text !== title) moments.push({ at: String(block?.start || ""), text });
+    }
+  }
+  return moments.slice(0, limit);
+}
+
 function habitsDue(state) {
   return Object.values(state?.habits?.definitions || {}).filter(
     (habit) => habit?.status === "active",
@@ -111,6 +138,18 @@ export function weekDaySummary(state, dateKey, todayKey = getDateKey()) {
     title: String(day?.title || "").trim(),
     isToday: dateKey === todayKey,
     isFuture: dateKey.localeCompare(todayKey) > 0,
+    /**
+     * What the day was, in his own words.
+     *
+     * Sai: "when i want to know what have i done last few days, than i can have
+     * a sense of that day when i check it. may be on monday i was working on my
+     * project all day, and on sunday, i go to the market with mum."
+     *
+     * So the day leads with what he wrote in it — the hours he logged and the
+     * moments inside them — and the counts sit underneath. A tally answers how
+     * much; only his own words answer what it was.
+     */
+    moments: dayMoments(state, dateKey),
     kept: record.habits.length,
     due: habitsDue(state),
     tasks: record.tasks.length,

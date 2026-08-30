@@ -1047,7 +1047,7 @@ export default function CircleOSMirror() {
           >
             <PageLayout
               className="os-week-cover"
-              footer={<span>Swipe to see</span>}
+              footer={<span className="os-cover-cue">Swipe to see</span>}
               headerLeft={<p className="os-card-label">Week</p>}
               key="week-cover"
               theme="dark"
@@ -1094,9 +1094,27 @@ export default function CircleOSMirror() {
                     </button>
                   ))}
                 </div>
+                {/* What the day was, then how much of it there was. A tally
+                    answers how much; only his own words answer what it was. */}
                 <div className="os-week-day-summary">
+                  {chosenDay.moments.length ? (
+                    <ul className="os-week-day-moments">
+                      {chosenDay.moments.map((moment, index) => (
+                        <li key={`${moment.at}-${index}`}>
+                          <b>{moment.at}</b>
+                          <span>{moment.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : chosenDay.touched ? (
+                    <p className="os-week-day-empty">Nothing logged this day.</p>
+                  ) : (
+                    <p className="os-week-day-empty">
+                      {chosenDay.isToday ? "Nothing written down yet." : "Nothing written down."}
+                    </p>
+                  )}
                   {chosenDay.touched ? (
-                    <dl>
+                    <dl className="os-week-day-counts">
                       <div>
                         <dt>Habits</dt>
                         <dd>{chosenDay.kept} of {chosenDay.due}</dd>
@@ -1106,15 +1124,11 @@ export default function CircleOSMirror() {
                         <dd>{chosenDay.tasks}</dd>
                       </div>
                       <div>
-                        <dt>Hours logged</dt>
+                        <dt>Hours</dt>
                         <dd>{chosenDay.hours}</dd>
                       </div>
                     </dl>
-                  ) : (
-                    <p className="os-week-day-empty">
-                      {chosenDay.isToday ? "Nothing written down yet." : "Nothing written down."}
-                    </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </PageLayout>

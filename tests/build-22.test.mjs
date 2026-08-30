@@ -72,17 +72,20 @@ test("a new-page reveal decorates but never blocks pointer or trackpad input", (
   }
 });
 
-test("a Line keeps its setup behind the reveal and leaves on its own", () => {
+test("a Line keeps its setup behind the reveal and waits", () => {
   assert.match(shell, /useAppBack<"note" \| "line">\("note"\)/);
   assert.match(shell, /revealedLine\?\.kind === "quote" \? \[0\] : \[0, 1\]/);
   assert.match(shell, /setRevealedLinePage\(nextIndex\)/);
   assert.doesNotMatch(shell, /Swipe to close/);
 
-  // The last Page cannot be swiped forward, so time is the only way out. Left
-  // without a timer a Line trapped the box and the only escape was a button
-  // that does not belong on a reading surface.
-  assert.match(shell, /const LINE_DWELL_MS = \d+/);
-  assert.match(shell, /closeLine\.current\(\), LINE_DWELL_MS/);
+  // A Line no longer leaves on a timer. It used to close after a dwell, which
+  // took the words away mid-sentence and sometimes before a punchline had been
+  // read at all. Sai: "they should never fade away until i dismiss, react, or
+  // complete." Three ways out, all of them his.
+  assert.doesNotMatch(shell, /LINE_DWELL_MS|closeLine/);
+  assert.match(shell, /onForwardBoundary=\{noteLineActive \? passLineForward/);
+  assert.match(shell, /onBackwardBoundary=\{noteLineActive \? dismissLineBackward/);
+  assert.match(shell, /function reactToRevealedLine/);
 });
 
 test("a Line carries no edge, only its kind at the top left", () => {

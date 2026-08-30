@@ -103,8 +103,9 @@ test("the first swipe asks and the second one leaves", () => {
   assert.match(pass, /closeNoteLine\(\)/);
   assert.match(shell, /onForwardBoundary=\{noteLineActive \? passLineForward : undefined\}/);
 
-  // A Page must not be taken away while he is deciding on it.
-  assert.match(shell, /if \(lineFeedbackOpen\) return;/);
+  // Nothing takes a Line away but him: there is no dwell any more.
+  assert.doesNotMatch(shell, /LINE_DWELL_MS/);
+  assert.match(shell, /function dismissLineBackward\(\)/);
 
   // A reaction records and then the Line goes.
   const react = shell.match(/function reactToRevealedLine\([\s\S]*?\n  \}/)?.[0] ?? "";
