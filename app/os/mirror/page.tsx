@@ -852,11 +852,18 @@ export default function CircleOSMirror() {
     memorySections: Array<{ heading: string; text: string; paragraphs?: string[] }>,
     fallbackKeys: Array<[string, string]>,
   ) {
-    const prompt: AthenaReadingPrompt | null = buildAthenaReadingReplyPrompt(
-      page,
-      memorySections,
-      athenaReading.latestEditionId,
-    );
+    // Only one Page in a reading asks anything. Sai: "only your shape page
+    // would be a reply to Athena's question." Days and Alive are what she
+    // noticed; Shape is where she hands it back, so that is where a reply
+    // belongs and the other two stay reading surfaces.
+    const prompt: AthenaReadingPrompt | null =
+      page === "shape"
+        ? buildAthenaReadingReplyPrompt(
+            page,
+            memorySections,
+            athenaReading.latestEditionId,
+          )
+        : null;
     const answer = prompt
       ? profileCase.survey.answers.find(
           (item) => item.questionId === prompt.id,
@@ -867,6 +874,10 @@ export default function CircleOSMirror() {
         <header>
           <p className="os-card-label">{label}</p>
           <h2>{title}</h2>
+          {/* Athena writes on her own schedule, so a reading has to say when it
+              was written. It was only on the section heading outside the App
+              Box; a person reading the words could not see how old they were. */}
+          <p className="athena-reader-updated">{updateLabel}</p>
         </header>
         <div className="athena-reader-copy">
           {memorySections.length
@@ -1022,7 +1033,11 @@ export default function CircleOSMirror() {
         <header className="mirror-intro mirror-week-intro">
           <div>
             <p className="os-eyebrow">Week</p>
-            <h1>{weekCover}</h1>
+            {/* The heading names the surface and holds still. The count belongs
+                on the cover, which is the thing that is meant to change as the
+                week fills. Sai: "header, should be something. stable, not 6 of
+                7 days". */}
+            <h1>How this week went</h1>
           </div>
         </header>
 

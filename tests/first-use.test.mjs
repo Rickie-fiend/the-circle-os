@@ -86,8 +86,17 @@ test("Note and Thoughts show their first words ahead of the rotations", () => {
     shell,
     /firstUsePlaceholder\(state, "thoughts"\) \|\|\s*\n\s*selectThoughtPrompt/,
   );
-  assert.match(
-    shell,
-    /firstUsePlaceholder\(state, "note"\) \|\|\s*\n\s*notePlaceholderPool/,
-  );
+  assert.match(shell, /firstUsePlaceholder\(state, "note"\)/);
+});
+
+// It greets once. It used to win outright until a note was written, so Clear
+// advanced the pool underneath and the words on screen never changed. Sai: "now
+// clear button doesnt show creative lines."
+test("Clear hands the Note back to its rotation", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /!noteGreeted \? firstUsePlaceholder\(state, "note"\) : ""/);
+  const clear = shell.match(/function clearNote\(\)[\s\S]*?\n  \}/)?.[0] ?? "";
+  assert.ok(clear, "clearNote moved");
+  assert.match(clear, /setNoteGreeted\(true\)/);
+  assert.match(clear, /nextNotePlaceholder\(notePlaceholderPool, currentId\)/);
 });

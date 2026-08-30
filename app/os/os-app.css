@@ -4899,6 +4899,13 @@
   opacity: 1;
 }
 
+.circle-os .athena-reader-updated {
+  color: var(--c-neutral-400);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.03em;
+  margin: 0.35rem 0 0;
+}
+
 .circle-os .athena-reader-app {
   background: var(--c-orange-600);
   color: var(--c-warm-50);

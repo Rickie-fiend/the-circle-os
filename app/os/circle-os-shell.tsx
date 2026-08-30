@@ -1435,8 +1435,15 @@ export function TodayExperience() {
   const [notePlaceholderId, setNotePlaceholderId] = useState(
     firstNotePlaceholder?.id || "",
   );
+  // The first-use words greet once; Clear hands the Page back to the rotation.
+  //
+  // They used to win outright until a note was written, so Clear advanced the
+  // pool underneath and the words on screen never changed. Sai: "only for the
+  // first time user, it will be prefilled. not the placeholder all the time.
+  // now clear button doesnt show creative lines."
+  const [noteGreeted, setNoteGreeted] = useState(false);
   const notePlaceholder =
-    firstUsePlaceholder(state, "note") ||
+    (!noteGreeted ? firstUsePlaceholder(state, "note") : "") ||
     notePlaceholderPool.placeholders.find(
       (placeholder) => placeholder.id === notePlaceholderId,
     )?.text ||
@@ -1449,6 +1456,7 @@ export function TodayExperience() {
     const now = Date.now();
     if (now - noteClearedAt.current < 500) return;
     noteClearedAt.current = now;
+    setNoteGreeted(true);
     setNotePlaceholderId((currentId) =>
       nextNotePlaceholder(notePlaceholderPool, currentId)?.id || currentId,
     );
