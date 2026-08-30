@@ -99,3 +99,52 @@ test("two devices that read different lines remember both", () => {
   const merged = mergeSeenLines(phone, laptop);
   for (const id of [...phone, ...laptop]) assert.ok(merged.includes(id), id);
 });
+
+// Sai: "it never update while i am using, so i have read the same joke quite a
+// few times a day for like a week."
+//
+// The rotation was right and the memory was too short. `selectLine` treats
+// anything outside the remembered list as unseen, so a memory smaller than the
+// pool starts repeating before the pool is exhausted — at 24 against 40 lines,
+// with a joke dealt every third turn, the ten jokes came round and round.
+test("the whole pool is dealt before anything repeats", async () => {
+  const pool = JSON.parse(readFileSync("app/os/lines/lines.json", "utf8"));
+  assert.ok(
+    LINE_MEMORY > pool.lines.length,
+    `memory ${LINE_MEMORY} must stay larger than the ${pool.lines.length}-line pool`,
+  );
+
+  let seen = [];
+  const shown = [];
+  for (let draw = 0; draw < pool.lines.length; draw += 1) {
+    const line = selectLine(pool, seen);
+    shown.push(line.id);
+    seen = rememberLine(seen, line.id);
+  }
+  assert.equal(
+    new Set(shown).size,
+    pool.lines.length,
+    "a full pass through the pool repeated a line",
+  );
+
+  // And every kind is exhausted too, not just the pool overall.
+  for (const kind of ["quote", "joke", "fact"]) {
+    const all = pool.lines.filter((line) => line.kind === kind).length;
+    const dealt = new Set(
+      shown.filter((id) => pool.lines.find((line) => line.id === id).kind === kind),
+    ).size;
+    assert.equal(dealt, all, `only ${dealt} of ${all} ${kind}s were dealt`);
+  }
+});
+
+test("the joke shelf is deep enough to survive a week of reading", () => {
+  const pool = JSON.parse(readFileSync("app/os/lines/lines.json", "utf8"));
+  const jokes = pool.lines.filter((line) => line.kind === "joke");
+  // A joke is dealt roughly every third turn, so ten of them lasted days.
+  assert.ok(jokes.length >= 30, `only ${jokes.length} jokes on the shelf`);
+  // A joke is a setup and a punchline: the second Page must exist.
+  for (const joke of jokes) {
+    assert.ok(joke.sub, `${joke.id} has no punchline`);
+  }
+  assert.equal(new Set(pool.lines.map((line) => line.id)).size, pool.lines.length);
+});

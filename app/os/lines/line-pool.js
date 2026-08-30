@@ -15,8 +15,21 @@
 
 export const LINE_KINDS = Object.freeze(["quote", "joke", "fact"]);
 
-/** How many recently seen lines are remembered, so the pool rotates. */
-export const LINE_MEMORY = 24;
+/**
+ * How many recently seen lines are remembered, so the pool rotates.
+ *
+ * This has to stay larger than the pool. `selectLine` calls anything outside
+ * this memory unseen, so a memory shorter than the pool starts repeating before
+ * the pool has been exhausted — the oldest lines fall off the end and come
+ * straight back round. At 24 against 40 lines, and one joke dealt every third
+ * turn, Sai was reading the same joke several times a day: "it never update
+ * while i am using, so i have read the same joke quite a few times a day for
+ * like a week."
+ *
+ * Ids are short, so remembering generously costs nothing worth counting. Raise
+ * this whenever the pool grows near it.
+ */
+export const LINE_MEMORY = 240;
 
 function cleanText(value, maximum = 320) {
   return typeof value === "string"

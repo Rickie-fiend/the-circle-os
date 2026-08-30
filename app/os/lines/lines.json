@@ -2,47 +2,394 @@
   "version": 2,
   "note": "Lines give and ask nothing. Quotes stay on one Page. Every joke and fact uses a setup Page and a reveal Page; neither creates a run, version, cooldown or completion.",
   "lines": [
-    { "id": "q-ordinary", "kind": "quote", "text": "Most of a life is spent on days nobody would write down.", "sub": "Today is one of them." },
-    { "id": "q-slow", "kind": "quote", "text": "Nothing important ever felt urgent while it was happening." },
-    { "id": "q-kept", "kind": "quote", "text": "The habit you keep badly still counts.", "sub": "Kept badly is still kept." },
-    { "id": "q-noticing", "kind": "quote", "text": "You cannot change a day you did not notice." },
-    { "id": "q-began", "kind": "quote", "text": "Beginning again is not starting over." },
-    { "id": "q-walk", "kind": "quote", "text": "The thing you do without counting it is usually the thing holding." },
-    { "id": "q-honest", "kind": "quote", "text": "An honest sentence about a bad day is worth more than a good one about nothing." },
-    { "id": "q-later", "kind": "quote", "text": "Later is a place people keep things they do not want to decide about." },
-    { "id": "q-small", "kind": "quote", "text": "Small and repeated beats large and once. It is not close." },
-    { "id": "q-rest", "kind": "quote", "text": "Rest is not the reward for the work. It is part of it." },
-    { "id": "q-watching", "kind": "quote", "text": "Nobody is grading this." },
-    { "id": "q-evidence", "kind": "quote", "text": "What you did is evidence. What you meant to do is not." },
-    { "id": "q-mood", "kind": "quote", "text": "A mood is weather. It tells you about today, not about you." },
-    { "id": "q-enough", "kind": "quote", "text": "You are allowed to have done enough for one day." },
-    { "id": "q-return", "kind": "quote", "text": "Coming back is the whole skill. Everything else is detail." },
-
-    { "id": "j-tomorrow", "kind": "joke", "text": "I have a great relationship with tomorrow.", "sub": "We have never met." },
-    { "id": "j-water", "kind": "joke", "text": "Drank a glass of water.", "sub": "Considering a parade." },
-    { "id": "j-productive", "kind": "joke", "text": "I was productive today.", "sub": "In the sense that time passed." },
-    { "id": "j-list", "kind": "joke", "text": "Wrote a list.", "sub": "The list is now the achievement." },
-    { "id": "j-early", "kind": "joke", "text": "I am a morning person.", "sub": "The morning just starts at one." },
-    { "id": "j-plants", "kind": "joke", "text": "I bought a plant to prove I can keep something alive.", "sub": "The plant is nervous." },
-    { "id": "j-advice", "kind": "joke", "text": "I give excellent advice.", "sub": "I take none of it." },
-    { "id": "j-phone", "kind": "joke", "text": "Picked up my phone to check one thing.", "sub": "See you in an hour." },
-    { "id": "j-cook", "kind": "joke", "text": "I cook in two modes:", "sub": "From scratch, and from desperation." },
-    { "id": "j-focus", "kind": "joke", "text": "I have laser focus.", "sub": "The laser is pointed at nothing in particular." },
-
-    { "id": "f-honey", "kind": "fact", "text": "Honey does not spoil.", "sub": "Jars found in ancient tombs were still edible." },
-    { "id": "f-octopus", "kind": "fact", "text": "An octopus has three hearts.", "sub": "Two pump to the gills. One pumps to the rest of it." },
-    { "id": "f-venus", "kind": "fact", "text": "A day on Venus is longer than its year.", "sub": "It turns slower than it orbits." },
-    { "id": "f-sharks", "kind": "fact", "text": "Sharks are older than trees.", "sub": "By roughly a hundred million years." },
-    { "id": "f-cleopatra", "kind": "fact", "text": "Cleopatra lived closer to the moon landing.", "sub": "Than to the building of the Great Pyramid." },
-    { "id": "f-otters", "kind": "fact", "text": "Sea otters hold hands while they sleep.", "sub": "So they do not drift apart." },
-    { "id": "f-trees", "kind": "fact", "text": "There are more trees on Earth than stars in our galaxy.", "sub": "Around three trillion, against a few hundred billion." },
-    { "id": "f-eiffel", "kind": "fact", "text": "The Eiffel Tower is taller in summer.", "sub": "The iron expands in the heat, by about fifteen centimetres." },
-    { "id": "f-wombat", "kind": "fact", "text": "Wombats produce cube-shaped droppings.", "sub": "Cubes do not roll away, which is the point." },
-    { "id": "f-banana", "kind": "fact", "text": "A banana is a berry. A strawberry is not.", "sub": "Botany does not care what we call things." },
-    { "id": "f-oxygen", "kind": "fact", "text": "Most of the oxygen you breathe came from the ocean.", "sub": "Not from forests." },
-    { "id": "f-sleepwalk", "kind": "fact", "text": "You are slightly taller in the morning.", "sub": "Your spine compresses through the day." },
-    { "id": "f-bones", "kind": "fact", "text": "You had around three hundred bones as a baby and have around two hundred and six now.", "sub": "Some of them fused." },
-    { "id": "f-clouds", "kind": "fact", "text": "A cloud can weigh hundreds of tonnes.", "sub": "It floats because the air beneath it is heavier still." },
-    { "id": "f-taste", "kind": "fact", "text": "Your sense of taste is mostly smell.", "sub": "Hold your nose and an apple and an onion get harder to tell apart." }
+    {
+      "id": "q-ordinary",
+      "kind": "quote",
+      "text": "Most of a life is spent on days nobody would write down.",
+      "sub": "Today is one of them."
+    },
+    {
+      "id": "q-slow",
+      "kind": "quote",
+      "text": "Nothing important ever felt urgent while it was happening."
+    },
+    {
+      "id": "q-kept",
+      "kind": "quote",
+      "text": "The habit you keep badly still counts.",
+      "sub": "Kept badly is still kept."
+    },
+    {
+      "id": "q-noticing",
+      "kind": "quote",
+      "text": "You cannot change a day you did not notice."
+    },
+    {
+      "id": "q-began",
+      "kind": "quote",
+      "text": "Beginning again is not starting over."
+    },
+    {
+      "id": "q-walk",
+      "kind": "quote",
+      "text": "The thing you do without counting it is usually the thing holding."
+    },
+    {
+      "id": "q-honest",
+      "kind": "quote",
+      "text": "An honest sentence about a bad day is worth more than a good one about nothing."
+    },
+    {
+      "id": "q-later",
+      "kind": "quote",
+      "text": "Later is a place people keep things they do not want to decide about."
+    },
+    {
+      "id": "q-small",
+      "kind": "quote",
+      "text": "Small and repeated beats large and once. It is not close."
+    },
+    {
+      "id": "q-rest",
+      "kind": "quote",
+      "text": "Rest is not the reward for the work. It is part of it."
+    },
+    {
+      "id": "q-watching",
+      "kind": "quote",
+      "text": "Nobody is grading this."
+    },
+    {
+      "id": "q-evidence",
+      "kind": "quote",
+      "text": "What you did is evidence. What you meant to do is not."
+    },
+    {
+      "id": "q-mood",
+      "kind": "quote",
+      "text": "A mood is weather. It tells you about today, not about you."
+    },
+    {
+      "id": "q-enough",
+      "kind": "quote",
+      "text": "You are allowed to have done enough for one day."
+    },
+    {
+      "id": "q-return",
+      "kind": "quote",
+      "text": "Coming back is the whole skill. Everything else is detail."
+    },
+    {
+      "id": "j-tomorrow",
+      "kind": "joke",
+      "text": "I have a great relationship with tomorrow.",
+      "sub": "We have never met."
+    },
+    {
+      "id": "j-water",
+      "kind": "joke",
+      "text": "Drank a glass of water.",
+      "sub": "Considering a parade."
+    },
+    {
+      "id": "j-productive",
+      "kind": "joke",
+      "text": "I was productive today.",
+      "sub": "In the sense that time passed."
+    },
+    {
+      "id": "j-list",
+      "kind": "joke",
+      "text": "Wrote a list.",
+      "sub": "The list is now the achievement."
+    },
+    {
+      "id": "j-early",
+      "kind": "joke",
+      "text": "I am a morning person.",
+      "sub": "The morning just starts at one."
+    },
+    {
+      "id": "j-plants",
+      "kind": "joke",
+      "text": "I bought a plant to prove I can keep something alive.",
+      "sub": "The plant is nervous."
+    },
+    {
+      "id": "j-advice",
+      "kind": "joke",
+      "text": "I give excellent advice.",
+      "sub": "I take none of it."
+    },
+    {
+      "id": "j-phone",
+      "kind": "joke",
+      "text": "Picked up my phone to check one thing.",
+      "sub": "See you in an hour."
+    },
+    {
+      "id": "j-cook",
+      "kind": "joke",
+      "text": "I cook in two modes:",
+      "sub": "From scratch, and from desperation."
+    },
+    {
+      "id": "j-focus",
+      "kind": "joke",
+      "text": "I have laser focus.",
+      "sub": "The laser is pointed at nothing in particular."
+    },
+    {
+      "id": "f-honey",
+      "kind": "fact",
+      "text": "Honey does not spoil.",
+      "sub": "Jars found in ancient tombs were still edible."
+    },
+    {
+      "id": "f-octopus",
+      "kind": "fact",
+      "text": "An octopus has three hearts.",
+      "sub": "Two pump to the gills. One pumps to the rest of it."
+    },
+    {
+      "id": "f-venus",
+      "kind": "fact",
+      "text": "A day on Venus is longer than its year.",
+      "sub": "It turns slower than it orbits."
+    },
+    {
+      "id": "f-sharks",
+      "kind": "fact",
+      "text": "Sharks are older than trees.",
+      "sub": "By roughly a hundred million years."
+    },
+    {
+      "id": "f-cleopatra",
+      "kind": "fact",
+      "text": "Cleopatra lived closer to the moon landing.",
+      "sub": "Than to the building of the Great Pyramid."
+    },
+    {
+      "id": "f-otters",
+      "kind": "fact",
+      "text": "Sea otters hold hands while they sleep.",
+      "sub": "So they do not drift apart."
+    },
+    {
+      "id": "f-trees",
+      "kind": "fact",
+      "text": "There are more trees on Earth than stars in our galaxy.",
+      "sub": "Around three trillion, against a few hundred billion."
+    },
+    {
+      "id": "f-eiffel",
+      "kind": "fact",
+      "text": "The Eiffel Tower is taller in summer.",
+      "sub": "The iron expands in the heat, by about fifteen centimetres."
+    },
+    {
+      "id": "f-wombat",
+      "kind": "fact",
+      "text": "Wombats produce cube-shaped droppings.",
+      "sub": "Cubes do not roll away, which is the point."
+    },
+    {
+      "id": "f-banana",
+      "kind": "fact",
+      "text": "A banana is a berry. A strawberry is not.",
+      "sub": "Botany does not care what we call things."
+    },
+    {
+      "id": "f-oxygen",
+      "kind": "fact",
+      "text": "Most of the oxygen you breathe came from the ocean.",
+      "sub": "Not from forests."
+    },
+    {
+      "id": "f-sleepwalk",
+      "kind": "fact",
+      "text": "You are slightly taller in the morning.",
+      "sub": "Your spine compresses through the day."
+    },
+    {
+      "id": "f-bones",
+      "kind": "fact",
+      "text": "You had around three hundred bones as a baby and have around two hundred and six now.",
+      "sub": "Some of them fused."
+    },
+    {
+      "id": "f-clouds",
+      "kind": "fact",
+      "text": "A cloud can weigh hundreds of tonnes.",
+      "sub": "It floats because the air beneath it is heavier still."
+    },
+    {
+      "id": "f-taste",
+      "kind": "fact",
+      "text": "Your sense of taste is mostly smell.",
+      "sub": "Hold your nose and an apple and an onion get harder to tell apart."
+    },
+    {
+      "id": "dad-alphabet",
+      "kind": "joke",
+      "text": "I only know 25 letters of the alphabet.",
+      "sub": "I do not know y."
+    },
+    {
+      "id": "dad-calendar",
+      "kind": "joke",
+      "text": "I am worried about the calendar.",
+      "sub": "Its days are numbered."
+    },
+    {
+      "id": "dad-beard",
+      "kind": "joke",
+      "text": "I used to hate facial hair.",
+      "sub": "Then it grew on me."
+    },
+    {
+      "id": "dad-pencil",
+      "kind": "joke",
+      "text": "I made a pencil with two erasers.",
+      "sub": "It was pointless."
+    },
+    {
+      "id": "dad-noodle",
+      "kind": "joke",
+      "text": "What do you call a fake noodle?",
+      "sub": "An impasta."
+    },
+    {
+      "id": "dad-gravity",
+      "kind": "joke",
+      "text": "I am reading a book about anti-gravity.",
+      "sub": "Impossible to put down."
+    },
+    {
+      "id": "dad-moon",
+      "kind": "joke",
+      "text": "There is a new restaurant on the moon.",
+      "sub": "Great food, no atmosphere."
+    },
+    {
+      "id": "dad-cheese",
+      "kind": "joke",
+      "text": "What do you call cheese that is not yours?",
+      "sub": "Nacho cheese."
+    },
+    {
+      "id": "dad-construction",
+      "kind": "joke",
+      "text": "I could tell you a joke about construction.",
+      "sub": "I am still working on it."
+    },
+    {
+      "id": "dad-flamingo",
+      "kind": "joke",
+      "text": "I was told to stop impersonating a flamingo.",
+      "sub": "I had to put my foot down."
+    },
+    {
+      "id": "dad-lasagne",
+      "kind": "joke",
+      "text": "I burned two thousand calories today.",
+      "sub": "Left the lasagne in the oven."
+    },
+    {
+      "id": "dad-scarecrow",
+      "kind": "joke",
+      "text": "Why did the scarecrow win an award?",
+      "sub": "He was outstanding in his field."
+    },
+    {
+      "id": "dad-bees",
+      "kind": "joke",
+      "text": "Why do bees have sticky hair?",
+      "sub": "They use honeycombs."
+    },
+    {
+      "id": "dad-egg",
+      "kind": "joke",
+      "text": "I ordered a chicken and an egg online.",
+      "sub": "I will let you know."
+    },
+    {
+      "id": "dad-elevator",
+      "kind": "joke",
+      "text": "I have a joke about an elevator.",
+      "sub": "It works on so many levels."
+    },
+    {
+      "id": "fish-bank",
+      "kind": "joke",
+      "text": "Where do fish keep their money?",
+      "sub": "In the riverbank."
+    },
+    {
+      "id": "fish-eyes",
+      "kind": "joke",
+      "text": "What do you call a fish with no eyes?",
+      "sub": "Fsh."
+    },
+    {
+      "id": "fish-net",
+      "kind": "joke",
+      "text": "Why do fish never play basketball?",
+      "sub": "They are afraid of the net."
+    },
+    {
+      "id": "fish-bowtie",
+      "kind": "joke",
+      "text": "What do you call a fish in a bowtie?",
+      "sub": "Sofishticated."
+    },
+    {
+      "id": "fish-octobus",
+      "kind": "joke",
+      "text": "How do fish get to work?",
+      "sub": "They take the octobus."
+    },
+    {
+      "id": "fish-catch",
+      "kind": "joke",
+      "text": "What is the easiest way to catch a fish?",
+      "sub": "Have someone throw you one."
+    },
+    {
+      "id": "fish-school",
+      "kind": "joke",
+      "text": "Why are fish so clever?",
+      "sub": "They live in schools."
+    },
+    {
+      "id": "fish-lobster",
+      "kind": "joke",
+      "text": "What do you call a lazy crayfish?",
+      "sub": "A slobster."
+    },
+    {
+      "id": "fish-tank",
+      "kind": "joke",
+      "text": "Two fish are sitting in a tank.",
+      "sub": "One says, do you know how to drive this?"
+    },
+    {
+      "id": "fish-wall",
+      "kind": "joke",
+      "text": "What did the fish say when it swam into a wall?",
+      "sub": "Dam."
+    },
+    {
+      "id": "fish-bass",
+      "kind": "joke",
+      "text": "What music do fish listen to?",
+      "sub": "Anything with a good bass line."
+    },
+    {
+      "id": "fish-blush",
+      "kind": "joke",
+      "text": "Why did the fish go red?",
+      "sub": "It saw the ocean's bottom."
+    }
   ]
 }
