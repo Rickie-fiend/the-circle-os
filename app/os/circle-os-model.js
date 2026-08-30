@@ -6,6 +6,11 @@ import {
   normalizeAthenaMemory,
 } from "./athena-memory-model.js";
 import { mergeSeenLines, rememberLine } from "./lines/line-pool.js";
+import {
+  mergeLineFeedback,
+  normalizeLineFeedback,
+  reactToLine,
+} from "./lines/line-feedback.js";
 
 export const CIRCLE_OS_STORAGE_KEY = "circle-os-state-v2";
 export const CIRCLE_OS_LEGACY_STORAGE_KEY = "circle-os-state-v1";
@@ -680,6 +685,9 @@ export function createEmptyState() {
     // Which lines have been read lately, newest first. A line is not a chapter:
     // there is no run to record, only enough memory to keep the pool rotating.
     seenLines: [],
+    // What he thought of the Lines he has read. Small on purpose: which line,
+    // which reaction, when. A Line still collects nothing else.
+    lineFeedback: {},
     outbox: [],
   };
 }
@@ -841,8 +849,19 @@ export function normalizeState(state) {
     },
     athenaMemory: normalizeAthenaMemory(state.athenaMemory),
     seenLines: mergeSeenLines(state.seenLines, []),
+    lineFeedback: normalizeLineFeedback(state.lineFeedback),
     outbox: Array.isArray(state.outbox) ? state.outbox : [],
   };
+}
+
+/**
+ * Record what he thought of a Line. Pressing the same reaction again takes it
+ * back: a reaction given by accident on a reading surface has to be givable
+ * back, and there is nowhere else to undo it from.
+ */
+export function reactToLineSeen(state, lineId, reaction, at = new Date().toISOString()) {
+  const lineFeedback = reactToLine(state.lineFeedback, lineId, reaction, at);
+  return { ...state, lineFeedback };
 }
 
 export function markLineSeen(state, lineId) {
@@ -1694,6 +1713,7 @@ export function mergeServerState(state, serverState) {
       ),
     },
     seenLines: mergeSeenLines(local.seenLines, remote.seenLines),
+    lineFeedback: mergeLineFeedback(local.lineFeedback, remote.lineFeedback),
     appSessions: {
       ...remote.appSessions,
       ...mergeUpdatedRecords(remote.appSessions, local.appSessions),

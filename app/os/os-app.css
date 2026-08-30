@@ -679,6 +679,54 @@
   margin: 0;
 }
 
+/* How was this?
+ *
+ * The reactions live in the Footer of a Line's last Page, on the right, where
+ * a Page's action always is. They are the only thing a Line ever collects, so
+ * they stay small and stay out of the reading: nothing is asked until a swipe
+ * says the reading is finished.
+ *
+ * Square keys rather than full-width ones. A reaction is a small answer and
+ * should not look like the one main action of a Page that asks something. */
+.circle-os .os-line-reactions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-left: auto;
+  width: auto;
+}
+
+.circle-os .os-line-reactions .os-creative-button-shell {
+  height: auto;
+  width: auto;
+}
+
+.circle-os .os-line-reaction.os-creative-button {
+  --os-key-lift: var(--os-key-lift-sm);
+  --os-key-leg: var(--c-neutral-300);
+  --os-key-top: var(--os-key-unlit);
+  align-items: center;
+  background: var(--c-warm-100);
+  border: 1px solid var(--c-neutral-200);
+  border-radius: var(--r-md);
+  color: var(--c-ink);
+  display: flex;
+  font-size: var(--text-lg);
+  justify-content: center;
+  line-height: 1;
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: 0;
+  width: var(--touch-min);
+}
+
+/* Answered: the key stays down, the way a kept term does. */
+.circle-os .os-line-reaction[aria-pressed="true"].os-creative-button {
+  background: var(--c-ink);
+  color: var(--c-warm-50);
+}
+
 .circle-os .os-line-cue {
   color: var(--c-neutral-600);
   font-size: var(--text-xs);

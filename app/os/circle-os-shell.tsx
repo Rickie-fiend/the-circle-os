@@ -65,6 +65,7 @@ import {
   normalizeState,
   queueProfileUpdate,
   markLineSeen,
+  reactToLineSeen,
   setAppSessionIndex,
   setDayLogRange,
   setDayTitle,
@@ -105,6 +106,12 @@ import {
 } from "./dreamline-pages";
 import linePool from "./lines/lines.json";
 import { selectLine } from "./lines/line-pool.js";
+import {
+  LINE_REACTION_GLYPHS,
+  LINE_REACTION_LABELS,
+  lineReaction,
+  lineReactions,
+} from "./lines/line-feedback.js";
 import notePlaceholderPool from "./note-placeholders/note-placeholders.json";
 import { nextNotePlaceholder } from "./note-placeholders/note-placeholder-pool.js";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
@@ -793,6 +800,7 @@ export type CircleState = {
   };
   /** Ids of lines read lately, newest first. */
   seenLines: string[];
+  lineFeedback: Record<string, { reaction: string; at: string }>;
   outbox: Array<{
     id: string;
     reason: string;
@@ -1501,6 +1509,11 @@ export function TodayExperience() {
     { id: string; kind: string; text: string; sub: string } | null
   >(null);
   const [revealedLinePage, setRevealedLinePage] = useState(0);
+  // A Line's last Page does not leave on the first swipe. The swipe opens the
+  // footer, and the second one — or a reaction — closes it. Sai: "more like a
+  // confirm swipe, user may click on it and the page fade, or swipe after the
+  // footer show to continue."
+  const [lineFeedbackOpen, setLineFeedbackOpen] = useState(false);
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
   const noteBack = useAppBack<"note" | "line">("note");
@@ -2514,6 +2527,7 @@ export function TodayExperience() {
     noteBack.flip("line", () => {
       setRevealedLine(line);
       setRevealedLinePage(0);
+      setLineFeedbackOpen(false);
       updateState((current) => markLineSeen(current, line.id));
     }, event.currentTarget);
   }
@@ -2523,6 +2537,7 @@ export function TodayExperience() {
     noteBack.flip("note", () => {
       setRevealedLine(null);
       setRevealedLinePage(0);
+      setLineFeedbackOpen(false);
     }, source);
   }
 
@@ -2538,11 +2553,34 @@ export function TodayExperience() {
 
   useEffect(() => {
     if (!revealedLine) return;
+    // Once the footer is open he is choosing, and a Page must not be taken away
+    // mid-decision. The Line then leaves by a reaction or by a second swipe.
+    if (lineFeedbackOpen) return;
     const lastPage = revealedLine.kind === "quote" ? 0 : 1;
     if (revealedLinePage !== lastPage) return;
     const timer = window.setTimeout(() => closeLine.current(), LINE_DWELL_MS);
     return () => window.clearTimeout(timer);
-  }, [revealedLine, revealedLinePage]);
+  }, [lineFeedbackOpen, revealedLine, revealedLinePage]);
+
+  /**
+   * A swipe off the end of a Line. The first one asks; the second one leaves.
+   */
+  function passLineForward() {
+    if (!revealedLine) return;
+    if (!lineFeedbackOpen) {
+      setLineFeedbackOpen(true);
+      return;
+    }
+    closeNoteLine();
+  }
+
+  /** A reaction is an answer and a goodbye: it records, then the Page goes. */
+  function reactToRevealedLine(reaction: string) {
+    if (!revealedLine) return;
+    const line = revealedLine;
+    updateState((current) => reactToLineSeen(current, line.id, reaction));
+    closeNoteLine();
+  }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
@@ -2855,11 +2893,36 @@ export function TodayExperience() {
         {kindLabel}
       </span>
     );
+    // The reactions sit in the Footer of the Line's last Page, on the right.
+    // They are keys like every other control, and they latch, because choosing
+    // one is the last thing that happens on this Page.
+    const reactions = (
+      <div className="os-line-reactions" role="group" aria-label="How was this?">
+        {lineReactions(revealedLine.kind).map((reaction) => (
+          <CreativeButton
+            aria-label={LINE_REACTION_LABELS[reaction] || reaction}
+            aria-pressed={lineReaction(state.lineFeedback, revealedLine.id) === reaction}
+            className="os-line-reaction"
+            key={reaction}
+            onClick={() => reactToRevealedLine(reaction)}
+            release="latch"
+            sizing="content"
+            styleId="default"
+            type="button"
+          >
+            <span aria-hidden="true">{LINE_REACTION_GLYPHS[reaction] || "?"}</span>
+          </CreativeButton>
+        ))}
+      </div>
+    );
+    const lastPageFooter = lineFeedbackOpen ? reactions : (
+      <span className="os-line-cue">Swipe</span>
+    );
     const setup = (
       <PageLayout
         className="os-line-page"
         footer={
-          revealedLine.kind === "quote" ? undefined : (
+          revealedLine.kind === "quote" ? lastPageFooter : (
             <span className="os-line-cue">Swipe to reveal</span>
           )
         }
@@ -2882,6 +2945,7 @@ export function TodayExperience() {
       setup,
       <PageLayout
         className="os-line-page os-line-reveal-page"
+        footer={lastPageFooter}
         headerLeft={kind}
         key={`${revealedLine.id}:reveal`}
         theme="light"
@@ -3038,6 +3102,7 @@ export function TodayExperience() {
             index={checkInIndex}
             label={noteLineActive ? "A Line" : "Check-in session"}
             maxIndex={Math.max(...checkInAvailableIndices)}
+            onForwardBoundary={noteLineActive ? passLineForward : undefined}
             rotateMs={IDLE_PAGE_DWELL_MS}
             rotatePaused={!noteLineActive && Boolean(thoughtDraft.trim())}
             onIndexChange={(nextIndex) => {
