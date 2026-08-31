@@ -52,3 +52,4 @@ export function discardEmptyStep(
   stepId: string,
   discardTask: (state: unknown, taskId: string) => unknown,
 ): never;
+export function taskIsUnderDoneGoal(state: unknown, taskId: string): boolean;

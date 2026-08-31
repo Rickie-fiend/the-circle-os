@@ -167,13 +167,13 @@ test("the App Box knows the arriving Page's height before it is painted", () => 
   const committed = measured.indexOf("\n    commitMeasurement();");
   assert.ok(committed > defined, "the commit is synchronous, ahead of the settle");
 
-  // And the resize is the Page's own arrival, so the two finish together.
+  // And it takes that height outright. A Page arriving is not a box growing:
+  // easing it made the box travel into place after the Page had landed, which
+  // is the adjustment Sai kept seeing.
   const css = readFileSync("app/os/os-app.css", "utf8");
-  const arrival = css.match(/os-page-arrive-next (\d+)ms (cubic-bezier\([^)]+\))/);
-  const resize = css.match(/page-resizing \{\n\s*transition: height (\d+)ms (cubic-bezier\([^)]+\))/);
-  assert.ok(arrival && resize);
-  assert.equal(resize[1], arrival[1]);
-  assert.equal(resize[2], arrival[2]);
+  assert.doesNotMatch(css, /page-resizing/);
+  assert.match(css, /os-app-window\.fluid-height \{\n\s*transition: none;/);
+  assert.doesNotMatch(session, /frameEasing/);
 });
 
 // Sai: "make it directly editable in the week app rather than directing to
@@ -269,7 +269,9 @@ test("a step reads as the priority among Routine's tasks", () => {
       + 240,
   );
   assert.match(key, /background: var\(--c-ink\)/, "darker than on the Week Page");
-  assert.match(key, /border-color: var\(--c-orange\)/, "the ring joins the card");
+  // The ring is lifted out of the card rather than lost in it: the brand orange
+  // over the brand orange is no ring at all.
+  assert.match(key, /border-color: color-mix\(in srgb, var\(--c-warm-50\)/);
 
   const row = css.slice(
     css.indexOf(".circle-os .os-task-row.from-week .os-extra-mission-copy"),
@@ -277,4 +279,32 @@ test("a step reads as the priority among Routine's tasks", () => {
   );
   assert.match(row, /font-weight: 700/);
   assert.match(row, /color: var\(--c-ink\)/);
+});
+
+// Sai: "between the 'Day' and 'week nav bar', add the date, ('August 31') for
+// each day of the week." A day he has renamed still has to say which day it is.
+test("a day says its date under whatever he calls it", () => {
+  const [monday] = weekDays(createEmptyState(), WEDNESDAY);
+  assert.equal(monday.date, "August 24");
+  assert.equal(weekDays(createEmptyState(), "2026-09-01")[0].date, "August 31");
+
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const page = shell.slice(
+    shell.indexOf("os-week-day-name"),
+    shell.indexOf("os-week-goals"),
+  );
+  const name = page.indexOf("os-week-day-name");
+  const date = page.indexOf("os-week-date");
+  const strip = page.indexOf("os-week-strip");
+  assert.ok(name < date && date < strip, "name, then date, then the week");
+  assert.match(page, /\{logChosenDay\.date\}/);
+});
+
+// A step under a goal he has called done is carried by the goal.
+test("Routine stops asking for a step whose goal is done", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(
+    shell,
+    /\.filter\(\(task\) => !taskIsUnderDoneGoal\(state, task\.id\)\)/,
+  );
 });

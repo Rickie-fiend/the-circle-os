@@ -191,6 +191,22 @@ export function goalStepForTask(state, taskId) {
 }
 
 /**
+ * Whether a task is a step of a goal that has been marked done.
+ *
+ * Routine stops asking for it either way. Sai: "when a goal is completed,
+ * respective task for the steps, whether they complete or not, must not show in
+ * routine task, since its part of the goal." Calling the goal done is calling
+ * the whole of it done — a step still open underneath it was made unnecessary by
+ * that, not left undone. Nothing is deleted: reopening the goal brings the step
+ * back to Routine exactly as it was.
+ */
+export function taskIsUnderDoneGoal(state, taskId) {
+  const step = goalStepForTask(state, taskId);
+  if (!step) return false;
+  return normalizeGoals(state.goals).items[step.goalId]?.status === "done";
+}
+
+/**
  * Add a step to a goal, and the Routine task that is that step.
  *
  * Returns the task id so the caller can put the cursor in the right row: a step

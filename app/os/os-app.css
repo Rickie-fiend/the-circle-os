@@ -451,17 +451,17 @@
   min-height: var(--os-app-box-min-height);
 }
 
-/* Content edits resize the frame in the same frame as the Page. Only a Page
-   change earns the shared height ease; otherwise ResizeObserver would restart
-   the transition on every row and textarea measurement.
-
-   The duration and the curve are the Page's own arrival, above: the box
-   reaching its new height and the Page reaching its place are one movement,
-   finishing together. Held longer, the box was still resizing after the Page
-   had landed, which read as the Page adjusting itself while you looked at it. */
-.circle-os .os-app-window.fluid-height.page-resizing {
-  transition: height 280ms cubic-bezier(0.22, 0.72, 0.22, 1);
-  will-change: height;
+/* The frame takes its new height outright, with no ease.
+ *
+ * A Page arriving is not a box growing: everything above the fold is already
+ * where it belongs, and the only thing that changes is where the box stops.
+ * Easing that made the box travel into place after the Page had landed, which
+ * is what he kept seeing. Sai: "the app box expend then it adjust to the real
+ * position. what should happen is, the forehead and the main text all of the
+ * position is still and already in placed, only it extend to the end of the
+ * app." */
+.circle-os .os-app-window.fluid-height {
+  transition: none;
 }
 
 .circle-os .os-app-window.fluid-height .os-app-page > :first-child {
@@ -2657,7 +2657,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .circle-os .os-app-window.fluid-height.page-resizing,
   .circle-os .os-extra-mission {
     transition-duration: 1ms !important;
   }
@@ -4754,13 +4753,13 @@
   border-color: var(--c-orange);
 }
 
-/* On Routine's orange card the same key goes darker still and its stroke joins
- * the card, so what you see is a solid dark disc among bone ones. Sai: "The dark
- * button for steps on routine task, should be darker, and the orange ring
- * blended with the background orange." */
+/* On Routine's orange card the same key goes darker still, and its ring is
+ * lifted out of the card rather than lost in it: the brand orange over the
+ * brand orange is no ring at all. The lighter tone is his own two colours
+ * mixed, not a new one. Sai: "i want the orange ring to be more visible." */
 .circle-os .os-task-row.from-week .os-row-tick-week.os-creative-button {
   background: var(--c-ink);
-  border-color: var(--c-orange);
+  border-color: color-mix(in srgb, var(--c-warm-50) 58%, var(--c-orange));
 }
 
 /* The days sit under the Main text and above what that day held, so the Page
@@ -4768,6 +4767,16 @@
 .circle-os .os-week-day-body {
   display: grid;
   gap: var(--os-group-gap);
+}
+
+/* The date, between the day's name and the week. Quiet: the name is what he
+ * calls the day, and this only says which day that is. */
+.circle-os .os-week-date {
+  color: rgb(241 239 232 / 0.5);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: calc(var(--os-group-gap) * -0.5) 0 0;
 }
 
 .circle-os .os-week-strip {

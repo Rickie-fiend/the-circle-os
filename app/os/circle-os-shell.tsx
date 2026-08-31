@@ -131,6 +131,7 @@ import {
   discardEmptyStep,
   goalStepForTask,
   goalsForDay,
+  taskIsUnderDoneGoal,
   toggleGoal,
   updateGoal,
 } from "./goal-model.js";
@@ -1969,6 +1970,9 @@ export function TodayExperience() {
     .filter(
       (task) => task.status === "open" || leavingMissionIds.includes(task.id),
     )
+    // A step under a goal he has called done is carried by the goal, so Routine
+    // stops asking for it. It is not deleted: reopening the goal brings it back.
+    .filter((task) => !taskIsUnderDoneGoal(state, task.id))
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
   // Habit shows one finished day behind the label, not a week of dots.
   const yesterdayKey = previousDateKey(dateKey);
@@ -3924,6 +3928,8 @@ export function TodayExperience() {
                 />
               </div>
               <div className="os-page-sub os-week-day-body">
+                {/* Which day this is, under whatever he has called it. */}
+                <p className="os-week-date">{logChosenDay.date}</p>
                 <div className="os-week-strip" role="group" aria-label="Days of this week">
                   {logWeekDays.map((day) => (
                     <button

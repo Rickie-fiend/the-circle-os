@@ -2,6 +2,7 @@ export type WeekDaySummary = {
   dateKey: string;
   letter: string;
   name: string;
+  date: string;
   title: string;
   isToday: boolean;
   isFuture: boolean;

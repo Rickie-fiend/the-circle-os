@@ -135,6 +135,15 @@ export function weekDaySummary(state, dateKey, todayKey = getDateKey()) {
     dateKey,
     letter: WEEK_DAY_LETTERS[weekdayIndex(dateKey)],
     name: DAY_NAMES[dayAt(dateKey).getDay()],
+    /**
+     * The day's date, said the way the Today heading says it. A day that has
+     * been renamed — "Jame's birthday" — still has to say which day it is, or
+     * the strip is the only thing telling you where you are in the week.
+     */
+    date: dayAt(dateKey).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+    }),
     title: String(day?.title || "").trim(),
     isToday: dateKey === todayKey,
     isFuture: dateKey.localeCompare(todayKey) > 0,

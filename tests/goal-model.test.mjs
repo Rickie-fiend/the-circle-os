@@ -17,6 +17,7 @@ import {
   goalStepForTask,
   goalsForDay,
   mergeGoals,
+  taskIsUnderDoneGoal,
   removeGoal,
   toggleGoal,
   updateGoal,
@@ -167,4 +168,25 @@ test("an unwritten step takes its Routine task with it", () => {
   const kept = discardEmptyStep(written, "s1", discardEmptyTask);
   assert.equal(goalsForDay(kept, MONDAY)[0].steps.length, 1);
   assert.equal(kept.tasks.items[added.taskId].status, "open");
+});
+
+// Sai: "when a goal is completed, respective task for the steps, whether they
+// complete or not, must not show in routine task, since its part of the goal."
+test("a goal that is done carries its steps out of Routine", () => {
+  const { state, taskId } = goalWithStep();
+  assert.equal(taskIsUnderDoneGoal(state, taskId), false, "an open goal still asks");
+
+  const done = toggleGoal(state, "g1");
+  assert.equal(taskIsUnderDoneGoal(done, taskId), true);
+  // A step still open under a finished goal goes too: calling the goal done is
+  // calling the whole of it done.
+  assert.equal(done.tasks.items[taskId].status, "open", "nothing was deleted");
+  // And the step is still under the goal in the Week, where it was written.
+  assert.equal(goalsForDay(done, MONDAY)[0].steps.length, 1);
+
+  // Reopening the goal brings it back exactly as it was.
+  assert.equal(taskIsUnderDoneGoal(toggleGoal(done, "g1"), taskId), false);
+  // An ordinary task is nobody's step.
+  const loose = addTask(state);
+  assert.equal(taskIsUnderDoneGoal(loose.state, loose.id), false);
 });
