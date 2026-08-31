@@ -8219,6 +8219,41 @@
 }
 
 /* An overview, and a way back into the run it describes. */
+/* Past phases fold away. They are a record to reach for, not the body of the
+ * Page — Sai does not read them back, so they stop taking the room. */
+.circle-os .os-protocol-past > summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  list-style: none;
+  min-height: var(--touch-min);
+}
+
+.circle-os .os-protocol-past > summary::-webkit-details-marker {
+  display: none;
+}
+
+.circle-os .os-protocol-past-count {
+  align-items: center;
+  border: 1px solid rgb(25 24 19 / 0.35);
+  border-radius: var(--r-full);
+  color: var(--c-ink);
+  display: inline-flex;
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 7px;
+}
+
+/* An empty slot is still the key that starts a phase. */
+.circle-os .os-protocol-current.is-empty {
+  border-style: dashed;
+}
+
 .circle-os .os-protocol-current {
   appearance: none;
   background: rgb(25 24 19 / 0.14);

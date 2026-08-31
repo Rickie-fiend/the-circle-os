@@ -162,23 +162,11 @@ function ProtocolHome({
   return (
     <PageLayout
       className={`os-protocol os-protocol-home ${className}`.trim()}
-      footer={
-        !running && onStart ? (
-          <CreativeButton
-            className="os-protocol-begin"
-            onClick={onStart}
-            sizing="content"
-            styleId="default"
-            type="button"
-          >
-            Start a phase
-          </CreativeButton>
-        ) : undefined
-      }
+      footer={undefined}
       heading={
-        <p className="os-protocol-home-heading">
-          {currentPhase ? "Phases" : "Past phases"}
-        </p>
+        // The Page leads with the current phase whether or not one is running,
+        // so the heading names the Page rather than whichever part is longest.
+        <p className="os-protocol-home-heading">Phases</p>
       }
       headerLeft={
         running ? (
@@ -197,9 +185,16 @@ function ProtocolHome({
       placement="content-flow"
       theme="orange"
     >
-      {currentPhase ? (
-        <section className="os-protocol-home-part" aria-label="Current phase">
-          <p className="os-record-label">Current phase</p>
+      {/* One box, two states.
+        *
+        * A running phase is the box; with none running the same box is where
+        * one begins, rather than a separate action in the Footer. Sai: "rather
+        * than start the phase as a button, we can make the current phase, a
+        * place to start a phase when we dont currently have one. and i love the
+        * current phase monk mode or smt, a box that we can click on." */}
+      <section className="os-protocol-home-part" aria-label="Current phase">
+        <p className="os-record-label">Current phase</p>
+        {currentPhase ? (
           <button
             className="os-protocol-current"
             onClick={onReturnToPhase}
@@ -213,11 +208,28 @@ function ProtocolHome({
                 : ""}
             </span>
           </button>
-        </section>
-      ) : null}
+        ) : onStart ? (
+          <button
+            className="os-protocol-current is-empty"
+            onClick={onStart}
+            type="button"
+          >
+            <span className="os-protocol-current-name">Start a phase</span>
+            <span className="os-protocol-current-meta">
+              A stretch of days with terms you agree to first.
+            </span>
+          </button>
+        ) : null}
+      </section>
 
-      <section className="os-protocol-home-part" aria-label="Past phases">
-        {currentPhase ? <p className="os-record-label">Past phases</p> : null}
+      {/* Folded by default. Sai: "Past phases, i dont really care, i dont read
+        * back at all so it should be just stored within reach." So the record
+        * is kept and reachable, and stops being the body of the Page. */}
+      <details className="os-protocol-home-part os-protocol-past" aria-label="Past phases">
+        <summary className="os-protocol-past-head">
+          <span className="os-record-label">Past phases</span>
+          <span className="os-protocol-past-count">{phaseRecords.length}</span>
+        </summary>
       <div className="os-page-main os-protocol-home-records">
         {phaseRecords.length ? phaseRecords.map((record) => {
           const canCorrect = completedProtocol?.run.id === record.id;
@@ -293,7 +305,7 @@ function ProtocolHome({
           </p>
         )}
       </div>
-      </section>
+      </details>
     </PageLayout>
   );
 }

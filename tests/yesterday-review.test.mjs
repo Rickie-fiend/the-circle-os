@@ -113,24 +113,30 @@ test("what he achieved names two things at most, and three rows at most", () => 
 });
 
 // The day just gone still does not take an App Box of its own. It is one key on
-// the week strip, and today is simply the day the Page opens on.
-test("a day is read from the week strip, not from its own App Box", () => {
+// the week strip, which now lives at the back of the Log.
+test("a day is read from the week strip inside the Log", () => {
   assert.doesNotMatch(mirror, /aria-label="Yesterday session"/);
   assert.doesNotMatch(mirror, /mirror-yesterday-intro/);
 
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  // Three Pages: the day, the days either side, the week behind them.
+  assert.match(shell, /const logAppMaxIndex = 2;/);
+  assert.match(shell, /className="os-log-page os-log-span"/);
+  assert.match(shell, /className="os-log-page os-log-week"/);
+
   // Seven keys, and the one being read is the Page under them.
-  assert.match(mirror, /className="os-week-strip"/);
-  assert.match(mirror, /aria-pressed=\{day\.dateKey === chosenDayKey\}/);
-  assert.match(mirror, /onClick=\{\(\) => setChosenDayKey\(day\.dateKey\)\}/);
-  // A day not yet lived cannot be chosen: there is nothing to look at.
-  assert.match(mirror, /disabled=\{day\.isFuture\}/);
+  assert.match(shell, /className="os-week-strip"/);
+  assert.match(shell, /aria-pressed=\{day\.dateKey === logChosenDayKey\}/);
+  assert.match(shell, /onClick=\{\(\) => setLogChosenDayKey\(day\.dateKey\)\}/);
 
-  // A chosen day that falls out of the week returns to today rather than
-  // showing a day that is not on the strip above it.
-  assert.match(mirror, /weekDaysView\.find\(\(day\) => day\.dateKey === todayKey\)/);
+  // A future day IS reachable here: this Page is for planning the week, so
+  // Thursday has to be selectable before Thursday.
+  const weekPage = shell.match(/os-log-page os-log-week[\s\S]*?<\/PageLayout>/)?.[0] ?? "";
+  assert.ok(weekPage, "the week Page moved");
+  assert.doesNotMatch(weekPage, /disabled=\{day\.isFuture\}/);
 
-  // The saved page position forgets the old Week Review arrangement once.
-  assert.match(mirror, /weekJourneyVersion = "week-app-v1"/);
+  // The saved position forgets the old one-Page Log.
+  assert.match(shell, /logAppVersion = "log-week-v1"/);
 });
 
 test("a Page arrives whole, with no part of it revealed on a delay", () => {

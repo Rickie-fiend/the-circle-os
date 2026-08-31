@@ -122,6 +122,7 @@ import {
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
+import { weekDays, weekSpan } from "./week-app-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   ProtocolKeptPage,
@@ -1962,8 +1963,25 @@ export function TodayExperience() {
   const dreamlineEditing = editingDreamline || !dreamlineProgressView;
   // Log is one Page again. The Dreamline moved into the Routine box, where it
   // sits after Protocol: the small daily, the weekly reset, the big goal.
-  const logAppVersion = "log-v3";
-  const logAppMaxIndex = 0;
+  // Log is three Pages now: the day, the days either side, and the week behind
+  // them. Sai: "Move Week app to the back of the log app. and these days to the
+  // second page of the log app. i will be using that to plan for the week."
+  //
+  // The week belongs to the Log rather than to Reflect because planning a week
+  // is the same act as logging a day, one size up — Reflect is for reading, and
+  // he never read it there.
+  const logAppVersion = "log-week-v1";
+  const logAppMaxIndex = 2;
+  const logWeekDays = weekDays(state, dateKey);
+  const logSpanView = weekSpan(state, dateKey);
+  // A future day can be chosen here, unlike on the reading surface: this Page
+  // is for planning the week, so Thursday has to be reachable before Thursday.
+  const [logChosenDayKey, setLogChosenDayKey] = useState(dateKey);
+  const logChosenDay =
+    logWeekDays.find((day) => day.dateKey === logChosenDayKey) ||
+    logWeekDays.find((day) => day.dateKey === dateKey) ||
+    logWeekDays[0];
+  const logSpanHeading = `${logSpanView.filter((day) => day.touched).length} of ${logSpanView.length} days here.`;
   const logAppIndex = Math.min(
     appSessionIndex(state, "today-log", logAppVersion),
     logAppMaxIndex,
@@ -3743,6 +3761,106 @@ export function TodayExperience() {
                 <span aria-hidden="true">+</span>
               </button>
             ) : null}
+              </div>
+            </PageLayout>
+
+            {/* Page two: the days either side, for planning the week ahead. */}
+            <PageLayout
+              className="os-log-page os-log-span"
+              headerLeft={<p className="os-card-label">These days</p>}
+              key="log-span"
+              theme="dark"
+            >
+              <div className="os-page-main">
+                <h2>{logSpanHeading}</h2>
+              </div>
+              <div className="os-page-sub os-week-span">
+                {logSpanView.map((day) => (
+                  <div
+                    className={`os-week-span-day${day.isToday ? " is-today" : ""}${
+                      day.isFuture ? " is-future" : ""
+                    }`}
+                    key={day.dateKey}
+                  >
+                    <b>{day.letter}</b>
+                    <span>{day.title || day.name}</span>
+                    <small>
+                      {day.isFuture
+                        ? "—"
+                        : day.touched
+                          ? `${day.kept}/${day.due}`
+                          : "nothing"}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            </PageLayout>
+
+            {/* Page three: the week itself, behind the days. */}
+            <PageLayout
+              className="os-log-page os-log-week"
+              headerLeft={<p className="os-card-label">Week</p>}
+              key="log-week"
+              theme="dark"
+            >
+              <div className="os-page-main">
+                <h2 className="os-week-day-name">
+                  {logChosenDay.title || logChosenDay.name}
+                </h2>
+              </div>
+              <div className="os-page-sub os-week-day-body">
+                <div className="os-week-strip" role="group" aria-label="Days of this week">
+                  {logWeekDays.map((day) => (
+                    <button
+                      aria-label={day.name}
+                      aria-pressed={day.dateKey === logChosenDayKey}
+                      className={`os-week-day${day.isToday ? " is-today" : ""}${
+                        day.isFuture ? " is-future" : ""
+                      }${day.touched ? " is-touched" : ""}`}
+                      key={day.dateKey}
+                      onClick={() => setLogChosenDayKey(day.dateKey)}
+                      type="button"
+                    >
+                      <span aria-hidden="true">{day.letter}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="os-week-day-summary">
+                  {logChosenDay.moments.length ? (
+                    <ul className="os-week-day-moments">
+                      {logChosenDay.moments.map((moment, index) => (
+                        <li key={`${moment.at}-${index}`}>
+                          <b>{moment.at}</b>
+                          <span>{moment.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="os-week-day-empty">
+                      {logChosenDay.isFuture
+                        ? "Not yet."
+                        : logChosenDay.isToday
+                          ? "Nothing written down yet."
+                          : "Nothing written down."}
+                    </p>
+                  )}
+                  {logChosenDay.touched ? (
+                    <dl className="os-week-day-counts">
+                      <div>
+                        <dt>Habits</dt>
+                        <dd>{logChosenDay.kept} of {logChosenDay.due}</dd>
+                      </div>
+                      <div>
+                        <dt>Tasks</dt>
+                        <dd>{logChosenDay.tasks}</dd>
+                      </div>
+                      <div>
+                        <dt>Hours</dt>
+                        <dd>{logChosenDay.hours}</dd>
+                      </div>
+                    </dl>
+                  ) : null}
+                </div>
               </div>
             </PageLayout>
           </SwipeSession>
