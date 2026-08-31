@@ -128,7 +128,6 @@ export function SwipeSession({
   const [showingAttentionKey, setShowingAttentionKey] = useState("");
   const attentionShowing = showingAttentionKey === attentionKey;
   const attentionArmed = attentionIsNew && !attentionShowing;
-  const [contentHeight, setContentHeight] = useState<number | null>(null);
   const longPressCallback = useRef(onLongPress);
   const longPressEnabled = Boolean(onLongPress);
 
@@ -343,69 +342,21 @@ export function SwipeSession({
     };
   }, [longPressEnabled]);
 
-  useLayoutEffect(() => {
-    if (frameHeight || !currentPageRef.current) return;
-
-    const page = currentPageRef.current;
-    let active = true;
-    let measureFrame = 0;
-    let settleFrame = 0;
-
-    const commitMeasurement = () => {
-      if (!active) return;
-      const surface = page.firstElementChild as HTMLElement | null;
-      const nextHeight = Math.ceil(
-        Math.max(
-          page.scrollHeight,
-          surface?.scrollHeight || 0,
-          surface?.getBoundingClientRect().height || 0,
-        ),
-      );
-      if (nextHeight <= 0) return;
-      setContentHeight((currentHeight) =>
-        currentHeight === nextHeight ? currentHeight : nextHeight,
-      );
-    };
-
-    // Child layout effects size editable rows, and a webfont can replace the
-    // fallback after the first layout. Two frames let both settle before the
-    // App Box commits a height; the shared CSS minimum carries first paint.
-    const measure = () => {
-      if (!active) return;
-      window.cancelAnimationFrame(measureFrame);
-      window.cancelAnimationFrame(settleFrame);
-      measureFrame = window.requestAnimationFrame(() => {
-        settleFrame = window.requestAnimationFrame(commitMeasurement);
-      });
-    };
-
-    // The height of the Page you have arrived at, before the browser paints it.
-    // Waiting even two frames meant the box stood at the outgoing Page's height
-    // for the first frames of the slide and then resized under you — Sai: "it
-    // readjust upon viewing from the swipe, so it feels like jolting every
-    // swipe." Reading scrollHeight here forces the layout the new Page needs, so
-    // it lands already the right size. The settle below still follows, for a
-    // webfont or a child that sizes itself late.
-    commitMeasurement();
-    measure();
-    void document.fonts.ready.then(measure);
-    document.fonts.addEventListener?.("loadingdone", measure);
-    document.fonts.addEventListener?.("loadingerror", measure);
-    window.addEventListener("load", measure);
-
-    const observer =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
-    observer?.observe(page);
-    return () => {
-      active = false;
-      window.cancelAnimationFrame(measureFrame);
-      window.cancelAnimationFrame(settleFrame);
-      observer?.disconnect();
-      document.fonts.removeEventListener?.("loadingdone", measure);
-      document.fonts.removeEventListener?.("loadingerror", measure);
-      window.removeEventListener("load", measure);
-    };
-  }, [activeIndex, frameHeight]);
+  /* The App Box is as tall as the Page in it, and nothing measures that.
+   *
+   * The height used to be read from the DOM and written back as an inline
+   * pixel value, which meant the box could only learn its size after the Page
+   * existed — so it stood at the outgoing Page's height, then corrected. Every
+   * version of that correction was visible. Sai: "the app box expend then it
+   * adjust to the real position. what should happen is, the forehead and the
+   * main text all of the position is still and already in placed, only it
+   * extend to the end of the app."
+   *
+   * The current Page is in normal flow, so the box is already exactly its
+   * height with no height set at all: it arrives right, on the first frame,
+   * and follows a textarea growing with no measurement in between. Only the
+   * Pages either side are taken out of flow, and they are only there mid-swipe.
+   */
 
   useEffect(
     () => () => {
@@ -721,13 +672,7 @@ export function SwipeSession({
           attentionShowing ? " update-arrival" : ""
         }`}
         ref={windowRef}
-        style={
-          frameHeight
-            ? { height: frameHeight }
-            : contentHeight
-              ? { height: `${contentHeight}px` }
-              : undefined
-        }
+        style={frameHeight ? { height: frameHeight } : undefined}
       >
         {(dragging || settling) && previousIndex !== undefined ? (
           <div

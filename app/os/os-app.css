@@ -447,20 +447,19 @@
   margin: 0;
 }
 
+/* The frame is as tall as the Page in it, and no taller.
+ *
+ * No height is set on it and none is animated: the current Page is in normal
+ * flow, so the box is already exactly its height on the first frame it exists.
+ * A Page arriving is not a box growing — everything above the fold is already
+ * where it belongs, and the only thing that changes is where the box stops.
+ * Sai: "the app box expend then it adjust to the real position. what should
+ * happen is, the forehead and the main text all of the position is still and
+ * already in placed, only it extend to the end of the app."
+ *
+ * The floor is the App Box standard, so a short Page is still an App Box. */
 .circle-os .os-app-window.fluid-height {
   min-height: var(--os-app-box-min-height);
-}
-
-/* The frame takes its new height outright, with no ease.
- *
- * A Page arriving is not a box growing: everything above the fold is already
- * where it belongs, and the only thing that changes is where the box stops.
- * Easing that made the box travel into place after the Page had landed, which
- * is what he kept seeing. Sai: "the app box expend then it adjust to the real
- * position. what should happen is, the forehead and the main text all of the
- * position is still and already in placed, only it extend to the end of the
- * app." */
-.circle-os .os-app-window.fluid-height {
   transition: none;
 }
 
@@ -673,24 +672,24 @@
  * they stay small and stay out of the reading: nothing is asked until a swipe
  * says the reading is finished.
  *
- * Square keys rather than full-width ones. A reaction is a small answer and
- * should not look like the one main action of a Page that asks something. */
+ * Two keys, side by side, the whole width of the Page between them. The answer
+ * is the only thing the Footer is for once the Line has been read, so it takes
+ * the Footer's full line rather than sitting small in a corner. Sai: "two of
+ * those button take up the whole width side by side." */
 .circle-os .os-line-reactions {
   align-items: center;
-  display: flex;
+  display: grid;
   gap: 10px;
-  justify-content: flex-end;
-  margin-left: auto;
-  width: auto;
-}
-
-.circle-os .os-line-reactions .os-creative-button-shell {
-  flex: 0 0 auto;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  margin-left: 0;
+  width: 100%;
 }
 
 .circle-os .os-line-reactions .os-creative-button-shell {
   height: auto;
-  width: auto;
+  min-width: 0;
+  width: 100%;
 }
 
 /* Words, not pictures.
@@ -701,13 +700,13 @@
  * here is, and it says exactly what it means without a legend. */
 .circle-os .os-line-reaction.os-creative-button {
   --os-key-lift: var(--os-key-lift-sm);
-  --os-key-leg: var(--c-neutral-300);
+  --os-key-leg: var(--c-ink-deep);
   --os-key-top: var(--os-key-unlit);
   align-items: center;
-  background: var(--c-warm-100);
-  border: 1px solid var(--c-neutral-200);
+  background: var(--c-ink);
+  border: 1px solid var(--c-ink);
   border-radius: var(--r-md);
-  color: var(--c-ink);
+  color: var(--c-warm-50);
   display: flex;
   font-size: var(--text-sm);
   font-weight: 650;
@@ -717,12 +716,20 @@
   min-height: var(--touch-min);
   padding: 0 1rem;
   white-space: nowrap;
+  width: 100%;
 }
 
-/* Answered: the key stays down, the way a kept term does. */
+/* Answered: the key stays down, the way a kept term does, and the one he did
+ * not choose stands back rather than changing colour — both are the same key
+ * and only one of them was the answer. */
 .circle-os .os-line-reaction[aria-pressed="true"].os-creative-button {
-  background: var(--c-ink);
+  background: var(--c-ink-deep);
   color: var(--c-warm-50);
+}
+
+.circle-os .os-line-reactions:has([aria-pressed="true"])
+  .os-line-reaction:not([aria-pressed="true"]).os-creative-button {
+  opacity: 0.38;
 }
 
 .circle-os .os-line-cue {
@@ -4753,13 +4760,12 @@
   border-color: var(--c-orange);
 }
 
-/* On Routine's orange card the same key goes darker still, and its ring is
- * lifted out of the card rather than lost in it: the brand orange over the
- * brand orange is no ring at all. The lighter tone is his own two colours
- * mixed, not a new one. Sai: "i want the orange ring to be more visible." */
+/* On Routine's orange card the same key goes darker still, and keeps the brand
+ * orange as its ring. A paler mix read more strongly against the card but was
+ * not the colour: Sai, on trying it, "that white ring sucks." */
 .circle-os .os-task-row.from-week .os-row-tick-week.os-creative-button {
   background: var(--c-ink);
-  border-color: color-mix(in srgb, var(--c-warm-50) 58%, var(--c-orange));
+  border-color: var(--c-orange);
 }
 
 /* The days sit under the Main text and above what that day held, so the Page

@@ -157,23 +157,26 @@ test("the day's name is written here and read in the Log", () => {
 // Sai: "Log app, it readjust upon viewing from the swipe, so it feels like
 // jolting every swipe." The height of the Page you land on has to be known
 // before the browser paints it, not two frames later.
-test("the App Box knows the arriving Page's height before it is painted", () => {
+test("the App Box is the Page's own height, measured by nothing", () => {
   const session = readFileSync("app/os/app-session.tsx", "utf8");
-  const measured = session.slice(
-    session.indexOf("const commitMeasurement"),
-    session.indexOf("void document.fonts.ready"),
-  );
-  const defined = measured.indexOf("const measure =");
-  const committed = measured.indexOf("\n    commitMeasurement();");
-  assert.ok(committed > defined, "the commit is synchronous, ahead of the settle");
+  // No measurement, so there is no moment when the box knows the wrong height.
+  // Every version of this ended the same way: the box stood at the outgoing
+  // Page's height and then corrected, and the correction was what he saw.
+  assert.doesNotMatch(session, /contentHeight/);
+  assert.doesNotMatch(session, /commitMeasurement/);
+  assert.match(session, /style=\{frameHeight \? \{ height: frameHeight \} : undefined\}/);
 
-  // And it takes that height outright. A Page arriving is not a box growing:
-  // easing it made the box travel into place after the Page had landed, which
-  // is the adjustment Sai kept seeing.
+  // Nor an ease into place: a Page arriving is not a box growing.
   const css = readFileSync("app/os/os-app.css", "utf8");
   assert.doesNotMatch(css, /page-resizing/);
-  assert.match(css, /os-app-window\.fluid-height \{\n\s*transition: none;/);
   assert.doesNotMatch(session, /frameEasing/);
+  // The current Page stays in flow, which is what makes the box its height.
+  assert.match(css, /\.os-app-page\.adjacent \{[^}]*position: absolute/s);
+  // And the floor still holds: an App Box is never shorter than the standard.
+  assert.match(
+    css,
+    /os-app-window\.fluid-height \{\s+min-height: var\(--os-app-box-min-height\)/,
+  );
 });
 
 // Sai: "make it directly editable in the week app rather than directing to
@@ -269,9 +272,9 @@ test("a step reads as the priority among Routine's tasks", () => {
       + 240,
   );
   assert.match(key, /background: var\(--c-ink\)/, "darker than on the Week Page");
-  // The ring is lifted out of the card rather than lost in it: the brand orange
-  // over the brand orange is no ring at all.
-  assert.match(key, /border-color: color-mix\(in srgb, var\(--c-warm-50\)/);
+  // The ring is the brand orange. A paler mix read more strongly against the
+  // card but was not the colour: Sai, on trying it, "that white ring sucks."
+  assert.match(key, /border-color: var\(--c-orange\)/);
 
   const row = css.slice(
     css.indexOf(".circle-os .os-task-row.from-week .os-extra-mission-copy"),
