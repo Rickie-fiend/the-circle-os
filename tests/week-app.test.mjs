@@ -327,8 +327,8 @@ test("Routine stops asking for a step whose goal is done", () => {
 test("the box's edge moves, and everything inside it stays put", () => {
   const session = readFileSync("app/os/app-session.tsx", "utf8");
   const play = session.slice(
-    session.indexOf("function playGrowth(nextHeight: number)"),
-    session.indexOf("useLayoutEffect", session.indexOf("function playGrowth")),
+    session.indexOf("const playGrowth = useCallback("),
+    session.indexOf("useLayoutEffect", session.indexOf("const playGrowth")),
   );
   // Animated after the layout is final, so nothing is laid out at an interim
   // size — that is what made the old measured height jolt.

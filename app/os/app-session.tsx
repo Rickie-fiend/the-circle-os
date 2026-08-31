@@ -2,6 +2,7 @@
 
 import {
   Children,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -126,20 +127,23 @@ export function SwipeSession({
    * the Page in front of you growing. They share one record of the height so
    * they cannot disagree about where the edge was.
    */
-  function playGrowth(nextHeight: number) {
-    const frame = windowRef.current;
-    const from = boxHeight.current;
-    boxHeight.current = nextHeight;
-    if (!frame || frameHeight || from === null) return;
-    // A line of text appearing under the caret is not an expansion, and
-    // animating it would put the box behind the typing.
-    if (Math.abs(nextHeight - from) <= GROWTH_MIN_PX) return;
-    growth.current?.cancel();
-    growth.current = frame.animate(
-      [{ height: `${from}px` }, { height: `${nextHeight}px` }],
-      { duration: GROWTH_MS, easing: GROWTH_EASE },
-    );
-  }
+  const playGrowth = useCallback(
+    (nextHeight: number) => {
+      const frame = windowRef.current;
+      const from = boxHeight.current;
+      boxHeight.current = nextHeight;
+      if (!frame || frameHeight || from === null) return;
+      // A line of text appearing under the caret is not an expansion, and
+      // animating it would put the box behind the typing.
+      if (Math.abs(nextHeight - from) <= GROWTH_MIN_PX) return;
+      growth.current?.cancel();
+      growth.current = frame.animate(
+        [{ height: `${from}px` }, { height: `${nextHeight}px` }],
+        { duration: GROWTH_MS, easing: GROWTH_EASE },
+      );
+    },
+    [frameHeight],
+  );
   const internalCommit = useRef(false);
   const wheelTimer = useRef<number | null>(null);
   const wheelDistance = useRef(0);
@@ -323,7 +327,7 @@ export function SwipeSession({
       setExternalMotion("");
       externalMotionTimer.current = null;
     }, 300);
-  }, [activeIndex]);
+  }, [activeIndex, frameHeight, playGrowth]);
 
   useEffect(() => {
     const session = sessionRef.current;
@@ -413,7 +417,7 @@ export function SwipeSession({
       observer.disconnect();
       growth.current?.cancel();
     };
-  }, [dragging, frameHeight, settling]);
+  }, [dragging, frameHeight, playGrowth, settling]);
 
   /* The App Box is as tall as the Page in it, and nothing measures that.
    *
