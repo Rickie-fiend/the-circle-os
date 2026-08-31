@@ -282,7 +282,9 @@ export function SwipeSession({
     frameEaseTimer.current = window.setTimeout(() => {
       setFrameEasing(false);
       frameEaseTimer.current = null;
-    }, 460);
+      // Just past the 280ms arrival: the ease is for the Page change and is
+      // gone again before the next content measurement can ride it.
+    }, 320);
     if (internalCommit.current) {
       internalCommit.current = false;
       return;
@@ -387,6 +389,14 @@ export function SwipeSession({
       });
     };
 
+    // The height of the Page you have arrived at, before the browser paints it.
+    // Waiting even two frames meant the box stood at the outgoing Page's height
+    // for the first frames of the slide and then resized under you — Sai: "it
+    // readjust upon viewing from the swipe, so it feels like jolting every
+    // swipe." Reading scrollHeight here forces the layout the new Page needs, so
+    // it lands already the right size. The settle below still follows, for a
+    // webfont or a child that sizes itself late.
+    commitMeasurement();
     measure();
     void document.fonts.ready.then(measure);
     document.fonts.addEventListener?.("loadingdone", measure);

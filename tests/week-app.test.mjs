@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { createEmptyState } from "../app/os/circle-os-model.js";
@@ -115,4 +116,62 @@ test("the cover says where the week is", () => {
   );
   assert.equal(weekCoverLine(full, "2026-08-25"), "2 days, all in.");
   assert.equal(weekCoverLine(full, "2026-08-24"), "Today is in.");
+});
+
+// The Week Page is where the week is planned: what a day is for, and the
+// smallest step toward it. Sai: "below navigation bar, i want to make it for
+// the goal of the day ... below that will be the sub task."
+test("a day's goals sit under the day strip, each with its steps", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const page = shell.slice(
+    shell.indexOf("os-week-day-name"),
+    shell.indexOf("os-week-day-summary"),
+  );
+  const strip = page.indexOf("os-week-strip");
+  const goals = page.indexOf("os-week-goals");
+  const goal = page.indexOf("os-week-goal-head");
+  const step = page.indexOf("os-week-step");
+  assert.ok(strip > 0 && goals > strip, "the goals follow the day strip");
+  assert.ok(step > goal, "a step is written under the goal it serves");
+
+  // Both tick, and both latch: a tick is a state you leave the key in.
+  assert.match(page, /toggleGoal\(current, goal\.id\)[\s\S]*?release="latch"\n\s*role="habit"/);
+  assert.match(page, /finishTask\(step\.taskId\)[\s\S]*?release="latch"\n\s*role="habit"/);
+  // Only the step is the Routine task. The goal is ticked here and nowhere else.
+  assert.match(page, /finishTask\(step\.taskId/);
+  assert.match(page, /updateTask\(current, step\.taskId/);
+  assert.doesNotMatch(page, /finishTask\(goal\./);
+});
+
+// Sai: "Monday, Tuesday, ... make those editable. I could say, Jame's birthday.
+// ... and that would be shown in Log app, current 'Beautiful Day' placeholder."
+test("the day's name is written here and read in the Log", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  // One field, one record: the Week Page writes the same day title the Log
+  // shows, so naming a day here names it there.
+  assert.match(shell, /className="os-app-page-heading os-week-day-name"/);
+  assert.match(shell, /setDayTitle\(day, value\)/);
+  assert.match(shell, /placeholder=\{logChosenDay\.name\}/);
+});
+
+// Sai: "Log app, it readjust upon viewing from the swipe, so it feels like
+// jolting every swipe." The height of the Page you land on has to be known
+// before the browser paints it, not two frames later.
+test("the App Box knows the arriving Page's height before it is painted", () => {
+  const session = readFileSync("app/os/app-session.tsx", "utf8");
+  const measured = session.slice(
+    session.indexOf("const commitMeasurement"),
+    session.indexOf("void document.fonts.ready"),
+  );
+  const defined = measured.indexOf("const measure =");
+  const committed = measured.indexOf("\n    commitMeasurement();");
+  assert.ok(committed > defined, "the commit is synchronous, ahead of the settle");
+
+  // And the resize is the Page's own arrival, so the two finish together.
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const arrival = css.match(/os-page-arrive-next (\d+)ms (cubic-bezier\([^)]+\))/);
+  const resize = css.match(/page-resizing \{\n\s*transition: height (\d+)ms (cubic-bezier\([^)]+\))/);
+  assert.ok(arrival && resize);
+  assert.equal(resize[1], arrival[1]);
+  assert.equal(resize[2], arrival[2]);
 });

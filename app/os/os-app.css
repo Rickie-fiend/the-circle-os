@@ -453,9 +453,14 @@
 
 /* Content edits resize the frame in the same frame as the Page. Only a Page
    change earns the shared height ease; otherwise ResizeObserver would restart
-   a 440ms transition on every row and textarea measurement. */
+   the transition on every row and textarea measurement.
+
+   The duration and the curve are the Page's own arrival, above: the box
+   reaching its new height and the Page reaching its place are one movement,
+   finishing together. Held longer, the box was still resizing after the Page
+   had landed, which read as the Page adjusting itself while you looked at it. */
 .circle-os .os-app-window.fluid-height.page-resizing {
-  transition: height 440ms cubic-bezier(0.22, 0.82, 0.22, 1);
+  transition: height 280ms cubic-bezier(0.22, 0.72, 0.22, 1);
   will-change: height;
 }
 
@@ -4619,6 +4624,127 @@
  * control of its own. A day that has something in it is marked; a day not yet
  * lived is dimmed and cannot be chosen, because there is nothing to look at and
  * a disabled key says that more honestly than an empty Page would. */
+/* What a day is for, and the smallest step toward it.
+ *
+ * A goal is drawn as a Protocol term is drawn — the same wide key on the same
+ * dark surface — because agreeing what a day is for and agreeing a term are the
+ * same kind of act. A step sits under its goal, indented and quieter: it is in
+ * service of the line above it. */
+.circle-os .os-week-goals {
+  display: grid;
+  gap: 14px;
+}
+
+.circle-os .os-week-goal {
+  display: grid;
+  gap: 8px;
+}
+
+.circle-os .os-week-goal-head,
+.circle-os .os-week-step {
+  align-items: center;
+  column-gap: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  min-height: var(--touch-min);
+}
+
+.circle-os .os-week-step {
+  border-left: 1px solid rgb(241 239 232 / 0.14);
+  margin-left: 6px;
+  padding-left: 14px;
+}
+
+.circle-os .os-week-goal-text,
+.circle-os .os-week-step-text {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--c-warm-50);
+  field-sizing: content;
+  font-family: inherit;
+  min-width: 0;
+  outline: none;
+  overflow: hidden;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+
+.circle-os .os-week-goal-text {
+  font-size: var(--text-lg);
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.circle-os .os-week-step-text {
+  color: rgb(241 239 232 / 0.82);
+  font-size: var(--text-md);
+  line-height: 1.35;
+}
+
+.circle-os .os-week-goal-text::placeholder,
+.circle-os .os-week-step-text::placeholder {
+  color: rgb(241 239 232 / 0.34);
+}
+
+/* Done recedes rather than changing colour. */
+.circle-os .os-week-goal-text.is-done,
+.circle-os .os-week-step-text.is-done {
+  opacity: 0.5;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.circle-os .os-week-add-goal,
+.circle-os .os-week-add-step {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: rgb(241 239 232 / 0.55);
+  cursor: pointer;
+  display: flex;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 620;
+  gap: 0.5rem;
+  min-height: var(--touch-min);
+  padding: 0;
+  text-align: left;
+}
+
+.circle-os .os-week-add-step {
+  margin-left: 20px;
+}
+
+.circle-os .os-week-add-goal span,
+.circle-os .os-week-add-step span {
+  font-size: var(--text-xl);
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* The ticks on this surface are dark rather than orange: a Week Page is the
+ * dark App Box, so the leg has to be the App Box, not the Routine surface. */
+.circle-os .os-week-goal .os-creative-button-shell.role-habit .os-row-tick.os-creative-button,
+.circle-os .os-week-step .os-creative-button-shell.role-habit .os-row-tick.os-creative-button {
+  background: rgb(241 239 232 / 0.1);
+  border-color: rgb(241 239 232 / 0.45);
+}
+
+.circle-os .os-week-goal .os-creative-button-shell.role-habit
+  .os-row-tick-habit.os-creative-button,
+.circle-os .os-week-step .os-creative-button-shell.role-habit
+  .os-row-tick-task.os-creative-button {
+  --os-key-leg-orange: var(--c-ink-deep);
+}
+
+.circle-os .os-week-goal .os-row-tick[aria-pressed="true"]::after,
+.circle-os .os-week-step .os-row-tick[aria-pressed="true"]::after {
+  border-color: var(--c-warm-50);
+}
+
 /* The days sit under the Main text and above what that day held, so the Page
  * reads name, days, detail — the order every other App reads in. */
 .circle-os .os-week-day-body {

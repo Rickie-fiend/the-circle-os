@@ -6,6 +6,7 @@ import {
   normalizeAthenaMemory,
 } from "./athena-memory-model.js";
 import { mergeSeenLines, rememberLine } from "./lines/line-pool.js";
+import { mergeGoals, normalizeGoals } from "./goal-model.js";
 import {
   mergeLineFeedback,
   normalizeLineFeedback,
@@ -688,6 +689,9 @@ export function createEmptyState() {
     // What he thought of the Lines he has read. Small on purpose: which line,
     // which reaction, when. A Line still collects nothing else.
     lineFeedback: {},
+    // What each day of the week is for, and the smallest step toward it. A step
+    // is a Routine task; see `goal-model.js`.
+    goals: { items: {}, steps: {} },
     outbox: [],
   };
 }
@@ -850,6 +854,7 @@ export function normalizeState(state) {
     athenaMemory: normalizeAthenaMemory(state.athenaMemory),
     seenLines: mergeSeenLines(state.seenLines, []),
     lineFeedback: normalizeLineFeedback(state.lineFeedback),
+    goals: normalizeGoals(state.goals),
     outbox: Array.isArray(state.outbox) ? state.outbox : [],
   };
 }
@@ -1714,6 +1719,7 @@ export function mergeServerState(state, serverState) {
     },
     seenLines: mergeSeenLines(local.seenLines, remote.seenLines),
     lineFeedback: mergeLineFeedback(local.lineFeedback, remote.lineFeedback),
+    goals: mergeGoals(local.goals, remote.goals),
     appSessions: {
       ...remote.appSessions,
       ...mergeUpdatedRecords(remote.appSessions, local.appSessions),
