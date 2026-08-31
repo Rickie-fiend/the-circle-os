@@ -7,11 +7,14 @@ import {
   addProtocolItem,
   archiveProtocolRun,
   beginProtocolRun,
+  canBeginProtocolRun,
   createEmptyState,
+  PROTOCOL_DEFAULT_NAME,
   endProtocolRun,
   mergeServerState,
   protocolPhaseRecords,
   sealProtocolDay,
+  renameProtocolRun,
   setProtocolDays,
   startProtocolDraft,
   toggleProtocolItem,
@@ -138,4 +141,43 @@ test("the running phase keeps one Footer action and ending lives in its editor",
   assert.match(running, /footer=\{[\s\S]*Day \{day\} of \{run\.days\}[\s\S]*Completed today/);
   assert.doesNotMatch(running, /os-protocol-edit-link/);
   assert.match(source, /if \(isOver\)[\s\S]*onClick=\{onEndRun\}[\s\S]*Close this protocol/);
+});
+
+// A pre-filled name reads as a decision already made, so nobody discovers they
+// can change it. Sai: "the protocol name should be a placeholder. If user leave
+// it blank then it will be use as default and title of the protocol. Currently
+// it always filled so that new user might not know that they can edit."
+test("a phase is unnamed until it starts, then takes the default", () => {
+  let state = startProtocolDraft(createEmptyState(), "phase").state;
+  const draft = state.protocol.runs.phase;
+  assert.equal(draft.name, "", "the draft arrives already named");
+
+  // The field shows what it would be called rather than filling it in.
+  const page = readFileSync("app/os/protocol-page.tsx", "utf8");
+  assert.match(page, /placeholder="Monk Mode"/);
+
+  // A term is what gates starting, never a name.
+  const added = addProtocolItem(state, "phase", "non-negotiable", "term");
+  state = updateProtocolItem(added.state, "phase", added.id, "Workout 15 min");
+  assert.equal(canBeginProtocolRun(state.protocol.runs.phase), true);
+
+  // Whatever it is called at the moment it begins is what it is called for
+  // good, so a record is never blank.
+  state = beginProtocolRun(state, "phase", "2026-08-31");
+  assert.equal(state.protocol.runs.phase.name, PROTOCOL_DEFAULT_NAME);
+
+  // And a name he did type is kept exactly as he typed it.
+  let named = startProtocolDraft(createEmptyState(), "own").state;
+  named = renameProtocolRun(named, "own", "Deep Work");
+  const ownTerm = addProtocolItem(named, "own", "non-negotiable", "t2");
+  named = updateProtocolItem(ownTerm.state, "own", ownTerm.id, "Read");
+  named = beginProtocolRun(named, "own", "2026-08-31");
+  assert.equal(named.protocol.runs.own.name, "Deep Work");
+});
+
+// The App Label already says Phases. A Page that says its own name twice is
+// saying it once too often, which is what the screenshot showed.
+test("the Phases Page does not name itself twice", () => {
+  const page = readFileSync("app/os/protocol-page.tsx", "utf8");
+  assert.doesNotMatch(page, /os-protocol-home-heading">Phases/);
 });

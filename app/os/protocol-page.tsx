@@ -181,9 +181,10 @@ function ProtocolHome({
         ) : undefined
       }
       heading={
-        // The Page leads with the current phase whether or not one is running,
-        // so the heading names the Page rather than whichever part is longest.
-        <p className="os-protocol-home-heading">Phases</p>
+        // No heading. The App Label above already says Phases, and a Page that
+        // says its own name twice is saying it once too often — which is what
+        // Sai's screenshot shows: PHASES, a gap, then PHASES again.
+        undefined
       }
       headerLeft={
         running ? (

@@ -1376,7 +1376,10 @@ test("a protocol is drafted, edited while it runs, and kept for its days", () =>
 
   const draft = startProtocolDraft(state, "run-1");
   state = draft.state;
-  assert.equal(activeProtocolRun(state).name, "Monk Mode");
+  // A draft arrives unnamed so the field can show what it would be called
+  // rather than filling it in, which is what stopped anyone realising the name
+  // was theirs to change. It takes the default at the moment it begins.
+  assert.equal(activeProtocolRun(state).name, "");
   assert.equal(activeProtocolRun(state).days, 7);
 
   // One run at a time.

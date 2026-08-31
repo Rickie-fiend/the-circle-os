@@ -3546,7 +3546,12 @@ export function startProtocolDraft(state, id = freshRecordId("protocol")) {
   return {
     state: writeRun(state, {
       id,
-      name: PROTOCOL_DEFAULT_NAME,
+      // Empty on purpose. A pre-filled name reads as a decision already made,
+      // so nobody discovers they can change it. Sai: "the protocol name should
+      // be a placeholder. If user leave it blank then it will be use as default
+      // and title of the protocol. Currently it always filled so that new user
+      // might not know that they can edit."
+      name: "",
       days: 7,
       status: "draft",
       startDateKey: null,
@@ -3689,6 +3694,9 @@ export function beginProtocolRun(state, runId, dateKey) {
   );
   return writeRun(state, {
     ...run,
+    // A phase that was never named takes the default at the moment it begins,
+    // so the name is settled once and the record is never blank.
+    name: run.name.trim() || PROTOCOL_DEFAULT_NAME,
     items,
     status: "active",
     startDateKey: dateKey,
