@@ -840,10 +840,6 @@ export default function CircleOSMirror() {
         <header>
           <p className="os-card-label">{label}</p>
           <h2>{title}</h2>
-          {/* Athena writes on her own schedule, so a reading has to say when it
-              was written. It was only on the section heading outside the App
-              Box; a person reading the words could not see how old they were. */}
-          <p className="athena-reader-updated">{updateLabel}</p>
         </header>
         <div className="athena-reader-copy">
           {memorySections.length
@@ -1048,7 +1044,15 @@ export default function CircleOSMirror() {
             <div className="gap-cover">
               <p className="os-card-label">Athena&apos;s Reading</p>
               <h2>{profileReady ? readingCoverLine : "Athena is still learning."}</h2>
-              <span>{profileReady ? "Swipe to see" : "Still learning"}</span>
+              {/* When this reading was written, said once. Athena writes on her
+                  own schedule, so the reading has to say how old it is — but on
+                  the Cover, which is where you arrive, not on all three Pages.
+                  Sai: "the updated date would be on the cover page. we dont need
+                  it for every page." */}
+              <div className="gap-cover-foot">
+                <p className="athena-reader-updated">{updateLabel}</p>
+                <span>{profileReady ? "Swipe to see" : "Still learning"}</span>
+              </div>
             </div>
 
             {athenaReaderApp(

@@ -30,6 +30,14 @@ const seenAttentionKeys = new Set<string>();
  * touch, it waits while anything inside the box has focus, and it does not run
  * while the phone is asleep or the app is in the background.
  */
+/* The box's own growth: long enough to read as a movement, short enough that
+ * it never keeps you waiting to see what opened. The curve is the Page's own
+ * arrival curve, so everything in an App Box moves the same way. */
+const GROWTH_MS = 260;
+const GROWTH_EASE = "cubic-bezier(0.22, 0.72, 0.22, 1)";
+/* Below a line of text the box just follows: that is typing, not expanding. */
+const GROWTH_MIN_PX = 40;
+
 export const IDLE_PAGE_DWELL_MS = 30000;
 
 export type AppPagePlacement =
@@ -108,6 +116,7 @@ export function SwipeSession({
   const commitFrame = useRef<number | null>(null);
   const externalMotionTimer = useRef<number | null>(null);
   const previousActiveIndex = useRef(activeIndex);
+  const pageJustChanged = useRef(false);
   const internalCommit = useRef(false);
   const wheelTimer = useRef<number | null>(null);
   const wheelDistance = useRef(0);
@@ -274,6 +283,9 @@ export function SwipeSession({
     const previousIndex = previousActiveIndex.current;
     if (previousIndex === activeIndex) return;
     previousActiveIndex.current = activeIndex;
+    // A Page arriving is not the box growing, so the height change it brings is
+    // taken outright rather than played back.
+    pageJustChanged.current = true;
     if (internalCommit.current) {
       internalCommit.current = false;
       return;
@@ -341,6 +353,55 @@ export function SwipeSession({
       session.removeEventListener("touchcancel", clear);
     };
   }, [longPressEnabled]);
+
+  /* Growing is a movement; arriving is not.
+   *
+   * The box takes its height from the Page in flow, so when a Page grows — a
+   * section opened, a goal added, past phases unfolded — the box is instantly
+   * taller and the growth is over before it reads as anything. Sai: "Fix the
+   * expend animation for all so that it smoothly expend and with ease."
+   *
+   * So the growth is played back: the box is animated from the height it had to
+   * the height it now has, once, after the layout is already final. Nothing is
+   * laid out at an interim size, which is what made the old measured height
+   * jolt — this only animates the box's own edge over content that is already
+   * where it belongs.
+   *
+   * Two things are exempt. A Page arriving takes its height outright, because
+   * that is not the box growing. And a change smaller than a line of text takes
+   * it outright too — that is a textarea following the caret, and animating it
+   * would leave the box behind the typing. */
+  useLayoutEffect(() => {
+    const frame = windowRef.current;
+    if (!frame || frameHeight || typeof ResizeObserver === "undefined") return;
+
+    let previousHeight = frame.getBoundingClientRect().height;
+    let growth: Animation | null = null;
+    const observer = new ResizeObserver(() => {
+      const nextHeight = frame.getBoundingClientRect().height;
+      const distance = nextHeight - previousHeight;
+      const from = previousHeight;
+      previousHeight = nextHeight;
+      if (Math.abs(distance) < 1) return;
+      if (pageJustChanged.current) {
+        pageJustChanged.current = false;
+        return;
+      }
+      // A line of text appearing under the caret is not an expansion, and
+      // animating it would put the box behind the typing.
+      if (Math.abs(distance) <= GROWTH_MIN_PX || dragging || settling) return;
+      growth?.cancel();
+      growth = frame.animate(
+        [{ height: `${from}px` }, { height: `${nextHeight}px` }],
+        { duration: GROWTH_MS, easing: GROWTH_EASE },
+      );
+    });
+    observer.observe(frame);
+    return () => {
+      observer.disconnect();
+      growth?.cancel();
+    };
+  }, [dragging, frameHeight, settling]);
 
   /* The App Box is as tall as the Page in it, and nothing measures that.
    *

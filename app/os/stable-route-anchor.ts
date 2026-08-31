@@ -29,9 +29,20 @@ export function useStableRouteAnchor(
     };
 
     const observer = new ResizeObserver(() => {
-      const nextHeight = changing.getBoundingClientRect().height;
+      const changingRect = changing.getBoundingClientRect();
+      const nextHeight = changingRect.height;
       if (Math.abs(nextHeight - changingHeight) <= ANCHOR_TOLERANCE_PX) return;
       changingHeight = nextHeight;
+
+      // If the box that changed is on screen, he is looking at it — he opened
+      // it — and holding something below still means scrolling his view to the
+      // end of what just opened. Sai, on Typical Tuesday: "it expend and scroll
+      // my screen to the end of the expension." This only protects a reader
+      // from a change happening above the fold, where nobody asked for it.
+      if (changingRect.top >= 0) {
+        readingTop = reading.getBoundingClientRect().top;
+        return;
+      }
 
       const readingRect = reading.getBoundingClientRect();
       const wasVisible =

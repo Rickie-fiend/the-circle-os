@@ -321,3 +321,37 @@ test("Routine stops asking for a step whose goal is done", () => {
     /\.filter\(\(task\) => !taskIsUnderDoneGoal\(state, task\.id\)\)/,
   );
 });
+
+// Sai: "All the app box expend animation is not smooth anymore. Fix the expend
+// animation for all so that it smoothly expend and with ease."
+test("a box growing is played back; a Page arriving is not", () => {
+  const session = readFileSync("app/os/app-session.tsx", "utf8");
+  const growth = session.slice(
+    session.indexOf("/* Growing is a movement; arriving is not."),
+    session.indexOf("}, [dragging, frameHeight, settling]);"),
+  );
+  // Animated after the layout is final, so nothing is laid out at an interim
+  // size — that is what made the old measured height jolt.
+  assert.match(growth, /frame\.animate\(/);
+  assert.match(growth, /duration: GROWTH_MS, easing: GROWTH_EASE/);
+  assert.match(session, /const GROWTH_EASE = "cubic-bezier\(0\.22, 0\.72, 0\.22, 1\)"/);
+
+  // A Page arriving takes its height outright: that is not the box growing.
+  assert.match(growth, /if \(pageJustChanged\.current\) \{\s+pageJustChanged\.current = false;\s+return;/);
+  assert.match(session, /pageJustChanged\.current = true;/);
+  // Nor is a textarea following the caret, nor a swipe in progress.
+  assert.match(growth, /GROWTH_MIN_PX \|\| dragging \|\| settling\) return;/);
+});
+
+// Sai, on Typical Tuesday: "it expend and scroll my screen to the end of the
+// expension."
+test("opening something in view does not scroll the screen", () => {
+  const anchor = readFileSync("app/os/stable-route-anchor.ts", "utf8");
+  // The anchor protects a reader from a change above the fold. A box he can see
+  // is a box he opened, and holding something below it still would scroll his
+  // view to the end of what just opened.
+  assert.match(anchor, /if \(changingRect\.top >= 0\) \{/);
+  const guard = anchor.indexOf("if (changingRect.top >= 0)");
+  const scroll = anchor.indexOf("window.scrollBy");
+  assert.ok(guard > 0 && guard < scroll, "the guard stands before the scroll");
+});
