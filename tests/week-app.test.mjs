@@ -211,3 +211,70 @@ test("a step wears the same key in both Apps", () => {
   assert.match(key, /border-color: var\(--c-orange\)/);
   assert.match(key, /--os-key-leg-orange: var\(--c-ink-deep\)/);
 });
+
+// The other half of the jolt. The App Box knew its height a frame late; the
+// text inside it was placed a frame late too, so the heading moved under the
+// forehead after the Page had landed. Sai: "The forehead jolt issue is still
+// there for log app."
+test("a Page's text is placed before the Page is painted", () => {
+  const session = readFileSync("app/os/app-session.tsx", "utf8");
+  const effect = session.slice(
+    session.indexOf("const commit = () => {"),
+    session.indexOf("window.addEventListener(\"resize\", measure)"),
+  );
+  // The work is a plain call, and the frame is kept only for what arrives late.
+  assert.doesNotMatch(effect, /requestAnimationFrame\(\(\) =>/);
+  assert.match(session, /commit\(\);\n\s*void document\.fonts\.ready\.then\(measure\)/);
+  assert.match(session, /frame = window\.requestAnimationFrame\(commit\)/);
+
+  // And the Week Page is measured at all: its Main text is the day's name,
+  // written in place, so an input has to count as Main text.
+  assert.match(session, /"textarea, input, h1, h2, h3, p, \[data-os-main-text\]"/);
+});
+
+// Sai: "Make a border, like a card for each goal and respective steps."
+test("a goal and its steps are one card", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const card = css.slice(
+    css.indexOf(".circle-os .os-week-goal {"),
+    css.indexOf(".circle-os .os-week-goal-head"),
+  );
+  assert.match(card, /border: 1px solid/);
+  assert.match(card, /border-radius: var\(--r-lg\)/);
+  assert.match(card, /padding:/);
+
+  // The card holds the goal, its steps and its own way to add one; adding a
+  // goal stands outside it.
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const goals = shell.slice(
+    shell.indexOf('<div className="os-week-goals">'),
+    shell.indexOf("os-week-day-summary"),
+  );
+  const article = goals.indexOf('className="os-week-goal"');
+  const addStep = goals.indexOf("os-week-add-step");
+  const closeArticle = goals.indexOf("</article>");
+  const addGoal = goals.indexOf("os-week-add-goal");
+  assert.ok(article < addStep && addStep < closeArticle, "a step is added inside");
+  assert.ok(closeArticle < addGoal, "a goal is added outside");
+});
+
+// Sai: "The dark button for steps on routine task, should be darker, and the
+// orange ring blended with the background orange ... be bold in routine app
+// over all look, to indicate priority."
+test("a step reads as the priority among Routine's tasks", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const key = css.slice(
+    css.indexOf(".circle-os .os-task-row.from-week .os-row-tick-week"),
+    css.indexOf(".circle-os .os-task-row.from-week .os-row-tick-week")
+      + 240,
+  );
+  assert.match(key, /background: var\(--c-ink\)/, "darker than on the Week Page");
+  assert.match(key, /border-color: var\(--c-orange\)/, "the ring joins the card");
+
+  const row = css.slice(
+    css.indexOf(".circle-os .os-task-row.from-week .os-extra-mission-copy"),
+    css.indexOf(".circle-os .os-habit-body-session .os-extra-mission-copy::placeholder"),
+  );
+  assert.match(row, /font-weight: 700/);
+  assert.match(row, /color: var\(--c-ink\)/);
+});

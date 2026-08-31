@@ -4642,12 +4642,17 @@
  * service of the line above it. */
 .circle-os .os-week-goals {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
+/* A goal and its steps are one thing, so they are one card. Sai: "Make a
+ * border, like a card for each goal and respective steps." */
 .circle-os .os-week-goal {
+  border: 1px solid rgb(241 239 232 / 0.14);
+  border-radius: var(--r-lg);
   display: grid;
   gap: 8px;
+  padding: 14px 16px 10px;
 }
 
 .circle-os .os-week-goal-head,
@@ -4749,11 +4754,13 @@
   border-color: var(--c-orange);
 }
 
-/* Dark carries it on the Week's dark Page, where the stroke is what you see;
- * the stroke is lost on Routine's orange card, where the dark face is what you
- * see. One key, legible on both. */
+/* On Routine's orange card the same key goes darker still and its stroke joins
+ * the card, so what you see is a solid dark disc among bone ones. Sai: "The dark
+ * button for steps on routine task, should be darker, and the orange ring
+ * blended with the background orange." */
 .circle-os .os-task-row.from-week .os-row-tick-week.os-creative-button {
-  background: rgb(25 24 19 / 0.82);
+  background: var(--c-ink);
+  border-color: var(--c-orange);
 }
 
 /* The days sit under the Main text and above what that day held, so the Page
@@ -7870,6 +7877,14 @@
 .circle-os .os-task-row .os-extra-mission-copy {
   font-size: var(--text-lg) !important;
   font-weight: 540;
+}
+
+/* A step from the Week is the one task on this Page he decided the day was for,
+ * so it carries the weight of that among the others. Sai: "be bold in routine
+ * app over all look, to indicate priority." */
+.circle-os .os-task-row.from-week .os-extra-mission-copy {
+  color: var(--c-ink);
+  font-weight: 700;
 }
 
 .circle-os .os-habit-body-session .os-extra-mission-copy::placeholder,

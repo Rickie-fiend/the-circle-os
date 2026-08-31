@@ -891,7 +891,12 @@ export function PageLayout({
     const mainText = placement === "identity-stack"
       ? body.querySelector<HTMLElement>("[data-os-app-heading]")
       : main?.querySelector<HTMLElement>(
-          "textarea, h1, h2, h3, p, [data-os-main-text]",
+          // An input belongs here too: the Week Page's Main text is the day's
+          // name, which is written in place. Without it that Page fell out of
+          // the measured layout entirely and stood where flow left it, so
+          // arriving from the Log's day Page moved everything under the
+          // forehead.
+          "textarea, input, h1, h2, h3, p, [data-os-main-text]",
         );
     if (!main || !mainText) {
       clearMeasurement();
@@ -900,51 +905,60 @@ export function PageLayout({
 
     let active = true;
     let frame = 0;
+    /* Where the Main text sits under the forehead.
+     *
+     * This used to be computed a frame after the Page was shown, so a Page you
+     * swiped to was painted once with the Page before it still measured, and
+     * the text under the forehead jumped as the new numbers landed. Sai: "The
+     * forehead jolt issue is still there for log app." It is computed before
+     * the browser paints now, so a Page arrives already laid out; the frame
+     * below is kept for a webfont or a resize, which arrive later by nature. */
+    const commit = () => {
+      if (!active) return;
+      const pageStyle = window.getComputedStyle(page);
+      const textStyle = window.getComputedStyle(mainText);
+      const minPageHeight = Number.parseFloat(pageStyle.minHeight);
+      const lineHeight = Number.parseFloat(textStyle.lineHeight);
+      if (!minPageHeight || !lineHeight) return;
+
+      const header = page.querySelector<HTMLElement>(":scope > .os-page-header");
+      const heading = page.querySelector<HTMLElement>(":scope > .os-page-heading");
+      const footer = page.querySelector<HTMLElement>(":scope > .os-page-footer");
+      const baseBodyHeight =
+        minPageHeight -
+        Number.parseFloat(pageStyle.paddingTop) -
+        Number.parseFloat(pageStyle.paddingBottom) -
+        (header?.getBoundingClientRect().height || 0) -
+        (heading?.getBoundingClientRect().height || 0) -
+        (footer?.getBoundingClientRect().height || 0);
+      const opticalShift = Number.parseFloat(
+        window.getComputedStyle(page).getPropertyValue("--os-body-optical-shift"),
+      ) || 0;
+      const metrics = pageTextLayout({
+        baseBodyHeight,
+        lineHeight,
+        mainHeight:
+          placement === "identity-stack"
+            ? mainText.getBoundingClientRect().height
+            : main.getBoundingClientRect().height,
+        opticalShift,
+      });
+
+      body.dataset.osTextLayout = "measured";
+      body.style.setProperty(
+        "--os-measured-body-min-height",
+        `${metrics.bodyMinHeight}px`,
+      );
+      body.style.setProperty("--os-measured-main-top", `${metrics.mainTop}px`);
+    };
     const measure = () => {
       if (!active) return;
       window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        if (!active) return;
-        const pageStyle = window.getComputedStyle(page);
-        const textStyle = window.getComputedStyle(mainText);
-        const minPageHeight = Number.parseFloat(pageStyle.minHeight);
-        const lineHeight = Number.parseFloat(textStyle.lineHeight);
-        if (!minPageHeight || !lineHeight) return;
-
-        const header = page.querySelector<HTMLElement>(":scope > .os-page-header");
-        const heading = page.querySelector<HTMLElement>(":scope > .os-page-heading");
-        const footer = page.querySelector<HTMLElement>(":scope > .os-page-footer");
-        const baseBodyHeight =
-          minPageHeight -
-          Number.parseFloat(pageStyle.paddingTop) -
-          Number.parseFloat(pageStyle.paddingBottom) -
-          (header?.getBoundingClientRect().height || 0) -
-          (heading?.getBoundingClientRect().height || 0) -
-          (footer?.getBoundingClientRect().height || 0);
-        const opticalShift = Number.parseFloat(
-          window.getComputedStyle(page).getPropertyValue("--os-body-optical-shift"),
-        ) || 0;
-        const metrics = pageTextLayout({
-          baseBodyHeight,
-          lineHeight,
-          mainHeight:
-            placement === "identity-stack"
-              ? mainText.getBoundingClientRect().height
-              : main.getBoundingClientRect().height,
-          opticalShift,
-        });
-
-        body.dataset.osTextLayout = "measured";
-        body.style.setProperty(
-          "--os-measured-body-min-height",
-          `${metrics.bodyMinHeight}px`,
-        );
-        body.style.setProperty("--os-measured-main-top", `${metrics.mainTop}px`);
-      });
+      frame = window.requestAnimationFrame(commit);
     };
 
     window.addEventListener("resize", measure);
-    measure();
+    commit();
     void document.fonts.ready.then(measure);
 
     return () => {
