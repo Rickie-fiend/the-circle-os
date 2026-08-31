@@ -116,7 +116,30 @@ export function SwipeSession({
   const commitFrame = useRef<number | null>(null);
   const externalMotionTimer = useRef<number | null>(null);
   const previousActiveIndex = useRef(activeIndex);
-  const pageJustChanged = useRef(false);
+  const boxHeight = useRef<number | null>(null);
+  const growth = useRef<Animation | null>(null);
+
+  /**
+   * Move the box's edge from where it was to where it now is.
+   *
+   * Called from both places a height can change: the Page you arrive at, and
+   * the Page in front of you growing. They share one record of the height so
+   * they cannot disagree about where the edge was.
+   */
+  function playGrowth(nextHeight: number) {
+    const frame = windowRef.current;
+    const from = boxHeight.current;
+    boxHeight.current = nextHeight;
+    if (!frame || frameHeight || from === null) return;
+    // A line of text appearing under the caret is not an expansion, and
+    // animating it would put the box behind the typing.
+    if (Math.abs(nextHeight - from) <= GROWTH_MIN_PX) return;
+    growth.current?.cancel();
+    growth.current = frame.animate(
+      [{ height: `${from}px` }, { height: `${nextHeight}px` }],
+      { duration: GROWTH_MS, easing: GROWTH_EASE },
+    );
+  }
   const internalCommit = useRef(false);
   const wheelTimer = useRef<number | null>(null);
   const wheelDistance = useRef(0);
@@ -283,9 +306,13 @@ export function SwipeSession({
     const previousIndex = previousActiveIndex.current;
     if (previousIndex === activeIndex) return;
     previousActiveIndex.current = activeIndex;
-    // A Page arriving is not the box growing, so the height change it brings is
-    // taken outright rather than played back.
-    pageJustChanged.current = true;
+    // The Page has already been swapped in and laid out at its own height, so
+    // this reads where the box has to end up and moves its edge there. Driven
+    // from here rather than left to the observer, because arriving at a Page is
+    // the change he watches most and it must not wait on a delivery.
+    if (windowRef.current && !frameHeight) {
+      playGrowth(windowRef.current.getBoundingClientRect().height);
+    }
     if (internalCommit.current) {
       internalCommit.current = false;
       return;
@@ -354,52 +381,37 @@ export function SwipeSession({
     };
   }, [longPressEnabled]);
 
-  /* Growing is a movement; arriving is not.
+  /* The box's edge moves; nothing inside it does.
    *
-   * The box takes its height from the Page in flow, so when a Page grows — a
-   * section opened, a goal added, past phases unfolded — the box is instantly
-   * taller and the growth is over before it reads as anything. Sai: "Fix the
-   * expend animation for all so that it smoothly expend and with ease."
+   * The box takes its height from the Page in flow, so any change in height —
+   * a Page arrived at, a section opened, past phases unfolded — was over before
+   * it read as anything. Sai: "Fix the expend animation for all so that it
+   * smoothly expend and with ease."
    *
-   * So the growth is played back: the box is animated from the height it had to
-   * the height it now has, once, after the layout is already final. Nothing is
-   * laid out at an interim size, which is what made the old measured height
-   * jolt — this only animates the box's own edge over content that is already
-   * where it belongs.
+   * So the change is played back: the box is animated from the height it had to
+   * the height it now has, once, after the layout is already final. This is
+   * safe in a way the old measured height was not. Nothing is laid out at an
+   * interim size — a Page waiting at either side already keeps its own height,
+   * so its content is where it belongs before the box ever moves. Only the
+   * box's own edge travels: "the forehead and the main text all of the position
+   * is still and already in placed, only it extend to the end of the app."
    *
-   * Two things are exempt. A Page arriving takes its height outright, because
-   * that is not the box growing. And a change smaller than a line of text takes
-   * it outright too — that is a textarea following the caret, and animating it
-   * would leave the box behind the typing. */
+   * A change smaller than a line of text is exempt. That is a textarea
+   * following the caret, and animating it would leave the box behind the
+   * typing. */
   useLayoutEffect(() => {
     const frame = windowRef.current;
     if (!frame || frameHeight || typeof ResizeObserver === "undefined") return;
 
-    let previousHeight = frame.getBoundingClientRect().height;
-    let growth: Animation | null = null;
+    boxHeight.current = frame.getBoundingClientRect().height;
     const observer = new ResizeObserver(() => {
-      const nextHeight = frame.getBoundingClientRect().height;
-      const distance = nextHeight - previousHeight;
-      const from = previousHeight;
-      previousHeight = nextHeight;
-      if (Math.abs(distance) < 1) return;
-      if (pageJustChanged.current) {
-        pageJustChanged.current = false;
-        return;
-      }
-      // A line of text appearing under the caret is not an expansion, and
-      // animating it would put the box behind the typing.
-      if (Math.abs(distance) <= GROWTH_MIN_PX || dragging || settling) return;
-      growth?.cancel();
-      growth = frame.animate(
-        [{ height: `${from}px` }, { height: `${nextHeight}px` }],
-        { duration: GROWTH_MS, easing: GROWTH_EASE },
-      );
+      if (dragging || settling) return;
+      playGrowth(frame.getBoundingClientRect().height);
     });
     observer.observe(frame);
     return () => {
       observer.disconnect();
-      growth?.cancel();
+      growth.current?.cancel();
     };
   }, [dragging, frameHeight, settling]);
 

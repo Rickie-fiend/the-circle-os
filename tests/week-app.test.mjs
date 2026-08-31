@@ -324,23 +324,31 @@ test("Routine stops asking for a step whose goal is done", () => {
 
 // Sai: "All the app box expend animation is not smooth anymore. Fix the expend
 // animation for all so that it smoothly expend and with ease."
-test("a box growing is played back; a Page arriving is not", () => {
+test("the box's edge moves, and everything inside it stays put", () => {
   const session = readFileSync("app/os/app-session.tsx", "utf8");
-  const growth = session.slice(
-    session.indexOf("/* Growing is a movement; arriving is not."),
-    session.indexOf("}, [dragging, frameHeight, settling]);"),
+  const play = session.slice(
+    session.indexOf("function playGrowth(nextHeight: number)"),
+    session.indexOf("useLayoutEffect", session.indexOf("function playGrowth")),
   );
   // Animated after the layout is final, so nothing is laid out at an interim
   // size — that is what made the old measured height jolt.
-  assert.match(growth, /frame\.animate\(/);
-  assert.match(growth, /duration: GROWTH_MS, easing: GROWTH_EASE/);
+  assert.match(play, /frame\.animate\(/);
+  assert.match(play, /duration: GROWTH_MS, easing: GROWTH_EASE/);
   assert.match(session, /const GROWTH_EASE = "cubic-bezier\(0\.22, 0\.72, 0\.22, 1\)"/);
+  // A textarea following the caret is not an expansion.
+  assert.match(play, /Math\.abs\(nextHeight - from\) <= GROWTH_MIN_PX\) return;/);
 
-  // A Page arriving takes its height outright: that is not the box growing.
-  assert.match(growth, /if \(pageJustChanged\.current\) \{\s+pageJustChanged\.current = false;\s+return;/);
-  assert.match(session, /pageJustChanged\.current = true;/);
-  // Nor is a textarea following the caret, nor a swipe in progress.
-  assert.match(growth, /GROWTH_MIN_PX \|\| dragging \|\| settling\) return;/);
+  // Both places a height can change drive it, through one record of where the
+  // edge was: the Page arrived at, and the Page in front of you growing.
+  assert.match(session, /const boxHeight = useRef<number \| null>\(null\)/);
+  assert.match(
+    session,
+    /previousActiveIndex\.current = activeIndex;[\s\S]*?playGrowth\(windowRef\.current\.getBoundingClientRect\(\)\.height\)/,
+  );
+  assert.match(
+    session,
+    /new ResizeObserver\(\(\) => \{\s+if \(dragging \|\| settling\) return;\s+playGrowth\(/,
+  );
 });
 
 // Sai, on Typical Tuesday: "it expend and scroll my screen to the end of the
