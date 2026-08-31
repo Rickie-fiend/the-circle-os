@@ -1595,6 +1595,9 @@ export function TodayExperience() {
   const [regularThoughtDraft, setRegularThoughtDraft] = useState("");
   const [deepThoughtDraft, setDeepThoughtDraft] = useState("");
   const [deepThoughtPrompt, setDeepThoughtPrompt] = useState<DeepThoughtPrompt | null>(null);
+  // How many times Deep Thoughts has been opened. It counts visits, not
+  // answers, which is what makes the next one a different question.
+  const deepThoughtVisits = useRef(0);
   const [thoughtRewarded, setThoughtRewarded] = useState(false);
   const thoughtDraft = thoughtMode === "deep" ? deepThoughtDraft : regularThoughtDraft;
   // liveNow already ticks every thirty seconds and the prompt is bucketed by the
@@ -2836,7 +2839,15 @@ export function TodayExperience() {
   function openDeepThoughts(event: ReactMouseEvent<HTMLButtonElement>) {
     if (thoughtBack.flipping || thoughtTransition !== "idle") return;
     const nextMode = thoughtMode === "deep" ? "regular" : "deep";
-    const prompt = selectDeepThoughtPrompt(state, dateKey);
+    // A different question every time it is opened. Sai: "better be refresh
+    // with new question on every visit. so that there may be some questions
+    // that i am not in the mood now." Leaving without answering spends nothing,
+    // so the one skipped is still there to come back to.
+    const prompt =
+      nextMode === "deep"
+        ? selectDeepThoughtPrompt(state, dateKey, deepThoughtVisits.current)
+        : null;
+    if (nextMode === "deep") deepThoughtVisits.current += 1;
     pauseDeepWriting();
     concealThoughtButton();
     thoughtBack.flip(nextMode, () => {

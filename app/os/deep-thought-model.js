@@ -226,22 +226,37 @@ export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
 // her sourced Curiosity Queue gets the next; the phone's personalised lines
 // and static floor remain the same local source and are separated only so the
 // report can say which fallback was used.
-export function selectDeepThoughtPrompt(state, dateKey) {
+//
+// The visit walks that order. A question you are not in the mood for should
+// cost one flip to get past, not a day — Sai: "better be refresh with new
+// question on every visit. so that there may be some questions that i am not in
+// the mood now." Leaving without answering spends nothing, so the one you
+// skipped comes back another time.
+export function selectDeepThoughtPrompt(state, dateKey, visit = 0) {
   const answers = state?.profile?.profileCase?.survey?.answers || [];
   const athenaPrompt = state?.profile?.profileCase?.deepThoughtPrompt;
+  const turns = [];
   if (
     athenaPrompt?.dateKey === dateKey &&
     !answers.some((answer) => answer?.questionId === athenaPrompt.id)
   ) {
-    return { ...athenaPrompt, source: "athena" };
+    turns.push(() => ({ ...athenaPrompt, source: "athena" }));
   }
+  const curiosity = unansweredCuriosityPrompt(state, dateKey);
+  if (curiosity) turns.push(() => curiosity);
+
+  // The local floor is deep enough to keep offering, so it fills the rest of
+  // the walk: one turn per question left unasked.
   const localOffset = answers.filter((answer) =>
     String(answer?.questionId || "").startsWith(`deep-local-${dateKey}-`),
   ).length;
-  return (
-    unansweredCuriosityPrompt(state, dateKey) ||
-    createLocalDeepThoughtPrompt(state, dateKey, localOffset)
-  );
+  const localTurns = Math.max(1, unaskedDeepThoughts(state).length);
+  for (let step = 0; step < localTurns; step += 1) {
+    turns.push(() =>
+      createLocalDeepThoughtPrompt(state, dateKey, localOffset + step),
+    );
+  }
+  return turns[Math.max(0, Number(visit) || 0) % turns.length]();
 }
 
 export function deepThoughtSourceLabel(source, questionId = "") {

@@ -31,5 +31,5 @@ export function countDeepThoughtWords(value?: string): number;
 export function isDeepThoughtRewardEligible(options?: { text?: string; activeMs?: number }): boolean;
 export function isSentenceWorthBreakingFor(text?: string): boolean;
 export function createLocalDeepThoughtPrompt(state: unknown, dateKey: string, offset?: number): DeepThoughtPrompt;
-export function selectDeepThoughtPrompt(state: unknown, dateKey: string): DeepThoughtPrompt;
+export function selectDeepThoughtPrompt(state: unknown, dateKey: string, visit?: number): DeepThoughtPrompt;
 export function deepThoughtSourceLabel(source?: string, questionId?: string): string;

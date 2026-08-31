@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DEEP_THOUGHT_KINDS, LOCAL_DEEP_THOUGHTS, countDeepThoughtWords, createLocalDeepThoughtPrompt, isDeepThoughtRewardEligible, selectDeepThoughtPrompt, unaskedDeepThoughts } from "../app/os/deep-thought-model.js";
 import * as deepThoughtModel from "../app/os/deep-thought-model.js";
@@ -130,7 +131,7 @@ test("one selector keeps Athena daily, Curiosity, personalised, static order", (
     kind: "deep-thought",
   });
   assert.equal(
-    selectDeepThoughtPrompt(state, "2026-08-18", 1).id,
+    selectDeepThoughtPrompt(state, "2026-08-18", 0).id,
     "deep-curiosity-software-help",
   );
   state.profile.profileCase.survey.answers.push({
@@ -139,7 +140,51 @@ test("one selector keeps Athena daily, Curiosity, personalised, static order", (
     answer: "Feel seen.",
     kind: "deep-thought",
   });
-  assert.equal(selectDeepThoughtPrompt(state, "2026-08-18", 2).source, "local-personalized");
+  assert.equal(selectDeepThoughtPrompt(state, "2026-08-18", 0).source, "local-personalized");
+});
+
+// Sai: "better be refresh with new question on every visit. so that there may
+// be some questions that i am not in the mood now."
+test("every visit offers a different question, and skipping spends nothing", () => {
+  const state = {
+    athenaMemory: {
+      curiosity: [{
+        id: "software-help",
+        question: "What do you want your software to help someone feel or do?",
+        sourceRefs: [{ sourceType: "thought", sourceId: "thought-1" }],
+      }],
+    },
+    profile: {
+      profileCase: {
+        deepThoughtPrompt: {
+          id: "deep-2026-08-18-daily",
+          text: "What changed today?",
+          target: "currentLife",
+          dateKey: "2026-08-18",
+          source: "athena",
+          preparedAt: "2026-08-18T00:00:00.000Z",
+        },
+        survey: { answers: [] },
+      },
+    },
+    days: {},
+  };
+  const at = (visit) => selectDeepThoughtPrompt(state, "2026-08-18", visit);
+
+  // Her question first, then hers from the Queue, then the floor — the order
+  // is unchanged; the visit is what moves along it.
+  assert.equal(at(0).source, "athena");
+  assert.equal(at(1).source, "curiosity");
+  assert.equal(at(2).source, "local");
+  assert.notEqual(at(3).text, at(2).text);
+
+  // Coming back later is the same walk: nothing was spent by skipping.
+  assert.equal(at(0).source, "athena");
+
+  // And it never runs out — the walk comes round rather than going blank.
+  const many = Array.from({ length: 60 }, (_, visit) => at(visit).text);
+  assert.ok(many.every(Boolean));
+  assert.ok(new Set(many).size > 10, "a visit is a real change, not a shuffle of two");
 });
 
 test("Curiosity does not repeat a question Athena already asked under another id", () => {
@@ -235,4 +280,20 @@ test("a question he has answered is not asked again", () => {
   const spent = answered(LOCAL_DEEP_THOUGHTS.map((question) => question.text));
   assert.equal(unaskedDeepThoughts(spent).length, LOCAL_DEEP_THOUGHTS.length);
   assert.ok(createLocalDeepThoughtPrompt(spent, "2026-09-02", 0).text);
+});
+
+// The counter is visits, not answers: that is the whole point of it.
+test("the App counts openings, and holds the question while it is answered", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /const deepThoughtVisits = useRef\(0\)/);
+  assert.match(
+    shell,
+    /selectDeepThoughtPrompt\(state, dateKey, deepThoughtVisits\.current\)/,
+  );
+  // Counted on the way in only, so closing the side does not skip a question.
+  assert.match(shell, /if \(nextMode === "deep"\) deepThoughtVisits\.current \+= 1;/);
+  // And the question is captured once, into state, rather than re-read on every
+  // render — a question must not change under someone who is answering it.
+  assert.match(shell, /setDeepThoughtPrompt\(prompt\)/);
+  assert.match(shell, /\{deepThoughtPrompt\?\.text\}/);
 });
