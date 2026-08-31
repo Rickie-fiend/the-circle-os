@@ -492,10 +492,25 @@
   transition: none;
 }
 
+/* A Page waiting at either side keeps its own height.
+ *
+ * Stretched to the box (inset: 0) it was laid out at the height of the Page you
+ * were leaving for the whole of the swipe, and then laid out again at its own
+ * height the moment it landed. That second layout is the jolt, and it is in
+ * every App with more than one Page — Sai: "that jolt problem we have had so
+ * many times before with other apps."
+ *
+ * Given its own height it arrives already in the position it will keep. A
+ * taller Page is simply clipped by the box until the swipe finishes, and then
+ * the box extends to it: "the forehead and the main text all of the position is
+ * still and already in placed, only it extend to the end of the app." */
 .circle-os .os-app-page.adjacent {
-  inset: 0;
+  bottom: auto;
+  left: 0;
   overflow: hidden;
   position: absolute;
+  right: 0;
+  top: 0;
   width: 100%;
 }
 

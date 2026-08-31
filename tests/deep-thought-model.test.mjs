@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { LOCAL_DEEP_THOUGHTS, countDeepThoughtWords, createLocalDeepThoughtPrompt, isDeepThoughtRewardEligible, selectDeepThoughtPrompt } from "../app/os/deep-thought-model.js";
+import { DEEP_THOUGHT_KINDS, LOCAL_DEEP_THOUGHTS, countDeepThoughtWords, createLocalDeepThoughtPrompt, isDeepThoughtRewardEligible, selectDeepThoughtPrompt, unaskedDeepThoughts } from "../app/os/deep-thought-model.js";
 import * as deepThoughtModel from "../app/os/deep-thought-model.js";
 
 test("deep reward follows a sentence, not an essay", () => {
@@ -173,4 +173,66 @@ test("Curiosity does not repeat a question Athena already asked under another id
     days: {},
   };
   assert.equal(selectDeepThoughtPrompt(state, "2026-08-18", 0).id, "deep-curiosity-new-words");
+});
+
+// Sai: "like 'whats your hidden talent' or smt, which ask user to think a
+// little deeper and fun to answer question. Life questions will be ask in
+// athena session." The floor is six shapes rather than one long list, and the
+// heavy ones are gone from it — those are Athena's, in his voice.
+test("the floor asks for a peek, not for a reckoning", () => {
+  const kinds = new Set(LOCAL_DEEP_THOUGHTS.map((question) => question.kind));
+  assert.deepEqual([...kinds].sort(), Object.keys(DEEP_THOUGHT_KINDS).sort());
+  for (const kind of kinds) {
+    assert.ok(
+      LOCAL_DEEP_THOUGHTS.filter((question) => question.kind === kind).length >= 3,
+      `${kind} needs enough questions to come back to`,
+    );
+  }
+  // A life question is one that asks what something cost. Those are asked in
+  // Athena's session, where she chose the moment.
+  for (const question of LOCAL_DEEP_THOUGHTS) {
+    assert.doesNotMatch(
+      question.text,
+      /\b(give up|gave up|lying to yourself|ashamed|regret|worth it)\b/i,
+      `${question.text} is a life question and belongs to Athena`,
+    );
+  }
+});
+
+// The offset used to count the answers given today, which reset every morning:
+// the same question opened every day and the rest was never reached.
+test("a question he has answered is not asked again", () => {
+  const answered = (texts) => ({
+    profile: {
+      profileCase: {
+        survey: {
+          answers: texts.map((text, index) => ({
+            kind: "deep-thought",
+            question: text,
+            answeredAt: `2026-08-${String(index + 1).padStart(2, "0")}T09:00:00.000Z`,
+          })),
+        },
+      },
+    },
+  });
+
+  const first = LOCAL_DEEP_THOUGHTS[0].text;
+  const pool = unaskedDeepThoughts(answered([first]));
+  assert.equal(pool.length, LOCAL_DEEP_THOUGHTS.length - 1);
+  assert.ok(!pool.some((question) => question.text === first));
+
+  // Two mornings running do not open on the same question.
+  const day = (state, key) => createLocalDeepThoughtPrompt(state, key, 0).text;
+  const monday = day({}, "2026-08-31");
+  assert.notEqual(day(answered([monday]), "2026-09-01"), monday);
+
+  // Nor on the same shape, so the second morning is a different kind of door.
+  const shapeOf = (text) =>
+    LOCAL_DEEP_THOUGHTS.find((question) => question.text === text)?.kind;
+  assert.notEqual(shapeOf(day(answered([monday]), "2026-09-01")), shapeOf(monday));
+
+  // Every one answered: the pool comes round rather than the App going quiet.
+  const spent = answered(LOCAL_DEEP_THOUGHTS.map((question) => question.text));
+  assert.equal(unaskedDeepThoughts(spent).length, LOCAL_DEEP_THOUGHTS.length);
+  assert.ok(createLocalDeepThoughtPrompt(spent, "2026-09-02", 0).text);
 });

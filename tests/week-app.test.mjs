@@ -171,7 +171,17 @@ test("the App Box is the Page's own height, measured by nothing", () => {
   assert.doesNotMatch(css, /page-resizing/);
   assert.doesNotMatch(session, /frameEasing/);
   // The current Page stays in flow, which is what makes the box its height.
-  assert.match(css, /\.os-app-page\.adjacent \{[^}]*position: absolute/s);
+  const adjacent = css.slice(
+    css.indexOf(".circle-os .os-app-page.adjacent {"),
+    css.indexOf(".circle-os .os-app-page.adjacent.previous"),
+  );
+  assert.match(adjacent, /position: absolute/);
+  // And a Page waiting at either side keeps its own height rather than being
+  // stretched to the box. Stretched, it was laid out at the height of the Page
+  // being left for the whole swipe and laid out again on landing, which is the
+  // jolt itself — in every App with more than one Page.
+  assert.match(adjacent, /bottom: auto/);
+  assert.doesNotMatch(adjacent, /inset: 0/);
   // And the floor still holds: an App Box is never shorter than the standard.
   assert.match(
     css,
