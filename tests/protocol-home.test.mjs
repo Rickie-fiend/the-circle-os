@@ -13,6 +13,7 @@ import {
   endProtocolRun,
   mergeServerState,
   protocolPhaseRecords,
+  protocolStanding,
   sealProtocolDay,
   renameProtocolRun,
   setProtocolDays,
@@ -180,4 +181,29 @@ test("a phase is unnamed until it starts, then takes the default", () => {
 test("the Phases Page does not name itself twice", () => {
   const page = readFileSync("app/os/protocol-page.tsx", "utf8");
   assert.doesNotMatch(page, /os-protocol-home-heading">Phases/);
+});
+
+// With nothing running the Page was a Label, a folded record and a button, and
+// said nothing about the phases behind it. Sai: "Can we add more to this
+// protocol screen?" This is not a reading back — it is the standing fact of
+// what he has kept, so the next phase starts in front of the last ones.
+test("the Page shows what has been kept, across every phase", () => {
+  assert.equal(protocolStanding([]), null, "a first phase has nothing to stand on");
+  assert.equal(protocolStanding(undefined), null);
+
+  const standing = protocolStanding([
+    { name: "Monk Mode", days: 7, keptDays: 6, endedEarly: false },
+    { name: "Deep Work", days: 21, keptDays: 14, endedEarly: false },
+    { name: "Reset", days: 3, keptDays: 1, endedEarly: true },
+  ]);
+  assert.equal(standing.phases, 3);
+  assert.equal(standing.finished, 2, "a phase ended early is not a finished one");
+  // A phase ended early still counts every day it was kept: those days happened.
+  assert.equal(standing.daysKept, 21);
+  assert.equal(standing.longestDays, 14);
+  assert.equal(standing.longestName, "Deep Work");
+
+  const page = readFileSync("app/os/protocol-page.tsx", "utf8");
+  assert.match(page, /os-protocol-standing/);
+  assert.match(page, /protocolStanding\(phaseRecords\)/);
 });

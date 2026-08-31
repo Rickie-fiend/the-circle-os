@@ -3949,6 +3949,37 @@ function addProtocolDays(dateKey, amount) {
 
 // Protocol home is a read model over the records the phone already keeps. No
 // aggregate is persisted: correcting one completion changes the next read.
+/**
+ * What the Protocol App has actually held, across every phase.
+ *
+ * With nothing running the Page was an App Label, a folded record and a button,
+ * and Sai had nine phases behind it that it said nothing about. Sai: "Can we add
+ * more to this protocol screen?"
+ *
+ * This is not a reading back — he does not do that, and said so. It is the
+ * standing fact of what he has kept, so starting the tenth phase happens in
+ * front of the nine. Everything here is counted from completions and seals he
+ * recorded himself; nothing is averaged, scored or praised. A phase ended early
+ * still counts every day it was kept, because those days happened.
+ *
+ * Takes the records rather than the state, so the Page can derive it from what
+ * it already has and the sum is testable on its own.
+ */
+export function protocolStanding(records) {
+  if (!Array.isArray(records) || !records.length) return null;
+  const longest = records.reduce(
+    (best, record) => (record.keptDays > best.keptDays ? record : best),
+    records[0],
+  );
+  return {
+    phases: records.length,
+    finished: records.filter((record) => !record.endedEarly).length,
+    daysKept: records.reduce((total, record) => total + record.keptDays, 0),
+    longestDays: longest.keptDays,
+    longestName: longest.name,
+  };
+}
+
 export function protocolPhaseRecords(state) {
   const completions = Object.values(state.protocol?.completions || {});
   const seals = Object.values(state.protocol?.seals || {});

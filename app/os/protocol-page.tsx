@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { PageLayout } from "./app-session";
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
-import { PROTOCOL_DURATIONS } from "./circle-os-model.js";
+import { PROTOCOL_DURATIONS, protocolStanding } from "./circle-os-model.js";
 import { useAppBack } from "./app-back";
 
 export type ProtocolItemView = {
@@ -133,6 +133,7 @@ function ProtocolHome({
 }) {
   const [confirmingRemoval, setConfirmingRemoval] = useState<string | null>(null);
   const removalTimer = useRef<number | null>(null);
+  const standing = protocolStanding(phaseRecords);
   const completedItems = completedProtocol
     ? [...completedProtocol.nonNegotiable, ...completedProtocol.negotiable]
     : [];
@@ -230,6 +231,30 @@ function ProtocolHome({
           </button>
         )}
       </section>
+      ) : null}
+
+      {/* What the App has held, across every phase.
+        *
+        * With nothing running the Page was a Label, a folded record and a
+        * button, saying nothing about the nine phases behind it. This is not a
+        * reading back — he does not do that — it is the standing fact of what
+        * he has kept, so the next phase starts in front of the last ones.
+        * Counted from his own completions; nothing averaged or praised. */}
+      {standing ? (
+        <section className="os-protocol-home-part os-protocol-standing" aria-label="What you have kept">
+          <div>
+            <b>{standing.daysKept}</b>
+            <span>days kept</span>
+          </div>
+          <div>
+            <b>{standing.phases}</b>
+            <span>{standing.phases === 1 ? "phase" : "phases"}</span>
+          </div>
+          <div>
+            <b>{standing.longestDays}</b>
+            <span>longest</span>
+          </div>
+        </section>
       ) : null}
 
       {/* Folded by default. Sai: "Past phases, i dont really care, i dont read

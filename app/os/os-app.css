@@ -8219,6 +8219,38 @@
 }
 
 /* An overview, and a way back into the run it describes. */
+/* What the App has held, across every phase.
+ *
+ * Three counted facts on one line: days kept, phases, the longest. It fills a
+ * Page that had nothing in it when no phase was running, without becoming a
+ * record to read — the record is still folded underneath. */
+.circle-os .os-protocol-standing {
+  display: flex;
+  gap: 28px;
+}
+
+.circle-os .os-protocol-standing > div {
+  display: grid;
+  gap: 1px;
+}
+
+.circle-os .os-protocol-standing b {
+  color: var(--c-warm-50);
+  font-size: var(--text-2xl);
+  font-variant-numeric: tabular-nums;
+  font-weight: 720;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.circle-os .os-protocol-standing span {
+  color: rgb(25 24 19 / 0.62);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 /* Past phases fold away. They are a record to reach for, not the body of the
  * Page — Sai does not read them back, so they stop taking the room. */
 .circle-os .os-protocol-past > summary {
