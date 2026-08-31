@@ -160,6 +160,14 @@ export function selectFirstUsePublication(
   audienceProfileId: string,
   runs: Record<string, ChapterRun>,
 ) {
+  // Set up once, whatever else has been published since.
+  //
+  // Every unanswered first-use chapter for an App used to queue up behind the
+  // last one, so publishing three versions of the Log's setup asked the same
+  // two questions three times over. Sai: "The setup is showing 3 times for log
+  // app." Finishing any one of them is being set up; a newer version is for
+  // whoever has not been through it yet.
+  if (firstUsePublicationDone(publications, targetApp, runs)) return null;
   return (
     publications
       .map(normalizeChapterPublication)

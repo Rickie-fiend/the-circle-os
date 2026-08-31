@@ -1892,11 +1892,21 @@
   min-height: 58px;
   padding: 0.7rem 0.85rem;
   width: 100%;
+  /* iOS draws its own time control, whose intrinsic width is wider than the
+     Page. A grid item will not shrink below that on its own, so the field grew
+     past the Sub Body and stood 22px to the right of the Continue key under it
+     — the misalignment in Sai's screenshot. It obeys the Page's width here and
+     wears the Page's own field rather than the platform's. */
+  appearance: none;
+  -webkit-appearance: none;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .circle-os .os-survey-text input {
   background: transparent;
   border: 0;
+  min-width: 0;
   border-bottom: 1px solid var(--c-neutral-400);
   border-radius: 0;
   color: var(--c-ink);
@@ -4725,24 +4735,25 @@
   line-height: 1;
 }
 
-/* The ticks on this surface are dark rather than orange: a Week Page is the
- * dark App Box, so the leg has to be the App Box, not the Routine surface. */
-.circle-os .os-week-goal .os-creative-button-shell.role-habit .os-row-tick.os-creative-button,
-.circle-os .os-week-step .os-creative-button-shell.role-habit .os-row-tick.os-creative-button {
-  background: rgb(241 239 232 / 0.1);
-  border-color: rgb(241 239 232 / 0.45);
-}
-
-.circle-os .os-week-goal .os-creative-button-shell.role-habit
-  .os-row-tick-habit.os-creative-button,
-.circle-os .os-week-step .os-creative-button-shell.role-habit
-  .os-row-tick-task.os-creative-button {
+/* The Week's key: dark, with an orange stroke.
+ *
+ * A Week Page is the dark App Box, so the leg has to be the App Box rather than
+ * Routine's orange surface. The stroke is what names it. The Routine task that
+ * a step *is* wears the same key, so a row in Routine says where it came from
+ * without a word of explanation. Sai: "Make the week app dark circle buttons to
+ * have orange stroke. And the correspondent task in routine app would also use
+ * the same dark orange button. So that we understand its from week app." */
+.circle-os .os-creative-button-shell.role-habit .os-row-tick-week.os-creative-button {
   --os-key-leg-orange: var(--c-ink-deep);
+  background: rgb(25 24 19 / 0.55);
+  border-color: var(--c-orange);
 }
 
-.circle-os .os-week-goal .os-row-tick[aria-pressed="true"]::after,
-.circle-os .os-week-step .os-row-tick[aria-pressed="true"]::after {
-  border-color: var(--c-warm-50);
+/* Dark carries it on the Week's dark Page, where the stroke is what you see;
+ * the stroke is lost on Routine's orange card, where the dark face is what you
+ * see. One key, legible on both. */
+.circle-os .os-task-row.from-week .os-row-tick-week.os-creative-button {
+  background: rgb(25 24 19 / 0.82);
 }
 
 /* The days sit under the Main text and above what that day held, so the Page

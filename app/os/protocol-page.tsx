@@ -102,6 +102,7 @@ type ProtocolPageProps = {
   onArchiveRecord: (runId: string) => void;
   onSealToday: () => void;
   onEndRun: () => void;
+  onDiscardDraft: () => void;
 };
 
 function ProtocolHome({
@@ -380,6 +381,7 @@ export function ProtocolPage({
   onArchiveRecord,
   onSealToday,
   onEndRun,
+  onDiscardDraft,
 }: ProtocolPageProps) {
   const label = <p className="os-card-label">Protocol</p>;
   // Ending a run early is the one thing here that cannot be undone: the terms
@@ -474,7 +476,21 @@ export function ProtocolPage({
     return (
       <PageLayout
         className="os-protocol os-protocol-draft"
-        headerLeft={label}
+        headerLeft={
+          // The way out. A draft is a phase not yet begun, and the top left is
+          // where every App Box is left, so leaving one here throws it away
+          // rather than recording it. Sai: "after i click ok start the phase and
+          // dont want to, i cant go back by top left button so that i have to
+          // type random to start the phase and end again, thats where 9
+          // protocols come from."
+          <button
+            className="os-card-label os-protocol-mode-toggle"
+            onClick={onDiscardDraft}
+            type="button"
+          >
+            Protocol
+          </button>
+        }
         placement="identity-stack"
         theme="orange"
         footer={

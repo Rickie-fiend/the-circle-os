@@ -13,6 +13,22 @@ export function chapterRunId(chapter) {
   return `${chapter.id}@${chapter.version}`;
 }
 
+/**
+ * Whether a chapter has ever been finished, in any version of itself.
+ *
+ * A run is keyed by version, which is right for a chapter that is played: a new
+ * version is a new thing to read. It is wrong for setup. Editing the Log's
+ * setup and publishing version 2 asked a person who had already answered it to
+ * answer it again, and version 3 asked a third time. Sai: "The setup is showing
+ * 3 times for log app." Setting up is something that happens once.
+ */
+export function chapterEverCompleted(runs, chapterId) {
+  const prefix = `${chapterId}@`;
+  return Object.entries(runs || {}).some(
+    ([id, run]) => id.startsWith(prefix) && run?.status === "completed",
+  );
+}
+
 function now() {
   return new Date().toISOString();
 }

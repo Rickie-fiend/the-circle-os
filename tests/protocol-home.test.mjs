@@ -9,6 +9,7 @@ import {
   beginProtocolRun,
   canBeginProtocolRun,
   createEmptyState,
+  discardProtocolDraft,
   PROTOCOL_DEFAULT_NAME,
   endProtocolRun,
   mergeServerState,
@@ -206,4 +207,41 @@ test("the Page shows what has been kept, across every phase", () => {
   const page = readFileSync("app/os/protocol-page.tsx", "utf8");
   assert.match(page, /os-protocol-standing/);
   assert.match(page, /protocolStanding\(phaseRecords\)/);
+});
+
+// Sai: "after i click ok start the phase and dont want to, i cant go back by top
+// left button so that i have to type random to start the phase and end again,
+// thats where 9 protocols come from."
+test("a phase drafted and thought better of leaves no record", () => {
+  let state = createEmptyState();
+  const started = startProtocolDraft(state);
+  state = started.state;
+  assert.equal(activeProtocolRun(state)?.status, "draft");
+
+  state = discardProtocolDraft(state, started.id);
+  assert.equal(activeProtocolRun(state), null);
+  assert.deepEqual(Object.keys(state.protocol.runs), [], "nothing to read back");
+
+  // A phase that actually ran is a record and is not deleted by the same door.
+  const opened = startProtocolDraft(createEmptyState());
+  const runId = opened.id;
+  const item = addProtocolItem(opened.state, runId, "non-negotiable");
+  let ran = updateProtocolItem(item.state, runId, item.id, "No phone in bed");
+  ran = beginProtocolRun(ran, runId, "2026-08-31");
+  const kept = discardProtocolDraft(ran, runId);
+  assert.equal(Object.keys(kept.protocol.runs).length, 1);
+  assert.equal(kept.protocol.runs[runId].status, "active");
+});
+
+// The way out is the top left, where every App Box is left.
+test("the draft Page's mode label is the way back", () => {
+  const page = readFileSync("app/os/protocol-page.tsx", "utf8");
+  const draft = page.slice(
+    page.indexOf('className="os-protocol os-protocol-draft"'),
+    page.indexOf("os-protocol-days"),
+  );
+  assert.match(draft, /onClick=\{onDiscardDraft\}/);
+  assert.match(draft, /className="os-card-label os-protocol-mode-toggle"/);
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /discardProtocolDraft\(current, protocolRun\.id\)/);
 });

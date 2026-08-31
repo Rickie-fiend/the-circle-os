@@ -35,6 +35,7 @@ import {
   appSessionIndex,
   archiveProtocolRun,
   beginProtocolRun,
+  discardProtocolDraft,
   canBeginProtocolRun,
   completeTask,
   dayRecord,
@@ -126,10 +127,24 @@ import { weekDays } from "./week-app-model.js";
 import {
   addGoal,
   addGoalStep,
+  discardEmptyGoal,
+  discardEmptyStep,
+  goalStepForTask,
   goalsForDay,
   toggleGoal,
   updateGoal,
 } from "./goal-model.js";
+
+/**
+ * The name the Week's own row for a step answers to.
+ *
+ * Routine shows a row for the same task, addressed by the task's id and standing
+ * earlier in the page, so a step written in the Week has to be reachable by a
+ * name only the Week uses.
+ */
+function weekStepEditorId(taskId: string) {
+  return `week-step-${taskId}`;
+}
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   ProtocolKeptPage,
@@ -137,6 +152,7 @@ import {
   type ProtocolSealView,
 } from "./protocol-page";
 import {
+  chapterEverCompleted,
   chapterRunId,
   chapterAnswerText,
   createChapterRun,
@@ -710,6 +726,26 @@ export type CircleState = {
         updatedAt: string;
         completedAt: string | null;
       }
+    >;
+  };
+  // What a day is for, and the smallest step toward it. A step holds the id of
+  // the Routine task that *is* that step rather than a copy of its words.
+  goals: {
+    items: Record<
+      string,
+      {
+        id: string;
+        dateKey: string;
+        text: string;
+        status: "open" | "done";
+        completedAt: string | null;
+        createdAt: string;
+        updatedAt: string;
+      }
+    >;
+    steps: Record<
+      string,
+      { id: string; goalId: string; taskId: string; createdAt: string }
     >;
   };
   declarations: {
@@ -1904,8 +1940,12 @@ export function TodayExperience() {
     // A published setup chapter that has been finished seals this App's setup,
     // so the compiled chapter is done whether or not it was ever opened. It
     // stays a run rather than disappearing, because Routine reads a completed
-    // run as "show the idle Page".
-    if (habitSetupSealed && stored.status !== "completed") {
+    // run as "show the idle Page". An earlier version of the compiled chapter,
+    // already answered, seals it the same way: setting up happens once.
+    const sealed =
+      habitSetupSealed ||
+      chapterEverCompleted(state.chapters.runs, habitBuildingChapter.id);
+    if (sealed && stored.status !== "completed") {
       return { ...stored, status: "completed" as const };
     }
     return stored;
@@ -1990,6 +2030,12 @@ export function TodayExperience() {
   }, [logSetupChapter, state.chapters.runs, surveyAnswers]);
   const logSetupDone =
     logSetupSealed ||
+    // Any version of it, answered once. Editing the setup and publishing a new
+    // version used to ask again from the top, which is how the same two
+    // questions arrived three times.
+    (logSetupChapter
+      ? chapterEverCompleted(state.chapters.runs, logSetupChapter.id)
+      : false) ||
     (logSetupRun ? logSetupRun.status === "completed" : routineTimesKnown);
   const activeDreamline = currentDreamline(state, liveNow) as DreamlineRecord | null;
   const pastDreamlines = dreamlineRecords(state, liveNow).filter(
@@ -2042,8 +2088,27 @@ export function TodayExperience() {
       editorId = added.taskId;
       return added.state;
     });
-    // The step is a Routine task, so the row is addressed by the task's id.
-    if (editorId) setNewGoalEditorId(editorId);
+    // The step is a Routine task, and Routine has a row for that same task, so
+    // the Week's row answers to a name of its own. Sai: "make it directly
+    // editable in the week app rather than directing to routine app."
+    if (editorId) setNewGoalEditorId(weekStepEditorId(editorId));
+  }
+
+  // A row opened and left blank goes when you look away, the same way an
+  // unwritten habit or task does.
+  function finishGoalEdit(goalId: string) {
+    updateState((current) => discardEmptyGoal(current, goalId));
+    setNewGoalEditorId((current) => (current === goalId ? null : current));
+  }
+
+  function finishStepEdit(stepId: string) {
+    let editorId = "";
+    updateState((current) => {
+      const step = current.goals?.steps?.[stepId];
+      editorId = step ? weekStepEditorId(step.taskId) : "";
+      return discardEmptyStep(current, stepId, discardEmptyTask);
+    });
+    setNewGoalEditorId((current) => (current === editorId ? null : current));
   }
 
   const logAppIndex = Math.min(
@@ -3425,7 +3490,7 @@ export function TodayExperience() {
                     <div className="os-one-time-tasks">
                       {oneTimeTasks.map((task) => (
                         <article
-                          className={`os-extra-mission os-task-row${task.status === "completed" ? " completed" : ""}${fadingMissionIds.includes(task.id) ? " leaving" : ""}`}
+                          className={`os-extra-mission os-task-row${task.status === "completed" ? " completed" : ""}${fadingMissionIds.includes(task.id) ? " leaving" : ""}${goalStepForTask(state, task.id) ? " from-week" : ""}`}
                           key={task.id}
                         >
                           <textarea
@@ -3443,7 +3508,7 @@ export function TodayExperience() {
                           <CreativeButton
                             aria-label={`${task.status === "completed" ? "Undo" : "Complete"} task: ${task.text || "New Task"}`}
                             aria-pressed={task.status === "completed"}
-                            className="os-row-tick os-row-tick-task"
+                            className={`os-row-tick os-row-tick-task${goalStepForTask(state, task.id) ? " os-row-tick-week" : ""}`}
                             disabled={!task.text.trim()}
                             keepMountedOnSuccess
                             onClick={() => finishTask(task.id)}
@@ -3521,6 +3586,12 @@ export function TodayExperience() {
                   onEndRun={() =>
                     protocolRun &&
                     updateState((current) => endProtocolRun(current, protocolRun.id))
+                  }
+                  onDiscardDraft={() =>
+                    protocolRun &&
+                    updateState((current) =>
+                      discardProtocolDraft(current, protocolRun.id),
+                    )
                   }
                 />,
                 ...(!SHOW_DREAMLINE || dreamlineEditing
@@ -3885,6 +3956,7 @@ export function TodayExperience() {
                           className={`os-week-goal-text${goal.done ? " is-done" : ""}`}
                           data-inline-editor-id={goal.id}
                           maxLength={240}
+                          onBlur={() => finishGoalEdit(goal.id)}
                           onChange={(event) => {
                             const value = event.target.value;
                             updateState((current) => updateGoal(current, goal.id, value));
@@ -3897,7 +3969,7 @@ export function TodayExperience() {
                         <CreativeButton
                           aria-label={`${goal.done ? "Undo" : "Complete"} goal: ${goal.text || "this day"}`}
                           aria-pressed={goal.done}
-                          className="os-row-tick os-row-tick-habit"
+                          className="os-row-tick os-row-tick-habit os-row-tick-week"
                           disabled={!goal.text.trim()}
                           keepMountedOnSuccess
                           onClick={() => updateState((current) => toggleGoal(current, goal.id))}
@@ -3913,8 +3985,9 @@ export function TodayExperience() {
                           <textarea
                             aria-label="Smallest step toward this goal"
                             className={`os-week-step-text${step.done ? " is-done" : ""}`}
-                            data-inline-editor-id={step.taskId}
+                            data-inline-editor-id={weekStepEditorId(step.taskId)}
                             maxLength={240}
+                            onBlur={() => finishStepEdit(step.id)}
                             onChange={(event) => {
                               const value = event.target.value;
                               updateState((current) => updateTask(current, step.taskId, value));
@@ -3927,7 +4000,7 @@ export function TodayExperience() {
                           <CreativeButton
                             aria-label={`${step.done ? "Undo" : "Complete"} step: ${step.text || "this step"}`}
                             aria-pressed={step.done}
-                            className="os-row-tick os-row-tick-task"
+                            className="os-row-tick os-row-tick-task os-row-tick-week"
                             disabled={!step.text.trim()}
                             keepMountedOnSuccess
                             onClick={() => finishTask(step.taskId)}

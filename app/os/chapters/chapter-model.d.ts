@@ -7,6 +7,11 @@ import type {
 
 export function chapterRunId(chapter: ChapterDefinition): string;
 
+export function chapterEverCompleted(
+  runs: Record<string, ChapterRun>,
+  chapterId: string,
+): boolean;
+
 export function createChapterRun(
   chapter: ChapterDefinition,
   seedAnswers?: ChapterAnswer[],

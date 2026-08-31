@@ -225,6 +225,36 @@ export function removeGoalStep(state, stepId) {
   return write(state, { ...goals, steps });
 }
 
+/**
+ * A goal opened and then left alone is not a goal.
+ *
+ * Sai: "When i tap on goal and i dont want to add anything, the input box is
+ * open all the time." Adding a row is how you find out what a row is, so an
+ * empty one has to cost nothing — it goes when you look away, the same way an
+ * unwritten habit or task does.
+ */
+export function discardEmptyGoal(state, goalId) {
+  const goals = normalizeGoals(state.goals);
+  const goal = goals.items[cleanId(goalId)];
+  if (!goal || goal.text.trim()) return state;
+  // A goal with steps under it has been worked on even if it is still unnamed.
+  if (goalSteps(state, goal.id).length) return state;
+  return removeGoal(state, goal.id);
+}
+
+/**
+ * The same for a step, which also takes its Routine task with it: the task was
+ * created by opening the row, so an unwritten one was never work.
+ */
+export function discardEmptyStep(state, stepId, discardTask) {
+  const goals = normalizeGoals(state.goals);
+  const step = goals.steps[cleanId(stepId)];
+  if (!step) return state;
+  const task = state?.tasks?.items?.[step.taskId];
+  if (task && task.text.trim() && task.status !== "archived") return state;
+  return removeGoalStep(discardTask(state, step.taskId), step.id);
+}
+
 /** Two devices that wrote different goals keep both; the later edit wins a clash. */
 export function mergeGoals(left, right) {
   const a = normalizeGoals(left);

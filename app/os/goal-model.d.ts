@@ -46,3 +46,9 @@ export function addGoalStep(
 ): { state: never; id: string; taskId: string };
 export function removeGoalStep(state: unknown, stepId: string): never;
 export function mergeGoals(left: unknown, right: unknown): unknown;
+export function discardEmptyGoal(state: unknown, goalId: string): never;
+export function discardEmptyStep(
+  state: unknown,
+  stepId: string,
+  discardTask: (state: unknown, taskId: string) => unknown,
+): never;

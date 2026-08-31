@@ -58,9 +58,44 @@ test("finishing a published setup seals that App for good", () => {
   assert.match(shell, /const habitSetupSealed = firstUsePublicationDone\(/);
   assert.match(shell, /const logSetupSealed = firstUsePublicationDone\(/);
   // Routine reads a completed run as "show the idle Page".
+  assert.match(shell, /const sealed =\s+habitSetupSealed \|\|/);
+  assert.match(shell, /if \(sealed && stored\.status !== "completed"\)/);
+  assert.match(shell, /const logSetupDone =\s*\n\s*logSetupSealed \|\|/);
+});
+
+// Sai: "The setup is showing 3 times for log app." His state held log-setup@1,
+// @2 and @3 — one run per version of the same setup chapter, each asking the
+// same two questions from the top.
+test("a setup is answered once, whatever version it was", () => {
+  const model = readFileSync("app/os/chapters/chapter-model.js", "utf8");
+  assert.match(model, /export function chapterEverCompleted\(runs, chapterId\)/);
+  // Keyed on the chapter, not the version.
+  assert.match(model, /const prefix = `\$\{chapterId\}@`/);
+
+  // Both compiled setups read it, so a published version 2 does not re-ask.
+  assert.match(shell, /chapterEverCompleted\(state\.chapters\.runs, logSetupChapter\.id\)/);
   assert.match(
     shell,
-    /if \(habitSetupSealed && stored\.status !== "completed"\)/,
+    /chapterEverCompleted\(state\.chapters\.runs, habitBuildingChapter\.id\)/,
   );
-  assert.match(shell, /const logSetupDone =\s*\n\s*logSetupSealed \|\|/);
+
+  // And a published first-use chapter stops offering itself once one of them
+  // has been finished, rather than queueing the next unanswered version.
+  assert.match(
+    store,
+    /if \(firstUsePublicationDone\(publications, targetApp, runs\)\) return null;/,
+  );
+});
+
+// The time field on a setup Page. Sai's screenshot showed it standing 22px to
+// the right of the Continue key under it, past the Page's own edge.
+test("a time answer is as wide as the key beneath it, and no wider", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const field = css.slice(
+    css.indexOf(".circle-os .os-survey-time input {"),
+    css.indexOf(".circle-os .os-survey-text input {"),
+  );
+  assert.match(field, /min-width: 0;/, "a grid item shrinks to the Page");
+  assert.match(field, /max-width: 100%;/);
+  assert.match(field, /-webkit-appearance: none;/, "iOS draws the Page's field");
 });

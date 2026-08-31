@@ -5,12 +5,15 @@ import {
   addTask,
   completeTask,
   createEmptyState,
+  discardEmptyTask,
   normalizeState,
   updateTask,
 } from "../app/os/circle-os-model.js";
 import {
   addGoal,
   addGoalStep,
+  discardEmptyGoal,
+  discardEmptyStep,
   goalStepForTask,
   goalsForDay,
   mergeGoals,
@@ -127,4 +130,41 @@ test("two devices keep both goals, and the later edit wins a clash", () => {
   assert.equal(merged.items.g2.text, "Second");
   // The older edit does not win by arriving second.
   assert.equal(mergeGoals(laptop, phone).items.g1.text, "New");
+});
+
+// Sai: "When i tap on goal and i dont want to add anything, the input box is
+// open all the time." Adding a row is how you find out what a row is.
+test("a row opened and left blank costs nothing", () => {
+  let state = createEmptyState();
+  state = addGoal(state, MONDAY, "g1").state;
+  assert.equal(goalsForDay(discardEmptyGoal(state, "g1"), MONDAY).length, 0);
+
+  // Written, it stays.
+  const written = updateGoal(state, "g1", "Create a good content");
+  assert.equal(goalsForDay(discardEmptyGoal(written, "g1"), MONDAY).length, 1);
+
+  // Unnamed but worked on: a goal with a step under it has been started.
+  const stepped = addGoalStep(state, "g1", addTask, "s1").state;
+  const kept = updateTask(stepped, Object.values(stepped.goals.steps)[0].taskId, "Write");
+  assert.equal(goalsForDay(discardEmptyGoal(kept, "g1"), MONDAY).length, 1);
+});
+
+test("an unwritten step takes its Routine task with it", () => {
+  let state = createEmptyState();
+  state = addGoal(state, MONDAY, "g1").state;
+  const added = addGoalStep(state, "g1", addTask, "s1");
+  state = added.state;
+  assert.equal(state.tasks.items[added.taskId].status, "open");
+
+  const dropped = discardEmptyStep(state, "s1", discardEmptyTask);
+  assert.equal(goalsForDay(dropped, MONDAY)[0].steps.length, 0);
+  assert.equal(dropped.goals.steps.s1, undefined);
+  // The task was never work: it was created by opening the row.
+  assert.equal(dropped.tasks.items[added.taskId].status, "archived");
+
+  // Written, both stay put.
+  const written = updateTask(state, added.taskId, "Write down 1 word");
+  const kept = discardEmptyStep(written, "s1", discardEmptyTask);
+  assert.equal(goalsForDay(kept, MONDAY)[0].steps.length, 1);
+  assert.equal(kept.tasks.items[added.taskId].status, "open");
 });

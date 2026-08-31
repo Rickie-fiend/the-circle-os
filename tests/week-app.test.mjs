@@ -175,3 +175,39 @@ test("the App Box knows the arriving Page's height before it is painted", () => 
   assert.equal(resize[1], arrival[1]);
   assert.equal(resize[2], arrival[2]);
 });
+
+// Sai: "make it directly editable in the week app rather than directing to
+// routine app." Routine has a row for the same task, addressed by the task's id
+// and standing earlier in the page, so the cursor was landing over there.
+test("a step is written where it was added", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /function weekStepEditorId\(taskId: string\) \{\s+return `week-step-\$\{taskId\}`;/);
+  assert.match(shell, /data-inline-editor-id=\{weekStepEditorId\(step\.taskId\)\}/);
+  assert.match(shell, /setNewGoalEditorId\(weekStepEditorId\(editorId\)\)/);
+  // Routine's own row keeps the plain task id, so the two never collide.
+  assert.match(shell, /data-inline-editor-id=\{task\.id\}/);
+});
+
+// Sai: "Make the week app dark circle buttons to have orange stroke. And the
+// correspondent task in routine app would also use the same dark orange button.
+// So that we understand its from week app."
+test("a step wears the same key in both Apps", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  // The Week's own rows.
+  assert.match(shell, /className="os-row-tick os-row-tick-habit os-row-tick-week"/);
+  assert.match(shell, /className="os-row-tick os-row-tick-task os-row-tick-week"/);
+  // And Routine's row for a task that is a step.
+  assert.match(
+    shell,
+    /goalStepForTask\(state, task\.id\) \? " os-row-tick-week" : ""/,
+  );
+  assert.match(shell, /goalStepForTask\(state, task\.id\) \? " from-week" : ""/);
+
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const key = css.slice(
+    css.indexOf(".circle-os .os-creative-button-shell.role-habit .os-row-tick-week"),
+    css.indexOf(".circle-os .os-task-row.from-week"),
+  );
+  assert.match(key, /border-color: var\(--c-orange\)/);
+  assert.match(key, /--os-key-leg-orange: var\(--c-ink-deep\)/);
+});

@@ -3727,6 +3727,25 @@ export function endProtocolRun(state, runId, status = "ended") {
 // A phase record is evidence, so removing it from the Page archives the run
 // rather than deleting its key. The newer timestamp lets the phone's ordinary
 // record merge defeat an older server copy instead of resurrecting the phase.
+/**
+ * A phase drafted and then thought better of leaves nothing behind.
+ *
+ * A draft has not begun: no day of it has been lived and no term was agreed, so
+ * there is no record to keep and it is deleted rather than archived. Without a
+ * way out, backing off a phase meant beginning one and ending it immediately,
+ * which wrote a phase into the standing that never happened. Sai: "after i
+ * click ok start the phase and dont want to, i cant go back by top left button
+ * so that i have to type random to start the phase and end again, thats where 9
+ * protocols come from."
+ */
+export function discardProtocolDraft(state, runId) {
+  const run = state.protocol?.runs?.[runId];
+  if (!run || run.status !== "draft") return state;
+  const runs = { ...state.protocol.runs };
+  delete runs[runId];
+  return { ...state, protocol: { ...state.protocol, runs } };
+}
+
 export function archiveProtocolRun(state, runId) {
   const run = state.protocol?.runs?.[runId];
   if (
