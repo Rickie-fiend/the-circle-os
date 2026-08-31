@@ -162,7 +162,24 @@ function ProtocolHome({
   return (
     <PageLayout
       className={`os-protocol os-protocol-home ${className}`.trim()}
-      footer={undefined}
+      footer={
+        // A button, not an empty outline, and on the Footer line where every
+        // other App puts its one action. Sai: "start phases button rather than
+        // dotted box, make it a darktheme button. And the alignment is not
+        // right. Footer also." With nothing running there is nothing for a box
+        // to hold, and the Footer was reserving 52px for no action at all.
+        !running && onStart ? (
+          <CreativeButton
+            className="os-protocol-begin os-protocol-start"
+            onClick={onStart}
+            sizing="content"
+            styleId="default"
+            type="button"
+          >
+            Start a phase
+          </CreativeButton>
+        ) : undefined
+      }
       heading={
         // The Page leads with the current phase whether or not one is running,
         // so the heading names the Page rather than whichever part is longest.
@@ -192,10 +209,11 @@ function ProtocolHome({
         * than start the phase as a button, we can make the current phase, a
         * place to start a phase when we dont currently have one. and i love the
         * current phase monk mode or smt, a box that we can click on." */}
-      {/* No label above the key. The heading already says Phases and the key
-        * says what it is — a third word for the same thing is a word. */}
+      {/* The slot exists only when there is a phase in it. With none running
+        * the Page is its heading and the action on the Footer line. */}
+      {currentPhase ? (
       <section className="os-protocol-home-part" aria-label="Current phase">
-        {currentPhase ? (
+        {(
           <button
             className="os-protocol-current"
             onClick={onReturnToPhase}
@@ -209,19 +227,9 @@ function ProtocolHome({
                 : ""}
             </span>
           </button>
-        ) : onStart ? (
-          <button
-            className="os-protocol-current is-empty"
-            onClick={onStart}
-            type="button"
-          >
-            <span className="os-protocol-current-name">Start a phase</span>
-            <span className="os-protocol-current-meta">
-              A stretch of days with terms you agree to first.
-            </span>
-          </button>
-        ) : null}
+        )}
       </section>
+      ) : null}
 
       {/* Folded by default. Sai: "Past phases, i dont really care, i dont read
         * back at all so it should be just stored within reach." So the record

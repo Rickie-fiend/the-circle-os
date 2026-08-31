@@ -122,7 +122,7 @@ import {
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
-import { weekDays, weekSpan } from "./week-app-model.js";
+import { weekDays } from "./week-app-model.js";
 import { ChapterPlayer } from "./chapters/chapter-player";
 import {
   ProtocolKeptPage,
@@ -1963,20 +1963,15 @@ export function TodayExperience() {
   const dreamlineEditing = editingDreamline || !dreamlineProgressView;
   // Log is one Page again. The Dreamline moved into the Routine box, where it
   // sits after Protocol: the small daily, the weekly reset, the big goal.
-  // The Log has two Pages and a back. The day and the days either side are the
-  // front; the week is behind them, reached by its Label the way a Line is
-  // reached from Note and Deep Thoughts from Thoughts. Sai: "week app would the
-  // flip side of the log app."
+  // Two Pages: the day, then the week. Sai: "week app should be the second page
+  // of the log."
   //
   // The week belongs to the Log rather than to Reflect because planning a week
   // is the same act as logging a day, one size up — Reflect is for reading, and
   // he never read it there.
-  const logBack = useAppBack<"log" | "week">("log");
-  const logSide = logBack.side;
-  const logAppVersion = "log-week-v2";
-  const logAppMaxIndex = logSide === "week" ? 0 : 1;
+  const logAppVersion = "log-week-v3";
+  const logAppMaxIndex = 1;
   const logWeekDays = weekDays(state, dateKey);
-  const logSpanView = weekSpan(state, dateKey);
   // A future day can be chosen here, unlike on the reading surface: this Page
   // is for planning the week, so Thursday has to be reachable before Thursday.
   const [logChosenDayKey, setLogChosenDayKey] = useState(dateKey);
@@ -1984,11 +1979,7 @@ export function TodayExperience() {
     logWeekDays.find((day) => day.dateKey === logChosenDayKey) ||
     logWeekDays.find((day) => day.dateKey === dateKey) ||
     logWeekDays[0];
-  const logSpanHeading = `${logSpanView.filter((day) => day.touched).length} of ${logSpanView.length} days here.`;
 
-  function toggleLogSide(event: ReactMouseEvent<HTMLButtonElement>) {
-    logBack.flip(logSide === "week" ? "log" : "week", undefined, event.currentTarget);
-  }
   const logAppIndex = Math.min(
     appSessionIndex(state, "today-log", logAppVersion),
     logAppMaxIndex,
@@ -3549,14 +3540,12 @@ export function TodayExperience() {
               { length: logAppMaxIndex + 1 },
               (_, index) => index,
             )}
-            className={`os-log-session${logBack.className ? ` ${logBack.className}` : ""}`}
-            index={logSide === "week" ? 0 : logAppIndex}
-            label={logSide === "week" ? "Week" : "Log apps"}
+            className="os-log-session"
+            index={logAppIndex}
+            label="Log apps"
             maxIndex={logAppMaxIndex}
             onIndexChange={saveLogAppIndex}
           >
-            {logSide === "week" ? null : (
-            <>
             <PageLayout
               className="os-log-page"
               footer={
@@ -3584,16 +3573,7 @@ export function TodayExperience() {
                   value={today.title || ""}
                 />
               }
-              headerLeft={
-                <button
-                  aria-pressed={false}
-                  className="os-card-label os-log-mode-toggle"
-                  onClick={toggleLogSide}
-                  type="button"
-                >
-                  Log
-                </button>
-              }
+              headerLeft={<p className="os-card-label">Log</p>}
               placement="content-flow"
               theme="dark"
             >
@@ -3782,54 +3762,9 @@ export function TodayExperience() {
               </div>
             </PageLayout>
 
-            {/* Page two: the days either side, for planning the week ahead. */}
-            <PageLayout
-              className="os-log-page os-log-span"
-              headerLeft={<p className="os-card-label">These days</p>}
-              key="log-span"
-              theme="dark"
-            >
-              <div className="os-page-main">
-                <h2>{logSpanHeading}</h2>
-              </div>
-              <div className="os-page-sub os-week-span">
-                {logSpanView.map((day) => (
-                  <div
-                    className={`os-week-span-day${day.isToday ? " is-today" : ""}${
-                      day.isFuture ? " is-future" : ""
-                    }`}
-                    key={day.dateKey}
-                  >
-                    <b>{day.letter}</b>
-                    <span>{day.title || day.name}</span>
-                    <small>
-                      {day.isFuture
-                        ? "—"
-                        : day.touched
-                          ? `${day.kept}/${day.due}`
-                          : "nothing"}
-                    </small>
-                  </div>
-                ))}
-              </div>
-            </PageLayout>
-
-            </>
-            )}
-
-            {logSide !== "week" ? null : (
             <PageLayout
               className="os-log-page os-log-week"
-              headerLeft={
-                <button
-                  aria-pressed
-                  className="os-card-label os-log-mode-toggle"
-                  onClick={toggleLogSide}
-                  type="button"
-                >
-                  Week
-                </button>
-              }
+              headerLeft={<p className="os-card-label">Week</p>}
               key="log-week"
               theme="dark"
             >
@@ -3893,7 +3828,6 @@ export function TodayExperience() {
                 </div>
               </div>
             </PageLayout>
-            )}
           </SwipeSession>
         </section>
         )}

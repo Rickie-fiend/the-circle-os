@@ -8249,10 +8249,14 @@
   padding: 2px 7px;
 }
 
-/* An empty slot is the same key, dashed: nothing has been agreed to yet. */
-.circle-os .os-protocol-current.is-empty {
-  border-color: rgb(25 24 19 / 0.55);
-  border-style: dashed;
+/* With no phase running the slot holds one action, not an empty outline.
+ * A dark face on the orange App Box, standing on the same deep orange leg as
+ * everything else there. */
+.circle-os .os-protocol-start.os-creative-button {
+  background: var(--c-ink);
+  color: var(--c-warm-50);
+  font-size: var(--text-md);
+  font-weight: 700;
 }
 
 /* The current phase is a key, drawn like a Protocol term: the same Ink stroke,
