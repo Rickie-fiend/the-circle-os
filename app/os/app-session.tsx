@@ -313,9 +313,11 @@ export function SwipeSession({
     // The Page has already been swapped in and laid out at its own height, so
     // this reads where the box has to end up and moves its edge there. Driven
     // from here rather than left to the observer, because arriving at a Page is
-    // the change he watches most and it must not wait on a delivery.
-    if (windowRef.current && !frameHeight) {
-      playGrowth(windowRef.current.getBoundingClientRect().height);
+    // the change he watches most and it must not wait on a delivery. The Page
+    // is measured rather than the frame: a frame mid-animation would hand back
+    // whatever height the animation had reached, not where it is going.
+    if (currentPageRef.current && !frameHeight) {
+      playGrowth(currentPageRef.current.getBoundingClientRect().height);
     }
     if (internalCommit.current) {
       internalCommit.current = false;
@@ -404,20 +406,29 @@ export function SwipeSession({
    * following the caret, and animating it would leave the box behind the
    * typing. */
   useLayoutEffect(() => {
-    const frame = windowRef.current;
-    if (!frame || frameHeight || typeof ResizeObserver === "undefined") return;
+    const page = currentPageRef.current;
+    if (!page || frameHeight || typeof ResizeObserver === "undefined") return;
 
-    boxHeight.current = frame.getBoundingClientRect().height;
+    // The Page is watched, never the frame.
+    //
+    // Watching the frame meant watching the thing being animated: every frame
+    // of the animation resized it, which delivered another observation, which
+    // started another animation from wherever the last one had got to. That
+    // feedback is what Sai saw — "jittery and not usable" — and it is what
+    // fills the console with ResizeObserver loop errors on a swipe. The Page
+    // keeps its own height whatever the frame is doing, so it is the honest
+    // measure of where the edge has to end up.
+    boxHeight.current = page.getBoundingClientRect().height;
     const observer = new ResizeObserver(() => {
       if (dragging || settling) return;
-      playGrowth(frame.getBoundingClientRect().height);
+      playGrowth(page.getBoundingClientRect().height);
     });
-    observer.observe(frame);
+    observer.observe(page);
     return () => {
       observer.disconnect();
       growth.current?.cancel();
     };
-  }, [dragging, frameHeight, playGrowth, settling]);
+  }, [activeIndex, dragging, frameHeight, playGrowth, settling]);
 
   /* The App Box is as tall as the Page in it, and nothing measures that.
    *

@@ -343,12 +343,24 @@ test("the box's edge moves, and everything inside it stays put", () => {
   assert.match(session, /const boxHeight = useRef<number \| null>\(null\)/);
   assert.match(
     session,
-    /previousActiveIndex\.current = activeIndex;[\s\S]*?playGrowth\(windowRef\.current\.getBoundingClientRect\(\)\.height\)/,
+    /previousActiveIndex\.current = activeIndex;[\s\S]*?playGrowth\(currentPageRef\.current\.getBoundingClientRect\(\)\.height\)/,
   );
   assert.match(
     session,
-    /new ResizeObserver\(\(\) => \{\s+if \(dragging \|\| settling\) return;\s+playGrowth\(/,
+    /new ResizeObserver\(\(\) => \{\s+if \(dragging \|\| settling\) return;\s+playGrowth\(page\.getBoundingClientRect\(\)\.height\)/,
   );
+
+  // The Page is watched, never the frame. Watching the frame is watching the
+  // thing being animated: every frame of the animation resizes it, which
+  // delivers another observation, which starts another animation from wherever
+  // the last one had got to. Sai: "jittery and not usable."
+  assert.match(session, /observer\.observe\(page\)/);
+  assert.doesNotMatch(session, /observer\.observe\(frame\)/);
+  // And the Page is what both callers measure, for the same reason: a frame
+  // mid-animation hands back where the animation had reached, not where it is
+  // going.
+  assert.doesNotMatch(session, /playGrowth\(windowRef\.current/);
+  assert.match(session, /playGrowth\(currentPageRef\.current\.getBoundingClientRect\(\)\.height\)/);
 });
 
 // Sai, on Typical Tuesday: "it expend and scroll my screen to the end of the
