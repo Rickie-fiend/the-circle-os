@@ -33,8 +33,10 @@ test("Log keeps one outer SwipeSession and gives Dreamline its own saved journey
     shell.indexOf('<section className="os-log-section"'),
     shell.indexOf("</main>"),
   );
-  assert.match(log, /label="Log apps"/);
-  assert.match(log, /index=\{logAppIndex\}/);
+  // The Log has a back now, so its label names the side being shown and its
+  // index only applies to the front.
+  assert.match(log, /label=\{logSide === "week" \? "Week" : "Log apps"\}/);
+  assert.match(log, /index=\{logSide === "week" \? 0 : logAppIndex\}/);
   assert.match(log, /onIndexChange=\{saveLogAppIndex\}/);
   assert.match(
     shell,

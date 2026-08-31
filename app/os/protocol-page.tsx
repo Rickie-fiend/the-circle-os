@@ -192,8 +192,9 @@ function ProtocolHome({
         * than start the phase as a button, we can make the current phase, a
         * place to start a phase when we dont currently have one. and i love the
         * current phase monk mode or smt, a box that we can click on." */}
+      {/* No label above the key. The heading already says Phases and the key
+        * says what it is — a third word for the same thing is a word. */}
       <section className="os-protocol-home-part" aria-label="Current phase">
-        <p className="os-record-label">Current phase</p>
         {currentPhase ? (
           <button
             className="os-protocol-current"

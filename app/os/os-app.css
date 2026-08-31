@@ -8211,7 +8211,7 @@
  * him. Sai asked for it to be shaped like its family — Routine and the
  * Dreamline both name their sections this way. */
 .circle-os .os-protocol-home-part + .os-protocol-home-part {
-  margin-top: var(--os-part-gap);
+  margin-top: var(--os-group-gap);
 }
 
 .circle-os .os-protocol-home-part > .os-record-label {
@@ -8249,16 +8249,24 @@
   padding: 2px 7px;
 }
 
-/* An empty slot is still the key that starts a phase. */
+/* An empty slot is the same key, dashed: nothing has been agreed to yet. */
 .circle-os .os-protocol-current.is-empty {
+  border-color: rgb(25 24 19 / 0.55);
   border-style: dashed;
 }
 
+/* The current phase is a key, drawn like a Protocol term: the same Ink stroke,
+ * the same lit top edge, standing on the same deep orange. Sai: "the current
+ * phase, might be good to have a black border. or start a phase button like
+ * design." It presses like one too, so opening a phase feels like keeping one. */
 .circle-os .os-protocol-current {
   appearance: none;
-  background: rgb(25 24 19 / 0.14);
-  border: 0;
+  background: rgb(255 248 241 / 0.14);
+  border: 2px solid var(--c-ink);
   border-radius: var(--r-md);
+  box-shadow:
+    var(--os-key-light),
+    0 var(--os-key-lift-md) 0 var(--os-key-leg-orange);
   color: var(--c-warm-50);
   cursor: pointer;
   display: flex;
@@ -8266,9 +8274,19 @@
   font: inherit;
   gap: 0.3rem;
   min-height: var(--os-action-height);
-  padding: 0.9rem 1rem;
+  padding: 0.85rem 1rem;
   text-align: left;
+  transform: translateY(calc(-1 * var(--os-key-lift-md)));
+  transition:
+    box-shadow 150ms var(--ease-out),
+    transform 150ms var(--os-key-ease);
   width: 100%;
+}
+
+.circle-os .os-protocol-current:active {
+  box-shadow: var(--os-key-sunk);
+  transform: translateY(0);
+  transition-duration: var(--os-key-press-ms);
 }
 
 .circle-os .os-protocol-current-name {

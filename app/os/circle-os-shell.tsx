@@ -1963,15 +1963,18 @@ export function TodayExperience() {
   const dreamlineEditing = editingDreamline || !dreamlineProgressView;
   // Log is one Page again. The Dreamline moved into the Routine box, where it
   // sits after Protocol: the small daily, the weekly reset, the big goal.
-  // Log is three Pages now: the day, the days either side, and the week behind
-  // them. Sai: "Move Week app to the back of the log app. and these days to the
-  // second page of the log app. i will be using that to plan for the week."
+  // The Log has two Pages and a back. The day and the days either side are the
+  // front; the week is behind them, reached by its Label the way a Line is
+  // reached from Note and Deep Thoughts from Thoughts. Sai: "week app would the
+  // flip side of the log app."
   //
   // The week belongs to the Log rather than to Reflect because planning a week
   // is the same act as logging a day, one size up — Reflect is for reading, and
   // he never read it there.
-  const logAppVersion = "log-week-v1";
-  const logAppMaxIndex = 2;
+  const logBack = useAppBack<"log" | "week">("log");
+  const logSide = logBack.side;
+  const logAppVersion = "log-week-v2";
+  const logAppMaxIndex = logSide === "week" ? 0 : 1;
   const logWeekDays = weekDays(state, dateKey);
   const logSpanView = weekSpan(state, dateKey);
   // A future day can be chosen here, unlike on the reading surface: this Page
@@ -1982,6 +1985,10 @@ export function TodayExperience() {
     logWeekDays.find((day) => day.dateKey === dateKey) ||
     logWeekDays[0];
   const logSpanHeading = `${logSpanView.filter((day) => day.touched).length} of ${logSpanView.length} days here.`;
+
+  function toggleLogSide(event: ReactMouseEvent<HTMLButtonElement>) {
+    logBack.flip(logSide === "week" ? "log" : "week", undefined, event.currentTarget);
+  }
   const logAppIndex = Math.min(
     appSessionIndex(state, "today-log", logAppVersion),
     logAppMaxIndex,
@@ -3542,12 +3549,14 @@ export function TodayExperience() {
               { length: logAppMaxIndex + 1 },
               (_, index) => index,
             )}
-            className="os-log-session"
-            index={logAppIndex}
-            label="Log apps"
+            className={`os-log-session${logBack.className ? ` ${logBack.className}` : ""}`}
+            index={logSide === "week" ? 0 : logAppIndex}
+            label={logSide === "week" ? "Week" : "Log apps"}
             maxIndex={logAppMaxIndex}
             onIndexChange={saveLogAppIndex}
           >
+            {logSide === "week" ? null : (
+            <>
             <PageLayout
               className="os-log-page"
               footer={
@@ -3575,7 +3584,16 @@ export function TodayExperience() {
                   value={today.title || ""}
                 />
               }
-              headerLeft={<p className="os-card-label">Log</p>}
+              headerLeft={
+                <button
+                  aria-pressed={false}
+                  className="os-card-label os-log-mode-toggle"
+                  onClick={toggleLogSide}
+                  type="button"
+                >
+                  Log
+                </button>
+              }
               placement="content-flow"
               theme="dark"
             >
@@ -3796,10 +3814,22 @@ export function TodayExperience() {
               </div>
             </PageLayout>
 
-            {/* Page three: the week itself, behind the days. */}
+            </>
+            )}
+
+            {logSide !== "week" ? null : (
             <PageLayout
               className="os-log-page os-log-week"
-              headerLeft={<p className="os-card-label">Week</p>}
+              headerLeft={
+                <button
+                  aria-pressed
+                  className="os-card-label os-log-mode-toggle"
+                  onClick={toggleLogSide}
+                  type="button"
+                >
+                  Week
+                </button>
+              }
               key="log-week"
               theme="dark"
             >
@@ -3863,6 +3893,7 @@ export function TodayExperience() {
                 </div>
               </div>
             </PageLayout>
+            )}
           </SwipeSession>
         </section>
         )}

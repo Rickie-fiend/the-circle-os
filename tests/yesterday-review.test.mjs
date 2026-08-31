@@ -119,10 +119,15 @@ test("a day is read from the week strip inside the Log", () => {
   assert.doesNotMatch(mirror, /mirror-yesterday-intro/);
 
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  // Three Pages: the day, the days either side, the week behind them.
-  assert.match(shell, /const logAppMaxIndex = 2;/);
+  // Two Pages and a back: the day and the days either side in front, the week
+  // behind them. Sai: "week app would the flip side of the log app."
+  assert.match(shell, /const logBack = useAppBack<"log" \| "week">\("log"\)/);
+  assert.match(shell, /logAppMaxIndex = logSide === "week" \? 0 : 1/);
   assert.match(shell, /className="os-log-page os-log-span"/);
   assert.match(shell, /className="os-log-page os-log-week"/);
+  // The Label is the door, the way it is on Note and Thoughts.
+  assert.match(shell, /className="os-card-label os-log-mode-toggle"/);
+  assert.match(shell, /function toggleLogSide/);
 
   // Seven keys, and the one being read is the Page under them.
   assert.match(shell, /className="os-week-strip"/);
@@ -136,7 +141,7 @@ test("a day is read from the week strip inside the Log", () => {
   assert.doesNotMatch(weekPage, /disabled=\{day\.isFuture\}/);
 
   // The saved position forgets the old one-Page Log.
-  assert.match(shell, /logAppVersion = "log-week-v1"/);
+  assert.match(shell, /logAppVersion = "log-week-v2"/);
 });
 
 test("a Page arrives whole, with no part of it revealed on a delay", () => {

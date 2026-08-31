@@ -7,12 +7,14 @@ const css = readFileSync("app/os/os-app.css", "utf8");
 
 test("Log uses the shared App Box and Page anatomy, and grows", () => {
   // The Dreamline card back became Pages, so the session carries no flip class.
-  assert.match(shell, /className="os-log-session"/);
+  // The session carries the flip class when the week is showing behind it.
+  assert.match(shell, /className=\{`os-log-session\$\{logBack\.className/);
   // No frame height. Log grows downward like every other App Box; pinning it
   // to the default height made a day readable only through a slot.
   assert.doesNotMatch(shell, /frameHeight/);
   assert.match(shell, /className="os-log-page"/);
-  assert.match(shell, /headerLeft={<p className="os-card-label">Log<\/p>}/);
+  // The Label is a door to the week behind it, not a static word.
+  assert.match(shell, /className="os-card-label os-log-mode-toggle"/);
   // The Log title is his own words now, editable like Routine's identity and a
   // Protocol's name, and it carries the shared Main-to-content gap under it.
   assert.match(shell, /className="os-app-page-heading os-day-name-edit"/);
