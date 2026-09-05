@@ -280,7 +280,7 @@ test("each goal gets its own box under the day being planned", () => {
     shell.indexOf('<section className="os-week-goal-day"'),
     shell.indexOf("os-week-day-summary"),
   );
-  assert.match(box, /os-record-label/);
+  assert.match(box, /os-week-goal-day-name/);
   assert.doesNotMatch(box, /toggleGoal/);
 });
 

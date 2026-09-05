@@ -1540,6 +1540,13 @@
   line-height: 1;
 }
 
+/* On a dark Page the header action takes the Page's own ink. It is written for
+ * Routine's orange card, where Ink reads at 5.08:1; on the Week's dark box the
+ * same colour is invisible. Sai: "Couldnt see the add goal button." */
+.circle-os .os-log-week .os-new-habit {
+  color: var(--c-warm-50);
+}
+
 .circle-os .os-new-habit {
   appearance: none;
   background: transparent;
@@ -4661,19 +4668,23 @@
  * dark surface — because agreeing what a day is for and agreeing a term are the
  * same kind of act. A step sits under its goal, indented and quieter: it is in
  * service of the line above it. */
+/* One goal to a row, parted by a rule, the way Routine parts its habits. Sai:
+ * "The goal row text must be large and dominant. And have some spaces between
+ * them, like habit."
+ *
+ * They were cards when a goal carried its own steps. The steps live under the
+ * day now, so a card around a single line was a box drawn for nothing. */
 .circle-os .os-week-goals {
   display: grid;
-  gap: 12px;
 }
 
-/* A goal and its steps are one thing, so they are one card. Sai: "Make a
- * border, like a card for each goal and respective steps." */
-.circle-os .os-week-goal {
-  border: 1px solid rgb(241 239 232 / 0.14);
-  border-radius: var(--r-lg);
-  display: grid;
-  gap: 8px;
-  padding: 14px 16px 10px;
+.circle-os .os-week-goal-head {
+  border-bottom: 1px solid rgb(241 239 232 / 0.14);
+  padding: 0.7rem 0;
+}
+
+.circle-os .os-week-goal-head:last-child {
+  border-bottom: 0;
 }
 
 .circle-os .os-week-goal-head,
@@ -4686,9 +4697,7 @@
 }
 
 .circle-os .os-week-step {
-  border-left: 1px solid rgb(241 239 232 / 0.14);
-  margin-left: 6px;
-  padding-left: 14px;
+  min-height: 0;
 }
 
 .circle-os .os-week-goal-text,
@@ -4708,10 +4717,10 @@
 }
 
 .circle-os .os-week-goal-text {
-  font-size: var(--text-lg);
-  font-weight: 640;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .circle-os .os-week-step-text {
@@ -4751,7 +4760,7 @@
 }
 
 .circle-os .os-week-add-step {
-  margin-left: 20px;
+  margin: 0;
 }
 
 .circle-os .os-week-add-goal span,
@@ -4857,20 +4866,52 @@
   margin: 0;
 }
 
-/* What each goal asks of the day being planned. One box to a goal, so writing a
- * step under one is how the step gets assigned to it. */
+/* What this day asks of the week: one bordered group, so it reads as belonging
+ * to the day named above it rather than floating under the strip. */
 .circle-os .os-week-day-plan {
+  border: 1px solid rgb(241 239 232 / 0.14);
+  border-radius: var(--r-lg);
   display: grid;
-  gap: 18px;
+  gap: 14px;
+  padding: 14px;
 }
 
 .circle-os .os-week-goal-day {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
-.circle-os .os-week-goal-day .os-record-label {
-  color: rgb(241 239 232 / 0.5);
+/* The goal named here is the goal written above, so it is written in the same
+ * ink. Sai: "should be using white, as the text color from the week goal,
+ * indicating they are related." */
+.circle-os .os-week-goal-day-name {
+  color: var(--c-warm-50);
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* Which goal a new step is for, asked only when there is a choice. */
+.circle-os .os-week-goal-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.circle-os .os-week-goal-pick {
+  appearance: none;
+  background: rgb(241 239 232 / 0.06);
+  border: 1px solid rgb(241 239 232 / 0.2);
+  border-radius: var(--r-md);
+  color: var(--c-warm-50);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  min-height: var(--touch-min);
+  padding: 0.5rem 0.85rem;
+  text-align: left;
 }
 
 /* The day's own name, demoted from the heading it used to be. Still his words,

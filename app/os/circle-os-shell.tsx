@@ -1642,6 +1642,8 @@ export function TodayExperience() {
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   // A new goal or step takes the cursor the same way a new habit or task does.
   const [newGoalEditorId, setNewGoalEditorId] = useState<string | null>(null);
+  // Which goal a new step belongs to is asked only when there is a choice.
+  const [choosingStepGoal, setChoosingStepGoal] = useState(false);
   const [editingDreamline, setEditingDreamline] = useState(false);
   const [leavingMissionIds, setLeavingMissionIds] = useState<string[]>([]);
   const [fadingMissionIds, setFadingMissionIds] = useState<string[]>([]);
@@ -4041,7 +4043,10 @@ export function TodayExperience() {
                         day.isFuture ? " is-future" : ""
                       }${day.touched ? " is-touched" : ""}`}
                       key={day.dateKey}
-                      onClick={() => setLogChosenDayKey(day.dateKey)}
+                      onClick={() => {
+                        setChoosingStepGoal(false);
+                        setLogChosenDayKey(day.dateKey);
+                      }}
                       type="button"
                     >
                       <span aria-hidden="true">{day.letter}</span>
@@ -4055,15 +4060,29 @@ export function TodayExperience() {
                   * of the week to assign the step for the day ... with boxes
                   * for each goal." The goal is named here but not ticked —
                   * finishing it belongs to the list above. */}
+                {/* What this day asks of the week.
+                  *
+                  * Only the goals with something on this day are drawn: a box
+                  * per goal, always, meant three headings and three buttons on
+                  * an empty Tuesday. Sai: "It reads as clutter for each day."
+                  * One way to add a step stands at the foot of it, and when
+                  * there is more than one goal it asks which — the choice
+                  * arrives when it is needed rather than sitting there. */}
                 <div className="os-week-day-plan">
-                  {chosenWeekGoals.map((goal) => (
-                    <section className="os-week-goal-day" key={goal.id}>
-                      <p className="os-record-label">
-                        {goal.text.trim() || "Unnamed goal"}
-                      </p>
-                      {goal.steps
-                        .filter((step) => step.dateKey === logChosenDayKey)
-                        .map((step) => (
+                  {chosenWeekGoals
+                    .map((goal) => ({
+                      goal,
+                      steps: goal.steps.filter(
+                        (step) => step.dateKey === logChosenDayKey,
+                      ),
+                    }))
+                    .filter((entry) => entry.steps.length)
+                    .map(({ goal, steps }) => (
+                      <section className="os-week-goal-day" key={goal.id}>
+                        <p className="os-week-goal-day-name">
+                          {goal.text.trim() || "Unnamed goal"}
+                        </p>
+                        {steps.map((step) => (
                           <div className="os-week-step" key={step.id}>
                             <textarea
                               aria-label="Smallest step toward this goal"
@@ -4096,16 +4115,47 @@ export function TodayExperience() {
                             />
                           </div>
                         ))}
-                      <button
-                        className="os-week-add-step"
-                        onClick={() => addStepToGoal(goal.id, logChosenDayKey)}
-                        type="button"
-                      >
-                        <span aria-hidden="true">+</span>
-                        Add a step for {logChosenDay.title || logChosenDay.name}
-                      </button>
-                    </section>
-                  ))}
+                      </section>
+                    ))}
+
+                  {choosingStepGoal ? (
+                    <div
+                      aria-label="Which goal is this step for?"
+                      className="os-week-goal-picker"
+                      role="group"
+                    >
+                      {chosenWeekGoals.map((goal) => (
+                        <button
+                          className="os-week-goal-pick"
+                          key={goal.id}
+                          onClick={() => {
+                            setChoosingStepGoal(false);
+                            addStepToGoal(goal.id, logChosenDayKey);
+                          }}
+                          type="button"
+                        >
+                          {goal.text.trim() || "Unnamed goal"}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {chosenWeekGoals.length ? (
+                    <button
+                      className="os-week-add-step"
+                      onClick={() => {
+                        if (chosenWeekGoals.length === 1) {
+                          addStepToGoal(chosenWeekGoals[0].id, logChosenDayKey);
+                          return;
+                        }
+                        setChoosingStepGoal((open) => !open);
+                      }}
+                      type="button"
+                    >
+                      <span aria-hidden="true">+</span>
+                      Add a step for {logChosenDay.title || logChosenDay.name}
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="os-week-day-summary">

@@ -130,7 +130,22 @@ export function createAthenaMemory() {
     corrections: [],
     reading: createAthenaReadingDraft(),
     editions: [],
+    pricing: null,
   };
+}
+
+/**
+ * What the recorded days cost, computed by `athena-pricing-model.js`.
+ *
+ * Kept shape-only here so memory does not depend on the pricing rules: the
+ * numbers are arithmetic and belong with the days, the words belong here.
+ */
+export function normalizeAthenaPricing(value) {
+  if (!value || typeof value !== "object") return null;
+  const categories = (Array.isArray(value.categories) ? value.categories : [])
+    .filter((category) => category?.id && Number(category.blocks) > 0);
+  if (!categories.length) return null;
+  return { ...value, categories };
 }
 
 /**
@@ -302,6 +317,7 @@ export function normalizeAthenaMemory(value) {
       ? memory.corrections.filter((item) => item?.id)
       : [],
     reading,
+    pricing: normalizeAthenaPricing(memory.pricing),
     editions: collectAthenaEditions([
       ...(Array.isArray(memory.editions) ? memory.editions : []).map(
         normalizeAthenaEdition,
@@ -455,6 +471,12 @@ export function mergeAthenaMemory(leftValue, rightValue) {
       : readingWeight(left.reading) >= readingWeight(right.reading)
         ? left.reading
         : right.reading,
+    // Pricing is arithmetic over the days, so the side that has seen more days
+    // wins rather than the side that merely saved last.
+    pricing:
+      (right.pricing?.recordedDays || 0) >= (left.pricing?.recordedDays || 0)
+        ? right.pricing || left.pricing
+        : left.pricing,
     // Editions are immutable and each side may hold ones the other never saw.
     // A merge is a union: a past edition is never lost because a phone synced
     // from a copy that predates it.
@@ -719,10 +741,27 @@ ${markdownList(memory.curiosity, (item) => `- ${item.question || item.statement}
 
 ${memory.corrections.length ? memory.corrections.map((item) => `- ${item.action}: ${item.note || item.targetId || item.sourceId || "recorded"}`).join("\n") : "No corrections yet."}
 
+## What the days cost
+
+${serializeMemoryPricing(memory.pricing)}
+
 ## Reading
 
 ${serializeAthenaReading(memory.reading)}
 `;
+}
+
+function serializeMemoryPricing(pricing) {
+  if (!pricing?.categories?.length) return "Not priced yet.";
+  const head = `Over ${pricing.recordedDays} recorded days (${pricing.from} to ${pricing.to}), ${pricing.recordedHours} hours logged, about ${pricing.hoursLoggedPerDay} a day. Categories overlap, so shares do not add to 100.`;
+  const rows = pricing.categories.map((category) => {
+    const change =
+      category.changePerDay === null || category.changePerDay === 0
+        ? ""
+        : `, ${category.changePerDay > 0 ? "up" : "down"} ${Math.abs(category.changePerDay)}h a day`;
+    return `- ${category.label} — ${category.hours}h, ${category.share}% of logged time, ${category.hoursPerRecordedDay}h a day, on ${category.daysPresent} of ${pricing.recordedDays} days${change}`;
+  });
+  return [head, "", ...rows].join("\n");
 }
 
 const READING_PAGE_TITLES = {

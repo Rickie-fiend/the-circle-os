@@ -131,7 +131,7 @@ test("a day is read from the week strip inside the Log", () => {
   // Seven keys, and the one being read is the Page under them.
   assert.match(shell, /className="os-week-strip"/);
   assert.match(shell, /aria-pressed=\{day\.dateKey === logChosenDayKey\}/);
-  assert.match(shell, /onClick=\{\(\) => setLogChosenDayKey\(day\.dateKey\)\}/);
+  assert.match(shell, /setLogChosenDayKey\(day\.dateKey\)/);
 
   // A future day IS reachable here: this Page is for planning the week, so
   // Thursday has to be selectable before Thursday.
