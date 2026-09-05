@@ -4726,9 +4726,9 @@
 
 .circle-os .os-week-step-text {
   color: var(--c-warm-50);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: var(--text-base);
+  font-weight: 500;
+  letter-spacing: -0.01em;
   line-height: 1.35;
 }
 
@@ -6120,13 +6120,6 @@
   .circle-os textarea.os-week-goal-text,
   .circle-os input.os-week-day-name {
     font-size: 1.85rem !important;
-  }
-
-  /* A step is written at the date's size, which is under the floor. Tapping one
-     will scale the Page on iOS Safari; the alternative is a step two sizes off
-     the date it is meant to match. */
-  .circle-os textarea.os-week-step-text {
-    font-size: var(--text-sm) !important;
   }
 
   .circle-os .os-info-page .os-session-detail {
