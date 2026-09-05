@@ -375,3 +375,30 @@ test("opening something in view does not scroll the screen", () => {
   const scroll = anchor.indexOf("window.scrollBy");
   assert.ok(guard > 0 && guard < scroll, "the guard stands before the scroll");
 });
+
+// Sai: "Log day should be the day of from the week, monday tuesday, market day,
+// exam day etc." An unnamed day is still a day of the week, so the placeholder
+// is the weekday itself rather than a compliment about it.
+test("the Log calls a day by its weekday until it is named", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /const logTodayName =\s+logWeekDays\.find\(\(day\) => day\.isToday\)\?\.name \|\| "Today";/);
+  assert.match(shell, /placeholder=\{logTodayName\}/);
+  assert.doesNotMatch(shell, /placeholder="Beautiful day"/);
+  // The Week Page names days the same way, and both write the same field.
+  assert.match(shell, /placeholder=\{logChosenDay\.name\}/);
+});
+
+// Sai: "how do we mark as complete?" — it could not be, which was a hole.
+test("the week's goal is ticked by hand, like a day's", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const head = shell.slice(
+    shell.indexOf('className="os-page-main os-week-goal-head"'),
+    shell.indexOf("os-week-day-body"),
+  );
+  assert.match(head, /toggleGoal\(current, logWeekGoal\.id\)/);
+  assert.match(head, /release="latch"/, "a tick is a state you leave the key in");
+  // Nothing to finish until something is written.
+  assert.match(head, /disabled=\{!logWeekGoal\?\.text\.trim\(\)\}/);
+  // And the goal reads as done without changing colour.
+  assert.match(head, /logWeekGoal\?\.done \? " is-done" : ""/);
+});

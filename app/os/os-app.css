@@ -4852,11 +4852,29 @@
  * It is the Main text because everything below it is under it: the days, their
  * one things, and the terms the Protocol keeps. A Page that opened on the day's
  * name could say what today was called but never what the week was for. */
+/* The goal and its tick share the Main line, the way a day's goal and its tick
+ * share a row. The tick sits at the top of it rather than the middle, because
+ * the goal can run to two lines and the key should not drift down with it. */
+.circle-os .os-week-goal-head {
+  align-items: start;
+  column-gap: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+
 .circle-os .os-week-goal-line {
   field-sizing: content;
   margin: 0;
+  min-width: 0;
   overflow: hidden;
   resize: none;
+}
+
+/* Done recedes rather than changing colour, as everywhere else. */
+.circle-os .os-week-goal-line.is-done {
+  opacity: 0.5;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
 }
 
 /* The day's own name, demoted from the heading it used to be. Still his words,

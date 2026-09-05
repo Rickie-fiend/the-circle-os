@@ -2078,6 +2078,12 @@ export function TodayExperience() {
   // week key is worked out here rather than inside the goal model: the Circle
   // week is defined in `week-app-model.js`, which reads the state the goal
   // model writes, so that dependency has to run one way.
+  // An unnamed day is still a day of the week. Sai: "Log day should be the day
+  // of from the week, monday tuesday, market day, exam day etc." So the
+  // placeholder is the weekday itself rather than a compliment about it, and
+  // writing over it is how a Tuesday becomes market day.
+  const logTodayName =
+    logWeekDays.find((day) => day.isToday)?.name || "Today";
   const logWeekKey = weekStartKey(dateKey);
   const logWeekGoal = weekGoal(state, logWeekKey);
   // What the running phase is for. A phase begun from now on says so itself; a
@@ -3747,7 +3753,7 @@ export function TodayExperience() {
                   onChange={(event) =>
                     updateToday((day) => setDayTitle(day, event.target.value))
                   }
-                  placeholder="Beautiful day"
+                  placeholder={logTodayName}
                   value={today.title || ""}
                 />
               }
@@ -3953,10 +3959,12 @@ export function TodayExperience() {
                 * nothing. Sai: "i have no goal for the week so the protocol did
                 * not build upon that goal ... i cant see what i am going for
                 * clearly." */}
-              <div className="os-page-main">
+              <div className="os-page-main os-week-goal-head">
                 <textarea
                   aria-label="What this week is for"
-                  className="os-app-page-heading os-week-goal-line"
+                  className={`os-app-page-heading os-week-goal-line${
+                    logWeekGoal?.done ? " is-done" : ""
+                  }`}
                   data-os-app-heading
                   maxLength={240}
                   onChange={(event) => {
@@ -3969,6 +3977,23 @@ export function TodayExperience() {
                   placeholder="What is this week for?"
                   rows={1}
                   value={logWeekGoal?.text || ""}
+                />
+                {/* A week's goal is finished the way a day's is: ticked here,
+                  * by hand, and never by the app deciding on his behalf. */}
+                <CreativeButton
+                  aria-label={`${logWeekGoal?.done ? "Undo" : "Complete"} this week's goal`}
+                  aria-pressed={Boolean(logWeekGoal?.done)}
+                  className="os-row-tick os-row-tick-habit os-row-tick-week"
+                  disabled={!logWeekGoal?.text.trim()}
+                  keepMountedOnSuccess
+                  onClick={() =>
+                    logWeekGoal &&
+                    updateState((current) => toggleGoal(current, logWeekGoal.id))
+                  }
+                  release="latch"
+                  role="habit"
+                  styleId="soft-clay"
+                  type="button"
                 />
               </div>
               <div className="os-page-sub os-week-day-body">
