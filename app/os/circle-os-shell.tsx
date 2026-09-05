@@ -4021,19 +4021,23 @@ export function TodayExperience() {
               <div className="os-page-sub os-week-day-body">
                 {/* The day names itself, and writes the same title the Log
                     shows, so naming a day here names it there. */}
-                <input
-                  aria-label={`What ${logChosenDay.name} is called`}
-                  className="os-week-day-name"
-                  maxLength={60}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    updateDay(logChosenDay.dateKey, (day) => setDayTitle(day, value));
-                  }}
-                  placeholder={logChosenDay.name}
-                  value={logChosenDay.title}
-                />
-                {/* Which day this is, under whatever he has called it. */}
-                <p className="os-week-date">{logChosenDay.date}</p>
+                {/* The day and its date are one thing, so they are paired
+                    rather than spaced by the body's own rhythm. */}
+                <div className="os-week-day-head">
+                  <input
+                    aria-label={`What ${logChosenDay.name} is called`}
+                    className="os-week-day-name"
+                    maxLength={60}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      updateDay(logChosenDay.dateKey, (day) => setDayTitle(day, value));
+                    }}
+                    placeholder={logChosenDay.name}
+                    value={logChosenDay.title}
+                  />
+                  {/* Which day this is, under whatever he has called it. */}
+                  <p className="os-week-date">{logChosenDay.date}</p>
+                </div>
                 <div className="os-week-strip" role="group" aria-label="Days of this week">
                   {logWeekDays.map((day) => (
                     <button

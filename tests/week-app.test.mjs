@@ -433,7 +433,7 @@ test("inside a day, a goal reads as a heading and a step as a line", () => {
   // Told apart by case and size, not by weight alone.
   assert.match(name, /text-transform: uppercase/);
   assert.match(name, /font-size: var\(--text-2xs\)/);
-  assert.match(step, /font-size: var\(--text-md\)/);
+  assert.match(step, /font-size: var\(--text-sm\)/);
   // And they do not share a starting edge.
   assert.match(css, /os-week-goal-day \.os-week-step \{\s+padding-left: 14px/);
 
@@ -472,7 +472,11 @@ test("the Week's editable lines survive the phone's 16px floor", () => {
     css,
     /textarea\.os-week-goal-text,\s+\.circle-os input\.os-week-day-name \{\s+font-size: 1\.85rem !important;/,
   );
-  // A step stays at the floor: below 16px a field makes the phone zoom, and it
-  // gives the box its hierarchy for free.
-  assert.doesNotMatch(css, /os-week-step-text \{[^}]*!important/);
+  // A step is written at the date's size, which is under the floor, so it has
+  // to be exempted there too — at the cost of the Page scaling when one is
+  // tapped on iOS Safari.
+  assert.match(
+    css,
+    /textarea\.os-week-step-text \{\s+font-size: var\(--text-sm\) !important;/,
+  );
 });

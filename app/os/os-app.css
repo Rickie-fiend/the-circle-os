@@ -4725,8 +4725,10 @@
 }
 
 .circle-os .os-week-step-text {
-  color: rgb(241 239 232 / 0.82);
-  font-size: var(--text-md);
+  color: var(--c-warm-50);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
   line-height: 1.35;
 }
 
@@ -4796,8 +4798,16 @@
 /* The days sit under the Main text and above what that day held, so the Page
  * reads name, days, detail — the order every other App reads in. */
 .circle-os .os-week-day-body {
+  border-top: 1px solid rgb(241 239 232 / 0.22);
   display: grid;
   gap: var(--os-group-gap);
+  padding-top: var(--os-group-gap);
+}
+
+/* The day and its date are one thing. */
+.circle-os .os-week-day-head {
+  display: grid;
+  gap: 0.15rem;
 }
 
 /* The date, between the day's name and the week. Quiet: the name is what he
@@ -4810,7 +4820,7 @@
   font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: 0.02em;
-  margin: 0.3rem 0 0;
+  margin: 0;
 }
 
 .circle-os .os-week-strip {
@@ -6110,6 +6120,13 @@
   .circle-os textarea.os-week-goal-text,
   .circle-os input.os-week-day-name {
     font-size: 1.85rem !important;
+  }
+
+  /* A step is written at the date's size, which is under the floor. Tapping one
+     will scale the Page on iOS Safari; the alternative is a step two sizes off
+     the date it is meant to match. */
+  .circle-os textarea.os-week-step-text {
+    font-size: var(--text-sm) !important;
   }
 
   .circle-os .os-info-page .os-session-detail {
