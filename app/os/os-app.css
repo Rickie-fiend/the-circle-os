@@ -4698,6 +4698,7 @@
 
 .circle-os .os-week-step {
   min-height: 0;
+  padding: 0.3rem 0;
 }
 
 .circle-os .os-week-goal-text,
@@ -4717,10 +4718,10 @@
 }
 
 .circle-os .os-week-goal-text {
-  font-size: var(--text-2xl);
+  font-size: clamp(1.75rem, 7vw, 2rem);
   font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
 }
 
 .circle-os .os-week-step-text {
@@ -4872,24 +4873,32 @@
   border: 1px solid rgb(241 239 232 / 0.14);
   border-radius: var(--r-lg);
   display: grid;
-  gap: 14px;
-  padding: 14px;
+  gap: 18px;
+  padding: 16px;
 }
 
 .circle-os .os-week-goal-day {
   display: grid;
-  gap: 4px;
+  gap: 10px;
 }
 
 /* The goal named here is the goal written above, so it is written in the same
- * ink. Sai: "should be using white, as the text color from the week goal,
- * indicating they are related." */
+ * ink — Sai: "should be using white, as the text color from the week goal,
+ * indicating they are related" — but as the App's label, not as a line of copy.
+ * Uppercase and tracked, it reads as the heading its steps hang under. */
 .circle-os .os-week-goal-day-name {
   color: var(--c-warm-50);
-  font-size: var(--text-md);
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.13em;
+  line-height: var(--os-card-label-line-height);
   margin: 0;
+  text-transform: uppercase;
+}
+
+/* And a step starts inboard of its heading, so the two never share an edge. */
+.circle-os .os-week-goal-day .os-week-step {
+  padding-left: 14px;
 }
 
 /* Which goal a new step is for, asked only when there is a choice. */

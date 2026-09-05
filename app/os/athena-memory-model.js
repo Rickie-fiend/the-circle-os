@@ -131,6 +131,23 @@ export function createAthenaMemory() {
     reading: createAthenaReadingDraft(),
     editions: [],
     pricing: null,
+    alignment: null,
+  };
+}
+
+/**
+ * What he starred against what it cost, computed by
+ * `athena-alignment-model.js`. Shape-only here, like pricing.
+ */
+export function normalizeAthenaAlignment(value) {
+  if (!value || typeof value !== "object") return null;
+  const wants = (Array.isArray(value.wants) ? value.wants : []).filter((w) => w?.id);
+  if (!wants.length) return null;
+  return {
+    ...value,
+    wants,
+    unbacked: (Array.isArray(value.unbacked) ? value.unbacked : []).filter((w) => w?.id),
+    trades: (Array.isArray(value.trades) ? value.trades : []).filter((t) => t?.id),
   };
 }
 
@@ -318,6 +335,7 @@ export function normalizeAthenaMemory(value) {
       : [],
     reading,
     pricing: normalizeAthenaPricing(memory.pricing),
+    alignment: normalizeAthenaAlignment(memory.alignment),
     editions: collectAthenaEditions([
       ...(Array.isArray(memory.editions) ? memory.editions : []).map(
         normalizeAthenaEdition,
@@ -477,6 +495,10 @@ export function mergeAthenaMemory(leftValue, rightValue) {
       (right.pricing?.recordedDays || 0) >= (left.pricing?.recordedDays || 0)
         ? right.pricing || left.pricing
         : left.pricing,
+    alignment:
+      (right.alignment?.recordedDays || 0) >= (left.alignment?.recordedDays || 0)
+        ? right.alignment || left.alignment
+        : left.alignment,
     // Editions are immutable and each side may hold ones the other never saw.
     // A merge is a union: a past edition is never lost because a phone synced
     // from a copy that predates it.
@@ -745,10 +767,37 @@ ${memory.corrections.length ? memory.corrections.map((item) => `- ${item.action}
 
 ${serializeMemoryPricing(memory.pricing)}
 
+## What he starred, against what it costs
+
+${serializeMemoryAlignment(memory.alignment)}
+
 ## Reading
 
 ${serializeAthenaReading(memory.reading)}
 `;
+}
+
+function serializeMemoryAlignment(alignment) {
+  if (!alignment?.wants?.length) return "Nothing starred yet.";
+  const rows = alignment.wants.map((want) => {
+    const name = want.doing ? `${want.text} — ${want.doing}` : want.text;
+    const steps = `${want.steps} step${want.steps === 1 ? "" : "s"}`;
+    if (want.kind === "having") return `- ★ ${name} — an outcome, reached or not; ${steps}`;
+    if (!want.trackable) return `- ★ ${name} — nothing in the day log matches this yet; ${steps}`;
+    if (!want.hoursPerDay)
+      return `- ★ ${name} — no recorded time in the last ${alignment.recordedDays} days`;
+    return `- ★ ${name} — ${want.hoursPerDay}h a day, on ${want.daysPresent} of ${alignment.recordedDays} days`;
+  });
+  const trades = alignment.trades?.length
+    ? [
+        "",
+        "Outspending every starred want a day can hold:",
+        ...alignment.trades.map(
+          (trade) => `- ${trade.label} — ${trade.hoursPerDay}h a day, ${trade.share}% of logged time`,
+        ),
+      ]
+    : [];
+  return [...rows, ...trades].join("\n");
 }
 
 function serializeMemoryPricing(pricing) {

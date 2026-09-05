@@ -417,3 +417,27 @@ test("a week's goal is ticked in the list that leads the Page", () => {
   // And an empty week says what the space is for.
   assert.match(list, /os-week-goal-empty/);
 });
+
+// Sai: "the main goal title and steps be different and clear enough to see as
+// title and step. Currently it look the same size same stsrting position."
+test("inside a day, a goal reads as a heading and a step as a line", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const name = css.slice(
+    css.indexOf(".circle-os .os-week-goal-day-name {"),
+    css.indexOf(".circle-os .os-week-goal-day .os-week-step {"),
+  );
+  const step = css.slice(
+    css.indexOf(".circle-os .os-week-step-text {"),
+    css.indexOf(".circle-os .os-week-goal-text::placeholder"),
+  );
+  // Told apart by case and size, not by weight alone.
+  assert.match(name, /text-transform: uppercase/);
+  assert.match(name, /font-size: var\(--text-2xs\)/);
+  assert.match(step, /font-size: var\(--text-md\)/);
+  // And they do not share a starting edge.
+  assert.match(css, /os-week-goal-day \.os-week-step \{\s+padding-left: 14px/);
+
+  // The goal above is the largest thing on the Page: larger than the day it is
+  // planned into, and larger than anything inside the day's box.
+  assert.match(css, /os-week-goal-text \{\s+font-size: clamp\(1\.75rem, 7vw, 2rem\)/);
+});
