@@ -41,6 +41,10 @@ export function normalizeGoals(value) {
     items[goalId] = {
       id: goalId,
       dateKey,
+      // A day's goal is what today is for; the week's is what every day of it
+      // is under. One record, two scopes, so a week goal ticks, carries steps
+      // and merges across devices exactly as a day's does.
+      scope: goal?.scope === "week" ? "week" : "day",
       text: clean(goal?.text),
       status: goal?.status === "done" ? "done" : "open",
       completedAt: cleanId(goal?.completedAt) || null,
@@ -69,7 +73,13 @@ function write(state, goals) {
   return { ...state, goals };
 }
 
-export function addGoal(state, dateKey, id, at = new Date().toISOString()) {
+export function addGoal(
+  state,
+  dateKey,
+  id,
+  at = new Date().toISOString(),
+  scope = "day",
+) {
   const goals = normalizeGoals(state.goals);
   const goalId = cleanId(id) || `goal-${Date.parse(at) || Date.now()}`;
   if (!cleanId(dateKey) || goals.items[goalId]) return { state, id: goalId };
@@ -81,6 +91,7 @@ export function addGoal(state, dateKey, id, at = new Date().toISOString()) {
         [goalId]: {
           id: goalId,
           dateKey: cleanId(dateKey),
+          scope: scope === "week" ? "week" : "day",
           text: "",
           status: "open",
           completedAt: null,
@@ -141,12 +152,66 @@ export function removeGoal(state, goalId) {
   return write(state, { items, steps });
 }
 
+/**
+ * The week's goal — the thing every day of that week is under.
+ *
+ * Its id is the week itself, so there can only ever be one and writing it twice
+ * is the same write. The key is the week's Monday, which the caller supplies:
+ * the Circle week lives in `week-app-model.js`, and that module reads the state
+ * this one writes, so the dependency has to run one way.
+ *
+ * Sai: "i have no goal for the week so the protocol did not build upon that
+ * goal, so i dont know the progress even i am keeping with my protocol, because
+ * i cant see what i am going for clearly."
+ */
+export function weekGoalId(weekKey) {
+  return `week-${cleanId(weekKey)}`;
+}
+
+export function weekGoal(state, weekKey) {
+  const key = cleanId(weekKey);
+  if (!key) return null;
+  const goal = normalizeGoals(state.goals).items[weekGoalId(key)];
+  if (!goal || goal.scope !== "week") return null;
+  return {
+    ...goal,
+    done: goal.status === "done",
+    steps: goalSteps(state, goal.id),
+  };
+}
+
+export function setWeekGoal(state, weekKey, text, at = new Date().toISOString()) {
+  const key = cleanId(weekKey);
+  if (!key) return state;
+  const goals = normalizeGoals(state.goals);
+  const id = weekGoalId(key);
+  const existing = goals.items[id];
+  return write(state, {
+    ...goals,
+    items: {
+      ...goals.items,
+      [id]: existing
+        ? { ...existing, text: clean(text), updatedAt: at }
+        : {
+            id,
+            dateKey: key,
+            scope: "week",
+            text: clean(text),
+            status: "open",
+            completedAt: null,
+            createdAt: at,
+            updatedAt: at,
+          },
+    },
+  });
+}
+
 /** Every goal written for a day, oldest first. */
 export function goalsForDay(state, dateKey) {
   const goals = normalizeGoals(state.goals);
   const key = cleanId(dateKey);
   return Object.values(goals.items)
-    .filter((goal) => goal.dateKey === key)
+    .filter((goal) => goal.scope === "day" && goal.dateKey === key)
     .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)))
     .map((goal) => ({
       ...goal,
@@ -179,6 +244,17 @@ export function goalSteps(state, goalId) {
         },
       ];
     });
+}
+
+/** One goal by id, whatever its scope. */
+export function goalById(state, goalId) {
+  const goal = normalizeGoals(state.goals).items[cleanId(goalId)];
+  if (!goal) return null;
+  return {
+    ...goal,
+    done: goal.status === "done",
+    steps: goalSteps(state, goal.id),
+  };
 }
 
 /** The step a Routine task belongs to, if it is one. */

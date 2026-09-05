@@ -36,6 +36,7 @@ import {
   archiveProtocolRun,
   beginProtocolRun,
   discardProtocolDraft,
+  setProtocolGoal,
   canBeginProtocolRun,
   completeTask,
   dayRecord,
@@ -123,15 +124,18 @@ import {
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
-import { weekDays } from "./week-app-model.js";
+import { weekDays, weekStartKey } from "./week-app-model.js";
 import {
   addGoal,
   addGoalStep,
   discardEmptyGoal,
   discardEmptyStep,
   goalStepForTask,
+  goalById,
   goalsForDay,
+  setWeekGoal,
   taskIsUnderDoneGoal,
+  weekGoal,
   toggleGoal,
   updateGoal,
 } from "./goal-model.js";
@@ -2070,6 +2074,18 @@ export function TodayExperience() {
   const logAppVersion = "log-week-v3";
   const logAppMaxIndex = 1;
   const logWeekDays = weekDays(state, dateKey);
+  // The week the Log is showing, and the goal every day of it is under. The
+  // week key is worked out here rather than inside the goal model: the Circle
+  // week is defined in `week-app-model.js`, which reads the state the goal
+  // model writes, so that dependency has to run one way.
+  const logWeekKey = weekStartKey(dateKey);
+  const logWeekGoal = weekGoal(state, logWeekKey);
+  // What the running phase is for. A phase begun from now on says so itself; a
+  // phase that was already running when it had nowhere to say it stands under
+  // this week's goal, because that is in fact what it is serving.
+  const protocolGoalText =
+    (protocolRun?.goalId ? goalById(state, protocolRun.goalId)?.text : "") ||
+    (protocolRun?.goalId ? "" : logWeekGoal?.text || "");
   // A future day can be chosen here, unlike on the reading surface: this Page
   // is for planning the week, so Thursday has to be reachable before Thursday.
   const [logChosenDayKey, setLogChosenDayKey] = useState(dateKey);
@@ -3584,7 +3600,16 @@ export function TodayExperience() {
                   onFinishItemEdit={finishProtocolTermEdit}
                   onBegin={() =>
                     protocolRun &&
-                    updateState((current) => beginProtocolRun(current, protocolRun.id, dateKey))
+                    updateState((current) =>
+                      // The phase is begun and told what it is for in one act,
+                      // so a phase started this week is explicitly serving this
+                      // week's goal rather than inferring it later.
+                      setProtocolGoal(
+                        beginProtocolRun(current, protocolRun.id, dateKey),
+                        protocolRun.id,
+                        logWeekGoal?.id || "",
+                      ),
+                    )
                   }
                   onToggleItem={(itemId) =>
                     updateState((current) => toggleProtocolItem(current, itemId, dateKey))
@@ -3608,6 +3633,7 @@ export function TodayExperience() {
                       discardProtocolDraft(current, protocolRun.id),
                     )
                   }
+                  goalText={protocolGoalText}
                 />,
                 ...(!SHOW_DREAMLINE || dreamlineEditing
                   ? []
@@ -3920,15 +3946,39 @@ export function TodayExperience() {
               key="log-week"
               theme="dark"
             >
-              {/* The day names itself. Sai: "Monday, Tuesday, ... make those
-                  editable. I could say, Jame's birthday." It writes the day's
-                  own title, which is the same field the Log shows, so naming a
-                  day here names it there. */}
+              {/* What the week is for.
+                *
+                * It leads the Page because every day below it is under it, and
+                * because without it the Protocol counts days that measure
+                * nothing. Sai: "i have no goal for the week so the protocol did
+                * not build upon that goal ... i cant see what i am going for
+                * clearly." */}
               <div className="os-page-main">
+                <textarea
+                  aria-label="What this week is for"
+                  className="os-app-page-heading os-week-goal-line"
+                  data-os-app-heading
+                  maxLength={240}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    updateState((current) =>
+                      setWeekGoal(current, logWeekKey, value),
+                    );
+                    sizeTextAreaToContent(event.currentTarget);
+                  }}
+                  placeholder="What is this week for?"
+                  rows={1}
+                  value={logWeekGoal?.text || ""}
+                />
+              </div>
+              <div className="os-page-sub os-week-day-body">
+                {/* The day names itself. Sai: "Monday, Tuesday, ... make those
+                    editable. I could say, Jame's birthday." It writes the day's
+                    own title, which is the same field the Log shows, so naming a
+                    day here names it there. */}
                 <input
                   aria-label={`What ${logChosenDay.name} is called`}
-                  className="os-app-page-heading os-week-day-name"
-                  data-os-app-heading
+                  className="os-week-day-name"
                   maxLength={60}
                   onChange={(event) => {
                     const value = event.target.value;
@@ -3937,8 +3987,6 @@ export function TodayExperience() {
                   placeholder={logChosenDay.name}
                   value={logChosenDay.title}
                 />
-              </div>
-              <div className="os-page-sub os-week-day-body">
                 {/* Which day this is, under whatever he has called it. */}
                 <p className="os-week-date">{logChosenDay.date}</p>
                 <div className="os-week-strip" role="group" aria-label="Days of this week">

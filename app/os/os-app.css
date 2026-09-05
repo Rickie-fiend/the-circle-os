@@ -4797,7 +4797,7 @@
   font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.01em;
-  margin: calc(var(--os-group-gap) * -0.5) 0 0;
+  margin: calc(var(--os-group-gap) * -0.75) 0 0;
 }
 
 .circle-os .os-week-strip {
@@ -4847,8 +4847,39 @@
   color: var(--c-warm-50);
 }
 
-.circle-os .os-week-day-name {
+/* The week's goal leads the Page, and the day sits under it.
+ *
+ * It is the Main text because everything below it is under it: the days, their
+ * one things, and the terms the Protocol keeps. A Page that opened on the day's
+ * name could say what today was called but never what the week was for. */
+.circle-os .os-week-goal-line {
+  field-sizing: content;
   margin: 0;
+  overflow: hidden;
+  resize: none;
+}
+
+/* The day's own name, demoted from the heading it used to be. Still his words,
+ * still the same field the Log shows — just no longer the biggest thing on a
+ * Page about the week. */
+.circle-os .os-week-day-name {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--c-warm-50);
+  font-family: inherit;
+  font-size: var(--text-lg);
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  margin: 0;
+  min-width: 0;
+  outline: none;
+  padding: 0;
+  width: 100%;
+}
+
+.circle-os .os-week-day-name::placeholder {
+  color: rgb(241 239 232 / 0.42);
 }
 
 .circle-os .os-week-day-summary {
@@ -8844,6 +8875,17 @@
 
 /* The terms are one continuous stack, the same rhythm Habit uses for repeated
    rows: one label, one row spacing, no nested card and no doubled gap. */
+/* What the terms are for, under the name of the phase keeping them. Quiet: the
+ * phase is the thing on this Page, and this only says where it points. */
+.circle-os .os-protocol-toward {
+  color: rgb(25 24 19 / 0.62);
+  font-size: var(--text-sm);
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin: 0.4rem 0 0;
+}
+
 .circle-os .os-protocol .os-protocol-terms {
   gap: 0.65rem;
 }

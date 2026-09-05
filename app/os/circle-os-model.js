@@ -3560,6 +3560,10 @@ export function startProtocolDraft(state, id = freshRecordId("protocol")) {
       name: "",
       days: 7,
       status: "draft",
+      // What the terms are for. A phase kept in a vacuum counts days and
+      // measures nothing. Sai: "i dont know the progress even i am keeping with
+      // my protocol, because i cant see what i am going for clearly."
+      goalId: null,
       startDateKey: null,
       startedAt: null,
       endedAt: null,
@@ -3587,6 +3591,24 @@ export function startProtocolDraft(state, id = freshRecordId("protocol")) {
  */
 function protocolRunIsOpen(run) {
   return Boolean(run) && (run.status === "draft" || run.status === "active");
+}
+
+/**
+ * Attach a phase to the goal it serves, or let it go.
+ *
+ * The goal is the week's, and it is held by id rather than copied, so editing
+ * the goal in the Week App changes what the phase says it is for without a
+ * second write. A phase can outlive the week it was started in; when the goal
+ * is gone the phase is still a phase, and simply says nothing about why.
+ */
+export function setProtocolGoal(state, runId, goalId) {
+  const run = state.protocol?.runs?.[runId];
+  if (!protocolRunIsOpen(run)) return state;
+  return writeRun(state, {
+    ...run,
+    goalId: typeof goalId === "string" && goalId.trim() ? goalId.trim() : null,
+    updatedAt: now(),
+  });
 }
 
 export function renameProtocolRun(state, runId, name) {

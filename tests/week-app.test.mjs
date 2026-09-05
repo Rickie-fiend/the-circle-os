@@ -149,7 +149,7 @@ test("the day's name is written here and read in the Log", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   // One field, one record: the Week Page writes the same day title the Log
   // shows, so naming a day here names it there.
-  assert.match(shell, /className="os-app-page-heading os-week-day-name"/);
+  assert.match(shell, /className="os-week-day-name"/);
   assert.match(shell, /setDayTitle\(day, value\)/);
   assert.match(shell, /placeholder=\{logChosenDay\.name\}/);
 });

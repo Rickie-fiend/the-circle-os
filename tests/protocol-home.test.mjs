@@ -10,6 +10,7 @@ import {
   canBeginProtocolRun,
   createEmptyState,
   discardProtocolDraft,
+  setProtocolGoal,
   PROTOCOL_DEFAULT_NAME,
   endProtocolRun,
   mergeServerState,
@@ -22,6 +23,7 @@ import {
   toggleProtocolItem,
   updateProtocolItem,
 } from "../app/os/circle-os-model.js";
+import { goalById, setWeekGoal, weekGoal } from "../app/os/goal-model.js";
 
 function phaseWithOneTerm(id, days = 3) {
   let state = startProtocolDraft(createEmptyState(), id).state;
@@ -244,4 +246,41 @@ test("the draft Page's mode label is the way back", () => {
   assert.match(draft, /className="os-card-label os-protocol-mode-toggle"/);
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   assert.match(shell, /discardProtocolDraft\(current, protocolRun\.id\)/);
+});
+
+// A phase kept in a vacuum counts days and measures nothing.
+test("a phase says what its terms are for", () => {
+  let state = createEmptyState();
+  const started = startProtocolDraft(state);
+  const runId = started.id;
+  assert.equal(started.state.protocol.runs[runId].goalId, null, "unattached at first");
+
+  const item = addProtocolItem(started.state, runId, "non-negotiable");
+  state = updateProtocolItem(item.state, runId, item.id, "No phone in bed");
+  state = setWeekGoal(state, "2026-08-31", "Ship v1");
+  const goalId = weekGoal(state, "2026-08-31").id;
+
+  state = setProtocolGoal(beginProtocolRun(state, runId, "2026-08-31"), runId, goalId);
+  assert.equal(state.protocol.runs[runId].goalId, goalId);
+  // Held by id, not copied: renaming the goal in the Week App changes what the
+  // phase says it is for, without a second write.
+  state = setWeekGoal(state, "2026-08-31", "Ship v1 properly");
+  assert.equal(goalById(state, state.protocol.runs[runId].goalId).text, "Ship v1 properly");
+
+  // A phase that has ended is closed to it, the way its terms are.
+  const ended = endProtocolRun(state, runId);
+  assert.equal(setProtocolGoal(ended, runId, "").protocol.runs[runId].goalId, goalId);
+});
+
+// The Page says it where the phase is named, not as a tally in a corner.
+test("the running phase names its direction under its own name", () => {
+  const page = readFileSync("app/os/protocol-page.tsx", "utf8");
+  assert.match(page, /goalText \? <p className="os-protocol-toward">Toward \{goalText\}/);
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /goalText=\{protocolGoalText\}/);
+  // Begun and told what it is for in one act.
+  assert.match(
+    shell,
+    /setProtocolGoal\(\s*beginProtocolRun\(current, protocolRun\.id, dateKey\),/,
+  );
 });

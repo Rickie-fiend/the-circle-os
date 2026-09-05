@@ -9,6 +9,8 @@ export type GoalStepView = {
 export type GoalView = {
   id: string;
   dateKey: string;
+  /** A day's goal, or the week's — the thing every day of it is under. */
+  scope: "day" | "week";
   text: string;
   status: "open" | "done";
   done: boolean;
@@ -27,6 +29,7 @@ export function addGoal(
   dateKey: string,
   id?: string,
   at?: string,
+  scope?: "day" | "week",
 ): { state: never; id: string };
 export function updateGoal(state: unknown, goalId: string, text: string, at?: string): never;
 export function toggleGoal(state: unknown, goalId: string, at?: string): never;
@@ -53,3 +56,12 @@ export function discardEmptyStep(
   discardTask: (state: unknown, taskId: string) => unknown,
 ): never;
 export function taskIsUnderDoneGoal(state: unknown, taskId: string): boolean;
+export function weekGoalId(weekKey: string): string;
+export function weekGoal(state: unknown, weekKey: string): GoalView | null;
+export function setWeekGoal(
+  state: unknown,
+  weekKey: string,
+  text: string,
+  at?: string,
+): never;
+export function goalById(state: unknown, goalId: string): GoalView | null;

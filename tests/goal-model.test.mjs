@@ -17,7 +17,9 @@ import {
   goalStepForTask,
   goalsForDay,
   mergeGoals,
+  setWeekGoal,
   taskIsUnderDoneGoal,
+  weekGoal,
   removeGoal,
   toggleGoal,
   updateGoal,
@@ -189,4 +191,38 @@ test("a goal that is done carries its steps out of Routine", () => {
   // An ordinary task is nobody's step.
   const loose = addTask(state);
   assert.equal(taskIsUnderDoneGoal(loose.state, loose.id), false);
+});
+
+// Sai: "i have no goal for the week so the protocol did not build upon that
+// goal, so i dont know the progress even i am keeping with my protocol, because
+// i cant see what i am going for clearly."
+test("a week has one goal, and it is not one of the week's days", () => {
+  const MONDAY_WEEK = "2026-08-31";
+  let state = createEmptyState();
+  assert.equal(weekGoal(state, MONDAY_WEEK), null);
+
+  state = setWeekGoal(state, MONDAY_WEEK, "Ship v1");
+  assert.equal(weekGoal(state, MONDAY_WEEK).text, "Ship v1");
+  assert.equal(weekGoal(state, MONDAY_WEEK).scope, "week");
+
+  // Writing it twice is the same write: the id is the week itself.
+  state = setWeekGoal(state, MONDAY_WEEK, "Ship v1 properly");
+  assert.equal(Object.keys(state.goals.items).length, 1);
+  assert.equal(weekGoal(state, MONDAY_WEEK).text, "Ship v1 properly");
+
+  // It sits at the week's Monday, but it is not Monday's goal — a day's list
+  // would otherwise show the week's goal as one of that day's.
+  assert.equal(goalsForDay(state, MONDAY_WEEK).length, 0);
+  state = addGoal(state, MONDAY_WEEK, "d1").state;
+  state = updateGoal(state, "d1", "Write the setup");
+  assert.deepEqual(goalsForDay(state, MONDAY_WEEK).map((goal) => goal.text), [
+    "Write the setup",
+  ]);
+
+  // Another week is another goal.
+  assert.equal(weekGoal(state, "2026-09-07"), null);
+  // And the week's goal ticks and carries steps like any other.
+  assert.equal(toggleGoal(state, weekGoal(state, MONDAY_WEEK).id).goals.items[
+    weekGoal(state, MONDAY_WEEK).id
+  ].status, "done");
 });
