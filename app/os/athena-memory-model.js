@@ -140,14 +140,13 @@ export function createAthenaMemory() {
  * `athena-alignment-model.js`. Shape-only here, like pricing.
  */
 export function normalizeAthenaAlignment(value) {
-  if (!value || typeof value !== "object") return null;
-  const wants = (Array.isArray(value.wants) ? value.wants : []).filter((w) => w?.id);
-  if (!wants.length) return null;
+  if (!value || typeof value !== "object" || !value.levels) return null;
   return {
     ...value,
-    wants,
-    unbacked: (Array.isArray(value.unbacked) ? value.unbacked : []).filter((w) => w?.id),
-    trades: (Array.isArray(value.trades) ? value.trades : []).filter((t) => t?.id),
+    breaks: (Array.isArray(value.breaks) ? value.breaks : []).filter((item) => item?.level),
+    unclaimed: (Array.isArray(value.unclaimed) ? value.unclaimed : []).filter(
+      (item) => item?.id,
+    ),
   };
 }
 
@@ -767,7 +766,7 @@ ${memory.corrections.length ? memory.corrections.map((item) => `- ${item.action}
 
 ${serializeMemoryPricing(memory.pricing)}
 
-## What he starred, against what it costs
+## The chain of why
 
 ${serializeMemoryAlignment(memory.alignment)}
 
@@ -778,26 +777,35 @@ ${serializeAthenaReading(memory.reading)}
 }
 
 function serializeMemoryAlignment(alignment) {
-  if (!alignment?.wants?.length) return "Nothing starred yet.";
-  const rows = alignment.wants.map((want) => {
-    const name = want.doing ? `${want.text} — ${want.doing}` : want.text;
-    const steps = `${want.steps} step${want.steps === 1 ? "" : "s"}`;
-    if (want.kind === "having") return `- ★ ${name} — an outcome, reached or not; ${steps}`;
-    if (!want.trackable) return `- ★ ${name} — nothing in the day log matches this yet; ${steps}`;
-    if (!want.hoursPerDay)
-      return `- ★ ${name} — no recorded time in the last ${alignment.recordedDays} days`;
-    return `- ★ ${name} — ${want.hoursPerDay}h a day, on ${want.daysPresent} of ${alignment.recordedDays} days`;
-  });
-  const trades = alignment.trades?.length
+  if (!alignment?.levels) return "Not aligned yet.";
+  const { levels } = alignment;
+  const spine = [
+    `- character: ${
+      levels.character
+        ? `${alignment.characterText} (stand-in, from ${alignment.characterSource})`
+        : "not named"
+    }`,
+    `- habits: ${levels.habits}`,
+    `- protocol running: ${levels.protocol}`,
+    `- week goal: ${levels.goal}`,
+    `- open tasks: ${levels.daily}`,
+  ];
+  const breaks = alignment.breaks?.length
+    ? ["", "Where the chain breaks:", ...alignment.breaks.map(
+        (item) => `- ${item.level}: ${item.detail}`,
+      )]
+    : ["", "The chain holds."];
+  const unclaimed = alignment.unclaimed?.length
     ? [
         "",
-        "Outspending every starred want a day can hold:",
-        ...alignment.trades.map(
-          (trade) => `- ${trade.label} — ${trade.hoursPerDay}h a day, ${trade.share}% of logged time`,
+        "Hours no level of the chain names:",
+        ...alignment.unclaimed.map(
+          (item) =>
+            `- ${item.label} — ${item.hoursPerDay}h a day, ${item.share}% of logged time`,
         ),
       ]
     : [];
-  return [...rows, ...trades].join("\n");
+  return [...spine, ...breaks, ...unclaimed].join("\n");
 }
 
 function serializeMemoryPricing(pricing) {

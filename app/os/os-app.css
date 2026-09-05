@@ -4718,10 +4718,10 @@
 }
 
 .circle-os .os-week-goal-text {
-  font-size: clamp(1.75rem, 7vw, 2rem);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.1;
+  font-size: 1.85rem;
+  font-weight: 720;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
 }
 
 .circle-os .os-week-step-text {
@@ -4802,12 +4802,15 @@
 
 /* The date, between the day's name and the week. Quiet: the name is what he
  * calls the day, and this only says which day that is. */
+/* Orange, the way a date is written on Today. It sits under the day's name
+ * rather than beside it: at 1.85rem the name often takes two lines, and a date
+ * parked against a wrapping line lands wherever the wrap leaves it. */
 .circle-os .os-week-date {
-  color: rgb(241 239 232 / 0.5);
+  color: var(--c-orange);
   font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  margin: calc(var(--os-group-gap) * -0.75) 0 0;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0.3rem 0 0;
 }
 
 .circle-os .os-week-strip {
@@ -4932,9 +4935,10 @@
   border: 0;
   color: var(--c-warm-50);
   font-family: inherit;
-  font-size: var(--text-lg);
-  font-weight: 640;
-  letter-spacing: -0.015em;
+  font-size: 1.85rem;
+  font-weight: 720;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
   margin: 0;
   min-width: 0;
   outline: none;

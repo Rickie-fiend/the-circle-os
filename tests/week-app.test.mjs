@@ -437,7 +437,17 @@ test("inside a day, a goal reads as a heading and a step as a line", () => {
   // And they do not share a starting edge.
   assert.match(css, /os-week-goal-day \.os-week-step \{\s+padding-left: 14px/);
 
-  // The goal above is the largest thing on the Page: larger than the day it is
-  // planned into, and larger than anything inside the day's box.
-  assert.match(css, /os-week-goal-text \{\s+font-size: clamp\(1\.75rem, 7vw, 2rem\)/);
+  // The goal above is drawn as Routine draws an editable line — same size,
+  // weight and tracking as a habit's own text, which is what makes the two
+  // Apps read as one. Sai: "The main text is still not the same size as the
+  // habit text."
+  const habitRow = css.slice(
+    css.indexOf(".circle-os .os-extra-mission-copy {"),
+    css.indexOf(".circle-os .os-extra-mission-copy {") + 200,
+  );
+  assert.match(habitRow, /font-size: 1\.85rem/);
+  assert.match(css, /os-week-goal-text \{\s+font-size: 1\.85rem/);
+  assert.match(css, /os-week-day-name \{[\s\S]*?font-size: 1\.85rem/);
+  // And the date is written in the App's date colour, as it is on Today.
+  assert.match(css, /os-week-date \{\s+color: var\(--c-orange\)/);
 });
