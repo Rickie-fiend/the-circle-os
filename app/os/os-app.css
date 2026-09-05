@@ -6105,6 +6105,13 @@
     font-size: clamp(2rem, 8vw, 2.7rem) !important;
   }
 
+  /* The Week's goal and the day's name are editable lines, drawn the size
+     Routine draws a habit. Without this they are 16px like every other field. */
+  .circle-os textarea.os-week-goal-text,
+  .circle-os input.os-week-day-name {
+    font-size: 1.85rem !important;
+  }
+
   .circle-os .os-info-page .os-session-detail {
     font-size: var(--text-base);
   }

@@ -451,3 +451,28 @@ test("inside a day, a goal reads as a heading and a step as a line", () => {
   // And the date is written in the App's date colour, as it is on Today.
   assert.match(css, /os-week-date \{\s+color: var\(--c-orange\)/);
 });
+
+// Every input and textarea is forced to 16px on a phone so Safari does not zoom
+// the Page on focus. Anything meant to be bigger has to say so in the same
+// breath, or the size is thrown away on the only device Sai uses. He said so
+// three times: "I didnt see any changes in text sizes."
+test("the Week's editable lines survive the phone's 16px floor", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  // The floor exists and still covers every ordinary field.
+  assert.match(
+    css,
+    /\.circle-os input,\s+\.circle-os textarea,\s+\.circle-os select \{\s+font-size: 16px !important;/,
+  );
+  // And the two lines drawn at habit size are exempted from it, in the same
+  // media query, or they are 16px on the phone whatever the rule above says.
+  const floorAt = css.indexOf("font-size: 16px !important;");
+  const exemptAt = css.indexOf("textarea.os-week-goal-text");
+  assert.ok(exemptAt > floorAt, "the exemption comes after the floor");
+  assert.match(
+    css,
+    /textarea\.os-week-goal-text,\s+\.circle-os input\.os-week-day-name \{\s+font-size: 1\.85rem !important;/,
+  );
+  // A step stays at the floor: below 16px a field makes the phone zoom, and it
+  // gives the box its hierarchy for free.
+  assert.doesNotMatch(css, /os-week-step-text \{[^}]*!important/);
+});
