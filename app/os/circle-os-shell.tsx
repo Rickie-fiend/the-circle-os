@@ -132,7 +132,7 @@ import {
   discardEmptyStep,
   goalById,
   goalStepForTask,
-  setWeekGoal,
+
   taskIsUnderDoneGoal,
   toggleGoal,
   updateGoal,
@@ -3958,58 +3958,67 @@ export function TodayExperience() {
             <PageLayout
               className="os-log-page os-log-week"
               headerLeft={<p className="os-card-label">Week</p>}
+              /* Opening a goal sits where Routine puts New habit: top right,
+                 opposite the App Label. Sai: "Add week goal button on top
+                 right." */
+              headerRight={
+                <button
+                  className="os-new-habit"
+                  onClick={() => addGoalToWeek(logWeekKey)}
+                  type="button"
+                >
+                  Add goal
+                </button>
+              }
               key="log-week"
               theme="dark"
             >
-              {/* What the week is for.
+              {/* The week's goals are the Page.
                 *
-                * It leads the Page because every day below it is under it, and
-                * because without it the Protocol counts days that measure
-                * nothing. Sai: "i have no goal for the week so the protocol did
-                * not build upon that goal ... i cant see what i am going for
-                * clearly." */}
-              <div className="os-page-main os-week-goal-head">
-                <textarea
-                  aria-label="What this week is for"
-                  className={`os-app-page-heading os-week-goal-line${
-                    logWeekGoal?.done ? " is-done" : ""
-                  }`}
-                  data-os-app-heading
-                  maxLength={240}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    updateState((current) =>
-                      setWeekGoal(current, logWeekKey, value),
-                    );
-                    sizeTextAreaToContent(event.currentTarget);
-                  }}
-                  placeholder="What is this week for?"
-                  rows={1}
-                  value={logWeekGoal?.text || ""}
-                />
-                {/* A week's goal is finished the way a day's is: ticked here,
-                  * by hand, and never by the app deciding on his behalf. */}
-                <CreativeButton
-                  aria-label={`${logWeekGoal?.done ? "Undo" : "Complete"} this week's goal`}
-                  aria-pressed={Boolean(logWeekGoal?.done)}
-                  className="os-row-tick os-row-tick-habit os-row-tick-week"
-                  disabled={!logWeekGoal?.text.trim()}
-                  keepMountedOnSuccess
-                  onClick={() =>
-                    logWeekGoal &&
-                    updateState((current) => toggleGoal(current, logWeekGoal.id))
-                  }
-                  release="latch"
-                  role="habit"
-                  styleId="soft-clay"
-                  type="button"
-                />
+                * They read as rows that tick, the way Routine's habits do. Sai:
+                * "it should be the main screen for the week goals. Just like
+                * habit in routine. We can tick there." The days below are where
+                * each one is cut into steps. */}
+              <div className="os-page-main os-week-goals">
+                {chosenWeekGoals.length ? (
+                  chosenWeekGoals.map((goal) => (
+                    <div className="os-week-goal-head" key={goal.id}>
+                      <textarea
+                        aria-label="Goal for this week"
+                        className={`os-week-goal-text${goal.done ? " is-done" : ""}`}
+                        data-inline-editor-id={goal.id}
+                        maxLength={240}
+                        onBlur={() => finishGoalEdit(goal.id)}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          updateState((current) => updateGoal(current, goal.id, value));
+                          sizeTextAreaToContent(event.currentTarget);
+                        }}
+                        placeholder="What is this week for?"
+                        rows={1}
+                        value={goal.text}
+                      />
+                      <CreativeButton
+                        aria-label={`${goal.done ? "Undo" : "Complete"} goal: ${goal.text || "this week"}`}
+                        aria-pressed={goal.done}
+                        className="os-row-tick os-row-tick-habit os-row-tick-week"
+                        disabled={!goal.text.trim()}
+                        keepMountedOnSuccess
+                        onClick={() => updateState((current) => toggleGoal(current, goal.id))}
+                        release="latch"
+                        role="habit"
+                        styleId="soft-clay"
+                        type="button"
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <p className="os-week-goal-empty">What is this week for?</p>
+                )}
               </div>
               <div className="os-page-sub os-week-day-body">
-                {/* The day names itself. Sai: "Monday, Tuesday, ... make those
-                    editable. I could say, Jame's birthday." It writes the day's
-                    own title, which is the same field the Log shows, so naming a
-                    day here names it there. */}
+                {/* The day names itself, and writes the same title the Log
+                    shows, so naming a day here names it there. */}
                 <input
                   aria-label={`What ${logChosenDay.name} is called`}
                   className="os-week-day-name"
@@ -4039,97 +4048,54 @@ export function TodayExperience() {
                     </button>
                   ))}
                 </div>
-                {/* The week's goals, and the days they are cut into.
+                {/* One box per goal, holding what that goal asks of this day.
                   *
-                  * A goal for the week is a wish until it is distilled: "run
-                  * the business" becomes Monday's "write down the customer
-                  * persona", two minutes long, standing on one day. Sai: "Goal
-                  * of the week distill down in to days, that we can plan ...
-                  * Then we dont need a goal for each day."
-                  *
-                  * A goal is ticked here and nowhere else; a step is a Routine
-                  * task, so ticking it in either place is the same write, and
-                  * the day it stands on is the day Routine shows it. */}
-                <div className="os-week-goals">
+                  * A step is written under the goal it serves, which is how it
+                  * gets assigned to one. Sai: "For each day, we can select goal
+                  * of the week to assign the step for the day ... with boxes
+                  * for each goal." The goal is named here but not ticked —
+                  * finishing it belongs to the list above. */}
+                <div className="os-week-day-plan">
                   {chosenWeekGoals.map((goal) => (
-                    <article className="os-week-goal" key={goal.id}>
-                      <div className="os-week-goal-head">
-                        <textarea
-                          aria-label="Goal for this week"
-                          className={`os-week-goal-text${goal.done ? " is-done" : ""}`}
-                          data-inline-editor-id={goal.id}
-                          maxLength={240}
-                          onBlur={() => finishGoalEdit(goal.id)}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            updateState((current) => updateGoal(current, goal.id, value));
-                            sizeTextAreaToContent(event.currentTarget);
-                          }}
-                          placeholder="What is this week for?"
-                          rows={1}
-                          value={goal.text}
-                        />
-                        <CreativeButton
-                          aria-label={`${goal.done ? "Undo" : "Complete"} goal: ${goal.text || "this week"}`}
-                          aria-pressed={goal.done}
-                          className="os-row-tick os-row-tick-habit os-row-tick-week"
-                          disabled={!goal.text.trim()}
-                          keepMountedOnSuccess
-                          onClick={() => updateState((current) => toggleGoal(current, goal.id))}
-                          release="latch"
-                          role="habit"
-                          styleId="soft-clay"
-                          type="button"
-                        />
-                      </div>
-
-                      {goal.steps.map((step) => (
-                        <div
-                          className={`os-week-step${
-                            step.dateKey === logChosenDayKey ? " is-chosen" : ""
-                          }`}
-                          key={step.id}
-                        >
-                          {/* Which day this step stands on. It is what puts the
-                            * step in front of him in Routine that morning. */}
-                          <span className="os-week-step-day">
-                            {logWeekDays.find((day) => day.dateKey === step.dateKey)
-                              ?.letter || "·"}
-                          </span>
-                          <textarea
-                            aria-label="Smallest step toward this goal"
-                            className={`os-week-step-text${step.done ? " is-done" : ""}`}
-                            data-inline-editor-id={weekStepEditorId(step.taskId)}
-                            maxLength={240}
-                            onBlur={() => finishStepEdit(step.id)}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              updateState((current) =>
-                                updateTask(current, step.taskId, value),
-                              );
-                              sizeTextAreaToContent(event.currentTarget);
-                            }}
-                            placeholder="Smallest step you could take now"
-                            rows={1}
-                            value={step.text}
-                          />
-                          <CreativeButton
-                            aria-label={`${step.done ? "Undo" : "Complete"} step: ${step.text || "this step"}`}
-                            aria-pressed={step.done}
-                            className="os-row-tick os-row-tick-task os-row-tick-week"
-                            disabled={!step.text.trim()}
-                            keepMountedOnSuccess
-                            onClick={() => finishTask(step.taskId)}
-                            release="latch"
-                            role="habit"
-                            styleId="soft-clay"
-                            type="button"
-                          />
-                        </div>
-                      ))}
-
-                      {/* A new step lands on the day the strip is showing, so
-                        * choosing a day is how the week gets planned. */}
+                    <section className="os-week-goal-day" key={goal.id}>
+                      <p className="os-record-label">
+                        {goal.text.trim() || "Unnamed goal"}
+                      </p>
+                      {goal.steps
+                        .filter((step) => step.dateKey === logChosenDayKey)
+                        .map((step) => (
+                          <div className="os-week-step" key={step.id}>
+                            <textarea
+                              aria-label="Smallest step toward this goal"
+                              className={`os-week-step-text${step.done ? " is-done" : ""}`}
+                              data-inline-editor-id={weekStepEditorId(step.taskId)}
+                              maxLength={240}
+                              onBlur={() => finishStepEdit(step.id)}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                updateState((current) =>
+                                  updateTask(current, step.taskId, value),
+                                );
+                                sizeTextAreaToContent(event.currentTarget);
+                              }}
+                              placeholder="Smallest step you could take now"
+                              rows={1}
+                              value={step.text}
+                            />
+                            <CreativeButton
+                              aria-label={`${step.done ? "Undo" : "Complete"} step: ${step.text || "this step"}`}
+                              aria-pressed={step.done}
+                              className="os-row-tick os-row-tick-task os-row-tick-week"
+                              disabled={!step.text.trim()}
+                              keepMountedOnSuccess
+                              onClick={() => finishTask(step.taskId)}
+                              release="latch"
+                              role="habit"
+                              styleId="soft-clay"
+                              type="button"
+                            />
+                          </div>
+                        ))}
                       <button
                         className="os-week-add-step"
                         onClick={() => addStepToGoal(goal.id, logChosenDayKey)}
@@ -4138,17 +4104,8 @@ export function TodayExperience() {
                         <span aria-hidden="true">+</span>
                         Add a step for {logChosenDay.title || logChosenDay.name}
                       </button>
-                    </article>
+                    </section>
                   ))}
-
-                  <button
-                    className="os-week-add-goal"
-                    onClick={() => addGoalToWeek(logWeekKey)}
-                    type="button"
-                  >
-                    <span aria-hidden="true">+</span>
-                    Add a goal
-                  </button>
                 </div>
 
                 <div className="os-week-day-summary">

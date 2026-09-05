@@ -121,33 +121,35 @@ test("the cover says where the week is", () => {
 // A goal for the week is a wish until it is distilled into days. Sai: "Goal of
 // the week distill down in to days, that we can plan ... Then we dont need a
 // goal for each day."
-test("the week's goals are cut into days, and a step stands on one", () => {
+test("the week's goals lead the Page, and each day is planned under them", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   const page = shell.slice(
-    shell.indexOf("os-week-day-name"),
+    shell.indexOf('className="os-log-page os-log-week"'),
     shell.indexOf("os-week-day-summary"),
   );
+  const goals = page.indexOf("os-page-main os-week-goals");
+  const dayName = page.indexOf("os-week-day-name");
   const strip = page.indexOf("os-week-strip");
-  const goals = page.indexOf("os-week-goals");
-  const goal = page.indexOf("os-week-goal-head");
-  const step = page.indexOf("os-week-step");
-  assert.ok(strip > 0 && goals > strip, "the goals follow the day strip");
-  assert.ok(step > goal, "a step is written under the goal it serves");
+  const plan = page.indexOf("os-week-day-plan");
+  // The goals are the Page; the day being planned sits under them. Sai: "it
+  // should be the main screen for the week goals. Just like habit in routine."
+  assert.ok(goals > 0 && goals < dayName, "the goals lead");
+  assert.ok(dayName < strip && strip < plan, "then the day, then its plan");
 
-  // The Page plans the week, not the day: several goals, each with its steps.
+  // Several goals to a week, ticked in that list and nowhere else.
   assert.match(page, /chosenWeekGoals\.map/);
   assert.match(shell, /const chosenWeekGoals = weekGoals\(state, logWeekKey\)/);
   assert.doesNotMatch(shell, /chosenDayGoals/);
-
-  // A new step lands on the day the strip is showing — choosing a day is how
-  // the week gets planned.
-  assert.match(page, /addStepToGoal\(goal\.id, logChosenDayKey\)/);
-  assert.match(page, /os-week-step-day/, "a step says which day it stands on");
-
-  // Both tick, and both latch: a tick is a state you leave the key in.
   assert.match(page, /toggleGoal\(current, goal\.id\)[\s\S]*?release="latch"/);
-  assert.match(page, /finishTask\(step\.taskId\)[\s\S]*?release="latch"/);
-  // Only the step is the Routine task. The goal is ticked here and nowhere else.
+
+  // Opening a goal is in the header, where Routine puts New habit.
+  assert.match(page, /headerRight=\{[\s\S]*?addGoalToWeek\(logWeekKey\)/);
+
+  // One box per goal under the day, holding only that day's steps — writing a
+  // step under one is how it gets assigned to that goal.
+  assert.match(page, /os-week-goal-day/);
+  assert.match(page, /step\.dateKey === logChosenDayKey/);
+  assert.match(page, /addStepToGoal\(goal\.id, logChosenDayKey\)/);
   assert.match(page, /updateTask\(current, step\.taskId/);
   assert.doesNotMatch(page, /finishTask\(goal\./);
 });
@@ -264,29 +266,22 @@ test("a Page's text is placed before the Page is painted", () => {
 });
 
 // Sai: "Make a border, like a card for each goal and respective steps."
-test("a goal and its steps are one card", () => {
+test("each goal gets its own box under the day being planned", () => {
   const css = readFileSync("app/os/os-app.css", "utf8");
-  const card = css.slice(
-    css.indexOf(".circle-os .os-week-goal {"),
-    css.indexOf(".circle-os .os-week-goal-head"),
+  const plan = css.slice(
+    css.indexOf(".circle-os .os-week-day-plan {"),
+    css.indexOf(".circle-os .os-week-goal-day .os-record-label"),
   );
-  assert.match(card, /border: 1px solid/);
-  assert.match(card, /border-radius: var\(--r-lg\)/);
-  assert.match(card, /padding:/);
-
-  // The card holds the goal, its steps and its own way to add one; adding a
-  // goal stands outside it.
+  assert.match(plan, /os-week-goal-day/);
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  const goals = shell.slice(
-    shell.indexOf('<div className="os-week-goals">'),
+  // The box names its goal but does not tick it: finishing a goal belongs to
+  // the list above, and one tick to a goal is the whole point.
+  const box = shell.slice(
+    shell.indexOf('<section className="os-week-goal-day"'),
     shell.indexOf("os-week-day-summary"),
   );
-  const article = goals.indexOf('className="os-week-goal"');
-  const addStep = goals.indexOf("os-week-add-step");
-  const closeArticle = goals.indexOf("</article>");
-  const addGoal = goals.indexOf("os-week-add-goal");
-  assert.ok(article < addStep && addStep < closeArticle, "a step is added inside");
-  assert.ok(closeArticle < addGoal, "a goal is added outside");
+  assert.match(box, /os-record-label/);
+  assert.doesNotMatch(box, /toggleGoal/);
 });
 
 // Sai: "The dark button for steps on routine task, should be darker, and the
@@ -322,7 +317,7 @@ test("a day says its date under whatever he calls it", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   const page = shell.slice(
     shell.indexOf("os-week-day-name"),
-    shell.indexOf("os-week-goals"),
+    shell.indexOf("os-week-day-plan"),
   );
   const name = page.indexOf("os-week-day-name");
   const date = page.indexOf("os-week-date");
@@ -407,16 +402,18 @@ test("the Log calls a day by its weekday until it is named", () => {
 });
 
 // Sai: "how do we mark as complete?" — it could not be, which was a hole.
-test("the week's goal is ticked by hand, like a day's", () => {
+test("a week's goal is ticked in the list that leads the Page", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  const head = shell.slice(
-    shell.indexOf('className="os-page-main os-week-goal-head"'),
+  const list = shell.slice(
+    shell.indexOf('className="os-page-main os-week-goals"'),
     shell.indexOf("os-week-day-body"),
   );
-  assert.match(head, /toggleGoal\(current, logWeekGoal\.id\)/);
-  assert.match(head, /release="latch"/, "a tick is a state you leave the key in");
+  assert.match(list, /toggleGoal\(current, goal\.id\)/);
+  assert.match(list, /release="latch"/, "a tick is a state you leave the key in");
   // Nothing to finish until something is written.
-  assert.match(head, /disabled=\{!logWeekGoal\?\.text\.trim\(\)\}/);
-  // And the goal reads as done without changing colour.
-  assert.match(head, /logWeekGoal\?\.done \? " is-done" : ""/);
+  assert.match(list, /disabled=\{!goal\.text\.trim\(\)\}/);
+  // Done reads by receding rather than changing colour.
+  assert.match(list, /goal\.done \? " is-done" : ""/);
+  // And an empty week says what the space is for.
+  assert.match(list, /os-week-goal-empty/);
 });
