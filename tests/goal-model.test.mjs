@@ -12,14 +12,18 @@ import {
 import {
   addGoal,
   addGoalStep,
+  addWeekGoal,
   discardEmptyGoal,
   discardEmptyStep,
   goalStepForTask,
   goalsForDay,
   mergeGoals,
+  setGoalStepDay,
   setWeekGoal,
+  stepsForDay,
   taskIsUnderDoneGoal,
   weekGoal,
+  weekGoals,
   removeGoal,
   toggleGoal,
   updateGoal,
@@ -225,4 +229,47 @@ test("a week has one goal, and it is not one of the week's days", () => {
   assert.equal(toggleGoal(state, weekGoal(state, MONDAY_WEEK).id).goals.items[
     weekGoal(state, MONDAY_WEEK).id
   ].status, "done");
+});
+
+// "run the business" becomes Monday's "write down the customer persona".
+test("a week's goal is distilled into days, one step to a day", () => {
+  const MONDAY = "2026-08-31";
+  const TUESDAY = "2026-09-01";
+  let state = createEmptyState();
+
+  // A week holds more than one goal. Sai: "goal for the week might be multiple."
+  state = addWeekGoal(state, MONDAY, "g1").state;
+  state = updateGoal(state, "g1", "Run the business");
+  state = addWeekGoal(state, MONDAY, "g2").state;
+  state = updateGoal(state, "g2", "Ship v1");
+  assert.deepEqual(weekGoals(state, MONDAY).map((goal) => goal.text), [
+    "Run the business",
+    "Ship v1",
+  ]);
+
+  const monday = addGoalStep(state, "g1", addTask, "s1", undefined, MONDAY);
+  state = updateTask(monday.state, monday.taskId, "Write the customer persona");
+  const tuesday = addGoalStep(state, "g1", addTask, "s2", undefined, TUESDAY);
+  state = updateTask(tuesday.state, tuesday.taskId, "Write the problem you solve");
+
+  // Both steps hang off the one goal, each on its own day.
+  assert.deepEqual(
+    weekGoals(state, MONDAY)[0].steps.map((step) => [step.dateKey, step.text]),
+    [
+      [MONDAY, "Write the customer persona"],
+      [TUESDAY, "Write the problem you solve"],
+    ],
+  );
+
+  // And a day knows only what stands on it.
+  assert.deepEqual(stepsForDay(state, MONDAY).map((step) => step.text), [
+    "Write the customer persona",
+  ]);
+  assert.deepEqual(stepsForDay(state, "2026-09-02"), []);
+
+  // A step can be moved to another day without touching the task it is.
+  const moved = setGoalStepDay(state, "s1", TUESDAY);
+  assert.deepEqual(stepsForDay(moved, MONDAY), []);
+  assert.equal(stepsForDay(moved, TUESDAY).length, 2);
+  assert.equal(moved.tasks.items[monday.taskId].text, "Write the customer persona");
 });

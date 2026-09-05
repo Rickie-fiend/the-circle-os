@@ -126,18 +126,18 @@ import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
 import { weekDays, weekStartKey } from "./week-app-model.js";
 import {
-  addGoal,
   addGoalStep,
+  addWeekGoal,
   discardEmptyGoal,
   discardEmptyStep,
-  goalStepForTask,
   goalById,
-  goalsForDay,
+  goalStepForTask,
   setWeekGoal,
   taskIsUnderDoneGoal,
-  weekGoal,
   toggleGoal,
   updateGoal,
+  weekGoal,
+  weekGoals,
 } from "./goal-model.js";
 
 /**
@@ -1980,6 +1980,15 @@ export function TodayExperience() {
     // A step under a goal he has called done is carried by the goal, so Routine
     // stops asking for it. It is not deleted: reopening the goal brings it back.
     .filter((task) => !taskIsUnderDoneGoal(state, task.id))
+    // Today's tasks are today's steps, plus whatever was written straight into
+    // Routine. A step planned for Thursday is not something to do today, and
+    // showing it would put the whole week in front of him every morning. Sai:
+    // "So the task in routine app will be act as a daily task for that day."
+    .filter((task) => {
+      const step = goalStepForTask(state, task.id);
+      if (!step) return true;
+      return !step.dateKey || step.dateKey === dateKey;
+    })
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
   // Habit shows one finished day behind the label, not a week of dots.
   const yesterdayKey = previousDateKey(dateKey);
@@ -2100,20 +2109,20 @@ export function TodayExperience() {
     logWeekDays.find((day) => day.dateKey === dateKey) ||
     logWeekDays[0];
 
-  const chosenDayGoals = goalsForDay(state, logChosenDay.dateKey);
+  const chosenWeekGoals = weekGoals(state, logWeekKey);
 
   // A goal and a step both arrive empty and take the cursor, the same way a new
   // habit or task does — writing is the point, so nothing asks twice.
-  function addGoalToDay(key: string) {
+  function addGoalToWeek(weekKey: string) {
     const id = `goal-${Date.now()}`;
-    updateState((current) => addGoal(current, key, id).state);
+    updateState((current) => addWeekGoal(current, weekKey, id).state);
     setNewGoalEditorId(id);
   }
 
-  function addStepToGoal(goalId: string) {
+  function addStepToGoal(goalId: string, dateKey: string) {
     let editorId = "";
     updateState((current) => {
-      const added = addGoalStep(current, goalId, addTask);
+      const added = addGoalStep(current, goalId, addTask, "", undefined, dateKey);
       editorId = added.taskId;
       return added.state;
     });
@@ -4030,19 +4039,23 @@ export function TodayExperience() {
                     </button>
                   ))}
                 </div>
-                {/* What this day is for, and the smallest step toward it.
+                {/* The week's goals, and the days they are cut into.
+                  *
+                  * A goal for the week is a wish until it is distilled: "run
+                  * the business" becomes Monday's "write down the customer
+                  * persona", two minutes long, standing on one day. Sai: "Goal
+                  * of the week distill down in to days, that we can plan ...
+                  * Then we dont need a goal for each day."
                   *
                   * A goal is ticked here and nowhere else; a step is a Routine
-                  * task, so ticking it in either place is the same write. Sai:
-                  * "only the sub task will be linked to the task in routine
-                  * app. the actual goal completion will have to tick in week
-                  * app." */}
+                  * task, so ticking it in either place is the same write, and
+                  * the day it stands on is the day Routine shows it. */}
                 <div className="os-week-goals">
-                  {chosenDayGoals.map((goal) => (
+                  {chosenWeekGoals.map((goal) => (
                     <article className="os-week-goal" key={goal.id}>
                       <div className="os-week-goal-head">
                         <textarea
-                          aria-label="Goal for this day"
+                          aria-label="Goal for this week"
                           className={`os-week-goal-text${goal.done ? " is-done" : ""}`}
                           data-inline-editor-id={goal.id}
                           maxLength={240}
@@ -4052,12 +4065,12 @@ export function TodayExperience() {
                             updateState((current) => updateGoal(current, goal.id, value));
                             sizeTextAreaToContent(event.currentTarget);
                           }}
-                          placeholder="What is this day for?"
+                          placeholder="What is this week for?"
                           rows={1}
                           value={goal.text}
                         />
                         <CreativeButton
-                          aria-label={`${goal.done ? "Undo" : "Complete"} goal: ${goal.text || "this day"}`}
+                          aria-label={`${goal.done ? "Undo" : "Complete"} goal: ${goal.text || "this week"}`}
                           aria-pressed={goal.done}
                           className="os-row-tick os-row-tick-habit os-row-tick-week"
                           disabled={!goal.text.trim()}
@@ -4071,7 +4084,18 @@ export function TodayExperience() {
                       </div>
 
                       {goal.steps.map((step) => (
-                        <div className="os-week-step" key={step.id}>
+                        <div
+                          className={`os-week-step${
+                            step.dateKey === logChosenDayKey ? " is-chosen" : ""
+                          }`}
+                          key={step.id}
+                        >
+                          {/* Which day this step stands on. It is what puts the
+                            * step in front of him in Routine that morning. */}
+                          <span className="os-week-step-day">
+                            {logWeekDays.find((day) => day.dateKey === step.dateKey)
+                              ?.letter || "·"}
+                          </span>
                           <textarea
                             aria-label="Smallest step toward this goal"
                             className={`os-week-step-text${step.done ? " is-done" : ""}`}
@@ -4080,7 +4104,9 @@ export function TodayExperience() {
                             onBlur={() => finishStepEdit(step.id)}
                             onChange={(event) => {
                               const value = event.target.value;
-                              updateState((current) => updateTask(current, step.taskId, value));
+                              updateState((current) =>
+                                updateTask(current, step.taskId, value),
+                              );
                               sizeTextAreaToContent(event.currentTarget);
                             }}
                             placeholder="Smallest step you could take now"
@@ -4102,20 +4128,22 @@ export function TodayExperience() {
                         </div>
                       ))}
 
+                      {/* A new step lands on the day the strip is showing, so
+                        * choosing a day is how the week gets planned. */}
                       <button
                         className="os-week-add-step"
-                        onClick={() => addStepToGoal(goal.id)}
+                        onClick={() => addStepToGoal(goal.id, logChosenDayKey)}
                         type="button"
                       >
                         <span aria-hidden="true">+</span>
-                        Add a step
+                        Add a step for {logChosenDay.title || logChosenDay.name}
                       </button>
                     </article>
                   ))}
 
                   <button
                     className="os-week-add-goal"
-                    onClick={() => addGoalToDay(logChosenDay.dateKey)}
+                    onClick={() => addGoalToWeek(logWeekKey)}
                     type="button"
                   >
                     <span aria-hidden="true">+</span>

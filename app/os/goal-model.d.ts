@@ -2,6 +2,8 @@ export type GoalStepView = {
   id: string;
   goalId: string;
   taskId: string;
+  /** The day this step is planned for, if it has been given one. */
+  dateKey: string;
   text: string;
   done: boolean;
 };
@@ -39,13 +41,14 @@ export function goalSteps(state: unknown, goalId: string): GoalStepView[];
 export function goalStepForTask(
   state: unknown,
   taskId: string,
-): { id: string; goalId: string; taskId: string } | null;
+): { id: string; goalId: string; taskId: string; dateKey: string } | null;
 export function addGoalStep(
   state: unknown,
   goalId: string,
   addTask: (state: unknown) => { state: unknown; id: string },
   id?: string,
   at?: string,
+  dateKey?: string,
 ): { state: never; id: string; taskId: string };
 export function removeGoalStep(state: unknown, stepId: string): never;
 export function mergeGoals(left: unknown, right: unknown): unknown;
@@ -65,3 +68,16 @@ export function setWeekGoal(
   at?: string,
 ): never;
 export function goalById(state: unknown, goalId: string): GoalView | null;
+export function weekGoals(state: unknown, weekKey: string): GoalView[];
+export function addWeekGoal(
+  state: unknown,
+  weekKey: string,
+  id?: string,
+  at?: string,
+): { state: never; id: string };
+export function stepsForDay(state: unknown, dateKey: string): GoalStepView[];
+export function setGoalStepDay(
+  state: unknown,
+  stepId: string,
+  dateKey: string,
+): never;

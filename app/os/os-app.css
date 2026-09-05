@@ -4685,10 +4685,26 @@
   min-height: var(--touch-min);
 }
 
+/* A step carries the day it stands on. The letter is what makes a week's goal
+ * read as a plan rather than a list: you can see it laid across the days. */
 .circle-os .os-week-step {
   border-left: 1px solid rgb(241 239 232 / 0.14);
+  grid-template-columns: auto 1fr auto;
   margin-left: 6px;
   padding-left: 14px;
+}
+
+.circle-os .os-week-step-day {
+  color: rgb(241 239 232 / 0.42);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  min-width: 1.1em;
+}
+
+/* The day the strip is showing. Its steps are the ones being planned. */
+.circle-os .os-week-step.is-chosen .os-week-step-day {
+  color: var(--c-orange);
 }
 
 .circle-os .os-week-goal-text,

@@ -118,10 +118,10 @@ test("the cover says where the week is", () => {
   assert.equal(weekCoverLine(full, "2026-08-24"), "Today is in.");
 });
 
-// The Week Page is where the week is planned: what a day is for, and the
-// smallest step toward it. Sai: "below navigation bar, i want to make it for
-// the goal of the day ... below that will be the sub task."
-test("a day's goals sit under the day strip, each with its steps", () => {
+// A goal for the week is a wish until it is distilled into days. Sai: "Goal of
+// the week distill down in to days, that we can plan ... Then we dont need a
+// goal for each day."
+test("the week's goals are cut into days, and a step stands on one", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   const page = shell.slice(
     shell.indexOf("os-week-day-name"),
@@ -134,13 +134,31 @@ test("a day's goals sit under the day strip, each with its steps", () => {
   assert.ok(strip > 0 && goals > strip, "the goals follow the day strip");
   assert.ok(step > goal, "a step is written under the goal it serves");
 
+  // The Page plans the week, not the day: several goals, each with its steps.
+  assert.match(page, /chosenWeekGoals\.map/);
+  assert.match(shell, /const chosenWeekGoals = weekGoals\(state, logWeekKey\)/);
+  assert.doesNotMatch(shell, /chosenDayGoals/);
+
+  // A new step lands on the day the strip is showing — choosing a day is how
+  // the week gets planned.
+  assert.match(page, /addStepToGoal\(goal\.id, logChosenDayKey\)/);
+  assert.match(page, /os-week-step-day/, "a step says which day it stands on");
+
   // Both tick, and both latch: a tick is a state you leave the key in.
-  assert.match(page, /toggleGoal\(current, goal\.id\)[\s\S]*?release="latch"\n\s*role="habit"/);
-  assert.match(page, /finishTask\(step\.taskId\)[\s\S]*?release="latch"\n\s*role="habit"/);
+  assert.match(page, /toggleGoal\(current, goal\.id\)[\s\S]*?release="latch"/);
+  assert.match(page, /finishTask\(step\.taskId\)[\s\S]*?release="latch"/);
   // Only the step is the Routine task. The goal is ticked here and nowhere else.
-  assert.match(page, /finishTask\(step\.taskId/);
   assert.match(page, /updateTask\(current, step\.taskId/);
   assert.doesNotMatch(page, /finishTask\(goal\./);
+});
+
+// Sai: "So the task in routine app will be act as a daily task for that day."
+test("Routine shows the steps standing on today, and nobody else's", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(
+    shell,
+    /const step = goalStepForTask\(state, task\.id\);\s+if \(!step\) return true;\s+return !step\.dateKey \|\| step\.dateKey === dateKey;/,
+  );
 });
 
 // Sai: "Monday, Tuesday, ... make those editable. I could say, Jame's birthday.

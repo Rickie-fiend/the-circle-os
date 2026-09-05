@@ -63,6 +63,10 @@ export function normalizeGoals(value) {
       id: stepId,
       goalId,
       taskId,
+      // The day this step is for. A week's goal is only a wish until it is cut
+      // into days, and the day it lands on is what puts it in front of him.
+      // Sai: "Goal of the week distill down in to days, that we can plan."
+      dateKey: cleanId(step?.dateKey),
       createdAt: cleanId(step?.createdAt) || "",
     };
   }
@@ -168,16 +172,51 @@ export function weekGoalId(weekKey) {
   return `week-${cleanId(weekKey)}`;
 }
 
-export function weekGoal(state, weekKey) {
+/**
+ * Every goal this week is for, oldest first.
+ *
+ * A week holds more than one. Sai: "goal for the week might be multiple." They
+ * are the parents; what makes them real is the steps under them, each landing
+ * on a day.
+ */
+export function weekGoals(state, weekKey) {
   const key = cleanId(weekKey);
-  if (!key) return null;
-  const goal = normalizeGoals(state.goals).items[weekGoalId(key)];
-  if (!goal || goal.scope !== "week") return null;
-  return {
-    ...goal,
-    done: goal.status === "done",
-    steps: goalSteps(state, goal.id),
-  };
+  if (!key) return [];
+  return Object.values(normalizeGoals(state.goals).items)
+    .filter((goal) => goal.scope === "week" && goal.dateKey === key)
+    .sort((left, right) =>
+      String(left.createdAt).localeCompare(String(right.createdAt)),
+    )
+    .map((goal) => ({
+      ...goal,
+      done: goal.status === "done",
+      steps: goalSteps(state, goal.id),
+    }));
+}
+
+/** The first goal of the week — the one a phase serves unless told otherwise. */
+export function weekGoal(state, weekKey) {
+  return weekGoals(state, weekKey)[0] || null;
+}
+
+/** Open a new goal for the week, unwritten, ready to be named. */
+export function addWeekGoal(state, weekKey, id, at = new Date().toISOString()) {
+  return addGoal(state, weekKey, id, at, "week");
+}
+
+/**
+ * The steps planned for one day, whichever goal they serve.
+ *
+ * This is what Routine shows: a day's tasks are the steps standing on it. Sai:
+ * "So the task in routine app will be act as a daily task for that day."
+ */
+export function stepsForDay(state, dateKey) {
+  const key = cleanId(dateKey);
+  if (!key) return [];
+  const goals = normalizeGoals(state.goals);
+  return Object.values(goals.items)
+    .flatMap((goal) => goalSteps(state, goal.id))
+    .filter((step) => step.dateKey === key);
 }
 
 export function setWeekGoal(state, weekKey, text, at = new Date().toISOString()) {
@@ -239,6 +278,7 @@ export function goalSteps(state, goalId) {
           id: step.id,
           goalId: step.goalId,
           taskId: step.taskId,
+          dateKey: step.dateKey,
           text: task.text || "",
           done: task.status === "completed",
         },
@@ -288,7 +328,14 @@ export function taskIsUnderDoneGoal(state, taskId) {
  * Returns the task id so the caller can put the cursor in the right row: a step
  * is written in the Week App but it is the same record Routine shows.
  */
-export function addGoalStep(state, goalId, addTask, id, at = new Date().toISOString()) {
+export function addGoalStep(
+  state,
+  goalId,
+  addTask,
+  id,
+  at = new Date().toISOString(),
+  dateKey = "",
+) {
   const goals = normalizeGoals(state.goals);
   const goal = goals.items[cleanId(goalId)];
   if (!goal) return { state, id: "", taskId: "" };
@@ -300,12 +347,32 @@ export function addGoalStep(state, goalId, addTask, id, at = new Date().toISOStr
       ...goals,
       steps: {
         ...goals.steps,
-        [stepId]: { id: stepId, goalId: goal.id, taskId: created.id, createdAt: at },
+        [stepId]: {
+          id: stepId,
+          goalId: goal.id,
+          taskId: created.id,
+          dateKey: cleanId(dateKey),
+          createdAt: at,
+        },
       },
     }),
     id: stepId,
     taskId: created.id,
   };
+}
+
+/** Move a step to the day it is meant to be taken. */
+export function setGoalStepDay(state, stepId, dateKey) {
+  const goals = normalizeGoals(state.goals);
+  const step = goals.steps[cleanId(stepId)];
+  if (!step) return state;
+  return write(state, {
+    ...goals,
+    steps: {
+      ...goals.steps,
+      [step.id]: { ...step, dateKey: cleanId(dateKey) },
+    },
+  });
 }
 
 export function removeGoalStep(state, stepId) {
