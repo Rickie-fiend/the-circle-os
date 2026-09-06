@@ -48,6 +48,12 @@ import {
   buildAthenaReading,
   buildAthenaReadingReplyPrompt,
 } from "../athena-memory-model.js";
+import {
+  DIMENSION_WINDOW_WEEKS,
+  dimensionRecord,
+  starvedDimension,
+} from "../dimension-record.js";
+import type { DimensionRow } from "../dimension-record";
 
 type AthenaReadingPage = "days" | "alive" | "shape";
 
@@ -79,6 +85,18 @@ type AthenaEdition = {
   cover: string;
   pages: Record<AthenaReadingPage, AthenaReadingSection[]>;
 };
+
+/**
+ * What the Page says out loud, which is always the part that has gone hungry.
+ *
+ * Never fed is said differently from a long time ago: a part of a life nobody
+ * has named is further away than one that has merely lapsed.
+ */
+function starvedLine(row: DimensionRow) {
+  const name = row.dimension.charAt(0).toUpperCase() + row.dimension.slice(1);
+  if (row.weeksSince === null) return `${name} has never been fed.`;
+  return `${name} has not been fed in ${row.weeksSince} weeks.`;
+}
 
 function athenaFreshnessLabel(
   state: ReturnType<typeof useCircleState>["state"],
@@ -465,6 +483,8 @@ export default function CircleOSMirror() {
   const [suggestionDraft, setSuggestionDraft] = useState("");
   const [suggestionSaved, setSuggestionSaved] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  // One part opened at a time: the deeper it goes the more it expands.
+  const [openDimension, setOpenDimension] = useState<string | null>(null);
   const visionSessionRef = useRef<HTMLElement>(null);
   const athenaSessionRef = useRef<HTMLElement>(null);
   const [draft, setDraft] = useState({
@@ -560,6 +580,14 @@ export default function CircleOSMirror() {
     ) >= 0
       ? athenaReading.updatedAt
       : profileCase.updatedAt;
+  /**
+   * The four parts of a life, and the one that has gone longest without.
+   *
+   * The hour matters because the week rolls on a Sunday evening: after that the
+   * window ends on the week he is planning rather than the one just lived.
+   */
+  const dimensions = dimensionRecord(state, getDateKey(), new Date().getHours());
+  const starved = starvedDimension(dimensions);
   const updateLabel = athenaFreshnessLabel(
     state,
     athenaReading,
@@ -1081,6 +1109,93 @@ export default function CircleOSMirror() {
             )}
           </SwipeSession>
           )}
+        </section>
+
+        {/* Reflect's deepest layer.
+          *
+          * The tab is a pyramid at longer horizons than Today's: what he said
+          * he wanted on top, the gap in the middle, and this at the foundation.
+          * Athena sits above it because the gap she reads is between the claim
+          * and this evidence.
+          *
+          * It says one thing out loud, and it is the part that has gone
+          * hungry. Nothing here is a score: every filled week is a week he
+          * himself said was fed, and nothing ever subtracts. */}
+        <header className="mirror-intro between-intro">
+          <div>
+            <p className="os-eyebrow">The Four</p>
+            <h1>{starved ? starvedLine(starved) : "Four parts of a life."}</h1>
+            <p className="profile-updated">
+              {DIMENSION_WINDOW_WEEKS} weeks · one square a week
+            </p>
+          </div>
+        </header>
+
+        <section className="vision-four-session" aria-label="The Four">
+          <article className="vision-four-app">
+            <p className="os-card-label">The Four</p>
+            <div className="vision-four-rows">
+              {dimensions.map((row) => {
+                const open = openDimension === row.dimension;
+                return (
+                  <div
+                    className={`vision-four-row${open ? " is-open" : ""}`}
+                    key={row.dimension}
+                  >
+                    <button
+                      aria-expanded={open}
+                      className="vision-four-head"
+                      onClick={() =>
+                        setOpenDimension(open ? null : row.dimension)
+                      }
+                      type="button"
+                    >
+                      <span className="vision-four-title">
+                        <span className="vision-four-name">{row.dimension}</span>
+                        <span className="vision-four-count">{row.fed}</span>
+                      </span>
+                      <span aria-hidden="true" className="vision-four-weeks">
+                        {row.weeks.map((week) => (
+                          <i
+                            className={week.fed ? "is-fed" : undefined}
+                            key={week.weekKey}
+                          />
+                        ))}
+                      </span>
+                    </button>
+
+                    {open ? (
+                      <div className="vision-four-detail">
+                        <p className="vision-four-trait">
+                          {row.trait || "Not named yet."}
+                        </p>
+                        <p className="vision-four-since">
+                          {row.weeksSince === null
+                            ? "Never fed."
+                            : row.weeksSince === 0
+                              ? "Fed this week."
+                              : `Last fed ${row.weeksSince} ${
+                                  row.weeksSince === 1 ? "week" : "weeks"
+                                } ago.`}
+                        </p>
+                        {row.habits.length ? (
+                          <ul className="vision-four-habits">
+                            {row.habits.map((habit) => (
+                              <li key={habit.id}>{habit.action}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="vision-four-since">
+                            No habit stands under it yet.
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </article>
         </section>
 
         <section
