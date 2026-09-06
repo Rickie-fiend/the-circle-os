@@ -34,15 +34,16 @@ test("a published setup stands in front of the compiled one", () => {
   assert.match(shell, /const habitSetupPublication = selectFirstUsePublication\(/);
   assert.match(shell, /const logSetupPublication = selectFirstUsePublication\(/);
   assert.match(shell, /\{habitSetupPublication \? \(/);
-  assert.match(shell, /\{dayOneDone && weekSetupDone && logSetupPublication \? \(/);
+  assert.match(shell, /\{dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/);
   // And it is checked before the everyday publication, which is checked before
   // the compiled chapter — so the branch reads setup, delivery, bundle.
   for (const [setup, everyday, compiled] of [
     ["{habitSetupPublication ? (", ") : habitPublication ? (", ") : activeHabitChapter && activeHabitRun ? ("],
-    ["{dayOneDone && weekSetupDone && logSetupPublication ? (", ") : logPublication ? (", ") : dayOneDone && weekSetupDone && !logSetupDone && logSetupChapter && logSetupRun ? ("],
+    [/\{dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/, /\) : logPublication \? \(/, /\) : dayOneDone &&\s+weekSetupDone &&\s+!logSetupDone/],
   ]) {
     const at = (needle) => {
-      const index = shell.indexOf(needle);
+      const index =
+        typeof needle === "string" ? shell.indexOf(needle) : shell.search(needle);
       assert.notEqual(index, -1, `branch missing: ${needle}`);
       return index;
     };

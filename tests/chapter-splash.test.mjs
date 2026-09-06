@@ -20,15 +20,15 @@ test("a setup chapter can have the screen to itself", () => {
 
   // A first-use setup is a splash; an ordinary delivery into an App is not.
   const gate = shell.slice(
-    shell.indexOf("{dayOneDone && weekSetupDone && logSetupPublication ? ("),
+    shell.search(/\{dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/),
     shell.indexOf('<section className="os-log-section"'),
   );
-  assert.match(gate, /<ChapterSplash label="Log setup">[\s\S]*?PublishedChapterDelivery/);
-  assert.match(gate, /<ChapterSplash label="Log setup">[\s\S]*?ChapterPlayer/);
+  assert.match(gate, /<ChapterSplash\s+label="Log setup"[\s\S]*?PublishedChapterDelivery/);
+  assert.match(gate, /<ChapterSplash\s+label="Log setup"[\s\S]*?ChapterPlayer/);
   // One sheet at a time. Two open at once is two Pages held still and one lock
   // left behind — Sai: "i sometimes cannot scroll entirely."
-  assert.match(gate, /dayOneDone && weekSetupDone && logSetupPublication \?/);
-  assert.match(gate, /dayOneDone && weekSetupDone && !logSetupDone && logSetupChapter/);
+  assert.match(gate, /dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/);
+  assert.match(gate, /dayOneDone &&\s+weekSetupDone &&\s+!logSetupDone &&\s+logSetupChapter/);
   assert.match(gate, /aria-label="Log chapter"[\s\S]*?os-day-gated|os-day-gated[\s\S]*?aria-label="Log chapter"/);
 });
 
@@ -165,4 +165,49 @@ test("the splash is the screen, with one scroll and its own rhythm", () => {
   // The sheet's ink is set where a field inherits from, not on the field: it is
   // written in color: inherit, and a later rule at equal specificity wins.
   assert.match(splash, /os-survey-text,[\s\S]*?color: var\(--c-warm-50\)/);
+});
+
+// Sai: "allow the splash screen to be dismiss for now, it show up a number of
+// times now. so that i have to fill everytime."
+test("a setup sheet can be put down, and comes back tomorrow", () => {
+  // The way out is on the sheet, not buried in the chapter.
+  assert.match(shell, /className="os-splash-later"/);
+  assert.match(css, /\.circle-os \.os-splash-later \{/);
+
+  // Every sheet that takes the screen offers it. A sheet with no way past it is
+  // a locked door on the App behind it.
+  for (const label of ["Day one", "Week review", "Week setup", "Log setup"]) {
+    const at = shell.indexOf(`label="${label}"`);
+    assert.ok(at > 0, `${label} splash is missing`);
+    const opening = shell.slice(at, at + 160);
+    assert.ok(opening.includes("onDismiss="), `${label} has no way out`);
+  }
+
+  // Dated, not permanent: the deferral lapses so the chapter is offered again.
+  assert.match(shell, /function splashDeferredToday\(/);
+  assert.match(shell, /getDateKey\(new Date\(run\.dismissedAt\)\) === dateKey/);
+
+  const model = readFileSync("app/os/chapters/chapter-model.js", "utf8");
+  assert.match(model, /export function deferChapterRun\(/);
+});
+
+test("putting a sheet down keeps what was already answered", async () => {
+  const { deferChapterRun } = await import("../app/os/chapters/chapter-model.js");
+  const run = {
+    runId: "day-one@2",
+    status: "in-progress",
+    answers: [{ answerKey: "habit-action", value: "read" }],
+    deferCount: 1,
+  };
+  const later = deferChapterRun(run, "2026-09-06T10:00:00.000Z");
+
+  // The answers survive: he resumes rather than starts over.
+  assert.deepEqual(later.answers, run.answers);
+  assert.equal(later.status, "in-progress");
+  assert.equal(later.dismissedAt, "2026-09-06T10:00:00.000Z");
+  assert.equal(later.deferCount, 2);
+
+  // Deferring is not finishing. The chapter is still owed.
+  assert.notEqual(later.status, "completed");
+  assert.equal(later.completedAt ?? null, null);
 });

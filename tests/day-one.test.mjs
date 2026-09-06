@@ -165,13 +165,13 @@ test("day one leaves an App with something in it", () => {
 // been answered once — whatever version he has since edited in the Workshop.
 test("day one is a splash, asked once", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(shell, /<ChapterSplash label="Day one">/);
+  assert.match(shell, /<ChapterSplash\s+label="Day one"/);
   assert.match(shell, /chapterEverCompleted\(state\.chapters\.runs, dayOneChapter\.id\)/);
   assert.match(shell, /function saveDayOneRun\(nextRun: ChapterRun\)/);
   // It stands in front of the other setups rather than among them.
   assert.ok(
-    shell.indexOf('<ChapterSplash label="Day one">') <
-      shell.indexOf("{dayOneDone && weekSetupDone && logSetupPublication ? ("),
+    shell.search(/<ChapterSplash\s+label="Day one"/) <
+      shell.search(/\{dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/),
   );
 });
 

@@ -12,6 +12,8 @@ export function chapterEverCompleted(
   chapterId: string,
 ): boolean;
 
+export function deferChapterRun(run: ChapterRun, at?: string): ChapterRun;
+
 export function createChapterRun(
   chapter: ChapterDefinition,
   seedAnswers?: ChapterAnswer[],

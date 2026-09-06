@@ -178,6 +178,7 @@ import {
 } from "./protocol-page";
 import {
   chapterEverCompleted,
+  deferChapterRun,
   chapterRunId,
   chapterAnswerText,
   createChapterRun,
@@ -484,9 +485,11 @@ function onServer() {
 export function ChapterSplash({
   children,
   label,
+  onDismiss,
 }: {
   children: ReactNode;
   label: string;
+  onDismiss?: () => void;
 }) {
   // The Page behind stops scrolling while this is open.
   //
@@ -523,6 +526,20 @@ export function ChapterSplash({
         ref={sheetRef}
         role="dialog"
       >
+        {onDismiss ? (
+          // The way out. A sheet that owns the whole screen with no way past it
+          // is a door, not an offer, and the App behind it is unreachable until
+          // it is answered. Small and in the corner: the chapter is still the
+          // thing to do, this is only the admission that today might not be the
+          // day. It stands the sheet down until tomorrow rather than for good.
+          <button
+            className="os-splash-later"
+            onClick={onDismiss}
+            type="button"
+          >
+            Later
+          </button>
+        ) : null}
         <div className="os-splash-frame">{children}</div>
       </div>
     </div>,
@@ -2099,6 +2116,41 @@ export function TodayExperience() {
     const top = markerTop(timeline, liveClockHour, liveHourProgress);
     if (top !== null) setLiveMarkerTop(top);
   }, [liveClockHour, liveHourProgress]);
+
+  /**
+   * A sheet he put down today.
+   *
+   * The deferral is dated so it lapses: the chapter is offered again tomorrow,
+   * from wherever he left it. Read against the Circle day, so a sheet dismissed
+   * at one in the morning is still down when he wakes up.
+   */
+  function splashDeferredToday(run: ChapterRun | null | undefined) {
+    if (!run?.dismissedAt) return false;
+    return getDateKey(new Date(run.dismissedAt)) === dateKey;
+  }
+
+  /**
+   * The published Log setup, put down for the day.
+   *
+   * A delivered chapter has no run of its own until it is played, so the
+   * deferral is written against the run it would create. The same dated stand-
+   * down as the others: it is offered again tomorrow.
+   */
+  function dismissLogSetupSplash() {
+    if (!logSetupPublication) return;
+    const chapter = logSetupPublication.chapter;
+    const id = chapterRunId(chapter);
+    const run = state.chapters.runs[id] || createChapterRun(chapter);
+    deferSplash({ ...run, runId: id }, chapter.session);
+  }
+
+  /** Put a sheet down for the rest of the day, keeping what he has answered. */
+  function deferSplash(run: ChapterRun | null | undefined, session: string) {
+    if (!run) return;
+    updateState((current) =>
+      storeChapterRun(current, deferChapterRun(run), session),
+    );
+  }
 
   // Day one: the front door. It is offered until it has been answered once,
   // whatever version of it he has since edited in the Workshop.
@@ -4240,8 +4292,14 @@ export function TodayExperience() {
           </section>
         ) : null}
 
-        {!dayOneDone && dayOneChapter && dayOneRun ? (
-          <ChapterSplash label="Day one">
+        {!dayOneDone &&
+        dayOneChapter &&
+        dayOneRun &&
+        !splashDeferredToday(dayOneRun) ? (
+          <ChapterSplash
+            label="Day one"
+            onDismiss={() => deferSplash(dayOneRun, dayOneChapter.session)}
+          >
             <ChapterPlayer
               className="os-day-one-session"
               definition={dayOneChapter}
@@ -4253,7 +4311,10 @@ export function TodayExperience() {
         ) : null}
 
         {weekReviewChapter && weekReviewRun ? (
-          <ChapterSplash label="Week review">
+          <ChapterSplash
+            label="Week review"
+            onDismiss={() => setReviewingWeekOf(null)}
+          >
             <ChapterPlayer
               className="os-week-review-session"
               definition={weekReviewChapter}
@@ -4264,8 +4325,15 @@ export function TodayExperience() {
           </ChapterSplash>
         ) : null}
 
-        {dayOneKeptADay && !weekSetupDone && weekSetupChapter && weekSetupRun ? (
-          <ChapterSplash label="Week setup">
+        {dayOneKeptADay &&
+        !weekSetupDone &&
+        weekSetupChapter &&
+        weekSetupRun &&
+        !splashDeferredToday(weekSetupRun) ? (
+          <ChapterSplash
+            label="Week setup"
+            onDismiss={() => deferSplash(weekSetupRun, weekSetupChapter.session)}
+          >
             <ChapterPlayer
               className="os-week-setup-session"
               definition={weekSetupChapter}
@@ -4276,8 +4344,13 @@ export function TodayExperience() {
           </ChapterSplash>
         ) : null}
 
-        {dayOneDone && weekSetupDone && logSetupPublication ? (
-          <ChapterSplash label="Log setup">
+        {dayOneDone &&
+        weekSetupDone &&
+        logSetupPublication &&
+        !splashDeferredToday(
+          state.chapters.runs[chapterRunId(logSetupPublication.chapter)],
+        ) ? (
+          <ChapterSplash label="Log setup" onDismiss={dismissLogSetupSplash}>
             <PublishedChapterDelivery
               className="os-log-setup-session"
               label="Log setup"
@@ -4292,8 +4365,16 @@ export function TodayExperience() {
               publication={logPublication}
             />
           </section>
-        ) : dayOneDone && weekSetupDone && !logSetupDone && logSetupChapter && logSetupRun ? (
-          <ChapterSplash label="Log setup">
+        ) : dayOneDone &&
+          weekSetupDone &&
+          !logSetupDone &&
+          logSetupChapter &&
+          logSetupRun &&
+          !splashDeferredToday(logSetupRun) ? (
+          <ChapterSplash
+            label="Log setup"
+            onDismiss={() => deferSplash(logSetupRun, logSetupChapter.session)}
+          >
             <ChapterPlayer
               className="os-log-setup-session"
               definition={logSetupChapter}
@@ -4610,22 +4691,7 @@ export function TodayExperience() {
                       />
                     </div>
                   ))
-                ) : (
-                  /* No goal yet, so the Page offers the one act that matters
-                   * rather than the ghost of a field. Sai: "Its better if the
-                   * default state not even show whats the week for, and add
-                   * goal button would be in bordered box, act exactly like the
-                   * add goal button." It is the header's action, in the space
-                   * the goals will fill. */
-                  <button
-                    className="os-week-goal-add-box"
-                    onClick={() => addGoalToWeek(logWeekKey)}
-                    type="button"
-                  >
-                    <span aria-hidden="true">+</span>
-                    Add goal
-                  </button>
-                )}
+                ) : null}
               </div>
               <div className="os-page-sub os-week-day-body">
                 {/* The day names itself, and writes the same title the Log
@@ -4761,22 +4827,26 @@ export function TodayExperience() {
                     </div>
                   ) : null}
 
-                  {chosenWeekGoals.length ? (
-                    <button
-                      className="os-week-add-step"
-                      onClick={() => {
-                        if (chosenWeekGoals.length === 1) {
-                          addStepToGoal(chosenWeekGoals[0].id, logChosenDayKey);
-                          return;
-                        }
-                        setChoosingStepGoal((open) => !open);
-                      }}
-                      type="button"
-                    >
-                      <span aria-hidden="true">+</span>
-                      Add a step for {logChosenDay.title || logChosenDay.name}
-                    </button>
-                  ) : null}
+                  <button
+                    className="os-week-add-step"
+                    onClick={() => {
+                      if (!chosenWeekGoals.length) {
+                        addGoalToWeek(logWeekKey);
+                        return;
+                      }
+                      if (chosenWeekGoals.length === 1) {
+                        addStepToGoal(chosenWeekGoals[0].id, logChosenDayKey);
+                        return;
+                      }
+                      setChoosingStepGoal((open) => !open);
+                    }}
+                    type="button"
+                  >
+                    <span aria-hidden="true">+</span>
+                    {chosenWeekGoals.length
+                      ? `Add a step for ${logChosenDay.title || logChosenDay.name}`
+                      : "Add the goal for the week"}
+                  </button>
                 </div>
 
                 {/* What the day actually held, folded away.

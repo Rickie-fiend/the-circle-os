@@ -303,3 +303,28 @@ export function storeChapterRun(state, run, session) {
     ],
   };
 }
+
+/**
+ * A setup sheet, put down.
+ *
+ * The ladder was built as a sequence of sheets that each own the screen until
+ * they are answered: day one, then the week the day after, then the Log's. Sai:
+ * "allow the splash screen to be dismiss for now, it show up a number of times
+ * now. so that i have to fill everytime." A person who opens the App to write
+ * one line should not have to finish a chapter first.
+ *
+ * The deferral is written onto the run rather than held in the tab, so it
+ * survives the App being closed, and it is dated rather than permanent: the
+ * sheet stands down for the rest of the day and is offered again tomorrow.
+ * Setting up is still something that has to happen — it just no longer happens
+ * at gunpoint.
+ */
+export function deferChapterRun(run, at = now()) {
+  return {
+    ...run,
+    deferCount: (run?.deferCount || 0) + 1,
+    deferredAt: at,
+    dismissedAt: at,
+    updatedAt: at,
+  };
+}

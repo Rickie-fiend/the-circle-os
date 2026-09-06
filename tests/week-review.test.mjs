@@ -158,7 +158,7 @@ test("the review waits behind a button on a Sunday", () => {
   );
   // Opened by hand, not sprung: a review nobody asked for at the end of a long
   // Sunday is a review that gets skipped.
-  assert.match(shell, /<ChapterSplash label="Week review">/);
+  assert.match(shell, /<ChapterSplash\s+label="Week review"/);
   assert.doesNotMatch(shell, /weekReviewDone/);
 
   // The strip carries the Sunday just gone, so a week missed is still reachable

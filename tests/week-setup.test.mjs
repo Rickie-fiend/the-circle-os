@@ -146,14 +146,14 @@ test("the week setup leaves a week with a goal, terms and a way back", () => {
 test("the week is offered once a day has actually been kept", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   assert.match(shell, /getDateKey\(new Date\(dayOneRunStored\.completedAt\)\) < dateKey/);
-  assert.match(shell, /<ChapterSplash label="Week setup">/);
+  assert.match(shell, /<ChapterSplash\s+label="Week setup"/);
   assert.match(shell, /chapterEverCompleted\(state\.chapters\.runs, weekSetupChapter\.id\)/);
 
   // One sheet at a time, and the week's setup stands in front of the Log's.
-  assert.match(shell, /dayOneDone && weekSetupDone && logSetupPublication \?/);
+  assert.match(shell, /dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/);
   assert.ok(
-    shell.indexOf('<ChapterSplash label="Week setup">') <
-      shell.indexOf("{dayOneDone && weekSetupDone && logSetupPublication ? ("),
+    shell.search(/<ChapterSplash\s+label="Week setup"/) <
+      shell.search(/\{dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/),
   );
 
   // The quality he already named arrives filled in, so day two asks for the

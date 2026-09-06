@@ -418,14 +418,26 @@ test("a week's goal is ticked in the list that leads the Page", () => {
   assert.match(list, /disabled=\{!goal\.text\.trim\(\)\}/);
   // Done reads by receding rather than changing colour.
   assert.match(list, /goal\.done \? " is-done" : ""/);
-  // And an empty week offers the one act that matters rather than the ghost of
-  // a field. Sai: "Its better if the default state not even show whats the week
-  // for, and add goal button would be in bordered box."
+  // An empty week shows nothing at all up here. Sai: "When we have no goal for
+  // the week, nothing should be there. Just the forehead and the day." Neither
+  // the ghost of a field nor the dotted box that replaced it.
   assert.doesNotMatch(list, /os-week-goal-empty/);
-  assert.match(list, /os-week-goal-add-box/);
-  assert.match(list, /onClick=\{\(\) => addGoalToWeek\(logWeekKey\)\}/);
+  assert.doesNotMatch(list, /os-week-goal-add-box/);
   const css = readFileSync("app/os/os-app.css", "utf8");
-  assert.match(css, /os-week-goal-add-box \{[\s\S]*?border: 2px dotted/);
+  assert.doesNotMatch(css, /os-week-goal-add-box/);
+  assert.match(css, /\.os-week-goals:empty \{\s+display: none;/);
+
+  // The ask moves into the day's own bordered box, in the same hand as the
+  // step it will be replaced by. Sai: "Compare the green, + Add the goal for
+  // the week, is just fine for adding the goal ready to type."
+  const day = shell.slice(shell.indexOf("os-week-day-body"));
+  const add = day.slice(
+    day.indexOf('className="os-week-add-step"'),
+    day.indexOf("</button>", day.indexOf('className="os-week-add-step"')),
+  );
+  assert.match(add, /addGoalToWeek\(logWeekKey\)/);
+  assert.match(add, /"Add the goal for the week"/);
+  assert.match(add, /Add a step for \$\{logChosenDay\.title/);
   // And the review key stands on a leg, or its colours are a flat rectangle.
   assert.match(css, /os-week-review-open \{\s+\/\*[\s\S]*?--os-key-leg: var\(--os-key-leg-orange\)/);
 });
