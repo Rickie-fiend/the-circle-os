@@ -36,8 +36,19 @@ export const DECLARATION_KINDS = Object.freeze([
  */
 export const CHARACTER_DIMENSIONS = Object.freeze(["mind", "body", "spirit", "social"]);
 
-/** How many of the four a character names. */
-export const CHARACTER_TRAIT_COUNT = 3;
+/**
+ * How many of the four a character can name.
+ *
+ * One is enough to begin. Day one asks for a single trait in a single part of
+ * a life — Sai: "why dont we just ask for 1 trait you'd like to have, choose
+ * from 4 dimensions" — and that one trait is what the first habit is for. The
+ * rest are named the next day, when there is a week to hang them on.
+ *
+ * So a character is never invalid for being unfinished; it is invalid only for
+ * being empty.
+ */
+export const CHARACTER_TRAIT_MIN = 1;
+export const CHARACTER_TRAIT_MAX = 4;
 
 /**
  * How far ahead the character stands.
@@ -476,9 +487,10 @@ function normalizeDeclarationContent(kind, value = {}) {
 
 function declarationHasContent(kind, content) {
   if (kind === "character") {
-    // Named, not complete: a character with fewer than three traits is a
-    // character half imagined, and one with four has not chosen.
-    return characterTraitList(content).length === CHARACTER_TRAIT_COUNT;
+    // Begun, not complete. One trait is a character started; four is a
+    // character finished; none is nothing to declare.
+    const named = characterTraitList(content).length;
+    return named >= CHARACTER_TRAIT_MIN && named <= CHARACTER_TRAIT_MAX;
   }
   if (kind === "vision") return Boolean(content.life && content.why);
   if (kind === "missionStatement") return Boolean(content.statement);
@@ -3651,7 +3663,15 @@ function now() {
   return new Date().toISOString();
 }
 
-export const PROTOCOL_DURATIONS = [3, 7, 14, 21];
+/**
+ * How long a phase can run.
+ *
+ * One day is a real length, and it is the one day one asks for: a single thing
+ * kept for a single day, before there is any week to commit to. Sai: "the set-up
+ * must be the commitment for 1 day ... the protocol i will have to follow for 1
+ * day." Seven is the week he commits to the next day.
+ */
+export const PROTOCOL_DURATIONS = [1, 3, 7, 14, 21];
 export const PROTOCOL_DEFAULT_NAME = "Monk Mode";
 const PROTOCOL_KINDS = new Set(["non-negotiable", "negotiable"]);
 

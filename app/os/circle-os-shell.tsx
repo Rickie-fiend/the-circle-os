@@ -17,6 +17,8 @@ import {
 import {
   CIRCLE_DAY_START_HOUR,
   addHabitDefinition,
+  composeHabitText,
+  declareLife,
   addTask,
   answerSurveyQuestion,
   connectLocalAi,
@@ -36,6 +38,7 @@ import {
   archiveProtocolRun,
   beginProtocolRun,
   discardProtocolDraft,
+  setHabitDimension,
   setProtocolGoal,
   canBeginProtocolRun,
   completeTask,
@@ -1967,6 +1970,18 @@ export function TodayExperience() {
     setLiveMarkerTop(currentCenter + (nextCenter - currentCenter) * liveHourProgress);
   }, [liveClockHour, liveHourProgress]);
 
+  // Day one: the front door. It is offered until it has been answered once,
+  // whatever version of it he has since edited in the Workshop.
+  const dayOneChapter = getPublishedChapter("day-one");
+  const dayOneDone =
+    !dayOneChapter || chapterEverCompleted(state.chapters.runs, dayOneChapter.id);
+  const dayOneRun = useMemo(() => {
+    if (!dayOneChapter) return null;
+    return (
+      state.chapters.runs[chapterRunId(dayOneChapter)] ||
+      createChapterRun(dayOneChapter)
+    );
+  }, [dayOneChapter, state.chapters.runs]);
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
   const habitBuildingRun = useMemo(() => {
@@ -2784,6 +2799,89 @@ export function TodayExperience() {
     const line = revealedLine;
     updateState((current) => reactToLineSeen(current, line.id, reaction));
     closeNoteLine();
+  }
+
+  /**
+   * Day one, turned into an App with something in it.
+   *
+   * Every line answered becomes a record he can see and edit afterwards: a
+   * character with one trait, the habit that trait is made small enough to do,
+   * a phase of one day holding the thing he will not do, and today's one goal
+   * with the two-minute move that starts it. Sai: "after the set-up we will
+   * understand, why we do it, what we can expect, what is needed to do."
+   *
+   * Nothing here is a copy. The habit is a habit, the step is a Routine task,
+   * the goal is the week's goal — the same records every other App writes, so
+   * the App he opens afterwards is his, not a demonstration of itself.
+   */
+  function saveDayOneRun(nextRun: ChapterRun) {
+    if (!dayOneChapter) return;
+    updateState((current) => {
+      const previousRun = current.chapters.runs[nextRun.runId];
+      let next = storeChapterRun(current, nextRun, dayOneChapter.session);
+      if (nextRun.status !== "completed" || previousRun?.status === "completed") {
+        return next;
+      }
+
+      // Who he is becoming: one part of a life, one quality in it.
+      const dimension = chapterAnswerText(nextRun, "character-dimension");
+      const trait = chapterAnswerText(nextRun, "character-trait");
+      next = declareLife(next, "character", {
+        [dimension]: trait,
+        past: chapterAnswerText(nextRun, "character-past"),
+        starting: dimension,
+      });
+
+      // The trait, made small enough to do today. The trait is the identity:
+      // the habit is what being that person looks like on a Tuesday.
+      const action = chapterAnswerText(nextRun, "habit-action");
+      const cue = chapterAnswerText(nextRun, "habit-time-place");
+      if (action) {
+        const added = addHabitDefinition(next);
+        next = updateHabitDefinitionParts(added.state, added.id, {
+          action,
+          cue,
+          identity: trait,
+          text: composeHabitText({ action, cue, identity: trait }),
+        });
+        next = setHabitDimension(next, added.id, dimension);
+        if (trait) {
+          next = { ...next, profile: { ...next.profile, identityFocus: trait } };
+        }
+      }
+
+      // One thing he will not do, kept for one day. A phase of one is still a
+      // phase: it is the shape the seven-day commitment arrives in tomorrow.
+      const term = chapterAnswerText(nextRun, "day-one-term");
+      if (term) {
+        const draft = startProtocolDraft(next);
+        next = setProtocolDays(draft.state, draft.id, 1);
+        const item = addProtocolItem(next, draft.id, "non-negotiable");
+        next = updateProtocolItem(item.state, draft.id, item.id, term);
+        next = beginProtocolRun(next, draft.id, dateKey);
+      }
+
+      // Today's one thing, and the two minutes that start it. The goal is the
+      // week's, because a day's goal was the thing that never had a parent.
+      const goalText = chapterAnswerText(nextRun, "day-one-goal");
+      const stepText = chapterAnswerText(nextRun, "day-one-step");
+      if (goalText) {
+        const opened = addWeekGoal(next, weekStartKey(dateKey), `goal-day-one-${dateKey}`);
+        next = updateGoal(opened.state, opened.id, goalText);
+        if (stepText) {
+          const step = addGoalStep(
+            next,
+            opened.id,
+            addTask,
+            `step-day-one-${dateKey}`,
+            undefined,
+            dateKey,
+          );
+          next = updateTask(step.state, step.taskId, stepText);
+        }
+      }
+      return next;
+    });
   }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
@@ -3719,6 +3817,18 @@ export function TodayExperience() {
               onRunChange={saveHabitBuildingRun}
             />
           </section>
+        ) : null}
+
+        {!dayOneDone && dayOneChapter && dayOneRun ? (
+          <ChapterSplash label="Day one">
+            <ChapterPlayer
+              className="os-day-one-session"
+              definition={dayOneChapter}
+              label="Day one"
+              run={dayOneRun}
+              onRunChange={saveDayOneRun}
+            />
+          </ChapterSplash>
         ) : null}
 
         {logSetupPublication ? (

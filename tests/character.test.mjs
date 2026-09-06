@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   CHARACTER_DIMENSIONS,
   CHARACTER_HORIZON_YEARS,
-  CHARACTER_TRAIT_COUNT,
+  CHARACTER_TRAIT_MAX,
   addHabitDefinition,
   characterDimensionOf,
   createEmptyState,
@@ -24,26 +24,39 @@ const HIM = {
   starting: "mind",
 };
 
-// Covey sharpens four saws and everybody drops the same one. Sai named three —
-// mind, body, spirit — and then reached for the fourth himself: his own example
-// trait, "charismatic", is social.
-test("a character is three of four parts of a life", () => {
+// Four parts of a life, named one at a time. Day one asks for one trait in one
+// part — Sai: "why dont we just ask for 1 trait you'd like to have, choose from
+// 4 dimensions" — and the rest are named the next day.
+test("a character begins with one trait and grows to four", () => {
   assert.deepEqual([...CHARACTER_DIMENSIONS], ["mind", "body", "spirit", "social"]);
-  assert.equal(CHARACTER_TRAIT_COUNT, 3);
 
-  const state = declareLife(createEmptyState(), "character", HIM);
-  const him = currentCharacter(state);
-  assert.deepEqual(him.traits.map((entry) => entry.dimension), ["mind", "body", "social"]);
-  assert.equal(him.traits[2].trait, "Charismatic");
-  // Which one he left out is knowable, and worth asking about later.
-  assert.ok(!him.traits.some((entry) => entry.dimension === "spirit"));
+  // Day one: one part, one trait. His own example — "(body) lean body posture
+  // and body language".
+  const dayOne = declareLife(createEmptyState(), "character", {
+    body: "Lean posture and open body language",
+    past: "Working a job I did not choose",
+  });
+  const started = currentCharacter(dayOne);
+  assert.equal(started.traits.length, 1);
+  assert.deepEqual(started.traits[0], {
+    dimension: "body",
+    trait: "Lean posture and open body language",
+  });
 
-  // Two is half imagined; four is not having chosen.
-  assert.equal(currentCharacter(declareLife(createEmptyState(), "character", { mind: "a", body: "b" })), null);
+  // Three, and then all four, are equally a character: it is never invalid for
+  // being unfinished.
+  const three = currentCharacter(declareLife(createEmptyState(), "character", HIM));
+  assert.deepEqual(three.traits.map((entry) => entry.dimension), ["mind", "body", "social"]);
+  const all = currentCharacter(
+    declareLife(createEmptyState(), "character", {
+      mind: "a", body: "b", spirit: "c", social: "d",
+    }),
+  );
+  assert.equal(all.traits.length, CHARACTER_TRAIT_MAX);
+
+  // Nothing named is nothing to declare.
   assert.equal(
-    currentCharacter(
-      declareLife(createEmptyState(), "character", { mind: "a", body: "b", spirit: "c", social: "d" }),
-    ),
+    currentCharacter(declareLife(createEmptyState(), "character", { past: "anything" })),
     null,
   );
 });

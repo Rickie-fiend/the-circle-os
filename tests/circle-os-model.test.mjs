@@ -1391,7 +1391,9 @@ test("a protocol is drafted, edited while it runs, and kept for its days", () =>
   assert.equal(activeProtocolRun(state).days, 14);
   state = setProtocolDays(state, "run-1", 9);
   assert.equal(activeProtocolRun(state).days, 14, "9 days is not on offer");
-  assert.deepEqual(PROTOCOL_DURATIONS, [3, 7, 14, 21]);
+  // One day is a real length: it is what day one commits to, before there is a
+  // week to commit to. Sai: "the protocol i will have to follow for 1 day."
+  assert.deepEqual(PROTOCOL_DURATIONS, [1, 3, 7, 14, 21]);
 
   const journal = addProtocolItem(state, "run-1", "non-negotiable", "i-journal");
   state = updateProtocolItem(journal.state, "run-1", "i-journal", "Journaling 1 line");

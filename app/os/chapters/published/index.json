@@ -630,6 +630,139 @@
     },
     {
       "schemaVersion": 1,
+      "id": "day-one",
+      "version": 1,
+      "status": "published",
+      "session": "day-one",
+      "app": "seven-days",
+      "kind": "lesson",
+      "completion": "swipe",
+      "theme": "dark",
+      "title": "Start with who you are becoming.",
+      "purpose": "Set up the whole App in one day, out of one trait and one small step toward it.",
+      "estimatedMinutes": 4,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Start with who you are becoming.",
+          "body": "Six lines. At the end of them the App is yours, and today already has something in it.",
+          "button": "Begin"
+        },
+        {
+          "id": "two-years-back",
+          "type": "short-text",
+          "question": "Two years ago, what were you doing?",
+          "why": "You have already become someone else once, without a system. That is the argument for the next two years.",
+          "answerKey": "character-past",
+          "placeholder": "Working a job I did not choose",
+          "required": true
+        },
+        {
+          "id": "imagine",
+          "type": "info",
+          "title": "Now picture yourself two years from now.",
+          "body": "Not a better version of today. A different man, with a life you would recognise as yours. Look at how he stands, how he speaks, what he does on an ordinary Tuesday.",
+          "button": "I can see him"
+        },
+        {
+          "id": "dimension",
+          "options": [
+            {
+              "id": "mind",
+              "label": "Mind — how you think"
+            },
+            {
+              "id": "body",
+              "label": "Body — how you carry yourself"
+            },
+            {
+              "id": "spirit",
+              "label": "Spirit — what you are for"
+            },
+            {
+              "id": "social",
+              "label": "Social — how you are with people"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Which part of him do you want first?",
+          "why": "A life is not one thing. Naming which part you are working on stops every trait becoming a career trait.",
+          "answerKey": "character-dimension",
+          "required": true
+        },
+        {
+          "id": "trait",
+          "type": "short-text",
+          "question": "Name one quality he has, in that part.",
+          "why": "One quality, written plainly. Everything else this week hangs off it.",
+          "answerKey": "character-trait",
+          "placeholder": "Lean posture and open body language",
+          "required": true
+        },
+        {
+          "id": "habit-secret",
+          "type": "info",
+          "title": "A trait is not built by wanting it.",
+          "body": "It is built by one small thing, done often enough that you stop noticing you are doing it. So the next two lines make it small, and give it a time.",
+          "button": "Continue"
+        },
+        {
+          "id": "habit-action",
+          "type": "short-text",
+          "question": "What is the smallest thing you could do today toward it?",
+          "why": "Small enough that a bad day cannot stop it. Two minutes is not a low bar, it is the whole trick.",
+          "answerKey": "habit-action",
+          "placeholder": "Stand up straight for one minute",
+          "required": true
+        },
+        {
+          "id": "habit-cue",
+          "type": "short-text",
+          "question": "After what, every day?",
+          "why": "An existing habit is the most reliable alarm clock there is. Attach it to something you already never miss.",
+          "answerKey": "habit-time-place",
+          "placeholder": "After my morning coffee",
+          "required": true
+        },
+        {
+          "id": "term",
+          "type": "short-text",
+          "question": "Name one thing you will not do today.",
+          "why": "A rule you keep is a decision you only have to make once.",
+          "answerKey": "day-one-term",
+          "placeholder": "No phone in bed",
+          "required": true
+        },
+        {
+          "id": "goal",
+          "type": "short-text",
+          "question": "What one thing today would let you call it a good day?",
+          "why": "One. Naming three is the same as naming none.",
+          "answerKey": "day-one-goal",
+          "placeholder": "Write the first page",
+          "required": true
+        },
+        {
+          "id": "step",
+          "type": "short-text",
+          "question": "What could you do in two minutes to start it?",
+          "why": "This is the one that goes into today's tasks. The goal is the direction; this is the move.",
+          "answerKey": "day-one-step",
+          "placeholder": "Open the document and write one sentence",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "That is today.",
+          "body": "You are becoming {{character-trait}}. After {{habit-time-place}} you will {{habit-action}}. Today is for {{day-one-goal}}, and it starts with {{day-one-step}}.",
+          "button": "Open the App"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "declare-dreamline",
       "version": 1,
       "status": "published",
