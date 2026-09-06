@@ -32,6 +32,21 @@ export const WEEK_DAY_LETTERS = Object.freeze([
   "S",
 ]);
 
+/**
+ * The strip is eight days, and it opens on last Sunday.
+ *
+ * A week is Monday to Sunday, and a week is reviewed on the Sunday that ends
+ * it — but a Sunday review that is missed has nowhere to happen. Carrying the
+ * Sunday just gone at the head of the strip means the week that ended is still
+ * within reach on the Monday that follows. Sai: "the first starting day would
+ * be sunday, from the week before ... yet last sunday would be reviewable."
+ *
+ * It is the strip that is eight days long, not the week. Totals and the cover
+ * still count the seven days of the Circle week, or a Monday would be told it
+ * had eight days in it.
+ */
+export const WEEK_BAR_LENGTH = 8;
+
 const DAY_NAMES = Object.freeze([
   "Sunday",
   "Monday",
@@ -156,6 +171,8 @@ export function weekDaySummary(state, dateKey, todayKey = getDateKey()) {
     title: String(day?.title || ""),
     isToday: dateKey === todayKey,
     isFuture: dateKey.localeCompare(todayKey) > 0,
+    /** Behind him. The strip marks these as gone rather than as untouched. */
+    isPast: dateKey.localeCompare(todayKey) < 0,
     /**
      * What the day was, in his own words.
      *
@@ -183,6 +200,19 @@ export function weekDays(state, todayKey = getDateKey()) {
   const monday = weekStartKey(todayKey);
   return Array.from({ length: 7 }, (_, index) =>
     weekDaySummary(state, shiftDateKey(monday, index), todayKey),
+  );
+}
+
+/**
+ * The eight days the strip shows: last Sunday, then the Circle week it begins.
+ *
+ * The caller navigates by these; everything that counts a week still uses
+ * `weekDays`, which is seven.
+ */
+export function weekBarDays(state, todayKey = getDateKey()) {
+  const lastSunday = shiftDateKey(weekStartKey(todayKey), -1);
+  return Array.from({ length: WEEK_BAR_LENGTH }, (_, index) =>
+    weekDaySummary(state, shiftDateKey(lastSunday, index), todayKey),
   );
 }
 

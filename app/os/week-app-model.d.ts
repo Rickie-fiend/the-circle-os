@@ -6,6 +6,7 @@ export type WeekDaySummary = {
   title: string;
   isToday: boolean;
   isFuture: boolean;
+  isPast: boolean;
   moments: { at: string; text: string }[];
   kept: number;
   due: number;
@@ -40,3 +41,5 @@ export function weekSpan(
 ): WeekDaySummary[];
 export function weekTotals(state: unknown, todayKey?: string): WeekTotals;
 export function weekCoverLine(state: unknown, todayKey?: string): string;
+export const WEEK_BAR_LENGTH: number;
+export function weekBarDays(state: unknown, todayKey?: string): WeekDaySummary[];

@@ -1570,9 +1570,10 @@
 }
 
 /* On a dark Page the header action takes the Page's own ink. It is written for
- * Routine's orange card, where Ink reads at 5.08:1; on the Week's dark box the
- * same colour is invisible. Sai: "Couldnt see the add goal button." */
-.circle-os .os-log-week .os-new-habit {
+ * Routine's orange card, where Ink reads at 5.08:1; on a dark box the same
+ * colour is invisible. Sai: "Couldnt see the add goal button." */
+.circle-os .os-log-week .os-new-habit,
+.circle-os .os-log-page .os-new-habit {
   color: var(--c-warm-50);
 }
 
@@ -5058,10 +5059,13 @@
   margin: 0;
 }
 
+/* Eight in one row, whatever the width. The columns are equal and each is free
+ * to shrink, so the extra day narrows the whole strip rather than pushing one
+ * off the end. Sai: "Can we make those 8 days fit in the same row somehow." */
 .circle-os .os-week-strip {
   display: grid;
-  gap: 6px;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  grid-template-columns: repeat(var(--os-week-bar-length, 8), minmax(0, 1fr));
   width: 100%;
 }
 
@@ -5069,7 +5073,10 @@
   --os-key-lift: var(--os-key-lift-sm);
   --os-key-leg: var(--c-ink-deep);
   align-items: center;
+  /* Square, and allowed to be small. Without this the button keeps its content
+     width and eight of them overflow the row they are meant to share. */
   aspect-ratio: 1;
+  min-width: 0;
   background: rgb(241 239 232 / 0.07);
   border: 1px solid rgb(241 239 232 / 0.12);
   border-radius: var(--r-sm);
@@ -5083,19 +5090,20 @@
   padding: 0;
 }
 
-/* Something was written down that day. */
-.circle-os .os-week-day.is-touched {
-  background: rgb(227 107 55 / 0.22);
-  border-color: rgb(227 107 55 / 0.45);
-  color: var(--c-warm-50);
+/* Behind him. A day that has been lived is still worth reaching for — the week
+ * just gone is reviewed from here — but it is not where he is. Sai: "the day
+ * behind should be marked as gone." */
+.circle-os .os-week-day.is-gone {
+  opacity: 0.42;
 }
 
 .circle-os .os-week-day.is-today {
   border-color: var(--c-orange);
 }
 
+/* Ahead of him, and still plannable: a step can be written on Thursday from
+   Monday. Quieter than a day behind, because nothing has happened in it. */
 .circle-os .os-week-day.is-future {
-  cursor: default;
   opacity: 0.3;
 }
 
@@ -5117,6 +5125,13 @@
 
 /* What this day asks of the week: one bordered group, so it reads as belonging
  * to the day named above it rather than floating under the strip. */
+/* Today's plan is the live one, and says so. A day behind or ahead is the same
+ * box without the charge. Sai: "only the box border for goal and steps for
+ * 'today' of the week be orange border." */
+.circle-os .os-week-day-plan.is-today {
+  border-color: var(--c-orange);
+}
+
 .circle-os .os-week-day-plan {
   border: 1px solid rgb(241 239 232 / 0.14);
   border-radius: var(--r-lg);

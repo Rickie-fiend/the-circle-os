@@ -19,7 +19,11 @@ test("Log uses the shared App Box and Page anatomy, and grows", () => {
   // Until it is named it is called by its weekday, not complimented.
   assert.match(shell, /placeholder=\{logTodayName\}/);
   assert.match(css, /\.os-day-name-edit \{\s*margin-bottom: var\(--os-main-sub-gap\)/s);
-  assert.match(shell, /className="os-log-add-current"/);
+  // The one action is Now, in the header where every App puts it. Sai: "remove
+  // add this hour button at the bottom. instead at top right header, add 'Now'
+  // button."
+  assert.doesNotMatch(shell, /className="os-log-add-current"/);
+  assert.match(shell, /<button className="os-new-habit" onClick=\{openNow\} type="button">/);
   assert.doesNotMatch(shell, /className="os-section-heading"/);
 });
 

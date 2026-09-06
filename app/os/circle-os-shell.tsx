@@ -129,7 +129,7 @@ import {
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
-import { weekDays, weekStartKey } from "./week-app-model.js";
+import { weekBarDays, weekStartKey } from "./week-app-model.js";
 import {
   addGoalStep,
   addWeekGoal,
@@ -377,6 +377,36 @@ function holdBodyStill() {
     sheetsOpen = Math.max(0, sheetsOpen - 1);
     if (sheetsOpen === 0) document.body.style.overflow = overflowBeforeSheets;
   };
+}
+
+/**
+ * Where the clock hand sits in the timeline, or null when now is not on it.
+ *
+ * It used to need the hour after this one as well, so that it could sit between
+ * two rows — which meant no hand at all whenever now was the last hour the Log
+ * shows, or the first time a Page rendered with a short range. Sai: "sometimes
+ * on login, the clock doesnt even show." With only this hour to go on it sits
+ * inside that row instead, which is the same answer to within a row's height.
+ */
+function markerTop(
+  timeline: HTMLElement,
+  hour: number,
+  progress: number,
+): number | null {
+  const row = (at: number) =>
+    timeline.querySelector<HTMLElement>(`[data-log-hour="${at}"] .os-time-range`);
+  const current = row(hour);
+  if (!current) return null;
+  const timelineRect = timeline.getBoundingClientRect();
+  const currentRect = current.getBoundingClientRect();
+  const offset = (rect: DOMRect) =>
+    rect.top - timelineRect.top + timeline.scrollTop;
+  const currentCenter = offset(currentRect) + currentRect.height / 2;
+  const next = row(hour + 1);
+  if (!next) return currentCenter + currentRect.height * (progress - 0.5);
+  const nextRect = next.getBoundingClientRect();
+  const nextCenter = offset(nextRect) + nextRect.height / 2;
+  return currentCenter + (nextCenter - currentCenter) * progress;
 }
 
 function subscribeToClient() {
@@ -1979,26 +2009,7 @@ export function TodayExperience() {
     if (!timeline) return;
 
     const updateMarker = () => {
-      const current = timeline.querySelector<HTMLElement>(
-        `[data-log-hour="${liveClockHour}"] .os-time-range`,
-      );
-      const next = timeline.querySelector<HTMLElement>(
-        `[data-log-hour="${liveClockHour + 1}"] .os-time-range`,
-      );
-      if (!current || !next) {
-        setLiveMarkerTop(null);
-        return;
-      }
-      const timelineRect = timeline.getBoundingClientRect();
-      const currentRect = current.getBoundingClientRect();
-      const nextRect = next.getBoundingClientRect();
-      const currentCenter =
-        currentRect.top - timelineRect.top + timeline.scrollTop + currentRect.height / 2;
-      const nextCenter =
-        nextRect.top - timelineRect.top + timeline.scrollTop + nextRect.height / 2;
-      setLiveMarkerTop(
-        currentCenter + (nextCenter - currentCenter) * liveHourProgressRef.current,
-      );
+      setLiveMarkerTop(markerTop(timeline, liveClockHour, liveHourProgressRef.current));
     };
 
     updateMarker();
@@ -2017,21 +2028,8 @@ export function TodayExperience() {
     liveHourProgressRef.current = liveHourProgress;
     const timeline = timelineRef.current;
     if (!timeline) return;
-    const current = timeline.querySelector<HTMLElement>(
-      `[data-log-hour="${liveClockHour}"] .os-time-range`,
-    );
-    const next = timeline.querySelector<HTMLElement>(
-      `[data-log-hour="${liveClockHour + 1}"] .os-time-range`,
-    );
-    if (!current || !next) return;
-    const timelineRect = timeline.getBoundingClientRect();
-    const currentRect = current.getBoundingClientRect();
-    const nextRect = next.getBoundingClientRect();
-    const currentCenter =
-      currentRect.top - timelineRect.top + timeline.scrollTop + currentRect.height / 2;
-    const nextCenter =
-      nextRect.top - timelineRect.top + timeline.scrollTop + nextRect.height / 2;
-    setLiveMarkerTop(currentCenter + (nextCenter - currentCenter) * liveHourProgress);
+    const top = markerTop(timeline, liveClockHour, liveHourProgress);
+    if (top !== null) setLiveMarkerTop(top);
   }, [liveClockHour, liveHourProgress]);
 
   // Day one: the front door. It is offered until it has been answered once,
@@ -2190,7 +2188,9 @@ export function TodayExperience() {
   // he never read it there.
   const logAppVersion = "log-week-v3";
   const logAppMaxIndex = 1;
-  const logWeekDays = weekDays(state, dateKey);
+  // Eight for the strip — last Sunday at its head, so the week that ended is
+  // still reachable on the Monday after it.
+  const logWeekDays = weekBarDays(state, dateKey);
   // The week the Log is showing, and the goal every day of it is under. The
   // week key is worked out here rather than inside the goal model: the Circle
   // week is defined in `week-app-model.js`, which reads the state the goal
@@ -2587,6 +2587,30 @@ export function TodayExperience() {
     );
     setFormError("");
     setLogOpen(true);
+  }
+
+  /**
+   * The hour it is, whether or not the Log is showing it yet.
+   *
+   * A day's range is the hours he said he keeps, and the hour he is actually in
+   * can fall outside them — early, late, or on a day whose range was set before
+   * the day went long. Sai: "the now button should be able to work, even when
+   * the time slot is not visible, it should automatically add those hours and
+   * ready to type state." So it opens the range far enough to hold this hour
+   * and then opens the hour.
+   */
+  function openNow() {
+    const hour = liveClockHour;
+    if (hour < logStartHour || hour > logEndHour) {
+      updateToday((day) =>
+        setDayLogRange(
+          day,
+          Math.min(logStartHour, hour),
+          Math.max(logEndHour, hour) + 1,
+        ),
+      );
+    }
+    openHour(hour);
   }
 
   function openHour(hour: number, defaultTitle = "") {
@@ -3958,16 +3982,13 @@ export function TodayExperience() {
           >
             <PageLayout
               className="os-log-page"
-              footer={
-                <CreativeButton
-                  className="os-log-add-current"
-                  onClick={() => openHour(liveClockHour)}
-                  sizing="content"
-                  styleId="default"
-                  type="button"
-                >
-                  Add this hour
-                </CreativeButton>
+              /* Now sits in the header, where every App puts its one action.
+                 Sai: "remove add this hour button at the bottom. instead at top
+                 right header, add 'Now' button." */
+              headerRight={
+                <button className="os-new-habit" onClick={openNow} type="button">
+                  Now
+                </button>
               }
               heading={
                 <input
@@ -4258,9 +4279,13 @@ export function TodayExperience() {
                     <button
                       aria-label={day.name}
                       aria-pressed={day.dateKey === logChosenDayKey}
+                      /* Two states, and one mark for what is behind him. Sai:
+                         "only show, what today is, and what is selected. the
+                         day behind should be marked as gone." Whether a day was
+                         written in is not what the strip is for. */
                       className={`os-week-day${day.isToday ? " is-today" : ""}${
-                        day.isFuture ? " is-future" : ""
-                      }${day.touched ? " is-touched" : ""}`}
+                        day.isPast ? " is-gone" : ""
+                      }`}
                       key={day.dateKey}
                       onClick={() => {
                         setChoosingStepGoal(false);
@@ -4287,7 +4312,11 @@ export function TodayExperience() {
                   * One way to add a step stands at the foot of it, and when
                   * there is more than one goal it asks which — the choice
                   * arrives when it is needed rather than sitting there. */}
-                <div className="os-week-day-plan">
+                <div
+                  className={`os-week-day-plan${
+                    logChosenDay.isToday ? " is-today" : ""
+                  }`}
+                >
                   {chosenWeekGoals
                     .map((goal) => ({
                       goal,

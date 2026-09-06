@@ -4,7 +4,9 @@ import test from "node:test";
 
 import { createEmptyState } from "../app/os/circle-os-model.js";
 import {
+  WEEK_BAR_LENGTH,
   WEEK_DAY_LETTERS,
+  weekBarDays,
   weekCoverLine,
   weekDays,
   weekSpan,
@@ -496,4 +498,38 @@ test("a day's name can hold the space between two words", () => {
   const state = createEmptyState();
   state.days["2026-08-24"] = { date: "2026-08-24", title: "review " };
   assert.equal(weekDays(state, WEDNESDAY)[0].title, "review ");
+});
+
+// Sai: "make it 8 days. the first starting day would be sunday, from the week
+// before ... so that after sunday, next monday would start the new week, yet
+// last sunday would be reviewable."
+test("the strip is eight days and opens on last Sunday", () => {
+  // 2026-09-09 is a Wednesday; the Sunday before its Monday is 2026-09-06.
+  const bar = weekBarDays(createEmptyState(), "2026-09-09");
+  assert.equal(bar.length, WEEK_BAR_LENGTH);
+  assert.equal(bar.length, 8);
+  assert.equal(bar[0].dateKey, "2026-09-06", "last Sunday leads");
+  assert.equal(bar[0].name, "Sunday");
+  assert.equal(bar[1].dateKey, "2026-09-07", "then the week's Monday");
+  assert.equal(bar[7].dateKey, "2026-09-13", "and it ends on this week's Sunday");
+
+  // The strip is eight; a week is still seven, or a Monday would be told it had
+  // eight days in it.
+  assert.equal(weekDays(createEmptyState(), "2026-09-09").length, 7);
+  assert.equal(weekTotals(createEmptyState(), "2026-09-13").days, 7);
+
+  // Two states and a mark for what is behind. Whether a day was written in is
+  // not what the strip is for.
+  assert.deepEqual(
+    bar.map((day) => [day.isPast, day.isToday, day.isFuture]).slice(2, 5),
+    [[true, false, false], [false, true, false], [false, false, true]],
+  );
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /day\.isPast \? " is-gone" : ""/);
+  assert.doesNotMatch(shell, /day\.touched \? " is-touched" : ""/);
+
+  // And today's plan is the live box.
+  assert.match(shell, /logChosenDay\.isToday \? " is-today" : ""/);
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  assert.match(css, /os-week-day-plan\.is-today \{\s+border-color: var\(--c-orange\)/);
 });
