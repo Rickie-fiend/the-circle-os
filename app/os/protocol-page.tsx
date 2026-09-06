@@ -103,8 +103,6 @@ type ProtocolPageProps = {
   onSealToday: () => void;
   onEndRun: () => void;
   onDiscardDraft: () => void;
-  /** What the terms are for — the week's goal, if there is one. */
-  goalText: string;
 };
 
 function ProtocolHome({
@@ -384,7 +382,6 @@ export function ProtocolPage({
   onSealToday,
   onEndRun,
   onDiscardDraft,
-  goalText,
 }: ProtocolPageProps) {
   const label = <p className="os-card-label">Protocol</p>;
   // Ending a run early is the one thing here that cannot be undone: the terms
@@ -738,10 +735,6 @@ export function ProtocolPage({
         <p className="os-app-page-heading os-protocol-name" data-os-app-heading>
           {run.name}
         </p>
-        {/* Direction, under the name. Days kept is a number about the phase;
-          * this is the only line that says what the phase is for. Sai: "i cant
-          * see what i am going for clearly." */}
-        {goalText ? <p className="os-protocol-toward">Toward {goalText}</p> : null}
       </div>
 
       <div className="os-page-sub os-app-page-stacks os-protocol-terms">

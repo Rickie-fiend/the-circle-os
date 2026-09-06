@@ -166,6 +166,6 @@ test("day one is a splash, asked once", () => {
   // It stands in front of the other setups rather than among them.
   assert.ok(
     shell.indexOf('<ChapterSplash label="Day one">') <
-      shell.indexOf("{logSetupPublication ? ("),
+      shell.indexOf("{dayOneDone && logSetupPublication ? ("),
   );
 });

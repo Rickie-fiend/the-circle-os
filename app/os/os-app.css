@@ -1373,19 +1373,36 @@
   display: none;
 }
 
+/* The three parts of a habit are one sentence in three fields, so they are
+ * written in one hand: the same family and the same weight, a step down in size
+ * and set a little quieter. Sai: "I want main habit and sub text be the same
+ * weight and font, and keep it 2 line, all 3 of them, including identity,
+ * editable on tap." */
+.circle-os .os-habit-cue-edit,
 .circle-os .os-habit-identity-edit {
   appearance: none;
   background: transparent;
   border: 0;
-  color: rgb(25 24 19 / 0.72);
+  color: rgb(25 24 19 / 0.62);
   display: block;
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  margin-top: 0.35rem;
+  field-sizing: content;
+  font-family: inherit;
+  font-size: var(--text-xl);
+  font-weight: 720;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  margin-top: 0.2rem;
+  min-width: 0;
+  outline: none;
+  overflow: hidden;
   padding: 0;
   resize: none;
   width: 100%;
+}
+
+.circle-os .os-habit-cue-edit::placeholder,
+.circle-os .os-habit-identity-edit::placeholder {
+  color: rgb(25 24 19 / 0.3);
 }
 
 .circle-os .os-habit-identity-edit::placeholder {
@@ -9166,17 +9183,6 @@
 
 /* The terms are one continuous stack, the same rhythm Habit uses for repeated
    rows: one label, one row spacing, no nested card and no doubled gap. */
-/* What the terms are for, under the name of the phase keeping them. Quiet: the
- * phase is the thing on this Page, and this only says where it points. */
-.circle-os .os-protocol-toward {
-  color: rgb(25 24 19 / 0.62);
-  font-size: var(--text-sm);
-  font-weight: 620;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-  margin: 0.4rem 0 0;
-}
-
 .circle-os .os-protocol .os-protocol-terms {
   gap: 0.65rem;
 }

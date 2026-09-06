@@ -272,13 +272,16 @@ test("a phase says what its terms are for", () => {
   assert.equal(setProtocolGoal(ended, runId, "").protocol.runs[runId].goalId, goalId);
 });
 
-// The Page says it where the phase is named, not as a tally in a corner.
-test("the running phase names its direction under its own name", () => {
+// The phase holds the goal it serves — that is what makes days kept mean
+// something — but it does not say so on the Page. Sai: "we dont need sub text
+// 'toward run the business'."
+test("a phase is attached to its goal without announcing it", () => {
   const page = readFileSync("app/os/protocol-page.tsx", "utf8");
-  assert.match(page, /goalText \? <p className="os-protocol-toward">Toward \{goalText\}/);
+  assert.doesNotMatch(page, /os-protocol-toward/);
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  assert.doesNotMatch(css, /os-protocol-toward/);
+  // Begun and told what it is for in one act, which is the part that matters.
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(shell, /goalText=\{protocolGoalText\}/);
-  // Begun and told what it is for in one act.
   assert.match(
     shell,
     /setProtocolGoal\(\s*beginProtocolRun\(current, protocolRun\.id, dateKey\),/,

@@ -135,7 +135,6 @@ import {
   addWeekGoal,
   discardEmptyGoal,
   discardEmptyStep,
-  goalById,
   goalStepForTask,
 
   taskIsUnderDoneGoal,
@@ -356,6 +355,30 @@ function HabitCopySwap({
  * underneath has to know a setup is happening; when the last question is
  * answered the splash stops rendering and the App is simply there.
  */
+/**
+ * Hold the Page behind a sheet still, and let go when the last one closes.
+ *
+ * Each sheet used to remember the overflow it found and put that back on the
+ * way out. With two open at once the second remembered "hidden" — the first
+ * one's doing — and restored it on close, leaving the Page locked for good.
+ * Sai: "i sometimes cannot scroll entirely." Counted, the lock belongs to the
+ * sheets together rather than to whichever happens to close last.
+ */
+let sheetsOpen = 0;
+let overflowBeforeSheets = "";
+
+function holdBodyStill() {
+  if (sheetsOpen === 0) {
+    overflowBeforeSheets = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+  sheetsOpen += 1;
+  return () => {
+    sheetsOpen = Math.max(0, sheetsOpen - 1);
+    if (sheetsOpen === 0) document.body.style.overflow = overflowBeforeSheets;
+  };
+}
+
 function subscribeToClient() {
   return () => undefined;
 }
@@ -385,14 +408,7 @@ export function ChapterSplash({
   // snapshot is false and nothing renders; on the client it is true from the
   // first render, so the sheet does not arrive a beat late.
   const mounted = useSyncExternalStore(subscribeToClient, onClient, onServer);
-  useEffect(() => {
-    const body = document.body;
-    const previousOverflow = body.style.overflow;
-    body.style.overflow = "hidden";
-    return () => {
-      body.style.overflow = previousOverflow;
-    };
-  }, []);
+  useEffect(() => holdBodyStill(), []);
 
   // Rendered onto the body, not into the feed it replaces.
   //
@@ -2187,12 +2203,6 @@ export function TodayExperience() {
     logWeekDays.find((day) => day.isToday)?.name || "Today";
   const logWeekKey = weekStartKey(dateKey);
   const logWeekGoal = weekGoal(state, logWeekKey);
-  // What the running phase is for. A phase begun from now on says so itself; a
-  // phase that was already running when it had nowhere to say it stands under
-  // this week's goal, because that is in fact what it is serving.
-  const protocolGoalText =
-    (protocolRun?.goalId ? goalById(state, protocolRun.goalId)?.text : "") ||
-    (protocolRun?.goalId ? "" : logWeekGoal?.text || "");
   // A future day can be chosen here, unlike on the reading surface: this Page
   // is for planning the week, so Thursday has to be reachable before Thursday.
   const [logChosenDayKey, setLogChosenDayKey] = useState(dateKey);
@@ -2390,6 +2400,15 @@ export function TodayExperience() {
   function changeHabit(id: string, text: string) {
     updateState((current) =>
       updateHabitDefinitionDraft(current, id, { action: text }),
+    );
+  }
+
+  // The anchor is the third of the three, and the one people skip. It is written
+  // in the row like the other two rather than only set once in the setup. Sai:
+  // "all 3 of them, including identity, editable on tap."
+  function changeHabitCue(id: string, text: string) {
+    updateState((current) =>
+      updateHabitDefinitionDraft(current, id, { cue: text }),
     );
   }
 
@@ -3641,9 +3660,18 @@ export function TodayExperience() {
                                   rows={1}
                                   value={action}
                                 />
-                                {habit.cue ? (
-                                  <span className="os-habit-cue">{habit.cue}</span>
-                                ) : null}
+                                <textarea
+                                  aria-label={`When you do it: ${action || "New Habit"}`}
+                                  className="os-habit-cue-edit"
+                                  maxLength={120}
+                                  onBlur={() => finishHabitEdit(habit.id)}
+                                  onChange={(event) =>
+                                    changeHabitCue(habit.id, event.target.value)
+                                  }
+                                  placeholder="After my morning coffee"
+                                  rows={1}
+                                  value={habit.cue}
+                                />
                                 <textarea
                                   aria-label={`Who this makes you: ${action || "New Habit"}`}
                                   className="os-habit-identity-edit"
@@ -3823,7 +3851,6 @@ export function TodayExperience() {
                       discardProtocolDraft(current, protocolRun.id),
                     )
                   }
-                  goalText={protocolGoalText}
                 />,
                 ...(!SHOW_DREAMLINE || dreamlineEditing
                   ? []
@@ -3879,7 +3906,7 @@ export function TodayExperience() {
           </ChapterSplash>
         ) : null}
 
-        {logSetupPublication ? (
+        {dayOneDone && logSetupPublication ? (
           <ChapterSplash label="Log setup">
             <PublishedChapterDelivery
               className="os-log-setup-session"
@@ -3895,7 +3922,7 @@ export function TodayExperience() {
               publication={logPublication}
             />
           </section>
-        ) : !logSetupDone && logSetupChapter && logSetupRun ? (
+        ) : dayOneDone && !logSetupDone && logSetupChapter && logSetupRun ? (
           <ChapterSplash label="Log setup">
             <ChapterPlayer
               className="os-log-setup-session"
