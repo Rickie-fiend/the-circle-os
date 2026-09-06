@@ -5239,9 +5239,41 @@
   color: rgb(241 239 232 / 0.42);
 }
 
+/* The day's log, folded. Its head is the one row always on the Page, and it
+ * says how much is behind it so opening is a decision rather than a guess. */
 .circle-os .os-week-day-summary {
   display: grid;
   gap: var(--os-group-gap);
+}
+
+.circle-os .os-week-day-summary > summary {
+  align-items: baseline;
+  color: rgb(241 239 232 / 0.55);
+  cursor: pointer;
+  display: flex;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  gap: 0.6rem;
+  justify-content: space-between;
+  letter-spacing: 0.13em;
+  list-style: none;
+  min-height: var(--touch-min);
+  padding-top: 0.4rem;
+  text-transform: uppercase;
+}
+
+.circle-os .os-week-day-summary > summary::-webkit-details-marker {
+  display: none;
+}
+
+.circle-os .os-week-day-summary[open] > summary {
+  color: var(--c-warm-50);
+}
+
+.circle-os .os-week-day-log-count {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 
 /* What the day was, in his own words. */

@@ -565,3 +565,27 @@ test("Sunday evening rolls the strip onto the week ahead", () => {
   assert.match(shell, /planningWeekStartKey\(dateKey, liveClockHour\)/);
   assert.match(shell, /weekBarDays\(state, dateKey, liveClockHour\)/);
 });
+
+// Sai: "make the log of the day be collapsible." The Week Page is for planning;
+// the log is the evidence underneath it — worth reaching for, not worth
+// carrying.
+test("the day's log folds away, and says how much is behind it", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /<details className="os-week-day-summary">/);
+  assert.doesNotMatch(shell, /<div className="os-week-day-summary">/);
+  // Closed by default: no open attribute.
+  assert.doesNotMatch(shell, /<details className="os-week-day-summary" open>/);
+  // Its head says how much is folded, so opening it is a decision rather than
+  // a guess.
+  assert.match(shell, /os-week-day-log-count/);
+  assert.match(shell, /\$\{logChosenDay\.moments\.length\} written down/);
+
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const summary = css.slice(
+    css.indexOf(".circle-os .os-week-day-summary > summary {"),
+    css.indexOf(".circle-os .os-week-day-summary > summary::-webkit-details-marker"),
+  );
+  assert.match(summary, /cursor: pointer/);
+  assert.match(summary, /min-height: var\(--touch-min\)/, "a real target to tap");
+  assert.match(summary, /list-style: none/);
+});

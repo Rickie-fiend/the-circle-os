@@ -4744,7 +4744,25 @@ export function TodayExperience() {
                   ) : null}
                 </div>
 
-                <div className="os-week-day-summary">
+                {/* What the day actually held, folded away.
+                  *
+                  * The Week Page is for planning; the log is the evidence
+                  * underneath it, worth reaching for and not worth carrying.
+                  * Sai: "make the log of the day be collapsible." Closed by
+                  * default, and the same <details> Protocol folds its past
+                  * phases into, so one gesture opens everything foldable in
+                  * the App. */}
+                <details className="os-week-day-summary">
+                  <summary>
+                    <span>The day</span>
+                    <span className="os-week-day-log-count">
+                      {logChosenDay.moments.length
+                        ? `${logChosenDay.moments.length} written down`
+                        : logChosenDay.isFuture
+                          ? "Not yet"
+                          : "Nothing yet"}
+                    </span>
+                  </summary>
                   {logChosenDay.moments.length ? (
                     <ul className="os-week-day-moments">
                       {logChosenDay.moments.map((moment, index) => (
@@ -4779,7 +4797,7 @@ export function TodayExperience() {
                       </div>
                     </dl>
                   ) : null}
-                </div>
+                </details>
               </div>
             </PageLayout>
           </SwipeSession>
