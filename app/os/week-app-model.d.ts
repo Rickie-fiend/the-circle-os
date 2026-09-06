@@ -78,4 +78,6 @@ export function recordWeekReview(
   },
   at?: string,
 ): never;
+export function weekWasReviewed(state: unknown, weekKey: string): boolean;
+
 export function weekRecords(state: unknown): WeekRecord[];

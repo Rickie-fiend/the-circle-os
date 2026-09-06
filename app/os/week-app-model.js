@@ -290,6 +290,18 @@ export function recordWeekReview(state, weekKey, review, at = new Date().toISOSt
 }
 
 /** Every week he has read, oldest first. */
+/**
+ * Whether a week has already been read.
+ *
+ * A week is only lived once, so `recordWeekReview` refuses to overwrite one.
+ * The Page asks this before offering the review again.
+ */
+export function weekWasReviewed(state, weekKey) {
+  const key = typeof weekKey === "string" ? weekKey.trim().slice(0, 10) : "";
+  if (!key) return false;
+  return Boolean(normalizeWeekRecords(state?.weeks)[key]);
+}
+
 export function weekRecords(state) {
   return Object.values(normalizeWeekRecords(state?.weeks)).sort((left, right) =>
     left.weekKey.localeCompare(right.weekKey),

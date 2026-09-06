@@ -1907,21 +1907,22 @@
  * there for the first time you meet the question and invisible by the tenth. */
 /* Why the question is worth answering.
  *
- * A shade smaller and dimmer than the body was not enough of a difference to
- * be worth a separate field. Sai: "if its nothing special from the sub text,
- * then whats the point of it." It is a different voice — the App teaching,
- * where the body is the question talking — so it is marked as an aside: set in
- * from a rule in the App's own colour, the way a note is set off from prose. */
+ * Written once for the published Page and the Workshop's editable line, so the
+ * two cannot drift apart. Sai: "i want exactly the same preview to match
+ * exactly the same, fonts and sized and spacings with actual displayed
+ * chapter, by the same standard."
+ *
+ * No ornament: a quote rule down its left was an invention of mine and not
+ * part of the design system. Sai: "the orange bar on the left, to look like a
+ * quote, thats not part of the design system." */
 .circle-os .os-chapter-why,
 .circle-os .os-chapter-inline-copy.why {
-  border-left: 2px solid var(--c-orange);
   color: var(--c-neutral-600);
   font-size: var(--text-sm);
   font-weight: 500;
   line-height: 1.4;
-  margin: 0.85rem 0 0;
+  margin: 0.5rem 0 0;
   max-width: 34ch;
-  padding-left: 0.7rem;
 }
 
 .circle-os .theme-dark .os-chapter-why,
@@ -1929,12 +1930,6 @@
 .circle-os .theme-orange .os-chapter-why,
 .circle-os .theme-orange .os-chapter-inline-copy.why {
   color: rgb(255 248 241 / 0.66);
-}
-
-/* On the App's own orange the rule would vanish into the ground. */
-.circle-os .theme-orange .os-chapter-why,
-.circle-os .theme-orange .os-chapter-inline-copy.why {
-  border-left-color: rgb(255 248 241 / 0.45);
 }
 
 .circle-os .os-survey-time {
@@ -6623,6 +6618,22 @@
     font-size: 1.85rem !important;
   }
 
+  /* The Workshop's lines are the chapter's own lines, typed in place. Without
+     this the title he is editing is 16px while the same words on the published
+     Page are 32, which is most of what made the preview a different thing from
+     the Page. Sai: "the fonts are different, the size are different." */
+  .circle-os textarea.os-chapter-inline-copy.main {
+    font-size: var(--os-page-main-font-size) !important;
+  }
+
+  .circle-os textarea.os-chapter-inline-copy.sub {
+    font-size: clamp(0.88rem, 3.7vw, 1rem) !important;
+  }
+
+  .circle-os textarea.os-chapter-inline-copy.why {
+    font-size: var(--text-sm) !important;
+  }
+
   .circle-os .os-info-page .os-session-detail {
     font-size: var(--text-base);
   }
@@ -7186,7 +7197,8 @@
  *
  * A question is allowed more characters on a line than a cover hook, so the
  * measure stays at 15ch; the type itself is the standard one. */
-.circle-os .os-chapter-page.os-chapter-card .os-page-main > h2 {
+.circle-os .os-chapter-page.os-chapter-card .os-page-main > h2,
+.circle-os .os-chapter-inline-copy.main {
   font-size: var(--os-page-main-font-size);
   font-weight: 760;
   letter-spacing: -0.055em;
@@ -7194,9 +7206,11 @@
   max-width: 15ch;
 }
 
-.circle-os .os-chapter-page.os-chapter-card .os-chapter-body {
+.circle-os .os-chapter-page.os-chapter-card .os-chapter-body,
+.circle-os .os-chapter-inline-copy.sub {
   font-size: clamp(0.88rem, 3.7vw, 1rem);
   line-height: 1.45;
+  margin: 0.85rem 0 0;
   max-width: 36ch;
   opacity: 0.78;
 }
@@ -7278,21 +7292,6 @@
   padding: 0;
   resize: none;
   width: 100%;
-}
-
-.circle-os .os-chapter-inline-copy.main {
-  font-size: var(--os-page-main-font-size);
-  font-weight: 760;
-  letter-spacing: -0.055em;
-  line-height: var(--os-page-main-line-height);
-  max-width: 15ch;
-}
-
-.circle-os .os-chapter-inline-copy.sub {
-  font-size: clamp(0.88rem, 3.7vw, 1rem);
-  line-height: 1.45;
-  max-width: 36ch;
-  opacity: 0.78;
 }
 
 /* An empty line in the Workshop says what it is, quietly, so there is

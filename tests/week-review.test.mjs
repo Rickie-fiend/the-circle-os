@@ -140,7 +140,11 @@ test("the review ends the phase that ran and points the next week", () => {
 // is disabled until the day has arrived. if than i forgot to review on that
 // day, next week that sunday would be available."
 test("the review waits behind a button on a Sunday", () => {
-  assert.match(shell, /logChosenDay\.name === "Sunday" \?/);
+  // And gone once that week has actually been read, since a week is only
+  // lived once. Sai: "after i completed review this week now, the button
+  // should disabled or disappear."
+  assert.match(shell, /logChosenDay\.name === "Sunday" &&/);
+  assert.match(shell, /!weekWasReviewed\(state, weekStartKey\(logChosenDay\.dateKey\)\)/);
   assert.match(shell, /disabled=\{logChosenDay\.isFuture \|\| !weekReviewChapter\}/);
   assert.match(shell, /setReviewingWeekOf\(weekStartKey\(logChosenDay\.dateKey\)\)/);
   assert.match(
@@ -149,7 +153,7 @@ test("the review waits behind a button on a Sunday", () => {
   );
   // On the Footer line, under the day's log, which is also the space the box
   // was padding out to nothing. Sai: "the footer is huge."
-  assert.match(shell, /footer=\{\s+logChosenDay\.name === "Sunday" \?/);
+  assert.match(shell, /footer=\{\s+logChosenDay\.name === "Sunday" &&/);
   // An orange key with a dark label, standing on its leg like every other key.
   const css = readFileSync("app/os/os-app.css", "utf8");
   assert.match(
@@ -245,4 +249,29 @@ test("the week's review is resumed, not rebuilt on every render", () => {
     /`\$\{chapterRunId\(weekReviewChapter\)\}:\$\{reviewingWeekOf\}`/,
   );
   assert.match(memo, /runId: weekReviewRunId/);
+});
+
+// Sai: "after i completed review this week now, the button should disabled or
+// disappear."
+test("the review key is gone once the week has been read", async () => {
+  const { createEmptyState } = await import("../app/os/circle-os-model.js");
+  const { recordWeekReview, weekWasReviewed } = await import(
+    "../app/os/week-app-model.js"
+  );
+
+  let state = createEmptyState();
+  assert.equal(weekWasReviewed(state, "2026-08-31"), false);
+  state = recordWeekReview(state, "2026-08-31", { fed: "mind", kept: true });
+  assert.equal(weekWasReviewed(state, "2026-08-31"), true);
+  // Only that week. Next Sunday still has its own review to do.
+  assert.equal(weekWasReviewed(state, "2026-09-07"), false);
+  assert.equal(weekWasReviewed(state, ""), false);
+
+  // And the Page asks before offering it. A week is only lived once, so
+  // offering the review again offers something that cannot happen.
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(
+    shell,
+    /logChosenDay\.name === "Sunday" &&\s+!weekWasReviewed\(state, weekStartKey\(logChosenDay\.dateKey\)\)/,
+  );
 });

@@ -5,9 +5,24 @@ import test from "node:test";
 const css = readFileSync("app/os/os-app.css", "utf8");
 const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
 
+/**
+ * Every rule that names this selector, run together.
+ *
+ * A selector rarely has a rule to itself: `.os-day` shares one with the Mirror
+ * cards for its ground, and has another of its own for its spacing; a chapter
+ * title shares one with the Workshop's editable line for it. Matching only the
+ * first rule found reported whichever happened to come first in the file.
+ *
+ * The selector has to be a whole entry in the list — bounded by a comma or the
+ * brace — or `.os-page-footer` would also answer for `.os-page-footer.is-empty`.
+ */
 function rule(selector) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return css.match(new RegExp(`${escaped} \\{[\\s\\S]*?\\n}`))?.[0] ?? "";
+  const pattern = new RegExp(
+    `(?:^|,)\\s*${escaped}\\s*(?:,[^{]*)?\\{[\\s\\S]*?\\n}`,
+    "gm",
+  );
+  return (css.match(pattern) ?? []).join("\n");
 }
 
 // One key, three sizes. Sai asked for the row tick's lit top edge on Protocol

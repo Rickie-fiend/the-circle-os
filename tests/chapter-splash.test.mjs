@@ -105,7 +105,9 @@ test("a question can say why it is worth answering, in one line", () => {
     css.indexOf(".circle-os .theme-dark .os-chapter-why"),
   );
   assert.match(why, /font-size: var\(--text-sm\)/);
-  assert.match(why, /border-left: 2px solid var\(--c-orange\)/);
+  // And nothing the design system does not have. Sai: "the orange bar on the
+  // left, to look like a quote, thats not part of the design system."
+  assert.doesNotMatch(why, /border-left/);
 
   // And typed in place in the Workshop, where the Page it lands on is visible.
   // Sai: "why this matters session, must also be tab to editable."

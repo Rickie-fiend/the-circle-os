@@ -264,12 +264,24 @@ export function chapterDefinitionToDraft(chapter, now = new Date().toISOString()
   };
 }
 
+/**
+ * Open a published chapter to work on.
+ *
+ * This used to bump the version, because a chapter somebody has already
+ * answered cannot change the questions under them. Nobody has answered
+ * anything yet. Sai: "we dont need v1 v2 yet. because nobody is seeing this
+ * until i release v1 so everything here is v1."
+ *
+ * So the version stays where it is and editing is editing. When there are
+ * people on the other side of a published chapter this is the one place that
+ * has to change back — bump `version` here and the runs, which are keyed by
+ * `id@version`, separate themselves again.
+ */
 export function createNextVersionDraft(source, now = new Date().toISOString()) {
   const copy = structuredClone(source);
-  copy.draftId = `draft-${source.chapter.id}-v${source.chapter.version + 1}-${Date.now()}`;
+  copy.draftId = `draft-${source.chapter.id}-${Date.now()}`;
   copy.workflowStatus = "draft";
   copy.updatedAt = now;
-  copy.chapter.version = source.chapter.version + 1;
   if (copy.chapter.pages.at(-1)?.type === "idle") copy.chapter.pages.pop();
   copy.chapter.app = source.chapter.app || chapterApp(source.chapter);
   copy.chapter.kind = source.chapter.kind || chapterKind(source.chapter);

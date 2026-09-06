@@ -138,6 +138,7 @@ import {
   recordWeekReview,
   weekBarDays,
   weekStartKey,
+  weekWasReviewed,
 } from "./week-app-model.js";
 import {
   addGoalStep,
@@ -4554,8 +4555,17 @@ export function TodayExperience() {
                  box, which is also the space the box was padding out to nothing.
                  Sai: "'Review this week now' button should be below the
                  collisible log, as a footer." */
+              /* And it is gone once the week has been read.
+                 *
+                 * A week is only lived once — `recordWeekReview` refuses to
+                 * overwrite one — so offering the review again is offering
+                 * something that cannot happen. Sai: "after i completed review
+                 * this week now, the button should disabled or disappear."
+                 * Gone rather than greyed: the Footer row collapses with it,
+                 * so a week already read simply ends on its own log. */
               footer={
-                logChosenDay.name === "Sunday" ? (
+                logChosenDay.name === "Sunday" &&
+                !weekWasReviewed(state, weekStartKey(logChosenDay.dateKey)) ? (
                   <CreativeButton
                     className="os-week-review-open"
                     disabled={logChosenDay.isFuture || !weekReviewChapter}
