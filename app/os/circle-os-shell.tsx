@@ -50,6 +50,7 @@ import {
   dayRecord,
   discardEmptyProtocolItem,
   endProtocolRun,
+  protocolDay,
   latestCompletedProtocol,
   protocolPhaseRecords,
   protocolToday,
@@ -150,6 +151,13 @@ import {
   weekGoal,
   weekGoals,
 } from "./goal-model.js";
+
+/** The Monday one week on. */
+function shiftWeekKey(weekKey: string) {
+  const date = new Date(`${weekKey}T12:00:00`);
+  date.setDate(date.getDate() + 7);
+  return date.toISOString().slice(0, 10);
+}
 
 /**
  * The name the Week's own row for a step answers to.
@@ -2147,6 +2155,39 @@ export function TodayExperience() {
     });
     return createChapterRun(weekSetupChapter, seeds);
   }, [state, weekSetupChapter]);
+  /**
+   * The review, opened by hand on a Sunday rather than sprung on him.
+   *
+   * A week is reviewed on the day it ends, and a review nobody asked for at the
+   * end of a long Sunday is a review that gets skipped. So it waits behind a
+   * button on that Sunday, and because the strip carries the Sunday just gone,
+   * a week missed can still be reviewed the following one. Sai: "if than i
+   * forgot to review on that day, next week that sunday would be available and
+   * review to pivot the week."
+   */
+  const weekReviewChapter = getPublishedChapter("week-review");
+  const [reviewingWeekOf, setReviewingWeekOf] = useState<string | null>(null);
+  const weekReviewRun = useMemo(() => {
+    if (!weekReviewChapter || !reviewingWeekOf) return null;
+    // The goal of the week being read is seeded in, so the Page can say what
+    // the week was for instead of asking him to remember.
+    const goal = weekGoals(state, reviewingWeekOf)[0];
+    const page = weekReviewChapter.pages.find((item) => item.id === "what-it-was-for");
+    const timestamp = new Date().toISOString();
+    const seeds = goal?.text && page
+      ? [
+          {
+            pageId: page.id,
+            answerKey: "week-just-gone",
+            value: goal.text,
+            displaySnapshot: goal.text,
+            answeredAt: timestamp,
+            changedAt: timestamp,
+          },
+        ]
+      : [];
+    return createChapterRun(weekReviewChapter, seeds);
+  }, [reviewingWeekOf, state, weekReviewChapter]);
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
   const habitBuildingRun = useMemo(() => {
@@ -3169,6 +3210,74 @@ export function TodayExperience() {
     });
   }
 
+  /**
+   * The week just read, and the one it points at.
+   *
+   * The pivot is the next week's setup: the same four answers day two asked
+   * for, given again with a week of evidence behind them. The phase that ran
+   * ends as it ends — kept to its last day or stopped short — and a new one
+   * begins against the new goal.
+   */
+  function saveWeekReviewRun(nextRun: ChapterRun) {
+    if (!weekReviewChapter) return;
+    const reviewedWeek = reviewingWeekOf;
+    updateState((current) => {
+      const previousRun = current.chapters.runs[nextRun.runId];
+      let next = storeChapterRun(current, nextRun, weekReviewChapter.session);
+      if (nextRun.status !== "completed" || previousRun?.status === "completed") {
+        return next;
+      }
+
+      // The week that was reviewed is closed, and the phase serving it with it.
+      const running = activeProtocolRun(next);
+      if (running) {
+        const lasted = protocolDay(running, dateKey) >= running.days;
+        next = endProtocolRun(next, running.id, lasted ? "completed" : "ended");
+      }
+
+      // The week ahead. On a Sunday evening the Page is already planning it, so
+      // this writes into whatever week the strip is showing.
+      const weekKey = planningWeekStartKey(dateKey, liveClockHour);
+      const nextWeek = weekKey === reviewedWeek ? shiftWeekKey(weekKey) : weekKey;
+      const goalText = chapterAnswerText(nextRun, "next-week-goal");
+      let goalId = "";
+      if (goalText) {
+        const opened = addWeekGoal(next, nextWeek, `goal-week-${nextWeek}`);
+        goalId = opened.id;
+        next = updateGoal(opened.state, opened.id, goalText);
+        const stepText = chapterAnswerText(nextRun, "next-week-step");
+        if (stepText) {
+          const step = addGoalStep(
+            next,
+            opened.id,
+            addTask,
+            `step-week-${nextWeek}`,
+            undefined,
+            nextWeek,
+          );
+          next = updateTask(step.state, step.taskId, stepText);
+        }
+      }
+
+      const term = chapterAnswerText(nextRun, "next-week-term");
+      if (term) {
+        const draft = startProtocolDraft(next);
+        next = setProtocolDays(draft.state, draft.id, 7);
+        const item = addProtocolItem(next, draft.id, "non-negotiable");
+        next = updateProtocolItem(item.state, draft.id, item.id, term);
+        next = beginProtocolRun(next, draft.id, nextWeek);
+        next = setProtocolGoal(next, draft.id, goalId);
+        next = setProtocolSlipLine(
+          next,
+          draft.id,
+          chapterAnswerText(nextRun, "next-week-slip"),
+        );
+      }
+      return next;
+    });
+    if (nextRun.status === "completed") setReviewingWeekOf(null);
+  }
+
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
     updateState((current) => {
@@ -4129,6 +4238,18 @@ export function TodayExperience() {
           </ChapterSplash>
         ) : null}
 
+        {weekReviewChapter && weekReviewRun ? (
+          <ChapterSplash label="Week review">
+            <ChapterPlayer
+              className="os-week-review-session"
+              definition={weekReviewChapter}
+              label="Week review"
+              run={weekReviewRun}
+              onRunChange={saveWeekReviewRun}
+            />
+          </ChapterSplash>
+        ) : null}
+
         {dayOneKeptADay && !weekSetupDone && weekSetupChapter && weekSetupRun ? (
           <ChapterSplash label="Week setup">
             <ChapterPlayer
@@ -4587,6 +4708,22 @@ export function TodayExperience() {
                         </button>
                       ))}
                     </div>
+                  ) : null}
+
+                  {/* The week ends on a Sunday, so that is where it is read
+                    * from. Disabled until the day arrives: there is nothing to
+                    * review about a week that has not happened. */}
+                  {logChosenDay.name === "Sunday" ? (
+                    <button
+                      className="os-week-review-open"
+                      disabled={logChosenDay.isFuture || !weekReviewChapter}
+                      onClick={() =>
+                        setReviewingWeekOf(weekStartKey(logChosenDay.dateKey))
+                      }
+                      type="button"
+                    >
+                      {logChosenDay.isFuture ? "Review on Sunday" : "Review now"}
+                    </button>
                   ) : null}
 
                   {chosenWeekGoals.length ? (

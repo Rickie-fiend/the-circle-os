@@ -2130,6 +2130,151 @@
     },
     {
       "schemaVersion": 1,
+      "id": "week-review",
+      "version": 1,
+      "status": "published",
+      "session": "week-review",
+      "app": "seven-days",
+      "kind": "mirror",
+      "completion": "swipe",
+      "theme": "dark",
+      "title": "Look at the week.",
+      "purpose": "Read the week that ended honestly, keep what worked, and point the next one.",
+      "estimatedMinutes": 6,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Look at the week.",
+          "body": "Seven days happened. This is where they become something you can use.",
+          "button": "Begin"
+        },
+        {
+          "id": "what-it-was-for",
+          "type": "info",
+          "title": "This week was for it.",
+          "body": "{{week-just-gone}}",
+          "button": "I remember"
+        },
+        {
+          "id": "kept",
+          "type": "yes-no",
+          "question": "Did it happen?",
+          "why": "Yes or no, before any explanation. The explanation is the next question and it is worth more once this one is answered plainly.",
+          "answerKey": "review-kept",
+          "required": true
+        },
+        {
+          "id": "moved",
+          "type": "short-text",
+          "question": "What actually moved it?",
+          "why": "Name the thing that worked, so it can be done again on purpose rather than by luck.",
+          "answerKey": "review-moved",
+          "placeholder": "The two minutes on Tuesday that turned into an hour",
+          "required": true
+        },
+        {
+          "id": "blocked",
+          "type": "short-text",
+          "question": "What got in the way?",
+          "why": "One thing, named plainly. A week is not derailed by everything at once.",
+          "answerKey": "review-blocked",
+          "placeholder": "I kept starting after nine",
+          "required": true
+        },
+        {
+          "id": "fed",
+          "options": [
+            {
+              "id": "mind",
+              "label": "Mind"
+            },
+            {
+              "id": "body",
+              "label": "Body"
+            },
+            {
+              "id": "spirit",
+              "label": "Spirit"
+            },
+            {
+              "id": "social",
+              "label": "Social"
+            },
+            {
+              "id": "none",
+              "label": "None of them"
+            }
+          ],
+          "type": "single-choice",
+          "question": "Which part of you did this week feed?",
+          "why": "A week that fed one part of a life is a different week from one that fed none. Over months this is the only honest record of what you have been living for.",
+          "answerKey": "review-fed",
+          "required": true
+        },
+        {
+          "id": "keep",
+          "type": "short-text",
+          "question": "What do you keep from this week?",
+          "why": "One thing to carry forward. Everything else can be put down.",
+          "answerKey": "review-keep",
+          "placeholder": "The first hour before the phone",
+          "required": true
+        },
+        {
+          "id": "pivot",
+          "type": "info",
+          "title": "Now point the next one.",
+          "body": "Same shape as before: one goal, one first step, one rule, and a line for the day it slips. What you keep from the week just gone goes in with you.",
+          "button": "Continue"
+        },
+        {
+          "id": "next-goal",
+          "type": "short-text",
+          "question": "What is next week for?",
+          "why": "The same goal again is a fine answer. A week that did not land is worth another week, not a new subject.",
+          "answerKey": "next-week-goal",
+          "placeholder": "Get the first ten customers",
+          "required": true
+        },
+        {
+          "id": "next-step",
+          "type": "short-text",
+          "question": "What is the first step, small enough for Monday?",
+          "why": "Two minutes. It is the move that makes the goal real before the week has any momentum of its own.",
+          "answerKey": "next-week-step",
+          "placeholder": "Send one message to a customer",
+          "required": true
+        },
+        {
+          "id": "next-term",
+          "type": "short-text",
+          "question": "What will you hold to for the seven days?",
+          "why": "Keep the one that worked, or change it. A rule you broke every day is not a rule, it is a wish.",
+          "answerKey": "next-week-term",
+          "placeholder": "No phone until the first hour is done",
+          "required": true
+        },
+        {
+          "id": "next-slip",
+          "type": "short-text",
+          "question": "On the day you miss it, what will you do?",
+          "why": "Write it now, while the week is still ahead of you.",
+          "answerKey": "next-week-slip",
+          "placeholder": "Do the two minute version, and let that count",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Next week is pointed.",
+          "body": "You keep {{review-keep}}. Next week is for {{next-week-goal}}, starting with {{next-week-step}}, holding to {{next-week-term}}.",
+          "button": "Open the week"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "week-setup",
       "version": 1,
       "status": "published",

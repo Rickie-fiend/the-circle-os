@@ -4985,6 +4985,31 @@
   text-decoration-thickness: 1.5px;
 }
 
+/* Reading the week is the one thing on a Sunday that is not planning it, so it
+ * is drawn as a key rather than as another quiet add-line. Disabled until the
+ * day arrives: there is nothing to review about a week that has not happened. */
+.circle-os .os-week-review-open {
+  appearance: none;
+  background: var(--c-orange);
+  border: 0;
+  border-radius: var(--r-md);
+  color: var(--c-warm-50);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  min-height: var(--touch-min);
+  padding: 0 1rem;
+  width: 100%;
+}
+
+.circle-os .os-week-review-open:disabled {
+  background: rgb(241 239 232 / 0.08);
+  color: rgb(241 239 232 / 0.4);
+  cursor: not-allowed;
+}
+
 .circle-os .os-week-add-goal,
 .circle-os .os-week-add-step {
   align-items: center;
