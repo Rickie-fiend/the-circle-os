@@ -47,6 +47,35 @@ export const WEEK_DAY_LETTERS = Object.freeze([
  */
 export const WEEK_BAR_LENGTH = 8;
 
+/**
+ * When Sunday stops being this week and becomes the eve of the next one.
+ *
+ * A week is planned before it is lived, and Sunday evening is when there is
+ * something to plan with: the week just ended is done enough to read. So at
+ * eight the strip rolls — the Sunday he is standing in moves to the head, where
+ * the week that ended is reviewed from, and the seven days after it become the
+ * week he is setting up. Sai: "after 8 o'clock in that evening, a new week will
+ * start, that sunday data will be move to the first daybar sunday, so that we
+ * may plan for the next week."
+ *
+ * Nothing about the day changes. Today is still today, its log is still its
+ * log; it is only which week the Page is planning that moves on.
+ */
+export const WEEK_ROLLOVER_HOUR = 20;
+
+/**
+ * The Monday of the week the Week Page is planning.
+ *
+ * The same as the week he is living, except on a Sunday evening, when it is the
+ * week about to begin.
+ */
+export function planningWeekStartKey(todayKey = getDateKey(), hour = 0) {
+  const monday = weekStartKey(todayKey);
+  const isSunday = shiftDateKey(monday, 6) === todayKey;
+  if (isSunday && Number(hour) >= WEEK_ROLLOVER_HOUR) return shiftDateKey(monday, 7);
+  return monday;
+}
+
 const DAY_NAMES = Object.freeze([
   "Sunday",
   "Monday",
@@ -209,8 +238,8 @@ export function weekDays(state, todayKey = getDateKey()) {
  * The caller navigates by these; everything that counts a week still uses
  * `weekDays`, which is seven.
  */
-export function weekBarDays(state, todayKey = getDateKey()) {
-  const lastSunday = shiftDateKey(weekStartKey(todayKey), -1);
+export function weekBarDays(state, todayKey = getDateKey(), hour = 0) {
+  const lastSunday = shiftDateKey(planningWeekStartKey(todayKey, hour), -1);
   return Array.from({ length: WEEK_BAR_LENGTH }, (_, index) =>
     weekDaySummary(state, shiftDateKey(lastSunday, index), todayKey),
   );

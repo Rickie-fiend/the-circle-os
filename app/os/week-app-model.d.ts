@@ -42,4 +42,10 @@ export function weekSpan(
 export function weekTotals(state: unknown, todayKey?: string): WeekTotals;
 export function weekCoverLine(state: unknown, todayKey?: string): string;
 export const WEEK_BAR_LENGTH: number;
-export function weekBarDays(state: unknown, todayKey?: string): WeekDaySummary[];
+export const WEEK_ROLLOVER_HOUR: number;
+export function planningWeekStartKey(todayKey?: string, hour?: number): string;
+export function weekBarDays(
+  state: unknown,
+  todayKey?: string,
+  hour?: number,
+): WeekDaySummary[];

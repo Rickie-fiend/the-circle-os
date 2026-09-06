@@ -122,12 +122,25 @@ test("the splash is the screen, with one scroll and its own rhythm", () => {
   // them scoped under .circle-os — would miss it and the sheet would collapse.
   assert.match(shell, /className="circle-os os-splash-host"/);
   assert.match(css, /\.circle-os\.os-splash-host \{\s+display: contents;/);
-  // And the Page behind stops scrolling, so there is one scrolling surface.
+  // The Page behind is taken off the flow, not merely told not to scroll:
+  // overflow: hidden does not stop iOS rubber-banding, and once the keyboard is
+  // up the Page scrolls freely behind the sheet. Sai: "after i click to input,
+  // it can scroll through the back of the app."
+  assert.match(shell, /document\.body\.style\.position = "fixed";/);
+  assert.match(shell, /document\.body\.style\.top = `-\$\{scrollBeforeSheets\}px`;/);
+  assert.match(shell, /window\.scrollTo\(0, scrollBeforeSheets\);/);
   // And the lock is counted, so it lifts when the last sheet closes rather than
   // when whichever happens to close last puts back what it found.
   assert.match(shell, /let sheetsOpen = 0;/);
-  assert.match(shell, /if \(sheetsOpen === 0\) document\.body\.style\.overflow = overflowBeforeSheets;/);
-  assert.match(shell, /body\.style\.overflow = "hidden"/);
+  assert.match(shell, /if \(sheetsOpen > 0\) return;/);
+
+  // The sheet is the size of what can actually be seen. CSS cannot see a
+  // keyboard; the visual viewport is the only thing that knows the real height.
+  assert.match(shell, /function fitToVisibleWindow\(/);
+  assert.match(shell, /sheet\.style\.height = `\$\{viewport\.height\}px`;/);
+  assert.match(shell, /sheet\.style\.transform = `translateY\(\$\{viewport\.offsetTop\}px\)`;/);
+  assert.match(shell, /viewport\.addEventListener\("resize", apply\)/);
+  assert.match(shell, /viewport\.addEventListener\("scroll", apply\)/);
 
   const splash = css.slice(
     css.indexOf(".circle-os .os-splash {"),

@@ -3050,8 +3050,12 @@
   /* One scrolling surface, and it is the frame inside. Two of them is what made
      the sheet feel unheld. */
   overflow: hidden;
-  overscroll-behavior: contain;
+  /* None: the sheet is sized to the visible window from script, because CSS
+     cannot see a keyboard. This is the fallback before that first measurement
+     and on anything without a visual viewport. */
+  overscroll-behavior: none;
   position: fixed;
+  touch-action: pan-y;
   width: 100%;
   /* Over the App's own header, which sits at 70. A setup is the screen, and
      there is nothing to navigate to yet. */

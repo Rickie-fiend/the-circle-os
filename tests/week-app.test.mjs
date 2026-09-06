@@ -6,6 +6,8 @@ import { createEmptyState } from "../app/os/circle-os-model.js";
 import {
   WEEK_BAR_LENGTH,
   WEEK_DAY_LETTERS,
+  WEEK_ROLLOVER_HOUR,
+  planningWeekStartKey,
   weekBarDays,
   weekCoverLine,
   weekDays,
@@ -532,4 +534,34 @@ test("the strip is eight days and opens on last Sunday", () => {
   assert.match(shell, /logChosenDay\.isToday \? " is-today" : ""/);
   const css = readFileSync("app/os/os-app.css", "utf8");
   assert.match(css, /os-week-day-plan\.is-today \{\s+border-color: var\(--c-orange\)/);
+});
+
+// Sai: "on sunday ... after 8 o'clock in that evening, a new week will start,
+// that sunday data will be move to the first daybar sunday, so that we may plan
+// for the next week."
+test("Sunday evening rolls the strip onto the week ahead", () => {
+  const state = createEmptyState();
+  const bar = (key, hour) =>
+    weekBarDays(state, key, hour).map((day) => day.dateKey);
+
+  // 2026-09-13 is a Sunday. Before eight it is still the last day of its week.
+  assert.equal(planningWeekStartKey("2026-09-13", 18), "2026-09-07");
+  assert.deepEqual(bar("2026-09-13", 18).at(0), "2026-09-06");
+  assert.deepEqual(bar("2026-09-13", 18).at(-1), "2026-09-13");
+
+  // At eight it becomes the eve of the next one: the Sunday he is standing in
+  // moves to the head, and the seven days after it are what he is planning.
+  assert.equal(planningWeekStartKey("2026-09-13", WEEK_ROLLOVER_HOUR), "2026-09-14");
+  assert.deepEqual(bar("2026-09-13", 20).at(0), "2026-09-13", "today leads the strip");
+  assert.deepEqual(bar("2026-09-13", 20).at(-1), "2026-09-20");
+
+  // And Monday morning is the same strip: the roll happened the night before.
+  assert.deepEqual(bar("2026-09-14", 9), bar("2026-09-13", 20));
+
+  // Only the week being planned moves. Any other day is unaffected by the hour.
+  assert.deepEqual(bar("2026-09-09", 23), bar("2026-09-09", 6));
+
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /planningWeekStartKey\(dateKey, liveClockHour\)/);
+  assert.match(shell, /weekBarDays\(state, dateKey, liveClockHour\)/);
 });

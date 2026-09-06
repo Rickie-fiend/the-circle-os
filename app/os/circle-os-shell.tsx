@@ -129,7 +129,11 @@ import {
 } from "./deep-thought-model.js";
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
-import { weekBarDays, weekStartKey } from "./week-app-model.js";
+import {
+  planningWeekStartKey,
+  weekBarDays,
+  weekStartKey,
+} from "./week-app-model.js";
 import {
   addGoalStep,
   addWeekGoal,
@@ -365,17 +369,61 @@ function HabitCopySwap({
  * sheets together rather than to whichever happens to close last.
  */
 let sheetsOpen = 0;
-let overflowBeforeSheets = "";
+let scrollBeforeSheets = 0;
 
 function holdBodyStill() {
   if (sheetsOpen === 0) {
-    overflowBeforeSheets = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // Taken off the flow, not merely told not to scroll.
+    //
+    // overflow: hidden does not stop iOS: the Page still rubber-bands under a
+    // sheet, and once the keyboard is up it scrolls freely behind it. Fixing
+    // the body at its current offset is the only thing that actually holds it,
+    // and the offset is put back on the way out so nothing moves.
+    scrollBeforeSheets = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollBeforeSheets}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
   }
   sheetsOpen += 1;
   return () => {
     sheetsOpen = Math.max(0, sheetsOpen - 1);
-    if (sheetsOpen === 0) document.body.style.overflow = overflowBeforeSheets;
+    if (sheetsOpen > 0) return;
+    for (const property of ["position", "top", "left", "right", "width"]) {
+      document.body.style.removeProperty(property);
+    }
+    window.scrollTo(0, scrollBeforeSheets);
+  };
+}
+
+/**
+ * Keep the sheet the size of what can actually be seen.
+ *
+ * A phone's keyboard shrinks the visible window without shrinking the one CSS
+ * measures, so a sheet fixed at 100dvh stays its full height, the keyboard
+ * covers its foot, and the Page it is over shows through above. Sai: "after i
+ * click to input, it can scroll through the back of the app, and look kinda
+ * ugly."
+ *
+ * The visual viewport is the only thing that knows the real numbers, so the
+ * sheet takes its height and follows it when it moves.
+ */
+function fitToVisibleWindow(sheet: HTMLElement | null) {
+  const viewport = window.visualViewport;
+  if (!sheet || !viewport) return () => undefined;
+  const apply = () => {
+    sheet.style.height = `${viewport.height}px`;
+    sheet.style.transform = `translateY(${viewport.offsetTop}px)`;
+  };
+  apply();
+  viewport.addEventListener("resize", apply);
+  viewport.addEventListener("scroll", apply);
+  return () => {
+    viewport.removeEventListener("resize", apply);
+    viewport.removeEventListener("scroll", apply);
+    sheet.style.removeProperty("height");
+    sheet.style.removeProperty("transform");
   };
 }
 
@@ -438,7 +486,9 @@ export function ChapterSplash({
   // snapshot is false and nothing renders; on the client it is true from the
   // first render, so the sheet does not arrive a beat late.
   const mounted = useSyncExternalStore(subscribeToClient, onClient, onServer);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => holdBodyStill(), []);
+  useEffect(() => fitToVisibleWindow(sheetRef.current), [mounted]);
 
   // Rendered onto the body, not into the feed it replaces.
   //
@@ -454,7 +504,13 @@ export function ChapterSplash({
     // outside all of them and collapse to nothing. The host is display:
     // contents, so it carries the scope and the tokens without being a box.
     <div className="circle-os os-splash-host">
-      <div aria-label={label} aria-modal="true" className="os-splash" role="dialog">
+      <div
+        aria-label={label}
+        aria-modal="true"
+        className="os-splash"
+        ref={sheetRef}
+        role="dialog"
+      >
         <div className="os-splash-frame">{children}</div>
       </div>
     </div>,
@@ -2190,7 +2246,7 @@ export function TodayExperience() {
   const logAppMaxIndex = 1;
   // Eight for the strip — last Sunday at its head, so the week that ended is
   // still reachable on the Monday after it.
-  const logWeekDays = weekBarDays(state, dateKey);
+  const logWeekDays = weekBarDays(state, dateKey, liveClockHour);
   // The week the Log is showing, and the goal every day of it is under. The
   // week key is worked out here rather than inside the goal model: the Circle
   // week is defined in `week-app-model.js`, which reads the state the goal
@@ -2201,7 +2257,8 @@ export function TodayExperience() {
   // writing over it is how a Tuesday becomes market day.
   const logTodayName =
     logWeekDays.find((day) => day.isToday)?.name || "Today";
-  const logWeekKey = weekStartKey(dateKey);
+  // The week being planned, which is the week he is in until Sunday evening.
+  const logWeekKey = planningWeekStartKey(dateKey, liveClockHour);
   const logWeekGoal = weekGoal(state, logWeekKey);
   // A future day can be chosen here, unlike on the reading surface: this Page
   // is for planning the week, so Thursday has to be reachable before Thursday.
