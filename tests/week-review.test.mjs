@@ -137,7 +137,19 @@ test("the review waits behind a button on a Sunday", () => {
   assert.match(shell, /logChosenDay\.name === "Sunday" \?/);
   assert.match(shell, /disabled=\{logChosenDay\.isFuture \|\| !weekReviewChapter\}/);
   assert.match(shell, /setReviewingWeekOf\(weekStartKey\(logChosenDay\.dateKey\)\)/);
-  assert.match(shell, /logChosenDay\.isFuture \? "Review on Sunday" : "Review now"/);
+  assert.match(
+    shell,
+    /logChosenDay\.isFuture\s+\? "Review on Sunday"\s+: "Review this week now"/,
+  );
+  // On the Footer line, under the day's log, which is also the space the box
+  // was padding out to nothing. Sai: "the footer is huge."
+  assert.match(shell, /footer=\{\s+logChosenDay\.name === "Sunday" \?/);
+  // An orange key with a dark label, standing on its leg like every other key.
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  assert.match(
+    css,
+    /os-week-review-open\.os-creative-button \{\s+background: var\(--c-orange\);[\s\S]*?color: var\(--c-ink\);/,
+  );
   // Opened by hand, not sprung: a review nobody asked for at the end of a long
   // Sunday is a review that gets skipped.
   assert.match(shell, /<ChapterSplash label="Week review">/);

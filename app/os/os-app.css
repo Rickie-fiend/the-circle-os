@@ -4985,29 +4985,19 @@
   text-decoration-thickness: 1.5px;
 }
 
-/* Reading the week is the one thing on a Sunday that is not planning it, so it
- * is drawn as a key rather than as another quiet add-line. Disabled until the
- * day arrives: there is nothing to review about a week that has not happened. */
-.circle-os .os-week-review-open {
-  appearance: none;
+/* An orange key with a dark label, standing on its leg like every other key in
+ * the App. Sai: "with a 3d orange button with dark label." It is the one act on
+ * this Page that is not planning, so it is the only thing drawn as a key. */
+.circle-os .os-week-review-open.os-creative-button {
   background: var(--c-orange);
-  border: 0;
-  border-radius: var(--r-md);
-  color: var(--c-warm-50);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--text-md);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  min-height: var(--touch-min);
-  padding: 0 1rem;
-  width: 100%;
+  border-color: var(--c-orange-900);
+  color: var(--c-ink);
 }
 
-.circle-os .os-week-review-open:disabled {
+.circle-os .os-week-review-open.os-creative-button:disabled {
   background: rgb(241 239 232 / 0.08);
+  border-color: rgb(241 239 232 / 0.16);
   color: rgb(241 239 232 / 0.4);
-  cursor: not-allowed;
 }
 
 .circle-os .os-week-add-goal,

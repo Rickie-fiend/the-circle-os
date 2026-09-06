@@ -4517,6 +4517,30 @@ export function TodayExperience() {
 
             <PageLayout
               className="os-log-page os-log-week"
+              /* Reading the week is the one act on this Page that is not
+                 planning it, so it stands on the Footer line where every App
+                 puts its one action — under the day's log, at the foot of the
+                 box, which is also the space the box was padding out to nothing.
+                 Sai: "'Review this week now' button should be below the
+                 collisible log, as a footer." */
+              footer={
+                logChosenDay.name === "Sunday" ? (
+                  <CreativeButton
+                    className="os-week-review-open"
+                    disabled={logChosenDay.isFuture || !weekReviewChapter}
+                    onClick={() =>
+                      setReviewingWeekOf(weekStartKey(logChosenDay.dateKey))
+                    }
+                    sizing="content"
+                    styleId="default"
+                    type="button"
+                  >
+                    {logChosenDay.isFuture
+                      ? "Review on Sunday"
+                      : "Review this week now"}
+                  </CreativeButton>
+                ) : undefined
+              }
               headerLeft={<p className="os-card-label">Week</p>}
               /* Opening a goal sits where Routine puts New habit: top right,
                  opposite the App Label. Sai: "Add week goal button on top
@@ -4708,22 +4732,6 @@ export function TodayExperience() {
                         </button>
                       ))}
                     </div>
-                  ) : null}
-
-                  {/* The week ends on a Sunday, so that is where it is read
-                    * from. Disabled until the day arrives: there is nothing to
-                    * review about a week that has not happened. */}
-                  {logChosenDay.name === "Sunday" ? (
-                    <button
-                      className="os-week-review-open"
-                      disabled={logChosenDay.isFuture || !weekReviewChapter}
-                      onClick={() =>
-                        setReviewingWeekOf(weekStartKey(logChosenDay.dateKey))
-                      }
-                      type="button"
-                    >
-                      {logChosenDay.isFuture ? "Review on Sunday" : "Review now"}
-                    </button>
                   ) : null}
 
                   {chosenWeekGoals.length ? (
