@@ -275,15 +275,22 @@ function keepHabitPart(value, maximum = 240) {
   return String(value || "").replace(/[^\S ]+/g, " ").slice(0, maximum);
 }
 
+/**
+ * The habit, read as the sentence it is.
+ *
+ * Who first, then what, then when: "To become a good speaker, I will practice
+ * speaking for 1 min after lunch." Sai wrote it that way himself, and the order
+ * is the argument — the reason comes before the work, so the work is what the
+ * reason costs rather than a chore with a justification stapled to the end.
+ */
 export function composeHabitText({ action = "", cue = "", identity = "" } = {}) {
   const cleanAction = cleanHabitPart(action);
   const cleanCue = cleanHabitPart(cue);
   const cleanIdentity = cleanHabitPart(identity);
-  if (!cleanCue && !cleanIdentity) return cleanAction;
   if (!cleanAction) return "";
-  return `I will ${cleanAction}${cleanCue ? `, ${cleanCue}` : ""}${
-    cleanIdentity ? `${cleanCue ? "," : ""} so I can become ${cleanIdentity}` : ""
-  }.`;
+  if (!cleanCue && !cleanIdentity) return cleanAction;
+  const doing = `I will ${cleanAction}${cleanCue ? ` ${cleanCue}` : ""}`;
+  return cleanIdentity ? `To become ${cleanIdentity}, ${doing}.` : `${doing}.`;
 }
 
 export function habitActionText(habit) {

@@ -41,10 +41,15 @@ const findChapter = (node, id) =>
         : Object.values(node).flatMap((item) => findChapter(item, id))
       : [];
 
-const DAY_ONE = findChapter(library, "day-one")[0];
+// The latest version, not the first: a chapter is immutable, so editing it in
+// the Workshop leaves the old one in the library beside the new one.
+const DAY_ONE = findChapter(library, "day-one").sort(
+  (left, right) => right.version - left.version,
+)[0];
 const DATE = "2026-09-06";
 const ANSWERS = {
   "character-past": "Working a job I did not choose",
+  "identity-focus": "An entrepreneur",
   "character-dimension": "body",
   "character-trait": "Lean posture and open body language",
   "habit-action": "Stand up straight for one minute",
@@ -168,4 +173,43 @@ test("day one is a splash, asked once", () => {
     shell.indexOf('<ChapterSplash label="Day one">') <
       shell.indexOf("{dayOneDone && logSetupPublication ? ("),
   );
+});
+
+// Sai: "To become - a good speaker - i will - practice speaking for 1 min -
+// after lunch." Who first, then what, then when: the reason comes before the
+// work, so the work is what the reason costs.
+test("a habit reads as one sentence, reason first", () => {
+  assert.equal(
+    composeHabitText({
+      identity: "a good speaker",
+      action: "practice speaking for 1 min",
+      cue: "after lunch",
+    }),
+    "To become a good speaker, I will practice speaking for 1 min after lunch.",
+  );
+  // Without a reason it is still a sentence, and without an anchor too.
+  assert.equal(
+    composeHabitText({ action: "practice speaking for 1 min", cue: "after lunch" }),
+    "I will practice speaking for 1 min after lunch.",
+  );
+  assert.equal(composeHabitText({ action: "practice speaking" }), "practice speaking");
+  assert.equal(composeHabitText({ cue: "after lunch" }), "", "an anchor alone is nothing");
+});
+
+// The one word the whole App points back at: it is the Routine App's own name,
+// so what he is building is written above the things he does. Sai: "describe
+// your ideal self, in one word, (entrepreneur, leader, a good father)."
+test("day one asks who he is in one word", () => {
+  const page = DAY_ONE.pages.find((item) => item.answerKey === "identity-focus");
+  assert.ok(page, "day one asks for the ideal self");
+  assert.equal(page.type, "short-text");
+  assert.ok(page.why);
+  // It is asked before the part of him and the quality inside it, because it is
+  // the thing those are parts of.
+  const at = (key) => DAY_ONE.pages.findIndex((item) => item.answerKey === key);
+  assert.ok(at("identity-focus") < at("character-dimension"));
+  assert.ok(at("character-dimension") < at("character-trait"));
+
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /updateRoutineIdentity\(next, idealSelf\)/);
 });

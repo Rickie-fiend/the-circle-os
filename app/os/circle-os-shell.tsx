@@ -2890,6 +2890,11 @@ export function TodayExperience() {
         return next;
       }
 
+      // The one word the whole App points back at. It is the Routine App's own
+      // name, so what he is building is written above the things he does.
+      const idealSelf = chapterAnswerText(nextRun, "identity-focus");
+      if (idealSelf) next = updateRoutineIdentity(next, idealSelf);
+
       // Who he is becoming: one part of a life, one quality in it.
       const dimension = chapterAnswerText(nextRun, "character-dimension");
       const trait = chapterAnswerText(nextRun, "character-trait");
