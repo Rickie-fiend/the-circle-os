@@ -49,3 +49,33 @@ export function weekBarDays(
   todayKey?: string,
   hour?: number,
 ): WeekDaySummary[];
+
+export type WeekRecord = {
+  weekKey: string;
+  kept: boolean;
+  fed: "" | "mind" | "body" | "spirit" | "social";
+  moved: string;
+  blocked: string;
+  keep: string;
+  reviewedAt: string;
+};
+export const WEEK_FED_VALUES: Set<string>;
+export function normalizeWeekRecords(value: unknown): Record<string, WeekRecord>;
+export function recordWeekReview(
+  state: unknown,
+  weekKey: string,
+  /**
+   * His answers, as the chapter gave them. `fed` is checked against the four
+   * dimensions on the way in, so anything else — including the honest "none of
+   * them" — is kept as no dimension rather than refused.
+   */
+  review: {
+    kept?: boolean;
+    fed?: string;
+    moved?: string;
+    blocked?: string;
+    keep?: string;
+  },
+  at?: string,
+): never;
+export function weekRecords(state: unknown): WeekRecord[];

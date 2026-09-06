@@ -9,6 +9,8 @@ import {
   beginProtocolRun,
   createEmptyState,
   endProtocolRun,
+  mergeServerState,
+  normalizeState,
   protocolDay,
   setProtocolDays,
   setProtocolGoal,
@@ -18,7 +20,11 @@ import {
   updateTask,
 } from "../app/os/circle-os-model.js";
 import { addGoalStep, addWeekGoal, stepsForDay, updateGoal, weekGoals } from "../app/os/goal-model.js";
-import { planningWeekStartKey } from "../app/os/week-app-model.js";
+import {
+  planningWeekStartKey,
+  recordWeekReview,
+  weekRecords,
+} from "../app/os/week-app-model.js";
 import { chapterAnswerText, createChapterRun } from "../app/os/chapters/chapter-model.js";
 
 const library = JSON.parse(readFileSync("app/os/chapters/published/index.json", "utf8"));
@@ -159,4 +165,61 @@ test("the review waits behind a button on a Sunday", () => {
   // the following one.
   const model = readFileSync("app/os/week-app-model.js", "utf8");
   assert.match(model, /export function weekBarDays/);
+});
+
+// A chapter run is keyed by chapter and version, so there is one week-review run
+// and next Sunday's answers would land on top of last Sunday's. The run is an
+// answer sheet; the record is state.
+test("a week read is written down, one row per week, and never rewritten", () => {
+  let state = createEmptyState();
+  assert.deepEqual(state.weeks, {}, "the slice exists on an empty state");
+
+  state = recordWeekReview(state, "2026-09-07", {
+    kept: false, fed: "mind", moved: "Tuesday", blocked: "Late starts", keep: "First hour",
+  });
+  state = recordWeekReview(state, "2026-09-14", {
+    kept: true, fed: "social", moved: "Called Dad", blocked: "", keep: "Sunday walks",
+  });
+  assert.deepEqual(weekRecords(state).map((week) => week.weekKey), [
+    "2026-09-07", "2026-09-14",
+  ]);
+  assert.equal(weekRecords(state)[0].fed, "mind");
+  assert.equal(weekRecords(state)[1].kept, true);
+
+  // A week is only lived once: reading it again does not quietly replace what
+  // he said the first time.
+  const again = recordWeekReview(state, "2026-09-07", { kept: true, fed: "body", moved: "rewritten" });
+  assert.equal(weekRecords(again)[0].moved, "Tuesday");
+  assert.equal(weekRecords(again)[0].fed, "mind");
+
+  // "None of them" is an honest answer and is kept as no dimension, not refused.
+  const none = recordWeekReview(createEmptyState(), "2026-09-21", { fed: "none" });
+  assert.equal(weekRecords(none)[0].fed, "");
+  assert.equal(weekRecords(none).length, 1);
+
+  // It survives a reload, and debris never reaches the record.
+  const reloaded = normalizeState(state);
+  assert.equal(weekRecords(reloaded).length, 2);
+  assert.deepEqual(
+    Object.keys(normalizeState({ ...createEmptyState(), weeks: { "": {}, good: null } }).weeks),
+    [],
+  );
+
+  // Two devices: a week read on either is a week read, and the first stands.
+  const phone = recordWeekReview(createEmptyState(), "2026-09-07", { fed: "mind" });
+  const laptop = recordWeekReview(createEmptyState(), "2026-09-14", { fed: "body" });
+  const merged = mergeServerState(phone, laptop);
+  assert.deepEqual(weekRecords(merged).map((week) => week.fed), ["mind", "body"]);
+});
+
+// The review writes it, from his own answers, as he gave them.
+test("finishing a review is what writes the week down", () => {
+  assert.match(shell, /next = recordWeekReview\(next, reviewedWeek, \{/);
+  assert.match(shell, /chapterAnswerText\(nextRun, "review-kept"\)\.toLowerCase\(\) === "yes"/);
+  for (const key of ["review-fed", "review-moved", "review-blocked", "review-keep"]) {
+    assert.ok(
+      shell.includes(`chapterAnswerText(nextRun, "${key}")`),
+      `${key} is answered and never written down`,
+    );
+  }
 });

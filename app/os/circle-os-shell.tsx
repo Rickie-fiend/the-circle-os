@@ -135,6 +135,7 @@ import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
 import {
   planningWeekStartKey,
+  recordWeekReview,
   weekBarDays,
   weekStartKey,
 } from "./week-app-model.js";
@@ -3226,6 +3227,19 @@ export function TodayExperience() {
       let next = storeChapterRun(current, nextRun, weekReviewChapter.session);
       if (nextRun.status !== "completed" || previousRun?.status === "completed") {
         return next;
+      }
+
+      // The week, written down before anything else. The run this came from is
+      // an answer sheet and there is only one of them; this is the record, one
+      // row per week, and it is what Reflect reads a life out of.
+      if (reviewedWeek) {
+        next = recordWeekReview(next, reviewedWeek, {
+          kept: chapterAnswerText(nextRun, "review-kept").toLowerCase() === "yes",
+          fed: chapterAnswerText(nextRun, "review-fed"),
+          moved: chapterAnswerText(nextRun, "review-moved"),
+          blocked: chapterAnswerText(nextRun, "review-blocked"),
+          keep: chapterAnswerText(nextRun, "review-keep"),
+        });
       }
 
       // The week that was reviewed is closed, and the phase serving it with it.

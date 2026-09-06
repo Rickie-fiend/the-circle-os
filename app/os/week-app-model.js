@@ -233,6 +233,70 @@ export function weekDays(state, todayKey = getDateKey()) {
 }
 
 /**
+ * What a week was, once it has been read.
+ *
+ * A chapter run is keyed by chapter and version, so there is one `week-review`
+ * run and next Sunday's answers would land on top of last Sunday's. The run is
+ * an answer sheet — transient, and rightly so. The record is state: one row per
+ * week, written when the review is finished, and never rewritten by a later
+ * week. It is what the Reflect tab's deepest layer is drawn from.
+ *
+ * Nothing here is a score. Every field is his own answer, kept as he gave it.
+ */
+export function normalizeWeekRecords(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const records = {};
+  for (const [key, record] of Object.entries(source)) {
+    const weekKey = typeof key === "string" ? key.trim().slice(0, 10) : "";
+    if (!weekKey || !record || typeof record !== "object") continue;
+    const line = (field, maximum = 240) =>
+      typeof record[field] === "string" ? record[field].slice(0, maximum) : "";
+    records[weekKey] = {
+      weekKey,
+      /** Whether the week's goal happened, in his own yes or no. */
+      kept: record.kept === true,
+      /** Which part of a life the week fed, or "" when it fed none of them. */
+      fed: WEEK_FED_VALUES.has(record.fed) ? record.fed : "",
+      moved: line("moved"),
+      blocked: line("blocked"),
+      keep: line("keep"),
+      reviewedAt: line("reviewedAt", 40),
+    };
+  }
+  return records;
+}
+
+/** The dimensions a week can be said to have fed, and the honest fifth answer. */
+export const WEEK_FED_VALUES = new Set(["mind", "body", "spirit", "social"]);
+
+/**
+ * Write the week down, once.
+ *
+ * A week already read is left alone: reviewing a second time should not quietly
+ * replace what he said the first time, and a week is only lived once.
+ */
+export function recordWeekReview(state, weekKey, review, at = new Date().toISOString()) {
+  const key = typeof weekKey === "string" ? weekKey.trim().slice(0, 10) : "";
+  if (!key) return state;
+  const records = normalizeWeekRecords(state?.weeks);
+  if (records[key]) return state;
+  return {
+    ...state,
+    weeks: normalizeWeekRecords({
+      ...records,
+      [key]: { ...review, weekKey: key, reviewedAt: at },
+    }),
+  };
+}
+
+/** Every week he has read, oldest first. */
+export function weekRecords(state) {
+  return Object.values(normalizeWeekRecords(state?.weeks)).sort((left, right) =>
+    left.weekKey.localeCompare(right.weekKey),
+  );
+}
+
+/**
  * The eight days the strip shows: last Sunday, then the Circle week it begins.
  *
  * The caller navigates by these; everything that counts a week still uses

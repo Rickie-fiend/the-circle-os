@@ -7,6 +7,7 @@ import {
 } from "./athena-memory-model.js";
 import { mergeSeenLines, rememberLine } from "./lines/line-pool.js";
 import { mergeGoals, normalizeGoals } from "./goal-model.js";
+import { normalizeWeekRecords } from "./week-app-model.js";
 import {
   mergeLineFeedback,
   normalizeLineFeedback,
@@ -774,6 +775,8 @@ export function createEmptyState() {
     // What each day of the week is for, and the smallest step toward it. A step
     // is a Routine task; see `goal-model.js`.
     goals: { items: {}, steps: {} },
+    // One row per week he has read. See `normalizeWeekRecords`.
+    weeks: {},
     outbox: [],
   };
 }
@@ -937,6 +940,7 @@ export function normalizeState(state) {
     seenLines: mergeSeenLines(state.seenLines, []),
     lineFeedback: normalizeLineFeedback(state.lineFeedback),
     goals: normalizeGoals(state.goals),
+    weeks: normalizeWeekRecords(state.weeks),
     outbox: Array.isArray(state.outbox) ? state.outbox : [],
   };
 }
@@ -1841,6 +1845,10 @@ export function mergeServerState(state, serverState) {
     seenLines: mergeSeenLines(local.seenLines, remote.seenLines),
     lineFeedback: mergeLineFeedback(local.lineFeedback, remote.lineFeedback),
     goals: mergeGoals(local.goals, remote.goals),
+    // A week read on either device is a week read, and the first reading
+    // stands: recordWeekReview refuses to overwrite one, so the merge keeps
+    // whichever arrived rather than letting a later sync rewrite his answer.
+    weeks: { ...normalizeWeekRecords(remote.weeks), ...normalizeWeekRecords(local.weeks) },
     appSessions: {
       ...remote.appSessions,
       ...mergeUpdatedRecords(remote.appSessions, local.appSessions),
