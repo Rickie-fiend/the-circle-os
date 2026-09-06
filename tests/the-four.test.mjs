@@ -135,31 +135,54 @@ test("the Page reads the record rather than keeping its own", () => {
   assert.match(page, /has not been fed in \$\{row\.weeksSince\} weeks\./);
 });
 
-// Sai: "And why is this not the app box standard?"
-test("The Four is an App Box, not something shaped like one", () => {
+// Sai: "And why is this not the app box standard?" — then, of the Page that
+// replaced the article: "and still the four is not an app. the sizing, the
+// swiping, nothing works."
+test("The Four is an App, not something shaped like one", () => {
   const page = readFileSync("app/os/mirror/page.tsx", "utf8");
   const css = readFileSync("app/os/os-app.css", "utf8");
 
-  // The real anatomy, so the forehead, the Main position and the footer are
-  // the App's own rather than a margin that imitates them.
-  const at = page.indexOf('className="vision-four-app"');
-  const box = page.slice(at, page.indexOf("</PageLayout>", at));
-  assert.match(page, /<PageLayout\s+className="vision-four-app"/);
-  assert.match(box, /headerLeft=\{<p className="os-card-label">The Four<\/p>\}/);
-  assert.match(box, /<div className="os-page-main">\s*<h2>/);
-  assert.match(box, /className="os-page-sub vision-four-rows"/);
-  assert.match(box, /vision-four-window/);
+  // A session of Pages, which is what gives it a window to size itself
+  // against and a gesture to move between them. A lone PageLayout has the
+  // anatomy of a Page and none of the behaviour of an App.
+  const at = page.indexOf('className="vision-four-apps"');
+  assert.ok(at > 0, "The Four has no session");
+  const app = page.slice(page.lastIndexOf("<SwipeSession", at), page.indexOf("</SwipeSession>", at));
+  assert.match(app, /attentionKey=\{`mirror-four:\$\{FOUR_APP_VERSION\}`\}/);
+  assert.match(app, /maxIndex=\{dimensions\.length\}/);
+  assert.match(app, /onIndexChange=\{openFourPage\}/);
 
-  // The box no longer carries a hand-rolled copy of the box's own shape.
+  // The record, then one Page for each part of a life.
+  assert.match(app, /key="four-record"/);
+  assert.match(app, /\{dimensions\.map\(\(row\) => \(\s*<PageLayout/);
+  assert.match(app, /className="vision-four-app vision-four-part"/);
+
+  // Tapping a row opens its Page. The expand-in-place it replaces is gone:
+  // swiping is the gesture the OS already has for this.
+  assert.match(app, /onClick=\{\(\) => openFourPage\(index \+ 1\)\}/);
+  assert.doesNotMatch(page, /openDimension/);
+  assert.doesNotMatch(css, /vision-four-detail/);
+
+  // And where it is kept: the same appSessions every other App uses, so the
+  // part he was reading is still there when he comes back.
+  assert.match(page, /appSessionIndex\(\s*state,\s*"mirror-four"/);
+  assert.match(page, /setAppSessionIndex\(current, "mirror-four", FOUR_APP_VERSION, index\)/);
+
+  // The box belongs to the session now; the Pages inside carry no box.
   const style = css.slice(
+    css.indexOf(".circle-os .vision-four-apps {"),
+    css.indexOf(".circle-os .vision-four-app h2 {"),
+  );
+  assert.match(style, /border-radius: var\(--r-box\)/);
+  assert.match(style, /\.vision-four-apps \.os-app-window/);
+  const pageStyle = css.slice(
     css.indexOf(".circle-os .vision-four-app {"),
     css.indexOf(".circle-os .vision-four-app h2 {"),
   );
-  assert.doesNotMatch(style, /min-height/);
-  assert.doesNotMatch(style, /padding:/);
-  assert.doesNotMatch(css, /\.vision-four-rows \{[\s\S]*?margin-top: var\(--os-label-gap\)/);
+  assert.doesNotMatch(pageStyle, /min-height/);
+  assert.doesNotMatch(pageStyle, /padding:/);
 
-  // And the sentence it says out loud lives in the box, said once. It used to
-  // sit outside it under a second copy of the App's own label.
+  // The sentence it says out loud lives in the box, said once. It used to sit
+  // outside it under a second copy of the App's own label.
   assert.doesNotMatch(page, /<p className="os-eyebrow">The Four<\/p>/);
 });

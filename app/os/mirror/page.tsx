@@ -87,6 +87,21 @@ type AthenaEdition = {
 };
 
 /**
+ * The Four's session, named by its shape.
+ *
+ * The record, then one Page for each part of a life. A saved position can only
+ * be wrong if that number changes, which is what the version is for.
+ */
+const FOUR_APP_VERSION = "four-v1";
+
+/** When a part of a life was last given anything, said as a person would. */
+function sinceLine(row: DimensionRow) {
+  if (row.weeksSince === null) return "Never fed";
+  if (row.weeksSince === 0) return "Fed this week";
+  return `${row.weeksSince} ${row.weeksSince === 1 ? "week" : "weeks"} ago`;
+}
+
+/**
  * What the Page says out loud, which is always the part that has gone hungry.
  *
  * Never fed is said differently from a long time ago: a part of a life nobody
@@ -484,7 +499,6 @@ export default function CircleOSMirror() {
   const [suggestionSaved, setSuggestionSaved] = useState(false);
   const [recovering, setRecovering] = useState(false);
   // One part opened at a time: the deeper it goes the more it expands.
-  const [openDimension, setOpenDimension] = useState<string | null>(null);
   const visionSessionRef = useRef<HTMLElement>(null);
   const athenaSessionRef = useRef<HTMLElement>(null);
   const [draft, setDraft] = useState({
@@ -588,6 +602,24 @@ export default function CircleOSMirror() {
    */
   const dimensions = dimensionRecord(state, getDateKey(), new Date().getHours());
   const starved = starvedDimension(dimensions);
+  /**
+   * Which of The Four's Pages is showing.
+   *
+   * Kept in `appSessions` like every other App's, so the part of himself he
+   * was reading is still there when he comes back to the tab. The version is
+   * the shape of the session rather than its contents: the Pages only change
+   * in number if the four parts of a life ever do.
+   */
+  const visibleFourApp = appSessionIndex(
+    state,
+    "mirror-four",
+    FOUR_APP_VERSION,
+    0,
+  );
+  const openFourPage = (index: number) =>
+    updateState((current) =>
+      setAppSessionIndex(current, "mirror-four", FOUR_APP_VERSION, index),
+    );
   const updateLabel = athenaFreshnessLabel(
     state,
     athenaReading,
@@ -1122,93 +1154,116 @@ export default function CircleOSMirror() {
           * hungry. Nothing here is a score: every filled week is a week he
           * himself said was fed, and nothing ever subtracts. */}
         <section className="vision-four-session" aria-label="The Four">
-          {/* An App Box, not something shaped like one.
+          {/* An App, not something shaped like one.
             *
-            * This was a hand-rolled article with the box's min-height and a
-            * margin where the forehead goes, so its rows floated in whatever
-            * space the height left over and the sentence it says out loud sat
-            * outside the box entirely, under a second copy of its own label.
-            * Sai: "And why is this not the app box standard?"
+            * This was a hand-rolled article, then a lone Page in a box. Both
+            * were still only the shape of an App: no window to size itself
+            * against, no session, and nothing to swipe. Sai: "and still the
+            * four is not an app. the sizing, the swiping, nothing works."
             *
-            * On the standard anatomy it reads the way every App does: the
-            * label, then the one thing it has to say in the Main position
-            * under the forehead, then the evidence for it underneath, then how
-            * far back the picture reaches. */}
-          <PageLayout
-            className="vision-four-app"
-            footer={
-              <p className="vision-four-window">
-                {DIMENSION_WINDOW_WEEKS} weeks · one square a week
-              </p>
-            }
-            headerLeft={<p className="os-card-label">The Four</p>}
-            theme="dark"
+            * It is a session of five Pages now, the way every App in the OS is
+            * built. The first is the record — the one thing it says out loud,
+            * over four rows of twenty-six weeks. Behind it stands one Page for
+            * each part of a life, which is where the detail went: the quality
+            * he named it, when it was last fed, and the habits standing under
+            * it. Tapping a row opens its Page, and the index is kept in
+            * `appSessions` like every other App's, so the part he was reading
+            * is still there when he comes back. */}
+          <SwipeSession
+            attentionKey={`mirror-four:${FOUR_APP_VERSION}`}
+            availableIndices={Array.from(
+              { length: dimensions.length + 1 },
+              (_, index) => index,
+            )}
+            className="vision-four-apps"
+            index={visibleFourApp}
+            label="The Four apps"
+            maxIndex={dimensions.length}
+            onIndexChange={openFourPage}
           >
-            <div className="os-page-main">
-              <h2>{starved ? starvedLine(starved) : "Four parts of a life."}</h2>
-            </div>
-            <div className="os-page-sub vision-four-rows">
-              {dimensions.map((row) => {
-                const open = openDimension === row.dimension;
-                return (
-                  <div
-                    className={`vision-four-row${open ? " is-open" : ""}`}
+            <PageLayout
+              className="vision-four-app"
+              footer={
+                <p className="vision-four-window">
+                  {DIMENSION_WINDOW_WEEKS} weeks · one square a week
+                </p>
+              }
+              headerLeft={<p className="os-card-label">The Four</p>}
+              key="four-record"
+              theme="dark"
+            >
+              <div className="os-page-main">
+                <h2>{starved ? starvedLine(starved) : "Four parts of a life."}</h2>
+              </div>
+              <div className="os-page-sub vision-four-rows">
+                {dimensions.map((row, index) => (
+                  <button
+                    className="vision-four-head"
                     key={row.dimension}
+                    onClick={() => openFourPage(index + 1)}
+                    type="button"
                   >
-                    <button
-                      aria-expanded={open}
-                      className="vision-four-head"
-                      onClick={() =>
-                        setOpenDimension(open ? null : row.dimension)
-                      }
-                      type="button"
-                    >
-                      <span className="vision-four-title">
-                        <span className="vision-four-name">{row.dimension}</span>
-                        <span className="vision-four-count">{row.fed}</span>
-                      </span>
-                      <span aria-hidden="true" className="vision-four-weeks">
-                        {row.weeks.map((week) => (
-                          <i
-                            className={week.fed ? "is-fed" : undefined}
-                            key={week.weekKey}
-                          />
-                        ))}
-                      </span>
-                    </button>
+                    <span className="vision-four-title">
+                      <span className="vision-four-name">{row.dimension}</span>
+                      <span className="vision-four-count">{row.fed}</span>
+                    </span>
+                    <span aria-hidden="true" className="vision-four-weeks">
+                      {row.weeks.map((week) => (
+                        <i
+                          className={week.fed ? "is-fed" : undefined}
+                          key={week.weekKey}
+                        />
+                      ))}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </PageLayout>
 
-                    {open ? (
-                      <div className="vision-four-detail">
-                        <p className="vision-four-trait">
-                          {row.trait || "Not named yet."}
-                        </p>
-                        <p className="vision-four-since">
-                          {row.weeksSince === null
-                            ? "Never fed."
-                            : row.weeksSince === 0
-                              ? "Fed this week."
-                              : `Last fed ${row.weeksSince} ${
-                                  row.weeksSince === 1 ? "week" : "weeks"
-                                } ago.`}
-                        </p>
-                        {row.habits.length ? (
-                          <ul className="vision-four-habits">
-                            {row.habits.map((habit) => (
-                              <li key={habit.id}>{habit.action}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="vision-four-since">
-                            No habit stands under it yet.
-                          </p>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </PageLayout>
+            {dimensions.map((row) => (
+              <PageLayout
+                className="vision-four-app vision-four-part"
+                footer={
+                  <p className="vision-four-window">
+                    {row.fed
+                      ? `${row.fed} ${row.fed === 1 ? "week" : "weeks"} on record`
+                      : "No week on record"}
+                  </p>
+                }
+                headerLeft={<p className="os-card-label">{row.dimension}</p>}
+                headerRight={
+                  <p className="vision-four-since">{sinceLine(row)}</p>
+                }
+                key={row.dimension}
+                theme="dark"
+              >
+                <div className="os-page-main">
+                  <h2>{row.trait || "Not named yet."}</h2>
+                </div>
+                <div className="os-page-sub vision-four-part-body">
+                  <span aria-hidden="true" className="vision-four-weeks">
+                    {row.weeks.map((week) => (
+                      <i
+                        className={week.fed ? "is-fed" : undefined}
+                        key={week.weekKey}
+                      />
+                    ))}
+                  </span>
+                  {row.habits.length ? (
+                    <ul className="vision-four-habits">
+                      {row.habits.map((habit) => (
+                        <li key={habit.id}>{habit.action}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="vision-four-empty">
+                      No habit stands under it yet.
+                    </p>
+                  )}
+                </div>
+              </PageLayout>
+            ))}
+          </SwipeSession>
         </section>
 
         <section
