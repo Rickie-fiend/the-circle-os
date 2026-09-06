@@ -176,3 +176,64 @@ test("the Workshop's editable lines are the chapter's own lines", () => {
   assert.doesNotMatch(why, /border-left/);
   assert.doesNotMatch(why, /padding-left/);
 });
+
+// Sai: "add a feature to rerun the chapter, in workshop ... so that if i want
+// to try and re run the chapter on the splashscreen i could."
+test("a chapter can be offered again without clearing the device", async () => {
+  const { createEmptyState } = await import("../app/os/circle-os-model.js");
+  const { resetChapterRuns, chapterEverCompleted } = await import(
+    "../app/os/chapters/chapter-model.js"
+  );
+
+  const done = (id, version) => [
+    `${id}@${version}`,
+    {
+      runId: `${id}@${version}`,
+      chapterId: id,
+      chapterVersion: version,
+      status: "completed",
+      answers: [{ answerKey: "a", value: "b" }],
+      currentPageId: "last",
+      furthestPageId: "last",
+      startedAt: "2026-09-01T09:00:00.000Z",
+      completedAt: "2026-09-01T09:10:00.000Z",
+      updatedAt: "2026-09-01T09:10:00.000Z",
+    },
+  ];
+  const base = createEmptyState();
+  const state = {
+    ...base,
+    chapters: {
+      ...base.chapters,
+      runs: Object.fromEntries([done("day-one", 1), done("day-one", 2), done("week-setup", 1)]),
+    },
+    habits: { ...base.habits, definitions: { h1: { id: "h1", action: "read" } } },
+  };
+  assert.equal(chapterEverCompleted(state.chapters.runs, "day-one"), true);
+
+  const next = resetChapterRuns(state, "day-one", "cover", "2026-09-07T00:00:00.000Z");
+
+  // Every version of it, because that is what the gates ask about.
+  assert.equal(chapterEverCompleted(next.chapters.runs, "day-one"), false);
+  assert.equal(next.chapters.runs["day-one@1"].status, "not-started");
+  assert.equal(next.chapters.runs["day-one@2"].currentPageId, "cover");
+  assert.equal(next.chapters.runs["day-one@2"].answers.length, 0);
+
+  // Reset, not deleted. `mergeServerState` merges runs as a union with the
+  // server's copy and keeps whichever has the later `updatedAt`, so a deleted
+  // run comes straight back on the next sync. A reset one carries a fresh
+  // timestamp and wins.
+  assert.ok(next.chapters.runs["day-one@2"], "the run must still exist");
+  assert.equal(next.chapters.runs["day-one@2"].updatedAt, "2026-09-07T00:00:00.000Z");
+
+  // Another chapter is not touched, and neither is what the run wrote. Running
+  // day one again must not hand him a second character.
+  assert.equal(next.chapters.runs["week-setup@1"].status, "completed");
+  assert.deepEqual(next.habits.definitions, state.habits.definitions);
+
+  // And the Workshop offers it.
+  const editor = readFileSync("app/os/admin/chapter-editor.tsx", "utf8");
+  assert.match(editor, /async function runChapterAgain\(source: ChapterDraft\)/);
+  assert.match(editor, /resetChapterRuns\(state, id, source\.chapter\.pages\[0\]\?\.id\)/);
+  assert.match(editor, /className="os-admin-preview-rerun"/);
+});

@@ -5,7 +5,7 @@ import { PageLayout } from "../app-session";
 import { ButtonRewardBackdrop, CreativeButton } from "../button-engine";
 import { BUTTON_STYLE_DEFINITIONS, BUTTON_STYLE_IDS, type ButtonStyleId } from "../button-engine-model.js";
 import { ChapterPlayer } from "../chapters/chapter-player";
-import { chapterRunId, createChapterRun } from "../chapters/chapter-model.js";
+import { chapterRunId, createChapterRun, resetChapterRuns } from "../chapters/chapter-model.js";
 import { publishedChapters } from "../chapters/registry";
 import {
   announceChapterPublication,
@@ -386,6 +386,29 @@ export function ChapterEditor() {
     setDraft(structuredClone(next)); setActiveKind(kind); setSelectedPage(0); setPreviewRun(createChapterRun(definition)); setSaveState(kind === "draft" ? "Saved on this device" : kind === "starter" ? "Starter preview" : "Published preview"); setView("workshop");
   }
 
+  /**
+   * Offer this chapter again, as if it had never been answered.
+   *
+   * A setup chapter is shown until it has been answered once, which is right
+   * for living with the App and useless for building it: to see day one again
+   * he would have to clear the whole device. Sai: "add a feature to rerun the
+   * chapter, in workshop ... so that if i want to try and re run the chapter
+   * on the splashscreen i could."
+   *
+   * Only the run is reset. What a completed run wrote — the habit, the goal,
+   * the phase, the week's record — is his real data and stays where it is, so
+   * running day one again does not give him a second character.
+   */
+  async function runChapterAgain(source: ChapterDraft) {
+    const id = source.chapter.id;
+    if (!window.confirm(`Offer “${source.chapter.title}” again on this device?`)) return;
+    const state = await loadCircleState();
+    await saveCircleState(
+      resetChapterRuns(state, id, source.chapter.pages[0]?.id),
+    );
+    setPublishState(`“${source.chapter.title}” will be offered again. Open the OS to see it.`);
+  }
+
   async function newDraft() { const next = createChapterDraft(); await persistDraft(next); openWorkshop(next, "draft"); }
   async function createFromStarter(source: ChapterDraft) { const next = createFirstUseChapterDraft(source.appSpaces[0]); next.chapter.theme = source.chapter.theme; await persistDraft(next); openWorkshop(next, "draft"); }
   async function newPublishedVersion(source: ChapterDraft) { const next = createNextVersionDraft(source); await persistDraft(next); openWorkshop(next, "draft"); }
@@ -538,6 +561,7 @@ export function ChapterEditor() {
           {activeKind === "draft" ? <button className="os-admin-add-page-preview" type="button" onClick={addPage}><span aria-hidden="true">+</span><strong>Add page</strong></button> : null}
 
           {activeKind !== "draft" ? <button className="os-admin-preview-use" type="button" onClick={() => editChapter(draft, activeKind)}>Edit this chapter</button> : null}
+          <button className="os-admin-preview-rerun" type="button" onClick={() => runChapterAgain(draft)}>Run it again on this device</button>
 
           {activeKind === "draft" ? <>
             <details className="os-admin-panel"><summary>Chapter settings</summary><div className="os-admin-fields two">

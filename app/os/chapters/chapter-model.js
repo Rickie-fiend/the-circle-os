@@ -328,3 +328,50 @@ export function deferChapterRun(run, at = now()) {
     updatedAt: at,
   };
 }
+
+/**
+ * Offer a chapter again, as if it had never been answered.
+ *
+ * A setup chapter is offered until it has been answered once, which is right
+ * for the person living with the App and wrong for the person building it: to
+ * see day one again he would have to clear the whole device. Sai: "add a
+ * feature to rerun the chapter, in workshop ... so that if i want to try and
+ * re run the chapter on the splashscreen i could."
+ *
+ * The run is reset rather than deleted, and that is not a detail. `mergeServerState`
+ * merges runs as a union with the server's copy and keeps whichever has the
+ * later `updatedAt`, so a locally deleted run simply comes back on the next
+ * sync — which is exactly what happened the first time this was written as a
+ * delete. A reset run carries a fresh timestamp, so it wins the merge and the
+ * gates see a chapter that has not been completed.
+ *
+ * Only the run is reset. What a completed run wrote — the habit, the goal, the
+ * phase, the week's record — is his real data and is left where it is, so
+ * running day one again does not hand him a second character.
+ */
+export function resetChapterRuns(state, chapterId, firstPageId, at = now()) {
+  const id = typeof chapterId === "string" ? chapterId.trim() : "";
+  if (!id) return state;
+  const prefix = `${id}@`;
+  const runs = state?.chapters?.runs || {};
+  const matching = Object.keys(runs).filter((runId) => runId.startsWith(prefix));
+  if (!matching.length) return state;
+  const reset = { ...runs };
+  for (const runId of matching) {
+    const page = firstPageId || runs[runId]?.currentPageId || "";
+    reset[runId] = {
+      ...runs[runId],
+      status: "not-started",
+      answers: [],
+      currentPageId: page,
+      furthestPageId: page,
+      startedAt: null,
+      completedAt: null,
+      deferCount: 0,
+      deferredAt: null,
+      dismissedAt: null,
+      updatedAt: at,
+    };
+  }
+  return { ...state, chapters: { ...state.chapters, runs: reset } };
+}

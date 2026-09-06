@@ -8362,6 +8362,16 @@
   display: none;
 }
 
+/* Offer this chapter again on this device. A builder's control, so it is quiet
+   and it says what it touches. */
+.circle-os .os-admin-preview-rerun {
+  background: transparent;
+  border: 1px solid rgb(241 239 232 / 0.18);
+  color: rgb(241 239 232 / 0.72);
+  margin-top: 10px;
+  width: 100%;
+}
+
 .circle-os .os-admin-preview-use {
   background: var(--c-orange);
   border: 0;

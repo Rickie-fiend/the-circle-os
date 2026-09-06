@@ -14,6 +14,13 @@ export function chapterEverCompleted(
 
 export function deferChapterRun(run: ChapterRun, at?: string): ChapterRun;
 
+export function resetChapterRuns<T>(
+  state: T,
+  chapterId: string,
+  firstPageId?: string,
+  at?: string,
+): T;
+
 export function createChapterRun(
   chapter: ChapterDefinition,
   seedAnswers?: ChapterAnswer[],
