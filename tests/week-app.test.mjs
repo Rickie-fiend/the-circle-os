@@ -418,8 +418,16 @@ test("a week's goal is ticked in the list that leads the Page", () => {
   assert.match(list, /disabled=\{!goal\.text\.trim\(\)\}/);
   // Done reads by receding rather than changing colour.
   assert.match(list, /goal\.done \? " is-done" : ""/);
-  // And an empty week says what the space is for.
-  assert.match(list, /os-week-goal-empty/);
+  // And an empty week offers the one act that matters rather than the ghost of
+  // a field. Sai: "Its better if the default state not even show whats the week
+  // for, and add goal button would be in bordered box."
+  assert.doesNotMatch(list, /os-week-goal-empty/);
+  assert.match(list, /os-week-goal-add-box/);
+  assert.match(list, /onClick=\{\(\) => addGoalToWeek\(logWeekKey\)\}/);
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  assert.match(css, /os-week-goal-add-box \{[\s\S]*?border: 2px dotted/);
+  // And the review key stands on a leg, or its colours are a flat rectangle.
+  assert.match(css, /os-week-review-open \{\s+\/\*[\s\S]*?--os-key-leg: var\(--os-key-leg-orange\)/);
 });
 
 // Sai: "the main goal title and steps be different and clear enough to see as

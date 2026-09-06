@@ -4988,6 +4988,13 @@
 /* An orange key with a dark label, standing on its leg like every other key in
  * the App. Sai: "with a 3d orange button with dark label." It is the one act on
  * this Page that is not planning, so it is the only thing drawn as a key. */
+.circle-os .os-week-review-open {
+  /* The leg is what makes a key a key. Without it the colours are a flat
+     rectangle. Sai: "Review now button should be in the footer and lifted 3d
+     button." */
+  --os-key-leg: var(--os-key-leg-orange);
+}
+
 .circle-os .os-week-review-open.os-creative-button {
   background: var(--c-orange);
   border-color: var(--c-orange-900);
@@ -5132,14 +5139,31 @@
   color: var(--c-warm-50);
 }
 
-/* Nothing set for the week yet. The way to set one is the header, so this only
- * has to say what the empty space is for. */
-.circle-os .os-week-goal-empty {
-  color: rgb(241 239 232 / 0.34);
+/* Nothing set for the week yet, so the space holds the way to set one. The same
+ * bordered box Routine offers a new task in, in the App's own colour. */
+.circle-os .os-week-goal-add-box {
+  align-items: center;
+  background: rgb(223 100 45 / 0.08);
+  border: 2px dotted var(--c-orange-600);
+  border-radius: var(--r-lg);
+  color: var(--c-orange);
+  cursor: pointer;
+  display: flex;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  gap: 0.55rem;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  min-height: var(--touch-min);
+  padding: 0.9rem 1rem;
+  width: 100%;
+}
+
+.circle-os .os-week-goal-add-box span {
   font-size: var(--text-lg);
-  font-weight: 640;
-  letter-spacing: -0.015em;
-  margin: 0;
+  font-weight: 400;
+  line-height: 1;
 }
 
 /* What this day asks of the week: one bordered group, so it reads as belonging

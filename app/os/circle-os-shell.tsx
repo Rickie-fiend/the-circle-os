@@ -4611,7 +4611,20 @@ export function TodayExperience() {
                     </div>
                   ))
                 ) : (
-                  <p className="os-week-goal-empty">What is this week for?</p>
+                  /* No goal yet, so the Page offers the one act that matters
+                   * rather than the ghost of a field. Sai: "Its better if the
+                   * default state not even show whats the week for, and add
+                   * goal button would be in bordered box, act exactly like the
+                   * add goal button." It is the header's action, in the space
+                   * the goals will fill. */
+                  <button
+                    className="os-week-goal-add-box"
+                    onClick={() => addGoalToWeek(logWeekKey)}
+                    type="button"
+                  >
+                    <span aria-hidden="true">+</span>
+                    Add goal
+                  </button>
                 )}
               </div>
               <div className="os-page-sub os-week-day-body">
