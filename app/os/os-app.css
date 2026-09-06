@@ -3488,6 +3488,12 @@
   position: relative;
 }
 
+/* The clock hand, on the row it belongs to.
+ *
+ * No `top` from script and no transition. It used to crawl down the hour on a
+ * thirty-second linear transition, which is the movement Sai could not stop
+ * noticing; now it points at the hour and stays there until the hour changes,
+ * and it is in place in the first paint because nothing has to measure it. */
 .circle-os .os-current-time {
   background: var(--c-orange);
   clip-path: polygon(0 0, 100% 50%, 0 100%);
@@ -3495,7 +3501,7 @@
   left: -14px;
   pointer-events: none;
   position: absolute;
-  transition: top 30s linear;
+  top: 50%;
   transform: translateY(-50%);
   width: 8px;
   z-index: 2;

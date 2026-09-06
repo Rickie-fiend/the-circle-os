@@ -44,3 +44,47 @@ test("the timeline does not scroll inside its own body", () => {
   assert.doesNotMatch(bodyRule, /overflow/);
   assert.doesNotMatch(timelineRule, /overflow/);
 });
+
+// Sai: "can you fix the clock on the log app. the indicator is always moving
+// and it did not seem quick ... the pointer is never there to indicate, it
+// took a while to load and to point at its time. it better be ready when the
+// log app is loaded. and feel like its simple as it should be."
+test("the clock hand is drawn on its row, not measured onto the timeline", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const css = readFileSync("app/os/os-app.css", "utf8");
+
+  // It is a child of the row that owns the hour, rendered with it. Nothing to
+  // measure means nothing to arrive late: the hand is in the same paint as the
+  // rows rather than in a second one after an effect has run.
+  assert.match(
+    shell,
+    /\{isCurrentHour \? \(\s*<span aria-label="Current time" className="os-current-time" \/>/,
+  );
+
+  // The measuring apparatus is gone, all of it. Matched against the code
+  // rather than the file, so the comment explaining the removal can keep
+  // naming what was removed.
+  const code = shell
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+  assert.doesNotMatch(code, /markerTop/);
+  assert.doesNotMatch(code, /liveMarkerTop/);
+  assert.doesNotMatch(code, /timelineRef/);
+  assert.doesNotMatch(code, /liveHourProgress/);
+
+  // Placed by CSS, and not creeping. The thirty-second linear transition on
+  // `top` is what made it always moving.
+  const hand = css.slice(
+    css.indexOf(".circle-os .os-current-time {"),
+    css.indexOf(".circle-os .os-current-time::after"),
+  );
+  assert.match(hand, /position: absolute;\s+top: 50%;/);
+  assert.doesNotMatch(hand, /transition/);
+
+  // And the row it hangs on is the positioning context, or it would fly to the
+  // top of the timeline.
+  assert.match(
+    css,
+    /\.circle-os \.os-timeline article \{[\s\S]*?position: relative;/,
+  );
+});

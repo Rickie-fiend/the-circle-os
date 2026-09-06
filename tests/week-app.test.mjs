@@ -437,7 +437,11 @@ test("a week's goal is ticked in the list that leads the Page", () => {
   );
   assert.match(add, /addGoalToWeek\(logWeekKey\)/);
   assert.match(add, /"Add the goal for the week"/);
-  assert.match(add, /Add a step for \$\{logChosenDay\.title/);
+  // A step belongs to a goal, not to the day it is written on — the day is
+  // already the Page. Sai: "rather than 'add a step for sunday', to 'add a
+  // step for a goal'."
+  assert.match(add, /"Add a step toward a goal"/);
+  assert.doesNotMatch(add, /Add a step for \$\{logChosenDay/);
   // And the review key stands on a leg, or its colours are a flat rectangle.
   assert.match(css, /os-week-review-open \{\s+\/\*[\s\S]*?--os-key-leg: var\(--os-key-leg-orange\)/);
 });

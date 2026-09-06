@@ -449,27 +449,6 @@ function fitToVisibleWindow(sheet: HTMLElement | null) {
  * on login, the clock doesnt even show." With only this hour to go on it sits
  * inside that row instead, which is the same answer to within a row's height.
  */
-function markerTop(
-  timeline: HTMLElement,
-  hour: number,
-  progress: number,
-): number | null {
-  const row = (at: number) =>
-    timeline.querySelector<HTMLElement>(`[data-log-hour="${at}"] .os-time-range`);
-  const current = row(hour);
-  if (!current) return null;
-  const timelineRect = timeline.getBoundingClientRect();
-  const currentRect = current.getBoundingClientRect();
-  const offset = (rect: DOMRect) =>
-    rect.top - timelineRect.top + timeline.scrollTop;
-  const currentCenter = offset(currentRect) + currentRect.height / 2;
-  const next = row(hour + 1);
-  if (!next) return currentCenter + currentRect.height * (progress - 0.5);
-  const nextRect = next.getBoundingClientRect();
-  const nextCenter = offset(nextRect) + nextRect.height / 2;
-  return currentCenter + (nextCenter - currentCenter) * progress;
-}
-
 function subscribeToClient() {
   return () => undefined;
 }
@@ -1752,8 +1731,6 @@ export function TodayExperience() {
   const [dateLabel, setDateLabel] = useState("");
   const [greeting, setGreeting] = useState("Hello.");
   const [liveNow, setLiveNow] = useState(() => new Date());
-  const [liveMarkerTop, setLiveMarkerTop] = useState<number | null>(null);
-  const timelineRef = useRef<HTMLDivElement>(null);
   const { publications } = useChapterPublications(ready);
   const profileSparkChapters = useMemo(() => {
     const profileId = state.ai.profileId || "local";
@@ -2074,48 +2051,25 @@ export function TodayExperience() {
     liveNow.getHours() < CIRCLE_DAY_START_HOUR
       ? liveNow.getHours() + 24
       : liveNow.getHours();
-  const liveHourProgress =
-    (liveNow.getMinutes() * 60 + liveNow.getSeconds()) / 3600;
-
-  // Where the current-time line sits, measured from the rendered rows.
-  //
-  // Two things made this arrive late. It ran in an effect, so the Log painted
-  // once without the marker and then again with it. And `liveHourProgress`
-  // changes every time the clock ticks, so having it in the dependency list
-  // tore down the ResizeObserver and built a new one every thirty seconds,
-  // re-measuring the whole timeline each time for a sub-pixel move.
-  //
-  // The progress is read from a ref now, so the observer is created once for a
-  // given set of rows, and the measurement runs before paint.
-  const liveHourProgressRef = useRef(liveHourProgress);
-
-  useLayoutEffect(() => {
-    const timeline = timelineRef.current;
-    if (!timeline) return;
-
-    const updateMarker = () => {
-      setLiveMarkerTop(markerTop(timeline, liveClockHour, liveHourProgressRef.current));
-    };
-
-    updateMarker();
-    const observer = new ResizeObserver(updateMarker);
-    observer.observe(timeline);
-    window.addEventListener("resize", updateMarker);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateMarker);
-    };
-  }, [liveClockHour, logEndHour, logStartHour]);
-
-  // The clock still moves the marker; it just no longer rebuilds the observer
-  // to do it.
-  useEffect(() => {
-    liveHourProgressRef.current = liveHourProgress;
-    const timeline = timelineRef.current;
-    if (!timeline) return;
-    const top = markerTop(timeline, liveClockHour, liveHourProgress);
-    if (top !== null) setLiveMarkerTop(top);
-  }, [liveClockHour, liveHourProgress]);
+  /* The clock hand is drawn, not measured.
+   *
+   * It used to be an absolutely positioned line whose `top` was measured off
+   * the rendered rows in an effect and held in state. That meant the Log
+   * painted once without it and again with it — so the hand was missing for
+   * the moment he most wants it. Sai: "when i open the app just to log, i
+   * normally scroll to the log and seach for what time currently is. the
+   * pointer is never there to indicate, it took a while to load and to point
+   * at its time. it better be ready when the log app is loaded."
+   *
+   * It also carried `transition: top 30s linear` and a `liveHourProgress` that
+   * ticked with the seconds, so it crept down the hour forever — Sai: "the
+   * indicator is always moving and it did not seem quick."
+   *
+   * The row already knows whether it is the current hour. So the hand is a
+   * child of that row, placed by CSS: correct in the first paint, with no
+   * measurement, no observer, no state, and nothing to re-render on a tick. It
+   * marks the hour, which is the thing the Log is written in.
+   */
 
   /**
    * A sheet he put down today.
@@ -4425,14 +4379,7 @@ export function TodayExperience() {
               placement="content-flow"
               theme="dark"
             >
-              <div className="os-timeline" ref={timelineRef}>
-            {liveMarkerTop !== null ? (
-              <span
-                aria-label="Current time"
-                className="os-current-time"
-                style={{ top: `${liveMarkerTop}px` }}
-              />
-            ) : null}
+              <div className="os-timeline">
             {logStartHour > CIRCLE_DAY_START_HOUR ? (
               <button
                 className="os-expand-hour"
@@ -4470,6 +4417,9 @@ export function TodayExperience() {
                   data-log-hour={hour}
                   key={hour}
                 >
+                  {isCurrentHour ? (
+                    <span aria-label="Current time" className="os-current-time" />
+                  ) : null}
                   <div className="os-time-range">
                     <strong>{slotStart}</strong>
                   </div>
@@ -4843,8 +4793,13 @@ export function TodayExperience() {
                     type="button"
                   >
                     <span aria-hidden="true">+</span>
+                    {/* A step belongs to a goal, not to a day. The day is
+                        already the Page it is being written on, so naming it
+                        here said the obvious twice and left the thing the step
+                        is actually for unsaid. Sai: "rather than 'add a step
+                        for sunday', to 'add a step for a goal'." */}
                     {chosenWeekGoals.length
-                      ? `Add a step for ${logChosenDay.title || logChosenDay.name}`
+                      ? "Add a step toward a goal"
                       : "Add the goal for the week"}
                   </button>
                 </div>
