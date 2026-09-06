@@ -263,15 +263,15 @@ test("a key knows whether it rebounds or latches", () => {
   assert.match(engine, /if \(release === "rebound"\) dispatch\("release"\)/);
 
   // Send and every toggle latch.
-  assert.match(shell, /release="latch"\s*\n\s*styleId=\{THOUGHT_BUTTON_STYLE\}/);
+  assert.match(shell, /release="latch"\s+styleId=\{THOUGHT_BUTTON_STYLE\}/);
   // Counted against every tick rather than against a fixed number: a tick added
   // later has to latch too, and the test should say that rather than say "4".
   const habitKeys = shell.match(/role="habit"/g) ?? [];
-  const habitLatches = shell.match(/release="latch"\n\s*role="habit"/g) ?? [];
+  const habitLatches = shell.match(/release="latch"\s+role="habit"/g) ?? [];
   assert.ok(habitKeys.length > 0);
   assert.equal(habitLatches.length, habitKeys.length, "every toggle should latch");
   const protocol = readFileSync("app/os/protocol-page.tsx", "utf8");
-  assert.match(protocol, /release="latch"\n\s*role="habit"/);
+  assert.match(protocol, /release="latch"\s+role="habit"/);
 });
 
 // The press finishes as a movement before anything happens because of it.

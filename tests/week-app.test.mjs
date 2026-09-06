@@ -609,3 +609,42 @@ test("the day's log folds away, and says how much is behind it", () => {
   assert.match(summary, /min-height: var\(--touch-min\)/, "a real target to tap");
   assert.match(summary, /list-style: none/);
 });
+
+// Sai: "Remove the line. remove the gap. I wanted the forehead space to be
+// where the standard is suppose to relative with review day."
+test("with no goal the day stands at the forehead, with nothing above it", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+
+  // The rule and the space above the day separate two sessions. With no goal
+  // there is only one session, so they separate the day from nothing — and
+  // push it a rule's width below where a Main text belongs.
+  assert.match(
+    css,
+    /\.os-week-goals:empty \+ \.os-week-day-body \{\s+border-top: 0;\s+padding-top: 0;/,
+  );
+
+  // And they come back the moment a goal is written above it.
+  assert.match(
+    css,
+    /\.circle-os \.os-week-day-body \{[\s\S]*?border-top: 1px solid/,
+  );
+});
+
+// A closed fold that was not closing. `display: grid` on a <details> defeats
+// the native hiding of its closed content, so the log was laid out anyway and
+// stood in the band between The day and the key beneath it.
+test("the day's log is actually folded away when it is closed", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const fold = css.slice(
+    css.indexOf(".circle-os .os-week-day-summary {"),
+    css.indexOf(".circle-os .os-week-day-summary > summary {"),
+  );
+  assert.doesNotMatch(fold, /display: grid/);
+  assert.match(fold, /display: block/);
+
+  // The spacing moves onto the summary, where it exists only while it is open.
+  assert.match(
+    css,
+    /\.os-week-day-summary\[open\] > summary \{\s+margin-bottom: var\(--os-group-gap\)/,
+  );
+});

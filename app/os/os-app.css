@@ -5099,6 +5099,18 @@
   padding-top: var(--os-group-gap);
 }
 
+/* Nothing set for the week, so there are not two sessions to separate — only
+ * the day. The rule and the space above it were dividing the day from nothing,
+ * and pushing it a rule's width below where a Main text belongs. Sai: "Remove
+ * the line. remove the gap. I wanted the forehead space to be where the
+ * standard is suppose to relative with review day." Without them the day sits
+ * at the forehead, exactly where every other App Box puts its Main text, and
+ * the separation returns the moment a goal is written above it. */
+.circle-os .os-week-goals:empty + .os-week-day-body {
+  border-top: 0;
+  padding-top: 0;
+}
+
 /* The day and its date are one thing. */
 .circle-os .os-week-day-head {
   display: grid;
@@ -5262,8 +5274,11 @@
 /* The day's log, folded. Its head is the one row always on the Page, and it
  * says how much is behind it so opening is a decision rather than a guess. */
 .circle-os .os-week-day-summary {
-  display: grid;
-  gap: var(--os-group-gap);
+  display: block;
+}
+
+.circle-os .os-week-day-summary[open] > summary {
+  margin-bottom: var(--os-group-gap);
 }
 
 .circle-os .os-week-day-summary > summary {
@@ -5749,19 +5764,33 @@
  * pictographs and no colour scale — a week was fed or it was not. */
 .circle-os .vision-four-app {
   background: var(--c-neutral-950);
+  border: 1px solid rgb(241 239 232 / 0.08);
   border-radius: var(--r-box);
   color: var(--c-warm-50);
-  min-height: var(--os-app-box-min-height);
-  padding:
-    var(--os-app-box-padding-top)
-    var(--os-app-box-padding-x)
-    var(--os-app-box-padding-bottom);
+}
+
+/* The one thing it says out loud, in the Main position under the forehead. */
+.circle-os .vision-four-app h2 {
+  font-size: var(--text-2xl);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+  margin: 0;
 }
 
 .circle-os .vision-four-rows {
   display: grid;
   gap: 4px;
-  margin-top: var(--os-label-gap);
+}
+
+/* How far back the picture reaches. Quiet: it is a caption on the record, not
+   a claim about it. */
+.circle-os .vision-four-window {
+  color: rgb(241 239 232 / 0.42);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0;
 }
 
 /* The name and its count on one line, the weeks on their own beneath it.

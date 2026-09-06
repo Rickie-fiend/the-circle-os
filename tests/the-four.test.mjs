@@ -134,3 +134,32 @@ test("the Page reads the record rather than keeping its own", () => {
   assert.match(page, /has never been fed\./);
   assert.match(page, /has not been fed in \$\{row\.weeksSince\} weeks\./);
 });
+
+// Sai: "And why is this not the app box standard?"
+test("The Four is an App Box, not something shaped like one", () => {
+  const page = readFileSync("app/os/mirror/page.tsx", "utf8");
+  const css = readFileSync("app/os/os-app.css", "utf8");
+
+  // The real anatomy, so the forehead, the Main position and the footer are
+  // the App's own rather than a margin that imitates them.
+  const at = page.indexOf('className="vision-four-app"');
+  const box = page.slice(at, page.indexOf("</PageLayout>", at));
+  assert.match(page, /<PageLayout\s+className="vision-four-app"/);
+  assert.match(box, /headerLeft=\{<p className="os-card-label">The Four<\/p>\}/);
+  assert.match(box, /<div className="os-page-main">\s*<h2>/);
+  assert.match(box, /className="os-page-sub vision-four-rows"/);
+  assert.match(box, /vision-four-window/);
+
+  // The box no longer carries a hand-rolled copy of the box's own shape.
+  const style = css.slice(
+    css.indexOf(".circle-os .vision-four-app {"),
+    css.indexOf(".circle-os .vision-four-app h2 {"),
+  );
+  assert.doesNotMatch(style, /min-height/);
+  assert.doesNotMatch(style, /padding:/);
+  assert.doesNotMatch(css, /\.vision-four-rows \{[\s\S]*?margin-top: var\(--os-label-gap\)/);
+
+  // And the sentence it says out loud lives in the box, said once. It used to
+  // sit outside it under a second copy of the App's own label.
+  assert.doesNotMatch(page, /<p className="os-eyebrow">The Four<\/p>/);
+});

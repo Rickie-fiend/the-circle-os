@@ -1121,20 +1121,33 @@ export default function CircleOSMirror() {
           * It says one thing out loud, and it is the part that has gone
           * hungry. Nothing here is a score: every filled week is a week he
           * himself said was fed, and nothing ever subtracts. */}
-        <header className="mirror-intro between-intro">
-          <div>
-            <p className="os-eyebrow">The Four</p>
-            <h1>{starved ? starvedLine(starved) : "Four parts of a life."}</h1>
-            <p className="profile-updated">
-              {DIMENSION_WINDOW_WEEKS} weeks · one square a week
-            </p>
-          </div>
-        </header>
-
         <section className="vision-four-session" aria-label="The Four">
-          <article className="vision-four-app">
-            <p className="os-card-label">The Four</p>
-            <div className="vision-four-rows">
+          {/* An App Box, not something shaped like one.
+            *
+            * This was a hand-rolled article with the box's min-height and a
+            * margin where the forehead goes, so its rows floated in whatever
+            * space the height left over and the sentence it says out loud sat
+            * outside the box entirely, under a second copy of its own label.
+            * Sai: "And why is this not the app box standard?"
+            *
+            * On the standard anatomy it reads the way every App does: the
+            * label, then the one thing it has to say in the Main position
+            * under the forehead, then the evidence for it underneath, then how
+            * far back the picture reaches. */}
+          <PageLayout
+            className="vision-four-app"
+            footer={
+              <p className="vision-four-window">
+                {DIMENSION_WINDOW_WEEKS} weeks · one square a week
+              </p>
+            }
+            headerLeft={<p className="os-card-label">The Four</p>}
+            theme="dark"
+          >
+            <div className="os-page-main">
+              <h2>{starved ? starvedLine(starved) : "Four parts of a life."}</h2>
+            </div>
+            <div className="os-page-sub vision-four-rows">
               {dimensions.map((row) => {
                 const open = openDimension === row.dimension;
                 return (
@@ -1195,7 +1208,7 @@ export default function CircleOSMirror() {
                 );
               })}
             </div>
-          </article>
+          </PageLayout>
         </section>
 
         <section
