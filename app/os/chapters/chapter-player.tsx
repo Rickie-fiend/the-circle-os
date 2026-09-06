@@ -86,12 +86,15 @@ function EditableCopy({
   className,
   label,
   onChange,
+  placeholder,
   rows = 1,
   value,
 }: {
   className: string;
   label: string;
   onChange: (value: string) => void;
+  /** What the empty field says. Without it a blank line is nothing to tap. */
+  placeholder?: string;
   rows?: number;
   value: string;
 }) {
@@ -114,6 +117,7 @@ function EditableCopy({
           input.setSelectionRange(start, end);
         });
       }}
+      placeholder={placeholder}
       ref={ref}
       rows={rows}
       value={value}
@@ -160,7 +164,7 @@ function ChapterPageView({
   idlePlacement?: AppPagePlacement;
   hideIdleHeading?: boolean;
   completionReady?: boolean;
-  onEdit?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
+  onEdit?: (pageId: string, field: "title" | "body" | "question" | "why", value: string) => void;
 }) {
   const required = Boolean(page.required);
   const answer = page.answerKey
@@ -326,9 +330,16 @@ function ChapterPageView({
   let subContent: ReactNode = (
     <>
       {onEdit ? (
-        <EditableCopy className="sub" label="Edit page subtitle" onChange={(value) => onEdit(page.id, "body", value)} rows={2} value={page.body || ""} />
+        <EditableCopy className="sub" label="Edit page subtitle" onChange={(value) => onEdit(page.id, "body", value)} placeholder="Subtitle" rows={2} value={page.body || ""} />
       ) : body ? <p className="os-chapter-body">{body}</p> : null}
-      {page.why ? <p className="os-chapter-why">{page.why}</p> : null}
+      {/* Why the question is worth answering — the App's own voice, not more
+        * of the question. In the Workshop it is typed in place like every
+        * other line, so it can be written while looking at the Page it lands
+        * on rather than in a field below it. Sai: "why this matters session,
+        * must also be tab to editable." */}
+      {onEdit ? (
+        <EditableCopy className="why" label="Edit why this matters" onChange={(value) => onEdit(page.id, "why", value)} placeholder="Why this matters" rows={2} value={page.why || ""} />
+      ) : page.why ? <p className="os-chapter-why">{page.why}</p> : null}
     </>
   );
   let footer: ReactNode;
@@ -572,7 +583,7 @@ export function ChapterPlayer({
   previewMode?: boolean;
   /** Swiping back off the first page closes the sheet a chapter is shown in. */
   onDismiss?: () => void;
-  onEditPage?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
+  onEditPage?: (pageId: string, field: "title" | "body" | "question" | "why", value: string) => void;
 }) {
   // Validation remains capability-driven even though every valid terminal Page
   // now shares one protected-swipe interaction.

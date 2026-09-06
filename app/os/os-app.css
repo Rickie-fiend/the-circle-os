@@ -1905,18 +1905,36 @@
 /* Why the question is worth answering, beside the field rather than on a Page
  * of its own. Quieter than the question and quieter than the answer: it is
  * there for the first time you meet the question and invisible by the tenth. */
-.circle-os .os-chapter-why {
+/* Why the question is worth answering.
+ *
+ * A shade smaller and dimmer than the body was not enough of a difference to
+ * be worth a separate field. Sai: "if its nothing special from the sub text,
+ * then whats the point of it." It is a different voice — the App teaching,
+ * where the body is the question talking — so it is marked as an aside: set in
+ * from a rule in the App's own colour, the way a note is set off from prose. */
+.circle-os .os-chapter-why,
+.circle-os .os-chapter-inline-copy.why {
+  border-left: 2px solid var(--c-orange);
   color: var(--c-neutral-600);
   font-size: var(--text-sm);
   font-weight: 500;
   line-height: 1.4;
-  margin: 0.5rem 0 0;
+  margin: 0.85rem 0 0;
   max-width: 34ch;
+  padding-left: 0.7rem;
 }
 
 .circle-os .theme-dark .os-chapter-why,
-.circle-os .theme-orange .os-chapter-why {
+.circle-os .theme-dark .os-chapter-inline-copy.why,
+.circle-os .theme-orange .os-chapter-why,
+.circle-os .theme-orange .os-chapter-inline-copy.why {
   color: rgb(255 248 241 / 0.66);
+}
+
+/* On the App's own orange the rule would vanish into the ground. */
+.circle-os .theme-orange .os-chapter-why,
+.circle-os .theme-orange .os-chapter-inline-copy.why {
+  border-left-color: rgb(255 248 241 / 0.45);
 }
 
 .circle-os .os-survey-time {
@@ -7275,6 +7293,13 @@
   line-height: 1.45;
   max-width: 36ch;
   opacity: 0.78;
+}
+
+/* An empty line in the Workshop says what it is, quietly, so there is
+   something to tap. */
+.circle-os .os-chapter-inline-copy::placeholder {
+  color: currentcolor;
+  opacity: 0.32;
 }
 
 .circle-os .os-chapter-inline-copy:focus {

@@ -289,7 +289,7 @@ export function ChapterEditor() {
     updateDraft((next) => { (next.chapter.pages[selectedPage] as unknown as Record<string, unknown>)[key] = value; return next; });
   }
 
-  function editPreviewPage(pageId: string, field: "title" | "body" | "question", value: string) {
+  function editPreviewPage(pageId: string, field: "title" | "body" | "question" | "why", value: string) {
     const index = draft.chapter.pages.findIndex((item) => item.id === pageId);
     if (index < 0) return;
     setSelectedPage(index);
@@ -389,6 +389,26 @@ export function ChapterEditor() {
   async function newDraft() { const next = createChapterDraft(); await persistDraft(next); openWorkshop(next, "draft"); }
   async function createFromStarter(source: ChapterDraft) { const next = createFirstUseChapterDraft(source.appSpaces[0]); next.chapter.theme = source.chapter.theme; await persistDraft(next); openWorkshop(next, "draft"); }
   async function newPublishedVersion(source: ChapterDraft) { const next = createNextVersionDraft(source); await persistDraft(next); openWorkshop(next, "draft"); }
+
+  /**
+   * Open a chapter to work on, whatever kind it is.
+   *
+   * There used to be a button for each mechanism — "Create next version" on a
+   * published chapter, "Use template" on a starter — which asked him to know
+   * how the store works before he could change a sentence. Sai: "why does it
+   * have to be create next version, or use template. it doesnt make sense. we
+   * can just be able to edit or delete."
+   *
+   * The mechanisms are unchanged underneath: a published chapter opens as the
+   * next version of itself and a starter opens as a copy, because a chapter
+   * somebody has already answered cannot change under them. That is the
+   * machine's business. His button says Edit.
+   */
+  async function editChapter(source: ChapterDraft, kind: LibraryKind) {
+    if (kind === "published") return newPublishedVersion(source);
+    if (kind === "starter") return createFromStarter(source);
+    return openWorkshop(source, "draft");
+  }
   async function copyDraft(source: ChapterDraft) { const next = duplicateChapterDraft(source); await persistDraft(next); openWorkshop(next, "draft"); }
 
   async function deleteDraft(source: ChapterDraft) {
@@ -486,19 +506,19 @@ export function ChapterEditor() {
           </div>
           <div className="os-admin-draft-list">
             {libraryGroups.map(({ app, groups }) => (
-              <details className="os-admin-library-app" key={app} open>
+              <details className="os-admin-library-app" key={app}>
                 <summary className="os-admin-library-app-head">
                   <h3>{app === UNASSIGNED_APP ? "No app named" : pageLabel(app)}</h3>
                   <span>{groups.reduce((total, group) => total + group.items.length, 0)}</span>
                 </summary>
                 {groups.map((group) => (
-                  <details className="os-admin-library-group" key={group.classification} open>
+                  <details className="os-admin-library-group" key={group.classification}>
                     <summary className="os-admin-library-group-head">
                       <h4>{group.classification}</h4>
                       <span>{group.items.length}</span>
                     </summary>
                     <div className="os-admin-library-group-items">
-                      {group.items.map(({ draft: item, kind }) => <article key={`${kind}-${item.draftId}`}><button className="os-admin-draft-open" type="button" onClick={() => openWorkshop(item, kind)}><span>{kind === "starter" ? "First-use starter" : kind === "published" ? "Published" : item.workflowStatus} · {item.appSpaces.map(pageLabel).join(", ")}</span><strong>{item.chapter.title}</strong><small>{chapterDraftToPreview(item).pages.length} pages · v{item.chapter.version} · {item.category}</small></button><div className={kind === "draft" ? "three" : ""}><button type="button" onClick={() => kind === "draft" ? openDraftForPublish(item) : openWorkshop(item, kind)}>{kind === "draft" ? "Publish" : "Open"}</button>{kind === "draft" ? <><button type="button" onClick={() => copyDraft(item)}>Duplicate</button><button type="button" onClick={() => deleteDraft(item)}>Delete</button></> : null}{kind === "starter" ? <button type="button" onClick={() => createFromStarter(item)}>Use template</button> : null}{kind === "published" ? <button type="button" onClick={() => newPublishedVersion(item)}>Create next version</button> : null}</div></article>)}
+                      {group.items.map(({ draft: item, kind }) => <article key={`${kind}-${item.draftId}`}><button className="os-admin-draft-open" type="button" onClick={() => openWorkshop(item, kind)}><span>{kind === "starter" ? "First-use starter" : kind === "published" ? "Published" : item.workflowStatus} · {item.appSpaces.map(pageLabel).join(", ")}</span><strong>{item.chapter.title}</strong><small>{chapterDraftToPreview(item).pages.length} pages · v{item.chapter.version} · {item.category}</small></button><div className={kind === "draft" ? "three" : ""}><button type="button" onClick={() => kind === "draft" ? openDraftForPublish(item) : editChapter(item, kind)}>{kind === "draft" ? "Publish" : "Edit"}</button>{kind === "draft" ? <><button type="button" onClick={() => copyDraft(item)}>Duplicate</button><button type="button" onClick={() => deleteDraft(item)}>Delete</button></> : null}</div></article>)}
                     </div>
                   </details>
                 ))}
@@ -517,8 +537,7 @@ export function ChapterEditor() {
           <ChapterPlayer definition={preview} label="Editable chapter preview" onEditPage={activeKind === "draft" ? editPreviewPage : undefined} previewMode run={previewRun} onRunChange={syncPreviewRun} />
           {activeKind === "draft" ? <button className="os-admin-add-page-preview" type="button" onClick={addPage}><span aria-hidden="true">+</span><strong>Add page</strong></button> : null}
 
-          {activeKind === "starter" ? <button className="os-admin-preview-use" type="button" onClick={() => createFromStarter(draft)}>Use this starter</button> : null}
-          {activeKind === "published" ? <button className="os-admin-preview-use" type="button" onClick={() => newPublishedVersion(draft)}>Create next version</button> : null}
+          {activeKind !== "draft" ? <button className="os-admin-preview-use" type="button" onClick={() => editChapter(draft, activeKind)}>Edit this chapter</button> : null}
 
           {activeKind === "draft" ? <>
             <details className="os-admin-panel"><summary>Chapter settings</summary><div className="os-admin-fields two">

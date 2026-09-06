@@ -102,7 +102,15 @@ export function createChapterDraft(now = new Date().toISOString()) {
       app: "thoughts",
       kind: "check-in",
       completion: "swipe",
-      theme: "light",
+      /* The default is the one the App actually uses.
+       *
+       * Every chapter in the ladder — day one, the week's setup, the Sunday
+       * review, the Log's — is dark, because that is what a chapter given the
+       * whole screen looks like here. A blank chapter opened light and had to
+       * be changed every time before it looked like anything in the OS. Sai:
+       * "the preview template must be the same standard we are using default."
+       */
+      theme: "dark",
       title: "Untitled chapter",
       purpose: "Describe what this chapter helps the person understand or do.",
       estimatedMinutes: 3,

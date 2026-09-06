@@ -95,13 +95,24 @@ test("a question can say why it is worth answering, in one line", () => {
   // Drawn beside the field rather than on a Page of its own: a lesson between
   // every question is a lecture, and people skip lectures.
   assert.match(player, /page\.why \? <p className="os-chapter-why">\{page\.why\}<\/p> : null/);
-  assert.match(css, /\.circle-os \.os-chapter-why \{/);
-  // And it is quieter than the question it belongs to.
+  assert.match(css, /\.circle-os \.os-chapter-why,/);
+
+  // A different voice from the question, and marked as one. A shade smaller
+  // and dimmer was not enough to earn a field of its own. Sai: "if its nothing
+  // special from the sub text, then whats the point of it."
   const why = css.slice(
-    css.indexOf(".circle-os .os-chapter-why {"),
+    css.indexOf(".circle-os .os-chapter-why,"),
     css.indexOf(".circle-os .theme-dark .os-chapter-why"),
   );
   assert.match(why, /font-size: var\(--text-sm\)/);
+  assert.match(why, /border-left: 2px solid var\(--c-orange\)/);
+
+  // And typed in place in the Workshop, where the Page it lands on is visible.
+  // Sai: "why this matters session, must also be tab to editable."
+  assert.match(player, /className="why" label="Edit why this matters"/);
+  assert.match(player, /onEdit\(page\.id, "why", value\)/);
+  // An empty line needs something to tap.
+  assert.match(player, /placeholder="Why this matters"/);
 
   // Authorable in the Workshop, and written back out to Markdown.
   const editor = readFileSync("app/os/admin/chapter-editor.tsx", "utf8");
