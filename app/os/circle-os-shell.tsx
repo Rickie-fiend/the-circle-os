@@ -3662,7 +3662,12 @@ export function TodayExperience() {
                                 />
                                 <textarea
                                   aria-label={`When you do it: ${action || "New Habit"}`}
-                                  className="os-habit-cue-edit"
+                                  // The action's own classes, not a copy of
+                                  // its numbers: one sentence over two lines
+                                  // can only stay one sentence if both halves
+                                  // are governed by the same rules, including
+                                  // the narrow-screen size the action takes.
+                                  className="os-extra-mission-copy os-mission-text-edit os-habit-cue-edit"
                                   maxLength={120}
                                   onBlur={() => finishHabitEdit(habit.id)}
                                   onChange={(event) =>

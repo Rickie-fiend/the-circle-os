@@ -1266,7 +1266,8 @@
 
 /* A finished row quiets down rather than changing colour: it stays bone on the
  * orange surface and simply recedes. */
-.circle-os .os-extra-mission.completed .os-mission-text-edit {
+.circle-os .os-extra-mission.completed .os-mission-text-edit,
+.circle-os .os-extra-mission.completed .os-habit-cue-edit {
   opacity: 0.52;
   text-decoration: line-through;
   text-decoration-thickness: 1.5px;
@@ -1403,6 +1404,17 @@
 .circle-os .os-habit-cue-edit::placeholder,
 .circle-os .os-habit-identity-edit::placeholder {
   color: rgb(25 24 19 / 0.3);
+}
+
+/* "Walk mindfully" and "as soon as I leave the house" are one sentence over two
+ * lines. Sai: "It will be 2 lines but must read as one sentence."
+ *
+ * So the anchor wears the action's own classes rather than a copy of its
+ * numbers — size, weight, colour and the narrower size a phone gives it all
+ * follow from one place. All that is left here is to close the gap between
+ * them, so the second line is led like a wrap and not like a new paragraph. */
+.circle-os .os-habit-cue-edit {
+  margin-top: 0;
 }
 
 .circle-os .os-habit-identity-edit::placeholder {

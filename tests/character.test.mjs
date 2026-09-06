@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -128,4 +129,33 @@ test("a habit feeds one part of the character", () => {
   assert.equal(characterDimensionOf(state, "rich"), "");
   // And nothing outside the four sticks.
   assert.equal(setHabitDimension(state, added.id, "wealth").habits.definitions[added.id].dimension, "");
+});
+
+// Sai: "Walk mindfully (and) as soon as i leave the house muse be the same size
+// font and color. It will be 2 lines but must read as one sentence."
+test("a habit's action and its anchor are one sentence", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const css = readFileSync("app/os/os-app.css", "utf8");
+
+  // The anchor wears the action's own classes rather than a copy of its
+  // numbers, so size, weight, colour and the narrower size a phone gives the
+  // action all follow from one place and cannot drift apart.
+  assert.match(
+    shell,
+    /className="os-extra-mission-copy os-mission-text-edit os-habit-cue-edit"/,
+  );
+  const cueAt = css.indexOf(".circle-os .os-habit-cue-edit {");
+  const cue = css.slice(cueAt, css.indexOf("}", cueAt));
+  assert.doesNotMatch(cue, /font-size|color:|font-weight/, "nothing is restated");
+  assert.match(cue, /margin-top: 0;/, "led like a wrap, not a new paragraph");
+
+  // And it is written in the row, not only during setup.
+  assert.match(shell, /changeHabitCue\(habit\.id, event\.target\.value\)/);
+  assert.match(shell, /updateHabitDefinitionDraft\(current, id, \{ cue: text \}\)/);
+
+  // Finishing strikes the whole sentence, not half of it.
+  assert.match(
+    css,
+    /completed \.os-mission-text-edit,\s+\.circle-os \.os-extra-mission\.completed \.os-habit-cue-edit \{/,
+  );
 });
