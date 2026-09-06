@@ -4673,7 +4673,7 @@ export function TodayExperience() {
                           updateState((current) => updateGoal(current, goal.id, value));
                           sizeTextAreaToContent(event.currentTarget);
                         }}
-                        placeholder="What is this week for?"
+                        placeholder="Goal for this week"
                         rows={1}
                         value={goal.text}
                       />
@@ -4772,7 +4772,7 @@ export function TodayExperience() {
                         {steps.map((step) => (
                           <div className="os-week-step" key={step.id}>
                             <textarea
-                              aria-label="Smallest step toward this goal"
+                              aria-label="One step toward this goal"
                               className={`os-week-step-text${step.done ? " is-done" : ""}`}
                               data-inline-editor-id={weekStepEditorId(step.taskId)}
                               maxLength={240}
@@ -4784,7 +4784,7 @@ export function TodayExperience() {
                                 );
                                 sizeTextAreaToContent(event.currentTarget);
                               }}
-                              placeholder="Smallest step you could take now"
+                              placeholder="One step you could take in 2 min"
                               rows={1}
                               value={step.text}
                             />

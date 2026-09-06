@@ -5341,7 +5341,6 @@
 .circle-os .os-week-day-counts {
   display: flex;
   gap: 22px;
-  margin: 0;
 }
 
 .circle-os .os-week-day-counts > div {
@@ -5351,8 +5350,18 @@
   padding: 0;
 }
 
+/* The tally stands off the log.
+ *
+ * What the day held and how much of it there was are two readings, and with
+ * the fold laid out as a block they had nothing between them — the counts ran
+ * straight on from the last hour. Sai: "I want the gap here for the
+ * distinction."
+ *
+ * It is set here rather than on .os-week-day-counts because this rule is the
+ * one that wins: it is a tag more specific and stands later in the file, which
+ * is how the margin put on the class quietly did nothing. */
 .circle-os .os-week-day-summary dl {
-  margin: 0;
+  margin: var(--os-group-gap) 0 0;
 }
 
 

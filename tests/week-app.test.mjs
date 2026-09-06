@@ -648,3 +648,35 @@ test("the day's log is actually folded away when it is closed", () => {
     /\.os-week-day-summary\[open\] > summary \{\s+margin-bottom: var\(--os-group-gap\)/,
   );
 });
+
+// Sai: "I want the gap here for the distinction. Change 'whats this week for?'
+// Placeholder with 'goal for this week', 'Smallest steps you could take now'
+// to 'one step you could take in 2 min for this goal'."
+test("the day's tally stands off its log, and the fields name what goes in them", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const css = readFileSync("app/os/os-app.css", "utf8");
+
+  // What the day held and how much of it there was are two readings. Laid out
+  // as a block the fold had nothing between them.
+  assert.match(
+    css,
+    /\.circle-os \.os-week-day-summary dl \{\s+margin: var\(--os-group-gap\) 0 0;/,
+  );
+  // And only one rule decides it. The class rule is a tag less specific and
+  // stands earlier, so a margin put there is quietly overruled.
+  const counts = css.slice(
+    css.indexOf(".circle-os .os-week-day-counts {"),
+    css.indexOf("}", css.indexOf(".circle-os .os-week-day-counts {")),
+  );
+  assert.doesNotMatch(counts, /margin/);
+
+  // The field names what goes in it rather than asking a question he answered
+  // by tapping Add goal.
+  assert.match(shell, /placeholder="Goal for this week"/);
+  assert.doesNotMatch(shell, /placeholder="What is this week for\?"/);
+
+  // And a step is sized out loud: small enough to start now.
+  assert.match(shell, /placeholder="One step you could take in 2 min"/);
+  assert.match(shell, /aria-label="One step toward this goal"/);
+  assert.doesNotMatch(shell, /Smallest step/);
+});
