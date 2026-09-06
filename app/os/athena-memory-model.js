@@ -810,6 +810,27 @@ function serializeMemoryAlignment(alignment) {
 
 function serializeMemoryPricing(pricing) {
   if (!pricing?.categories?.length) return "Not priced yet.";
+  const fed = (pricing.dimensions || [])
+    .slice()
+    .sort((left, right) => right.hours - left.hours)
+    .map((dimension) => {
+      const change =
+        dimension.changePerDay === null || dimension.changePerDay === 0
+          ? ""
+          : `, ${dimension.changePerDay > 0 ? "up" : "down"} ${Math.abs(dimension.changePerDay)}h a day`;
+      return dimension.fed
+        ? `- ${dimension.label} — ${dimension.hours}h, ${dimension.share}% of directed time, ${dimension.hoursPerRecordedDay}h a day${change}`
+        : `- ${dimension.label} — nothing recorded`;
+    });
+  const outside = (pricing.outside || []).length
+    ? [
+        "",
+        "Outside the four:",
+        ...pricing.outside.map(
+          (item) => `- ${item.label} — ${item.hours}h, ${item.hoursPerRecordedDay}h a day`,
+        ),
+      ]
+    : [];
   const head = `Over ${pricing.recordedDays} recorded days (${pricing.from} to ${pricing.to}), ${pricing.recordedHours} hours logged, about ${pricing.hoursLoggedPerDay} a day. Categories overlap, so shares do not add to 100.`;
   const rows = pricing.categories.map((category) => {
     const change =
@@ -818,7 +839,14 @@ function serializeMemoryPricing(pricing) {
         : `, ${category.changePerDay > 0 ? "up" : "down"} ${Math.abs(category.changePerDay)}h a day`;
     return `- ${category.label} — ${category.hours}h, ${category.share}% of logged time, ${category.hoursPerRecordedDay}h a day, on ${category.daysPresent} of ${pricing.recordedDays} days${change}`;
   });
-  return [head, "", ...rows].join("\n");
+  return [
+    ...(fed.length
+      ? ["Which part of himself he fed:", "", ...fed, ...outside, "", "Where the hours went:", ""]
+      : []),
+    head,
+    "",
+    ...rows,
+  ].join("\n");
 }
 
 const READING_PAGE_TITLES = {
