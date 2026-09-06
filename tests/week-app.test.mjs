@@ -144,7 +144,7 @@ test("the week's goals lead the Page, and each day is planned under them", () =>
   assert.match(page, /chosenWeekGoals\.map/);
   assert.match(shell, /const chosenWeekGoals = weekGoals\(state, logWeekKey\)/);
   assert.doesNotMatch(shell, /chosenDayGoals/);
-  assert.match(page, /toggleGoal\(current, goal\.id\)[\s\S]*?release="latch"/);
+  assert.match(page, /finishWeekGoal\(goal\.id\)[\s\S]*?release="latch"/);
 
   // Opening a goal is in the header, where Routine puts New habit.
   assert.match(page, /headerRight=\{[\s\S]*?addGoalToWeek\(logWeekKey\)/);
@@ -308,7 +308,9 @@ test("a step reads as the priority among Routine's tasks", () => {
     css.indexOf(".circle-os .os-habit-body-session .os-extra-mission-copy::placeholder"),
   );
   assert.match(row, /font-weight: 700/);
-  assert.match(row, /color: var\(--c-ink\)/);
+  // In the Page's own ink, not a darker one. Sai: "the tasks from week goal,
+  // still should be white color text, with dark complete button."
+  assert.match(row, /color: var\(--c-bone\)/);
 });
 
 // Sai: "between the 'Day' and 'week nav bar', add the date, ('August 31') for
@@ -412,7 +414,7 @@ test("a week's goal is ticked in the list that leads the Page", () => {
     shell.indexOf('className="os-page-main os-week-goals"'),
     shell.indexOf("os-week-day-body"),
   );
-  assert.match(list, /toggleGoal\(current, goal\.id\)/);
+  assert.match(list, /finishWeekGoal\(goal\.id\)/);
   assert.match(list, /release="latch"/, "a tick is a state you leave the key in");
   // Nothing to finish until something is written.
   assert.match(list, /disabled=\{!goal\.text\.trim\(\)\}/);
@@ -683,4 +685,67 @@ test("the day's tally stands off its log, and the fields name what goes in them"
   assert.match(shell, /placeholder="One step you could take in 2 min"/);
   assert.match(shell, /aria-label="One step toward this goal"/);
   assert.doesNotMatch(shell, /Smallest step/);
+});
+
+// Sai: "completing the goal would make it disappear after a delay, just like
+// the routine task. i guess we could mark as completed week goal and, save it
+// somewhere. we may flip the week page to show it, thats for later."
+test("a finished week goal leaves the Page, and is kept", async () => {
+  const { createEmptyState } = await import("../app/os/circle-os-model.js");
+  const { addWeekGoal, toggleGoal, updateGoal, weekGoalsDone, weekGoalsOpen } =
+    await import("../app/os/goal-model.js");
+
+  let state = createEmptyState();
+  const opened = addWeekGoal(state, "2026-09-07", "goal-test");
+  state = updateGoal(opened.state, opened.id, "Run the business");
+  assert.equal(weekGoalsOpen(state, "2026-09-07").length, 1);
+  assert.equal(weekGoalsDone(state, "2026-09-07").length, 0);
+
+  state = toggleGoal(state, opened.id, "2026-09-07T10:00:00.000Z");
+  // Gone from what the Page shows.
+  assert.equal(weekGoalsOpen(state, "2026-09-07").length, 0);
+  // And kept, with what it was and when it was finished, for the flip side.
+  const done = weekGoalsDone(state, "2026-09-07");
+  assert.equal(done.length, 1);
+  assert.equal(done[0].text, "Run the business");
+  assert.equal(done[0].completedAt, "2026-09-07T10:00:00.000Z");
+
+  // Unticking puts it back, so a mistap is not a loss.
+  state = toggleGoal(state, opened.id, "2026-09-07T10:00:05.000Z");
+  assert.equal(weekGoalsOpen(state, "2026-09-07").length, 1);
+  assert.equal(weekGoalsDone(state, "2026-09-07").length, 0);
+
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  // It waits before it goes, the same three seconds Routine gives a task, so
+  // every finished thing in the App waits the same amount of time.
+  const finish = shell.slice(
+    shell.indexOf("function finishWeekGoal(id: string) {"),
+    shell.indexOf("function finishTask(id: string) {"),
+  );
+  assert.match(finish, /3_000/);
+  assert.match(finish, /3_340/);
+  assert.match(finish, /setLeavingGoalIds/);
+  // The Page only holds a done goal while it is on its way out.
+  assert.match(
+    shell,
+    /\(goal\) => !goal\.done \|\| leavingGoalIds\.includes\(goal\.id\)/,
+  );
+});
+
+// Sai: "the tasks from week goal, still should be white color text, with dark
+// complete button."
+test("a task that came from a week goal reads in the same ink as the rest", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  const row = css.slice(
+    css.indexOf(".circle-os .os-task-row.from-week .os-extra-mission-copy {"),
+    css.indexOf("}", css.indexOf(".circle-os .os-task-row.from-week .os-extra-mission-copy {")),
+  );
+  assert.match(row, /color: var\(--c-bone\)/);
+  assert.doesNotMatch(row, /var\(--c-ink\)/);
+
+  // The dark tick beside it is what marks where it came from.
+  assert.match(
+    css,
+    /\.os-task-row\.from-week \.os-row-tick-week\.os-creative-button \{\s+background: var\(--c-ink\);\s+border-color: var\(--c-orange\);/,
+  );
 });

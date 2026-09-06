@@ -69,6 +69,10 @@ export function setWeekGoal(
 ): never;
 export function goalById(state: unknown, goalId: string): GoalView | null;
 export function weekGoals(state: unknown, weekKey: string): GoalView[];
+
+export function weekGoalsDone(state: unknown, weekKey: string): GoalView[];
+
+export function weekGoalsOpen(state: unknown, weekKey: string): GoalView[];
 export function addWeekGoal(
   state: unknown,
   weekKey: string,

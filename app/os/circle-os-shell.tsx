@@ -1848,6 +1848,10 @@ export function TodayExperience() {
         window.clearTimeout(fade);
         window.clearTimeout(remove);
       });
+      Object.values(goalExitTimers.current).forEach(({ fade, remove }) => {
+        window.clearTimeout(fade);
+        window.clearTimeout(remove);
+      });
     },
     [],
   );
@@ -2148,6 +2152,10 @@ export function TodayExperience() {
    */
   const weekReviewChapter = getPublishedChapter("week-review");
   const [reviewingWeekOf, setReviewingWeekOf] = useState<string | null>(null);
+  // A ticked goal on its way off the Page, and the timers that carry it there.
+  const [leavingGoalIds, setLeavingGoalIds] = useState<string[]>([]);
+  const [fadingGoalIds, setFadingGoalIds] = useState<string[]>([]);
+  const goalExitTimers = useRef<Record<string, { fade: number; remove: number }>>({});
   /**
    * The review of one week, resumed rather than restarted.
    *
@@ -2357,7 +2365,18 @@ export function TodayExperience() {
     logWeekDays.find((day) => day.dateKey === dateKey) ||
     logWeekDays[0];
 
-  const chosenWeekGoals = weekGoals(state, logWeekKey);
+  /**
+   * The week's goals, and the one just ticked on its way out.
+   *
+   * A finished goal leaves the Page the way a finished task leaves Routine:
+   * it stays put long enough to undo an accidental press, then goes. Sai:
+   * "completing the goal would make it disappear after a delay, just like the
+   * routine task." What it achieved is kept — `toggleGoal` stamps
+   * `completedAt` — and `weekGoalsDone` is what the flip side will read.
+   */
+  const chosenWeekGoals = weekGoals(state, logWeekKey).filter(
+    (goal) => !goal.done || leavingGoalIds.includes(goal.id),
+  );
 
   // A goal and a step both arrive empty and take the cursor, the same way a new
   // habit or task does — writing is the point, so nothing asks twice.
@@ -2609,6 +2628,40 @@ export function TodayExperience() {
     setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
     setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
     updateState((current) => reopenTask(current, id));
+  }
+
+  /**
+   * Tick a week's goal, and let it leave.
+   *
+   * The same three seconds Routine gives a task and a habit, so every finished
+   * thing in the App waits the same amount of time before the row changes.
+   */
+  function finishWeekGoal(id: string) {
+    const goal = state.goals?.items?.[id];
+    const wasDone = goal?.status === "done";
+    updateState((current) => toggleGoal(current, id));
+    const timers = goalExitTimers.current[id];
+    if (timers) {
+      window.clearTimeout(timers.fade);
+      window.clearTimeout(timers.remove);
+      delete goalExitTimers.current[id];
+    }
+    if (wasDone) {
+      // Unticked: it stays, and nothing is leaving.
+      setLeavingGoalIds((ids) => ids.filter((goalId) => goalId !== id));
+      setFadingGoalIds((ids) => ids.filter((goalId) => goalId !== id));
+      return;
+    }
+    setLeavingGoalIds((ids) => [...new Set([...ids, id])]);
+    const fade = window.setTimeout(() => {
+      setFadingGoalIds((ids) => [...new Set([...ids, id])]);
+    }, 3_000);
+    const remove = window.setTimeout(() => {
+      setLeavingGoalIds((ids) => ids.filter((goalId) => goalId !== id));
+      setFadingGoalIds((ids) => ids.filter((goalId) => goalId !== id));
+      delete goalExitTimers.current[id];
+    }, 3_340);
+    goalExitTimers.current[id] = { fade, remove };
   }
 
   function finishTask(id: string) {
@@ -4607,7 +4660,12 @@ export function TodayExperience() {
               <div className="os-page-main os-week-goals">
                 {chosenWeekGoals.length ? (
                   chosenWeekGoals.map((goal) => (
-                    <div className="os-week-goal-head" key={goal.id}>
+                    <div
+                      className={`os-week-goal-head${
+                        leavingGoalIds.includes(goal.id) ? " is-leaving" : ""
+                      }${fadingGoalIds.includes(goal.id) ? " is-fading" : ""}`}
+                      key={goal.id}
+                    >
                       <textarea
                         aria-label="Goal for this week"
                         className={`os-week-goal-text${goal.done ? " is-done" : ""}`}
@@ -4629,7 +4687,7 @@ export function TodayExperience() {
                         className="os-row-tick os-row-tick-habit os-row-tick-week"
                         disabled={!goal.text.trim()}
                         keepMountedOnSuccess
-                        onClick={() => updateState((current) => toggleGoal(current, goal.id))}
+                        onClick={() => finishWeekGoal(goal.id)}
                         release="latch"
                         role="habit"
                         styleId="soft-clay"

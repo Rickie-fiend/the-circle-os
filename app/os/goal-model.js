@@ -179,6 +179,25 @@ export function weekGoalId(weekKey) {
  * are the parents; what makes them real is the steps under them, each landing
  * on a day.
  */
+/**
+ * The week's goals that were finished.
+ *
+ * A completed goal leaves the Week Page — Sai: "completing the goal would make
+ * it disappear after a delay, just like the routine task" — but it is not
+ * thrown away. `toggleGoal` already stamps `completedAt`, so the week keeps
+ * what it actually achieved. Sai: "i guess we could mark as completed week
+ * goal and, save it somewhere. we may flip the week page to show it, thats for
+ * later." This is what that page will read.
+ */
+export function weekGoalsDone(state, weekKey) {
+  return weekGoals(state, weekKey).filter((goal) => goal.done);
+}
+
+/** The week's goals still to do. What the Page shows. */
+export function weekGoalsOpen(state, weekKey) {
+  return weekGoals(state, weekKey).filter((goal) => !goal.done);
+}
+
 export function weekGoals(state, weekKey) {
   const key = cleanId(weekKey);
   if (!key) return [];

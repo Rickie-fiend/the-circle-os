@@ -4946,6 +4946,32 @@
 .circle-os .os-week-goal-head {
   border-bottom: 1px solid rgb(241 239 232 / 0.14);
   padding: 0.7rem 0;
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.22, 0.72, 0.22, 1),
+    min-height 320ms cubic-bezier(0.22, 0.72, 0.22, 1),
+    opacity 300ms ease,
+    padding-top 320ms cubic-bezier(0.22, 0.72, 0.22, 1),
+    transform 320ms cubic-bezier(0.22, 0.72, 0.22, 1);
+}
+
+/* Ticked, and on its way off the Page.
+ *
+ * The same shape Routine's finished task leaves in, and the same three seconds
+ * before it starts, so every finished thing in the App waits the same amount of
+ * time before the row changes. Sai: "completing the goal would make it
+ * disappear after a delay, just like the routine task." */
+.circle-os .os-week-goal-head.is-fading {
+  border-bottom-width: 0;
+  min-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
+  transform: translate3d(0, -3px, 0);
+}
+
+.circle-os .os-week-goal-head.is-fading > * {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .circle-os .os-week-goal-head:last-child {
@@ -6621,17 +6647,24 @@
   /* The Workshop's lines are the chapter's own lines, typed in place. Without
      this the title he is editing is 16px while the same words on the published
      Page are 32, which is most of what made the preview a different thing from
-     the Page. Sai: "the fonts are different, the size are different." */
+     the Page. Sai: "the fonts are different, the size are different."
+
+     Never below the floor, though. iOS zooms the page when a field smaller
+     than 16px takes focus, and lifting these past that is what made the editor
+     jump on every tap. Sai: "when i tap to edit on live editor, it zoomed in."
+     The title is 32px and clears it outright; the body and the why line take
+     the Page's size wherever the Page is 16px or more, and sit at the floor on
+     the narrow screens where it is not. */
   .circle-os textarea.os-chapter-inline-copy.main {
     font-size: var(--os-page-main-font-size) !important;
   }
 
   .circle-os textarea.os-chapter-inline-copy.sub {
-    font-size: clamp(0.88rem, 3.7vw, 1rem) !important;
+    font-size: max(16px, clamp(0.88rem, 3.7vw, 1rem)) !important;
   }
 
   .circle-os textarea.os-chapter-inline-copy.why {
-    font-size: var(--text-sm) !important;
+    font-size: max(16px, var(--text-sm)) !important;
   }
 
   .circle-os .os-info-page .os-session-detail {
@@ -8571,7 +8604,7 @@
  * so it carries the weight of that among the others. Sai: "be bold in routine
  * app over all look, to indicate priority." */
 .circle-os .os-task-row.from-week .os-extra-mission-copy {
-  color: var(--c-ink);
+  color: var(--c-bone);
   font-weight: 700;
 }
 

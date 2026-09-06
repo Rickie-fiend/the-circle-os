@@ -237,3 +237,26 @@ test("a chapter can be offered again without clearing the device", async () => {
   assert.match(editor, /resetChapterRuns\(state, id, source\.chapter\.pages\[0\]\?\.id\)/);
   assert.match(editor, /className="os-admin-preview-rerun"/);
 });
+
+// Sai: "when i tap to edit on live editor, it zoomed in, fix that."
+test("no editable line in the Workshop sits under the zoom floor", () => {
+  const css = readFileSync("app/os/os-app.css", "utf8");
+  // iOS zooms the page when a field smaller than 16px takes focus, which is
+  // what the floor exists to prevent. Lifting these past it to match the Page
+  // is what made the editor jump on every tap, so they are lifted no lower
+  // than the floor itself.
+  assert.match(
+    css,
+    /textarea\.os-chapter-inline-copy\.sub \{\s+font-size: max\(16px,/,
+  );
+  assert.match(
+    css,
+    /textarea\.os-chapter-inline-copy\.why \{\s+font-size: max\(16px,/,
+  );
+  // The title clears the floor outright at the Page's own size, which is the
+  // mismatch that was actually visible.
+  assert.match(
+    css,
+    /textarea\.os-chapter-inline-copy\.main \{\s+font-size: var\(--os-page-main-font-size\) !important;/,
+  );
+});
