@@ -540,6 +540,7 @@ export function ChapterPlayer({
   attentionKey,
   previewMode = false,
   onEditPage,
+  onDismiss,
 }: {
   definition: ChapterDefinition;
   run: ChapterRun;
@@ -569,6 +570,8 @@ export function ChapterPlayer({
   onLongPress?: () => void;
   attentionKey?: string;
   previewMode?: boolean;
+  /** Swiping back off the first page closes the sheet a chapter is shown in. */
+  onDismiss?: () => void;
   onEditPage?: (pageId: string, field: "title" | "body" | "question", value: string) => void;
 }) {
   // Validation remains capability-driven even though every valid terminal Page
@@ -812,6 +815,15 @@ export function ChapterPlayer({
       label={label}
       onLongPress={onLongPress}
       maxIndex={availableIndices.at(-1) ?? currentIndex}
+      /* The way out is the gesture, not a button.
+       *
+       * A Later key in the corner sat on top of the progress the chapter draws
+       * there, and needed explaining. Sai: "to dismiss, swiping right on the
+       * cover page make it up. we dont need complicated later button that
+       * covers the progress." Swiping back off the first page is what going
+       * back already means everywhere else in the OS; here the thing behind
+       * the first page is the App. */
+      onBackwardBoundary={onDismiss}
       onForwardBoundary={
         canExitFinalCompletion
           ? () =>

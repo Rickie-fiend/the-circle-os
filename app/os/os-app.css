@@ -3062,33 +3062,6 @@
   z-index: 90;
 }
 
-/* The way out of a setup sheet.
- *
- * Above the frame, in the corner, quiet enough that answering is still the
- * obvious thing and findable enough that the App is never a locked door.
- * Sai: "allow the splash screen to be dismiss for now." */
-.circle-os .os-splash-later {
-  appearance: none;
-  background: rgb(12 11 10 / 0.55);
-  border: 1px solid rgb(241 239 232 / 0.14);
-  border-radius: 999px;
-  color: rgb(241 239 232 / 0.5);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 0.5rem 0.95rem;
-  position: absolute;
-  right: max(1rem, env(safe-area-inset-right));
-  top: max(1rem, env(safe-area-inset-top));
-  z-index: 2;
-}
-
-.circle-os .os-splash-later:active {
-  color: rgb(241 239 232 / 0.82);
-}
-
 .circle-os .os-splash-frame {
   box-sizing: border-box;
   display: grid;

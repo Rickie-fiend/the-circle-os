@@ -170,18 +170,25 @@ test("the splash is the screen, with one scroll and its own rhythm", () => {
 // Sai: "allow the splash screen to be dismiss for now, it show up a number of
 // times now. so that i have to fill everytime."
 test("a setup sheet can be put down, and comes back tomorrow", () => {
-  // The way out is on the sheet, not buried in the chapter.
-  assert.match(shell, /className="os-splash-later"/);
-  assert.match(css, /\.circle-os \.os-splash-later \{/);
+  // The way out is the gesture, not a key. A Later button in the corner sat on
+  // top of the progress the chapter draws there. Sai: "to dismiss, swiping
+  // right on the cover page make it up. we dont need complicated later button
+  // that covers the progress."
+  assert.doesNotMatch(shell, /os-splash-later/);
+  assert.doesNotMatch(css, /os-splash-later/);
+  assert.match(player, /onBackwardBoundary=\{onDismiss\}/);
 
-  // Every sheet that takes the screen offers it. A sheet with no way past it is
-  // a locked door on the App behind it.
-  for (const label of ["Day one", "Week review", "Week setup", "Log setup"]) {
+  // Every sheet that takes the screen hands its chapter a way out. A sheet
+  // with no way past it is a locked door on the App behind it.
+  for (const label of ["Day one", "Week review", "Week setup"]) {
     const at = shell.indexOf(`label="${label}"`);
     assert.ok(at > 0, `${label} splash is missing`);
-    const opening = shell.slice(at, at + 160);
-    assert.ok(opening.includes("onDismiss="), `${label} has no way out`);
+    const block = shell.slice(at, at + 420);
+    assert.ok(block.includes("onDismiss="), `${label} has no way out`);
   }
+  // The published Log setup stands itself down, through the same gesture.
+  assert.match(shell, /dismissOnBackSwipe/);
+  assert.match(shell, /onDismiss=\{dismissOnBackSwipe \? dismiss : undefined\}/);
 
   // Dated, not permanent: the deferral lapses so the chapter is offered again.
   assert.match(shell, /function splashDeferredToday\(/);

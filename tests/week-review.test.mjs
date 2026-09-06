@@ -223,3 +223,26 @@ test("finishing a review is what writes the week down", () => {
     );
   }
 });
+
+// Sai: "fix that i cannot start the review session in sunday week. i cannot
+// swipe pass the cover screen."
+test("the week's review is resumed, not rebuilt on every render", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const at = shell.indexOf("const weekReviewRun = useMemo(");
+  const memo = shell.slice(at, shell.indexOf("], [reviewingWeekOf", at));
+
+  // A stored sheet is picked up. Building a fresh run on every render while
+  // depending on `state` meant each answer stored the run, changed the state,
+  // re-ran this and handed back a new run on the cover — so every forward
+  // swipe was undone by the save that followed it.
+  assert.match(memo, /const stored = state\.chapters\.runs\[weekReviewRunId\];/);
+  assert.match(memo, /if \(stored\) return stored;/);
+
+  // Keyed by the week it reads, because the review happens again every Sunday
+  // and each week's answers are their own sheet.
+  assert.match(
+    shell,
+    /`\$\{chapterRunId\(weekReviewChapter\)\}:\$\{reviewingWeekOf\}`/,
+  );
+  assert.match(memo, /runId: weekReviewRunId/);
+});

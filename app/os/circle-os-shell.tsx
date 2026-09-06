@@ -464,11 +464,9 @@ function onServer() {
 export function ChapterSplash({
   children,
   label,
-  onDismiss,
 }: {
   children: ReactNode;
   label: string;
-  onDismiss?: () => void;
 }) {
   // The Page behind stops scrolling while this is open.
   //
@@ -505,20 +503,6 @@ export function ChapterSplash({
         ref={sheetRef}
         role="dialog"
       >
-        {onDismiss ? (
-          // The way out. A sheet that owns the whole screen with no way past it
-          // is a door, not an offer, and the App behind it is unreachable until
-          // it is answered. Small and in the corner: the chapter is still the
-          // thing to do, this is only the admission that today might not be the
-          // day. It stands the sheet down until tomorrow rather than for good.
-          <button
-            className="os-splash-later"
-            onClick={onDismiss}
-            type="button"
-          >
-            Later
-          </button>
-        ) : null}
         <div className="os-splash-frame">{children}</div>
       </div>
     </div>,
@@ -533,6 +517,7 @@ export function PublishedChapterDelivery({
   hideIdleHeading = false,
   label,
   onDismissed,
+  dismissOnBackSwipe = false,
   onCompletedReturn,
   onCompleted,
   runId,
@@ -543,6 +528,8 @@ export function PublishedChapterDelivery({
   hideIdleHeading?: boolean;
   label: string;
   onDismissed?: () => void;
+  /** Shown as a sheet: swiping back off the first page stands it down. */
+  dismissOnBackSwipe?: boolean;
   onCompletedReturn?: () => void;
   onCompleted?: (state: CircleState, run: ChapterRun) => CircleState;
   runId?: string;
@@ -603,6 +590,7 @@ export function PublishedChapterDelivery({
       key={activeRunId}
       label={label}
       onBackAppShown={backApp ? dismiss : undefined}
+      onDismiss={dismissOnBackSwipe ? dismiss : undefined}
       onRunChange={saveRun}
       run={run}
     />
@@ -2083,21 +2071,6 @@ export function TodayExperience() {
     return getDateKey(new Date(run.dismissedAt)) === dateKey;
   }
 
-  /**
-   * The published Log setup, put down for the day.
-   *
-   * A delivered chapter has no run of its own until it is played, so the
-   * deferral is written against the run it would create. The same dated stand-
-   * down as the others: it is offered again tomorrow.
-   */
-  function dismissLogSetupSplash() {
-    if (!logSetupPublication) return;
-    const chapter = logSetupPublication.chapter;
-    const id = chapterRunId(chapter);
-    const run = state.chapters.runs[id] || createChapterRun(chapter);
-    deferSplash({ ...run, runId: id }, chapter.session);
-  }
-
   /** Put a sheet down for the rest of the day, keeping what he has answered. */
   function deferSplash(run: ChapterRun | null | undefined, session: string) {
     if (!run) return;
@@ -2174,8 +2147,28 @@ export function TodayExperience() {
    */
   const weekReviewChapter = getPublishedChapter("week-review");
   const [reviewingWeekOf, setReviewingWeekOf] = useState<string | null>(null);
+  /**
+   * The review of one week, resumed rather than restarted.
+   *
+   * This built a fresh run on every render and depended on `state`, so the
+   * moment a page was answered the run was stored, the state changed, the memo
+   * ran again and handed back a brand-new run sitting on the cover. Every
+   * forward swipe was undone by the save that followed it. Sai: "i cannot
+   * start the review session in sunday week. i cannot swipe pass the cover
+   * screen."
+   *
+   * The run is keyed by the week it reads, not just by the chapter's version,
+   * because a review happens again every Sunday and each week's answers are
+   * their own sheet. A stored sheet for this week is picked up where he left
+   * it; a week with none starts fresh.
+   */
+  const weekReviewRunId = weekReviewChapter && reviewingWeekOf
+    ? `${chapterRunId(weekReviewChapter)}:${reviewingWeekOf}`
+    : "";
   const weekReviewRun = useMemo(() => {
     if (!weekReviewChapter || !reviewingWeekOf) return null;
+    const stored = state.chapters.runs[weekReviewRunId];
+    if (stored) return stored;
     // The goal of the week being read is seeded in, so the Page can say what
     // the week was for instead of asking him to remember.
     const goal = weekGoals(state, reviewingWeekOf)[0];
@@ -2193,8 +2186,8 @@ export function TodayExperience() {
           },
         ]
       : [];
-    return createChapterRun(weekReviewChapter, seeds);
-  }, [reviewingWeekOf, state, weekReviewChapter]);
+    return { ...createChapterRun(weekReviewChapter, seeds), runId: weekReviewRunId };
+  }, [reviewingWeekOf, state, weekReviewChapter, weekReviewRunId]);
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
   const habitBuildingRun = useMemo(() => {
@@ -4003,7 +3996,7 @@ export function TodayExperience() {
                                   maxLength={240}
                                   onBlur={() => finishHabitEdit(habit.id)}
                                   onChange={(event) => changeHabit(habit.id, event.target.value)}
-                                  placeholder="New Habit"
+                                  placeholder="Habit"
                                   rows={1}
                                   value={action}
                                 />
@@ -4020,7 +4013,7 @@ export function TodayExperience() {
                                   onChange={(event) =>
                                     changeHabitCue(habit.id, event.target.value)
                                   }
-                                  placeholder="After my morning coffee"
+                                  placeholder="At time / location"
                                   rows={1}
                                   value={habit.cue}
                                 />
@@ -4032,7 +4025,7 @@ export function TodayExperience() {
                                   onChange={(event) =>
                                     changeHabitIdentity(habit.id, event.target.value)
                                   }
-                                  placeholder="I am a reader"
+                                  placeholder="The type of person I want to be"
                                   rows={1}
                                   value={habit.identity}
                                 />
@@ -4250,14 +4243,12 @@ export function TodayExperience() {
         dayOneChapter &&
         dayOneRun &&
         !splashDeferredToday(dayOneRun) ? (
-          <ChapterSplash
-            label="Day one"
-            onDismiss={() => deferSplash(dayOneRun, dayOneChapter.session)}
-          >
+          <ChapterSplash label="Day one">
             <ChapterPlayer
               className="os-day-one-session"
               definition={dayOneChapter}
               label="Day one"
+              onDismiss={() => deferSplash(dayOneRun, dayOneChapter.session)}
               run={dayOneRun}
               onRunChange={saveDayOneRun}
             />
@@ -4265,14 +4256,12 @@ export function TodayExperience() {
         ) : null}
 
         {weekReviewChapter && weekReviewRun ? (
-          <ChapterSplash
-            label="Week review"
-            onDismiss={() => setReviewingWeekOf(null)}
-          >
+          <ChapterSplash label="Week review">
             <ChapterPlayer
               className="os-week-review-session"
               definition={weekReviewChapter}
               label="Week review"
+              onDismiss={() => setReviewingWeekOf(null)}
               run={weekReviewRun}
               onRunChange={saveWeekReviewRun}
             />
@@ -4284,14 +4273,12 @@ export function TodayExperience() {
         weekSetupChapter &&
         weekSetupRun &&
         !splashDeferredToday(weekSetupRun) ? (
-          <ChapterSplash
-            label="Week setup"
-            onDismiss={() => deferSplash(weekSetupRun, weekSetupChapter.session)}
-          >
+          <ChapterSplash label="Week setup">
             <ChapterPlayer
               className="os-week-setup-session"
               definition={weekSetupChapter}
               label="Week setup"
+              onDismiss={() => deferSplash(weekSetupRun, weekSetupChapter.session)}
               run={weekSetupRun}
               onRunChange={saveWeekSetupRun}
             />
@@ -4304,9 +4291,10 @@ export function TodayExperience() {
         !splashDeferredToday(
           state.chapters.runs[chapterRunId(logSetupPublication.chapter)],
         ) ? (
-          <ChapterSplash label="Log setup" onDismiss={dismissLogSetupSplash}>
+          <ChapterSplash label="Log setup">
             <PublishedChapterDelivery
               className="os-log-setup-session"
+              dismissOnBackSwipe
               label="Log setup"
               publication={logSetupPublication}
             />
@@ -4325,14 +4313,12 @@ export function TodayExperience() {
           logSetupChapter &&
           logSetupRun &&
           !splashDeferredToday(logSetupRun) ? (
-          <ChapterSplash
-            label="Log setup"
-            onDismiss={() => deferSplash(logSetupRun, logSetupChapter.session)}
-          >
+          <ChapterSplash label="Log setup">
             <ChapterPlayer
               className="os-log-setup-session"
               definition={logSetupChapter}
               label="Log setup"
+              onDismiss={() => deferSplash(logSetupRun, logSetupChapter.session)}
               run={logSetupRun}
               onRunChange={saveLogSetupRun}
             />
