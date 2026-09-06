@@ -144,7 +144,16 @@ export function weekDaySummary(state, dateKey, todayKey = getDateKey()) {
       month: "long",
       day: "numeric",
     }),
-    title: String(day?.title || "").trim(),
+    /**
+     * His words, exactly as they stand.
+     *
+     * Not trimmed: this is what the Week Page puts in the editor, and trimming
+     * it eats the space the moment it is typed, so "review day" can never be
+     * written — the second word never gets a space to start on. The same fault
+     * `setDayTitle` was written to avoid, reintroduced one module downstream.
+     * Anything that needs a tidy title trims at the point it reads it.
+     */
+    title: String(day?.title || ""),
     isToday: dateKey === todayKey,
     isFuture: dateKey.localeCompare(todayKey) > 0,
     /**

@@ -479,3 +479,21 @@ test("the Week's editable lines survive the phone's 16px floor", () => {
   // focus, which is what Sai hit: "It zoomed in when adding step for the goal."
   assert.doesNotMatch(css, /textarea\.os-week-step-text \{[^}]*!important/);
 });
+
+// Sai: "the spacebar trim issue is there on week app, days. 'saturday' 'review
+// day'". setDayTitle was already written to avoid exactly this; the trim had
+// been reintroduced one module downstream, where the Page reads the title back.
+test("a day's name can hold the space between two words", () => {
+  const model = readFileSync("app/os/week-app-model.js", "utf8");
+  const summary = model.slice(
+    model.indexOf("export function weekDaySummary"),
+    model.indexOf("/** The seven days of the week a day belongs to"),
+  );
+  assert.match(summary, /title: String\(day\?\.title \|\| ""\),/);
+  assert.doesNotMatch(summary, /title: String\(day\?\.title \|\| ""\)\.trim\(\)/);
+
+  // A day named with a trailing space keeps it, so the second word can start.
+  const state = createEmptyState();
+  state.days["2026-08-24"] = { date: "2026-08-24", title: "review " };
+  assert.equal(weekDays(state, WEDNESDAY)[0].title, "review ");
+});

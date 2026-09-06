@@ -64,7 +64,11 @@ test("server-renders the functional Circle OS Today route", async () => {
   // say to somebody who has not written anything yet.
   assert.match(html, /This is your Note\. Tap here to write\./);
   assert.match(html, /Let&#x27;s set up your first habit\./);
-  assert.match(html, /Set your usual day\./);
+  // The setups that take the whole screen are not server-rendered. A splash is
+  // portalled onto the body, which needs a document, so it mounts on the
+  // client — and which setup is owed depends on local state the server has no
+  // way to know anyway. The feed underneath still renders in full.
+  assert.doesNotMatch(html, /os-splash/);
   assert.match(html, /Swipe to begin/);
   assert.doesNotMatch(html, /os-app-dots/);
   assert.match(html, /Today/);

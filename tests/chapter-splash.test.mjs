@@ -105,3 +105,43 @@ test("a question can say why it is worth answering, in one line", () => {
   const authoring = readFileSync("app/os/admin/chapter-authoring.js", "utf8");
   assert.match(authoring, /line\("Why", page\.why\)/);
 });
+
+// Sai: "Splash screen is having double scroll, and the splash screen did not
+// fixed at the position ... the spacing between paragraph are weird ... the
+// input text color is also have to be white. not grey."
+test("the splash is the screen, with one scroll and its own rhythm", () => {
+  // Rendered onto the body, so no ancestor's stacking context can trap it and
+  // let the App's own header paint over a sheet meant to be the screen.
+  assert.match(shell, /createPortal\(/);
+  assert.match(shell, /document\.body,/);
+  // The App's class travels with it, or every rule in the stylesheet — all of
+  // them scoped under .circle-os — would miss it and the sheet would collapse.
+  assert.match(shell, /className="circle-os os-splash-host"/);
+  assert.match(css, /\.circle-os\.os-splash-host \{\s+display: contents;/);
+  // And the Page behind stops scrolling, so there is one scrolling surface.
+  assert.match(shell, /body\.style\.overflow = "hidden"/);
+
+  const splash = css.slice(
+    css.indexOf(".circle-os .os-splash {"),
+    css.indexOf(".circle-os .os-day-gated {"),
+  );
+  assert.match(splash, /height: 100dvh/, "the screen, as its chrome slides away");
+  assert.match(splash, /overflow: hidden/);
+  assert.match(splash, /overscroll-behavior: contain/);
+  // Over the App's header, which sits at 70.
+  assert.match(splash, /z-index: 90/);
+  // Every level carries a definite height, or the one below has nothing to take
+  // a percentage of and the sheet holds a card in a void.
+  assert.match(splash, /os-app-page\.current \{\s+height: 100%/);
+
+  // Two groups, one gap: the question and its reason, then the field and the
+  // button that commits it. The gap sits on the field, because the reason line
+  // lives inside the form with it.
+  assert.match(splash, /os-chapter-text-input,[\s\S]*?margin-top: 1\.9rem/);
+  assert.match(splash, /os-page-sub \{\s+padding-top: 0\.4rem/);
+  assert.match(splash, /os-page-footer \{\s+padding-top: 0\.85rem/);
+
+  // The sheet's ink is set where a field inherits from, not on the field: it is
+  // written in color: inherit, and a later rule at equal specificity wins.
+  assert.match(splash, /os-survey-text,[\s\S]*?color: var\(--c-warm-50\)/);
+});

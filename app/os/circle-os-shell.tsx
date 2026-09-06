@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import {
   createContext,
   useContext,
@@ -10,6 +11,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type FormEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -354,6 +356,18 @@ function HabitCopySwap({
  * underneath has to know a setup is happening; when the last question is
  * answered the splash stops rendering and the App is simply there.
  */
+function subscribeToClient() {
+  return () => undefined;
+}
+
+function onClient() {
+  return true;
+}
+
+function onServer() {
+  return false;
+}
+
 export function ChapterSplash({
   children,
   label,
@@ -361,10 +375,44 @@ export function ChapterSplash({
   children: ReactNode;
   label: string;
 }) {
-  return (
-    <div aria-label={label} aria-modal="true" className="os-splash" role="dialog">
-      <div className="os-splash-frame">{children}</div>
-    </div>
+  // The Page behind stops scrolling while this is open.
+  //
+  // A fixed sheet over a scrollable Page gives two scrolls: the sheet moves,
+  // the Page moves under it, and neither feels held. Sai: "Splash screen is
+  // having double scroll, and the splash screen did not fixed at the position."
+  // With the body locked there is one scrolling surface, which is the frame.
+  // Client-only, without setting state inside an effect. On the server the
+  // snapshot is false and nothing renders; on the client it is true from the
+  // first render, so the sheet does not arrive a beat late.
+  const mounted = useSyncExternalStore(subscribeToClient, onClient, onServer);
+  useEffect(() => {
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = "hidden";
+    return () => {
+      body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  // Rendered onto the body, not into the feed it replaces.
+  //
+  // Left where it sits in the tree it is inside the route layer's stacking
+  // context, and no z-index can lift it over a header that belongs to another
+  // one — which is why the App's own header kept showing through a sheet that
+  // was meant to be the screen. On the body it has no ancestor to be trapped
+  // by, which is also what an aria-modal dialog should be.
+  if (!mounted) return null;
+  return createPortal(
+    // The App's own class travels with it. Every rule in the stylesheet is
+    // scoped under .circle-os, so a sheet portalled onto the body would land
+    // outside all of them and collapse to nothing. The host is display:
+    // contents, so it carries the scope and the tokens without being a box.
+    <div className="circle-os os-splash-host">
+      <div aria-label={label} aria-modal="true" className="os-splash" role="dialog">
+        <div className="os-splash-frame">{children}</div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

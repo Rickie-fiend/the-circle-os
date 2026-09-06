@@ -3000,6 +3000,11 @@
   padding: 17px;
 }
 
+/* The sheet's host on the body: scope and tokens, no box. */
+.circle-os.os-splash-host {
+  display: contents;
+}
+
 /* A chapter with the screen to itself.
  *
  * The App Box is one presentation of a chapter, not the chapter itself, so a
@@ -3008,30 +3013,167 @@
  * .os-splash. */
 .circle-os .os-splash {
   background: var(--c-ink-deep);
+  /* The dynamic viewport, so the sheet is the screen even as the browser's own
+     chrome slides away. */
+  height: 100dvh;
   inset: 0;
-  overflow-y: auto;
+  /* One scrolling surface, and it is the frame inside. Two of them is what made
+     the sheet feel unheld. */
+  overflow: hidden;
+  overscroll-behavior: contain;
   position: fixed;
-  z-index: 60;
+  width: 100%;
+  /* Over the App's own header, which sits at 70. A setup is the screen, and
+     there is nothing to navigate to yet. */
+  z-index: 90;
 }
 
 .circle-os .os-splash-frame {
   box-sizing: border-box;
   display: grid;
+  height: 100%;
   margin: 0 auto;
   max-width: 560px;
-  min-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding:
-    max(24px, env(safe-area-inset-top))
+    max(28px, env(safe-area-inset-top))
     var(--os-app-box-padding-x)
-    max(24px, env(safe-area-inset-bottom));
+    max(28px, env(safe-area-inset-bottom));
   width: 100%;
 }
 
-/* The chapter fills the frame rather than standing at the App Box minimum. */
+/* The chapter fills the frame rather than standing at the App Box minimum.
+ *
+ * Every level has to carry a definite height or the one below it has nothing to
+ * take a percentage of: with the page's own parent left at content height, its
+ * min-height: 100% resolved against 228px and the sheet held a card in a void. */
 .circle-os .os-splash .os-swipe-session,
-.circle-os .os-splash .os-app-window.fluid-height,
+.circle-os .os-splash .os-app-window,
+.circle-os .os-splash .os-app-page.current {
+  height: 100%;
+}
+
+.circle-os .os-splash .os-swipe-session {
+  display: grid;
+}
+
 .circle-os .os-splash .os-app-window.fluid-height .os-app-page > :first-child {
   min-height: 100%;
+}
+
+/* A splash is its own template, not an App Box that happens to be large.
+ *
+ * The App Box's proportions are measured for a card in a feed: a forehead that
+ * holds the Label off the Main text, a floor so a short Page is still a box, a
+ * body that shares its height with the Pages either side of it. None of that
+ * describes a screen someone is answering one question on, and reusing it is
+ * what made the spacing read as arbitrary. Sai: "the spacing between paragraph
+ * are weird ... make it better for experience."
+ *
+ * So inside the sheet the Page is a plain vertical rhythm: the Label at the
+ * top, the question and its reason together in the middle, the field under
+ * them, and the action on the floor of the screen. */
+.circle-os .os-splash .os-page-layout {
+  /* Every row is its own size and the space left over falls to the floor. The
+     1fr body of an App Box pushes the action to the bottom of whatever it is
+     in, which on a screen means the field and the button it belongs to end up
+     at opposite ends. */
+  align-content: start;
+  grid-template-rows: auto auto auto auto;
+  min-height: 100%;
+  padding: 0;
+  row-gap: 0;
+}
+
+.circle-os .os-splash .os-page-header {
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+/* A cover has one line on it, so on a screen it is centred and its cue sits on
+ * the floor. Stacked from the top like a question, it left half a screen of
+ * nothing under two words. */
+.circle-os .os-splash .os-cover-page {
+  align-content: stretch;
+  /* Label, heading, the line itself, the cue. The growing row is the one the
+     line sits in, so it is what centres — put the growth above it and the line
+     is pushed to the floor instead. */
+  grid-template-rows: auto auto 1fr auto;
+}
+
+.circle-os .os-splash .os-cover-page .os-page-main {
+  align-self: center;
+}
+
+/* Two groups, and one gap.
+ *
+ * What is being asked — the question, its line of reason — is one thing. How it
+ * is answered — the field and the button that commits it — is another. Sai:
+ * "Main text, sub text, should be closer, and input + or / buttons should be
+ * closer. its like 2 session. the saperation between those session."
+ *
+ * So the rhythm inside each group is tight and the only large space on the Page
+ * is the one between them. */
+.circle-os .os-splash .os-page-heading,
+.circle-os .os-splash .os-page-main {
+  padding-top: 0;
+}
+
+.circle-os .os-splash .os-page-sub {
+  padding-top: 0.4rem;
+}
+
+.circle-os .os-splash .os-chapter-body {
+  margin: 0.35rem 0 0;
+}
+
+.circle-os .os-splash .os-chapter-why {
+  margin: 0.35rem 0 0;
+}
+
+/* The gap, put where the two groups actually meet.
+ *
+ * The reason line lives inside the form with the field, so spacing the form
+ * pushed the question away from its own reason and left the field flush under
+ * it — the opposite of what was asked for. The gap belongs on the field. */
+.circle-os .os-splash .os-chapter-text-input,
+.circle-os .os-splash .os-survey-text input,
+.circle-os .os-splash .os-survey-time input,
+.circle-os .os-splash .os-survey-choices,
+.circle-os .os-splash .os-survey-slider > input {
+  margin-top: 1.9rem;
+}
+
+/* And the button belongs to the field, not to the floor of the screen. */
+.circle-os .os-splash .os-page-footer {
+  padding-top: 0.85rem;
+}
+
+/* The sheet's ink, set once on the Page.
+ *
+ * A chapter field is written in `color: inherit`, and what it was inheriting on
+ * a dark sheet was a light Page's neutral — grey on near-black. Setting the ink
+ * where it is inherited from fixes the field, the body and anything else that
+ * takes its colour from the Page, rather than chasing each one. */
+.circle-os .os-splash .os-page-layout,
+.circle-os .os-splash .os-survey-text,
+.circle-os .os-splash .os-survey-time,
+.circle-os .os-splash .os-survey-slider,
+.circle-os .os-splash .os-survey-choices {
+  color: var(--c-warm-50);
+}
+
+.circle-os .os-splash .os-survey-text input,
+.circle-os .os-splash .os-survey-time input {
+  background: transparent;
+  border-bottom-color: rgb(255 248 241 / 0.34);
+}
+
+.circle-os .os-splash .os-chapter-text-input::placeholder,
+.circle-os .os-splash .os-survey-text input::placeholder {
+  color: rgb(255 248 241 / 0.4);
+  opacity: 1;
 }
 
 /* And it is the screen, so it drops every edge it wears inside a feed: the
