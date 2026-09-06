@@ -2127,6 +2127,147 @@
           "body": "You do not need to solve the whole day now."
         }
       ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "week-setup",
+      "version": 1,
+      "status": "published",
+      "session": "week-setup",
+      "app": "seven-days",
+      "kind": "lesson",
+      "completion": "swipe",
+      "theme": "dark",
+      "title": "Now set the week.",
+      "purpose": "Turn one day kept into a week with a goal, its terms, and a plan for the day it slips.",
+      "estimatedMinutes": 6,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Now set the week.",
+          "body": "You kept a day. Seven is the same thing, with somewhere to point it.",
+          "button": "Begin"
+        },
+        {
+          "id": "horizon",
+          "type": "info",
+          "title": "First, further out than a week.",
+          "body": "A week only means something if it is a week toward something. Six months is the horizon worth setting: long enough to be worth wanting, short enough to still be this year's problem.",
+          "button": "Continue"
+        },
+        {
+          "id": "six-month",
+          "type": "short-text",
+          "question": "In six months, what is true that is not true now?",
+          "why": "One thing that would have changed. Not a list, and not a mood — something you could check.",
+          "answerKey": "six-month-picture",
+          "placeholder": "The business pays for itself",
+          "required": true
+        },
+        {
+          "id": "six-month-why",
+          "type": "short-text",
+          "question": "Why is that worth six months?",
+          "why": "The reason is what you will read on the days the work is dull.",
+          "answerKey": "six-month-why",
+          "placeholder": "So I stop trading my hours for money",
+          "required": true
+        },
+        {
+          "id": "character",
+          "type": "info",
+          "title": "Now the rest of him.",
+          "body": "You named one quality on the first day. A life is four parts, and the ones you leave unnamed are the ones that quietly go unfed.",
+          "button": "Continue"
+        },
+        {
+          "id": "trait-mind",
+          "type": "short-text",
+          "question": "Mind — what is he like?",
+          "why": "How he thinks, reads, decides. The part that compounds slowest and furthest.",
+          "answerKey": "character-mind",
+          "placeholder": "Clear, and hard to fool",
+          "required": false
+        },
+        {
+          "id": "trait-body",
+          "type": "short-text",
+          "question": "Body — what is he like?",
+          "why": "How he carries himself, and what he can still do at sixty.",
+          "answerKey": "character-body",
+          "placeholder": "Lean, and easy in his own posture",
+          "required": false
+        },
+        {
+          "id": "trait-spirit",
+          "type": "short-text",
+          "question": "Spirit — what is he like?",
+          "why": "What he is for when nobody is watching or paying.",
+          "answerKey": "character-spirit",
+          "placeholder": "Settled, and not in a hurry",
+          "required": false
+        },
+        {
+          "id": "trait-social",
+          "type": "short-text",
+          "question": "Social — what is he like?",
+          "why": "The one people drop, and the one they regret dropping.",
+          "answerKey": "character-social",
+          "placeholder": "Warm, and easy to talk to",
+          "required": false
+        },
+        {
+          "id": "week",
+          "type": "info",
+          "title": "Now the seven days.",
+          "body": "One goal for the week, one rule you keep while you chase it, and one line for the day it goes wrong.",
+          "button": "Continue"
+        },
+        {
+          "id": "week-goal",
+          "type": "short-text",
+          "question": "What is this week for?",
+          "why": "One. A week with three goals is a week with none, and this is the thing every day gets cut from.",
+          "answerKey": "week-goal",
+          "placeholder": "Get the first ten customers",
+          "required": true
+        },
+        {
+          "id": "week-step",
+          "type": "short-text",
+          "question": "What is the first step, small enough for today?",
+          "why": "Two minutes. The week is only real once one day of it has something in it.",
+          "answerKey": "week-step",
+          "placeholder": "Write down who the first customer is",
+          "required": true
+        },
+        {
+          "id": "term",
+          "type": "short-text",
+          "question": "What will you hold to for all seven days?",
+          "why": "A rule, not a task — something you keep rather than finish. It is the price of the goal above.",
+          "answerKey": "week-term",
+          "placeholder": "No phone until the first hour is done",
+          "required": true
+        },
+        {
+          "id": "slip",
+          "type": "short-text",
+          "question": "On the day you miss it, what will you do?",
+          "why": "Write it now, while you still believe you will not need it. On the day you do, the App will show you this and say nothing else.",
+          "answerKey": "week-slip",
+          "placeholder": "Do the two minute version, and let that count",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Seven days, pointed somewhere.",
+          "body": "This week is for {{week-goal}}, and it starts with {{week-step}}. You will hold to {{week-term}}. If it slips: {{week-slip}}.",
+          "button": "Open the week"
+        }
+      ]
     }
   ]
 }

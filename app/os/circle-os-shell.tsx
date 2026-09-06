@@ -20,6 +20,7 @@ import {
   CIRCLE_DAY_START_HOUR,
   addHabitDefinition,
   composeHabitText,
+  currentCharacter,
   declareLife,
   addTask,
   answerSurveyQuestion,
@@ -39,9 +40,11 @@ import {
   appSessionIndex,
   archiveProtocolRun,
   beginProtocolRun,
+  CHARACTER_DIMENSIONS,
   discardProtocolDraft,
   setHabitDimension,
   setProtocolGoal,
+  setProtocolSlipLine,
   canBeginProtocolRun,
   completeTask,
   dayRecord,
@@ -2100,6 +2103,50 @@ export function TodayExperience() {
       createChapterRun(dayOneChapter)
     );
   }, [dayOneChapter, state.chapters.runs]);
+  /**
+   * The week, offered the day after the first one is kept.
+   *
+   * Not on the calendar's second day: someone who comes back on Friday gets it
+   * on Friday. What it waits for is a Circle day turning over with day one
+   * behind him — one day lived is the whole argument for committing to seven.
+   */
+  const weekSetupChapter = getPublishedChapter("week-setup");
+  const dayOneRunStored = dayOneChapter
+    ? state.chapters.runs[chapterRunId(dayOneChapter)]
+    : null;
+  const dayOneKeptADay = Boolean(
+    dayOneDone &&
+      dayOneRunStored?.completedAt &&
+      getDateKey(new Date(dayOneRunStored.completedAt)) < dateKey,
+  );
+  const weekSetupDone =
+    !weekSetupChapter ||
+    chapterEverCompleted(state.chapters.runs, weekSetupChapter.id);
+  const weekSetupRun = useMemo(() => {
+    if (!weekSetupChapter) return null;
+    const stored = state.chapters.runs[chapterRunId(weekSetupChapter)];
+    if (stored) return stored;
+    // The quality he already named arrives filled in, so day two asks for the
+    // parts of him that are still blank rather than for all four again.
+    const him = currentCharacter(state);
+    const timestamp = new Date().toISOString();
+    const seeds = (him?.traits || []).flatMap((entry) => {
+      const key = `character-${entry.dimension}`;
+      const page = weekSetupChapter.pages.find((item) => item.answerKey === key);
+      if (!page) return [];
+      return [
+        {
+          pageId: page.id,
+          answerKey: key,
+          value: entry.trait,
+          displaySnapshot: entry.trait,
+          answeredAt: timestamp,
+          changedAt: timestamp,
+        },
+      ];
+    });
+    return createChapterRun(weekSetupChapter, seeds);
+  }, [state, weekSetupChapter]);
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
   const habitBuildingRun = useMemo(() => {
@@ -3032,6 +3079,91 @@ export function TodayExperience() {
           );
           next = updateTask(step.state, step.taskId, stepText);
         }
+      }
+      return next;
+    });
+  }
+
+  /**
+   * The week, out of what he wrote on day two.
+   *
+   * The same rule as day one: every answer becomes a record he can see and
+   * edit, and none of it is a copy. The character grows the parts he left
+   * unnamed, the six-month horizon is a declaration like any other, the week's
+   * goal gets its first step on today, and the phase that serves it holds both
+   * the goal and the line he wrote for the day he misses.
+   */
+  function saveWeekSetupRun(nextRun: ChapterRun) {
+    if (!weekSetupChapter) return;
+    updateState((current) => {
+      const previousRun = current.chapters.runs[nextRun.runId];
+      let next = storeChapterRun(current, nextRun, weekSetupChapter.session);
+      if (nextRun.status !== "completed" || previousRun?.status === "completed") {
+        return next;
+      }
+
+      // Six months out: what is true then that is not true now.
+      const picture = chapterAnswerText(nextRun, "six-month-picture");
+      if (picture) {
+        next = declareLife(next, "sixMonth", {
+          picture,
+          why: chapterAnswerText(nextRun, "six-month-why"),
+        });
+      }
+
+      // The rest of him. What he named on day one comes back through the seed,
+      // so this declares the whole character rather than replacing it with the
+      // parts day two happened to ask about.
+      const him = currentCharacter(next);
+      const traits = Object.fromEntries(
+        CHARACTER_DIMENSIONS.map((dimension) => [
+          dimension,
+          chapterAnswerText(nextRun, `character-${dimension}`),
+        ]),
+      );
+      if (CHARACTER_DIMENSIONS.some((dimension) => traits[dimension])) {
+        next = declareLife(next, "character", {
+          ...traits,
+          past: him?.past || "",
+          starting: him?.starting || "",
+        });
+      }
+
+      // The week: a goal, its first step on today, and the phase that serves it.
+      const weekKey = planningWeekStartKey(dateKey, liveClockHour);
+      const goalText = chapterAnswerText(nextRun, "week-goal");
+      let weekGoalId = "";
+      if (goalText) {
+        const opened = addWeekGoal(next, weekKey, `goal-week-${weekKey}`);
+        weekGoalId = opened.id;
+        next = updateGoal(opened.state, opened.id, goalText);
+        const stepText = chapterAnswerText(nextRun, "week-step");
+        if (stepText) {
+          const step = addGoalStep(
+            next,
+            opened.id,
+            addTask,
+            `step-week-${dateKey}`,
+            undefined,
+            dateKey,
+          );
+          next = updateTask(step.state, step.taskId, stepText);
+        }
+      }
+
+      const term = chapterAnswerText(nextRun, "week-term");
+      if (term) {
+        const draft = startProtocolDraft(next);
+        next = setProtocolDays(draft.state, draft.id, 7);
+        const item = addProtocolItem(next, draft.id, "non-negotiable");
+        next = updateProtocolItem(item.state, draft.id, item.id, term);
+        next = beginProtocolRun(next, draft.id, dateKey);
+        next = setProtocolGoal(next, draft.id, weekGoalId);
+        next = setProtocolSlipLine(
+          next,
+          draft.id,
+          chapterAnswerText(nextRun, "week-slip"),
+        );
       }
       return next;
     });
@@ -3997,7 +4129,19 @@ export function TodayExperience() {
           </ChapterSplash>
         ) : null}
 
-        {dayOneDone && logSetupPublication ? (
+        {dayOneKeptADay && !weekSetupDone && weekSetupChapter && weekSetupRun ? (
+          <ChapterSplash label="Week setup">
+            <ChapterPlayer
+              className="os-week-setup-session"
+              definition={weekSetupChapter}
+              label="Week setup"
+              run={weekSetupRun}
+              onRunChange={saveWeekSetupRun}
+            />
+          </ChapterSplash>
+        ) : null}
+
+        {dayOneDone && weekSetupDone && logSetupPublication ? (
           <ChapterSplash label="Log setup">
             <PublishedChapterDelivery
               className="os-log-setup-session"
@@ -4013,7 +4157,7 @@ export function TodayExperience() {
               publication={logPublication}
             />
           </section>
-        ) : dayOneDone && !logSetupDone && logSetupChapter && logSetupRun ? (
+        ) : dayOneDone && weekSetupDone && !logSetupDone && logSetupChapter && logSetupRun ? (
           <ChapterSplash label="Log setup">
             <ChapterPlayer
               className="os-log-setup-session"

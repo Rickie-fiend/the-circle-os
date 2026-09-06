@@ -18,6 +18,7 @@ export const CIRCLE_OS_LEGACY_STORAGE_KEY = "circle-os-state-v1";
 
 export const DECLARATION_KINDS = Object.freeze([
   "character",
+  "sixMonth",
   "vision",
   "missionStatement",
   "typicalTuesday",
@@ -465,6 +466,13 @@ function normalizeDeclarationContent(kind, value = {}) {
     }
     return { ...traits, past: clean("past", 320), starting: clean("starting", 20) };
   }
+  if (kind === "sixMonth") {
+    // Ferriss picked six months and the length is the point: long enough to be
+    // worth wanting, short enough to still be this year's problem. It is not
+    // the Vision, which asks what life is worth wanting at all; it asks what is
+    // true in half a year that is not true now.
+    return { picture: clean("picture", 600), why: clean("why", 600) };
+  }
   if (kind === "vision") {
     return { life: clean("life"), why: clean("why") };
   }
@@ -499,6 +507,7 @@ function declarationHasContent(kind, content) {
     const named = characterTraitList(content).length;
     return named >= CHARACTER_TRAIT_MIN && named <= CHARACTER_TRAIT_MAX;
   }
+  if (kind === "sixMonth") return Boolean(content.picture);
   if (kind === "vision") return Boolean(content.life && content.why);
   if (kind === "missionStatement") return Boolean(content.statement);
   if (kind === "typicalTuesday") {
@@ -1048,6 +1057,7 @@ export function declareLife(
     supersedesId: previous?.id || null,
     ...(kind === "dreamline" ? { targetAt: sixMonthsAfter(declaredAt) } : {}),
     ...(kind === "character" ? { targetAt: yearsAfter(declaredAt, CHARACTER_HORIZON_YEARS) } : {}),
+    ...(kind === "sixMonth" ? { targetAt: sixMonthsAfter(declaredAt) } : {}),
   };
   let next = {
     ...state,
@@ -3727,6 +3737,7 @@ export function startProtocolDraft(state, id = freshRecordId("protocol")) {
       // measures nothing. Sai: "i dont know the progress even i am keeping with
       // my protocol, because i cant see what i am going for clearly."
       goalId: null,
+      slipLine: "",
       startDateKey: null,
       startedAt: null,
       endedAt: null,
@@ -3764,6 +3775,24 @@ function protocolRunIsOpen(run) {
  * second write. A phase can outlive the week it was started in; when the goal
  * is gone the phase is still a phase, and simply says nothing about why.
  */
+/**
+ * What he will do on the day he misses.
+ *
+ * Written while he is still optimistic, and read back on the day he is not.
+ * Most systems have no plan for the slip and treat it as a failure of will;
+ * this asks for the recovery in advance, in his own words, so that on the bad
+ * day the App has nothing to say — it only shows him what he already decided.
+ */
+export function setProtocolSlipLine(state, runId, text) {
+  const run = state.protocol?.runs?.[runId];
+  if (!run) return state;
+  return writeRun(state, {
+    ...run,
+    slipLine: String(text || "").trim().slice(0, 240),
+    updatedAt: now(),
+  });
+}
+
 export function setProtocolGoal(state, runId, goalId) {
   const run = state.protocol?.runs?.[runId];
   if (!protocolRunIsOpen(run)) return state;

@@ -20,15 +20,15 @@ test("a setup chapter can have the screen to itself", () => {
 
   // A first-use setup is a splash; an ordinary delivery into an App is not.
   const gate = shell.slice(
-    shell.indexOf("{dayOneDone && logSetupPublication ? ("),
+    shell.indexOf("{dayOneDone && weekSetupDone && logSetupPublication ? ("),
     shell.indexOf('<section className="os-log-section"'),
   );
   assert.match(gate, /<ChapterSplash label="Log setup">[\s\S]*?PublishedChapterDelivery/);
   assert.match(gate, /<ChapterSplash label="Log setup">[\s\S]*?ChapterPlayer/);
   // One sheet at a time. Two open at once is two Pages held still and one lock
   // left behind — Sai: "i sometimes cannot scroll entirely."
-  assert.match(gate, /dayOneDone && logSetupPublication \?/);
-  assert.match(gate, /dayOneDone && !logSetupDone && logSetupChapter/);
+  assert.match(gate, /dayOneDone && weekSetupDone && logSetupPublication \?/);
+  assert.match(gate, /dayOneDone && weekSetupDone && !logSetupDone && logSetupChapter/);
   assert.match(gate, /aria-label="Log chapter"[\s\S]*?os-day-gated|os-day-gated[\s\S]*?aria-label="Log chapter"/);
 });
 

@@ -34,12 +34,12 @@ test("a published setup stands in front of the compiled one", () => {
   assert.match(shell, /const habitSetupPublication = selectFirstUsePublication\(/);
   assert.match(shell, /const logSetupPublication = selectFirstUsePublication\(/);
   assert.match(shell, /\{habitSetupPublication \? \(/);
-  assert.match(shell, /\{dayOneDone && logSetupPublication \? \(/);
+  assert.match(shell, /\{dayOneDone && weekSetupDone && logSetupPublication \? \(/);
   // And it is checked before the everyday publication, which is checked before
   // the compiled chapter — so the branch reads setup, delivery, bundle.
   for (const [setup, everyday, compiled] of [
     ["{habitSetupPublication ? (", ") : habitPublication ? (", ") : activeHabitChapter && activeHabitRun ? ("],
-    ["{dayOneDone && logSetupPublication ? (", ") : logPublication ? (", ") : dayOneDone && !logSetupDone && logSetupChapter && logSetupRun ? ("],
+    ["{dayOneDone && weekSetupDone && logSetupPublication ? (", ") : logPublication ? (", ") : dayOneDone && weekSetupDone && !logSetupDone && logSetupChapter && logSetupRun ? ("],
   ]) {
     const at = (needle) => {
       const index = shell.indexOf(needle);
