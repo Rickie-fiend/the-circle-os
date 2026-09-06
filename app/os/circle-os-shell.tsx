@@ -338,6 +338,33 @@ function HabitCopySwap({
   );
 }
 
+/**
+ * A chapter with the screen to itself.
+ *
+ * Setting up is not one App among others, so it is not drawn as one. The
+ * chapter inside is the same chapter, authored in the same Workshop, saved to
+ * the same run — only the frame around it changes. Sai: "i am thinking the
+ * first time user, splash screen for the first day set-up ... can we use the
+ * splash screen as a chapter too?"
+ *
+ * It is fixed over the Page rather than replacing it, so nothing about the feed
+ * underneath has to know a setup is happening; when the last question is
+ * answered the splash stops rendering and the App is simply there.
+ */
+export function ChapterSplash({
+  children,
+  label,
+}: {
+  children: ReactNode;
+  label: string;
+}) {
+  return (
+    <div aria-label={label} aria-modal="true" className="os-splash" role="dialog">
+      <div className="os-splash-frame">{children}</div>
+    </div>
+  );
+}
+
 export function PublishedChapterDelivery({
   publication,
   className,
@@ -3695,15 +3722,13 @@ export function TodayExperience() {
         ) : null}
 
         {logSetupPublication ? (
-          <section className="os-day os-day-gated" aria-label="Log setup">
-            <div className="os-log-gate">
-              <PublishedChapterDelivery
-                className="os-log-setup-session"
-                label="Log setup"
-                publication={logSetupPublication}
-              />
-            </div>
-          </section>
+          <ChapterSplash label="Log setup">
+            <PublishedChapterDelivery
+              className="os-log-setup-session"
+              label="Log setup"
+              publication={logSetupPublication}
+            />
+          </ChapterSplash>
         ) : logPublication ? (
           <section className="os-day os-day-gated" aria-label="Log chapter">
             <PublishedChapterDelivery
@@ -3713,20 +3738,15 @@ export function TodayExperience() {
             />
           </section>
         ) : !logSetupDone && logSetupChapter && logSetupRun ? (
-          <section
-            className="os-day os-day-gated"
-            aria-label="Log setup session"
-          >
-            <div className="os-log-gate">
-              <ChapterPlayer
-                className="os-log-setup-session"
-                definition={logSetupChapter}
-                label="Log setup"
-                run={logSetupRun}
-                onRunChange={saveLogSetupRun}
-              />
-            </div>
-          </section>
+          <ChapterSplash label="Log setup">
+            <ChapterPlayer
+              className="os-log-setup-session"
+              definition={logSetupChapter}
+              label="Log setup"
+              run={logSetupRun}
+              onRunChange={saveLogSetupRun}
+            />
+          </ChapterSplash>
         ) : (
         <section className="os-log-section" aria-labelledby="day-heading">
           <SwipeSession

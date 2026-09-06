@@ -1872,6 +1872,23 @@
 
 .circle-os .os-survey-slider,
 .circle-os .os-survey-text,
+/* Why the question is worth answering, beside the field rather than on a Page
+ * of its own. Quieter than the question and quieter than the answer: it is
+ * there for the first time you meet the question and invisible by the tenth. */
+.circle-os .os-chapter-why {
+  color: var(--c-neutral-600);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  margin: 0.5rem 0 0;
+  max-width: 34ch;
+}
+
+.circle-os .theme-dark .os-chapter-why,
+.circle-os .theme-orange .os-chapter-why {
+  color: rgb(255 248 241 / 0.66);
+}
+
 .circle-os .os-survey-time {
   display: grid;
   gap: 0.8rem;
@@ -2981,6 +2998,53 @@
 .circle-os .os-day {
   margin-top: var(--os-app-box-gap);
   padding: 17px;
+}
+
+/* A chapter with the screen to itself.
+ *
+ * The App Box is one presentation of a chapter, not the chapter itself, so a
+ * splash is the same player in a frame that fills the screen instead of sitting
+ * in a feed. Nothing here changes the App Box: every rule is scoped inside
+ * .os-splash. */
+.circle-os .os-splash {
+  background: var(--c-ink-deep);
+  inset: 0;
+  overflow-y: auto;
+  position: fixed;
+  z-index: 60;
+}
+
+.circle-os .os-splash-frame {
+  box-sizing: border-box;
+  display: grid;
+  margin: 0 auto;
+  max-width: 560px;
+  min-height: 100%;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    var(--os-app-box-padding-x)
+    max(24px, env(safe-area-inset-bottom));
+  width: 100%;
+}
+
+/* The chapter fills the frame rather than standing at the App Box minimum. */
+.circle-os .os-splash .os-swipe-session,
+.circle-os .os-splash .os-app-window.fluid-height,
+.circle-os .os-splash .os-app-window.fluid-height .os-app-page > :first-child {
+  min-height: 100%;
+}
+
+/* And it is the screen, so it drops every edge it wears inside a feed: the
+ * session's own panel, the App Box's corners, the card behind a question. */
+.circle-os .os-splash .os-swipe-session,
+.circle-os .os-splash .os-chapter-session,
+.circle-os .os-splash .os-app-window,
+.circle-os .os-splash .os-survey-card,
+.circle-os .os-splash .os-session-intro {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .circle-os .os-day-gated {

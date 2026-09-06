@@ -96,6 +96,7 @@ function parsePage(id, source, filename) {
         question: "question",
         button: "button",
         answer: "answerKey",
+        why: "why",
         placeholder: "placeholder",
         default: "defaultValue",
         min: "min",

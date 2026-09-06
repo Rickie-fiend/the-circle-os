@@ -316,9 +316,21 @@ function ChapterPageView({
     );
   }
 
-  let subContent: ReactNode = onEdit ? (
-    <EditableCopy className="sub" label="Edit page subtitle" onChange={(value) => onEdit(page.id, "body", value)} rows={2} value={page.body || ""} />
-  ) : body ? <p className="os-chapter-body">{body}</p> : null;
+  /* The body, and then the one line that says why the question is worth
+   * answering. It sits with the body rather than in each Page type's branch, so
+   * every kind of question can teach without any of them being special.
+   *
+   * Sai: "i want the process itself to be the goal of the app, we will be
+   * educating them with why you do what you do." A page of its own between
+   * every question would be a lecture, and people skip lectures. */
+  let subContent: ReactNode = (
+    <>
+      {onEdit ? (
+        <EditableCopy className="sub" label="Edit page subtitle" onChange={(value) => onEdit(page.id, "body", value)} rows={2} value={page.body || ""} />
+      ) : body ? <p className="os-chapter-body">{body}</p> : null}
+      {page.why ? <p className="os-chapter-why">{page.why}</p> : null}
+    </>
+  );
   let footer: ReactNode;
 
   if (choices.length) {

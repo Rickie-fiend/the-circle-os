@@ -27,6 +27,16 @@ export type ChapterPage = {
   question?: string;
   button?: string;
   answerKey?: string;
+  /**
+   * One sentence on why this question is worth answering.
+   *
+   * Sai wants the setting up to teach: "when setting up habit, user should get
+   * the knowledge about habit, how to set habit, what is important for the
+   * habit to stick." A page of its own between every question is a lecture, and
+   * people skip lectures — so the teaching sits beside the field, in one line,
+   * at the moment it is needed.
+   */
+  why?: string;
   placeholder?: string;
   options?: ChapterOption[];
   min?: number;

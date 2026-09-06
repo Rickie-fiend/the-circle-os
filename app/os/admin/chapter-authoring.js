@@ -363,6 +363,7 @@ export function chapterDraftToMarkdown(draft) {
       line("Title", page.title),
       line("Body", page.body),
       line("Question", page.question),
+      line("Why", page.why),
       line("Button", page.button),
       line("Answer", page.answerKey),
       line("Placeholder", page.placeholder),
