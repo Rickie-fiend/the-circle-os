@@ -17,11 +17,36 @@ export const CIRCLE_OS_STORAGE_KEY = "circle-os-state-v2";
 export const CIRCLE_OS_LEGACY_STORAGE_KEY = "circle-os-state-v1";
 
 export const DECLARATION_KINDS = Object.freeze([
+  "character",
   "vision",
   "missionStatement",
   "typicalTuesday",
   "dreamline",
 ]);
+
+/**
+ * The four parts of a life a character is built out of.
+ *
+ * Covey sharpens four saws — physical, mental, spiritual, and the one everybody
+ * drops. Sai named three and then reached for the fourth himself: his own
+ * example trait, "charismatic", is social, not mind, body or spirit.
+ *
+ * Three of the four are named, not all four. Which one is left out is worth
+ * knowing, and choosing what to leave out is a smaller ask than filling a page.
+ */
+export const CHARACTER_DIMENSIONS = Object.freeze(["mind", "body", "spirit", "social"]);
+
+/** How many of the four a character names. */
+export const CHARACTER_TRAIT_COUNT = 3;
+
+/**
+ * How far ahead the character stands.
+ *
+ * Two years, because one year is too close to be a different person and five is
+ * too far to feel. The six-month horizon belongs to the Dreamline, which asks
+ * for something concrete rather than for who he is becoming.
+ */
+export const CHARACTER_HORIZON_YEARS = 2;
 
 export const DREAMLINE_CATEGORIES = Object.freeze(["having", "being", "doing"]);
 export const DREAMLINE_STEP_KEYS = Object.freeze(["now", "tomorrow", "dayAfter"]);
@@ -285,6 +310,12 @@ function normalizeHabitDefinitions(definitions) {
           action,
           cue: keepHabitPart(definition?.cue),
           identity: keepHabitPart(definition?.identity),
+          // Which of the four the habit feeds. A habit is a trait made small
+          // enough to do today, and this is the thread back to the character:
+          // "Character traits > into habits > into protocol."
+          dimension: CHARACTER_DIMENSIONS.includes(definition?.dimension)
+            ? definition.dimension
+            : "",
         },
       ];
     }),
@@ -406,6 +437,16 @@ function normalizeDeclarationContent(kind, value = {}) {
     typeof content[field] === "string"
       ? content[field].trim().slice(0, maximum)
       : "";
+  if (kind === "character") {
+    // Three traits and the line that makes them believable. The past is asked
+    // once and never again: it is there to show that two years is long enough
+    // to have become someone else already, without trying.
+    const traits = {};
+    for (const dimension of CHARACTER_DIMENSIONS) {
+      traits[dimension] = clean(dimension, 120);
+    }
+    return { ...traits, past: clean("past", 320), starting: clean("starting", 20) };
+  }
   if (kind === "vision") {
     return { life: clean("life"), why: clean("why") };
   }
@@ -434,6 +475,11 @@ function normalizeDeclarationContent(kind, value = {}) {
 }
 
 function declarationHasContent(kind, content) {
+  if (kind === "character") {
+    // Named, not complete: a character with fewer than three traits is a
+    // character half imagined, and one with four has not chosen.
+    return characterTraitList(content).length === CHARACTER_TRAIT_COUNT;
+  }
   if (kind === "vision") return Boolean(content.life && content.why);
   if (kind === "missionStatement") return Boolean(content.statement);
   if (kind === "typicalTuesday") {
@@ -452,6 +498,14 @@ function declarationHasContent(kind, content) {
     );
   }
   return false;
+}
+
+/** The same instant, some whole number of years later. */
+function yearsAfter(value, years) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setFullYear(date.getFullYear() + years);
+  return date.toISOString();
 }
 
 function sixMonthsAfter(value) {
@@ -918,6 +972,43 @@ function declarationRecordId(kind, declaredAt) {
 // A declaration is never edited in place. Every save adds a dated record that
 // points back to the version it replaces, so a change can be read later rather
 // than disappearing into the newest sentence.
+/** The traits a character names, in the order the dimensions are listed. */
+export function characterTraitList(content = {}) {
+  return CHARACTER_DIMENSIONS.map((dimension) => ({
+    dimension,
+    trait: typeof content?.[dimension] === "string" ? content[dimension].trim() : "",
+  })).filter((entry) => entry.trait);
+}
+
+/**
+ * Who he is becoming, as last declared.
+ *
+ * A character is superseded rather than rewritten, like every other
+ * declaration, so the one he wrote two years ago is still there to read.
+ */
+export function currentCharacter(state) {
+  const record = currentDeclaration(state, "character");
+  if (!record) return null;
+  return {
+    id: record.id,
+    declaredAt: record.declaredAt,
+    targetAt: record.targetAt || null,
+    past: record.content.past || "",
+    starting: record.content.starting || "",
+    traits: characterTraitList(record.content),
+  };
+}
+
+/** The dimension a trait belongs to, or "" if it is not one of his. */
+export function characterDimensionOf(state, trait) {
+  const wanted = String(trait || "").trim().toLocaleLowerCase();
+  if (!wanted) return "";
+  const found = currentCharacter(state)?.traits.find(
+    (entry) => entry.trait.toLocaleLowerCase() === wanted,
+  );
+  return found?.dimension || "";
+}
+
 export function declareLife(
   state,
   kind,
@@ -937,6 +1028,7 @@ export function declareLife(
     declaredAt,
     supersedesId: previous?.id || null,
     ...(kind === "dreamline" ? { targetAt: sixMonthsAfter(declaredAt) } : {}),
+    ...(kind === "character" ? { targetAt: yearsAfter(declaredAt, CHARACTER_HORIZON_YEARS) } : {}),
   };
   let next = {
     ...state,
@@ -1850,6 +1942,50 @@ export function updateRoutineIdentity(state, text) {
   // An empty edit is a dated value too. Removing the field would let an older
   // server copy restore the name on the next merge.
   return queueProfileUpdate(next, "routine-identity");
+}
+
+/**
+ * Attach a habit to the part of the character it feeds.
+ *
+ * Sai's ladder: "Wise man (mind) > read 1 page on my desk after morning coffee
+ * to become a reader (2min) > read 1 chapter." The trait is the identity the
+ * habit already carries; this says which of the four it belongs to, so a week
+ * can be asked which part of him it fed.
+ */
+export function setHabitDimension(state, id, dimension) {
+  const habit = state.habits?.definitions?.[id];
+  if (!habit) return state;
+  return {
+    ...state,
+    habits: {
+      ...state.habits,
+      definitions: {
+        ...state.habits.definitions,
+        [id]: {
+          ...habit,
+          dimension: CHARACTER_DIMENSIONS.includes(dimension) ? dimension : "",
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    },
+  };
+}
+
+/**
+ * The habits feeding each part of the character, and the parts feeding none.
+ *
+ * This is what the week is read against: a character names three, and a week
+ * that fed one of them is a different week from one that fed all three.
+ */
+export function habitsByDimension(state) {
+  const grouped = Object.fromEntries(
+    CHARACTER_DIMENSIONS.map((dimension) => [dimension, []]),
+  );
+  for (const habit of Object.values(state.habits?.definitions || {})) {
+    if (habit.status === "archived") continue;
+    if (grouped[habit.dimension]) grouped[habit.dimension].push(habit);
+  }
+  return grouped;
 }
 
 export function updateHabitDefinition(state, id, text) {
