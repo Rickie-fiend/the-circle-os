@@ -6942,6 +6942,17 @@
   width: 100%;
 }
 
+/* No key, no row. The height and the gap above it belong to the key; without
+   one they are a band of nothing between the last line and the box's edge. */
+.circle-os .os-page-footer.is-empty {
+  min-height: 0;
+  padding-top: 0;
+}
+
+.circle-os .os-page-footer.is-empty .os-info-page-spacer {
+  min-height: 0;
+}
+
 /* A Cover has no Label, but it still begins where every other Page begins.
  *
  * Hiding the Header took the forehead with it — the forehead is that Header's

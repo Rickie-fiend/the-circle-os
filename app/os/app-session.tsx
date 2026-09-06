@@ -1000,7 +1000,18 @@ export function PageLayout({
       </div>
       <div className="os-page-heading">{heading}</div>
       <div className="os-page-body" ref={bodyRef}>{children}</div>
-      <div className="os-page-footer">
+      {/* A key is what extends the box.
+        *
+        * This row reserved a key's height and the gap above it whether or not
+        * there was a key in it, so a Page that ends on its content ended on a
+        * band of nothing instead — most visibly under the Week's folded day on
+        * the six days of the week that have no review to offer. Sai: "the
+        * collapse day and end of the app box, there should be no gap, when
+        * there is no button. the button is where the app box extend."
+        *
+        * Empty, it takes no room, and the box's own bottom padding is the
+        * bottom edge — which is what that padding is for. */}
+      <div className={`os-page-footer${footer ? "" : " is-empty"}`}>
         {footer ?? <span aria-hidden="true" className="os-info-page-spacer" />}
       </div>
     </div>
