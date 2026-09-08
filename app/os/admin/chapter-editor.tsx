@@ -6,6 +6,7 @@ import { ButtonRewardBackdrop, CreativeButton } from "../button-engine";
 import { BUTTON_STYLE_DEFINITIONS, BUTTON_STYLE_IDS, type ButtonStyleId } from "../button-engine-model.js";
 import { ChapterPlayer } from "../chapters/chapter-player";
 import { chapterRunId, createChapterRun, resetChapterRuns } from "../chapters/chapter-model.js";
+import { DAY_DOOR_ORDER, writePinnedDoor, type DayDoorKind } from "../day-door.js";
 import { publishedChapters } from "../chapters/registry";
 import {
   announceChapterPublication,
@@ -409,6 +410,22 @@ export function ChapterEditor() {
     setPublishState(`“${source.chapter.title}” will be offered again. Open the OS to see it.`);
   }
 
+  /**
+   * Put this chapter in the door and go and look at it.
+   *
+   * Every door waits for something real — a setup nobody has answered, a
+   * Sunday evening, a day that has not been opened — which is impossible to
+   * work with while building. Sai: "let me have a way to manually test the
+   * splash screen chapters."
+   *
+   * The pin is let go the moment the sheet is answered or put down, so it can
+   * never become a door somebody is stuck behind.
+   */
+  function showInTheDoor(kind: DayDoorKind) {
+    writePinnedDoor(kind);
+    window.location.assign("/os");
+  }
+
   async function newDraft() { const next = createChapterDraft(); await persistDraft(next); openWorkshop(next, "draft"); }
   async function createFromStarter(source: ChapterDraft) { const next = createFirstUseChapterDraft(source.appSpaces[0]); next.chapter.theme = source.chapter.theme; await persistDraft(next); openWorkshop(next, "draft"); }
   async function newPublishedVersion(source: ChapterDraft) { const next = createNextVersionDraft(source); await persistDraft(next); openWorkshop(next, "draft"); }
@@ -562,6 +579,16 @@ export function ChapterEditor() {
 
           {activeKind !== "draft" ? <button className="os-admin-preview-use" type="button" onClick={() => editChapter(draft, activeKind)}>Edit this chapter</button> : null}
           <button className="os-admin-preview-rerun" type="button" onClick={() => runChapterAgain(draft)}>Run it again on this device</button>
+          {/* Straight into the splash it will really be shown in, without
+              waiting for the day that would show it. */}
+          <div className="os-admin-door-tests" role="group" aria-label="Show a sheet in the door">
+            <p className="os-card-label">Show in the door</p>
+            {DAY_DOOR_ORDER.map((kind) => (
+              <button key={kind} onClick={() => showInTheDoor(kind)} type="button">
+                {kind.replace("-", " ")}
+              </button>
+            ))}
+          </div>
 
           {activeKind === "draft" ? <>
             <details className="os-admin-panel"><summary>Chapter settings</summary><div className="os-admin-fields two">

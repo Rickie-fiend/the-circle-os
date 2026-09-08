@@ -8405,6 +8405,26 @@
   width: 100%;
 }
 
+/* A builder's row: put a sheet in the door and go and look at it. */
+.circle-os .os-admin-door-tests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.circle-os .os-admin-door-tests p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.circle-os .os-admin-door-tests button {
+  background: transparent;
+  border: 1px solid rgb(241 239 232 / 0.18);
+  color: rgb(241 239 232 / 0.72);
+  text-transform: capitalize;
+}
+
 .circle-os .os-admin-preview-use {
   background: var(--c-orange);
   border: 0;

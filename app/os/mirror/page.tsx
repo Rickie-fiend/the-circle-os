@@ -92,6 +92,16 @@ type AthenaEdition = {
  * The record, then one Page for each part of a life. A saved position can only
  * be wrong if that number changes, which is what the version is for.
  */
+/**
+ * Whether Reflect's deepest layer is dealt into the tab.
+ *
+ * Off while the phases are being rebuilt. Sai: "Hide The Four app session for
+ * now." Nothing about it is deleted: the record it reads keeps accumulating
+ * every Sunday, `dimension-record.js` is untouched, and turning this back on
+ * puts the App back where it was with its whole history intact.
+ */
+const SHOW_THE_FOUR = false;
+
 const FOUR_APP_VERSION = "four-v1";
 
 /** When a part of a life was last given anything, said as a person would. */
@@ -1153,7 +1163,7 @@ export default function CircleOSMirror() {
           * It says one thing out loud, and it is the part that has gone
           * hungry. Nothing here is a score: every filled week is a week he
           * himself said was fed, and nothing ever subtracts. */}
-        <section className="vision-four-session" aria-label="The Four">
+        <section className="vision-four-session" aria-label="The Four" hidden={!SHOW_THE_FOUR}>
           {/* An App, not something shaped like one.
             *
             * This was a hand-rolled article, then a lone Page in a box. Both

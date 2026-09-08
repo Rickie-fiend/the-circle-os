@@ -121,7 +121,9 @@ test("the App asks the door once and draws one sheet", () => {
 
   // The order lives in day-door.js, not in four conditionals negating each
   // other across the render.
-  assert.match(shell, /const doorKind = reviewingWeekOf \? "week-review" : dayDoor\(doorOffers, dateKey\)/);
+  // A pin from the Workshop stands in front; otherwise it is the button or
+  // the door itself.
+  assert.match(shell, /pinned \|\| \(reviewingWeekOf \? "week-review" : dayDoor\(doorOffers, dateKey\)\)/);
   for (const kind of DAY_DOOR_ORDER) {
     assert.ok(
       shell.includes(`doorKind === "${kind}"`),
@@ -132,4 +134,66 @@ test("the App asks the door once and draws one sheet", () => {
   // The old shape is gone: no sheet decides its own precedence any more.
   assert.doesNotMatch(shell, /\{!dayOneDone &&\s+dayOneChapter/);
   assert.doesNotMatch(shell, /\) : dayOneDone &&\s+weekSetupDone &&\s+!logSetupDone/);
+});
+
+// Sai: "let me have a way to manually test the splash screen chapters."
+test("a door can be pinned open from the Workshop", async () => {
+  const store = new Map();
+  const original = globalThis.window;
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => (store.has(key) ? store.get(key) : null),
+      setItem: (key, value) => store.set(key, String(value)),
+      removeItem: (key) => store.delete(key),
+    },
+  };
+  try {
+    const { readPinnedDoor, writePinnedDoor, clearPinnedDoor } = await import(
+      `../app/os/day-door.js?pin=${Date.now()}`
+    );
+    assert.equal(readPinnedDoor(), null);
+
+    writePinnedDoor("week-review");
+    assert.equal(readPinnedDoor(), "week-review");
+
+    // Only a real door. A name that is not one leaves whatever was there.
+    writePinnedDoor("not-a-door");
+    assert.equal(readPinnedDoor(), "week-review");
+
+    // Let go the moment the sheet is answered or put down, so it can never
+    // become a door somebody is stuck behind.
+    clearPinnedDoor();
+    assert.equal(readPinnedDoor(), null);
+  } finally {
+    if (original === undefined) delete globalThis.window;
+    else globalThis.window = original;
+  }
+});
+
+test("the pin lives beside the state, not in it", () => {
+  const door = readFileSync("app/os/day-door.js", "utf8");
+  // A pin is one device, one moment, one person. In the synced state the first
+  // sync after opening the OS rebuilt `chapters` from its runs and sessions and
+  // threw it away — which is right for sync and wrong for this.
+  assert.match(door, /window\.localStorage/);
+
+  const model = readFileSync("app/os/circle-os-model.js", "utf8");
+  assert.doesNotMatch(model, /pinnedDoor/);
+
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  // Read during render behind the client check, never in an effect, or the App
+  // paints once without the sheet and again with it.
+  assert.match(shell, /const pinned = onTheClient && !pinLetGo \? readPinnedDoor\(\) : null;/);
+  // And a pinned review has a week to read on a day that is not a Sunday.
+  assert.match(shell, /reviewIsDue \|\| pinned === "week-review" \? weekJustEnded : ""/);
+});
+
+// Sai: "Hide The Four app session for now."
+test("The Four is hidden, and nothing about it was deleted", () => {
+  const mirror = readFileSync("app/os/mirror/page.tsx", "utf8");
+  assert.match(mirror, /const SHOW_THE_FOUR = false;/);
+  assert.match(mirror, /hidden=\{!SHOW_THE_FOUR\}/);
+  // The record it reads keeps accumulating every Sunday, so turning it back on
+  // puts the App back with its whole history intact.
+  assert.match(mirror, /dimensionRecord\(/);
 });

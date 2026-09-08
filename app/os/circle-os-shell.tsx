@@ -182,6 +182,8 @@ import {
   dayDoor,
   dayOpenRunId,
   dayWasOpened,
+  clearPinnedDoor,
+  readPinnedDoor,
 } from "./day-door.js";
 import {
   chapterEverCompleted,
@@ -2093,6 +2095,7 @@ export function TodayExperience() {
    * comes back before the week turns.
    */
   function dismissWeekReview() {
+    releasePinnedDoor();
     setReviewingWeekOf(null);
     if (weekReviewRun && weekReviewChapter) {
       deferSplash(weekReviewRun, weekReviewChapter.session);
@@ -2106,6 +2109,7 @@ export function TodayExperience() {
    * does not need greeting again at lunchtime.
    */
   function saveDayOpenRun(nextRun: ChapterRun) {
+    if (nextRun.status === "completed") releasePinnedDoor();
     if (!dayOpenChapter) return;
     updateState((current) =>
       storeChapterRun(current, nextRun, dayOpenChapter.session),
@@ -2114,6 +2118,7 @@ export function TodayExperience() {
 
   /** Put a sheet down for the rest of the day, keeping what he has answered. */
   function deferSplash(run: ChapterRun | null | undefined, session: string) {
+    releasePinnedDoor();
     if (!run) return;
     updateState((current) =>
       storeChapterRun(current, deferChapterRun(run), session),
@@ -2188,6 +2193,17 @@ export function TodayExperience() {
    */
   const weekReviewChapter = getPublishedChapter("week-review");
   const [reviewingWeekOf, setReviewingWeekOf] = useState<string | null>(null);
+  /* A door the Workshop asked to see.
+   *
+   * A thing on this device rather than a thing about him, so it is read from
+   * the browser rather than the state. Read during render behind the same
+   * client check the splash uses — never in an effect, or the App would paint
+   * once without it and again with it. */
+  const onTheClient = useSyncExternalStore(subscribeToClient, onClient, onServer);
+  // Held in state rather than re-read, so letting go of a pin re-renders. The
+  // browser is asked once, when the client arrives.
+  const [pinLetGo, setPinLetGo] = useState(false);
+  const pinned = onTheClient && !pinLetGo ? readPinnedDoor() : null;
   // A ticked goal on its way off the Page, and the timers that carry it there.
   const [leavingGoalIds, setLeavingGoalIds] = useState<string[]>([]);
   const [fadingGoalIds, setFadingGoalIds] = useState<string[]>([]);
@@ -2222,7 +2238,11 @@ export function TodayExperience() {
   const reviewIsDue = Boolean(
     sundayEvening && !weekWasReviewed(state, weekJustEnded),
   );
-  const weekBeingReviewed = reviewingWeekOf || (reviewIsDue ? weekJustEnded : "");
+  /* Pinned from the Workshop counts as a third way in, or the sheet would have
+     nothing to read on any day that is not a Sunday evening. */
+  const weekBeingReviewed =
+    reviewingWeekOf ||
+    (reviewIsDue || pinned === "week-review" ? weekJustEnded : "");
   const weekReviewRunId = weekReviewChapter && weekBeingReviewed
     ? `${chapterRunId(weekReviewChapter)}:${weekBeingReviewed}`
     : "";
@@ -2507,8 +2527,18 @@ export function TodayExperience() {
       dismissedKey: dismissedDay(dayOpenRun),
     },
   };
-  // Opened by hand from the Week Page, or standing in the door on a Sunday.
-  const doorKind = reviewingWeekOf ? "week-review" : dayDoor(doorOffers, dateKey);
+  /* Opened by hand from the Week Page, standing in the door on a Sunday, or
+     pinned open from the Workshop so a sheet can be looked at without waiting
+     for the day that would show it. */
+  const doorKind =
+    pinned || (reviewingWeekOf ? "week-review" : dayDoor(doorOffers, dateKey));
+
+  /** A pinned door is let go the moment its sheet is answered or put down. */
+  function releasePinnedDoor() {
+    if (!pinned) return;
+    clearPinnedDoor();
+    setPinLetGo(true);
+  }
 
   /**
    * The week's goals, and the one just ticked on its way out.
@@ -3250,6 +3280,7 @@ export function TodayExperience() {
    * the App he opens afterwards is his, not a demonstration of itself.
    */
   function saveDayOneRun(nextRun: ChapterRun) {
+    if (nextRun.status === "completed") releasePinnedDoor();
     if (!dayOneChapter) return;
     updateState((current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
@@ -3334,6 +3365,7 @@ export function TodayExperience() {
    * the goal and the line he wrote for the day he misses.
    */
   function saveWeekSetupRun(nextRun: ChapterRun) {
+    if (nextRun.status === "completed") releasePinnedDoor();
     if (!weekSetupChapter) return;
     updateState((current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
@@ -3418,6 +3450,7 @@ export function TodayExperience() {
    * begins against the new goal.
    */
   function saveWeekReviewRun(nextRun: ChapterRun) {
+    if (nextRun.status === "completed") releasePinnedDoor();
     if (!weekReviewChapter) return;
     const reviewedWeek = weekBeingReviewed;
     updateState((current) => {

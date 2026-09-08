@@ -90,3 +90,47 @@ export function dayWasOpened(run) {
   if (!run) return false;
   return run.status === "completed" || Boolean(run.dismissedAt);
 }
+
+/**
+ * The door a builder asked to see.
+ *
+ * Every door waits for something real — a setup nobody has answered, a Sunday
+ * evening, a day that has not been opened — which is right for living with the
+ * App and impossible to work with while building it. Sai: "let me have a way
+ * to manually test the splash screen chapters."
+ *
+ * It is kept beside the state rather than in it. A pin is one device, one
+ * moment, and one person: putting it in the synced state meant the first sync
+ * after opening the OS rebuilt `chapters` from its runs and sessions and threw
+ * the pin away, which is the right thing for sync to do and the wrong place
+ * for this to live.
+ */
+const PINNED_DOOR_KEY = "circle-os-pinned-door";
+
+export function readPinnedDoor() {
+  if (typeof window === "undefined") return null;
+  try {
+    const kind = window.localStorage.getItem(PINNED_DOOR_KEY);
+    return DAY_DOOR_ORDER.includes(kind) ? kind : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writePinnedDoor(kind) {
+  if (typeof window === "undefined" || !DAY_DOOR_ORDER.includes(kind)) return;
+  try {
+    window.localStorage.setItem(PINNED_DOOR_KEY, kind);
+  } catch {
+    // A builder's convenience, not something to fail an App over.
+  }
+}
+
+export function clearPinnedDoor() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(PINNED_DOOR_KEY);
+  } catch {
+    // As above.
+  }
+}
