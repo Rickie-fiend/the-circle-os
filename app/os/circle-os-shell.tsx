@@ -134,6 +134,7 @@ import {
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
 import {
+  WEEK_ROLLOVER_HOUR,
   planningWeekStartKey,
   recordWeekReview,
   weekBarDays,
@@ -177,6 +178,11 @@ import {
   ProtocolPage,
   type ProtocolSealView,
 } from "./protocol-page";
+import {
+  dayDoor,
+  dayOpenRunId,
+  dayWasOpened,
+} from "./day-door.js";
 import {
   chapterEverCompleted,
   deferChapterRun,
@@ -2071,9 +2077,39 @@ export function TodayExperience() {
    * from wherever he left it. Read against the Circle day, so a sheet dismissed
    * at one in the morning is still down when he wakes up.
    */
-  function splashDeferredToday(run: ChapterRun | null | undefined) {
-    if (!run?.dismissedAt) return false;
-    return getDateKey(new Date(run.dismissedAt)) === dateKey;
+  /** The Circle day a sheet was last put down on, if it was. */
+  function dismissedDay(run: ChapterRun | null | undefined) {
+    if (!run?.dismissedAt) return null;
+    return getDateKey(new Date(run.dismissedAt));
+  }
+
+  /**
+   * Put the review down.
+   *
+   * It can arrive two ways — standing in Sunday's door, or opened by hand from
+   * the Week Page — so putting it down has to close both. The deferral is
+   * written onto the run so the door does not simply reopen on the next render,
+   * and it is dated like every other, so Sunday offers it again tomorrow if he
+   * comes back before the week turns.
+   */
+  function dismissWeekReview() {
+    setReviewingWeekOf(null);
+    if (weekReviewRun && weekReviewChapter) {
+      deferSplash(weekReviewRun, weekReviewChapter.session);
+    }
+  }
+
+  /**
+   * The greeting, answered or waved away.
+   *
+   * Either one opens the day: a person who waved it off has been greeted and
+   * does not need greeting again at lunchtime.
+   */
+  function saveDayOpenRun(nextRun: ChapterRun) {
+    if (!dayOpenChapter) return;
+    updateState((current) =>
+      storeChapterRun(current, nextRun, dayOpenChapter.session),
+    );
   }
 
   /** Put a sheet down for the rest of the day, keeping what he has answered. */
@@ -2171,16 +2207,32 @@ export function TodayExperience() {
    * their own sheet. A stored sheet for this week is picked up where he left
    * it; a week with none starts fresh.
    */
-  const weekReviewRunId = weekReviewChapter && reviewingWeekOf
-    ? `${chapterRunId(weekReviewChapter)}:${reviewingWeekOf}`
+  /**
+   * The week being read, whichever way the review arrived.
+   *
+   * By hand from the Week Page, or standing in Sunday's door once the week has
+   * turned. Both are the same review of the same week — Sai: "so when its time
+   * to review for the week, ss will inform that, and to continue the process."
+   * — so both resolve to one run and one sheet.
+   */
+  const sundayEvening =
+    new Date(`${dateKey}T12:00:00`).getDay() === 0 &&
+    liveClockHour >= WEEK_ROLLOVER_HOUR;
+  const weekJustEnded = weekStartKey(dateKey);
+  const reviewIsDue = Boolean(
+    sundayEvening && !weekWasReviewed(state, weekJustEnded),
+  );
+  const weekBeingReviewed = reviewingWeekOf || (reviewIsDue ? weekJustEnded : "");
+  const weekReviewRunId = weekReviewChapter && weekBeingReviewed
+    ? `${chapterRunId(weekReviewChapter)}:${weekBeingReviewed}`
     : "";
   const weekReviewRun = useMemo(() => {
-    if (!weekReviewChapter || !reviewingWeekOf) return null;
+    if (!weekReviewChapter || !weekBeingReviewed) return null;
     const stored = state.chapters.runs[weekReviewRunId];
     if (stored) return stored;
     // The goal of the week being read is seeded in, so the Page can say what
     // the week was for instead of asking him to remember.
-    const goal = weekGoals(state, reviewingWeekOf)[0];
+    const goal = weekGoals(state, weekBeingReviewed)[0];
     const page = weekReviewChapter.pages.find((item) => item.id === "what-it-was-for");
     const timestamp = new Date().toISOString();
     const seeds = goal?.text && page
@@ -2196,7 +2248,47 @@ export function TodayExperience() {
         ]
       : [];
     return { ...createChapterRun(weekReviewChapter, seeds), runId: weekReviewRunId };
-  }, [reviewingWeekOf, state, weekReviewChapter, weekReviewRunId]);
+  }, [state, weekBeingReviewed, weekReviewChapter, weekReviewRunId]);
+  /**
+   * The day's greeting: the door on an ordinary morning.
+   *
+   * Keyed by the day it greets, the way the review is keyed by the week it
+   * reads. Yesterday's answers were yesterday's; today starts blank rather
+   * than resuming a week-old sheet. What the day is already for is seeded in,
+   * so the Page can say it instead of asking him to remember.
+   */
+  const dayOpenChapter = getPublishedChapter("day-open");
+  const dayOpenRunKey = dayOpenRunId(dayOpenChapter, dateKey);
+  const dayOpenRun = useMemo(() => {
+    if (!dayOpenChapter) return null;
+    const stored = state.chapters.runs[dayOpenRunKey];
+    if (stored) return stored;
+    const timestamp = new Date().toISOString();
+    const goal = weekGoals(state, weekStartKey(dateKey))[0];
+    // A blank is filled by name, so it does not need a Page of its own — it is
+    // the chapter's words asking for something the App already knows.
+    const seed = (answerKey: string, value: string) => {
+      if (!value) return [];
+      return [
+        {
+          pageId: dayOpenChapter.pages[0]?.id || "",
+          answerKey,
+          value,
+          displaySnapshot: value,
+          answeredAt: timestamp,
+          changedAt: timestamp,
+        },
+      ];
+    };
+    return {
+      ...createChapterRun(dayOpenChapter, [
+        ...seed("day-greeting", greeting),
+        ...seed("week-goal", goal?.text || ""),
+      ]),
+      runId: dayOpenRunKey,
+    };
+  }, [dateKey, dayOpenChapter, dayOpenRunKey, greeting, state]);
+
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
   const habitBuildingRun = useMemo(() => {
@@ -2364,6 +2456,59 @@ export function TodayExperience() {
     logWeekDays.find((day) => day.dateKey === logChosenDayKey) ||
     logWeekDays.find((day) => day.dateKey === dateKey) ||
     logWeekDays[0];
+
+  /**
+   * What stands in the door, if anything.
+   *
+   * One question, one answer, one sheet. Which door wins lives in
+   * `day-door.js` rather than in the negations of four conditionals spread
+   * through the render — see that file for the order and why it is that order.
+   * The App's job here is only to say which doors are ready.
+   */
+  const dayOpenOffered = Boolean(
+    dayOneDone &&
+      weekSetupDone &&
+      dayOpenChapter &&
+      dayOpenRun &&
+      !dayWasOpened(state.chapters.runs[dayOpenRunKey]),
+  );
+  const logSetupSplashRun = logSetupPublication
+    ? state.chapters.runs[chapterRunId(logSetupPublication.chapter)]
+    : logSetupRun;
+  const doorOffers = {
+    "day-one": {
+      offered: Boolean(!dayOneDone && dayOneChapter && dayOneRun),
+      dismissedKey: dismissedDay(dayOneRun),
+    },
+    "week-setup": {
+      offered: Boolean(dayOneKeptADay && !weekSetupDone && weekSetupChapter && weekSetupRun),
+      dismissedKey: dismissedDay(weekSetupRun),
+    },
+    "log-setup": {
+      offered: Boolean(
+        dayOneDone &&
+          weekSetupDone &&
+          (logSetupPublication || (!logSetupDone && logSetupChapter && logSetupRun)),
+      ),
+      dismissedKey: dismissedDay(logSetupSplashRun),
+    },
+    /* Sunday's review stands in the door, not only behind a key.
+     *
+     * A week ends whether or not he looks at it, and the one evening it can be
+     * read honestly is the one it ended on. Sai: "so when its time to review
+     * for the week, ss will inform that, and to continue the process." The key
+     * on the Week Page stays for after he has put this down. */
+    "week-review": {
+      offered: Boolean(dayOneDone && weekSetupDone && weekReviewChapter && reviewIsDue),
+      dismissedKey: dismissedDay(state.chapters.runs[weekReviewRunId]),
+    },
+    "day-open": {
+      offered: dayOpenOffered,
+      dismissedKey: dismissedDay(dayOpenRun),
+    },
+  };
+  // Opened by hand from the Week Page, or standing in the door on a Sunday.
+  const doorKind = reviewingWeekOf ? "week-review" : dayDoor(doorOffers, dateKey);
 
   /**
    * The week's goals, and the one just ticked on its way out.
@@ -3274,7 +3419,7 @@ export function TodayExperience() {
    */
   function saveWeekReviewRun(nextRun: ChapterRun) {
     if (!weekReviewChapter) return;
-    const reviewedWeek = reviewingWeekOf;
+    const reviewedWeek = weekBeingReviewed;
     updateState((current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(current, nextRun, weekReviewChapter.session);
@@ -4293,10 +4438,13 @@ export function TodayExperience() {
           </section>
         ) : null}
 
-        {!dayOneDone &&
-        dayOneChapter &&
-        dayOneRun &&
-        !splashDeferredToday(dayOneRun) ? (
+        {/* One door, one sheet.
+          *
+          * Which of them stands here is decided in `day-door.js`, so the order
+          * is a list somebody can read rather than something to be inferred
+          * from four conditionals negating each other. Every one of them is
+          * left by swiping back off its first page. */}
+        {doorKind === "day-one" && dayOneChapter && dayOneRun ? (
           <ChapterSplash label="Day one">
             <ChapterPlayer
               className="os-day-one-session"
@@ -4309,24 +4457,7 @@ export function TodayExperience() {
           </ChapterSplash>
         ) : null}
 
-        {weekReviewChapter && weekReviewRun ? (
-          <ChapterSplash label="Week review">
-            <ChapterPlayer
-              className="os-week-review-session"
-              definition={weekReviewChapter}
-              label="Week review"
-              onDismiss={() => setReviewingWeekOf(null)}
-              run={weekReviewRun}
-              onRunChange={saveWeekReviewRun}
-            />
-          </ChapterSplash>
-        ) : null}
-
-        {dayOneKeptADay &&
-        !weekSetupDone &&
-        weekSetupChapter &&
-        weekSetupRun &&
-        !splashDeferredToday(weekSetupRun) ? (
+        {doorKind === "week-setup" && weekSetupChapter && weekSetupRun ? (
           <ChapterSplash label="Week setup">
             <ChapterPlayer
               className="os-week-setup-session"
@@ -4339,21 +4470,58 @@ export function TodayExperience() {
           </ChapterSplash>
         ) : null}
 
-        {dayOneDone &&
-        weekSetupDone &&
-        logSetupPublication &&
-        !splashDeferredToday(
-          state.chapters.runs[chapterRunId(logSetupPublication.chapter)],
-        ) ? (
+        {doorKind === "log-setup" ? (
           <ChapterSplash label="Log setup">
-            <PublishedChapterDelivery
-              className="os-log-setup-session"
-              dismissOnBackSwipe
-              label="Log setup"
-              publication={logSetupPublication}
+            {logSetupPublication ? (
+              <PublishedChapterDelivery
+                className="os-log-setup-session"
+                dismissOnBackSwipe
+                label="Log setup"
+                publication={logSetupPublication}
+              />
+            ) : logSetupChapter && logSetupRun ? (
+              <ChapterPlayer
+                className="os-log-setup-session"
+                definition={logSetupChapter}
+                label="Log setup"
+                onDismiss={() => deferSplash(logSetupRun, logSetupChapter.session)}
+                run={logSetupRun}
+                onRunChange={saveLogSetupRun}
+              />
+            ) : null}
+          </ChapterSplash>
+        ) : null}
+
+        {doorKind === "week-review" && weekReviewChapter && weekReviewRun ? (
+          <ChapterSplash label="Week review">
+            <ChapterPlayer
+              className="os-week-review-session"
+              definition={weekReviewChapter}
+              label="Week review"
+              onDismiss={dismissWeekReview}
+              run={weekReviewRun}
+              onRunChange={saveWeekReviewRun}
             />
           </ChapterSplash>
-        ) : logPublication ? (
+        ) : null}
+
+        {/* And on an ordinary morning, the greeting. It opens the day once and
+          * then gets out of the way. Sai: "for that day whenever the user
+          * login, it will be to use app." */}
+        {doorKind === "day-open" && dayOpenChapter && dayOpenRun ? (
+          <ChapterSplash label="A new day">
+            <ChapterPlayer
+              className="os-day-open-session"
+              definition={dayOpenChapter}
+              label="A new day"
+              onDismiss={() => deferSplash(dayOpenRun, dayOpenChapter.session)}
+              run={dayOpenRun}
+              onRunChange={saveDayOpenRun}
+            />
+          </ChapterSplash>
+        ) : null}
+
+        {logPublication ? (
           <section className="os-day os-day-gated" aria-label="Log chapter">
             <PublishedChapterDelivery
               className="os-log-setup-session"
@@ -4361,22 +4529,6 @@ export function TodayExperience() {
               publication={logPublication}
             />
           </section>
-        ) : dayOneDone &&
-          weekSetupDone &&
-          !logSetupDone &&
-          logSetupChapter &&
-          logSetupRun &&
-          !splashDeferredToday(logSetupRun) ? (
-          <ChapterSplash label="Log setup">
-            <ChapterPlayer
-              className="os-log-setup-session"
-              definition={logSetupChapter}
-              label="Log setup"
-              onDismiss={() => deferSplash(logSetupRun, logSetupChapter.session)}
-              run={logSetupRun}
-              onRunChange={saveLogSetupRun}
-            />
-          </ChapterSplash>
         ) : (
         <section className="os-log-section" aria-labelledby="day-heading">
           <SwipeSession

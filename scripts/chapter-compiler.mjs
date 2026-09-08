@@ -345,16 +345,39 @@ export function validateChapter(chapter, filename = "chapter.md") {
   return chapter;
 }
 
+/**
+ * Whether a published chapter may be changed where it stands.
+ *
+ * A chapter somebody is part-way through cannot have its questions changed
+ * under them, which is what pinning a published version protects. Nobody is on
+ * the other side of these yet. Sai: "we dont need v1 v2 yet. because nobody is
+ * seeing this until i release v1 so everything here is v1" — and: "in up
+ * coming days, i will be authoring most of the chapters", which this rule
+ * would have interrupted on every edit.
+ *
+ * The Workshop already edits published chapters in place; this is the same
+ * decision for the sources they are compiled from, so the two agree.
+ *
+ * Set CIRCLE_OS_RELEASED=1 to put the rail back. That is the one line to
+ * change on the day there are people on the other side of a chapter.
+ */
+const CHAPTERS_ARE_RELEASED = process.env.CIRCLE_OS_RELEASED === "1";
+
 export function mergePublishedChapters(existingChapters, sourceChapters) {
   const merged = [...existingChapters];
   for (const chapter of sourceChapters) {
-    const previous = merged.find(
+    const index = merged.findIndex(
       (item) => item.id === chapter.id && item.version === chapter.version,
     );
+    const previous = index >= 0 ? merged[index] : null;
     if (previous && !isDeepStrictEqual(previous, chapter)) {
-      throw new Error(
-        `${chapter.id}@${chapter.version} is already published. Increase Version instead of changing it.`,
-      );
+      if (CHAPTERS_ARE_RELEASED) {
+        throw new Error(
+          `${chapter.id}@${chapter.version} is already published. Increase Version instead of changing it.`,
+        );
+      }
+      merged[index] = chapter;
+      continue;
     }
     if (!previous) merged.push(chapter);
   }

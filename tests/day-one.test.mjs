@@ -163,16 +163,16 @@ test("day one leaves an App with something in it", () => {
 
 // It is the front door, so it takes the screen, and it is offered until it has
 // been answered once — whatever version he has since edited in the Workshop.
-test("day one is a splash, asked once", () => {
+test("day one is a splash, asked once", async () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   assert.match(shell, /<ChapterSplash\s+label="Day one"/);
   assert.match(shell, /chapterEverCompleted\(state\.chapters\.runs, dayOneChapter\.id\)/);
   assert.match(shell, /function saveDayOneRun\(nextRun: ChapterRun\)/);
-  // It stands in front of the other setups rather than among them.
-  assert.ok(
-    shell.search(/<ChapterSplash\s+label="Day one"/) <
-      shell.search(/\{dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/),
-  );
+  // It stands in front of everything else, and that order is a list somebody
+  // can read rather than something inferred from the render.
+  const { DAY_DOOR_ORDER } = await import("../app/os/day-door.js");
+  assert.equal(DAY_DOOR_ORDER[0], "day-one");
+  assert.match(shell, /doorKind === "day-one"/);
 });
 
 // Sai: "To become - a good speaker - i will - practice speaking for 1 min -

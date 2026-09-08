@@ -33,9 +33,37 @@ function now() {
   return new Date().toISOString();
 }
 
+/**
+ * Every `{{blank}}` the chapter's own words ask to have filled in.
+ *
+ * A blank is not a question: it stands in a title or a body and is filled from
+ * what the App already knows, so the Page can say "This week was for running
+ * the business" instead of asking him to remember. `renderChapterTemplate`
+ * looks these up by name across the whole run.
+ */
+function templateKeys(chapter) {
+  const keys = new Set();
+  for (const page of chapter.pages || []) {
+    for (const field of [page.title, page.body, page.question, page.why, page.placeholder]) {
+      for (const match of String(field || "").matchAll(/\{\{([a-z0-9-]+)\}\}/gi)) {
+        keys.add(match[1]);
+      }
+    }
+  }
+  return keys;
+}
+
 export function createChapterRun(chapter, seedAnswers = []) {
   const timestamp = now();
-  const answers = seedAnswers.filter((answer) =>
+  /* A seed survives if the chapter has somewhere to put it: a question it
+   * answers ahead of time, or a blank in the words that asks for it.
+   *
+   * This used to keep only the first kind, so a `{{blank}}` on a cover or an
+   * info Page could never be filled — the seed was dropped before the Page was
+   * ever drawn, and the words rendered with a hole in them. The Week Review's
+   * "This week was for it." had been blank since the day it was written. */
+  const blanks = templateKeys(chapter);
+  const answeredAhead = seedAnswers.filter((answer) =>
     chapter.pages.some(
       (page) =>
         page.id === answer.pageId &&
@@ -43,13 +71,27 @@ export function createChapterRun(chapter, seedAnswers = []) {
         INPUT_PAGE_TYPES.has(page.type),
     ),
   );
+  // A blank belongs to the chapter, not to a Page: the same name can stand in a
+  // cover and a body, and no Page declares it. So it is kept on the name alone,
+  // which is how `renderChapterTemplate` looks it up.
+  const filledBlanks = seedAnswers.filter(
+    (answer) =>
+      blanks.has(answer.answerKey) && !answeredAhead.includes(answer),
+  );
+  const answers = [...answeredAhead, ...filledBlanks];
   const firstUnanswered = chapter.pages.find(
     (page) =>
       INPUT_PAGE_TYPES.has(page.type) &&
       page.answerKey &&
       !answers.some((answer) => answer.answerKey === page.answerKey),
   );
-  const currentPage = answers.length
+  /* Only a question answered ahead of time moves the starting Page.
+   *
+   * A filled blank is not progress — it is the chapter knowing something before
+   * it opens its mouth — so a greeting whose cover says the person's name must
+   * still start on the cover. Counting blanks here opened the day's greeting on
+   * its second Page. */
+  const currentPage = answeredAhead.length
     ? firstUnanswered ||
       chapter.pages.find((page) => COMPLETION_PAGE_TYPES.has(page.type)) ||
       chapter.pages.at(-1)
@@ -59,10 +101,10 @@ export function createChapterRun(chapter, seedAnswers = []) {
     runId: chapterRunId(chapter),
     chapterId: chapter.id,
     chapterVersion: chapter.version,
-    status: answers.length ? "in-progress" : "not-started",
+    status: answeredAhead.length ? "in-progress" : "not-started",
     currentPageId: currentPage.id,
     furthestPageId: currentPage.id,
-    startedAt: answers.length ? timestamp : null,
+    startedAt: answeredAhead.length ? timestamp : null,
     updatedAt: timestamp,
     completedAt: null,
     deferCount: 0,

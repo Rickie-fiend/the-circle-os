@@ -20,15 +20,14 @@ test("a setup chapter can have the screen to itself", () => {
 
   // A first-use setup is a splash; an ordinary delivery into an App is not.
   const gate = shell.slice(
-    shell.search(/\{dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/),
+    shell.indexOf('{doorKind === "log-setup" ? ('),
     shell.indexOf('<section className="os-log-section"'),
   );
-  assert.match(gate, /<ChapterSplash\s+label="Log setup"[\s\S]*?PublishedChapterDelivery/);
-  assert.match(gate, /<ChapterSplash\s+label="Log setup"[\s\S]*?ChapterPlayer/);
-  // One sheet at a time. Two open at once is two Pages held still and one lock
-  // left behind — Sai: "i sometimes cannot scroll entirely."
-  assert.match(gate, /dayOneDone &&\s+weekSetupDone &&\s+logSetupPublication/);
-  assert.match(gate, /dayOneDone &&\s+weekSetupDone &&\s+!logSetupDone &&\s+logSetupChapter/);
+  assert.match(gate, /<ChapterSplash label="Log setup">[\s\S]*?PublishedChapterDelivery/);
+  assert.match(gate, /<ChapterSplash label="Log setup">[\s\S]*?ChapterPlayer/);
+  // One sheet at a time, and the door is what guarantees it: it answers with
+  // one kind, so two can no longer be open at once. Sai: "i sometimes cannot
+  // scroll entirely."
   assert.match(gate, /aria-label="Log chapter"[\s\S]*?os-day-gated|os-day-gated[\s\S]*?aria-label="Log chapter"/);
 });
 
@@ -204,8 +203,11 @@ test("a setup sheet can be put down, and comes back tomorrow", () => {
   assert.match(shell, /onDismiss=\{dismissOnBackSwipe \? dismiss : undefined\}/);
 
   // Dated, not permanent: the deferral lapses so the chapter is offered again.
-  assert.match(shell, /function splashDeferredToday\(/);
-  assert.match(shell, /getDateKey\(new Date\(run\.dismissedAt\)\) === dateKey/);
+  // The door skips anything put down on today's Circle day.
+  assert.match(shell, /function dismissedDay\(run: ChapterRun \| null \| undefined\)/);
+  assert.match(shell, /return getDateKey\(new Date\(run\.dismissedAt\)\)/);
+  const door = readFileSync("app/os/day-door.js", "utf8");
+  assert.match(door, /offer\.dismissedKey === today/);
 
   const model = readFileSync("app/os/chapters/chapter-model.js", "utf8");
   assert.match(model, /export function deferChapterRun\(/);

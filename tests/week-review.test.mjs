@@ -246,7 +246,7 @@ test("the week's review is resumed, not rebuilt on every render", () => {
   // and each week's answers are their own sheet.
   assert.match(
     shell,
-    /`\$\{chapterRunId\(weekReviewChapter\)\}:\$\{reviewingWeekOf\}`/,
+    /`\$\{chapterRunId\(weekReviewChapter\)\}:\$\{weekBeingReviewed\}`/,
   );
   assert.match(memo, /runId: weekReviewRunId/);
 });

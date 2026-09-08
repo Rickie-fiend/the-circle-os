@@ -905,6 +905,72 @@
     },
     {
       "schemaVersion": 1,
+      "id": "day-open",
+      "version": 1,
+      "status": "published",
+      "session": "day-open",
+      "app": "seven-days",
+      "kind": "lesson",
+      "completion": "swipe",
+      "theme": "dark",
+      "title": "A new day.",
+      "purpose": "Open the day with what it is already for, ask one honest thing, and get out of the way.",
+      "estimatedMinutes": 1,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "{{day-greeting}}",
+          "button": "Open it"
+        },
+        {
+          "id": "the-week",
+          "type": "info",
+          "title": "This week is for it.",
+          "body": "{{week-goal}}",
+          "button": "I know"
+        },
+        {
+          "id": "arriving",
+          "options": [
+            {
+              "id": "light",
+              "label": "Light"
+            },
+            {
+              "id": "steady",
+              "label": "Steady"
+            },
+            {
+              "id": "heavy",
+              "label": "Heavy"
+            }
+          ],
+          "type": "single-choice",
+          "question": "How are you arriving?",
+          "why": "Naming it costs nothing and changes what you ask of yourself. A heavy day and a light one should not get the same plan.",
+          "answerKey": "day-arriving",
+          "required": true
+        },
+        {
+          "id": "the-one-thing",
+          "type": "short-text",
+          "question": "What is the one thing today?",
+          "why": "One. A day with six priorities has none, and the evening only ever remembers whether the one got done.",
+          "answerKey": "day-one-thing",
+          "placeholder": "The smallest move that counts",
+          "required": true
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Good. Go and live it.",
+          "button": "Finish"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "declare-dreamline",
       "version": 1,
       "status": "published",

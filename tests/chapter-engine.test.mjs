@@ -309,19 +309,98 @@ Title: Keep going.
   assert.equal(chapter.pages[1].answerKey, "morning-feeling");
 });
 
-test("published chapter versions are preserved and cannot be silently changed", () => {
+test("a new version stands beside the old, and an edit lands in place", () => {
   const nextVersion = { ...logSetup, version: logSetup.version + 1 };
   const library = mergePublishedChapters([logSetup], [nextVersion]);
 
   assert.equal(chapterRunId(logSetup), `log-setup@${logSetup.version}`);
   assert.equal(chapterRunId(nextVersion), `log-setup@${logSetup.version + 1}`);
   assert.equal(library.length, 2);
-  assert.throws(
-    () =>
-      mergePublishedChapters(
-        [logSetup],
-        [{ ...logSetup, title: "Changed without a new version" }],
-      ),
-    /already published/,
+
+  // Before release, editing a chapter is editing it. Sai: "we dont need v1 v2
+  // yet ... everything here is v1", and he is about to author most of them.
+  const edited = mergePublishedChapters(
+    [logSetup],
+    [{ ...logSetup, title: "Changed in place" }],
   );
+  assert.equal(edited.length, 1);
+  assert.equal(edited[0].title, "Changed in place");
+});
+
+// The rail is not gone, only stood down. On the day there are people part-way
+// through a chapter, its questions must not change under them.
+test("once released, a published version cannot be silently changed", async () => {
+  const previous = process.env.CIRCLE_OS_RELEASED;
+  process.env.CIRCLE_OS_RELEASED = "1";
+  try {
+    // Read at module load, so the released build is a separate import.
+    const fresh = await import(
+      `../scripts/chapter-compiler.mjs?released=${Date.now()}`
+    );
+    assert.throws(
+      () =>
+        fresh.mergePublishedChapters(
+          [logSetup],
+          [{ ...logSetup, title: "Changed without a new version" }],
+        ),
+      /already published/,
+    );
+  } finally {
+    if (previous === undefined) delete process.env.CIRCLE_OS_RELEASED;
+    else process.env.CIRCLE_OS_RELEASED = previous;
+  }
+});
+
+// A blank in a chapter's own words, filled from what the App already knows.
+// This is what "This week was for it." on the Week Review is made of — and it
+// had been rendering blank since the day it was written.
+test("a blank in the words is filled, and is not mistaken for progress", async () => {
+  const { createChapterRun, renderChapterTemplate } = await import(
+    "../app/os/chapters/chapter-model.js"
+  );
+  const chapter = {
+    id: "greet",
+    version: 1,
+    pages: [
+      { id: "cover", type: "cover", title: "{{greeting}}", body: "" },
+      { id: "week", type: "info", title: "This week is for it.", body: "{{week-goal}}" },
+      { id: "ask", type: "short-text", question: "What is the one thing?", answerKey: "one-thing" },
+      { id: "done", type: "result", title: "Go." },
+    ],
+  };
+  const at = "2026-09-08T09:00:00.000Z";
+  const seed = (answerKey, value) => ({
+    pageId: "cover",
+    answerKey,
+    value,
+    displaySnapshot: value,
+    answeredAt: at,
+    changedAt: at,
+  });
+
+  const run = createChapterRun(chapter, [
+    seed("greeting", "Good morning, Sai."),
+    seed("week-goal", "Run the business"),
+  ]);
+
+  // A blank belongs to the chapter, not to a Page: no Page declares it, and it
+  // is looked up by name.
+  assert.equal(renderChapterTemplate("{{greeting}}", run), "Good morning, Sai.");
+  assert.equal(renderChapterTemplate("{{week-goal}}", run), "Run the business");
+
+  // And a filled blank is not progress. It is the chapter knowing something
+  // before it opens its mouth, so the greeting still starts on its cover.
+  assert.equal(run.currentPageId, "cover");
+  assert.equal(run.status, "not-started");
+
+  // A question answered ahead of time still moves the starting Page, which is
+  // what that behaviour was for.
+  const seeded = createChapterRun(chapter, [
+    { ...seed("one-thing", "Write the persona"), pageId: "ask" },
+  ]);
+  assert.notEqual(seeded.currentPageId, "cover");
+
+  // A name the chapter never mentions is still dropped.
+  const stray = createChapterRun(chapter, [seed("nowhere", "x")]);
+  assert.equal(stray.answers.length, 0);
 });
