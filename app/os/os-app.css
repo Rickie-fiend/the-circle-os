@@ -8406,6 +8406,39 @@
 }
 
 /* A builder's row: put a sheet in the door and go and look at it. */
+/* An App that has not opened yet: its cover, with the key dark.
+ *
+ * Shown rather than hidden, because the shape of the whole thing is the
+ * argument for staying. Sai: "Protocol, and Week app will have a cover screen,
+ * with the disabled button." */
+.circle-os .os-locked-app {
+  background: var(--c-neutral-950);
+}
+
+.circle-os .os-locked-app h2 {
+  font-size: var(--os-page-main-font-size);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: var(--os-page-main-line-height);
+  margin: 0;
+  max-width: 15ch;
+}
+
+.circle-os .os-locked-app-why {
+  color: rgb(241 239 232 / 0.52);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 34ch;
+}
+
+/* Dark and quiet: it is waiting, not refusing. */
+.circle-os .os-locked-app-key.os-creative-button {
+  background: rgb(241 239 232 / 0.06);
+  border-color: rgb(241 239 232 / 0.14);
+  color: rgb(241 239 232 / 0.42);
+}
+
 .circle-os .os-admin-door-tests {
   display: flex;
   flex-wrap: wrap;

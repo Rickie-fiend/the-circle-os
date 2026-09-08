@@ -178,6 +178,13 @@ import {
   ProtocolPage,
   type ProtocolSealView,
 } from "./protocol-page";
+import { LockedAppPage } from "./locked-app-page";
+import {
+  PROTOCOL_DAY,
+  WEEK_DAY,
+  appIsOpen,
+  journeyDay,
+} from "./phases.js";
 import {
   dayDoor,
   dayOpenRunId,
@@ -2148,6 +2155,21 @@ export function TodayExperience() {
   const dayOneRunStored = dayOneChapter
     ? state.chapters.runs[chapterRunId(dayOneChapter)]
     : null;
+  /**
+   * Which day of the journey he is on, and so which Apps have opened.
+   *
+   * Counted in Circle days lived since day one was kept, not in calendar days
+   * since he installed anything: somebody who comes back on Friday is on their
+   * second day, not their fifth. See `phases.js` for the three phases and why
+   * each one waits for the one before it.
+   */
+  const dayOneKeptOn = dayOneRunStored?.completedAt
+    ? getDateKey(new Date(dayOneRunStored.completedAt))
+    : "";
+  const journeyDayNumber = journeyDay(dayOneKeptOn, dateKey);
+  const protocolIsOpen = appIsOpen("protocol", journeyDayNumber);
+  const weekIsOpen = appIsOpen("week", journeyDayNumber);
+
   const dayOneKeptADay = Boolean(
     dayOneDone &&
       dayOneRunStored?.completedAt &&
@@ -4371,9 +4393,25 @@ export function TodayExperience() {
               }
               hideIdleHeading
               idleApps={[
-                ...(sealedProtocolDay ? [
+                ...(sealedProtocolDay && protocolIsOpen ? [
                   <ProtocolKeptPage key="protocol-kept" seal={sealedProtocolDay} />,
                 ] : []),
+                /* Day one hands over the Apps that only need a person to be
+                   present. A Protocol is a commitment to seven days, and on
+                   day one there is no evidence that one day can be kept — so
+                   it shows its cover with the key dark until there is. */
+                ...(protocolIsOpen ? [] : [
+                  <LockedAppPage
+                    className="os-protocol-page os-locked-app"
+                    day={journeyDayNumber}
+                    key="protocol-locked"
+                    label="Protocol"
+                    opensOn={PROTOCOL_DAY}
+                    title="One line you will not cross."
+                    why="Tomorrow, once today is kept. A week you commit to is worth more than a week you hope for, and one day lived is the whole argument for it."
+                  />,
+                ]),
+                ...(protocolIsOpen ? [
                 <ProtocolPage
                   key={`protocol-${protocolRun?.id || "home"}`}
                   protocol={protocol}
@@ -4429,6 +4467,7 @@ export function TodayExperience() {
                     )
                   }
                 />,
+                ] : []),
                 ...(!SHOW_DREAMLINE || dreamlineEditing
                   ? []
                   : [
@@ -4785,6 +4824,25 @@ export function TodayExperience() {
               </div>
             </PageLayout>
 
+            {/* The Week Page waits for a week.
+              *
+              * On day one there is nothing for it to show — no week lived, no
+              * review to read — so it shows its cover with the key dark, and
+              * the person can see it coming. Sai: "at day 7, week and athena
+              * review would be able." */}
+            {weekIsOpen ? null : (
+              <LockedAppPage
+                className="os-log-page os-log-week os-locked-app"
+                day={journeyDayNumber}
+                key="log-week-locked"
+                label="Week"
+                opensOn={WEEK_DAY}
+                title="A week you can read."
+                why="On day seven, once there is a week to read. What the days were for, what moved, and what to point the next one at — none of which a week can tell you before it has happened."
+              />
+            )}
+
+            {weekIsOpen ? (
             <PageLayout
               className="os-log-page os-log-week"
               /* Reading the week is the one act on this Page that is not
@@ -5099,6 +5157,7 @@ export function TodayExperience() {
                 </details>
               </div>
             </PageLayout>
+            ) : null}
           </SwipeSession>
         </section>
         )}
