@@ -5789,6 +5789,159 @@
  * The square is the day strip's square and the key's square, so the picture
  * belongs to this App rather than to a charting library. There are no
  * pictographs and no colour scale — a week was fed or it was not. */
+/* The Quest catalogue.
+ *
+ * An App Box like any other — one Quest to a Page, browsed by swiping, its
+ * place in the header the way a chapter shows its own. Sai: "it look as a app
+ * box, but with indicator, we may browse them by swiping, and click on view
+ * button to extend the box and show the steps." */
+.circle-os .quest-catalogue-session {
+  margin-top: var(--os-app-box-gap);
+  padding: 0 !important;
+}
+
+.circle-os .quest-catalogue-apps {
+  background: var(--c-neutral-950);
+  border: 1px solid rgb(241 239 232 / 0.08);
+  border-radius: var(--r-box);
+}
+
+.circle-os .quest-catalogue-apps .os-app-window,
+.circle-os .quest-catalogue-apps .os-app-page {
+  background: var(--c-neutral-950);
+  border-radius: var(--r-box);
+}
+
+.circle-os .quest-page {
+  color: var(--c-warm-50);
+}
+
+.circle-os .quest-page h2 {
+  font-size: var(--os-page-main-font-size);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: var(--os-page-main-line-height);
+  margin: 0;
+  max-width: 15ch;
+}
+
+/* Which Quest of how many, opposite the topic. */
+.circle-os .quest-place {
+  color: rgb(241 239 232 / 0.42);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.circle-os .quest-body {
+  align-content: start;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.circle-os .quest-blurb {
+  color: rgb(241 239 232 / 0.62);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 36ch;
+}
+
+.circle-os .quest-count {
+  color: rgb(241 239 232 / 0.42);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* How far in, without a number to read. One cell a step, the same square the
+   day strip and The Four are drawn from. */
+.circle-os .quest-bar {
+  display: grid;
+  gap: 3px;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  min-width: 0;
+}
+
+.circle-os .quest-bar > i {
+  background: rgb(241 239 232 / 0.09);
+  border-radius: 1px;
+  display: block;
+  height: 5px;
+  min-width: 0;
+}
+
+.circle-os .quest-bar > i.is-done {
+  background: var(--c-orange);
+}
+
+/* The steps, opened inside the box the Quest already had. */
+.circle-os .quest-steps {
+  display: grid;
+  gap: 0.55rem;
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+}
+
+.circle-os .quest-steps li {
+  align-items: baseline;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 1.2rem 1fr auto;
+}
+
+.circle-os .quest-step-place {
+  color: rgb(241 239 232 / 0.34);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.circle-os .quest-step-title {
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+
+.circle-os .quest-step-minutes {
+  color: rgb(241 239 232 / 0.42);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* A step already answered recedes rather than being crossed out: it is done,
+   not cancelled. */
+.circle-os .quest-steps li.is-done .quest-step-title {
+  color: rgb(241 239 232 / 0.42);
+}
+
+.circle-os .quest-steps li.is-done .quest-step-minutes {
+  color: var(--c-orange);
+}
+
+.circle-os .quest-view {
+  appearance: none;
+  background: transparent;
+  border: 1px solid rgb(241 239 232 / 0.18);
+  border-radius: 999px;
+  color: rgb(241 239 232 / 0.82);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  min-height: var(--touch-min);
+  padding: 0 1.1rem;
+  text-transform: uppercase;
+}
+
 .circle-os .vision-four-apps {
   background: var(--c-neutral-950);
   border: 1px solid rgb(241 239 232 / 0.08);

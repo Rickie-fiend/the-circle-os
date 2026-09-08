@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import {
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -42,6 +43,8 @@ import {
   selectPendingAppPublication,
 } from "../chapters/chapter-publication-store";
 import { chapterAnswerText, chapterRunId } from "../chapters/chapter-model.js";
+import { getPublishedChapter } from "../chapters/registry";
+import { questCatalogue } from "../quests.js";
 import type { ChapterRun } from "../chapters/chapter-types";
 import { useChapterPublications } from "../chapters/use-chapter-publications";
 import {
@@ -610,6 +613,26 @@ export default function CircleOSMirror() {
    * The hour matters because the week rolls on a Sunday evening: after that the
    * window ends on the week he is planning rather than the one just lived.
    */
+  /**
+   * The Quest catalogue, read against the chapters actually answered.
+   *
+   * A chapter answered before its Quest existed is already counted: progress
+   * comes from the runs rather than from a second record of what has been
+   * done.
+   */
+  const quests = useMemo(
+    () => questCatalogue(state.chapters.runs, getPublishedChapter),
+    [state.chapters.runs],
+  );
+  const questCatalogueVersion = `quests-v1:${quests.length}`;
+  const visibleQuest = appSessionIndex(
+    state,
+    "quest-catalogue",
+    questCatalogueVersion,
+    0,
+  );
+  const [openQuest, setOpenQuest] = useState<string | null>(null);
+
   const dimensions = dimensionRecord(state, getDateKey(), new Date().getHours());
   const starved = starvedDimension(dimensions);
   /**
@@ -1151,6 +1174,112 @@ export default function CircleOSMirror() {
             )}
           </SwipeSession>
           )}
+        </section>
+
+        {/* The Quest catalogue.
+          *
+          * Under Athena's Reading, because a Quest is the thing you go and do
+          * about what she just told you. Sai: "Add the quest catalog session
+          * under athena reading."
+          *
+          * An App Box like any other: one Quest to a Page, browsed by swiping,
+          * with the position in the header the way a chapter shows its own.
+          * Sai: "it look as a app box, but with indicator, we may browse them
+          * by swiping, and click on view button to extend the box and show the
+          * steps." The View key opens the steps inside the same box, which the
+          * box grows to hold — nothing navigates away. */}
+        <section className="quest-catalogue-session" aria-label="Quests">
+          <SwipeSession
+            attentionKey={`quests:${questCatalogueVersion}`}
+            availableIndices={quests.map((_, index) => index)}
+            className="quest-catalogue-apps"
+            index={visibleQuest}
+            label="Quests"
+            maxIndex={Math.max(0, quests.length - 1)}
+            onIndexChange={(nextIndex) =>
+              updateState((current) =>
+                setAppSessionIndex(
+                  current,
+                  "quest-catalogue",
+                  questCatalogueVersion,
+                  nextIndex,
+                ),
+              )
+            }
+          >
+            {quests.map((quest, index) => {
+              const open = openQuest === quest.id;
+              return (
+                <PageLayout
+                  className="quest-page"
+                  footer={
+                    <button
+                      aria-expanded={open}
+                      className="quest-view"
+                      onClick={() => setOpenQuest(open ? null : quest.id)}
+                      type="button"
+                    >
+                      {open ? "Hide steps" : "View steps"}
+                    </button>
+                  }
+                  headerLeft={<p className="os-card-label">{quest.topic}</p>}
+                  headerRight={
+                    <p className="quest-place">
+                      {index + 1}/{quests.length}
+                    </p>
+                  }
+                  key={quest.id}
+                  theme="dark"
+                >
+                  <div className="os-page-main">
+                    <h2>{quest.title}</h2>
+                  </div>
+                  <div className="os-page-sub quest-body">
+                    <p className="quest-blurb">{quest.blurb}</p>
+                    {/* What it costs and how far in he is, in one line. A bar
+                        rather than a number, because the useful question is
+                        "how much is left" and a bar answers it without being
+                        read. */}
+                    <p className="quest-count">
+                      {quest.complete
+                        ? `All ${quest.total} steps done`
+                        : `${quest.done} of ${quest.total} steps · ${quest.minutes} min`}
+                    </p>
+                    <span
+                      aria-hidden="true"
+                      className="quest-bar"
+                      data-done={quest.done}
+                    >
+                      {quest.steps.map((step) => (
+                        <i
+                          className={step.done ? "is-done" : undefined}
+                          key={step.chapterId}
+                        />
+                      ))}
+                    </span>
+                    {open ? (
+                      <ol className="quest-steps">
+                        {quest.steps.map((step, stepIndex) => (
+                          <li
+                            className={step.done ? "is-done" : undefined}
+                            key={step.chapterId}
+                          >
+                            <span className="quest-step-place">
+                              {stepIndex + 1}
+                            </span>
+                            <span className="quest-step-title">{step.title}</span>
+                            <span className="quest-step-minutes">
+                              {step.done ? "Done" : `${step.minutes} min`}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : null}
+                  </div>
+                </PageLayout>
+              );
+            })}
+          </SwipeSession>
         </section>
 
         {/* Reflect's deepest layer.
