@@ -152,6 +152,10 @@ test("the catalogue is an App Box under Athena's Reading", () => {
   // and clickable to start ... all those chapters will be process on splash
   // screen."
   assert.match(page, /className="quest-step"/);
+  // A block, not a line: a row of text does not look like a thing you go and
+  // do. Sai: "Steps in quests should be in boxes of blocks rather then lines."
+  assert.match(page, /className="quest-step-meta"/);
+  assert.match(css2, /\.circle-os \.quest-step \{[\s\S]*?border: 1px solid[\s\S]*?border-radius: var\(--r-lg\)/);
   assert.match(page, /onClick=\{\(\) => startQuestStep\(step\.chapterId\)\}/);
   assert.match(page, /function startQuestStep\(chapterId: string\)/);
   assert.match(page, /writePinnedChapter\(chapterId\)/);

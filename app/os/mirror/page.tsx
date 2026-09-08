@@ -1287,19 +1287,22 @@ export default function CircleOSMirror() {
                             className={step.done ? "is-done" : undefined}
                             key={step.chapterId}
                           >
+                            {/* A block, not a line. A step is a thing you go
+                                and do, and a row of text does not look like
+                                one. Sai: "Steps in quests should be in boxes
+                                of blocks rather then lines." */}
                             <button
                               className="quest-step"
                               onClick={() => startQuestStep(step.chapterId)}
                               type="button"
                             >
-                              <span className="quest-step-place">
-                                {stepIndex + 1}
+                              <span className="quest-step-meta">
+                                Step {stepIndex + 1}
+                                <i aria-hidden="true">·</i>
+                                {step.done ? "Done" : `${step.minutes} min`}
                               </span>
                               <span className="quest-step-title">
                                 {step.title}
-                              </span>
-                              <span className="quest-step-minutes">
-                                {step.done ? "Again" : `${step.minutes} min`}
                               </span>
                             </button>
                           </li>
