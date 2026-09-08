@@ -23,8 +23,8 @@ test("a setup chapter can have the screen to itself", () => {
     shell.indexOf('{doorKind === "log-setup" ? ('),
     shell.indexOf('<section className="os-log-section"'),
   );
-  assert.match(gate, /<ChapterSplash label="Log setup">[\s\S]*?PublishedChapterDelivery/);
-  assert.match(gate, /<ChapterSplash label="Log setup">[\s\S]*?ChapterPlayer/);
+  assert.match(gate, /<ChapterSplash[\s\S]{0,220}?label="Log setup"[\s\S]*?PublishedChapterDelivery/);
+  assert.match(gate, /<ChapterSplash[\s\S]{0,220}?label="Log setup"[\s\S]*?ChapterPlayer/);
   // One sheet at a time, and the door is what guarantees it: it answers with
   // one kind, so two can no longer be open at once. Sai: "i sometimes cannot
   // scroll entirely."
@@ -232,4 +232,36 @@ test("putting a sheet down keeps what was already answered", async () => {
   // Deferring is not finishing. The chapter is still owed.
   assert.notEqual(later.status, "completed");
   assert.equal(later.completedAt ?? null, null);
+});
+
+// Sai: "make all the chapter dismissable to skip to the app. We can always
+// rerun from the quest."
+test("a sheet can be pulled down from any page, not only the first", () => {
+  // Swiping back off the first Page already left a chapter, which is fine on
+  // the cover and useless on Page nine: to leave from there he had to walk all
+  // the way back first.
+  assert.match(shell, /function startPull\(event: ReactPointerEvent<HTMLDivElement>\)/);
+  assert.match(shell, /function endPull\(event: ReactPointerEvent<HTMLDivElement>\)/);
+  assert.match(shell, /onPointerDown=\{startPull\}/);
+  assert.match(shell, /onPointerUp=\{endPull\}/);
+
+  // Only from the top of the frame, so it never fights the scroll: with
+  // anything scrolled under the finger, a downward drag is reading.
+  assert.match(shell, /frame\.scrollTop <= 0/);
+  // And only when the drag is clearly vertical, so it never eats a page turn.
+  assert.match(shell, /down > 110 && down > across \* 1\.6/);
+
+  // Down rather than a key, because a key in the corner sits on the progress
+  // the chapter draws there — that was the Later button, and it is why it went.
+  assert.doesNotMatch(shell, /os-splash-later/);
+
+  // Every sheet hands the gesture the same way out its chapter already has.
+  for (const label of ["Day one", "Week setup", "Week review", "Log setup", "A new day"]) {
+    const at = shell.indexOf(`label="${label}"`);
+    assert.ok(at > 0, `${label} splash is missing`);
+    assert.ok(
+      shell.slice(at, at + 320).includes("onDismiss="),
+      `${label} cannot be pulled down`,
+    );
+  }
 });

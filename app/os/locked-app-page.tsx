@@ -15,27 +15,25 @@ import { CreativeButton } from "./button-engine";
  * walking toward. So the cover says what the App is for and which day it
  * opens, and the key sits there, dark, waiting.
  *
- * It says the day rather than "locked", because nothing is being withheld — a
- * Protocol on day one would be a commitment made with no evidence behind it,
- * and a Week Page on day one would have no week to show.
+ * It names the chapter that opens it rather than saying "locked", because
+ * nothing is being withheld: the chapter is the actual dependency, and it can
+ * be started from its Quest whenever he wants. Sai: "unlock after completing
+ * the set-up chapter ... We can always rerun from the quest."
  */
 export function LockedAppPage({
   className,
-  day,
   label,
-  opensOn,
+  opensAfter,
   title,
   why,
 }: {
   className: string;
-  /** The day of the journey he is on, counting day one as one. */
-  day: number;
   label: string;
-  opensOn: number;
+  /** The chapter that opens it, named so he knows what to go and do. */
+  opensAfter: string;
   title: string;
   why: string;
 }) {
-  const daysAway = Math.max(0, opensOn - day);
   return (
     <PageLayout
       className={className}
@@ -47,7 +45,7 @@ export function LockedAppPage({
           styleId="default"
           type="button"
         >
-          {daysAway === 1 ? "Opens tomorrow" : `Opens on day ${opensOn}`}
+          {opensAfter ? `Opens after “${opensAfter}”` : "Not open yet"}
         </CreativeButton>
       }
       headerLeft={<p className="os-card-label">{label}</p>}

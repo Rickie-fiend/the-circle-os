@@ -14,6 +14,7 @@ import {
   useSyncExternalStore,
   type FormEvent,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import {
@@ -179,12 +180,7 @@ import {
   type ProtocolSealView,
 } from "./protocol-page";
 import { LockedAppPage } from "./locked-app-page";
-import {
-  PROTOCOL_DAY,
-  WEEK_DAY,
-  appIsOpen,
-  journeyDay,
-} from "./phases.js";
+import { appIsOpen, lockedUntil } from "./phases.js";
 import {
   dayDoor,
   dayOpenRunId,
@@ -481,9 +477,12 @@ function onServer() {
 export function ChapterSplash({
   children,
   label,
+  onDismiss,
 }: {
   children: ReactNode;
   label: string;
+  /** Put the sheet down from wherever he has got to. */
+  onDismiss?: () => void;
 }) {
   // The Page behind stops scrolling while this is open.
   //
@@ -496,8 +495,43 @@ export function ChapterSplash({
   // first render, so the sheet does not arrive a beat late.
   const mounted = useSyncExternalStore(subscribeToClient, onClient, onServer);
   const sheetRef = useRef<HTMLDivElement | null>(null);
+  const frameRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => holdBodyStill(), []);
   useEffect(() => fitToVisibleWindow(sheetRef.current), [mounted]);
+
+  /**
+   * Pull the sheet down to put it down, from any Page.
+   *
+   * Swiping back off the first Page already left a chapter, which is fine on
+   * the cover and useless on Page nine: to leave from there he had to walk all
+   * the way back first. Sai: "make all the chapter dismissable to skip to the
+   * app. We can always rerun from the quest."
+   *
+   * Down rather than a key, because a key in the corner sits on the progress
+   * the chapter draws there — that was the Later button, and it is why it went.
+   * This is the gesture a sheet already means.
+   *
+   * Only from the top of the frame, so it never fights the scroll: with
+   * anything scrolled under the finger, a downward drag is reading, not
+   * leaving. And only when the drag is clearly vertical, so it never eats a
+   * page turn.
+   */
+  const pull = useRef<{ x: number; y: number } | null>(null);
+  function startPull(event: ReactPointerEvent<HTMLDivElement>) {
+    const frame = frameRef.current;
+    pull.current =
+      onDismiss && frame && frame.scrollTop <= 0
+        ? { x: event.clientX, y: event.clientY }
+        : null;
+  }
+  function endPull(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = pull.current;
+    pull.current = null;
+    if (!start || !onDismiss) return;
+    const down = event.clientY - start.y;
+    const across = Math.abs(event.clientX - start.x);
+    if (down > 110 && down > across * 1.6) onDismiss();
+  }
 
   // Rendered onto the body, not into the feed it replaces.
   //
@@ -517,10 +551,15 @@ export function ChapterSplash({
         aria-label={label}
         aria-modal="true"
         className="os-splash"
+        onPointerCancel={() => { pull.current = null; }}
+        onPointerDown={startPull}
+        onPointerUp={endPull}
         ref={sheetRef}
         role="dialog"
       >
-        <div className="os-splash-frame">{children}</div>
+        <div className="os-splash-frame" ref={frameRef}>
+          {children}
+        </div>
       </div>
     </div>,
     document.body,
@@ -2133,6 +2172,21 @@ export function TodayExperience() {
     );
   }
 
+  /**
+   * The published Log setup, put down for the day.
+   *
+   * A delivered chapter has no run of its own until it is played, so the
+   * deferral is written against the run it would create.
+   */
+  function dismissLogSetupPublication() {
+    releasePinnedDoor();
+    if (!logSetupPublication) return;
+    const chapter = logSetupPublication.chapter;
+    const id = chapterRunId(chapter);
+    const run = state.chapters.runs[id] || createChapterRun(chapter);
+    deferSplash({ ...run, runId: id }, chapter.session);
+  }
+
   /** Put a sheet down for the rest of the day, keeping what he has answered. */
   function deferSplash(run: ChapterRun | null | undefined, session: string) {
     releasePinnedDoor();
@@ -2166,19 +2220,13 @@ export function TodayExperience() {
     ? state.chapters.runs[chapterRunId(dayOneChapter)]
     : null;
   /**
-   * Which day of the journey he is on, and so which Apps have opened.
+   * Which Apps have opened.
    *
-   * Counted in Circle days lived since day one was kept, not in calendar days
-   * since he installed anything: somebody who comes back on Friday is on their
-   * second day, not their fifth. See `phases.js` for the three phases and why
-   * each one waits for the one before it.
+   * By the chapter that sets each one up rather than by a date — see
+   * `phases.js` for why the date was the wrong key.
    */
-  const dayOneKeptOn = dayOneRunStored?.completedAt
-    ? getDateKey(new Date(dayOneRunStored.completedAt))
-    : "";
-  const journeyDayNumber = journeyDay(dayOneKeptOn, dateKey);
-  const protocolIsOpen = appIsOpen("protocol", journeyDayNumber);
-  const weekIsOpen = appIsOpen("week", journeyDayNumber);
+  const protocolIsOpen = appIsOpen("protocol", state.chapters.runs);
+  const weekIsOpen = appIsOpen("week", state.chapters.runs);
 
   const dayOneKeptADay = Boolean(
     dayOneDone &&
@@ -4434,12 +4482,11 @@ export function TodayExperience() {
                 ...(protocolIsOpen ? [] : [
                   <LockedAppPage
                     className="os-protocol-page os-locked-app"
-                    day={journeyDayNumber}
                     key="protocol-locked"
                     label="Protocol"
-                    opensOn={PROTOCOL_DAY}
+                    opensAfter={getPublishedChapter(lockedUntil("protocol"))?.title || ""}
                     title="One line you will not cross."
-                    why="Tomorrow, once today is kept. A week you commit to is worth more than a week you hope for, and one day lived is the whole argument for it."
+                    why="Day one names the first one, and writes the phase it runs in. A week you commit to is worth more than a week you hope for."
                   />,
                 ]),
                 ...(protocolIsOpen ? [
@@ -4548,7 +4595,10 @@ export function TodayExperience() {
           * from four conditionals negating each other. Every one of them is
           * left by swiping back off its first page. */}
         {doorKind === "day-one" && dayOneChapter && dayOneRun ? (
-          <ChapterSplash label="Day one">
+          <ChapterSplash
+            label="Day one"
+            onDismiss={() => deferSplash(dayOneRun, dayOneChapter.session)}
+          >
             <ChapterPlayer
               className="os-day-one-session"
               definition={dayOneChapter}
@@ -4561,7 +4611,10 @@ export function TodayExperience() {
         ) : null}
 
         {doorKind === "week-setup" && weekSetupChapter && weekSetupRun ? (
-          <ChapterSplash label="Week setup">
+          <ChapterSplash
+            label="Week setup"
+            onDismiss={() => deferSplash(weekSetupRun, weekSetupChapter.session)}
+          >
             <ChapterPlayer
               className="os-week-setup-session"
               definition={weekSetupChapter}
@@ -4574,7 +4627,14 @@ export function TodayExperience() {
         ) : null}
 
         {doorKind === "log-setup" ? (
-          <ChapterSplash label="Log setup">
+          <ChapterSplash
+            label="Log setup"
+            onDismiss={
+              logSetupPublication
+                ? dismissLogSetupPublication
+                : () => deferSplash(logSetupRun, logSetupChapter?.session || "")
+            }
+          >
             {logSetupPublication ? (
               <PublishedChapterDelivery
                 className="os-log-setup-session"
@@ -4596,7 +4656,7 @@ export function TodayExperience() {
         ) : null}
 
         {doorKind === "week-review" && weekReviewChapter && weekReviewRun ? (
-          <ChapterSplash label="Week review">
+          <ChapterSplash label="Week review" onDismiss={dismissWeekReview}>
             <ChapterPlayer
               className="os-week-review-session"
               definition={weekReviewChapter}
@@ -4610,7 +4670,10 @@ export function TodayExperience() {
 
         {/* A chapter opened by name, from a Quest step. */}
         {doorKind === "chapter" && pinnedChapter && pinnedChapterRun ? (
-          <ChapterSplash label={pinnedChapter.title || "Chapter"}>
+          <ChapterSplash
+            label={pinnedChapter.title || "Chapter"}
+            onDismiss={releasePinnedDoor}
+          >
             <ChapterPlayer
               className="os-quest-step-session"
               definition={pinnedChapter}
@@ -4626,7 +4689,10 @@ export function TodayExperience() {
           * then gets out of the way. Sai: "for that day whenever the user
           * login, it will be to use app." */}
         {doorKind === "day-open" && dayOpenChapter && dayOpenRun ? (
-          <ChapterSplash label="A new day">
+          <ChapterSplash
+            label="A new day"
+            onDismiss={() => deferSplash(dayOpenRun, dayOpenChapter.session)}
+          >
             <ChapterPlayer
               className="os-day-open-session"
               definition={dayOpenChapter}
@@ -4878,12 +4944,11 @@ export function TodayExperience() {
             {weekIsOpen ? null : (
               <LockedAppPage
                 className="os-log-page os-log-week os-locked-app"
-                day={journeyDayNumber}
                 key="log-week-locked"
                 label="Week"
-                opensOn={WEEK_DAY}
+                opensAfter={getPublishedChapter(lockedUntil("week"))?.title || ""}
                 title="A week you can read."
-                why="On day seven, once there is a week to read. What the days were for, what moved, and what to point the next one at — none of which a week can tell you before it has happened."
+                why="The week's setup writes the goal and the phase this Page is built to show. Until then there is nothing here that would be true."
               />
             )}
 

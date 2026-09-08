@@ -15,6 +15,8 @@ export function journeyDay(
 
 export function phaseForDay(day: number): Phase;
 
-export function appIsOpen(app: string, day: number): boolean;
+export const SETUP_CHAPTER: Record<GatedApp, string>;
 
-export function lockedUntil(app: string): number;
+export function appIsOpen(app: string, runs: unknown): boolean;
+
+export function lockedUntil(app: string): string;

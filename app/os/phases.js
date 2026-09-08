@@ -38,6 +38,8 @@
  * second day, not their fifth.
  */
 
+import { chapterEverCompleted } from "./chapters/chapter-model.js";
+
 export const PHASES = ["one-day", "one-week", "the-week-read"];
 
 /** The day the Protocol opens, counting day one as day one. */
@@ -71,25 +73,42 @@ export function phaseForDay(day) {
 }
 
 /**
+ * The chapter that opens each gated App.
+ *
+ * An App opens when the chapter that sets it up has been answered, not when a
+ * date arrives. Sai: "For protocol and week app, unlock after completing the
+ * set-up chapter."
+ *
+ * A date was the wrong key. It let day seven arrive with no week goal written
+ * and no phase running, so the Week Page opened onto nothing — and it locked
+ * somebody who had done all the work out of the App that work was for. The
+ * chapter is the actual dependency: day one writes the first phase from the
+ * term he names, and the week's setup writes the goal and the seven-day phase
+ * the Week Page is built to show.
+ *
+ * Nothing here traps anybody. Every chapter can be put down and picked up
+ * again from its Quest, so a locked App is a thing waiting rather than a
+ * thing withheld. Sai: "make all the chapter dismissable to skip to the app.
+ * We can always rerun from the quest."
+ */
+export const SETUP_CHAPTER = {
+  protocol: "day-one",
+  week: "week-setup",
+};
+
+/**
  * Whether an App is open yet.
  *
  * Everything a person can use on the first day is open from the first day.
- * The two that need something lived behind them wait for it.
+ * The two that need something set up behind them wait for that chapter.
  */
-export function appIsOpen(app, day) {
-  if (app === "protocol") return day >= PROTOCOL_DAY;
-  if (app === "week") return day >= WEEK_DAY;
-  return true;
+export function appIsOpen(app, runs) {
+  const chapterId = SETUP_CHAPTER[app];
+  if (!chapterId) return true;
+  return chapterEverCompleted(runs, chapterId);
 }
 
-/**
- * What a locked App says on its cover.
- *
- * It names the day it opens rather than saying no, because the point of
- * showing a locked App at all is that the person can see where they are going.
- */
+/** The chapter a locked App is waiting for, if it is waiting for one. */
 export function lockedUntil(app) {
-  if (app === "protocol") return PROTOCOL_DAY;
-  if (app === "week") return WEEK_DAY;
-  return 0;
+  return SETUP_CHAPTER[app] || "";
 }
