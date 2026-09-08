@@ -107,14 +107,32 @@ export function dayWasOpened(run) {
  */
 const PINNED_DOOR_KEY = "circle-os-pinned-door";
 
+/**
+ * A pin is either one of the doors, or a chapter by name.
+ *
+ * The doors are for the Workshop, which needs to see a sheet on a day that
+ * would not show it. A chapter by name is for a Quest step: Sai, on tapping a
+ * step, "all those chapters will be process on splash screen." Both put
+ * something in the same sheet, so they are the same mechanism with two kinds
+ * of name rather than two mechanisms.
+ */
+const CHAPTER_PIN = "chapter:";
+
 export function readPinnedDoor() {
   if (typeof window === "undefined") return null;
   try {
-    const kind = window.localStorage.getItem(PINNED_DOOR_KEY);
-    return DAY_DOOR_ORDER.includes(kind) ? kind : null;
+    const pin = window.localStorage.getItem(PINNED_DOOR_KEY);
+    if (DAY_DOOR_ORDER.includes(pin)) return pin;
+    return typeof pin === "string" && pin.startsWith(CHAPTER_PIN) ? pin : null;
   } catch {
     return null;
   }
+}
+
+/** The chapter a pin names, or null when it names one of the doors. */
+export function pinnedChapterId(pin) {
+  if (typeof pin !== "string" || !pin.startsWith(CHAPTER_PIN)) return null;
+  return pin.slice(CHAPTER_PIN.length) || null;
 }
 
 export function writePinnedDoor(kind) {
@@ -123,6 +141,17 @@ export function writePinnedDoor(kind) {
     window.localStorage.setItem(PINNED_DOOR_KEY, kind);
   } catch {
     // A builder's convenience, not something to fail an App over.
+  }
+}
+
+/** Put one chapter in the door, by name. */
+export function writePinnedChapter(chapterId) {
+  const id = typeof chapterId === "string" ? chapterId.trim() : "";
+  if (typeof window === "undefined" || !id) return;
+  try {
+    window.localStorage.setItem(PINNED_DOOR_KEY, `${CHAPTER_PIN}${id}`);
+  } catch {
+    // As above.
   }
 }
 

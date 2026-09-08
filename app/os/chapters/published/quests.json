@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "quests": [
+    {
+      "id": "getting-started",
+      "topic": "Foundation",
+      "title": "Getting started",
+      "blurb": "The first week: who you are becoming, one habit, one line you will not cross, and a week you can read.",
+      "steps": [
+        {
+          "chapterId": "day-one",
+          "minutes": 6
+        },
+        {
+          "chapterId": "habit-building",
+          "minutes": 4
+        },
+        {
+          "chapterId": "log-setup",
+          "minutes": 2
+        },
+        {
+          "chapterId": "week-setup",
+          "minutes": 7
+        },
+        {
+          "chapterId": "week-review",
+          "minutes": 6
+        }
+      ]
+    },
+    {
+      "id": "the-life-you-want",
+      "topic": "Direction",
+      "title": "The life you want",
+      "blurb": "Four declarations, from an ordinary Tuesday to a dream with a date on it. What you are aiming at, written down where it can be checked.",
+      "steps": [
+        {
+          "chapterId": "declare-vision",
+          "minutes": 4
+        },
+        {
+          "chapterId": "declare-typical-tuesday",
+          "minutes": 6
+        },
+        {
+          "chapterId": "declare-mission-statement",
+          "minutes": 5
+        },
+        {
+          "chapterId": "declare-dreamline",
+          "minutes": 5
+        }
+      ]
+    },
+    {
+      "id": "knowing-yourself",
+      "topic": "Personal growth",
+      "title": "Knowing yourself",
+      "blurb": "Twelve short readings on how you actually work — your rhythm, your attention, what rest is for, what makes a day worth it.",
+      "steps": [
+        {
+          "chapterId": "profile-spark-01",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-02",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-03",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-04",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-05",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-06",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-07",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-08",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-09",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-10",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-11",
+          "minutes": 3
+        },
+        {
+          "chapterId": "profile-spark-12",
+          "minutes": 3
+        }
+      ]
+    }
+  ]
+}

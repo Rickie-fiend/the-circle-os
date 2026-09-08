@@ -27,6 +27,15 @@ const OUTPUT_PATH = join(
   "published",
   "index.json",
 );
+const QUESTS_SOURCE = join(CHAPTERS_ROOT, "Quests.md");
+const QUESTS_OUTPUT = join(
+  REPO_ROOT,
+  "app",
+  "os",
+  "chapters",
+  "published",
+  "quests.json",
+);
 const PAGE_TYPES = new Set([
   "cover",
   "info",
@@ -412,6 +421,114 @@ async function readChapters(paths) {
   );
 }
 
+/**
+ * The Quest manifest, authored in the vault beside the chapters it groups.
+ *
+ * It lived in the app for one commit, which was one too many: a Quest is
+ * content, and content he writes belongs where he writes everything else.
+ * Sai: "quest.md". Same folder, same command, same round trip.
+ *
+ * The format is deliberately thinner than a chapter's, because a Quest holds
+ * no words of its own beyond a title and a blurb — everything a person reads
+ * is in the chapters it names.
+ */
+export function parseQuestsMarkdown(source, file = "Quests.md") {
+  const quests = [];
+  let current = null;
+  let readingSteps = false;
+
+  const finish = () => {
+    if (!current) return;
+    if (!current.steps.length) {
+      throw new Error(`${file}: Quest "${current.id}" has no steps.`);
+    }
+    for (const field of ["topic", "title"]) {
+      if (!current[field]) {
+        throw new Error(`${file}: Quest "${current.id}" has no ${field}.`);
+      }
+    }
+    quests.push(current);
+    current = null;
+  };
+
+  for (const raw of String(source).split(/\r?\n/)) {
+    const line = raw.trim();
+    const heading = /^##\s+Quest:\s*(.+)$/i.exec(line);
+    if (heading) {
+      finish();
+      const id = heading[1].trim();
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) {
+        throw new Error(`${file}: Quest id "${id}" must be lower-case and hyphenated.`);
+      }
+      current = { id, topic: "", title: "", blurb: "", steps: [] };
+      readingSteps = false;
+      continue;
+    }
+    if (!current) continue;
+
+    if (/^steps:$/i.test(line)) {
+      readingSteps = true;
+      continue;
+    }
+    if (readingSteps && line.startsWith("-")) {
+      const [chapterId, minutes] = line
+        .slice(1)
+        .split("|")
+        .map((part) => part.trim());
+      if (!chapterId) throw new Error(`${file}: Quest "${current.id}" has a step with no chapter.`);
+      current.steps.push({
+        chapterId,
+        minutes: Number.parseInt(minutes, 10) || 0,
+      });
+      continue;
+    }
+
+    const field = /^(topic|title|blurb):\s*(.*)$/i.exec(line);
+    if (field) {
+      readingSteps = false;
+      current[field[1].toLowerCase()] = field[2].trim();
+    }
+  }
+  finish();
+
+  const ids = quests.map((quest) => quest.id);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error(`${file}: Quest ids must be unique.`);
+  }
+  return quests;
+}
+
+/**
+ * Every step has to name a chapter that is actually published.
+ *
+ * Caught here rather than in the App, where a Quest naming a chapter that does
+ * not exist becomes a Quest that is quietly one step shorter than it says.
+ */
+function assertQuestSteps(quests, chapters) {
+  const published = new Set(chapters.map((chapter) => chapter.id));
+  for (const quest of quests) {
+    for (const step of quest.steps) {
+      if (!published.has(step.chapterId)) {
+        throw new Error(
+          `Quest "${quest.id}" names a chapter that is not published: ${step.chapterId}`,
+        );
+      }
+      if (!step.minutes) {
+        throw new Error(`Quest "${quest.id}" step "${step.chapterId}" has no minutes.`);
+      }
+    }
+  }
+}
+
+async function readQuests() {
+  try {
+    return parseQuestsMarkdown(await readFile(QUESTS_SOURCE, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  }
+}
+
 async function main() {
   const command = process.argv.includes("--publish") ? "publish" : "check";
   const draftPaths = await markdownFiles(join(CHAPTERS_ROOT, "Drafts"));
@@ -421,8 +538,18 @@ async function main() {
   const all = await readChapters([...draftPaths, ...publishedPaths]);
   if (!all.length) throw new Error(`No chapter Markdown found in ${CHAPTERS_ROOT}`);
 
+  const quests = await readQuests();
+
   if (command === "check") {
-    console.log(`Checked ${all.length} chapter source${all.length === 1 ? "" : "s"}.`);
+    assertQuestSteps(
+      quests,
+      all.filter((chapter) => chapter.status === "published"),
+    );
+    console.log(
+      `Checked ${all.length} chapter source${all.length === 1 ? "" : "s"} and ${
+        quests.length
+      } quest${quests.length === 1 ? "" : "s"}.`,
+    );
     return;
   }
 
@@ -463,6 +590,15 @@ async function main() {
       publishedChapters.length === 1 ? "" : "s"
     }.`,
   );
+
+  assertQuestSteps(quests, publishedChapters);
+  await writeFile(
+    QUESTS_OUTPUT,
+    `${JSON.stringify({ schemaVersion: 1, quests }, null, 2)}
+`,
+    "utf8",
+  );
+  console.log(`Published ${quests.length} quest${quests.length === 1 ? "" : "s"}.`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

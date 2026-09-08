@@ -37,11 +37,9 @@ export type QuestView = {
 
 type GetChapter = (id: string) => ChapterDefinition | undefined;
 
-export const QUESTS: Quest[];
+export function questTopics(quests: Quest[]): string[];
 
-export function questTopics(): string[];
-
-export function findQuest(id: string): Quest | null;
+export function findQuest(quests: Quest[], id: string): Quest | null;
 
 export function questProgress(
   quest: Quest,
@@ -50,6 +48,7 @@ export function questProgress(
 ): QuestView;
 
 export function questCatalogue(
+  quests: Quest[],
   runs: Record<string, ChapterRun>,
   getChapter: GetChapter,
 ): QuestView[];

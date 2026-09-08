@@ -44,6 +44,9 @@ import {
 } from "../chapters/chapter-publication-store";
 import { chapterAnswerText, chapterRunId } from "../chapters/chapter-model.js";
 import { getPublishedChapter } from "../chapters/registry";
+import { CreativeButton } from "../button-engine";
+import { writePinnedChapter } from "../day-door.js";
+import { QUESTS } from "../chapters/quest-registry";
 import { questCatalogue } from "../quests.js";
 import type { ChapterRun } from "../chapters/chapter-types";
 import { useChapterPublications } from "../chapters/use-chapter-publications";
@@ -621,7 +624,7 @@ export default function CircleOSMirror() {
    * done.
    */
   const quests = useMemo(
-    () => questCatalogue(state.chapters.runs, getPublishedChapter),
+    () => questCatalogue(QUESTS, state.chapters.runs, getPublishedChapter),
     [state.chapters.runs],
   );
   const questCatalogueVersion = `quests-v1:${quests.length}`;
@@ -632,6 +635,23 @@ export default function CircleOSMirror() {
     0,
   );
   const [openQuest, setOpenQuest] = useState<string | null>(null);
+
+  /**
+   * Start a step, which means: put its chapter in the door and go there.
+   *
+   * Sai: "on click, the steps be shown and clickable to start, just like
+   * purpose quest session. all those chapters will be process on splash
+   * screen." A Quest step is not a different kind of thing to read — it is the
+   * same chapter, in the same full-screen sheet every other chapter arrives
+   * in, so there is one way to read a chapter in this App and not two.
+   *
+   * A finished step can be opened again. Answers supersede rather than lock:
+   * the last thing he said is what the record holds.
+   */
+  function startQuestStep(chapterId: string) {
+    writePinnedChapter(chapterId);
+    router.push("/os");
+  }
 
   const dimensions = dimensionRecord(state, getDateKey(), new Date().getHours());
   const starved = starvedDimension(dimensions);
@@ -1213,14 +1233,17 @@ export default function CircleOSMirror() {
                 <PageLayout
                   className="quest-page"
                   footer={
-                    <button
+                    <CreativeButton
                       aria-expanded={open}
                       className="quest-view"
                       onClick={() => setOpenQuest(open ? null : quest.id)}
+                      release="latch"
+                      sizing="content"
+                      styleId="default"
                       type="button"
                     >
                       {open ? "Hide steps" : "View steps"}
-                    </button>
+                    </CreativeButton>
                   }
                   headerLeft={<p className="os-card-label">{quest.topic}</p>}
                   headerRight={
@@ -1264,13 +1287,21 @@ export default function CircleOSMirror() {
                             className={step.done ? "is-done" : undefined}
                             key={step.chapterId}
                           >
-                            <span className="quest-step-place">
-                              {stepIndex + 1}
-                            </span>
-                            <span className="quest-step-title">{step.title}</span>
-                            <span className="quest-step-minutes">
-                              {step.done ? "Done" : `${step.minutes} min`}
-                            </span>
+                            <button
+                              className="quest-step"
+                              onClick={() => startQuestStep(step.chapterId)}
+                              type="button"
+                            >
+                              <span className="quest-step-place">
+                                {stepIndex + 1}
+                              </span>
+                              <span className="quest-step-title">
+                                {step.title}
+                              </span>
+                              <span className="quest-step-minutes">
+                                {step.done ? "Again" : `${step.minutes} min`}
+                              </span>
+                            </button>
                           </li>
                         ))}
                       </ol>

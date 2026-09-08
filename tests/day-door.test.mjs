@@ -123,7 +123,12 @@ test("the App asks the door once and draws one sheet", () => {
   // other across the render.
   // A pin from the Workshop stands in front; otherwise it is the button or
   // the door itself.
-  assert.match(shell, /pinned \|\| \(reviewingWeekOf \? "week-review" : dayDoor\(doorOffers, dateKey\)\)/);
+  // A pinned chapter stands in front, then a pinned door, then the button,
+  // then the door deciding for itself.
+  assert.match(
+    shell,
+    /\(pinnedChapter \? "chapter" : pinned\) \|\|\s+\(reviewingWeekOf \? "week-review" : dayDoor\(doorOffers, dateKey\)\)/,
+  );
   for (const kind of DAY_DOOR_ORDER) {
     assert.ok(
       shell.includes(`doorKind === "${kind}"`),
@@ -196,4 +201,50 @@ test("The Four is hidden, and nothing about it was deleted", () => {
   // The record it reads keeps accumulating every Sunday, so turning it back on
   // puts the App back with its whole history intact.
   assert.match(mirror, /dimensionRecord\(/);
+});
+
+// Sai, on tapping a Quest step: "all those chapters will be process on splash
+// screen."
+test("a pin can name a chapter, not only a door", async () => {
+  const store = new Map();
+  const original = globalThis.window;
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => (store.has(key) ? store.get(key) : null),
+      setItem: (key, value) => store.set(key, String(value)),
+      removeItem: (key) => store.delete(key),
+    },
+  };
+  try {
+    const { readPinnedDoor, writePinnedChapter, pinnedChapterId, clearPinnedDoor } =
+      await import(`../app/os/day-door.js?chapter=${Date.now()}`);
+
+    writePinnedChapter("declare-vision");
+    assert.equal(readPinnedDoor(), "chapter:declare-vision");
+    assert.equal(pinnedChapterId("chapter:declare-vision"), "declare-vision");
+
+    // A door is still a door: one mechanism, two kinds of name.
+    assert.equal(pinnedChapterId("week-review"), null);
+    assert.equal(pinnedChapterId(null), null);
+
+    // Empty names nothing, so a stray write cannot open an empty sheet.
+    writePinnedChapter("   ");
+    assert.equal(readPinnedDoor(), "chapter:declare-vision");
+
+    clearPinnedDoor();
+    assert.equal(readPinnedDoor(), null);
+  } finally {
+    if (original === undefined) delete globalThis.window;
+    else globalThis.window = original;
+  }
+});
+
+test("a pinned chapter is read in the sheet every chapter uses", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  assert.match(shell, /const pinnedChapter = getPublishedChapter\(pinnedChapterId\(pinned\) \|\| ""\)/);
+  assert.match(shell, /doorKind === "chapter" && pinnedChapter && pinnedChapterRun/);
+  // Its run is the chapter's own, so a step answered here counts everywhere:
+  // in the Quest's progress, in the setup gates, in the record.
+  assert.match(shell, /state\.chapters\.runs\[chapterRunId\(pinnedChapter\)\]/);
+  assert.match(shell, /function savePinnedChapterRun\(nextRun: ChapterRun\)/);
 });

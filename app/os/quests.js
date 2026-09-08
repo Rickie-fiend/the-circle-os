@@ -28,73 +28,35 @@
  * Progress is read from the chapter runs that already exist, so a chapter
  * answered before its Quest existed is already counted. Nothing is duplicated
  * and there is no second source of truth about what has been done.
- *
- * The manifest lives here for now. It belongs in the vault beside the chapter
- * sources, compiled like they are, once there is a second person authoring.
  */
 
 import { chapterEverCompleted } from "./chapters/chapter-model.js";
 
-/**
- * The Quests, in the order the catalogue offers them.
+/*
+ * The manifest is authored in the vault beside the chapters it groups —
+ * `Quests.md`, same folder, same `npm run chapters:publish`. It lived in this
+ * file for one commit, which was one too many: a Quest is content, and content
+ * he writes belongs where he writes everything else. Sai: "quest.md".
  *
- * `topic` groups them the way Sai described — "under 'topic' such as happiness
- * personal growth" — and `steps` are chapter ids in the order they are meant
- * to be walked. `minutes` is what a step actually costs, because the honest
- * number is what makes a person start.
+ * It is handed in rather than imported here, for the same reason `getChapter`
+ * is: this stays a plain function over data, so it can be read without a
+ * bundler. `quest-registry.ts` is what binds the compiled manifest to it.
+ *
+ * The compiler refuses to publish a Quest naming a chapter that is not
+ * published, so a step always has something behind it.
  */
-export const QUESTS = [
-  {
-    id: "getting-started",
-    topic: "Foundation",
-    title: "Getting started",
-    blurb:
-      "The first week: who you are becoming, one habit, one line you will not cross, and a week you can read.",
-    steps: [
-      { chapterId: "day-one", minutes: 6 },
-      { chapterId: "habit-building", minutes: 4 },
-      { chapterId: "log-setup", minutes: 2 },
-      { chapterId: "week-setup", minutes: 7 },
-      { chapterId: "week-review", minutes: 6 },
-    ],
-  },
-  {
-    id: "the-life-you-want",
-    topic: "Direction",
-    title: "The life you want",
-    blurb:
-      "Four declarations, from an ordinary Tuesday to a dream with a date on it. What you are aiming at, written down where it can be checked.",
-    steps: [
-      { chapterId: "declare-vision", minutes: 4 },
-      { chapterId: "declare-typical-tuesday", minutes: 6 },
-      { chapterId: "declare-mission-statement", minutes: 5 },
-      { chapterId: "declare-dreamline", minutes: 5 },
-    ],
-  },
-  {
-    id: "knowing-yourself",
-    topic: "Personal growth",
-    title: "Knowing yourself",
-    blurb:
-      "Twelve short readings on how you actually work — your rhythm, your attention, what rest is for, what makes a day worth it.",
-    steps: Array.from({ length: 12 }, (_, index) => ({
-      chapterId: `profile-spark-${String(index + 1).padStart(2, "0")}`,
-      minutes: 3,
-    })),
-  },
-];
 
-/** Every topic the catalogue holds, in the order the Quests are listed. */
-export function questTopics() {
+/** Every topic a catalogue holds, in the order the Quests are listed. */
+export function questTopics(quests) {
   const topics = [];
-  for (const quest of QUESTS) {
+  for (const quest of quests || []) {
     if (!topics.includes(quest.topic)) topics.push(quest.topic);
   }
   return topics;
 }
 
-export function findQuest(id) {
-  return QUESTS.find((quest) => quest.id === id) || null;
+export function findQuest(quests, id) {
+  return (quests || []).find((quest) => quest.id === id) || null;
 }
 
 /**
@@ -141,6 +103,6 @@ export function questProgress(quest, runs, getChapter) {
 }
 
 /** The whole catalogue, each Quest read against the runs. */
-export function questCatalogue(runs, getChapter) {
-  return QUESTS.map((quest) => questProgress(quest, runs, getChapter));
+export function questCatalogue(quests, runs, getChapter) {
+  return (quests || []).map((quest) => questProgress(quest, runs, getChapter));
 }

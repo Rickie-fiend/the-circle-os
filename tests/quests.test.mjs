@@ -3,12 +3,17 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
-  QUESTS,
   findQuest,
   questCatalogue,
   questProgress,
   questTopics,
 } from "../app/os/quests.js";
+
+// The manifest is compiled from the vault, so the test reads what the App
+// reads rather than a copy of it.
+const QUESTS = JSON.parse(
+  readFileSync("app/os/chapters/published/quests.json", "utf8"),
+).quests;
 
 const library = JSON.parse(
   readFileSync("app/os/chapters/published/index.json", "utf8"),
@@ -42,13 +47,13 @@ test("every step of every Quest is a chapter that actually exists", () => {
 
   // Grouped by topic, the way Sai described them: "we may have it in sessions
   // under 'topic' such as happiness personal growth".
-  assert.deepEqual(questTopics(), ["Foundation", "Direction", "Personal growth"]);
-  assert.equal(findQuest("getting-started")?.title, "Getting started");
-  assert.equal(findQuest("nothing-like-this"), null);
+  assert.deepEqual(questTopics(QUESTS), ["Foundation", "Direction", "Personal growth"]);
+  assert.equal(findQuest(QUESTS, "getting-started")?.title, "Getting started");
+  assert.equal(findQuest(QUESTS, "nothing-like-this"), null);
 });
 
 test("progress is read from the chapters already answered", () => {
-  const quest = findQuest("the-life-you-want");
+  const quest = findQuest(QUESTS, "the-life-you-want");
 
   // Nothing answered: not started, and the first step is where to pick it up.
   const fresh = questProgress(quest, {}, getChapter);
@@ -107,7 +112,7 @@ test("a Quest naming a chapter that is gone is shorter, not broken", () => {
 
 test("the catalogue reads every Quest at once", () => {
   const runs = Object.fromEntries([completed("day-one", 2)]);
-  const all = questCatalogue(runs, getChapter);
+  const all = questCatalogue(QUESTS, runs, getChapter);
   assert.equal(all.length, QUESTS.length);
 
   // Several run at once. Sai: "several." Nothing here is exclusive, so
@@ -133,9 +138,23 @@ test("the catalogue is an App Box under Athena's Reading", () => {
   assert.match(page, /appSessionIndex\(\s*state,\s*"quest-catalogue"/);
 
   // The View key opens the steps inside the same box; nothing navigates away.
-  assert.match(page, /aria-expanded=\{open\}/);
+  // And it is a key, not a pill: boxy, standing on a leg like every other one.
+  // Sai: "view steps button should be the boxy button with leg which
+  // compliment the theme."
+  assert.match(page, /<CreativeButton\s+aria-expanded=\{open\}\s+className="quest-view"/);
   assert.match(page, /\{open \? "Hide steps" : "View steps"\}/);
   assert.match(page, /className="quest-steps"/);
+  const css2 = readFileSync("app/os/os-app.css", "utf8");
+  assert.match(css2, /\.circle-os \.quest-view \{\s+--os-key-leg: var\(--os-key-leg-ink\);/);
+
+  // A step is a thing you start, and starting it is the splash — the same
+  // sheet every other chapter arrives in. Sai: "on click, the steps be shown
+  // and clickable to start ... all those chapters will be process on splash
+  // screen."
+  assert.match(page, /className="quest-step"/);
+  assert.match(page, /onClick=\{\(\) => startQuestStep\(step\.chapterId\)\}/);
+  assert.match(page, /function startQuestStep\(chapterId: string\)/);
+  assert.match(page, /writePinnedChapter\(chapterId\)/);
 
   // Under Athena's Reading, because a Quest is what you go and do about what
   // she just told you.

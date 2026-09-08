@@ -28,7 +28,11 @@ export function dayOpenRunId(
 
 export function dayWasOpened(run: ChapterRun | null | undefined): boolean;
 
-export function readPinnedDoor(): DayDoorKind | null;
+export function readPinnedDoor(): string | null;
+
+export function pinnedChapterId(pin: string | null): string | null;
+
+export function writePinnedChapter(chapterId: string): void;
 
 export function writePinnedDoor(kind: DayDoorKind): void;
 

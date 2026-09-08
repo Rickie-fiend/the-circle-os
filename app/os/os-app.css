@@ -5890,10 +5890,7 @@
 }
 
 .circle-os .quest-steps li {
-  align-items: baseline;
-  display: grid;
-  gap: 0.7rem;
-  grid-template-columns: 1.2rem 1fr auto;
+  display: block;
 }
 
 .circle-os .quest-step-place {
@@ -5926,20 +5923,35 @@
   color: var(--c-orange);
 }
 
+/* The View key stands on a leg like every other key in the OS. Sai: "view
+   steps button should be the boxy button with leg which compliment the theme."
+   Dark box, so it takes the ink leg the dark Apps use. */
 .circle-os .quest-view {
+  --os-key-leg: var(--os-key-leg-ink);
+}
+
+.circle-os .quest-view.os-creative-button {
+  background: var(--c-warm-50);
+  border-color: rgb(25 24 19 / 0.2);
+  color: var(--c-ink);
+}
+
+/* A step is a thing you start, so the whole row is the target. */
+.circle-os .quest-step {
+  align-items: baseline;
   appearance: none;
-  background: transparent;
-  border: 1px solid rgb(241 239 232 / 0.18);
-  border-radius: 999px;
-  color: rgb(241 239 232 / 0.82);
+  background: none;
+  border: 0;
+  color: inherit;
   cursor: pointer;
+  display: grid;
   font-family: inherit;
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  gap: 0.7rem;
+  grid-template-columns: 1.2rem 1fr auto;
   min-height: var(--touch-min);
-  padding: 0 1.1rem;
-  text-transform: uppercase;
+  padding: 0;
+  text-align: left;
+  width: 100%;
 }
 
 .circle-os .vision-four-apps {

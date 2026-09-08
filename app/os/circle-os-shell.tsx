@@ -190,6 +190,7 @@ import {
   dayOpenRunId,
   dayWasOpened,
   clearPinnedDoor,
+  pinnedChapterId,
   readPinnedDoor,
 } from "./day-door.js";
 import {
@@ -2115,6 +2116,15 @@ export function TodayExperience() {
    * Either one opens the day: a person who waved it off has been greeted and
    * does not need greeting again at lunchtime.
    */
+  /** A chapter opened from a Quest step, saved the way any chapter is. */
+  function savePinnedChapterRun(nextRun: ChapterRun) {
+    if (nextRun.status === "completed") releasePinnedDoor();
+    if (!pinnedChapter) return;
+    updateState((current) =>
+      storeChapterRun(current, nextRun, pinnedChapter.session),
+    );
+  }
+
   function saveDayOpenRun(nextRun: ChapterRun) {
     if (nextRun.status === "completed") releasePinnedDoor();
     if (!dayOpenChapter) return;
@@ -2552,8 +2562,29 @@ export function TodayExperience() {
   /* Opened by hand from the Week Page, standing in the door on a Sunday, or
      pinned open from the Workshop so a sheet can be looked at without waiting
      for the day that would show it. */
+  /**
+   * A chapter opened by name, from a Quest step.
+   *
+   * Sai: "all those chapters will be process on splash screen." A Quest step
+   * is the same chapter it always was, in the same sheet every other chapter
+   * arrives in — so this is the door holding one by name rather than a second
+   * way of reading a chapter.
+   *
+   * Its run is the chapter's own, so a step answered here counts everywhere:
+   * in the Quest's progress, in the setup gates, in the record.
+   */
+  const pinnedChapter = getPublishedChapter(pinnedChapterId(pinned) || "");
+  const pinnedChapterRun = useMemo(() => {
+    if (!pinnedChapter) return null;
+    return (
+      state.chapters.runs[chapterRunId(pinnedChapter)] ||
+      createChapterRun(pinnedChapter)
+    );
+  }, [pinnedChapter, state.chapters.runs]);
+
   const doorKind =
-    pinned || (reviewingWeekOf ? "week-review" : dayDoor(doorOffers, dateKey));
+    (pinnedChapter ? "chapter" : pinned) ||
+    (reviewingWeekOf ? "week-review" : dayDoor(doorOffers, dateKey));
 
   /** A pinned door is let go the moment its sheet is answered or put down. */
   function releasePinnedDoor() {
@@ -4573,6 +4604,20 @@ export function TodayExperience() {
               onDismiss={dismissWeekReview}
               run={weekReviewRun}
               onRunChange={saveWeekReviewRun}
+            />
+          </ChapterSplash>
+        ) : null}
+
+        {/* A chapter opened by name, from a Quest step. */}
+        {doorKind === "chapter" && pinnedChapter && pinnedChapterRun ? (
+          <ChapterSplash label={pinnedChapter.title || "Chapter"}>
+            <ChapterPlayer
+              className="os-quest-step-session"
+              definition={pinnedChapter}
+              label={pinnedChapter.session}
+              onDismiss={releasePinnedDoor}
+              run={pinnedChapterRun}
+              onRunChange={savePinnedChapterRun}
             />
           </ChapterSplash>
         ) : null}
