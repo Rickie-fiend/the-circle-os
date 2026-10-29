@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_COOKIE, adminAccessToken, adminCodeMatches } from "../admin-access";
+import {
+  ADMIN_COOKIE,
+  adminAccessToken,
+  adminCodeMatches,
+  configuredAdminCode,
+} from "../admin-access";
 
 export async function POST(request: NextRequest) {
   const contentType = request.headers.get("content-type") || "";
@@ -7,10 +12,18 @@ export async function POST(request: NextRequest) {
 
   if (contentType.includes("application/json")) {
     const body = await request.json().catch(() => ({}));
-    code = String(body?.code || "").trim();
+    code = typeof body?.code === "string" ? body.code : "";
   } else {
     const form = await request.formData();
-    code = String(form.get("code") || "").trim();
+    const value = form.get("code");
+    code = typeof value === "string" ? value : "";
+  }
+
+  if (!configuredAdminCode()) {
+    return NextResponse.json(
+      { unlocked: false, reason: "not_configured" },
+      { status: 503 },
+    );
   }
 
   if (!adminCodeMatches(code)) {

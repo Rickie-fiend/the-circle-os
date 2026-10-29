@@ -294,10 +294,16 @@ typeface, motion pattern, or interaction.
 ## Secret Admin and authoring library
 
 - Admin has no public tab, shortcut, or login page. A reserved phrase entered
-  through Thoughts unlocks authoring for the current browser session only.
-- The reserved phrase is intercepted before thought persistence. It is never
-  saved as profile evidence or uploaded with normal Thoughts.
-- An unauthorized direct Admin visit returns quietly to Today.
+  through Thoughts opens a password prompt in the same Page. The phrase is a
+  hidden doorway, not the password itself. The password lives only in the
+  server-side CIRCLE_OS_ADMIN_CODE environment setting; there is no fallback
+  password, and missing or too-short configuration keeps Admin locked.
+- The reserved phrase and admin password are intercepted before thought
+  persistence. Neither is saved as profile evidence or uploaded with normal
+  Thoughts.
+- A successful unlock uses an HttpOnly, SameSite=Strict browser-session cookie.
+  The signed session expires after eight hours, and direct unauthorized Admin
+  visits return quietly to Today.
 - Chapter Library groups follow the fixed authoring classification order:
   Foundation, Short, Guided Learning, Reflection, then Information. Empty
   groups stay hidden; free-form category metadata remains searchable.

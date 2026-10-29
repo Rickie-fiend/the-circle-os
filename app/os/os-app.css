@@ -7287,6 +7287,35 @@
   min-height: 1lh;
 }
 
+.circle-os .os-info-page .os-thoughts-form input.os-admin-unlock-input {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--c-ink);
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: var(--os-page-main-font-size);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: var(--os-page-main-line-height);
+  min-height: 1lh;
+  outline: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.circle-os .os-admin-unlock-input::placeholder {
+  color: rgb(25 24 19 / 0.42);
+  opacity: 1;
+}
+
+.circle-os .os-admin-unlock-error {
+  color: var(--c-ink);
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  margin: 0.75rem 0 0;
+}
+
 .circle-os .os-page-layout.os-chapter-card,
 .circle-os .os-page-layout.os-survey-card {
   display: grid;

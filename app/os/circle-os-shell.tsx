@@ -666,7 +666,7 @@ type CheckIn = {
   createdAt: string;
 };
 
-const ADMIN_THOUGHT = "admin";
+const ADMIN_UNLOCK_TRIGGER = "admin";
 
 type Mission = {
   text: string;
@@ -1828,12 +1828,20 @@ export function TodayExperience() {
   const thoughtMode = thoughtBack.side;
   const [regularThoughtDraft, setRegularThoughtDraft] = useState("");
   const [deepThoughtDraft, setDeepThoughtDraft] = useState("");
+  const [adminUnlockMode, setAdminUnlockMode] = useState(false);
+  const [adminCodeDraft, setAdminCodeDraft] = useState("");
+  const [adminUnlockError, setAdminUnlockError] = useState("");
+  const [adminUnlocking, setAdminUnlocking] = useState(false);
+  const adminCodeInputRef = useRef<HTMLInputElement>(null);
   const [deepThoughtPrompt, setDeepThoughtPrompt] = useState<DeepThoughtPrompt | null>(null);
   // How many times Deep Thoughts has been opened. It counts visits, not
   // answers, which is what makes the next one a different question.
   const deepThoughtVisits = useRef(0);
   const [thoughtRewarded, setThoughtRewarded] = useState(false);
   const thoughtDraft = thoughtMode === "deep" ? deepThoughtDraft : regularThoughtDraft;
+  useEffect(() => {
+    if (adminUnlockMode) adminCodeInputRef.current?.focus();
+  }, [adminUnlockMode]);
   // liveNow already ticks every thirty seconds and the prompt is bucketed by the
   // hour, so this changes through the day without moving under the person.
   // Before a single thought has been sent, the placeholder says what this App
@@ -3760,26 +3768,50 @@ export function TodayExperience() {
 
   async function sendThought(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const thought = thoughtDraft.trim();
-    if (!thought || thoughtSubmissionLocked.current) return;
-    if (thought.toLowerCase() === ADMIN_THOUGHT) {
+    if (thoughtSubmissionLocked.current) return;
+
+    if (adminUnlockMode) {
+      const code = adminCodeDraft.trim();
+      if (!code || adminUnlocking) return;
+
       thoughtSubmissionLocked.current = true;
+      setAdminUnlocking(true);
+      setAdminUnlockError("");
       try {
         const response = await fetch("/os/admin/unlock", {
           method: "POST",
-          body: new URLSearchParams({ code: thought }),
+          body: new URLSearchParams({ code }),
         });
-        if (!response.ok) return;
-        setThoughtDraft("");
-        thoughtTextareaRef.current?.blur();
+        setAdminCodeDraft("");
+        if (response.status === 503) {
+          setAdminUnlockError("Admin access is not set up on this server.");
+          return;
+        }
+        if (!response.ok) {
+          setAdminUnlockError("That password did not match.");
+          return;
+        }
+
+        setAdminUnlockMode(false);
         router.push("/os/admin");
       } catch {
-        // Keep the hidden phrase out of the thought stream even when the
-        // local network is unavailable. A later attempt can unlock Admin.
-        return;
+        setAdminCodeDraft("");
+        setAdminUnlockError("Could not reach the server. Try again.");
       } finally {
+        setAdminUnlocking(false);
         thoughtSubmissionLocked.current = false;
       }
+      return;
+    }
+
+    const thought = thoughtDraft.trim();
+    if (!thought) return;
+    if (thought.toLowerCase() === ADMIN_UNLOCK_TRIGGER) {
+      setThoughtDraft("");
+      setAdminCodeDraft("");
+      setAdminUnlockError("");
+      setAdminUnlockMode(true);
+      revealThoughtButton();
       return;
     }
     pauseDeepWriting();
@@ -3821,6 +3853,14 @@ export function TodayExperience() {
     pauseDeepWriting();
     setThoughtButtonVisible(false);
     thoughtTextareaRef.current?.blur();
+  }
+
+  function cancelAdminUnlock() {
+    setAdminUnlockMode(false);
+    setAdminCodeDraft("");
+    setAdminUnlockError("");
+    setThoughtButtonVisible(false);
+    adminCodeInputRef.current?.blur();
   }
 
   // What a send looks like.
@@ -4006,7 +4046,32 @@ export function TodayExperience() {
 
   function checkInThoughtsCard() {
     const deepThoughtsActive = thoughtMode === "deep" && Boolean(deepThoughtPrompt);
-    const thoughtInput = (
+    const thoughtInput = adminUnlockMode ? (
+      <div className="os-admin-unlock-field">
+        <input
+          aria-label="Admin password"
+          autoCapitalize="none"
+          autoComplete="current-password"
+          className="os-admin-unlock-input"
+          maxLength={256}
+          name="circle-os-admin-password"
+          onChange={(event) => {
+            setAdminCodeDraft(event.currentTarget.value);
+            setAdminUnlockError("");
+          }}
+          placeholder="Enter the admin password"
+          ref={adminCodeInputRef}
+          spellCheck={false}
+          type="password"
+          value={adminCodeDraft}
+        />
+        {adminUnlockError ? (
+          <p aria-live="polite" className="os-admin-unlock-error" role="status">
+            {adminUnlockError}
+          </p>
+        ) : null}
+      </div>
+    ) : (
       <textarea
         aria-label={deepThoughtsActive ? "Answer the deep thought" : "Write a thought"}
         className={deepThoughtsActive ? "os-deep-thought-answer" : "os-regular-thought-input"}
@@ -4038,12 +4103,14 @@ export function TodayExperience() {
     return (
       <InfoPage
         className={`os-thoughts-page os-survey-card${thoughtMode === "deep" ? " deep-mode" : ""}`}
-        header={<button aria-pressed={thoughtMode === "deep"} className="os-card-label os-thoughts-mode-toggle" type="button" onClick={openDeepThoughts}>{thoughtMode === "deep" ? "Deep Thoughts" : "Thoughts"}</button>}
+        header={<button aria-label={adminUnlockMode ? "Cancel admin access" : undefined} aria-pressed={adminUnlockMode ? false : thoughtMode === "deep"} className="os-card-label os-thoughts-mode-toggle" type="button" onClick={adminUnlockMode ? cancelAdminUnlock : openDeepThoughts}>{adminUnlockMode ? "Cancel" : thoughtMode === "deep" ? "Deep Thoughts" : "Thoughts"}</button>}
         footer={
           <div className="os-creative-button-slot">
             {thoughtButtonVisible ? (
               <CreativeButton
-                disabled={!thoughtDraft.trim() || thoughtSent}
+                disabled={adminUnlockMode
+                  ? !adminCodeDraft.trim() || adminUnlocking
+                  : !thoughtDraft.trim() || thoughtSent}
                 form="check-in-thought-form"
                 keepMountedOnSuccess
                 onSuccessComplete={beginThoughtDeparture}
@@ -4053,7 +4120,9 @@ export function TodayExperience() {
                 styleId={THOUGHT_BUTTON_STYLE}
                 type="submit"
               >
-                {thoughtSent ? "Sent" : "Send"}
+                {adminUnlockMode
+                  ? adminUnlocking ? "Checking..." : "Unlock"
+                  : thoughtSent ? "Sent" : "Send"}
               </CreativeButton>
             ) : null}
             <span aria-live="polite" className="os-visually-hidden" role="status">

@@ -31,6 +31,37 @@ Then inspect the relevant source and run `git status --short`. Existing changes
 belong to the user unless proven otherwise. Never discard or overwrite
 unrelated work.
 
+## When the Obsidian vault is unavailable
+
+The Obsidian documents listed in Required preflight remain the intended
+authorities for durable product thinking, brand rules, chapter rules, and AI
+continuity. At session start, check whether the relevant paths are accessible.
+Report each unavailable path exactly.
+
+Vault access is not a blanket blocker for repository work. Continue using this
+file, accessible repository documents, and explicit decisions in the current
+task. Do not guess what an unavailable note says. If a decision depends on
+unavailable information, leave that decision unresolved and ask for the note or
+the decision before proceeding with the dependent work.
+
+Never say an Obsidian note was read or updated unless that actually happened.
+When a required vault update cannot be made, record it as pending in the
+session handoff, with its exact path and reason.
+
+## Session continuity
+
+At session start, read `AGENTS.md`, `docs/CURRENT_TASK.md`, and the latest entry
+in `docs/SESSION_HANDOFF.md` when those files exist. Then check Git status,
+branch, and recent history. Treat existing changes as belonging to their
+authors; inspect them and do not overwrite or include them in unrelated work.
+
+At session end, inspect Git status and the diff. Run checks relevant to the
+work and report their exact commands and results. Update the current task and
+append a handoff entry that separates completed and verified work from
+attempts, assumptions, and unresolved issues. Record what was not verified and
+why. Include a commit range only when commits were actually made. Never claim
+tests, commits, deployments, or Obsidian updates that did not happen.
+
 ## Circle OS product rules
 
 - Circle OS is a lifestyle reflection system, not a productivity dashboard.

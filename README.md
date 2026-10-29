@@ -60,8 +60,25 @@ npm run build:vercel
 - Sites/Vinext uses `npm run build`.
 - Vercel uses `npm run build:vercel` through `vercel.json`.
 
-No production secrets are currently required because the online test is
-device-local.
+## Admin editor access
+
+The hidden Admin editor requires a private server-side password. To use the
+editor locally, create an ignored `.env.local` file in the repository root and
+add:
+
+```text
+CIRCLE_OS_ADMIN_CODE=replace-with-a-unique-random-password
+```
+
+Replace the example with a unique password of at least 16 characters. The app
+will keep Admin locked if this setting is missing or shorter than 16
+characters. Do not use a `NEXT_PUBLIC_` prefix, put the password in application
+code, or commit the `.env.local` file.
+
+For Vercel, add `CIRCLE_OS_ADMIN_CODE` as a server-side environment variable in
+the project settings for the environments where you want Admin enabled, then
+redeploy. The password is only used for the Admin editor; app users do not need
+it, and their lifestyle data remains in their own browser.
 
 ## Product phases
 
