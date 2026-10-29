@@ -204,3 +204,38 @@ occurred unless it did.
   CIRCLE_OS_ADMIN_CODE value of at least 16 characters in the server-side
   environment settings. Do not put that value in the repository or a
   NEXT_PUBLIC_ variable. Do not deploy without Sai's request.
+
+## 2026-10-29 — Push admin protection to the personal fork
+
+### Completed
+
+- Committed the reviewed admin protection and continuity changes as
+  `b27e6b4` (`Protect the Circle OS admin editor`).
+- Added the personal fork as the `fork` remote. The existing `origin` still
+  points to the source repository.
+- Pushed `paing-branch` to `fork/paing-branch`; the local branch now tracks it.
+- `.env.local` is ignored and was not staged or pushed. The pre-existing
+  `.handoff-prmopt.md` and `.session-start-prompt.md` files were left untouched
+  and uncommitted.
+
+### Verified
+
+- `node --test tests/admin-access.test.mjs` — 3 passed, 0 failed.
+- `node node_modules/vinext/dist/cli.js build` — passed.
+- `git diff --check` — passed before commit.
+- GitHub confirmed creation of `paing-branch` on the personal fork.
+
+### Not verified or unresolved
+
+- `npm.cmd run build:vercel` could not run because `npm.cmd` is not available
+  on this machine's command path. The installed Vinext production build passed.
+- Vercel is not connected to this fork, and no Preview deployment was created.
+- The Obsidian vault remains unavailable; required product and decision notes
+  remain pending as recorded above.
+
+### Next
+
+- Connect the fork to Vercel and configure `CIRCLE_OS_ADMIN_CODE` for Preview
+  only if Sai wants to test the admin editor there.
+- Then follow `docs/CURRENT_TASK.md` for the mobile-web setup, daily activity,
+  reload persistence, and Reflect journey.
