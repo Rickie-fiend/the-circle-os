@@ -460,7 +460,13 @@ export function ChapterEditor() {
   }
 
   function addPage() {
-    updateDraft((next) => { const insertAt = Math.max(1, next.chapter.pages.length - 1); next.chapter.pages.splice(insertAt, 0, createChapterPage("info", insertAt)); setSelectedPage(insertAt); return next; });
+    const insertAt = Math.max(1, draft.chapter.pages.length - 1);
+    let pageNumber = insertAt;
+    while (draft.chapter.pages.some((item) => item.id === `info-${pageNumber + 1}`)) pageNumber += 1;
+    const added = createChapterPage("info", pageNumber);
+    updateDraft((next) => { next.chapter.pages.splice(insertAt, 0, added); return next; });
+    setSelectedPage(insertAt);
+    jumpPreview(added.id);
   }
 
   function duplicatePage() {
@@ -473,8 +479,11 @@ export function ChapterEditor() {
   }
 
   function deletePage() {
-    if (selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 1) return;
-    updateDraft((next) => { next.chapter.pages.splice(selectedPage, 1); setSelectedPage(Math.max(0, selectedPage - 1)); return next; });
+    if (activeKind !== "draft" || selectedPage <= 0 || selectedPage >= draft.chapter.pages.length - 1) return;
+    if (!window.confirm(`Remove page ${selectedPage + 1} from this draft?`)) return;
+    const previousPage = draft.chapter.pages[selectedPage - 1];
+    updateDraft((next) => { next.chapter.pages.splice(selectedPage, 1); return next; });
+    jumpPreview(previousPage.id);
   }
 
   function jumpPreview(pageId: string) {
@@ -573,7 +582,7 @@ export function ChapterEditor() {
           <div className="os-admin-workshop-bar"><button type="button" onClick={() => setView("library")}>← Library</button><span>{activeKind === "draft" ? "Tap the page text to edit" : activeKind === "starter" ? "Starter preview" : "Published preview"}</span></div>
           <div className="os-admin-workshop-title"><div><p>{activeKind === "draft" ? "Live editor" : "Preview"}</p><h2>{draft.chapter.title}</h2></div><ThemePicker value={draft.chapter.theme} onChange={chooseTheme} /></div>
           <div className="os-admin-preview-pages" aria-label="Chapter pages">{preview.pages.map((item, index) => <button aria-pressed={index === previewPageIndex} key={item.id} type="button" onClick={() => jumpPreview(item.id)}><span>{index + 1}</span>{pageLabel(item.type)}</button>)}</div>
-          {activeKind === "draft" ? <div className="os-admin-preview-order"><button disabled={selectedPage <= 1} type="button" onClick={() => movePage(-1)}>Move earlier</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 2} type="button" onClick={() => movePage(1)}>Move later</button></div> : null}
+          {activeKind === "draft" ? <div className="os-admin-preview-order"><button disabled={selectedPage <= 1} type="button" onClick={() => movePage(-1)}>Move earlier</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 2} type="button" onClick={() => movePage(1)}>Move later</button><button disabled={selectedPage === 0 || selectedPage >= draft.chapter.pages.length - 1} type="button" onClick={deletePage}>Remove page</button></div> : null}
           <ChapterPlayer definition={preview} label="Editable chapter preview" onEditPage={activeKind === "draft" ? editPreviewPage : undefined} previewMode run={previewRun} onRunChange={syncPreviewRun} />
           {activeKind === "draft" ? <button className="os-admin-add-page-preview" type="button" onClick={addPage}><span aria-hidden="true">+</span><strong>Add page</strong></button> : null}
 
