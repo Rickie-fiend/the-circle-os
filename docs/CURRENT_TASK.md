@@ -1,71 +1,51 @@
 # Current task
 
-## Title
+## Phase 1 verification — saved Habit recovery and Reflect grounding
 
-Validate the core mobile-web user journey
+Date: 2026-10-30. Branch: `paing-branch`; HEAD: `7ffd3b2`.
+The developer approved isolated browser checks, focused model checks, and
+updates to this task, the handoff, journey evidence, and bug record.
+Application fixes require a separate reviewed proposal.
 
-## Status
+## Scope and acceptance
 
-Ready. The admin access investigation and code fix are recorded in
-`docs/SESSION_HANDOFF.md`. The fix has not been deployed.
+- Load synthetic already-completed Habit runs with an old starter, no starter,
+  or a later manual edit. Verify startup repair where needed, no duplicate
+  Habit, preserved answers, and persistence across repeated reloads.
+- Save activity through Log, reload, and compare Reflect's empty, derived,
+  and authored reading modes with known synthetic evidence. Check local
+  arithmetic separately from prepared-content display.
+- Use isolated mobile Chromium at 390x844 and 360x844, block external requests,
+  preserve personal data and all pre-existing working-tree changes.
 
-## Purpose
+## Result
 
-Confirm that a new tester can set up Circle OS, record part of a day, reload the
-web app without losing that entry, and reflect on the recorded life using a
-phone-sized browser.
+Complete for the approved isolated scope: browser tests 12/12 and focused
+model tests 64/64 passed. Targeted test lint passed. No application change
+was needed. This closes the saved-state recovery browser gap and adds
+fixture-level Reflect evidence coverage; it does not complete Phase 1.
 
-## Scope
+Coverage lives in [the browser test](../tests/core-recovery.browser.mjs);
+detailed commands, attempts, outcomes, and limits are in the
+[journey record](USER_JOURNEY_TESTING.md#phase-1--saved-habit-recovery-and-reflect-grounding--2026-10-30)
+and [current handoff](SESSION_HANDOFF.md).
 
-- Use a separate test browser profile or another safe test context. Do not clear
-  or overwrite the user's existing local app data.
-- Complete first-use setup.
-- Record at least one daily activity or moment.
-- Reload the app and confirm the entry remains.
-- Open Reflect and check that the displayed observations match the test data.
-- Record exact steps, observed results, and any failures or uncertain behavior.
+## Limits and next action
 
-Relevant code to inspect if a step fails:
+Prepared memory is a synthetic fixture. Actual Athena preparation, external
+profile sync, physical phones, other browsers, normal-motion geometry,
+and the 06:00 boundary were not certified. No full build, TypeScript check,
+broad suite, or full lint was rerun. Earlier failures remain historical gaps.
 
-- `app/os/circle-os-shell.tsx`
-- `app/os/circle-os-store.ts`
-- `app/os/circle-os-model.js`
-- `app/os/mirror/page.tsx` and its imported reflection components
-- `tests/first-use-setup.test.mjs`
-- `tests/circle-os-model.test.mjs`
-- `tests/rendered-html.test.mjs`
+Next: developer review of this verification evidence, then a separately
+scoped proposal for the next unresolved Phase 1 bug or journey.
+Character/Six-month Reflect Page design remains separate. No staging,
+commit, push, or deployment was requested or performed.
 
-Re-check paths and tests before starting; the repository may have changed.
+## Prior completed work
 
-## Out of scope
-
-- Replacing the existing framework or redesigning the product.
-- Database migrations, a new authentication provider, live AI, monetization,
-  public social features, or native mobile apps.
-- Deploying or changing production settings.
-- Clearing real tester or owner data to create a clean test state.
-
-## Acceptance criteria
-
-- Setup completes on a phone-sized web viewport.
-- A daily activity or moment can be recorded and is visible in the app.
-- A full page reload preserves that entry.
-- Reflect displays observations grounded in the recorded test data; any
-  inference is distinguishable from directly recorded information.
-- The test record separates verified outcomes from assumptions and lists
-  unresolved issues.
-- Existing local data is not deleted or overwritten.
-
-## Verification
-
-Use an available browser on a phone or phone-sized viewport. Follow the journey
-above and record the browser/device and viewport used. Run focused existing
-tests for any failure investigated, then build or lint in proportion to the
-change. Do not install browser tooling or dependencies for this task without
-asking.
-
-## References and limits
-
-The root `AGENTS.md` and repository-local `DESIGN.md` remain available
-authorities. The Obsidian vault at `C:\Brain` remains unavailable from this
-machine; do not infer its contents or claim its notes were updated.
+Admin page removal is committed in `7ffd3b2`; its
+[verification record](archive/SESSION_HANDOFF_2026-10-30_before-continuity-refresh.md#2026-10-30--admin-chapter-page-removal)
+and the completed
+[interaction-rule task](archive/CURRENT_TASK_2026-10-30_before-continuity-refresh.md)
+remain available. This pass did not reverify all earlier work.

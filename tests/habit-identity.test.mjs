@@ -12,7 +12,53 @@ import {
   updateHabitDefinitionDraft,
   updateHabitDefinitionParts,
 } from "../app/os/circle-os-model.js";
+import { applyHabitBuildingCompletion } from "../app/os/habit-building-model.js";
 import { selectThoughtPrompt } from "../app/os/thought-prompt-model.js";
+
+test("a completed Habit setup replaces the Day One starter Habit", () => {
+  const chapter = {
+    title: "Build a habit",
+    pages: [
+      {
+        type: "idle",
+        body: "I will {{habit-action}} {{habit-time-place}}, so I can become {{habit-identity}}.",
+      },
+    ],
+  };
+  const run = {
+    runId: "habit-building-run-1",
+    status: "completed",
+    answers: [
+      { answerKey: "habit-action", value: "Walk five minutes", displaySnapshot: "Walk five minutes" },
+      { answerKey: "habit-time-place", value: "after coffee", displaySnapshot: "after coffee" },
+      { answerKey: "habit-identity", value: "a steady walker", displaySnapshot: "a steady walker" },
+    ],
+  };
+  const starter = addHabitDefinition(createEmptyState(), "day-one-starter");
+  const state = updateHabitDefinitionParts(starter.state, starter.id, {
+    action: "ONBOARDING ANSWER",
+    cue: "ONBOARDING ANSWER",
+    identity: "ONBOARDING ANSWER",
+    text: "ONBOARDING ANSWER",
+  });
+  const completed = applyHabitBuildingCompletion(state, chapter, run);
+  const habitId = "day-one-starter";
+  const habit = completed.habits.definitions[habitId];
+
+  assert.equal(habit.action, "Walk five minutes");
+  assert.equal(habit.cue, "after coffee");
+  assert.equal(habit.identity, "a steady walker");
+  assert.equal(
+    habit.text,
+    "I will Walk five minutes after coffee, so I can become a steady walker.",
+  );
+  assert.equal(completed.profile.identityFocus, "a steady walker");
+  assert.equal(habit.setupRunId, run.runId);
+
+  const repeated = applyHabitBuildingCompletion(completed, chapter, run);
+  assert.deepEqual(Object.keys(repeated.habits.definitions), [habitId]);
+  assert.strictEqual(repeated, completed);
+});
 
 test("a chapter-shaped habit keeps action, cue and identity separately", () => {
   const added = addHabitDefinition(createEmptyState(), "write");
@@ -116,13 +162,23 @@ test("habit typing keeps spaces verbatim until blur commits the value", () => {
   assert.equal(state.evidence.localRevision, revision + 1);
 });
 
-test("the published habit completion is wired to all three stored fields", () => {
+test("published and compiled Habit setup paths project answers on completion", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const model = readFileSync("app/os/habit-building-model.js", "utf8");
   const css = readFileSync("app/os/os-app.css", "utf8");
-  assert.match(shell, /chapterAnswerText\(nextRun, "habit-action"\)/);
-  assert.match(shell, /chapterAnswerText\(nextRun, "habit-time-place"\)/);
-  assert.match(shell, /chapterAnswerText\(nextRun, "habit-identity"\)/);
-  assert.match(shell, /updateHabitDefinitionParts\(added\.state, added\.id, \{[\s\S]*?action,[\s\S]*?cue,[\s\S]*?identity,/);
+  assert.match(model, /chapterAnswerText\(run, "habit-action"\)/);
+  assert.match(model, /chapterAnswerText\(run, "habit-time-place"\)/);
+  assert.match(model, /chapterAnswerText\(run, "habit-identity"\)/);
+  assert.match(model, /updateHabitDefinitionParts\(added\.state, added\.id, \{[\s\S]*?action,[\s\S]*?cue,[\s\S]*?identity,/);
+  assert.match(shell, /onCompleted=\{\(current, run\) =>[\s\S]*?applyHabitBuildingCompletion\([\s\S]*?habitSetupPublication\.chapter,[\s\S]*?run,/);
+  assert.match(shell, /habitPublication\.chapter\.id === "habit-building"[\s\S]*?applyHabitBuildingCompletion\([\s\S]*?habitPublication\.chapter,[\s\S]*?run,/);
+  assert.match(shell, /function saveHabitBuildingRun\(nextRun: ChapterRun\)[\s\S]*?applyHabitBuildingCompletion\(next, habitBuildingChapter, nextRun\)/);
+  assert.match(model, /const starter = Object\.values\(state\.habits\.definitions\)/);
+  assert.match(model, /const habitId = starter\?\.id \|\| `chapter-run:\$\{run\.runId\}`/);
+  assert.match(shell, /const completedHabitSetupPublication = useMemo/);
+  assert.match(shell, /publication\.chapter\.id === "habit-building"/);
+  assert.match(shell, /habit\.setupRunId === completedRun\.runId/);
+  assert.match(shell, /applyHabitBuildingCompletion\([\s\S]*?publication\.chapter,[\s\S]*?latestRun,/);
   assert.match(css, /\.os-habit-action-copy,[\s\S]*?\.os-habit-identity-copy[\s\S]*?transition: opacity 220ms/);
   assert.match(css, /\.os-habit-copy-swap\.show-identity \.os-habit-action-copy[\s\S]*?opacity: 0/);
   // The identity is shown once the row has finished making room for it, not on
@@ -157,6 +213,16 @@ test("arriving on the Page is not an event the identity animates through", () =>
   // The identity is the way back to the habit behind it.
   assert.match(shell, /className="os-habit-identity-copy"[\s\S]*?onClick=/);
   assert.match(shell, /showIdentity=\{Boolean\([\s\S]*?editingHabitId !== habit\.id/);
+});
+
+test("an empty Routine leaves its shared Sub Body empty", () => {
+  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
+  const css = readFileSync("app/os/os-app.css", "utf8");
+
+  // Keep this wiring check alongside browser measurements: an empty wrapper
+  // with section labels prevents the shared :empty collapse rule from working.
+  assert.match(shell, /idleContent=\{habitMode === "yesterday" \|\| \(habits\.length === 0 && oneTimeTasks\.length === 0\) \? undefined : \(/);
+  assert.match(css, /\.circle-os \.os-page-sub:empty\s*\{[^}]*display:\s*none/);
 });
 
 test("one gap separates Habits from Tasks, declared once", () => {

@@ -899,7 +899,6 @@ export function PageLayout({
     const clearMeasurement = () => {
       delete body.dataset.osTextLayout;
       body.style.removeProperty("--os-measured-body-min-height");
-      body.style.removeProperty("--os-measured-main-top");
     };
     if (placement === "content-flow") {
       clearMeasurement();
@@ -925,14 +924,10 @@ export function PageLayout({
 
     let active = true;
     let frame = 0;
-    /* Where the Main text sits under the forehead.
-     *
-     * This used to be computed a frame after the Page was shown, so a Page you
-     * swiped to was painted once with the Page before it still measured, and
-     * the text under the forehead jumped as the new numbers landed. Sai: "The
-     * forehead jolt issue is still there for log app." It is computed before
-     * the browser paints now, so a Page arrives already laid out; the frame
-     * below is kept for a webfont or a resize, which arrive later by nature. */
+    /* Keep the shared minimum until Main exceeds its ordinary three-line
+     * budget, then grow downward. Main's top stays at the forehead; this
+     * measurement owns height only. It runs before paint, then again when a
+     * webfont or resize changes the measured text. */
     const commit = () => {
       if (!active) return;
       const pageStyle = window.getComputedStyle(page);
@@ -951,9 +946,6 @@ export function PageLayout({
         (header?.getBoundingClientRect().height || 0) -
         (heading?.getBoundingClientRect().height || 0) -
         (footer?.getBoundingClientRect().height || 0);
-      const opticalShift = Number.parseFloat(
-        window.getComputedStyle(page).getPropertyValue("--os-body-optical-shift"),
-      ) || 0;
       const metrics = pageTextLayout({
         baseBodyHeight,
         lineHeight,
@@ -961,7 +953,6 @@ export function PageLayout({
           placement === "identity-stack"
             ? mainText.getBoundingClientRect().height
             : main.getBoundingClientRect().height,
-        opticalShift,
       });
 
       body.dataset.osTextLayout = "measured";
@@ -969,7 +960,6 @@ export function PageLayout({
         "--os-measured-body-min-height",
         `${metrics.bodyMinHeight}px`,
       );
-      body.style.setProperty("--os-measured-main-top", `${metrics.mainTop}px`);
     };
     const measure = () => {
       if (!active) return;

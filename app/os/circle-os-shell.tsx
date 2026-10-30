@@ -174,6 +174,7 @@ function weekStepEditorId(taskId: string) {
   return `week-step-${taskId}`;
 }
 import { ChapterPlayer } from "./chapters/chapter-player";
+import { applyHabitBuildingCompletion } from "./habit-building-model.js";
 import {
   ProtocolKeptPage,
   ProtocolPage,
@@ -217,6 +218,7 @@ import {
 import { useChapterPublications } from "./chapters/use-chapter-publications";
 import type {
   ChapterPublication,
+  ChapterDefinition,
   ChapterRun,
   ChapterSubmission,
 } from "./chapters/chapter-types";
@@ -938,6 +940,7 @@ export type CircleState = {
         status: "active" | "archived";
         createdAt: string;
         updatedAt: string;
+        setupRunId?: string;
       }
     >;
     completions: Record<
@@ -990,7 +993,13 @@ export type CircleState = {
       string,
       {
         id: string;
-        kind: "vision" | "missionStatement" | "typicalTuesday" | "dreamline";
+        kind:
+          | "character"
+          | "sixMonth"
+          | "vision"
+          | "missionStatement"
+          | "typicalTuesday"
+          | "dreamline";
         content: Record<string, string>;
         declaredAt: string;
         supersedesId: string | null;
@@ -2081,6 +2090,28 @@ export function TodayExperience() {
     "habit",
     state.chapters.runs,
   );
+  const completedHabitSetupPublication = useMemo(
+    () =>
+      publications
+        .map(normalizeChapterPublication)
+        .filter(
+          (publication) =>
+            publication.targetApp === "habit" &&
+            publication.chapter.id === "habit-building" &&
+            state.chapters.runs[chapterRunId(publication.chapter)]?.status ===
+              "completed",
+        )
+        .sort((left, right) =>
+          String(
+            state.chapters.runs[chapterRunId(right.chapter)]?.completedAt || "",
+          ).localeCompare(
+            String(
+              state.chapters.runs[chapterRunId(left.chapter)]?.completedAt || "",
+            ),
+          ),
+        )[0] || null,
+    [publications, state.chapters.runs],
+  );
   const logSetupSealed = firstUsePublicationDone(
     publications,
     "log",
@@ -2430,6 +2461,49 @@ export function TodayExperience() {
   const habits = Object.values(state.habits.definitions)
     .filter((habit) => habit.status === "active")
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  useEffect(() => {
+    const publication = completedHabitSetupPublication;
+    if (!ready || !publication) return;
+    const runId = chapterRunId(publication.chapter);
+    const completedRun = state.chapters.runs[runId];
+    if (!completedRun || completedRun.status !== "completed") return;
+    if (
+      Object.values(state.habits.definitions).some(
+        (habit) => habit.setupRunId === completedRun.runId,
+      )
+    ) {
+      return;
+    }
+
+    const starter = Object.values(state.habits.definitions)
+      .filter((habit) => habit.status === "active")
+      .sort((left, right) => left.createdAt.localeCompare(right.createdAt))[0];
+    // A later edit is the person's own work. Only repair a starter that still
+    // predates setup, or create the row if setup has no starter to finish.
+    if (
+      starter &&
+      completedRun.completedAt &&
+      starter.updatedAt > completedRun.completedAt
+    ) {
+      return;
+    }
+
+    updateState((current) => {
+      const latestRun = current.chapters.runs[runId];
+      if (!latestRun || latestRun.status !== "completed") return current;
+      return applyHabitBuildingCompletion(
+        current,
+        publication.chapter,
+        latestRun,
+      );
+    });
+  }, [
+    completedHabitSetupPublication,
+    ready,
+    state.chapters.runs,
+    state.habits.definitions,
+    updateState,
+  ]);
   const habitCompletion = (habitId: string, key = dateKey) =>
     state.habits.completions[`${key}:${habitId}`];
   const oneTimeTasks = Object.values(state.tasks.items)
@@ -3636,39 +3710,14 @@ export function TodayExperience() {
     if (!habitBuildingChapter) return;
     updateState((current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
-      let next = storeChapterRun(
+      const next = storeChapterRun(
         current,
         nextRun,
         habitBuildingChapter.session,
       );
-      if (
-        nextRun.status === "completed" &&
-        previousRun?.status !== "completed"
-      ) {
-        const idlePage = habitBuildingChapter.pages.find(
-          (page) => page.type === "idle",
-        );
-        const missionText = renderChapterTemplate(
-          idlePage?.body || habitBuildingChapter.title,
-          nextRun,
-        );
-        const action = chapterAnswerText(nextRun, "habit-action");
-        const cue = chapterAnswerText(nextRun, "habit-time-place");
-        const identity =
-          chapterAnswerText(nextRun, "habit-identity") || "Yourself";
-        const added = addHabitDefinition(next);
-        next = updateHabitDefinitionParts(added.state, added.id, {
-          action,
-          cue,
-          identity,
-          text: missionText,
-        });
-        next = {
-          ...next,
-          profile: { ...next.profile, identityFocus: identity },
-        };
-      }
-      return next;
+      return nextRun.status === "completed" && previousRun?.status !== "completed"
+        ? applyHabitBuildingCompletion(next, habitBuildingChapter, nextRun)
+        : next;
     });
   }
 
@@ -3695,6 +3744,35 @@ export function TodayExperience() {
       }
       return next;
     });
+  }
+
+  function savePublishedLogSetup(
+    current: CircleState,
+    chapter: ChapterDefinition,
+    run: ChapterRun,
+  ) {
+    if (chapter.id !== "log-setup") {
+      return queueProfileUpdate(current, "survey-answer");
+    }
+
+    let next = current;
+    for (const answerKey of ["routine-wake", "routine-sleep"]) {
+      const page = chapter.pages.find((item) => item.answerKey === answerKey);
+      const value = chapterAnswerText(run, answerKey);
+      if (!page || !value) continue;
+      next = answerSurveyQuestion(
+        next,
+        {
+          id: answerKey,
+          text: page.question || page.title || chapter.title,
+          type: page.type,
+          target: "currentLife",
+        },
+        value,
+        "routine",
+      );
+    }
+    return next;
   }
 
   function commitCheckInNote(title: string, note: string) {
@@ -4253,6 +4331,13 @@ export function TodayExperience() {
               className="os-habit-session"
               hideIdleHeading
               label="Routine setup"
+              onCompleted={(current, run) =>
+                applyHabitBuildingCompletion(
+                  current,
+                  habitSetupPublication.chapter,
+                  run,
+                )
+              }
               publication={habitSetupPublication}
             />
           </section>
@@ -4262,6 +4347,16 @@ export function TodayExperience() {
               className="os-habit-session"
               hideIdleHeading
               label="Routine chapter"
+              onCompleted={
+                habitPublication.chapter.id === "habit-building"
+                  ? (current, run) =>
+                      applyHabitBuildingCompletion(
+                        current,
+                        habitPublication.chapter,
+                        run,
+                      )
+                  : undefined
+              }
               publication={habitPublication}
             />
           </section>
@@ -4352,7 +4447,7 @@ export function TodayExperience() {
                   value={state.habits.identity.text}
                 />
               )}
-              idleContent={habitMode === "yesterday" ? undefined : (
+              idleContent={habitMode === "yesterday" || (habits.length === 0 && oneTimeTasks.length === 0) ? undefined : (
                 <div className="os-routine-body">
                   <section className="os-habit-body-session" aria-labelledby="habit-session-title">
                     <p className="os-record-label" id="habit-session-title">Habits</p>
@@ -4709,6 +4804,9 @@ export function TodayExperience() {
                 className="os-log-setup-session"
                 dismissOnBackSwipe
                 label="Log setup"
+                onCompleted={(current, run) =>
+                  savePublishedLogSetup(current, logSetupPublication.chapter, run)
+                }
                 publication={logSetupPublication}
               />
             ) : logSetupChapter && logSetupRun ? (
@@ -4778,6 +4876,9 @@ export function TodayExperience() {
             <PublishedChapterDelivery
               className="os-log-setup-session"
               label="Log chapter"
+              onCompleted={(current, run) =>
+                savePublishedLogSetup(current, logPublication.chapter, run)
+              }
               publication={logPublication}
             />
           </section>

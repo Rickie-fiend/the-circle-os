@@ -17,15 +17,18 @@ import { isLowSignalText } from "./athena-memory-model.js";
 import { PRICING_CATEGORIES } from "./athena-pricing-model.js";
 
 /**
- * The top of the chain has no home of its own yet.
- *
- * `DECLARATION_KINDS` holds vision, missionStatement, typicalTuesday and
- * dreamline. There is no `character`. The Habit App's own identity is the
- * closest thing he actually writes — "Being a Leader" — so that is read first
- * and the mission statement second. Both are stand-ins, and are reported as
- * stand-ins, never as a character he declared.
+ * Character is the declared top of the chain. Routine identity is the short,
+ * editable focus used in daily life, and Mission says how the person intends
+ * to live. Older profiles may have either without a Character, so they remain
+ * labelled fallbacks rather than being mistaken for a declaration.
  */
-export const CHARACTER_DECLARATION = "missionStatement";
+export const CHARACTER_DECLARATION = "character";
+const CHARACTER_FIELDS = Object.freeze([
+  ["mind", "Mind"],
+  ["body", "Body"],
+  ["spirit", "Spirit"],
+  ["social", "Social"],
+]);
 
 /** A prohibition spends no hours; it is the opposite of a claim on them. */
 const NEGATED_TERM = /\b(?:no|not|never|avoid|quit|stop|zero|without)\b/i;
@@ -44,6 +47,21 @@ function habitSubstance(habit) {
 
 function usable(value) {
   return typeof value === "string" && value.trim() && !isLowSignalText(value);
+}
+
+function declaredCharacter(record) {
+  if (!record) return null;
+  const traits = CHARACTER_FIELDS.flatMap(([field, label]) => {
+    const trait = record.content?.[field];
+    return usable(trait) ? [`${label}: ${trait.trim()}`] : [];
+  });
+  if (!traits.length) return null;
+  return {
+    text: traits.join(" · "),
+    declaredAt: record.declaredAt || null,
+    source: CHARACTER_DECLARATION,
+    standIn: false,
+  };
 }
 
 function categoryFor(...texts) {
@@ -125,16 +143,18 @@ export function readChain(state, options = {}) {
   const dayGoals = allGoals.filter((goal) => goal.scope === "day");
 
   const habitIdentity = state?.habits?.identity;
-  const mission = latestDeclaration(state, CHARACTER_DECLARATION);
-  const character = usable(habitIdentity?.text)
-    ? { text: habitIdentity.text.trim(), declaredAt: habitIdentity.updatedAt || null, source: "habit-identity" }
+  const declaration = declaredCharacter(
+    latestDeclaration(state, CHARACTER_DECLARATION),
+  );
+  const mission = latestDeclaration(state, "missionStatement");
+  const character = declaration || (usable(habitIdentity?.text)
+    ? { text: habitIdentity.text.trim(), declaredAt: habitIdentity.updatedAt || null, source: "habit-identity", standIn: true }
     : usable(mission?.content?.statement)
-      ? { text: mission.content.statement.trim(), declaredAt: mission.declaredAt, source: "missionStatement" }
-      : null;
+      ? { text: mission.content.statement.trim(), declaredAt: mission.declaredAt, source: "missionStatement", standIn: true }
+      : null);
 
   return {
-    // Always a stand-in until `character` is a declaration kind of its own.
-    character: character ? { ...character, standIn: true } : null,
+    character,
     habits: habitList(state),
     protocol: protocolRuns(state),
     weekGoals: week,
@@ -224,6 +244,7 @@ export function alignChain(chain, pricing) {
     recordedDays: pricing?.recordedDays ?? 0,
     characterText: chain.character?.text || "",
     characterSource: chain.character?.source || "",
+    characterStandIn: Boolean(chain.character?.standIn),
     levels: {
       character: Boolean(chain.character && usable(chain.character.text)),
       habits: chain.habits.length,
@@ -277,8 +298,18 @@ function unclaimedHours(chain, pricing) {
 export function serializeAlignmentMarkdown(alignment) {
   if (!alignment) return "Not aligned yet.";
   const { levels } = alignment;
+  const characterStandIn =
+    typeof alignment.characterStandIn === "boolean"
+      ? alignment.characterStandIn
+      : alignment.characterSource !== CHARACTER_DECLARATION;
   const spine = [
-    `- character: ${levels.character ? `${alignment.characterText} (stand-in, from ${alignment.characterSource})` : "not named"}`,
+    `- character: ${
+      levels.character
+        ? characterStandIn
+          ? `${alignment.characterText} (stand-in, from ${alignment.characterSource})`
+          : `${alignment.characterText} (declared character)`
+        : "not named"
+    }`,
     `- habits: ${levels.habits}`,
     `- protocol running: ${levels.protocol}`,
     `- week goal: ${levels.goal}`,

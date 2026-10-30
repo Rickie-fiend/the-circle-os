@@ -25,7 +25,7 @@ test("a setup chapter is not also an everyday delivery", () => {
     /export function selectPendingAppPublication[\s\S]*?\n}/,
   )?.[0];
   assert.ok(pending, "selectPendingAppPublication moved");
-  assert.match(pending, /!publication\.firstUse/);
+  assert.match(pending, /!candidate\.firstUse/);
 });
 
 // The compiled chapter is what shipped in the bundle; the published one is what
@@ -94,6 +94,23 @@ test("a setup is answered once, whatever version it was", () => {
     store,
     /if \(firstUsePublicationDone\(publications, targetApp, runs\)\) return null;/,
   );
+});
+
+test("an App offers only the newest version of an ordinary publication", () => {
+  const pending = store.match(
+    /export function selectPendingAppPublication\([\s\S]*?\n}/,
+  )?.[0];
+  assert.ok(pending, "selectPendingAppPublication moved");
+  assert.match(pending, /const latestByChapter = new Map/);
+  assert.match(pending, /publication\.chapter\.version > latest\.chapter\.version/);
+  assert.match(pending, /\[\.\.\.latestByChapter\.values\(\)\]/);
+});
+
+test("published Log setup writes its wake and sleep answers to routine evidence", () => {
+  assert.match(shell, /function savePublishedLogSetup\(/);
+  assert.match(shell, /for \(const answerKey of \["routine-wake", "routine-sleep"\]\)/);
+  assert.match(shell, /savePublishedLogSetup\(current, logPublication\.chapter, run\)/);
+  assert.match(shell, /savePublishedLogSetup\(current, logSetupPublication\.chapter, run\)/);
 });
 
 // The time field on a setup Page. Sai's screenshot showed it standing 22px to

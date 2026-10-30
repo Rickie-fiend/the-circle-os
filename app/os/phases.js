@@ -1,9 +1,13 @@
 /**
  * How far into the journey a person is, and what that opens.
  *
- * The App is not a set of Apps that all arrive at once. It arrives in three
- * phases, and each one exists because the one before it earned the argument
- * for it. Sai laid the order out plainly:
+ * Current rule: Protocol opens after Day One is completed; Week opens after
+ * Week setup is completed, in any published version. Dates do not unlock Apps.
+ * Week setup is automatically offered after the next Circle day begins
+ * following Day One completion. That offer timing is separate from App access.
+ *
+ * Historical rationale for the earlier day-based plan follows. Its day-two
+ * and day-seven thresholds are not current App gates. Sai originally said:
  *
  *   "first time visit > onboarding ss > app. for one day commitment note app,
  *   thoughts, routine, log, are fully usable on day one ... Protocol, and Week
@@ -33,27 +37,25 @@
  * shape of the thing is visible from day one and the person knows what they are
  * walking toward.
  *
- * Days are counted in Circle days lived since day one was kept, not in
- * calendar days since install: somebody who comes back on Friday is on their
- * second day, not their fifth.
+ * The legacy day helpers below count date boundaries since Day One completion,
+ * not visits or days with recorded activity. They do not control App access.
  */
 
 import { chapterEverCompleted } from "./chapters/chapter-model.js";
 
 export const PHASES = ["one-day", "one-week", "the-week-read"];
 
-/** The day the Protocol opens, counting day one as day one. */
+/** Historical Protocol threshold; not an App access gate. */
 export const PROTOCOL_DAY = 2;
 
-/** The day the Week and its review open. */
+/** Historical Week threshold; not an App access or review gate. */
 export const WEEK_DAY = 7;
 
 /**
- * Which day of the journey a person is on, counting from one.
+ * Legacy elapsed-day count from Day One completion, counting from one.
  *
- * Zero means day one has not been kept yet — they are still inside it, or have
- * not begun. Day one being *kept* is the run being completed, and a day turning
- * over after it.
+ * Zero means the dates are missing, invalid, or reversed. The completion date
+ * itself is day one. This does not count active days or open an App.
  */
 export function journeyDay(keptDayOneOn, todayKey) {
   const from = typeof keptDayOneOn === "string" ? keptDayOneOn.slice(0, 10) : "";
@@ -65,7 +67,7 @@ export function journeyDay(keptDayOneOn, todayKey) {
   return Math.round((now - start) / (24 * 60 * 60 * 1000)) + 1;
 }
 
-/** The phase a day belongs to. */
+/** Historical phase for an elapsed-day count; not an App access gate. */
 export function phaseForDay(day) {
   if (day >= WEEK_DAY) return "the-week-read";
   if (day >= PROTOCOL_DAY) return "one-week";

@@ -223,18 +223,35 @@ export function selectPendingAppPublication(
   runs: Record<string, ChapterRun>,
   options: { includeDeferred?: boolean } = {},
 ) {
+  const latestByChapter = new Map<string, ChapterPublication>();
+  for (const publication of publications
+    .map(normalizeChapterPublication)
+    .filter(
+      (candidate) =>
+        !candidate.firstUse &&
+        candidate.targetApp === targetApp &&
+        (candidate.visibility === "public" ||
+          candidate.audienceProfileId === audienceProfileId ||
+          candidate.audienceProfileId === "local"),
+    )) {
+    const latest = latestByChapter.get(publication.chapter.id);
+    if (
+      !latest ||
+      publication.chapter.version > latest.chapter.version ||
+      (publication.chapter.version === latest.chapter.version &&
+        publication.publishedAt.localeCompare(latest.publishedAt) > 0)
+    ) {
+      latestByChapter.set(publication.chapter.id, publication);
+    }
+  }
+
   return (
-    publications
-      .map(normalizeChapterPublication)
-      .filter(
-        (publication) =>
-          !publication.firstUse &&
-          publication.targetApp === targetApp &&
-          (publication.visibility === "public" ||
-            publication.audienceProfileId === audienceProfileId ||
-            publication.audienceProfileId === "local"),
+    [...latestByChapter.values()]
+      .sort(
+        (a, b) =>
+          b.publishedAt.localeCompare(a.publishedAt) ||
+          b.chapter.version - a.chapter.version,
       )
-      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
       .find((publication) => {
         const run = runs[chapterRunId(publication.chapter)];
         if (publicationIsNewerThanRun(publication, run)) return true;

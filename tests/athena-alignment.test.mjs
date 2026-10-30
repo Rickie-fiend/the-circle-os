@@ -66,7 +66,32 @@ test("a habit is categorised by what it is, not by the cue that triggers it", ()
   assert.equal(chain.habits[0].category, "stillness");
 });
 
-test("character falls back to the habit identity, and is always a stand-in", () => {
+test("declared character leads the chain before Routine identity and Mission fallbacks", () => {
+  const declared = readChain(
+    state({
+      habits: { identity: { text: "Being a Leader" }, definitions: {} },
+      declarations: {
+        records: {
+          c: {
+            id: "c",
+            kind: "character",
+            content: { mind: "Clear thinker", social: "Warm with people" },
+            declaredAt: "2026-08-16",
+          },
+          m: {
+            id: "m",
+            kind: "missionStatement",
+            content: { statement: "Live with kindness." },
+            declaredAt: "2026-08-15",
+          },
+        },
+      },
+    }),
+  );
+  assert.equal(declared.character.text, "Mind: Clear thinker · Social: Warm with people");
+  assert.equal(declared.character.source, "character");
+  assert.equal(declared.character.standIn, false);
+
   const withHabit = readChain(state({ habits: { identity: { text: "Being a Leader" }, definitions: {} } }));
   assert.equal(withHabit.character.text, "Being a Leader");
   assert.equal(withHabit.character.source, "habit-identity");
@@ -87,8 +112,29 @@ test("character falls back to the habit identity, and is always a stand-in", () 
     }),
   );
   assert.equal(withMission.character.source, "missionStatement");
+  assert.equal(withMission.character.standIn, true);
 
   assert.equal(readChain(state()).character, null);
+});
+
+test("the newest unsuperseded Character is authoritative", () => {
+  const chain = readChain(state({
+    declarations: {
+      records: {
+        old: {
+          id: "old", kind: "character", content: { mind: "Old words" },
+          declaredAt: "2026-08-14",
+        },
+        current: {
+          id: "current", kind: "character", content: { body: "Strong and rested" },
+          declaredAt: "2026-08-15", supersedesId: "old",
+        },
+      },
+    },
+  }));
+  assert.equal(chain.character.text, "Body: Strong and rested");
+  assert.equal(chain.character.declaredAt, "2026-08-15");
+  assert.equal(chain.character.standIn, false);
 });
 
 test("a week goal with no steps is a wish, and no goal at all is its own break", () => {
@@ -210,6 +256,49 @@ test("memory carries the chain and a phone sync cannot erase it", () => {
 
   const merged = mergeAthenaMemory(memory, { updatedAt: "2026-09-07T06:00:00.000Z" });
   assert.equal(merged.alignment.levels.character, true);
+});
+
+test("serialized alignment distinguishes declared Character from a fallback", () => {
+  const declared = alignChain(readChain(state({
+    declarations: {
+      records: {
+        c: {
+          id: "c", kind: "character", content: { spirit: "Calm" },
+          declaredAt: "2026-08-15",
+        },
+      },
+    },
+  })), null);
+  assert.match(serializeAlignmentMarkdown(declared), /Spirit: Calm \(declared character\)/);
+  assert.doesNotMatch(serializeAlignmentMarkdown(declared), /stand-in/);
+  assert.match(
+    serializeAthenaMemoryMarkdown(
+      normalizeAthenaMemory({ updatedAt: "2026-09-06T06:00:00.000Z", alignment: declared }),
+      "p_test",
+    ),
+    /Spirit: Calm \(declared character\)/,
+  );
+
+  const fallback = alignChain(readChain(state({
+    habits: { identity: { text: "Builder" }, definitions: {} },
+  })), null);
+  assert.match(serializeAlignmentMarkdown(fallback), /Builder \(stand-in, from habit-identity\)/);
+
+  const legacyFallback = { ...fallback, characterStandIn: undefined };
+  assert.match(
+    serializeAlignmentMarkdown(legacyFallback),
+    /Builder \(stand-in, from habit-identity\)/,
+  );
+  assert.match(
+    serializeAthenaMemoryMarkdown(
+      normalizeAthenaMemory({
+        updatedAt: "2026-09-06T06:00:00.000Z",
+        alignment: legacyFallback,
+      }),
+      "p_test",
+    ),
+    /Builder \(stand-in, from habit-identity\)/,
+  );
 });
 
 test("the newest declaration wins and superseded ones are not read", () => {

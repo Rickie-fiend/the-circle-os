@@ -533,7 +533,7 @@ async function main() {
   const command = process.argv.includes("--publish") ? "publish" : "check";
   const draftPaths = await markdownFiles(join(CHAPTERS_ROOT, "Drafts"));
   const publishedPaths = await markdownFiles(
-    join(CHAPTERS_ROOT, "Published Sources"),
+    "D:\\CircleOS\\Chapters\\Published Soruces",
   );
   const all = await readChapters([...draftPaths, ...publishedPaths]);
   if (!all.length) throw new Error(`No chapter Markdown found in ${CHAPTERS_ROOT}`);

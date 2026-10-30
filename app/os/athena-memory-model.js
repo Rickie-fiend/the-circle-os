@@ -143,6 +143,10 @@ export function normalizeAthenaAlignment(value) {
   if (!value || typeof value !== "object" || !value.levels) return null;
   return {
     ...value,
+    characterStandIn:
+      typeof value.characterStandIn === "boolean"
+        ? value.characterStandIn
+        : value.characterSource !== "character",
     breaks: (Array.isArray(value.breaks) ? value.breaks : []).filter((item) => item?.level),
     unclaimed: (Array.isArray(value.unclaimed) ? value.unclaimed : []).filter(
       (item) => item?.id,
@@ -782,7 +786,9 @@ function serializeMemoryAlignment(alignment) {
   const spine = [
     `- character: ${
       levels.character
-        ? `${alignment.characterText} (stand-in, from ${alignment.characterSource})`
+        ? alignment.characterStandIn
+          ? `${alignment.characterText} (stand-in, from ${alignment.characterSource})`
+          : `${alignment.characterText} (declared character)`
         : "not named"
     }`,
     `- habits: ${levels.habits}`,

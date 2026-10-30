@@ -43,19 +43,19 @@ Every Cover, Chapter, and App Page uses the same five regions.
 
 ## App Box size
 
-- The default App Box is a compact rounded rectangle, and it is the same
-  rectangle everywhere. Note, Thoughts, Habit, Protocol, a short Chapter, a
-  Cover, Vision, Athena and Gap all rest at exactly one height. Swiping between
-  two Pages of the same App never resizes the frame.
+- The default App Box is a compact rounded rectangle and the shared minimum
+  everywhere. Empty and short Note, Thoughts, Habit, Protocol, Chapter, Cover,
+  Vision, Athena and Gap Pages rest at exactly one height. Real content may grow
+  the frame downward.
 - One foundation owns that size and the space inside it. `--os-app-box-min-height`
   is the height, `--os-app-box-padding-*` the inset,
-  `--os-body-optical-shift` Main's optical correction,
+  `--os-label-gap` the forehead from Label to first visible content,
   `--os-main-sub-gap` the space between Main and Sub, and
   `--os-body-footer-gap` the space between the last line of Body and the Footer.
   An App does not restate any of them.
-- Main Body is the centred element. One, two and three lines centre in the Body
-  region, measured in Main's own line height. At four lines its top pins where
-  the three-line top was and the App Box grows down by every added line.
+- Main Body begins at the forehead for every line count. One, two and three
+  lines use the ordinary Body budget without changing that top anchor. At four
+  lines the App Box grows down by every added line.
 - Two lines was not enough. A Note title is usually two lines but the Thoughts
   placeholder is sometimes three, so two Pages of one App Box sat at different
   heights and the frame resized on the swipe between them. The reserve is what
@@ -64,9 +64,9 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - A fluid App Box may grow for its content and ease back down, but never below
   the shared default minimum.
 - The App Box does not jump when adjacent Pages have different heights.
-- An App Box grows downward only. The top edge, the width, the radius and the
-  Header stay where they are. Once Main reaches four lines, its top stays at the
-  three-line position; the bottom edge is the only edge that travels.
+- An App Box grows downward only. The top edge, width, radius, Header and Main
+  forehead anchor stay where they are; the bottom edge is the only edge that
+  travels.
 - One written line costs one line of App Box. Main and Sub are two real rows
   that take the room they need. Written instead as a two-parts-to-one-part
   split of the Body, an absent Sub Body still claimed half of whatever Main
@@ -77,16 +77,16 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - Real added rows may extend a fluid App Box while the Footer remains below
   them. Habit tasks stay visible in one continuous Sub Body; they do not move
   into an inner scrolling panel.
+- Protocol terms use the same continuous-page behavior in draft, running and
+  finished states. They remain visible as the App Box grows downward rather
+  than moving into an inner scrolling panel.
 - A fluid App Box commits its first measured height only after child editors
   have sized and the font state has settled. It remeasures when fonts finish or
   fail and when an in-Page side changes; the CSS minimum carries first paint.
-- Main-text centring is a declared Page layout. Routine declares its editable
-  identity as Main text, so the identity receives the shared centred breathing
-  space. Record and Protocol home are content Pages: they opt out, begin directly
-  under Heading, and must never be measured from nested row text.
-- When a reused Page stops qualifying for Main-text centring, it clears the old
-  measured offset immediately. An App-back handoff may reuse a surface, but it
-  may not reuse the previous side's geometry.
+- Routine declares its editable identity as Main text, so it begins at the
+  shared forehead. Record and Protocol home are content Pages and must never be
+  measured from nested row text. An App-back handoff may reuse a surface, but
+  it may not reuse the previous side's height.
 - A content-heavy App may define a slightly larger stable minimum so its Main
   action and Footer never collide on a narrow phone.
 
@@ -145,6 +145,12 @@ Used for charts, weekly views, and other things worth reading again.
 - Reflect is for reading. Chapters ask a question and collect an answer, so
   they belong to Today. A publication assigned to Vision or Athena still
   delivers into its App Box, but Reflect never grows its own questionnaire.
+- Character is the authoritative answer to who the person is becoming. Routine
+  identity is the short daily focus; a habit identity belongs to one habit;
+  Mission says how the person intends to live. When Character is absent, Athena
+  may use Routine identity and then Mission only as labelled fallbacks.
+- Vision, Character, Mission statement, Typical Tuesday, and Six months are
+  distinct wanted-life records. Dreamline remains a separate finite plan.
 
 ## Lines
 
@@ -159,8 +165,13 @@ Used for charts, weekly views, and other things worth reading again.
   Chapter. Chapters arrive on their own in Thoughts and return to Thoughts when
   completed or dismissed.
 - A quote is one Line Page. A fact or joke keeps setup and reveal as two
-  adjacent Pages. Those Pages may rotate through the shared idle dwell, and the
-  Line stays until the person presses Note to return.
+  adjacent Pages. Those Pages may rotate through the shared idle dwell; a Line
+  never dismisses itself on a timer.
+- The Line face has a text kind label, not a Note return button. Swiping
+  backward past its first Page returns to Note. Swiping forward past its last
+  Page first reveals reactions; choosing a reaction records feedback and
+  returns to Note. Swiping forward past the end again returns without requiring
+  a reaction. Reactions are optional feedback, not Chapter answers or completion.
 - The neutral inset edge says that the arriving Page is not the person's Note.
   The top-right `FACT`, `JOKE`, or `QUOTE` label says what kind it is; colour
   does not encode kind.
@@ -331,10 +342,10 @@ Used for charts, weekly views, and other things worth reading again.
   the only one that flexes. Written with Heading flexible instead, spare height
   collects above the words, so a short thought sits low and jumps upward the
   moment it gains a second line.
-- On Cover, Note, Thoughts and Vision declaration Pages, Main is the centred
-  element and Sub hangs from its last line at the shared gap.
+- On Cover, Note, Thoughts and Vision declaration Pages, Main begins at the
+  forehead and Sub hangs from its last line at the shared gap.
 - Cover Main text, Note Main text, the Thoughts placeholder and the Vision
-  declaration editor use one shared typography token and centring rule. They
+  declaration editor use one shared typography token and forehead anchor. They
   remain left-aligned.
 - **A label is dimmed by choosing a lighter step, never by using the surface's
   own text colour on the wrong surface.** Section labels on a dark App Box use
@@ -342,8 +353,8 @@ Used for charts, weekly views, and other things worth reading again.
   labels in Ink on `--c-neutral-950`, which measures 1.13:1 — invisible rather
   than quiet. `--c-neutral-400` on that surface is 6.42:1 and reads as the quiet
   signpost the label is meant to be.
-- A Note Page keeps its Main text on the same centre or three-line pin as a
-  Cover Page. Optional Sub text begins beneath Main without moving it.
+- A Note Page keeps its Main text at the same forehead anchor as a Cover Page.
+  Optional Sub text begins beneath Main without moving it.
 - Routine App Pages place the editable app identity in Main Body, habits then
   Tasks in one continuous Sub Body, and Add task in Footer.
 - Repeated habits form one continuous Sub Body stack. Each habit uses one
@@ -351,8 +362,8 @@ Used for charts, weekly views, and other things worth reading again.
 - Routine is the first Page and Protocol is one swipe across. Their Headers are
   equal and their editable identities begin on the same line.
 - Their title box, title-to-first-label gap and Footer action outer height are
-  equal too. Those measurements feed Main centring; a feature-specific Footer
-  or duplicate content gap must not move one identity below the other.
+  equal too. A feature-specific Footer or duplicate content gap must not move
+  one identity below the other.
 - When Routine has no rows, the empty Sub Body collapses and the Page rests at
   the shared default height.
 - Full-width actions use the same black button language across apps.
@@ -363,8 +374,9 @@ Used for charts, weekly views, and other things worth reading again.
 - Note, Thoughts, short Chapter, empty Routine and resting Protocol Pages all
   use the same default App Box height. Only real added content may request a
   larger stable height.
-- A running or finished Protocol holds that default height and scrolls its
-  terms inside the Body. Draft editing remains fluid.
+- Draft, running and finished Protocol Pages grow downward for their real terms.
+  They share the default minimum but do not hold that height or nest a terms
+  scroller.
 
 ## State
 
@@ -465,10 +477,12 @@ back up a little slower.
   Protocol home declare `content-flow`. Moving a shared heading or Footer rule
   moves every Page that names the contract.
 - A Vision declaration versions only through `Save declaration`. Blur, route
-  reload and ordinary typing never create a declaration. The four current
-  kinds stay on the front. Tapping the declaration's top-left kind label flips
-  to superseded immutable records on the shared App back. On that back,
-  `History` is a passive top-right state label rather than a second action.
+  reload and ordinary typing never create a declaration. The current front
+  shows three kinds: Vision, Mission statement, and Typical Tuesday. Tapping a
+  declaration's top-left kind label flips to superseded immutable records on
+  the shared App back. On that back, `History` is a passive top-right state
+  label rather than a second action. Character and Six months already exist as
+  versioned records; their front-Page design remains a separate review.
 
 ## Athena Reading replies
 

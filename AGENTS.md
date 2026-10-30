@@ -5,62 +5,84 @@ This file governs the whole repository. Circle OS is the live product at
 
 ## Source of truth
 
-- Git is the source of truth for code.
-- Obsidian is the source of truth for durable product thinking, brand rules,
-  chapter rules, and AI continuity.
-- Never store secrets in Obsidian or frontend code.
+- Git is the source of truth for code and repository-owned project documents.
+- `docs/PRODUCT.md` owns the product direction; `docs/ROADMAP.md` owns the
+  delivery sequence; `docs/DECISION_LOG.md` distinguishes decisions from open
+  questions. `docs/PRODUCTION_ARCHITECTURE.md` owns the current/target system map.
+- `DESIGN.md`, `app/os/APP_SESSION_STANDARD.md`, and `app/brand-system.ts` own
+  the accessible design references. Record conflicts rather than guessing.
+- Never store secrets in product documents, test fixtures, or frontend code.
+
+## Manual review, approval, and understanding
+
+- Before changing files, explain the proposed changes in simple terms: what
+  will change, why, which files are involved, the intended result, and how it
+  will be checked. Ask for the developer's manual review and explicit approval,
+  then wait before editing. This includes code, tests, documentation, and handoffs.
+- Approval covers the reviewed scope. A general roadmap, bug priority, or request
+  to discuss an idea is not approval to edit. Obtain approval for changes outside
+  the agreed scope. Read-only investigation may prepare the concrete proposal.
+- If the intended outcome, context, or acceptance criteria are unclear, ask
+  focused questions and resolve them before making dependent changes. Do not
+  invent the developer's intent to keep moving.
+- Verify every code change against its intended behavior. Write or update
+  meaningful tests when necessary and use runtime/browser checks when appropriate.
+  Reverify after subsequent fixes or optimizations. Report the checks and results;
+  an unverified change remains explicitly unverified and is not declared done.
 
 ## Required preflight
 
-Before changing Circle OS code, layout, interaction, chapters, AI behavior, or
-project direction, read:
+At session start, read this file, `docs/DEVELOPMENT_WORKFLOW.md`,
+`docs/CURRENT_TASK.md`, and the current `docs/SESSION_HANDOFF.md` snapshot.
+Then read the owning references for the task before proposing changes:
 
-1. `C:\Brain\10 Projects\The Circle\Circle OS\START HERE.md`
-2. `C:\Brain\10 Projects\The Circle\Circle OS\Circle OS Master Build Plan.md`
-3. `C:\Brain\10 Projects\The Circle\BRAND_SYSTEM.md`
-4. `C:\Brain\10 Projects\The Circle\CIRCLE_OS_BRAND_APPLICATION.md`
-5. `C:\Brain\10 Projects\The Circle\Circle OS\App Box and Page Standard.md`
-6. `app/os/APP_SESSION_STANDARD.md` for App Box, Page, swipe, chapter, or
-   transition work
-7. `DESIGN.md` for the short code-side design reference
+| Task touches | Required references |
+| --- | --- |
+| Product behavior, Athena's role, or product scope/direction | Relevant sections of `docs/PRODUCT.md` |
+| Delivery order, release gates, dependencies, or new features | Current phase and relevant sections of `docs/ROADMAP.md` |
+| Any area being changed | Search `docs/DECISION_LOG.md` and read applicable decisions, reasons, and open conflicts |
+| Profiles, persistence, auth, sync, or AI | Relevant sections of `docs/PRODUCTION_ARCHITECTURE.md` |
+| Layout, visual design, or interaction | Relevant sections of `DESIGN.md` and `app/brand-system.ts` |
+| App Box, Page, swipe, chapter, or transition behavior | Relevant sections of `app/os/APP_SESSION_STANDARD.md` |
+| Bug fixes or existing behavior and its verification | Relevant reports in `bugs.md` and evidence in `docs/USER_JOURNEY_TESTING.md` |
 
-Read memory-specific notes only when the task touches profiles, persistence,
-Athena, Oscar, schedules, or chapter generation.
+Apply every matching row. Search headings and terms first, then read enough
+surrounding context to understand the rules and exceptions. A link alone is
+not a reason to load a whole document or archive. Expand the read when scope,
+dependencies, or conflicting evidence make more context necessary. If required
+context remains missing or unclear, ask before dependent edits. Do not reread
+unchanged material already available in the session.
+
+Inspect relevant source when the task touches profiles, persistence, Athena,
+schedules, or chapter generation. Supabase is the target backend; the current
+runtime is still the browser plus a file-based profile server.
 
 Then inspect the relevant source and run `git status --short`. Existing changes
 belong to the user unless proven otherwise. Never discard or overwrite
 unrelated work.
 
-## When the Obsidian vault is unavailable
+## Legacy external notes and integrations
 
-The Obsidian documents listed in Required preflight remain the intended
-authorities for durable product thinking, brand rules, chapter rules, and AI
-continuity. At session start, check whether the relevant paths are accessible.
-Report each unavailable path exactly.
+On 2026-10-30 the developer authorized replacing missing external documents
+with repository-owned sources. Unavailable Obsidian notes are no longer
+required preflight or pending update targets for new decisions. Historical
+handoffs remain historical; never claim those notes were read or updated.
 
-Vault access is not a blanket blocker for repository work. Continue using this
-file, accessible repository documents, and explicit decisions in the current
-task. Do not guess what an unavailable note says. If a decision depends on
-unavailable information, leave that decision unresolved and ask for the note or
-the decision before proceeding with the dependent work.
-
-Never say an Obsidian note was read or updated unless that actually happened.
-When a required vault update cannot be made, record it as pending in the
-session handoff, with its exact path and reason.
+The current profile server and chapter compiler still use external files.
+Changing document authority does not remove those runtime integrations or
+migrate personal records. Plan and verify any migration separately. Never
+invent the contents of an unavailable file or discard data to remove a path.
 
 ## Session continuity
 
-At session start, read `AGENTS.md`, `docs/CURRENT_TASK.md`, and the latest entry
-in `docs/SESSION_HANDOFF.md` when those files exist. Then check Git status,
-branch, and recent history. Treat existing changes as belonging to their
-authors; inspect them and do not overwrite or include them in unrelated work.
+Use the shared [session-start checklist](docs/DEVELOPMENT_WORKFLOW.md#session-start)
+and [handoff checklist and template](docs/DEVELOPMENT_WORKFLOW.md#session-handoff).
+The workflow also defines [document responsibilities](docs/DEVELOPMENT_WORKFLOW.md#document-responsibilities).
 
-At session end, inspect Git status and the diff. Run checks relevant to the
-work and report their exact commands and results. Update the current task and
-append a handoff entry that separates completed and verified work from
-attempts, assumptions, and unresolved issues. Record what was not verified and
-why. Include a commit range only when commits were actually made. Never claim
-tests, commits, deployments, or Obsidian updates that did not happen.
+Historical handoffs and archives are evidence, not current authorization.
+Flag conflicts with current authorities and ask about unresolved decisions.
+A recorded bug is not permission to edit. Mark it fixed only after verification;
+if verification is blocked, record the gap and remind the developer.
 
 ## Circle OS product rules
 
@@ -68,9 +90,17 @@ tests, commits, deployments, or Obsidian updates that did not happen.
 - Today receives input. Vision helps the person notice the life they are
   living, the life they want, and the uncertain space between them.
 - Athena observes and asks clear questions. Athena does not prescribe a life.
+- Athena's intended role includes personal feedback, motivation, and reflection
+  on goals and behavior. Ground these in the user's evidence and choices.
 - Use simple language a fourth grader can understand.
 - Never invent evidence about a person. Mark inference as inference.
 - Preserve local-first behavior. Keep phone data safe before server sync.
+- The current delivery goal is a web MVP for friends and family. iOS/Android
+  and Supabase-backed personalized Athena are the long-term direction.
+- The first friends-and-family test covers the stabilized core. Add new
+  personalized Athena afterward; audit existing prepared content as core.
+- Fix and verify existing features, optimize with evidence, then test and verify
+  again before feature expansion. Follow `docs/DEVELOPMENT_WORKFLOW.md`.
 - One user has one profile. Do not edit generated profile state or day data by
   hand unless the task explicitly requires that workflow.
 
@@ -88,15 +118,19 @@ tests, commits, deployments, or Obsidian updates that did not happen.
 - Main Body receives roughly two parts of body space; Sub Body receives one.
   On Cover, Note and Thoughts that weight is where the eye lands, not reserved
   space: an empty Sub Body costs nothing and the App Box stays at its default.
-- Every App Box rests at one shared default size. An idle App Box with more
-  than one Page turns its own pages after a quiet dwell.
+- Every App Box has one shared default minimum size. Empty and short Pages rest
+  there; real content may grow the frame downward.
+- Only the Today Note/Thoughts session turns its pages automatically after the
+  shared idle dwell. Two-page facts and jokes on its Line side may also turn.
+  Other Apps stay on the chosen Page; journeys, Chapters, and pending
+  publications never rotate. Follow the Page standard's idle-rotation rules.
 - One Page has one main action. Do not add decorative controls or explanatory
   words without a clear purpose.
 - Motion is calm and meaningful. Existing page travel remains quick; only a
   genuinely new cover receives the slower staged reveal.
 - The installed Taste skills are references, not authority. They may improve
-  craft, but they must not override this file, `DESIGN.md`, the Obsidian brand
-  system, or established Circle OS behavior.
+  craft, but they must not override this file, `DESIGN.md`, the Page standard,
+  or established Circle OS behavior.
 
 ## Implementation rules
 
@@ -110,21 +144,19 @@ tests, commits, deployments, or Obsidian updates that did not happen.
 
 ## Working alongside another agent
 
-Codex and Claude both change this repository, and Sai brainstorms with both.
-Codex implements. Claude reviews, optimizes, and keeps the design system and
-architecture coherent. Sai decides the product. Neither agent is the other's
-approver: both answer to Sai, and Claude's review is advice with reasons, not
-permission.
+Codex and Claude both change this repository, and the developer brainstorms
+with both. Codex implements. Claude reviews, optimizes, and keeps the design
+system and architecture coherent. The developer decides the product. Neither
+agent is the other's approver: both answer to the developer, and Claude's
+review is advice with reasons, not permission.
 
 ### Before starting
 
-- Run `git status --short` and `git log --oneline -10`. Recent commits are the
-  other agent's work and are usually the reason the code looks unfamiliar.
-- Uncommitted changes are not yours. Read them before touching anything nearby.
-  If they conflict with the task, stop and say so rather than resolving it alone.
-- Read the note in `C:\Brain\10 Projects\The Circle\Circle OS` that owns the
-  area you are about to change. If a decision already has a written reason, do
-  not re-decide it silently; argue with it in the report or leave it alone.
+- Follow the shared session-start checklist, including Git status and history.
+- Read nearby uncommitted changes before editing. If they conflict with the
+  task, stop and explain the conflict instead of resolving it alone.
+- Read the owning document and relevant decision before changing an area.
+  If a decision has a written reason, explain any disagreement to the developer.
 
 ### While working
 
@@ -133,35 +165,28 @@ permission.
 - Never `git add -A` or `git commit -a`. Stage the paths you actually changed,
   so half-finished work from the other agent is not swept into your commit.
 - Do not rewrite history that has been pushed, and do not force-push.
-- Leave the tree clean at the end of a session. Uncommitted work is invisible to
-  the next agent and is the easiest thing in this setup to destroy by accident.
+- Preserve pre-existing working-tree changes and leave your edits reviewable.
+  Stage or commit only when the developer explicitly asks. Report uncommitted
+  and untracked work; never discard changes to force a clean tree.
 
 ### What to prepare for handoff
 
-Every piece of work ends with these, in the report and in the repository:
-
-1. **The commit range**, so the work can be read as a diff rather than
-   reconstructed from prose.
-2. **What was verified and how.** Name the command and the result. `npm.cmd test`
-   runs the build first, so a passing test run is also a passing build.
-3. **What was not verified**, and why. Silence about a gap reads as a claim.
-4. **Which invariants the change touched** from the list below, and what was
-   measured to show they still hold.
-5. **What remains uncertain or unfinished**, stated plainly enough that the next
-   agent can pick it up without asking Sai to explain it again.
-6. **The Obsidian update** — the reasoning note, the build record in
-   `Circle OS Master Build Plan.md`, and a dated section in that folder's
-   `START HERE.md` when app behaviour or an interaction rule changed.
+Use the shared handoff checklist and template. Include actual verification,
+unverified work, touched invariants and measurements, remaining uncertainty,
+and the next action. Give a commit range only when commits were made.
 
 ### Invariants that need measuring, not reasoning
 
 These were each established by finding a real defect. Changing one is allowed;
 changing one by accident is the failure mode.
 
-- **App Box geometry.** Every App Box rests at one shared default size, and
-  `--os-body-top` is tuned to a two-line Main plus one-line Sub budget. After any
-  geometry, type-scale or gap change, measure the rendered heights of Note,
-  Thoughts, Habit and Protocol. They must be equal at rest.
+- **App Box geometry.** Every App Box has one shared default minimum size, and
+  `--os-label-gap` owns the forehead from the App Label to the first visible
+  content. Main begins at that anchor and grows downward; it does not centre as
+  its line count changes. After any geometry, type-scale or gap change, measure
+  the rendered heights and forehead gaps of Note, Thoughts, Habit and Protocol.
+  Empty and short Pages must be equal at rest; real Habit and Protocol rows may
+  grow downward without an inner scroll panel.
 - **Give versus ask.** Content that gives is unrationed; content that asks stays
   rationed. A Line never acquires a run, version, cooldown or completion. Before
   raising any chapter budget, check supply rather than raising the number.
@@ -174,31 +199,29 @@ changing one by accident is the failure mode.
 - **Local-first persistence.** The phone keeps evidence until the server
   acknowledges a revision. A clearing edit writes a dated empty value rather than
   removing a record, or an older server copy restores it on merge.
-- **No live-AI assumptions.** There is no API access. Anything Athena produces is
-  authored ahead of time and delivered declaratively; the phone only does
-  arithmetic on its own state.
+- **Current versus planned AI.** The current phone consumes prepared Athena
+  content and performs local calculations. The target includes server-side AI
+  with authorized Supabase evidence access. Do not assume a provider, credentials,
+  live inference, or database access exists before implementation and verification.
+  The model never receives database administrator credentials.
 - **The Circle day starts at 06:00.** Anything recorded before then belongs to
   the finished day.
 
 ### What an agent does not decide alone
 
 - Visual language — colour, typography, brand. Those belong to a Claude Design
-  session with Sai, not to code.
+  session with the developer, not to code.
 - The ratios and budgets that shape how the app feels. They are guesses awaiting
-  lived use, and Sai is the only one using the app.
-- Athena's philosophy. The wisdom and practice libraries are Sai's writing.
+  lived use, and the developer is the only one using the app.
+- Athena's philosophy. The wisdom and practice libraries are the developer's
+  writing.
   An agent may build the structure and leave the positions empty.
-- Deploying. Do not publish unless Sai asks. He ships to `main` himself with a
-  fast-forward, because he is the only user until v1.
+- Deploying. Do not publish unless the developer asks. The developer ships to
+  `main` with a fast-forward, because they are the only user until v1.
 
 ## Verification and handoff
 
-- Run the smallest useful checks for the change. Prefer `npm.cmd` on Windows.
-- For chapter changes, run `npm.cmd run chapters:check`.
-- For app behavior, run focused tests, then lint/build in proportion to risk.
-- For visual work, verify mobile first and inspect desktop when layout changes.
-- Report what changed, what was verified, and what remains uncertain.
-- Update the relevant Obsidian note and
-  `C:\Brain\40 Logs\Decision Log.md` when work changes architecture, durable
-  design rules, memory behavior, or project direction.
+Use the workflow's [check selection](docs/DEVELOPMENT_WORKFLOW.md#choosing-checks)
+and session-handoff checklist. Run the smallest useful checks that verify the
+approved change. Preserve the invariants above and report any verification gap.
 

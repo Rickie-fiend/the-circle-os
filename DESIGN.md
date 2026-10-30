@@ -1,11 +1,10 @@
 # Circle Design Guide
 
-This is the short repository guide for The Circle website and Circle OS. The
-canonical durable documents remain:
-
-- `C:\Brain\10 Projects\The Circle\BRAND_SYSTEM.md`
-- `C:\Brain\10 Projects\The Circle\CIRCLE_OS_BRAND_APPLICATION.md`
-- `C:\Brain\10 Projects\The Circle\Circle OS\App Box and Page Standard.md`
+This is the repository design guide for The Circle website and Circle OS.
+Together with `app/os/APP_SESSION_STANDARD.md` and `app/brand-system.ts`, it
+replaces the requirement for unavailable external design notes. No missing
+note's contents have been inferred. Product direction and open design conflicts
+are recorded in `docs/PRODUCT.md` and `docs/DECISION_LOG.md`.
 
 The live human-readable brand guide is `/brand`. The code tokens live in
 `app/brand-system.ts`; Circle OS behavior details live in
@@ -61,9 +60,11 @@ geometry and hierarchy.
 ## Chapter delivery
 
 - A published chapter cover appears directly inside its assigned App Box.
-- Note remains the one deliberate, recallable destination: its idle Page stays
-  visible until the person taps the Note mode label, and that label can recall
-  the newest unfinished or dismissed Note chapter.
+- Note opens on its editable front. Its label flips the same App Box to a
+  Line (a quote, fact, or joke); it does not recall a Chapter. New deliveries
+  that previously belonged to Note use Thoughts. Preserve legacy immutable
+  Note publications, their versions, and saved records as required by the
+  [Page standard](app/os/APP_SESSION_STANDARD.md#state).
 - Thoughts, Habit, Log, Vision, Week Review, and Athena use one-time deliveries
   in this testing release. After completion or dismissal, their ordinary App
   content returns and the chapter is not recalled from the mode label.
@@ -93,15 +94,15 @@ Session
 - The App Box owns radius, clipping, border, shadow, theme, and height change.
 - Pages never add a second outer card.
 - The App Box starts as a compact rounded rectangle and never contracts below
-  the shared default size. Every App Box rests at that one size, so swiping
-  from Note to Thoughts or from Habit to Protocol never resizes the frame. One
-  set of tokens owns the size, the padding, the drop to the first line, the
-  Main-to-Sub gap and the Body-to-Footer gap; an App does not restate them.
-- Main content alone centres in the Body region for one, two and three lines.
-  At four lines its top pins to the three-line position, and every further line
-  grows the Page downward.
+  the shared default minimum. Empty and short Pages rest at that size. Real
+  content may grow the frame downward, including Routine rows and Protocol
+  terms. One set of tokens owns the minimum, padding, drop to the first line,
+  Main-to-Sub gap and Body-to-Footer gap; an App does not restate them.
+- Main content begins at the shared forehead anchor for every line count. It
+  never recentres as text changes; a fourth and every later line grows the Page
+  downward after the ordinary three-line height budget is used.
 - Optional Sub Body content hangs directly beneath Main's last line. It is not
-  part of the centred block and never moves Main.
+  part of Main's height budget and never moves Main.
 - One written line costs one line of App Box, and the gap between the last line
   and the action stays the same as the box grows. On Cover, Note and Thoughts
   the two-to-one weight of Main and Sub is where the eye lands, not a
@@ -109,6 +110,9 @@ Session
 - Real added rows may extend a fluid App Box without colliding with the Footer.
   Habit tasks stay visible in one continuous Sub Body rather than an inner
   scrolling panel.
+- Protocol terms follow the same continuous-page rule. Draft, running and
+  finished Protocol Pages grow to show their real terms instead of hiding them
+  in a nested scrolling region.
 - Repeated habits use that same continuous stack: one quiet divider and one row
   rhythm per habit, with no nested card or doubled spacing.
 - Empty optional regions collapse cleanly and leave no dead gap.
@@ -122,6 +126,17 @@ Session
 Reflect is where a person reads about their life. It has three parts: the life
 you want, the life you are living, and the space between. Athena's voice runs
 through all three rather than sitting beside them.
+
+The wanted life has distinct records: Vision names the life, Character names
+who the person is becoming, Mission names how they intend to live, Typical
+Tuesday shows an ordinary day there, and Six months names a nearer milestone.
+Routine identity is a short daily focus and habit identity belongs to one
+habit. Neither silently replaces the versioned Character. Dreamline remains a
+separate finite plan.
+
+The current Vision surface still shows Vision, Mission statement, and Typical
+Tuesday. Adding Character and Six months to that surface requires a separate
+review of their Pages; the data authority decision does not invent that UI.
 
 Her reading is published as dated editions that accumulate in state. Reflect
 shows only the current four-Page reading; its archive is not another Page in
@@ -167,8 +182,8 @@ is itself the point of the final week Page.
   that empties Main and Sub together.
 - Main and Sub both take unlimited writing.
 - Header shows the app label or app action.
-- Main and optional Sub text use the same centre, three-line pin and shared gap
-  as a Cover Page.
+- Main text uses the same forehead anchor as a Cover Page. Optional Sub text
+  follows Main at the shared gap without moving it.
 - Text can be edited directly with its display typography.
 - No separate edit box and no Save-message step.
 
@@ -176,8 +191,8 @@ is itself the point of the final week Page.
 
 - Uses the Info Page geometry.
 - Inviting editable typography in the body.
-- Its placeholder uses the same size, weight, line-height, and centring rule as
-  Cover and Note Main text.
+- Its placeholder uses the same size, weight, line-height, and forehead anchor
+  as Cover and Note Main text.
 - One full-width black Send action in the Footer.
 
 ### Blog Page
@@ -199,9 +214,14 @@ is itself the point of the final week Page.
 - Required-input feedback uses a brief, clear head shake of the text layer.
 - Respect reduced-motion preferences.
 - The page moves; the App Box does not.
-- An idle App Box turns its own pages after a shared dwell, so a Page nobody
-  swiped to still comes past. It restarts on touch, waits out focus and a part
-  written thought, and never runs in the background.
+- Only the Today Note/Thoughts session turns its pages after the shared
+  `IDLE_PAGE_DWELL_MS` dwell. Two-page facts and jokes on its Line side may
+  also turn; a single-page quote has no next Page to turn to.
+- Routine, Protocol, Log, Vision, Week Review, and Athena stay on the chosen
+  Page. Journeys, Chapters, and pending publications never rotate.
+- The idle dwell restarts on touch or key input, waits out focus and a part
+  written Thought, and never runs in the background. See the
+  [Page standard](app/os/APP_SESSION_STANDARD.md#idle-rotation).
 - Every action runs through the button engine. A feature does not draw its own
   button or its own checkbox.
 - Where an action cannot go through the engine, it is still the same key. See
@@ -255,8 +275,10 @@ rather than a migration.
 - Ask one thing at a time.
 - Prefer one tap, one slide, or one clear text response per Page.
 - Do not repeat the same question in different words.
-- Athena observes evidence, expresses uncertainty, and helps the user notice a
-  gap. Athena does not give life advice.
+- Athena reflects on evidence, expresses uncertainty, asks open questions, and
+  offers feedback and motivation tied to the person's own goals. The person
+  decides how to live. See `docs/PRODUCT.md` for the intended AI role and the
+  distinction between current prepared content and planned server-side AI.
 - Oscar may be playful later, but must not blur truth or consent.
 - Weekly views show real recorded life. AI interpretation belongs in Athena,
   clearly separated from observed data.
@@ -281,9 +303,13 @@ typeface, motion pattern, or interaction.
 
 ## App modes and publications
 
-- The top-left app label is a mode control, not navigation. Note recalls a
-  private chapter; Thoughts changes between Thoughts and Deep Thoughts; Habit
+- The top-left app label is a mode control, not navigation. Note opens its
+  Line back; Thoughts changes between Thoughts and Deep Thoughts; Habit
   cycles Habit, Habit Record, and Habit Tracker.
+- A Line does not dismiss itself on a timer. Swipe backward past its first
+  Page to return to Note. Swiping forward past its last Page reveals reactions;
+  choosing a reaction or swiping forward past the end again returns to Note.
+  Its kind label is text, not a Note return button.
 - A publication version targets exactly one app and one audience. Private work
   stays profile-scoped. Public/global work always requires explicit approval.
 - The visible product tab is **Reflect**. Vision remains the inner white app
