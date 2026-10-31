@@ -16,6 +16,7 @@ import {
 import type { AppTarget, ChapterCompletionMode, ChapterKind, ChapterPage, ChapterPageType, ChapterRun, ChapterTheme } from "../chapters/chapter-types";
 import { publishPublicChapter } from "../circle-os-ai";
 import { loadCircleState, saveCircleState } from "../circle-os-store";
+import { assertAccountScope, getAccountScope } from "../account-scope";
 import {
   CHAPTER_CLASSIFICATIONS,
   CHAPTER_PAGE_TYPES,
@@ -338,11 +339,12 @@ export function ChapterEditor() {
       // in place of the compiled one and finishing it seals that setup. Every
       // other chapter is an ordinary delivery that visits and retires.
       const firstUse = publishedDraft.category === FIRST_USE_CATEGORY;
-      const state = await loadCircleState();
+      const accountScope = getAccountScope();
+      const state = await loadCircleState(accountScope);
       const audienceProfileId = state.ai.profileId || "local";
       if (scope === "public") {
-        await publishPublicChapter(state, chapter, source);
-        await writeChapterPublication({
+        await publishPublicChapter(state, chapter, source, accountScope);
+        await writeChapterPublication(accountScope, {
           visibility: scope,
           source: "admin",
           publishedAt: publishedDraft.updatedAt,
@@ -353,7 +355,7 @@ export function ChapterEditor() {
           firstUse,
         });
       } else {
-        await writeImmutableChapterPublication({
+        await writeImmutableChapterPublication(accountScope, {
           visibility: scope,
           source: "admin",
           publishedAt: publishedDraft.updatedAt,
@@ -368,8 +370,9 @@ export function ChapterEditor() {
       if (state.chapters.runs[runId]) {
         const nextState = structuredClone(state);
         delete nextState.chapters.runs[runId];
-        await saveCircleState(nextState);
+        await saveCircleState(accountScope, nextState);
       }
+      assertAccountScope(accountScope);
       announceChapterPublication();
       await persistDraft(publishedDraft);
       setSaveState(scope === "private" ? "Published on this device" : "Published for connected Circle OS users");
@@ -403,8 +406,9 @@ export function ChapterEditor() {
   async function runChapterAgain(source: ChapterDraft) {
     const id = source.chapter.id;
     if (!window.confirm(`Offer “${source.chapter.title}” again on this device?`)) return;
-    const state = await loadCircleState();
-    await saveCircleState(
+    const accountScope = getAccountScope();
+    const state = await loadCircleState(accountScope);
+    await saveCircleState(accountScope,
       resetChapterRuns(state, id, source.chapter.pages[0]?.id),
     );
     setPublishState(`“${source.chapter.title}” will be offered again. Open the OS to see it.`);

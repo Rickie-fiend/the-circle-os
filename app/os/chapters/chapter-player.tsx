@@ -25,6 +25,7 @@ import {
   renderChapterTemplate,
 } from "./chapter-model.js";
 import { chapterCompletion } from "./chapter-capabilities.js";
+import { dayOneSummary } from "../day-one-model.js";
 import type {
   ChapterAnswerValue,
   ChapterDefinition,
@@ -238,6 +239,7 @@ function ChapterPageView({
   }
 
   const isCompletionPage = COMPLETION_TYPES.has(page.type);
+  const dayOneFinish = isCompletionPage && chapter.id === "day-one" && chapter.version === 3;
   const body = isCompletionPage ? "" : renderedBody;
   const isQuietPage = ["info", "confirm", "result", "idle"].includes(page.type);
   if (isQuietPage) {
@@ -312,6 +314,10 @@ function ChapterPageView({
             ? idleContent
             : onEdit && !isCompletionPage
               ? <EditableCopy className="sub" label={`Edit ${page.type} subtitle`} onChange={(value) => onEdit(page.id, "body", value)} rows={2} value={page.body || ""} />
+              : dayOneFinish
+                ? dayOneSummary(run).map((words, index) => (
+                    <p className="os-chapter-body" key={index}>{words}</p>
+                  ))
               : body
                 ? <p className="os-chapter-body">{body}</p>
                 : null}

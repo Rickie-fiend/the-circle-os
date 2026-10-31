@@ -41,11 +41,8 @@ const findChapter = (node, id) =>
         : Object.values(node).flatMap((item) => findChapter(item, id))
       : [];
 
-// The latest version, not the first: a chapter is immutable, so editing it in
-// the Workshop leaves the old one in the library beside the new one.
-const DAY_ONE = findChapter(library, "day-one").sort(
-  (left, right) => right.version - left.version,
-)[0];
+// Legacy Day One retains its questions and outcomes beside the shorter v3.
+const DAY_ONE = findChapter(library, "day-one").find(chapter => chapter.version === 2);
 const DATE = "2026-09-06";
 const ANSWERS = {
   "character-past": "Working a job I did not choose",
@@ -161,12 +158,11 @@ test("day one leaves an App with something in it", () => {
   );
 });
 
-// It is the front door, so it takes the screen, and it is offered until it has
-// been answered once — whatever version he has since edited in the Workshop.
-test("day one is a splash, asked once", async () => {
+// The sole user may see the new onboarding after completing an older version.
+test("day one is a splash, with version-aware selection", async () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   assert.match(shell, /<ChapterSplash\s+label="Day one"/);
-  assert.match(shell, /chapterEverCompleted\(state\.chapters\.runs, dayOneChapter\.id\)/);
+  assert.match(shell, /selectDayOneChapter\(publishedChapters, state\.chapters\.runs\)/);
   assert.match(shell, /function saveDayOneRun\(nextRun: ChapterRun\)/);
   // It stands in front of everything else, and that order is a list somebody
   // can read rather than something inferred from the render.
@@ -210,6 +206,6 @@ test("day one asks who he is in one word", () => {
   assert.ok(at("identity-focus") < at("character-dimension"));
   assert.ok(at("character-dimension") < at("character-trait"));
 
-  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(shell, /updateRoutineIdentity\(next, idealSelf\)/);
+  const model = readFileSync("app/os/day-one-model.js", "utf8");
+  assert.match(model, /updateRoutineIdentity\(next, idealSelf\)/);
 });

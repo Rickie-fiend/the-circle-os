@@ -4,6 +4,7 @@ import {
   createEmptyState,
   normalizeState,
 } from "./circle-os-model.js";
+import { accountStorageKey, assertAccountScope, scopedTransaction, type AccountScope } from "./account-scope";
 
 const DATABASE_NAME = "circle-os";
 const STORE_NAME = "state";
@@ -27,48 +28,36 @@ function storedRecord(value: unknown): StoredCircleState {
   return { savedAt: "", state: value };
 }
 
-function openDatabase() {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DATABASE_NAME, 1);
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(STORE_NAME)) {
-        request.result.createObjectStore(STORE_NAME);
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
+function indexedState<T>(scope: AccountScope, mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T>) {
+  return scopedTransaction<T>(scope, DATABASE_NAME, STORE_NAME, mode,
+    (database) => { database.createObjectStore(STORE_NAME); },
+    (store, result) => {
+      const request = work(store);
+      request.onsuccess = () => result(request.result);
+    });
 }
 
-async function readIndexedState() {
-  const database = await openDatabase();
-  return new Promise<unknown>((resolve, reject) => {
-    const transaction = database.transaction(STORE_NAME, "readonly");
-    const request = transaction.objectStore(STORE_NAME).get(CIRCLE_OS_STORAGE_KEY);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-    transaction.oncomplete = () => database.close();
-  });
-}
-
-export async function loadCircleState() {
+export async function loadCircleState(scope: AccountScope) {
+  const storageKey = accountStorageKey(scope, CIRCLE_OS_STORAGE_KEY);
   let indexed: StoredCircleState | null = null;
   try {
-    const stored = await readIndexedState();
+    const stored = await indexedState(scope, "readonly", (store) => store.get(CIRCLE_OS_STORAGE_KEY));
     if (stored) indexed = storedRecord(stored);
   } catch {
     // Older browsers can still migrate from the original local copy.
   }
+  assertAccountScope(scope);
 
   let local: StoredCircleState | null = null;
   try {
     const legacy =
-      window.localStorage.getItem(CIRCLE_OS_STORAGE_KEY) ||
-      window.localStorage.getItem(CIRCLE_OS_LEGACY_STORAGE_KEY);
+      window.localStorage.getItem(storageKey) ||
+      (scope.kind === "legacy" ? window.localStorage.getItem(CIRCLE_OS_LEGACY_STORAGE_KEY) : null);
     if (legacy) local = storedRecord(JSON.parse(legacy));
   } catch {
     // IndexedDB may still have a readable copy.
   }
+  assertAccountScope(scope);
 
   const newest =
     local &&
@@ -79,13 +68,14 @@ export async function loadCircleState() {
   return normalizeState(newest?.state ?? createEmptyState());
 }
 
-export function saveCircleState(state: unknown) {
+export function saveCircleState(scope: AccountScope, state: unknown) {
+  const storageKey = accountStorageKey(scope, CIRCLE_OS_STORAGE_KEY);
   const record: StoredCircleState = {
     savedAt: new Date().toISOString(),
-    state,
+    state: structuredClone(state),
   };
   try {
-    window.localStorage.setItem(CIRCLE_OS_STORAGE_KEY, JSON.stringify(record));
+    window.localStorage.setItem(storageKey, JSON.stringify(record));
   } catch {
     // IndexedDB remains the main phone copy when localStorage is unavailable.
   }
@@ -93,16 +83,8 @@ export function saveCircleState(state: unknown) {
   saveQueue = saveQueue
     .catch(() => undefined)
     .then(async () => {
-      const database = await openDatabase();
-      await new Promise<void>((resolve, reject) => {
-        const transaction = database.transaction(STORE_NAME, "readwrite");
-        transaction
-          .objectStore(STORE_NAME)
-          .put(record, CIRCLE_OS_STORAGE_KEY);
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error);
-      });
-      database.close();
+      assertAccountScope(scope);
+      await indexedState(scope, "readwrite", (store) => store.put(record, CIRCLE_OS_STORAGE_KEY));
     });
   return saveQueue;
 }

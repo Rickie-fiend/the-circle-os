@@ -200,21 +200,341 @@ not access rules. Their comments were clarified; runtime behavior, chapter
 versions, budgets, personal records, and review timing were not changed.
 Focused gate tests passed 4/4. No fresh browser verification was performed.
 
+## 2026-10-31 — shorter Day One opens Protocol with setup when needed
+
+The developer confirmed the Protocol dependency for the
+[shorter Day One draft](CHAPTER_SIMPLIFICATION_PLAN.md#day-one-draft-for-review---2026-10-31):
+
+- Completing the shorter Day One opens Protocol, retaining the existing
+  completion-based access rule.
+- If no Protocol exists, offer setup when needed through an intentional
+  empty/on-demand setup path. Do not create terms from broad onboarding answers.
+- Existing users retain their completion-based access and saved Protocols.
+- Week's completion gate, next-Circle-day Week Setup offer, and the 06:00
+  boundary remain unchanged.
+
+Reason: Day One can establish priority and direction without requiring a rule
+or commitment. Protocol remains available, and the person supplies its terms
+when choosing to set it up. This refines the earlier rationale that Day One
+must supply the first Protocol; it preserves the chapter-completion access rule.
+
+Approval covers recording this decision in the plan, decision log, and current
+task only. The exact empty state, setup interaction, new chapter version, and
+outcome handling need a reviewed implementation proposal. No application code
+changed and no runtime verification is claimed by this documentation update.
+
+## 2026-10-31 — invited web beta with accounts and paid Athena
+
+The developer approved saving the [web beta launch plan](WEB_BETA_LAUNCH_PLAN.md)
+and aligning the six owning/continuity records. This approval is documentation
+only; implementation, provisioning, real-data migration, and deployment require
+their reviewed scopes. Existing Day One work is preserved.
+
+Confirmed direction:
+
+- Web app with Home Screen installation for now; no native/store release.
+- 10-20 invited users, mainly in Myanmar and Thailand.
+- Email/password with a separate display alias replaces the username-only
+  preference.
+- Free core and paid Athena; the developer manually confirms payment and grants
+  one/three-month or otherwise specified access, which expires automatically.
+- Configurable user allowances and overall spending controls; amounts are open.
+- AI provider/model selection happens when integration is reached. Neither a
+  Supabase project nor an AI API account currently exists per the developer.
+
+The launch route now includes accounts, safe sync, membership admin, and a
+bounded Athena integration before the invited release. This supersedes the
+2026-10-30 core-first/Athena-after decision and the earlier broad optimization
+gate. It does not complete Phase 1 or permit skipping data-safety and blocking
+journey fixes. Further chapter simplification, compact Log, broad refactors,
+cosmetic work, timers, leaderboards, and native work are paused/deferred.
+
+Recommendations still requiring review: Singapore region; on-demand Reflect
+reading plus one follow-up question; prior readings remaining readable after
+expiry; renewal from the later of expiry/grant time; and live admin content
+publishing after beta. Define privacy, recovery, Athena semantics, exact usage
+budgets, month-end rules, and beta support before dependent implementation.
+The 4-6 week estimate is provisional, not a deadline or verification result.
+
+## 2026-10-31 — Athena replies only when asked
+
+The developer confirmed that Athena should reply only when the person asks,
+and approved recording this decision in the launch plan, product, architecture,
+decision log, current task, and handoff. This approval is documentation only.
+
+- Saving a reflection, including an answer to Athena's question, saves dated
+  personal evidence without triggering an AI reply.
+- Requesting a reply is a separate action subject to the Athena allowance;
+  saving reflections stays free. Exact allowances remain open.
+- Keep saving and reply requests separate, with the reply rule in one place.
+  Later changes can then preserve existing records and immutable readings.
+
+Reason: the person chooses when Athena joins the conversation. This also keeps
+AI use deliberate and leaves the reply behavior easy to change later.
+Initial reading cadence, the proposed Reflect reading/question format, exact
+controls, conversation depth, provider/model, privacy, and budgets still need
+review. Automatic replies and open-ended chat are not approved by this choice.
+No implementation or runtime verification is claimed.
+
+## 2026-10-31 — Requested readings appear when ready
+
+The developer confirmed that a person requests a reading and that the requested
+reading appears automatically when ready. They approved recording this flow in
+the same six documents as the reply rule. Approval is documentation only.
+
+Automatic appearance requires no second request to reveal the result. It does
+not authorize automatic preparation of unrequested readings. Saving an answer
+still triggers no reply; Athena replies only when asked. This clarification
+settles the initial reading trigger left open in the earlier entries above.
+Reflect as the location, one optional question, exact controls, conversation
+depth, limits, and technical delivery details remain open. No implementation or
+runtime verification is claimed.
+
+## 2026-10-31 — Athena readings live in Reflect
+
+The developer confirmed Reflect as the home for Athena readings and explicitly
+approved recording the location in the launch plan, product, architecture,
+decision log, current task, and handoff. Approval is documentation only.
+
+This settles the reading location left open in the earlier entries. The person
+requests a reading; it appears automatically when ready. Saving a reflection
+triggers no reply, and Athena replies only when asked. One optional reflection
+question, exact layout and controls, conversation depth, and limits remain open.
+No implementation or runtime verification is claimed.
+
+## 2026-10-31 — One optional reflection question per reading
+
+The developer confirmed that each Athena reading includes one optional
+reflection question and explicitly approved recording it in the launch plan,
+product, architecture, decision log, current task, and handoff. Approval is
+documentation only.
+
+The person may leave the question unanswered. Answering saves a dated
+reflection without triggering an AI reply; Athena replies only when asked.
+This settles the optional-question proposal left open in earlier entries.
+Readings remain person-requested and appear in Reflect when ready. Exact
+layout, controls, conversation depth, and allowances remain open. No
+implementation or runtime verification is claimed.
+
+## 2026-10-31 — Received readings stay readable after paid expiry
+
+The developer confirmed that previously received Athena readings remain
+readable after paid access expires. They explicitly approved recording this
+rule in the launch plan, product, architecture, decision log, current task,
+and handoff. Approval is documentation only.
+
+Expiry stops new Athena generation, not access to received readings, personal
+records, core tools, or sync. Existing reading editions remain immutable. This
+settles the post-expiry reading-access proposal in earlier entries; it does
+not settle deletion, backup retention, or exact allowance and renewal rules.
+No implementation or runtime verification is claimed.
+
+## 2026-10-31 — Renewals preserve unused paid time
+
+The developer confirmed that renewals add time from the current expiry while
+membership is active, or from the grant time after expiry. They explicitly
+approved recording this starting point in the launch plan, product,
+architecture, decision log, current task, and handoff. Approval is documentation
+only.
+
+Reason: renewing an active membership preserves its unused paid time. This
+settles the proposed later-of-expiry-or-grant-time starting point in earlier
+entries. Calendar-month arithmetic, month-end handling, and storage/display
+timezone rules remain open. No implementation or runtime verification is
+claimed.
+
+## 2026-10-31 — Membership months are fixed 30-day periods
+
+The developer chose always 30 days rather than calendar months and explicitly
+approved recording the rule in the launch plan, product, architecture, decision
+log, current task, and handoff. One membership month grants 30 days; three
+months grant 90 days. Approval is documentation only.
+
+Calendar months and month-end adjustments do not apply. The confirmed renewal
+starting point remains the current expiry while active, or grant time after
+expiry. This resolves the calendar-month and month-end questions in earlier
+entries. Storage/display timezone rules remain open. No implementation or
+runtime verification is claimed.
+
+## 2026-10-31 — Four fixed access durations
+
+The developer specified 30, 90, 180, and 365 days of access and explicitly
+approved recording those four durations in the launch plan, product,
+architecture, decision log, current task, and handoff. Approval is documentation
+only.
+
+Use these explicit day counts rather than calendar-month or calendar-year
+arithmetic. This expands and clarifies the earlier 30/90-day decision: the
+365-day option is not twelve 30-day periods. Month-end adjustments do not
+apply. The renewal starting point remains the current expiry while active,
+or grant time after expiry. Exact expiry-time and storage/display timezone
+rules remain open. No implementation or runtime verification is claimed.
+
+## 2026-10-31 — Membership expiry time and local display
+
+The developer confirmed that access expires at the same time of day after the
+selected duration and is displayed in the person's local timezone. They
+explicitly approved recording this in the launch plan, product, architecture,
+decision log, current task, and handoff. Approval is documentation only.
+
+Apply the duration from the agreed starting point: current expiry while active,
+or grant time after expiry. A new 30-day grant at 3 pm therefore ends 30 days
+later at 3 pm. This resolves the expiry-time and display-timezone choices in
+earlier entries. Timestamp storage and date-calculation details require
+implementation review. No implementation or runtime verification is claimed.
+
+## 2026-10-31 — Password recovery through verified email
+
+The developer confirmed that password recovery uses a reset link sent to the
+account's verified email address. They explicitly approved recording this in
+the launch plan, product, architecture, decision log, current task, and handoff.
+Approval is documentation only.
+
+This settles the forgotten-password route. Lost-email recovery, email
+verification and delivery configuration, reset-link handling, expired sessions,
+and lost-device behavior still require review. No implementation or runtime
+verification is claimed.
+
+## 2026-10-31 — Manual recovery for lost email access
+
+The developer confirmed that manual recovery will be offered when a person
+loses access to the account's email. They explicitly approved recording this
+in the launch plan, product, architecture, decision log, current task, and
+handoff. Approval is documentation only.
+
+Verified-email reset links remain the normal password-recovery route. This
+decision settles availability of a manual alternative; how the person proves
+ownership and the manual process remain open for review before implementation.
+No ownership-proof method or account-transfer procedure is approved by this
+choice. No implementation or runtime verification is claimed.
+
+## 2026-10-31 — Email verification before account use
+
+The developer confirmed that new users must verify their email before using
+their account. They explicitly approved recording this in the launch plan,
+product, architecture, decision log, current task, and handoff. Approval is
+documentation only.
+
+This settles whether verification is required. Verification delivery, link
+handling, and enforcement still need implementation review and testing.
+Verified-email password reset and manual recovery for lost email access remain
+the confirmed recovery routes; manual ownership checks remain open. No
+implementation or runtime verification is claimed.
+
+## 2026-10-31 — Singapore database region confirmed
+
+The developer chose Singapore as the database region and explicitly approved
+recording this in the launch plan, product, architecture, decision log, current
+task, and handoff. Approval is documentation only.
+
+Setup availability and actual connections from Myanmar and Thailand must be
+checked before launch. This resolves the database-region proposal in earlier
+entries. It does not settle AI processing location, other infrastructure
+transfers, logs, or backup retention. No project provisioning, connectivity
+verification, implementation, or deployment is claimed.
+
+## 2026-10-31 — No separate AI opt-in prompt for readings
+
+The developer confirmed that requesting an Athena reading requires no separate
+AI opt-in prompt and explicitly approved recording that choice in the launch
+plan, product, architecture, decision log, current task, and handoff. Approval
+is documentation only.
+
+The person requests the reading directly. How AI processing is explained to
+users remains open, as do allowed evidence, provider processing, and retention.
+This settles the separate prompt choice, not the wider processing contract.
+Authentication, membership, and usage checks remain required. No implementation
+or runtime verification is claimed.
+
+## 2026-10-31 — Allowed reading evidence and excluded details
+
+The developer confirmed that Athena may use relevant notes, reflections, goals,
+habits, and activity records for readings, while keeping login and payment
+details out of the AI context. They explicitly approved recording the boundary
+in the launch plan, product, architecture, decision log, current task, and
+handoff. Approval is documentation only.
+
+Evidence belongs to the requesting person and remains subject to user scoping
+and relevance selection. This settles the allowed-category choice left open in
+earlier entries; exact selection and exclusion checks require implementation
+review and verification. The processing explanation, provider processing, and
+retention remain open. No real evidence was sent to a provider, and no
+implementation or runtime verification is claimed.
+
+## 2026-10-31 — Remaining beta contract choices and clarifications
+
+The developer supplied the remaining choices in a batch, clarified admin
+access and allowance carry-over, and explicitly approved documentation updates
+to the launch plan, product, roadmap, architecture, decision log, current task,
+and handoff. Approval is documentation only. These choices supersede conflicting
+earlier proposals and open statuses; no runtime behavior is claimed implemented.
+
+- Admin has always-available read-only access to personal writing; no separate
+  support-case approval is required. Admin-only error logs may contain personal
+  writing. Read-access audit details and log retention remain open. Manual
+  account deletion is a separate approved admin power, not a writing-edit right.
+- Lost-email recovery is handled manually. Ownership proof and the detailed
+  procedure remain to be designed; no proof method is invented here.
+- The developer explains AI data use manually on the website or social pages
+  and tells users not to enter sensitive information. Exact wording/publication
+  remain pending. The developer accepts processing Athena needs without added
+  provider privacy restrictions at this stage. Actual provider retention,
+  training use, and processing locations must be documented at integration.
+  Login and payment details remain excluded from AI context.
+- Admin manually deletes accounts and their data on request. Deleted data may
+  remain in backups for at most 30 days. Deletion turnaround, retained
+  devices/logs/provider copies, and restore suppression need design and checks.
+- No user download/export is offered in beta. This supersedes the earlier
+  user-export launch requirement; operational backups and recovery remain gates.
+- Athena may use relevant evidence from the person's whole history. Requested
+  replies may use all evidence available to Athena for that person. Readings
+  are short, direct, calm, and advisory. Exact tone/language guidance will be
+  configured later in a skill or similar file; no philosophy is authored here.
+- Follow-up questions have no fixed count limit beyond usage allowance.
+  Readings/replies remain explicitly requested; saving answers triggers no reply.
+- Daily limits reset in Myanmar time (`Asia/Yangon`). Unused daily allowance
+  carries within the person's membership cycle and disappears at its monthly
+  reset; monthly allowance does not carry. The reset follows the person's
+  membership cycle rather than a calendar month. Failed requests consume no
+  user allowance. Exact reset hour, cycle calculation for 30/90/180/365-day
+  grants, expiry/renewal effects, amounts/counting, and retry/no-change rules
+  remain open. Do not infer those details from this choice.
+- Login should last until logout. Local records may remain stored, with
+  account separation and denied signed-out/other-account access preserved.
+  Session renewal, revocation, and lost-device handling need implementation review.
+- The person chooses between conflicting edits. The Circle day's timezone
+  follows the person, preserving the 06:00 boundary. Exact UI/travel handling
+  and preservation of dated evidence need implementation review.
+- The developer monitors the beta. Live chapter publishing stays after beta.
+
+Still open or deferred: total spending budget, prices/payment details, allowance
+amounts/counting and remaining reset rules, migration ownership/recovery,
+supported devices/browsers, beta duration/success criteria, supported languages
+and exact tone guidance, correction behavior, log retention/auditing, deletion
+turnaround/coverage, recovery/rollback procedures, and feedback route.
+Provider/model selection remains deferred until integration. Provider facts and
+published disclosure wording are not verified by accepting processing flexibility.
+No real evidence was sent to a provider; no implementation, provisioning,
+migration, staging, commit, or deployment is authorized by this entry.
+
 ## Preferences and open decisions
 
 | ID | Topic | Status and next decision |
 | --- | --- | --- |
-| O-01 | Login | Developer prefers a unique username and password. Email collection is undecided. Choose a supported authentication and recovery design before implementation. |
-| O-03 | AI operation | Choose provider, scheduled/on-demand cadence, processing consent, retention, correction behavior, and cost budget. |
+| O-01 | Login | Verified email/password, separate alias, reset links, manual lost-email recovery, login until logout, and retained account-separated local records confirmed. Review proof/procedures, verification/delivery, session renewal/revocation/lost devices, and shared-device isolation. |
+| O-03 | AI operation | Requested Reflect readings with one optional question; short/direct/calm/advisory; whole-history relevant evidence, no login/payment details. Requested follow-ups limited only by usage. Myanmar daily resets; carry-over clears at membership-cycle monthly reset; failures consume no allowance. Choose provider, exact tone/languages/controls, amounts/counting/reset details, correction behavior, and budget. |
 | O-04 | Rewards | Streaks and/or leaderboard are intended possibilities. Formula, fairness, abuse handling, visibility, and MVP timing are undecided. |
-| O-05 | Privacy contract | Decide allowed data processing, retention/deletion, backup expiration, region, and operator access. Pseudonymity is not a claim of complete anonymity. |
-| O-06 | Trial and release | Agree tester count, duration, supported devices, and meaningful success criteria. Preserve explicit deployment authorization. |
-| O-07 | Native implementation | iOS and Android are confirmed destinations; framework and implementation schedule follow web learning. |
+| O-05 | Privacy contract | Singapore confirmed pending setup/connections. Always-available read-only admin writing access; admin-only logs may contain writing. Manual account/data deletion; deleted backup data expires within 30 days; no user export/download in beta. Website/social data-use explanation and flexible provider processing accepted; document actual provider facts. Log retention/auditing, deletion details, and published wording remain open. |
+| O-06 | Trial and release | 10-20 invited Myanmar/Thailand users confirmed. Duration, supported devices, and success criteria remain open; deployment needs explicit authorization. |
+| O-07 | Native implementation | Deferred; current scope is the web app with Home Screen installation. No native framework or distribution route selected. |
 
-Recommendations awaiting product decisions: private-by-default evidence,
-optional sharing of score summaries, recovery that does not expose an identity,
+Evidence stays private from other ordinary users; approved admin read-only
+access and admin-only writing-bearing error logs are defined above.
+Recommendations awaiting product decisions: optional sharing of score summaries,
+recovery that does not expose an identity,
 and no ranking based on an AI judgment of a person. These are not a settled
-scoring system or an approved login implementation.
+scoring system or an approved login implementation. Paid Athena membership is
+separate from the unconfirmed older Circle membership experiences below.
 
 ## Existing design conflicts to reconcile
 

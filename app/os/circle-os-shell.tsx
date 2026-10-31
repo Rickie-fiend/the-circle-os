@@ -20,7 +20,6 @@ import {
 import {
   CIRCLE_DAY_START_HOUR,
   addHabitDefinition,
-  composeHabitText,
   currentCharacter,
   declareLife,
   addTask,
@@ -43,7 +42,6 @@ import {
   beginProtocolRun,
   CHARACTER_DIMENSIONS,
   discardProtocolDraft,
-  setHabitDimension,
   setProtocolGoal,
   setProtocolSlipLine,
   canBeginProtocolRun,
@@ -84,7 +82,6 @@ import {
   toggleHabitForDay,
   updateHabitDefinition,
   updateHabitDefinitionDraft,
-  updateHabitDefinitionParts,
   updateRoutineIdentity,
   updateDreamlineSetup,
   updateDreamlineStep,
@@ -98,6 +95,14 @@ import {
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
+import {
+  assertAccountScope,
+  getAccountScope,
+  getServerAccountScope,
+  isAccountScopeCurrent,
+  subscribeAccountScope,
+  type AccountScope,
+} from "./account-scope";
 import {
   IDLE_PAGE_DWELL_MS,
   InfoPage,
@@ -175,6 +180,7 @@ function weekStepEditorId(taskId: string) {
 }
 import { ChapterPlayer } from "./chapters/chapter-player";
 import { applyHabitBuildingCompletion } from "./habit-building-model.js";
+import { selectDayOneChapter, dayOneKeptBefore, saveDayOneProgress } from "./day-one-model.js";
 import {
   ProtocolKeptPage,
   ProtocolPage,
@@ -201,6 +207,7 @@ import {
 } from "./chapters/chapter-model.js";
 import {
   getPublishedChapter,
+  publishedChapters,
 } from "./chapters/registry";
 import {
   normalizeChapterPublication,
@@ -216,6 +223,7 @@ import {
   selectScheduledChapter,
 } from "./chapters/chapter-scheduler.js";
 import { useChapterPublications } from "./chapters/use-chapter-publications";
+import { BUILT_IN_PUBLISHED_AT } from "./chapters/chapter-supply";
 import type {
   ChapterPublication,
   ChapterDefinition,
@@ -592,7 +600,7 @@ export function PublishedChapterDelivery({
   onCompleted?: (state: CircleState, run: ChapterRun) => CircleState;
   runId?: string;
 }) {
-  const { state, updateState } = useCircleState();
+  const { state, updateState, dateKey } = useCircleState();
   const chapter = publication.chapter;
   const activeRunId = runId || chapterRunId(chapter);
   const createActiveRun = () => ({
@@ -609,6 +617,9 @@ export function PublishedChapterDelivery({
       onCompletedReturn?.();
     }
     updateState((current) => {
+      if (chapter.id === "day-one") {
+        return saveDayOneProgress(current, chapter, nextRun, dateKey);
+      }
       const previous = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(current, nextRun, chapter.session);
       if (nextRun.status === "completed" && previous?.status !== "completed") {
@@ -1210,6 +1221,14 @@ function applySyncResult(
 }
 
 export function CircleStateProvider({ children }: { children: ReactNode }) {
+  const scope = useSyncExternalStore(subscribeAccountScope, getAccountScope, getServerAccountScope);
+  // Remount the whole app subtree, including forms and route transitions.
+  // Signed-out sessions never mount an evidence reader or legacy provider.
+  if (scope.kind === "signed-out") return null;
+  return <ScopedCircleStateProvider key={scope.epoch} scope={scope}>{children}</ScopedCircleStateProvider>;
+}
+
+function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; scope: AccountScope }) {
   const dateKey = getDateKey();
   const [state, setState] = useState<CircleState>(() =>
     ensureDay(createEmptyState(), dateKey),
@@ -1227,11 +1246,11 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    void loadCircleState().then(async (stored) => {
+    void loadCircleState(scope).then(async (stored) => {
       let next = ensureDay(normalizeState(stored), getDateKey());
-      if (next.ai.baseUrl) {
+      if (scope.kind === "legacy" && next.ai.baseUrl) {
         try {
-          const remote = await readCircleState(next);
+          const remote = await readCircleState(next, scope);
           if (remote?.state) {
             next = ensureDay(mergeServerState(next, remote.state), getDateKey());
             lastServerSignature.current = serverSignature(
@@ -1239,9 +1258,11 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
             );
           }
           await writeSyncedChapterPublications(
+            scope,
             remote?.chapterPublications || [],
           );
         } catch {
+          if (!isAccountScopeCurrent(scope)) return;
           next = {
             ...next,
             ai: {
@@ -1252,23 +1273,29 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
           };
         }
       }
-      if (!active) return;
+      if (!active || !isAccountScopeCurrent(scope)) return;
       stateRef.current = next;
       setState(next);
       setReady(true);
+    }).catch(() => {
+      // A closed scope must never become ready or fall back to legacy data.
+      if (active && isAccountScopeCurrent(scope)) console.error("Circle local state could not be opened.");
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     if (!ready) return;
-    void saveCircleState(state);
-  }, [ready, state]);
+    if (!isAccountScopeCurrent(scope)) return;
+    void saveCircleState(scope, state).catch(() => {
+      if (isAccountScopeCurrent(scope)) console.error("Circle local state could not be saved.");
+    });
+  }, [ready, state, scope]);
 
   useEffect(() => {
-    if (!ready || !state.ai.baseUrl) return;
+    if (!ready || scope.kind !== "legacy" || !state.ai.baseUrl) return;
     if (!state.profile.name || !state.profile.age) return;
     const urgent = state.outbox.length > 0;
     const needsFirstProfile = !state.ai.profileId || !state.ai.token;
@@ -1284,10 +1311,12 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
       syncing.current = true;
       const sentState = stateRef.current;
       const sentSignature = serverSignature(sentState);
-      void syncCircleState(sentState)
+      void syncCircleState(sentState, scope)
         .then(async (result) => {
-          await writeSyncedChapterPublications(result.chapterPublications);
+          await writeSyncedChapterPublications(scope, result.chapterPublications);
+          if (!isAccountScopeCurrent(scope)) return;
           setState((current) => {
+            if (!isAccountScopeCurrent(scope)) return current;
             if (serverSignature(current) !== sentSignature) {
               syncPending.current = true;
             }
@@ -1298,6 +1327,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
           });
         })
         .catch((error) => {
+          if (!isAccountScopeCurrent(scope)) return;
           setState((current) => ({
             ...current,
             ai: {
@@ -1311,6 +1341,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
           }));
         })
         .finally(() => {
+          if (!isAccountScopeCurrent(scope)) return;
           syncing.current = false;
           if (syncPending.current) {
             syncPending.current = false;
@@ -1319,7 +1350,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
         });
     }, urgent || needsFirstProfile ? 350 : 15_000);
     return () => window.clearTimeout(timer);
-  }, [ready, state, syncTick]);
+  }, [ready, state, syncTick, scope]);
 
   useEffect(() => {
     if (!ready) return;
@@ -1337,7 +1368,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
   }, [ready]);
 
   useEffect(() => {
-    if (!ready || !state.ai.baseUrl) return;
+    if (!ready || scope.kind !== "legacy" || !state.ai.baseUrl) return;
     const timer = window.setInterval(() => {
       const current = stateRef.current;
       if (
@@ -1347,11 +1378,13 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
         return;
       }
       syncing.current = true;
-      void readCircleState(current)
+      void readCircleState(current, scope)
         .then(async (remote) => {
           if (!remote?.state) return;
-          await writeSyncedChapterPublications(remote.chapterPublications);
+          await writeSyncedChapterPublications(scope, remote.chapterPublications);
+          if (!isAccountScopeCurrent(scope)) return;
           setState((latest) => {
+            if (!isAccountScopeCurrent(scope)) return latest;
             if (serverSignature(latest) !== lastServerSignature.current) {
               syncPending.current = true;
               return latest;
@@ -1368,6 +1401,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
           });
         })
         .catch(() => {
+          if (!isAccountScopeCurrent(scope)) return;
           setState((latest) => ({
             ...latest,
             ai: {
@@ -1378,6 +1412,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
           }));
         })
         .finally(() => {
+          if (!isAccountScopeCurrent(scope)) return;
           syncing.current = false;
           if (syncPending.current) {
             syncPending.current = false;
@@ -1386,7 +1421,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
         });
     }, 30_000);
     return () => window.clearInterval(timer);
-  }, [ready, state.ai.baseUrl]);
+  }, [ready, state.ai.baseUrl, scope]);
 
   const today = state.days[dateKey] ?? ensureDay(state, dateKey).days[dateKey];
 
@@ -1394,7 +1429,9 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     transform: (day: CircleDay) => CircleDay,
     reason?: string,
   ) {
+    if (!isAccountScopeCurrent(scope)) return;
     setState((current) => {
+      if (!isAccountScopeCurrent(scope)) return current;
       const currentWithDay = ensureDay(current, dateKey);
       const next = {
         ...currentWithDay,
@@ -1417,7 +1454,9 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     transform: (day: CircleDay) => CircleDay,
     reason?: string,
   ) {
+    if (!isAccountScopeCurrent(scope)) return;
     setState((current) => {
+      if (!isAccountScopeCurrent(scope)) return current;
       const currentWithDay = ensureDay(current, key);
       const next = {
         ...currentWithDay,
@@ -1434,7 +1473,9 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     transform: (profile: CircleState["profile"]) => CircleState["profile"],
     reason?: string,
   ) {
+    if (!isAccountScopeCurrent(scope)) return;
     setState((current) => {
+      if (!isAccountScopeCurrent(scope)) return current;
       const next = {
         ...current,
         profile: transform(current.profile),
@@ -1444,24 +1485,27 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
   }
 
   function updateState(transform: (state: CircleState) => CircleState) {
-    setState(transform);
+    if (!isAccountScopeCurrent(scope)) return;
+    setState((current) => isAccountScopeCurrent(scope) ? transform(current) : current);
   }
 
   async function connectAi(baseUrl: string, token: string) {
     const connected = connectLocalAi(stateRef.current, baseUrl, token);
-    const result = await syncCircleState(connected);
-    await writeSyncedChapterPublications(result.chapterPublications);
+    const result = await syncCircleState(connected, scope);
+    await writeSyncedChapterPublications(scope, result.chapterPublications);
+    assertAccountScope(scope);
     const next = applySyncResult(connected, result);
     lastServerSignature.current = serverSignature(next);
     stateRef.current = next;
     setState(next);
-    await saveCircleState(next);
+    await saveCircleState(scope, next);
   }
 
   async function recoverProfile(profileId: string) {
     const current = stateRef.current;
-    const result = await recoverCircleProfile(current.ai.baseUrl, profileId);
-    await writeSyncedChapterPublications(result.chapterPublications);
+    const result = await recoverCircleProfile(current.ai.baseUrl, profileId, scope);
+    await writeSyncedChapterPublications(scope, result.chapterPublications);
+    assertAccountScope(scope);
     const restored = ensureDay(normalizeState(result.state), getDateKey());
     const next = {
       ...restored,
@@ -1478,7 +1522,7 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
     lastServerSignature.current = serverSignature(next);
     stateRef.current = next;
     setState(next);
-    await saveCircleState(next);
+    await saveCircleState(scope, next);
   }
 
   const value = {
@@ -2055,12 +2099,18 @@ export function TodayExperience() {
     publicationProfileId,
     state.chapters.runs,
   );
-  const habitPublication = selectPendingAppPublication(
+  const pendingHabitPublication = selectPendingAppPublication(
     publications,
     "habit",
     publicationProfileId,
     state.chapters.runs,
   );
+  // The bundled Habit lesson stays optional after shorter onboarding. Authored
+  // deliveries and explicit first-use publications retain their existing paths.
+  const habitPublication = state.chapters.runs["day-one@3"]?.status === "completed" &&
+    pendingHabitPublication?.chapter.id === "habit-building" &&
+    pendingHabitPublication.publishedAt === BUILT_IN_PUBLISHED_AT
+      ? null : pendingHabitPublication;
   const logPublication = selectPendingAppPublication(
     publications,
     "log",
@@ -2198,6 +2248,10 @@ export function TodayExperience() {
   function savePinnedChapterRun(nextRun: ChapterRun) {
     if (nextRun.status === "completed") releasePinnedDoor();
     if (!pinnedChapter) return;
+    if (pinnedChapter.id === "day-one") {
+      saveDayOneRun(nextRun);
+      return;
+    }
     updateState((current) =>
       storeChapterRun(current, nextRun, pinnedChapter.session),
     );
@@ -2235,11 +2289,14 @@ export function TodayExperience() {
     );
   }
 
-  // Day one: the front door. It is offered until it has been answered once,
-  // whatever version of it he has since edited in the Workshop.
-  const dayOneChapter = getPublishedChapter("day-one");
+  // New Day One versions may be offered to the current sole user. Keep a
+  // started older journey on its own pages, and return to the app on completion.
+  const [finishedDayOneVersion, setFinishedDayOneVersion] = useState<number>();
+  const dayOneChapter = finishedDayOneVersion
+    ? getPublishedChapter("day-one", finishedDayOneVersion)
+    : selectDayOneChapter(publishedChapters, state.chapters.runs);
   const dayOneDone =
-    !dayOneChapter || chapterEverCompleted(state.chapters.runs, dayOneChapter.id);
+    !dayOneChapter || state.chapters.runs[chapterRunId(dayOneChapter)]?.status === "completed";
   const dayOneRun = useMemo(() => {
     if (!dayOneChapter) return null;
     return (
@@ -2255,9 +2312,6 @@ export function TodayExperience() {
    * behind him — one day lived is the whole argument for committing to seven.
    */
   const weekSetupChapter = getPublishedChapter("week-setup");
-  const dayOneRunStored = dayOneChapter
-    ? state.chapters.runs[chapterRunId(dayOneChapter)]
-    : null;
   /**
    * Which Apps have opened.
    *
@@ -2267,11 +2321,7 @@ export function TodayExperience() {
   const protocolIsOpen = appIsOpen("protocol", state.chapters.runs);
   const weekIsOpen = appIsOpen("week", state.chapters.runs);
 
-  const dayOneKeptADay = Boolean(
-    dayOneDone &&
-      dayOneRunStored?.completedAt &&
-      getDateKey(new Date(dayOneRunStored.completedAt)) < dateKey,
-  );
+  const dayOneKeptADay = dayOneKeptBefore(state.chapters.runs, dateKey);
   const weekSetupDone =
     !weekSetupChapter ||
     chapterEverCompleted(state.chapters.runs, weekSetupChapter.id);
@@ -2457,7 +2507,12 @@ export function TodayExperience() {
       ),
     };
   }, [habitBuildingChapter]);
-  const activeHabitRun = habitBuildingRun;
+  // Short Day One opens the usable Routine/Protocol surface without claiming
+  // that Habit Building was answered. Its real run remains available in Quests.
+  const activeHabitRun = habitBuildingRun &&
+    state.chapters.runs["day-one@3"]?.status === "completed"
+      ? { ...habitBuildingRun, status: "completed" as const }
+      : habitBuildingRun;
   const habits = Object.values(state.habits.definitions)
     .filter((habit) => habit.status === "active")
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
@@ -2657,9 +2712,12 @@ export function TodayExperience() {
   const logSetupSplashRun = logSetupPublication
     ? state.chapters.runs[chapterRunId(logSetupPublication.chapter)]
     : logSetupRun;
-  const doorOffers = {
+  const dayOneDelivered = [thoughtsPublication, habitPublication, logPublication,
+    habitSetupPublication, logSetupPublication].some(publication => publication?.chapter.id === "day-one");
+  // Completing Day One returns to the app for this visit, without chaining setup.
+  const doorOffers = finishedDayOneVersion ? {} : {
     "day-one": {
-      offered: Boolean(!dayOneDone && dayOneChapter && dayOneRun),
+      offered: Boolean(!dayOneDone && !dayOneDelivered && dayOneChapter && dayOneRun),
       dismissedKey: dismissedDay(dayOneRun),
     },
     "week-setup": {
@@ -3331,6 +3389,9 @@ export function TodayExperience() {
     const completedNow =
       nextRun.status === "completed" && profileSparkRun?.status !== "completed";
     if (completedNow) {
+      if (profileSparkChapter.id === "day-one") {
+        setFinishedDayOneVersion(profileSparkChapter.version);
+      }
       setCheckInApp(checkInThoughtsApp);
       setCheckInIdleEntering(true);
       if (checkInIdleTimer.current) window.clearTimeout(checkInIdleTimer.current);
@@ -3340,6 +3401,9 @@ export function TodayExperience() {
       }, 420);
     }
     updateState((current) => {
+      if (profileSparkChapter.id === "day-one") {
+        return saveDayOneProgress(current, profileSparkChapter, nextRun, dateKey);
+      }
       const previousRun = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(
         current,
@@ -3450,92 +3514,18 @@ export function TodayExperience() {
   }
 
   /**
-   * Day one, turned into an App with something in it.
-   *
-   * Every line answered becomes a record he can see and edit afterwards: a
-   * character with one trait, the habit that trait is made small enough to do,
-   * a phase of one day holding the thing he will not do, and today's one goal
-   * with the two-minute move that starts it. Sai: "after the set-up we will
-   * understand, why we do it, what we can expect, what is needed to do."
-   *
-   * Nothing here is a copy. The habit is a habit, the step is a Routine task,
-   * the goal is the week's goal — the same records every other App writes, so
-   * the App he opens afterwards is his, not a demonstration of itself.
+   * Keep Day One answers on their original run and version. The shared model
+   * applies the older versions' outcomes; v3 saves reflection without creating
+   * commitments or identity. Finishing returns to the app for this visit.
    */
   function saveDayOneRun(nextRun: ChapterRun) {
-    if (nextRun.status === "completed") releasePinnedDoor();
-    if (!dayOneChapter) return;
-    updateState((current) => {
-      const previousRun = current.chapters.runs[nextRun.runId];
-      let next = storeChapterRun(current, nextRun, dayOneChapter.session);
-      if (nextRun.status !== "completed" || previousRun?.status === "completed") {
-        return next;
-      }
-
-      // The one word the whole App points back at. It is the Routine App's own
-      // name, so what he is building is written above the things he does.
-      const idealSelf = chapterAnswerText(nextRun, "identity-focus");
-      if (idealSelf) next = updateRoutineIdentity(next, idealSelf);
-
-      // Who he is becoming: one part of a life, one quality in it.
-      const dimension = chapterAnswerText(nextRun, "character-dimension");
-      const trait = chapterAnswerText(nextRun, "character-trait");
-      next = declareLife(next, "character", {
-        [dimension]: trait,
-        past: chapterAnswerText(nextRun, "character-past"),
-        starting: dimension,
-      });
-
-      // The trait, made small enough to do today. The trait is the identity:
-      // the habit is what being that person looks like on a Tuesday.
-      const action = chapterAnswerText(nextRun, "habit-action");
-      const cue = chapterAnswerText(nextRun, "habit-time-place");
-      if (action) {
-        const added = addHabitDefinition(next);
-        next = updateHabitDefinitionParts(added.state, added.id, {
-          action,
-          cue,
-          identity: trait,
-          text: composeHabitText({ action, cue, identity: trait }),
-        });
-        next = setHabitDimension(next, added.id, dimension);
-        if (trait) {
-          next = { ...next, profile: { ...next.profile, identityFocus: trait } };
-        }
-      }
-
-      // One thing he will not do, kept for one day. A phase of one is still a
-      // phase: it is the shape the seven-day commitment arrives in tomorrow.
-      const term = chapterAnswerText(nextRun, "day-one-term");
-      if (term) {
-        const draft = startProtocolDraft(next);
-        next = setProtocolDays(draft.state, draft.id, 1);
-        const item = addProtocolItem(next, draft.id, "non-negotiable");
-        next = updateProtocolItem(item.state, draft.id, item.id, term);
-        next = beginProtocolRun(next, draft.id, dateKey);
-      }
-
-      // Today's one thing, and the two minutes that start it. The goal is the
-      // week's, because a day's goal was the thing that never had a parent.
-      const goalText = chapterAnswerText(nextRun, "day-one-goal");
-      const stepText = chapterAnswerText(nextRun, "day-one-step");
-      if (goalText) {
-        const opened = addWeekGoal(next, weekStartKey(dateKey), `goal-day-one-${dateKey}`);
-        next = updateGoal(opened.state, opened.id, goalText);
-        if (stepText) {
-          const step = addGoalStep(
-            next,
-            opened.id,
-            addTask,
-            `step-day-one-${dateKey}`,
-            undefined,
-            dateKey,
-          );
-          next = updateTask(step.state, step.taskId, stepText);
-        }
-      }
-      return next;
-    });
+    const chapter = getPublishedChapter(nextRun.chapterId, nextRun.chapterVersion);
+    if (!chapter || chapter.id !== "day-one") return;
+    if (nextRun.status === "completed") {
+      setFinishedDayOneVersion(chapter.version);
+      releasePinnedDoor();
+    }
+    updateState((current) => saveDayOneProgress(current, chapter, nextRun, dateKey));
   }
 
   /**
@@ -4278,7 +4268,12 @@ export function TodayExperience() {
               backApp={checkInThoughtsCard()}
               className="os-checkin-session"
               label="Thoughts chapter"
-              onCompletedReturn={returnToThoughtsAfterChapter}
+              onCompletedReturn={() => {
+                if (thoughtsPublication.chapter.id === "day-one") {
+                  setFinishedDayOneVersion(thoughtsPublication.chapter.version);
+                }
+                returnToThoughtsAfterChapter();
+              }}
               onDismissed={returnToThoughtsAfterChapter}
               publication={thoughtsPublication}
             />

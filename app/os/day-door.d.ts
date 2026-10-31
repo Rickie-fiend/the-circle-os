@@ -1,4 +1,5 @@
 import type { ChapterDefinition, ChapterRun } from "./chapters/chapter-types";
+import type { AccountScope } from "./account-scope";
 
 export type DayDoorKind =
   | "day-one"
@@ -28,12 +29,12 @@ export function dayOpenRunId(
 
 export function dayWasOpened(run: ChapterRun | null | undefined): boolean;
 
-export function readPinnedDoor(): string | null;
+export function readPinnedDoor(scope?: AccountScope): string | null;
 
 export function pinnedChapterId(pin: string | null): string | null;
 
-export function writePinnedChapter(chapterId: string): void;
+export function writePinnedChapter(chapterId: string, scope?: AccountScope): void;
 
-export function writePinnedDoor(kind: DayDoorKind): void;
+export function writePinnedDoor(kind: DayDoorKind, scope?: AccountScope): void;
 
-export function clearPinnedDoor(): void;
+export function clearPinnedDoor(scope?: AccountScope): void;

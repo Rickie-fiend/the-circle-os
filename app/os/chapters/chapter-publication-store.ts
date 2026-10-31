@@ -1,4 +1,5 @@
 import { chapterRunId } from "./chapter-model.js";
+import { assertAccountScope, scopedTransaction, type AccountScope } from "../account-scope";
 import type {
   AppTarget,
   ChapterDefinition,
@@ -24,31 +25,17 @@ export type StoredChapterPublication = {
 const DATABASE = "circle-os-chapter-publications";
 const STORE = "chapters";
 
-function openDatabase() {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DATABASE, 1);
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(STORE)) {
-        request.result.createObjectStore(STORE, { keyPath: "key" });
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
 async function run<T>(
+  scope: AccountScope,
   mode: IDBTransactionMode,
   work: (store: IDBObjectStore) => IDBRequest<T>,
 ) {
-  const database = await openDatabase();
-  return new Promise<T>((resolve, reject) => {
-    const transaction = database.transaction(STORE, mode);
-    const request = work(transaction.objectStore(STORE));
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-    transaction.oncomplete = () => database.close();
-  });
+  return scopedTransaction<T>(scope, DATABASE, STORE, mode,
+    (database) => { database.createObjectStore(STORE, { keyPath: "key" }); },
+    (store, result) => {
+      const request = work(store);
+      request.onsuccess = () => result(request.result);
+    });
 }
 
 export function chapterPublicationKey(
@@ -60,17 +47,18 @@ export function chapterPublicationKey(
   return `${visibility}:${targetApp}:${audienceProfileId}:${chapter.id}:v${chapter.version}`;
 }
 
-export async function readChapterPublications() {
-  return run<StoredChapterPublication[]>("readonly", (store) => store.getAll());
+export async function readChapterPublications(scope: AccountScope) {
+  return run<StoredChapterPublication[]>(scope, "readonly", (store) => store.getAll());
 }
 
 export function writeChapterPublication(
+  scope: AccountScope,
   publication: Omit<StoredChapterPublication, "key">,
 ) {
   const visibility = publication.visibility || publication.scope || "private";
   const targetApp = publication.targetApp || "note";
   const audienceProfileId = publication.audienceProfileId || "local";
-  return run<IDBValidKey>("readwrite", (store) =>
+  return run<IDBValidKey>(scope, "readwrite", (store) =>
     store.put({
       ...publication,
       visibility,
@@ -82,26 +70,24 @@ export function writeChapterPublication(
 }
 
 export async function writeImmutableChapterPublication(
+  scope: AccountScope,
   publication: Omit<StoredChapterPublication, "key">,
 ) {
   const visibility = publication.visibility || publication.scope || "private";
   const targetApp = publication.targetApp || "note";
   const audienceProfileId = publication.audienceProfileId || "local";
   const key = chapterPublicationKey(publication.chapter, visibility, targetApp, audienceProfileId);
-  const database = await openDatabase();
-  return new Promise<IDBValidKey>((resolve, reject) => {
-    const transaction = database.transaction(STORE, "readwrite");
-    const store = transaction.objectStore(STORE);
+  return scopedTransaction<IDBValidKey>(scope, DATABASE, STORE, "readwrite",
+    (database) => { database.createObjectStore(STORE, { keyPath: "key" }); },
+    (store, result, fail) => {
     const request = store.get(key);
-    request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const existing = request.result as StoredChapterPublication | undefined;
       if (
         existing &&
         JSON.stringify(existing.chapter) !== JSON.stringify(publication.chapter)
       ) {
-        transaction.abort();
-        reject(new Error("That chapter version already exists. Create a new version."));
+        fail(new Error("That chapter version already exists. Create a new version."));
         return;
       }
       const put = store.put({
@@ -111,22 +97,21 @@ export async function writeImmutableChapterPublication(
         audienceProfileId,
         key,
       });
-      put.onsuccess = () => resolve(put.result);
-      put.onerror = () => reject(put.error);
+      put.onsuccess = () => result(put.result);
     };
-    transaction.oncomplete = () => database.close();
-    transaction.onabort = () => database.close();
   });
 }
 
 export async function writeSyncedChapterPublications(
+  scope: AccountScope,
   publications: ChapterPublication[],
 ) {
   await Promise.all(
     publications.map((publication) =>
-      writeImmutableChapterPublication(publication),
+      writeImmutableChapterPublication(scope, publication),
     ),
   );
+  assertAccountScope(scope);
   if (publications.length) announceChapterPublication();
 }
 

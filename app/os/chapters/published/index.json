@@ -905,6 +905,60 @@
     },
     {
       "schemaVersion": 1,
+      "id": "day-one",
+      "version": 3,
+      "status": "published",
+      "session": "day-one",
+      "app": "seven-days",
+      "kind": "lesson",
+      "completion": "swipe",
+      "theme": "dark",
+      "title": "Start with what matters.",
+      "purpose": "Name what matters now and a direction to explore, without creating a commitment.",
+      "estimatedMinutes": 2,
+      "pages": [
+        {
+          "id": "cover",
+          "type": "cover",
+          "title": "Start with what matters.",
+          "body": "A few words are enough. You can explore more later.",
+          "button": "Begin"
+        },
+        {
+          "id": "priority",
+          "type": "short-text",
+          "question": "What matters most to you right now?",
+          "answerKey": "day-one-priority",
+          "placeholder": "I am not sure yet",
+          "required": true
+        },
+        {
+          "id": "direction",
+          "type": "short-text",
+          "question": "What would you like to be different?",
+          "answerKey": "day-one-direction",
+          "placeholder": "I am still thinking",
+          "required": true
+        },
+        {
+          "id": "optional-action",
+          "type": "short-text",
+          "question": "What is one small thing you would like to try?",
+          "body": "This is optional. Leave it empty to skip. Saving these words does not add a task or habit.",
+          "answerKey": "day-one-optional-action",
+          "required": false,
+          "button": "Continue"
+        },
+        {
+          "id": "complete",
+          "type": "result",
+          "title": "Your words.",
+          "button": "Open the app"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "day-open",
       "version": 1,
       "status": "published",

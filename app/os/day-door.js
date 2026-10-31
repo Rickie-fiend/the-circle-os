@@ -1,3 +1,5 @@
+import { accountStorageKey, getAccountScope } from "./account-scope.js";
+
 /**
  * What stands in the door when the App is opened.
  *
@@ -118,10 +120,10 @@ const PINNED_DOOR_KEY = "circle-os-pinned-door";
  */
 const CHAPTER_PIN = "chapter:";
 
-export function readPinnedDoor() {
+export function readPinnedDoor(scope = getAccountScope()) {
   if (typeof window === "undefined") return null;
   try {
-    const pin = window.localStorage.getItem(PINNED_DOOR_KEY);
+    const pin = window.localStorage.getItem(accountStorageKey(scope, PINNED_DOOR_KEY));
     if (DAY_DOOR_ORDER.includes(pin)) return pin;
     return typeof pin === "string" && pin.startsWith(CHAPTER_PIN) ? pin : null;
   } catch {
@@ -135,30 +137,30 @@ export function pinnedChapterId(pin) {
   return pin.slice(CHAPTER_PIN.length) || null;
 }
 
-export function writePinnedDoor(kind) {
+export function writePinnedDoor(kind, scope = getAccountScope()) {
   if (typeof window === "undefined" || !DAY_DOOR_ORDER.includes(kind)) return;
   try {
-    window.localStorage.setItem(PINNED_DOOR_KEY, kind);
+    window.localStorage.setItem(accountStorageKey(scope, PINNED_DOOR_KEY), kind);
   } catch {
     // A builder's convenience, not something to fail an App over.
   }
 }
 
 /** Put one chapter in the door, by name. */
-export function writePinnedChapter(chapterId) {
+export function writePinnedChapter(chapterId, scope = getAccountScope()) {
   const id = typeof chapterId === "string" ? chapterId.trim() : "";
   if (typeof window === "undefined" || !id) return;
   try {
-    window.localStorage.setItem(PINNED_DOOR_KEY, `${CHAPTER_PIN}${id}`);
+    window.localStorage.setItem(accountStorageKey(scope, PINNED_DOOR_KEY), `${CHAPTER_PIN}${id}`);
   } catch {
     // As above.
   }
 }
 
-export function clearPinnedDoor() {
+export function clearPinnedDoor(scope = getAccountScope()) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.removeItem(PINNED_DOOR_KEY);
+    window.localStorage.removeItem(accountStorageKey(scope, PINNED_DOOR_KEY));
   } catch {
     // As above.
   }

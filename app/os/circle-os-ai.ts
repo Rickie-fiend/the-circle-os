@@ -1,8 +1,20 @@
 import type { CircleState } from "./circle-os-shell";
+import { assertAccountScope, type AccountScope } from "./account-scope";
 import type {
   ChapterDefinition,
   ChapterPublication,
 } from "./chapters/chapter-types";
+
+async function legacyFetch(scope: AccountScope, url: string, options: RequestInit) {
+  assertAccountScope(scope);
+  if (scope.kind !== "legacy") throw new Error("Account sync is not connected yet.");
+  const response = await fetch(url, {
+    ...options,
+    signal: options.signal ? AbortSignal.any([scope.signal, options.signal]) : scope.signal,
+  });
+  assertAccountScope(scope);
+  return response;
+}
 
 function baseUrl(state: CircleState) {
   const value = state.ai.baseUrl.trim().replace(/\/+$/, "");
@@ -29,9 +41,10 @@ export function buildServerPayload(state: CircleState) {
   };
 }
 
-export async function readCircleState(state: CircleState) {
+export async function readCircleState(state: CircleState, scope: AccountScope) {
+  assertAccountScope(scope);
   if (!state.ai.profileId || !state.ai.token) return null;
-  const response = await fetch(
+  const response = await legacyFetch(scope,
     `${baseUrl(state)}/profiles/${encodeURIComponent(state.ai.profileId)}`,
     {
       headers: profileHeaders(state),
@@ -39,6 +52,7 @@ export async function readCircleState(state: CircleState) {
     },
   );
   const data = await response.json().catch(() => ({}));
+  assertAccountScope(scope);
   if (!response.ok) {
     throw new Error(
       typeof data.error === "string" ? data.error : "Your profile is offline.",
@@ -50,16 +64,16 @@ export async function readCircleState(state: CircleState) {
       baseUrl: state.ai.baseUrl,
       profileId: state.ai.profileId,
       token: state.ai.token,
-    }),
+    }, scope),
   };
 }
 
-export async function syncCircleState(state: CircleState) {
+export async function syncCircleState(state: CircleState, scope: AccountScope) {
   const creating = !state.ai.profileId || !state.ai.token;
   const url = creating
     ? `${baseUrl(state)}/profiles`
     : `${baseUrl(state)}/profiles/${encodeURIComponent(state.ai.profileId)}/sync`;
-  const response = await fetch(url, {
+  const response = await legacyFetch(scope, url, {
     method: "POST",
     headers: creating
       ? { "Content-Type": "application/json" }
@@ -68,6 +82,7 @@ export async function syncCircleState(state: CircleState) {
     signal: AbortSignal.timeout(15_000),
   });
   const data = await response.json().catch(() => ({}));
+  assertAccountScope(scope);
   if (!response.ok) {
     throw new Error(
       typeof data.error === "string" ? data.error : "Your profile is offline.",
@@ -83,7 +98,7 @@ export async function syncCircleState(state: CircleState) {
       baseUrl: state.ai.baseUrl,
       profileId,
       token: accessKey,
-    }),
+    }, scope),
     acknowledgedEvidenceRevision: Number(
       data.acknowledgedEvidenceRevision || 0,
     ),
@@ -97,11 +112,12 @@ async function readProfileChapterPublications(connection: {
   baseUrl: string;
   profileId: string;
   token: string;
-}) {
+}, scope: AccountScope) {
+  assertAccountScope(scope);
   if (!connection.profileId || !connection.token) return [];
   const cleanUrl = connection.baseUrl.trim().replace(/\/+$/, "");
   if (!cleanUrl) return [];
-  const response = await fetch(
+  const response = await legacyFetch(scope,
     `${cleanUrl}/profiles/${encodeURIComponent(connection.profileId)}/chapters`,
     {
       headers: {
@@ -112,6 +128,7 @@ async function readProfileChapterPublications(connection: {
     },
   );
   const data = await response.json().catch(() => ({}));
+  assertAccountScope(scope);
   if (!response.ok) {
     throw new Error(
       typeof data.error === "string"
@@ -127,16 +144,18 @@ async function readProfileChapterPublications(connection: {
 export async function recoverCircleProfile(
   address: string,
   profileId: string,
+  scope: AccountScope,
 ) {
   const cleanUrl = address.trim().replace(/\/+$/, "");
   if (!cleanUrl) throw new Error("The Circle server is not connected.");
-  const response = await fetch(`${cleanUrl}/profiles/recover`, {
+  const response = await legacyFetch(scope, `${cleanUrl}/profiles/recover`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ profileId: profileId.trim() }),
     signal: AbortSignal.timeout(15_000),
   });
   const data = await response.json().catch(() => ({}));
+  assertAccountScope(scope);
   if (!response.ok) {
     throw new Error(
       typeof data.error === "string"
@@ -152,7 +171,7 @@ export async function recoverCircleProfile(
       baseUrl: cleanUrl,
       profileId: data.profileId as string,
       token: data.accessKey as string,
-    }),
+    }, scope),
   };
 }
 
@@ -170,11 +189,12 @@ type CircleAiConnection = Pick<
   "baseUrl" | "profileId" | "token"
 >;
 
-export async function readPublicChapters(connection: CircleAiConnection) {
+export async function readPublicChapters(connection: CircleAiConnection, scope: AccountScope) {
+  assertAccountScope(scope);
   if (!connection.profileId || !connection.token) return [];
   const cleanUrl = connection.baseUrl.trim().replace(/\/+$/, "");
   if (!cleanUrl) return [];
-  const response = await fetch(`${cleanUrl}/chapters/public`, {
+  const response = await legacyFetch(scope, `${cleanUrl}/chapters/public`, {
     headers: {
       Authorization: `Bearer ${connection.token}`,
       "Content-Type": "application/json",
@@ -182,6 +202,7 @@ export async function readPublicChapters(connection: CircleAiConnection) {
     signal: AbortSignal.timeout(10_000),
   });
   const data = await response.json().catch(() => ({}));
+  assertAccountScope(scope);
   if (!response.ok) {
     throw new Error(
       typeof data.error === "string" ? data.error : "Public chapters are offline.",
@@ -196,17 +217,19 @@ export async function publishPublicChapter(
   state: CircleState,
   chapter: ChapterDefinition,
   source: string,
+  scope: AccountScope,
 ) {
   if (!state.ai.profileId || !state.ai.token) {
     throw new Error("Connect Circle OS before publishing for everyone.");
   }
-  const response = await fetch(`${baseUrl(state)}/chapters/publish`, {
+  const response = await legacyFetch(scope, `${baseUrl(state)}/chapters/publish`, {
     method: "POST",
     headers: profileHeaders(state),
     body: JSON.stringify({ chapter, source }),
     signal: AbortSignal.timeout(15_000),
   });
   const data = await response.json().catch(() => ({}));
+  assertAccountScope(scope);
   if (!response.ok) {
     throw new Error(
       typeof data.error === "string" ? data.error : "The chapter was not published.",

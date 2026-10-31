@@ -1,19 +1,23 @@
 # Circle OS roadmap
 
-Updated: 2026-10-30.
+Updated: 2026-10-31.
 
 Destination: an Athena-powered iOS and Android app with Supabase as its backend.
 Delivery goal for this project: a web MVP for friends and family to test before
 the native app. [Product direction](PRODUCT.md) records the agreed intent.
 
-Current phase: **Phase 1 — stabilize existing behavior**. Planning documents
-have been aligned, but the implementation baseline and current feature audit
-remain to be completed. Existing browser checks are evidence for their recorded
-paths only. No phase is complete merely because its code exists.
+Current priority: **prepare the invited web beta with accounts and paid
+Athena**, following [the launch plan](WEB_BETA_LAUNCH_PLAN.md). The developer
+approved recording this new sequence on 2026-10-31. Phase 1 is not certified;
+its evidence and unresolved gaps remain. Critical data-safety and blocked launch
+journeys must be fixed. Broad optimization and further chapter simplification
+are deferred, not declared complete.
 
-The developer's required order is: fix and verify current features, optimize
-and verify again, then add features. The later sequence below is a proposed
-delivery plan; its open product decisions are not silently resolved by a date.
+The active order is launch contract, accounts/local isolation, private records
+and sync, membership admin, Athena, beta verification, then authorized release.
+The development cycle still applies to each change. The numbered phases below
+retain the earlier work breakdown; their original strict sequencing is
+superseded where it conflicts with this approved beta route.
 
 ## Phase 0 — establish the product and working rules
 
@@ -26,11 +30,12 @@ Recorded in this documentation update:
 - Repository documents replace unavailable external product authorities.
 - The development cycle is [documented](DEVELOPMENT_WORKFLOW.md).
 
-Confirmed test scope: friends and family test the stabilized core first; new
-personalized Athena follows afterward. Existing prepared readings remain in
-the current feature audit. Still open: login and recovery, initial tester
-scope, and whether gamification belongs in a later MVP iteration. See
-[decisions](DECISION_LOG.md).
+Current test scope: 10-20 invited users mainly in Myanmar and Thailand, with
+email/password, a separate alias, Home Screen installation, and paid Athena.
+The launch contract now defines recovery routes, admin access, deletion/backup
+limits, no user export, and Athena's requested reading/follow-up behavior.
+Implementation details and the remaining choices in the launch plan stay open.
+Gamification is deferred. See [decisions](DECISION_LOG.md).
 
 ## Phase 1 — stabilize existing behavior
 
@@ -67,7 +72,9 @@ Exit criteria:
 
 ## Phase 2 — optimize the existing system and verify again
 
-Depends on: Phase 1's baseline and coverage of the paths being changed.
+Depends on: a measured problem and coverage of the paths being changed.
+Broad Phase 2 work is deferred; launch-critical optimization may be proposed
+with evidence without treating this entire phase as a beta prerequisite.
 
 Work:
 
@@ -91,52 +98,64 @@ Exit criteria:
 
 ## Phase 3 — add the private Supabase foundation
 
-Depends on: stabilization and optimization gates; agreed login/recovery and
-data-processing design. This phase implements new infrastructure after the
-current-feature work.
+Depends on: an agreed login/recovery and data-processing design, reviewed
+implementation slices, and preservation of existing data. Accounts and safe
+sync now precede the beta without requiring every broad Phase 2 refactor.
 
 Work:
 
-- Select authentication that satisfies the approved identity and recovery
-  requirements. Email collection remains an open decision.
+- Implement email/password with a separate alias, email verification before
+  account use, verified-email reset links, and manually handled lost-email
+  recovery. Ownership checks and operational procedures need review.
+- Keep login persistent until logout, with account-separated retained local
+  records. Review session renewal, revocation, and lost-device behavior.
 - Define a versioned database schema and user ownership. Separate private
   lifestyle evidence from authentication and optional public summaries.
 - Implement authorization policies and tests for both allowed access and
   denied cross-user access, including server and background-job paths.
 - Migrate existing local/profile-server records with backup, validation, and
   a recovery plan. Retain local saves and an acknowledged sync outbox.
-- Add session handling, account recovery, export, deletion, operational backups,
-  restore checks, and a clear explanation of data destinations.
-- Resolve timestamps, the 06:00 Circle day, timezone changes, conflicts,
-  duplicate requests, and edits that clear values.
+- Implement protected always-available read-only admin access to writing and
+  admin-only error logs, which may contain personal writing. Audit/log retention
+  details require review.
+- Add manual admin account/data deletion on request, operational backups with
+  deleted data retained for at most 30 days, and verified restore. No user
+  download/export is offered in beta; this supersedes the earlier export gate.
+- The developer explains data use on the website or social pages and warns
+  against sensitive input. Publish actual provider processing facts when chosen.
+- Resolve timestamp details, person-chosen conflicting edits, duplicate requests,
+  and clearing edits. The Circle day starts at 06:00 and follows the person's
+  timezone; exact travel handling still needs review.
 
 Exit criteria:
 
 - Two synthetic users cannot read or change each other's private records.
 - Restore, device/session loss, offline changes, retry, and corrections are
   verified without duplicate profiles or silently restored old values.
+- Manual deletion, 30-day backup expiration, admin read-only access/admin-only
+  logs, persistent sessions and retained-local isolation pass their checks.
 - Migration preserves representative histories and can be recovered.
 - Supabase is configured and tested; a schema document alone is insufficient.
 
 ## Phase 4 — deliver and evaluate the core web MVP
 
-Depends on: stabilization, verified optimizations, the privacy/recovery checks
-required for the selected test environment, and explicit release authorization.
-New personalized Athena integration is not a gate. Supabase remains the target;
-an earlier bounded core trial need not wait for that migration if the developer
-agrees its data environment and limits.
+Depends on: launch-critical fixes, Supabase accounts/sync, manual membership
+controls, the reviewed personalized Athena slice, privacy/recovery checks,
+real-device verification, and explicit release authorization. This supersedes
+the earlier proposal for a core trial before Supabase and new Athena.
 
 Work:
 
 - Agree tester count, test duration, supported browsers, and what useful
   reflection and motivation look like to a tester.
 - Use a clear invitation, setup, privacy explanation, recovery path, and
-  feedback channel. Keep private evidence out of bug-report collection.
+  feedback channel. The developer monitors the beta. Error logs are admin-only
+  and may contain personal writing; retention and the feedback route need review.
 - Verify the chosen production runtime, update behavior, offline/reload paths,
   and existing installation support on real phones.
 - Observe first-day and later-week use; fix and reverify reported problems.
-- Evaluate current prepared readings without introducing a new AI provider or
-  claiming new personalized inference is present.
+- Evaluate existing prepared readings and the reviewed new Athena integration
+  separately; do not claim live inference before implementation and verification.
 - Assess whether the product helps people reflect and act on their own goals,
   rather than counting app visits as proof of value.
 
@@ -148,16 +167,28 @@ Exit criteria:
 - The final handoff records remaining defects, accepted limits, architecture,
   operating requirements, and the evidence informing mobile development.
 
-## Phase 5 — add personalized Athena after the core test
+## Phase 5 — personalized Athena workstream (now included in beta)
 
-Depends on: feedback from the stabilized-core trial, authorized user-scoped
-evidence, and approved AI processing choices. This is a follow-up to the first
-web MVP test.
+Depends on: authorized user-scoped evidence, server-enforced membership and
+usage controls, and approved AI processing choices. A bounded first experience
+now ships in the invited beta. Broader Athena development follows beta feedback.
 
 Work:
 
-- Use core-test feedback to choose the first reflection and follow-up question
-  experience, then choose provider, retention, cost budget, and cadence.
+- Implement person-requested readings that appear in Reflect when ready with
+  one optional reflection question. Saving an answer triggers no reply; replies
+  require a separate request. Follow-ups have no fixed count limit beyond usage.
+- Use relevant evidence across the person's whole history for readings and
+  requested replies, excluding login/payment details. Readings are short, direct,
+  calm, and advisory; exact tone/language guidance will be configured later.
+- No separate AI opt-in prompt is required. The developer accepts processing
+  Athena needs without additional provider privacy restrictions at this stage;
+  actual provider terms/locations and published data-use wording need review.
+- Choose provider/model at integration. Exact allowances/counting, reset hour,
+  monthly-cycle calculation, spending budget, prices/payment details, and
+  retry/no-change rules remain open. Daily resets use Myanmar time; unused daily
+  allowance carries within the person's membership cycle and clears at its
+  monthly reset. Monthly allowance does not carry; failed requests consume none.
 - Give Athena evidence through a constrained server service. The model receives
   selected records; it does not receive database administrator credentials.
 - Deliver reflections, open questions, feedback, and motivation tied to the
@@ -175,8 +206,10 @@ Exit criteria:
   questions without invented evidence or cross-user leakage.
 - A person can correct a wrong inference and understand how data is processed.
 - The core app stays usable if AI is unavailable; recorded evidence stays safe.
-- Repeat the friends-and-family test with Athena to evaluate its value, tone,
-  latency, and cost against the experience of using the core alone.
+- Membership-cycle allowance resets/carry-over, failed-request release, and
+  concurrent quota reservations are verified. No budget amounts are assumed.
+- Evaluate Athena's value, tone, latency, and cost in the invited beta, including
+  whether the core remains useful and usable when generation is unavailable.
 
 ## Gamification decision track
 
@@ -205,6 +238,9 @@ during the current stabilization phase.
 
 ## Immediate next action
 
-Establish the current implementation baseline, then close the saved-state
-Habit recovery and Reflect-evidence verification gaps. Continue through
-`bugs.md` one issue at a time using the documented development cycle.
+Review the open launch-contract decisions, then prepare a bounded accounts and
+account-separated local storage proposal with exact files and synthetic-user
+checks. Saved-state Habit recovery and fixture-based Reflect checks already
+passed within their recorded scope; broader Phase 1 gaps remain. Follow
+[the launch plan](WEB_BETA_LAUNCH_PLAN.md), keeping bugs visible and obtaining
+approval before implementation, provisioning, migration, or deployment.

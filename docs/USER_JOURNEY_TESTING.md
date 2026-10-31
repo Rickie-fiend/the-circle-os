@@ -1,5 +1,112 @@
 # Circle OS user-journey test record
 
+## Account-separated storage - 2026-10-31
+
+### Scope and setup
+
+The developer approved the storage boundary, pending-work guards, direct admin
+callers, synthetic tests, and continuity records. Supabase auth, provisioning,
+real-data migration, membership, and deployment are excluded. The legacy app
+continues using its existing records. Account mode is a foundation for a later
+verified-auth adapter; the local marker alone is not proof of identity.
+
+New tests: [account-scope.test.mjs](../tests/account-scope.test.mjs) and
+[account-storage.browser.mjs](../tests/account-storage.browser.mjs). The latter
+starts a test-only Vite page at `http://127.0.0.1:3220` that imports the real
+React provider, store, publication hook, pin helper, and sync client. No test
+route or account-switch control was added to production. Chromium uses isolated
+contexts, Bangkok time, synthetic accounts A/B and legacy data, and real
+IndexedDB. External requests are blocked. Basic switching/reload/publication
+cases run at 390x844 and 360x844; the remaining race/failure cases run at 390x844.
+No owner browser, private writing, profile server, or AI provider was used.
+
+### Final storage checks
+
+- `node --test tests/account-scope.test.mjs tests/day-one.test.mjs tests/day-one-simplification.test.mjs tests/phases.test.mjs tests/chapter-engine.test.mjs tests/day-door.test.mjs tests/protocol-home.test.mjs tests/first-use-setup.test.mjs tests/habit-identity.test.mjs tests/chapter-capabilities.test.mjs tests/chapter-splash.test.mjs`: **91/91 passed** (six new scope cases and 85 existing cases).
+- `node --test --test-reporter=tap tests/account-storage.browser.mjs`: **11/11 passed** on final application code, without page errors.
+- `node node_modules/next/dist/bin/next build`: passed on final code, including TypeScript and static generation.
+- `node node_modules/vinext/dist/cli.js build`: passed on final code; existing static route-classification limitations remain.
+- `node node_modules/typescript/bin/tsc --noEmit --incremental false -p tsconfig.vercel.json`: passed. This is the Vercel configuration, not a fresh result for the previously failing standalone configuration.
+- `node node_modules/eslint/bin/eslint.js app/os/account-scope.js app/os/account-scope.d.ts app/os/circle-os-store.ts app/os/circle-os-ai.ts app/os/chapters/chapter-publication-store.ts app/os/chapters/use-chapter-publications.ts app/os/day-door.js app/os/day-door.d.ts app/os/admin/chapter-editor.tsx tests/account-scope.test.mjs tests/account-storage.browser.mjs`: passed. Shell ESLint JSON diagnostics retain the pre-edit six memoization errors, two purity errors, one immutability error, and one unused-import warning.
+- A read-only Node check verified all 25 local links/fragments in the three updated continuity records. `git diff --check` passed with the existing LF/CRLF warnings.
+
+Account A starts without legacy records, private chapters, or pins. After saving
+A, switching to B shows neither A's saved evidence nor unsaved form text. B saves
+and reloads separately. Logout removes the evidence subtree in both open tabs;
+signed-out store reads fail. Signing back into A restores only A. Legacy
+localStorage bytes captured immediately before switching remain identical.
+Account entry does not claim an old profile.
+
+Queued reads, saves, and chapter writes reject after their captured scope
+closes. A live IndexedDB transaction aborts without overwriting its previous
+durable value; another-tab logout also aborts a live transaction. Old provider
+callbacks are inert. An intentionally delayed legacy fetch is aborted/rejected,
+including when a mock ignores cancellation; a delayed startup cannot repopulate
+the newly mounted account. Account-mode sync makes no legacy server request.
+Writes accepted into localStorage before switching stay in that account's copy.
+
+Newer localStorage wins within an account; corrupt/missing local JSON falls
+back to that account's IndexedDB. It does not read legacy v1 or another account.
+Offline edits and an empty save survive a reload after connectivity returns.
+Conflicting edits to an existing private chapter version reject and retain the
+original content. No server-merge, real acknowledgement, or migration result is
+implied by these local checks.
+
+### Broader production regression checks and unresolved failures
+
+The final Next build ran at `http://127.0.0.1:3218` with `TZ=Asia/Bangkok`.
+With the same timezone, the command
+`node --test --test-reporter=tap tests/day-one.browser.mjs tests/core-recovery.browser.mjs`
+passed **20/21**. All nine Day One cases passed, including offline completion,
+reload, Protocol, old versions, Quest/publication delivery, and Week Setup.
+Core recovery passed 11/12. The 360px authored Reflect case retained the
+placeholder `synthetic-walk-block` instead of the test's newly installed block
+reference after its direct fixture replacement. No real evidence was involved.
+
+An isolated rerun using
+`node --test --test-reporter=tap --test-name-pattern='Reflect evidence and authored reading at 360px' tests/core-recovery.browser.mjs`
+failed at the first swipe: saved `vision-between.index` stayed undefined rather
+than becoming 1. A subsequent core-only run with
+`node --test --test-reporter=tap tests/core-recovery.browser.mjs`
+passed **9/12**: derived/authored at 390px and authored at 360px timed out at that
+swipe. These are failed checks, not a passing regression certification.
+
+For comparison, a disposable source copy preserved the working tree's existing
+Day One and chapter bundle. The seven previously unchanged storage/client/
+publication/pin/admin files were restored from HEAD `5bc8ccb`; the shell's
+original provider block was restored from HEAD and its scope import removed.
+The comparison had no remaining imports of the scope helper. A Next Webpack
+production build passed, and the same isolated 360px authored-reading command
+failed with the same first-swipe timeout. This establishes that swipe failure
+also occurs before the storage change; it does not establish the cause of the
+initial fixture-reference mismatch. Fixture/autosave timing and cover readiness
+are possible explanations, not confirmed fixes. Reflect's broader verification
+remains open. No production gesture, reading model, or existing test was changed
+to make this check pass.
+
+The temporary in-repository comparison was removed after verification, its
+dependency junction removed without touching the real dependencies, and both
+local Next servers stopped. Preliminary cross-drive Turbopack and Webpack
+comparison builds failed on dependency-junction resolution; the successful
+comparison used a same-drive copy and `next build --webpack`. Early Vite harness
+attempts also needed a JSX-free virtual entry and a test-only `process.env`
+definition for Next imports. Final harness and production checks use their
+reported configurations. Verification ran on Node 24.22.1; older Node versions,
+physical phones, other browsers, and production Supabase auth/sync remain untested.
+
+### Invariants and next action
+
+No geometry, typography, gap, budget, chapter content, edition content, merge,
+acknowledgement, or 06:00 day rule changed. Focused tests retain the existing
+clearing/stale-merge and day-boundary coverage; no new geometry measurements or
+live-sync proof is claimed. The new runtime helper uses JavaScript and a matching
+declaration so existing JavaScript callers need no TypeScript runtime loader.
+The storage routing is not encryption or server authorization. Future auth must
+verify ownership before mounting personal content and must handle recovery and
+revocation. Next: review that auth implementation scope; separately resolve the
+Reflect fixture/swipe verification gap before release. No extra performance
+optimization was justified. Existing Phase 1 and broader verification gaps stay open.
+
 Updated: 2026-10-30
 
 ## Goal
@@ -330,3 +437,77 @@ real source selection, server acknowledgements/merges, offline retry, other
 browsers, physical phones, and geometry remain outside this verification.
 Existing TypeScript/build and broader-suite limitations were not rerun.
 No bug beyond this bounded coverage is newly declared fixed.
+
+## Shorter Day One - 2026-10-31
+
+### Scope and setup
+
+The developer approved Day One v3 implementation, its tests, continuity records,
+and the finish summary in the shared player. Their correction allows the sole
+user to see v3 after completing an older version. Existing access and records
+remain preserved. Tests used synthetic isolated profiles, never owner data.
+
+Final browser setup: `TZ=Asia/Bangkok`, Next production server at
+`http://127.0.0.1:3218`, Chromium at 390x844 and 360x844, mobile emulation and touch
+capability. The test intercepts and blocks every request outside that origin.
+Fresh isolated browser contexts include isolated IndexedDB publication storage.
+Four main-flow cases also enter and finish while the browser is offline, then
+restore local-server connectivity before reloading.
+
+### Commands and results
+
+- Baseline: `node --test tests/phases.test.mjs tests/chapter-engine.test.mjs tests/day-door.test.mjs tests/protocol-home.test.mjs` passed 42/42 before implementation.
+- Final: `node --test tests/day-one.test.mjs tests/day-one-simplification.test.mjs tests/phases.test.mjs tests/chapter-engine.test.mjs tests/day-door.test.mjs tests/protocol-home.test.mjs tests/first-use-setup.test.mjs tests/habit-identity.test.mjs tests/chapter-capabilities.test.mjs tests/chapter-splash.test.mjs` passed 85/85.
+- With Bangkok time set, `node --test --test-reporter=tap tests/day-one.browser.mjs` passed 9/9 against the final production build.
+- `node scripts/chapter-compiler.mjs --check` passed: 33 sources, zero external Quest sources; baseline was 32 sources. The bundled Quest registry was left unchanged.
+- `node node_modules/next/dist/bin/next build` and `node node_modules/vinext/dist/cli.js build` passed on the final application code.
+- `node node_modules/eslint/bin/eslint.js app/os/day-one-model.js app/os/chapters/chapter-player.tsx tests/day-one.test.mjs tests/day-one-simplification.test.mjs tests/day-one.browser.mjs` passed. Shell ESLint was compared with HEAD using JSON reports: both have six memoization errors, two purity errors, one immutability error, and one unused-import warning. No new lint finding remains.
+- `node node_modules/typescript/bin/tsc --noEmit` still fails with TS2307 for `cloudflare:workers` in `db/index.ts`. This matches the recorded baseline gap; the Next production build's own TypeScript phase passed.
+- A comparison against HEAD confirmed every one of the 35 pre-existing bundled chapter versions retained identical content. Only `day-one@3` was added. Source `Day One.md` was preserved; the new external file is `D:/CircleOS/Chapters/Published Soruces/Day One v3.md`.
+
+### Observed outcomes
+
+At both widths, two uncertain answers and either a skipped or supplied optional
+action reached the finish Page. The Page displayed only the supplied words.
+Reload during the journey resumed the next question with earlier answers intact.
+Offline progress remained in the local outbox. Completion returned to the app
+without another automatic exercise and created no declarations, identities,
+Habits, goals, tasks, or Protocols. Habit Building was not stored as completed.
+
+Routine's idle view made Protocol reachable. Its existing Start a phase action
+created one draft only when chosen; the draft and Day One answers survived reload.
+An older completed profile could see the new automatic cover. Quest entry saved
+the same new answers while retaining the older run. A partially answered v2
+resumed its original info Page and answers across reloads. A synthetic Day One
+publication delivered through Thoughts completed without a duplicate setup sheet
+or automatic greeting, using the shared outcome handler.
+
+Week Setup was offered after a synthetic v3 completion on the prior Circle day.
+Without any old Day One Character, habit, or commitment records, the full Week
+Setup journey completed and saved one goal, linked task, and Protocol, with no
+Habit invented. Reload retained completion. Focused tests separately checked
+legacy outcome idempotence, new completion preserving existing records, dated
+answer clearing through a stale merge, and the 05:59/06:00 Week-offer boundary
+for old and new Day One versions. No final browser page errors occurred.
+
+### Attempts, limits, and next action
+
+Early browser selectors assumed the cover's authored Begin label and a Routine
+region role. They were corrected to the actual accessible Begin name and named
+session element. The first publication fixture marked an empty Habit run complete
+and triggered normal recovery; it now defers that unrelated setup instead.
+Publication integration exposed a second route through the Thoughts scheduler;
+both it and direct delivery now use the same Day One handler and completion return.
+Finishing no longer opens a second automatic greeting in that case.
+
+A reload aborted during a development-server refresh while source edits/builds
+were ongoing. That run was stopped; the final full run used the stable production
+server and passed. A synthetic mobile summary screenshot was visually inspected.
+No geometry tokens, typography, gaps, or chapter budgets changed, so no new
+Note/Thoughts/Habit/Protocol geometry measurement is claimed. No additional
+performance optimization was justified beyond sharing the inconsistent outcomes.
+
+These results do not certify real server acknowledgements, offline recovery to
+that server, personal Athena preparation, physical phones, other browsers, the
+broad suite, or full lint. Earlier Phase 1 gaps remain open. Next is developer
+use and wording review; no other chapter revision or deployment is included.
