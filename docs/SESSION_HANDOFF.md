@@ -1,5 +1,105 @@
 # Session handoff
 
+## 2026-10-31 - Today's Note safe sync plan
+
+**Session close and delivery approval.** The developer requested stopping here,
+following `.handoff-prmopt.md`, and pushing all pending repository work, with
+one-time approval for necessary Git commands. The prompt delegates to the shared
+workflow, which this snapshot follows. Commit scope is the Note plan, four
+modified documentation files (including prior hosted-setup evidence), and
+`.vscode/settings.json` (`git.ignoreLimitWarning` only). Ignored local environment
+configuration stays excluded. Delivery targets the existing upstream
+`fork/paing-branch`; no merge to `main` or deployment is requested. The final
+response will report the actual commit and push result rather than predict it.
+
+**Approval and Git context.** The developer approved creating
+[NOTE_SYNC_PLAN.md](NOTE_SYNC_PLAN.md) and updating architecture, current task,
+and this handoff after reviewing the Today Note scope and verification plan.
+Approval is documentation only. Branch `paing-branch`, HEAD `7051357`; no commit,
+staging, push, remote configuration, personal-data migration, or deployment.
+The four pre-existing modified documentation paths and untracked `.vscode/`
+remain preserved, including the unchanged journey record. Earlier snapshots
+below retain their unique evidence.
+
+**Completed.** Saved a bounded plan for offline Note storage and Supabase sync.
+It proposes atomically saved local operations, server version checks, exact
+operation receipts/acknowledgements, safe retries, protected current/revision
+records, and person-chosen conflicts. Clearing stores an explicit empty revision;
+a stale device cannot silently restore old text. The plan covers same-account
+tabs, account/session changes, failed local writes, new-device recovery, and
+separate migration/operational-backup gates. It preserves `checkin-note` and the
+current editable Note rather than inventing a daily archive. Other writing,
+legacy migration, membership, Athena, and deployment stay separate.
+
+**Evidence and limits.** Source inspection found the existing scoped browser
+store and legacy-only remote transport. The legacy queue groups by reason and
+survey-answer merge uses device timestamps; neither is claimed to implement
+the proposed protocol. Login exists and the developer reported a successful
+basic offline local-persistence journey, but there is no verified Supabase Note
+sync or cloud backup. Reviewed the four documents for scope/source consistency,
+checked 39 local links/fragments successfully and ran `git diff --check`
+successfully with existing LF/CRLF warnings. No runtime tests, lint/build, browser tests,
+database inspection, or restore checks were run for this documentation slice.
+Official Supabase RLS, function, and backup references support planning only;
+project-specific backup coverage was not inspected.
+
+**Invariants and uncertainty.** No runtime invariant changed or geometry
+measurement was required. The plan preserves local-first acknowledgement,
+clearing, account isolation, the 06:00 Circle day, and person-chosen conflicts.
+Exact SQL/file scope, revision/receipt retention, conflict/status interaction,
+travel handling, restore/deletion procedures, and migration ownership remain
+subject to review. The approved 30-day deleted-backup limit remains a release
+requirement, not an implemented guarantee. Hosted auth refresh/revocation,
+physical-phone/other-browser coverage, prior Reflect issues, and wider release
+gaps remain open; sign-in UI work stays deferred.
+
+**Next action.** Prepare the first concrete SQL/local-contract and synthetic
+access/conflict-test proposal with exact files, then obtain developer approval
+before editing implementation. No additional implementation is authorized by
+the saved plan. Architecture and current task point to the detailed plan; no
+decision-log or roadmap change was needed for these proposed mechanisms.
+
+---
+
+## 2026-10-31 - Hosted Supabase connection
+
+**Developer follow-up.** After guided Gmail SMTP/template setup, the developer
+reported that signing into Circle OS works. This is developer-reported success,
+not an agent-observed full journey. Exact applied SMTP/template settings were
+not inspected. The developer deferred further sign-in UI/UX changes and later
+reported that password reset and logout also work. Basic offline return also
+passed in developer testing: an existing note survived offline reload, edits made
+offline remained after reconnection, and another online reload retained them.
+This is local persistence evidence, not cloud sync/backup verification. Other
+hosted checks, including refresh/revocation and cross-device cases, remain open. This
+updates the initial setup status below without superseding its test evidence.
+
+**Scope and changes.** Developer approved project/login setup, local configuration,
+synthetic verification and evidence. They created the project and provided public
+connection details. On `paing-branch`, HEAD `7051357`, updated ignored `.env.local`
+from `test` to `supabase` with the project URL and publishable key. Restart/reload
+is required. Preserved untracked `.vscode/`. No application source, remote settings,
+personal records, staging, commits, migration or deployment changed.
+
+**Checks.** Read-only hosted Auth requests accepted the key: email enabled,
+confirmation required, public signup enabled. Public JWKS returned ES256. Initial
+sandboxed network requests failed; the approved retry succeeded. Focused auth tests
+passed 10/10; see the journey record. No new browser/build result is claimed.
+Browser automation stopped because it could not verify Opera's URL.
+
+**Follow-up.** The developer changed hosted settings. A read-only Auth settings
+recheck confirmed public signup disabled, email login enabled and email
+confirmation required. The sandboxed attempt failed; the approved retry succeeded.
+No remote settings were changed by the agent.
+
+**Next and limits.** Configure SMTP, app origin/redirects
+and invite/reset templates, then verify synthetic invitation, password setup,
+login, recovery, logout and offline return. Hosted journeys remain unverified.
+Migration, sync, membership, Athena and release remain separate scopes. Existing
+runtime gaps remain; no geometry or persistence invariant changed.
+
+---
+
 ## 2026-10-31 - Development onboarding test mode
 
 **Approval and context.** The developer approved a development-only test mode

@@ -1,5 +1,49 @@
 # Circle OS user-journey test record
 
+## Hosted Supabase connection - 2026-10-31
+
+Developer follow-up: after guided Gmail SMTP/template setup, the developer
+reported successful sign-in to Circle OS. This is user-reported evidence only;
+the agent did not observe the complete journey or inspect final SMTP/templates.
+The developer subsequently reported that password reset and logout also work;
+these are user-reported results, not agent-observed journeys. Sign-in UI/UX
+changes are deferred.
+
+Basic offline return passed in developer testing at the local app address:
+Wi-Fi was turned off and the page reloaded; an existing note remained. The
+developer edited while offline, reconnected, and confirmed the notes remained.
+A further online reload retained those edits. This is user-reported evidence of
+local persistence across reload and reconnection. Device/browser details and
+network traces were not supplied, and the agent did not observe the journey.
+It does not verify Supabase evidence sync (not implemented), cloud backup,
+cross-device access or remote session revocation. Refresh/revocation and
+cross-device cases remain unverified.
+
+Approved setup scope: project/login configuration, synthetic verification and
+evidence. Developer created the project and supplied public connection details.
+Ignored `.env.local` selects Supabase mode with its URL and publishable key.
+No personal data migration or remote setting change occurred.
+
+Read-only PowerShell `Invoke-RestMethod` requests checked `/auth/v1/settings`
+with the public key and `/auth/v1/.well-known/jwks.json`. The initial sandboxed
+network attempt failed; an approved retry succeeded. Observed email auth enabled,
+`mailer_autoconfirm=false`, `disable_signup=false`, and an EC/ES256 signing key.
+Thus confirmation was required, but public signup initially needed disabling.
+After the developer changed settings, a read-only settings recheck returned
+`external.email=true`, `disable_signup=true`, and `mailer_autoconfirm=false`.
+Public signup is now disabled and confirmation remains required. The sandboxed
+attempt failed; the approved network retry succeeded. This checks public settings,
+not email delivery or a complete hosted account journey.
+
+`node --test tests/supabase-auth.test.mjs`: 10/10 passed. These are focused
+synthetic auth tests, not hosted user journeys. No new build/browser verification.
+Browser automation stopped because it could not verify Opera's URL. SMTP,
+origin/redirects, templates, invitation/password setup, actual login/refresh,
+recovery, logout/revocation and offline return remain unverified. Restart the
+development server and fully reload after the environment change.
+
+---
+
 ## Development onboarding test mode - 2026-10-31
 
 Approved scope: development-only `test` auth mode, isolated synthetic state,

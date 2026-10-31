@@ -40,6 +40,16 @@ authorities does not remove these integrations or migrate personal data.
 
 ### Supabase account entry implementation - 2026-10-31
 
+Hosted setup progress (2026-10-31): the developer created the project and supplied
+public connection details. Ignored local configuration now selects Supabase mode;
+restart/reload is required. Hosted read-only checks confirmed email auth, required
+email confirmation and ES256 signing. After the developer changed settings,
+a read-only recheck confirmed public signup disabled, email login enabled and
+email confirmation still required. SMTP,
+redirects/templates and real account journeys remain unverified. No remote settings
+or personal records changed in this connection step. Required setup below is not
+a claim of completed configuration.
+
 The reviewed login slice adds `app/os/auth/` in front of the existing state
 provider. It uses the official Supabase browser client; no lifestyle database,
 evidence sync, membership, or live Athena service is connected by this slice.
@@ -373,6 +383,17 @@ support caching and rollback. New actions/page types still require code; do not
 treat content publishing as permission to execute arbitrary instructions.
 
 ## Data and sync design to preserve
+
+The [Today's Note sync plan](NOTE_SYNC_PLAN.md) is the approved documentation
+for a bounded first evidence-sync slice (2026-10-31). Implementation remains
+proposed: atomically saved local Note operations, authenticated owner-scoped
+records, idempotent operation receipts, exact acknowledgements, explicit empty
+revisions, and person-chosen conflicts. Keep the existing `checkin-note`
+identifier and current editable Note behavior; do not create daily notes as a
+side effect. Device timestamps and the legacy reason-grouped outbox are not the
+proposed conflict/acknowledgement protocol. Other writing and legacy migration
+remain separate. No database schema, evidence sync, real-data migration, or
+operational backup is implemented or verified by this plan.
 
 - Versioned migrations from existing browser/profile-server records, with a
   backup and validated recovery path before migration is exercised on real data.

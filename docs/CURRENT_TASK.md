@@ -1,5 +1,84 @@
 # Current task
 
+## Today's Note storage and safe sync planning - 2026-10-31
+
+Status: approved documentation scope completed; implementation not started.
+Session closed at the developer's request after following `.handoff-prmopt.md`.
+The developer authorized committing all pending repository changes and pushing
+the existing `paing-branch` upstream to `fork/paing-branch`; ignored environment
+files remain excluded. Git delivery results are reported with the final commit.
+The developer approved saving [the bounded plan](NOTE_SYNC_PLAN.md) and updating
+architecture, this task, and handoff. Scope is the editable Today's Note first,
+with offline local saves, exact cloud acknowledgements, safe retries, explicit
+clearing, and person-chosen conflicts. Other writing, database setup, personal
+migration, and deployment require separate reviewed scope.
+
+The plan preserves `checkin-note` and current Note behavior; it does not add a
+daily archive. It proposes durable local operations, server versions and receipts,
+protected current/revision records, multi-tab safeguards, synthetic access and
+recovery checks, and a separate existing-account import. Existing reason-grouped
+queue/timestamp merge behavior is not sufficient for this proposed protocol.
+
+Login is connected. The prior developer-reported offline journey verifies local
+persistence only; Supabase note sync and operational backup remain unimplemented
+and unverified. Hosted auth refresh/revocation, physical phones/other browsers,
+prior Reflect failures, and wider release gaps remain open. Sign-in UI remains
+deferred. Existing uncommitted documentation and `.vscode/` work is preserved.
+
+Checks: reviewed scope and source claims; 39 local links/fragments passed across
+the four planning documents, and `git diff --check` passed with existing line-ending
+warnings. No runtime tests, database checks, build, migration, or deployment
+are claimed. Detailed planning scope and acceptance checks are in the plan.
+
+Next: prepare a bounded implementation proposal with exact SQL/local contracts,
+file list, revision/receipt retention, and synthetic access/conflict checks.
+Review the conflict/status interaction before dependent UI changes. Obtain
+developer approval before implementation. Earlier entries below retain evidence;
+their next actions are historical where superseded by this planning task.
+
+---
+
+## Hosted Supabase connection - 2026-10-31
+
+Status: local configuration connected; developer reports successful hosted
+sign-in. Sign-in UI/UX changes are deferred at the developer's request.
+The developer also reports successful password reset, logout and basic offline
+return: an existing note survived offline reload, offline edits remained after
+reconnection, and another online reload retained them. This verifies the reported
+local persistence journey, not Supabase evidence sync or cloud backup. Remaining
+hosted checks, including refresh/revocation and cross-device cases, stay open.
+The developer approved project/login setup, local configuration, synthetic
+verification and setup evidence, then created the project and supplied public
+connection details. Ignored `.env.local` now selects `supabase` instead of `test`.
+Restart the server and fully reload to apply. No personal records were migrated.
+
+Hosted read-only checks accepted the publishable key, confirmed email auth and
+required email confirmation, and returned an ES256 signing key. Public signup
+was initially enabled. After the developer changed settings, a read-only recheck
+confirmed public signup disabled, email login enabled and confirmation required.
+SMTP, redirect URLs,
+templates and real login/recovery/offline journeys remain unverified. Focused
+auth tests passed 10/10; no new build/browser result is claimed.
+
+Next: guided dashboard configuration and synthetic hosted verification. Browser
+automation stopped because it could not verify Opera's URL; no remote settings
+were changed. Migration, sync, membership, Athena and deployment remain separate.
+Earlier entries retain historical evidence.
+
+Deferred developer request (2026-10-31): revisit the startup sign-in loading
+screen, currently "Opening Circle OS…" / "Checking your sign-in." in
+`app/os/auth/auth-boundary.tsx`. The developer requested recording this for later;
+replacement wording/design and implementation scope remain undecided. No UI
+change is authorized by this note.
+
+Local hosted-auth test address confirmed by the developer:
+`http://localhost:3000/os`. Configure Site URL as `http://localhost:3000` and
+allow `http://localhost:3000/os/auth/confirm`. Invite/reset templates must use
+the fragment-based token-hash links in the architecture instructions. These
+dashboard changes are guidance pending developer application and verification.
+
+---
+
 ## Development onboarding test mode - 2026-10-31
 
 Status: implemented and locally verified. The developer approved a development-only
