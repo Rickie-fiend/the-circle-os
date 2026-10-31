@@ -19,6 +19,32 @@ async function fixture() {
   } };
 }
 
+test("development test selection preserves the real marker and invalidates previous work", async () => {
+  const previousEnvironment = process.env.NODE_ENV; process.env.NODE_ENV = "development";
+  const f = await fixture();
+  try {
+    const real = f.activateAccountScope("real-account");
+    const original = f.data.get(f.ACCOUNT_SCOPE_STORAGE_KEY);
+    f.enableDevelopmentTestScope();
+    assert.equal(real.signal.aborted, true);
+    assert.equal(f.getAccountScope().kind, "signed-out");
+    f.activateAccountScope("dev-test-synthetic");
+    assert.equal(f.data.get(f.ACCOUNT_SCOPE_STORAGE_KEY), original);
+    assert.equal(JSON.parse(f.data.get(f.DEVELOPMENT_TEST_SCOPE_STORAGE_KEY)).accountId, "dev-test-synthetic");
+  } finally { f.restore(); if (previousEnvironment === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previousEnvironment; }
+});
+
+test("production cannot enable the development storage namespace", async () => {
+  const previousEnvironment = process.env.NODE_ENV; process.env.NODE_ENV = "production";
+  const f = await fixture();
+  try {
+    const legacy = f.getAccountScope();
+    assert.throws(() => f.enableDevelopmentTestScope(), /only available in development/);
+    assert.equal(f.getAccountScope(), legacy);
+    assert.equal(f.data.has(f.DEVELOPMENT_TEST_SCOPE_STORAGE_KEY), false);
+  } finally { f.restore(); if (previousEnvironment === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previousEnvironment; }
+});
+
 test("legacy keys stay unchanged; account entry never claims old records", async () => {
   const f = await fixture();
   try {

@@ -38,6 +38,98 @@ File-based profile server (local-ai/server.mjs)
 Runtime files may still reference the vault. Replacing missing product-document
 authorities does not remove these integrations or migrate personal data.
 
+### Supabase account entry implementation - 2026-10-31
+
+The reviewed login slice adds `app/os/auth/` in front of the existing state
+provider. It uses the official Supabase browser client; no lifestyle database,
+evidence sync, membership, or live Athena service is connected by this slice.
+The developer approved invitations only, continued offline use after a prior
+online sign-in, and preserving the owner's legacy profile until a separate
+migration review. Authentication IDs select the existing account-scoped stores.
+Alias is editable Supabase user metadata, never an authorization role. Account
+mode bypasses the old real-name/age entry requirement, without inventing either.
+
+Online entry checks the user with Supabase and requires confirmed email.
+Invitation and recovery links lead to password entry before personal state can
+mount. Reload retains that step. A new account chooses an alias before entry.
+The saved browser scope marker alone cannot open a different account. Session
+and attempt guards reject late results after logout or switching.
+
+A successful online check saves an offline proof containing the signed token
+and public verification keys. Offline entry verifies its signature, issuer,
+audience, role and owner, deliberately accepting expiry for local use only.
+Local records remain usable until logout; server access still needs a current
+session. Reconnection/foreground checks detect rejection and close access.
+Remote revocation cannot be detected while disconnected. Local storage and
+cached keys are not encryption or protection against device/browser-script
+access. Offline logout removes the offline proof and persisted SDK credentials;
+it cannot revoke a remote session while the network is unavailable.
+
+Existing-profile mode remains the default while migration is unreviewed.
+Enable Supabase mode explicitly at build time; never treat that default as a
+multi-user beta configuration. Invalid Supabase configuration fails closed.
+
+For local onboarding tests, the developer approved a development-only `test`
+mode on 2026-10-31. Set this in the ignored `.env.local`, restart the development
+server (`npm run dev`), and fully reload the browser:
+
+```text
+NEXT_PUBLIC_CIRCLE_AUTH_MODE=test
+```
+
+This opens the account-style Day One flow without login, real name, or age.
+Reload resumes the current test. **New test session** creates a fresh synthetic
+account and empty state through the existing storage engine; it never deletes
+or migrates old records. The test selection uses
+`circle-os-development-test-scope-v1`, separate from the real account marker.
+Only generated `dev-test-<uuid>` accounts can open in this mode. Their state,
+private chapter cache and pins use the existing account-specific keys/databases.
+Neither Supabase auth nor the legacy profile server is contacted.
+
+Use `legacy` for the original profile flow, `supabase` for actual invited-account
+login, and `test` for development onboarding. Mode changes need a server restart
+and full page reload; production changes need a rebuild. Production with `test`
+configured fails closed, and the development namespace helper also rejects
+production calls. No test switch exists in the released login UI. The actual
+`.env.local` was not edited by implementation or verification.
+
+Only public project configuration belongs in frontend environment variables:
+
+```text
+NEXT_PUBLIC_CIRCLE_AUTH_MODE=supabase
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
+```
+
+Before hosted verification, create the reviewed Singapore project, disable
+public signup, require email confirmation, configure an asymmetric JWT signing
+key (ES256 or RS256), and set up custom SMTP. No administrator/service-role key
+is used by this browser implementation. Configure the app origin and allow
+`<app-origin>/os/auth/confirm` as a redirect. Use these email template link
+targets, substituting the actual app origin for `<app-origin>`:
+
+```text
+Invite: <app-origin>/os/auth/confirm#token_hash={{ .TokenHash }}&type=invite
+Reset:  <app-origin>/os/auth/confirm#token_hash={{ .TokenHash }}&type=recovery
+```
+
+Hash links keep one-use secrets out of HTTP requests and navigation caches;
+the boundary removes them from browser history before exchanging them. The
+app intentionally does not accept default implicit-token or arbitrary query
+redirect flows. Admin sends/reissues invitations through Supabase; users can
+request password resets. Disable email link tracking and test links on a
+different browser/device as well as the originating device. See official
+[email templates](https://supabase.com/docs/guides/auth/auth-email-templates),
+[SMTP requirements](https://supabase.com/docs/guides/auth/auth-smtp), and
+[session behavior](https://supabase.com/docs/guides/auth/sessions).
+
+The worker covers `/os` as well as nested routes and primes already-loaded
+static code after first sign-in. It does not cache Supabase auth responses.
+Actual hosted configuration, mail delivery, project access policies, physical
+phones, and owner migration need separate verification; local fixtures do not
+certify them. Current evidence belongs in the
+[journey record](USER_JOURNEY_TESTING.md#supabase-account-entry---2026-10-31).
+
 ## Target across later web iterations and mobile clients
 
 The [approved launch plan](WEB_BETA_LAUNCH_PLAN.md) now includes Supabase
@@ -73,7 +165,8 @@ create it. Keep domain rules and data contracts independent of web UI details.
 Confirmed intent: keep personal records private and use email/password with a
 separate display alias. On 2026-10-31 the developer accepted email, superseding
 the earlier username-only preference. Recovery and email-delivery configuration
-still need a reviewed implementation design.
+are described in the account-entry implementation above; hosted setup remains
+unverified and manual lost-email recovery still needs a reviewed design.
 
 Technical findings checked against official documentation on 2026-10-30:
 
@@ -89,21 +182,23 @@ Technical findings checked against official documentation on 2026-10-30:
 
 Use supported managed authentication with private contact/recovery details.
 Confirmed 2026-10-31: new users must verify their email before using their
-account. Verification delivery, link handling, and enforcement require
-implementation review and testing; the gate is not yet implemented.
+account. The optional Supabase-mode browser gate and link handling are now
+implemented and locally tested; actual email delivery and hosted enforcement
+remain unverified.
 Confirmed 2026-10-31: password recovery uses a reset link sent to the account's
 verified email address. Manual recovery will also be offered when the person
 loses access to that email (confirmed 2026-10-31). Ownership checks and the
-manual process require review before implementation. Verification-link and
-delivery setup, reset-link handling, expired sessions, and lost-device behavior still
-need implementation review. This is a requirement, not an implemented flow.
+manual process require review before implementation. Browser reset-link and
+session handling are implemented in the optional mode above. Hosted delivery,
+real session revocation, and lost-device operations remain unverified.
 Login should persist until logout; local records may remain stored. Session
-renewal, revocation/lost-device handling, and logout behavior require a reviewed
-implementation and verification. Retained local records must stay account-scoped
+renewal and local logout now have browser handling and synthetic checks;
+hosted revocation/lost-device behavior still needs verification. Retained local records must stay account-scoped
 and inaccessible to another account or a signed-out person.
 Do not build custom password verification or synthetic-email
-workarounds. The current browser store uses shared keys, so account-specific
-local storage and safe switching are required before multi-user operation.
+workarounds. The browser store now has account-specific keys, private chapter
+caches, pins, and safe switching. Supabase mode must be enabled and its
+authentication configuration verified before multi-user operation.
 Signing in must not silently claim a previous person's local evidence.
 
 Use an internal account ID for ownership. Keep a display alias separate from

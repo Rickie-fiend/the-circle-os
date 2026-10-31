@@ -1,8 +1,6 @@
-// v5 clears every entry cached under v4. It has to: styles and scripts were
-// served cache-first, and the shared CSS chunk keeps its filename across
-// builds, so a phone that had once loaded it would keep that copy for ever.
-// Fixes shipped, deployed, verified live — and never arrived.
-const CACHE = "circle-os-v5";
+// v6 keeps v5's network-first code updates and primes static files that loaded
+// before the first worker was installed, so the next open can work offline.
+const CACHE = "circle-os-v6";
 const SHELL = [
   "/os",
   "/os/mirror",
@@ -24,9 +22,28 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))),
-      ),
+      ).then(() => self.clients.claim()),
   );
-  self.clients.claim();
+});
+
+// The first app load happens before installation. Prime only same-origin
+// static resources, never evidence requests, login links, or auth responses.
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "CACHE_LOADED_ASSETS" || !Array.isArray(event.data.urls)) return;
+  const urls = [...new Set(event.data.urls)].filter((value) => {
+    try {
+      const url = new URL(value);
+      return url.origin === self.location.origin &&
+        ["/_next/static/", "/assets/", "/fonts/", "/brand/"].some((prefix) => url.pathname.startsWith(prefix));
+    } catch { return false; }
+  });
+  event.waitUntil(self.clients.claim().then(() => caches.open(CACHE)).then((cache) => Promise.allSettled(urls.map(async (url) => {
+    const response = await fetch(url, { cache: "reload" });
+    if (!response.ok) throw new Error("Static asset unavailable.");
+    await cache.put(url, response);
+  }))).then((results) => {
+    event.ports[0]?.postMessage({ ready: urls.length > 0 && results.every((result) => result.status === "fulfilled") });
+  }));
 });
 
 self.addEventListener("fetch", (event) => {

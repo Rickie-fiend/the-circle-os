@@ -6187,6 +6187,64 @@
   display: block;
 }
 
+/* Auth uses the existing palette, functional type, fields and shared key.
+   It sits outside personal state so signed-out views cannot load evidence. */
+.circle-os .os-auth {
+  padding: 48px 24px;
+  min-height: 100dvh;
+}
+.circle-os .os-auth > section {
+  background: var(--c-bone);
+  color: var(--c-ink);
+  border-radius: var(--r-box);
+  margin: 0 auto;
+  max-width: 480px;
+  padding: 28px 24px;
+}
+.circle-os .os-auth h1 {
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(28px, 7vw, 36px);
+  line-height: 1.15;
+  margin: 16px 0 24px;
+}
+.circle-os .os-auth p { line-height: 1.5; overflow-wrap: anywhere; }
+.circle-os .os-auth form, .circle-os .os-auth label { display: grid; gap: 12px; }
+.circle-os .os-auth form { margin-top: 24px; gap: 24px; }
+.circle-os .os-auth input {
+  background: var(--c-warm-100);
+  border: 1px solid var(--c-neutral-200);
+  border-radius: var(--r-md);
+  color: var(--c-ink);
+  font: inherit;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px;
+  width: 100%;
+}
+.circle-os .os-auth :is(button, input):focus-visible { outline: 2px solid var(--c-orange); outline-offset: 4px; }
+.circle-os .os-auth-link, .circle-os.os-auth-bar > button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  min-height: 44px;
+  padding: 8px 0;
+  text-decoration: underline;
+}
+.circle-os.os-auth-bar { min-height: 44px; padding: 0 24px; position: relative; text-align: right; z-index: 100; }
+.circle-os.os-auth-bar button { max-width: 100%; overflow-wrap: anywhere; }
+.circle-os .os-auth-menu {
+  background: var(--c-bone);
+  border-radius: var(--r-md);
+  color: var(--c-ink);
+  max-width: calc(100vw - 48px);
+  padding: 16px;
+  position: absolute;
+  right: 24px;
+  top: 44px;
+}
+
 .circle-os .os-connect > section {
   background: var(--c-bone);
   border-radius: var(--r-box);

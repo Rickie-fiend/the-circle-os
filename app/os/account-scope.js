@@ -1,6 +1,7 @@
 // Storage ownership only. The future auth adapter must supply the verified
 // account ID; this marker is never proof of identity or server authorization.
 export const ACCOUNT_SCOPE_STORAGE_KEY = "circle-os-account-scope-v1";
+export const DEVELOPMENT_TEST_SCOPE_STORAGE_KEY = "circle-os-development-test-scope-v1";
 
 export class AccountScopeChangedError extends Error {
   constructor() {
@@ -15,17 +16,20 @@ let controller = new AbortController();
 let current = Object.freeze({ ...legacy, signal: controller.signal });
 let listening = false;
 let switchingFailed = false;
+let developmentTest = false;
 const listeners = new Set();
+const scopeStorageKey = () => developmentTest ? DEVELOPMENT_TEST_SCOPE_STORAGE_KEY : ACCOUNT_SCOPE_STORAGE_KEY;
 
 function marker() {
   if (switchingFailed) return { kind: "signed-out", accountId: "", epoch: "switch-failed" };
   try {
-    const raw = window.localStorage.getItem(ACCOUNT_SCOPE_STORAGE_KEY);
+    const raw = window.localStorage.getItem(scopeStorageKey());
     if (raw === null) {
+      if (developmentTest) return { kind: "signed-out", accountId: "", epoch: "empty-test" };
       // Removing a marker must not reopen the legacy profile in a running tab.
       if (current.kind === "legacy") return legacy;
       const closed = { kind: "signed-out", accountId: "", epoch: "missing" };
-      window.localStorage.setItem(ACCOUNT_SCOPE_STORAGE_KEY, JSON.stringify(closed));
+      window.localStorage.setItem(scopeStorageKey(), JSON.stringify(closed));
       return closed;
     }
     const value = JSON.parse(raw);
@@ -45,7 +49,7 @@ function marker() {
 function refresh(notify = false) {
   if (typeof window === "undefined") return serverScope;
   const next = marker();
-  if (next.kind !== current.kind || next.accountId !== current.accountId || next.epoch !== current.epoch) {
+  if (controller.signal.aborted || next.kind !== current.kind || next.accountId !== current.accountId || next.epoch !== current.epoch) {
     controller.abort();
     controller = new AbortController();
     current = Object.freeze({ ...next, signal: controller.signal });
@@ -58,7 +62,7 @@ function listen() {
   if (listening || typeof window === "undefined" || typeof window.addEventListener !== "function") return;
   listening = true;
   window.addEventListener("storage", (event) => {
-    if (event.key === ACCOUNT_SCOPE_STORAGE_KEY || event.key === null) refresh(true);
+    if (event.key === scopeStorageKey() || event.key === null) refresh(true);
   });
 }
 
@@ -77,13 +81,25 @@ export function subscribeAccountScope(listener) {
   return () => { listeners.delete(listener); };
 }
 
+// Development tests have their own selection marker as well as their own
+// account stores. Entering test mode never replaces a real/legacy selection.
+export function enableDevelopmentTestScope() {
+  if (process.env.NODE_ENV !== "development") throw new Error("Test sessions are only available in development.");
+  if (!developmentTest) {
+    developmentTest = true;
+    switchingFailed = false;
+    controller.abort();
+    refresh(true);
+  }
+}
+
 // Called by the auth adapter, not by product controls. Null closes all local
 // evidence access. Switching never reads, claims, moves, or deletes old records.
 export function activateAccountScope(accountId) {
   if (typeof window === "undefined") throw new Error("Account switching requires a browser.");
   if (accountId !== null && !/^[A-Za-z0-9_-]{1,128}$/.test(accountId)) throw new Error("Invalid account ID.");
   try {
-    window.localStorage.setItem(ACCOUNT_SCOPE_STORAGE_KEY, JSON.stringify({
+    window.localStorage.setItem(scopeStorageKey(), JSON.stringify({
       kind: accountId === null ? "signed-out" : "account",
       accountId: accountId || "",
       epoch: crypto.randomUUID(),

@@ -6,6 +6,8 @@ type ScopeMarker = {
 
 export type AccountScope = Readonly<ScopeMarker & { signal: AbortSignal }>;
 export const ACCOUNT_SCOPE_STORAGE_KEY: string;
+export const DEVELOPMENT_TEST_SCOPE_STORAGE_KEY: string;
+export function enableDevelopmentTestScope(): void;
 export class AccountScopeChangedError extends Error {}
 export function getAccountScope(): AccountScope;
 export function getServerAccountScope(): AccountScope;

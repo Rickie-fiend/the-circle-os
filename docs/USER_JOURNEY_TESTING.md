@@ -1,5 +1,149 @@
 # Circle OS user-journey test record
 
+## Development onboarding test mode - 2026-10-31
+
+Approved scope: development-only `test` auth mode, isolated synthetic state,
+fresh-session action, persistence on reload, production rejection, tests, and
+implementation records. This extends the uncommitted login implementation;
+HEAD remains `e3dcb3e`. `.env.local`, the existing owner and remote services
+were not changed. All browser records below are synthetic, isolated and local.
+
+`tests/development-test-mode.browser.mjs` seeds distinct legacy/account/auth
+sentinels and a real-account selection marker before opening the actual app.
+At 390x844 and 360x844 it checks Day One without login/name/age, saves priority,
+reloads into direction on the same test owner, starts a new empty test, and
+checks that the first run and all real/legacy/auth sentinels remain. The control
+works above the onboarding splash. External requests are blocked and counted;
+final cases made none. No final page errors occurred. Production case checks
+the locked configuration screen, absent test controls/reader, and absent test
+marker. Browser timezone is Bangkok.
+
+Final commands and results:
+
+- With `NEXT_PUBLIC_CIRCLE_AUTH_MODE=test` and `TZ=Asia/Bangkok`, start
+  `node node_modules/vinext/dist/cli.js dev --hostname 127.0.0.1 --port 3222`.
+  Build Next with `NEXT_PUBLIC_CIRCLE_AUTH_MODE=test` using
+  `node node_modules/next/dist/bin/next build`, then start it on `127.0.0.1:3218`.
+  Set `CIRCLE_PRODUCTION_TEST_MODE_ORIGIN=http://127.0.0.1:3218` and run
+  `node --test --test-reporter=tap tests/development-test-mode.browser.mjs`:
+  **3/3 passed**, including actual production rejection.
+- Start Next development on `127.0.0.1:3223` with the same test flag. With
+  `CIRCLE_TEST_ORIGIN=http://127.0.0.1:3223`, run the same file: **2/2 development
+  cases passed**; the optional production case was skipped in that run.
+- The preceding focused command with the same twelve test files now passes
+  **103/103**, adding two namespace/production-guard cases to account-scope tests.
+- `node --test --test-reporter=tap tests/account-storage.browser.mjs`:
+  **11/11 passed**. `node --test --test-reporter=tap tests/supabase-auth.browser.mjs`:
+  **10/10 harness cases passed**, with two optional Supabase production cases
+  skipped because the production server in this slice used `test` configuration.
+- `node node_modules/eslint/bin/eslint.js app/os/account-scope.js app/os/account-scope.d.ts app/os/auth tests/account-scope.test.mjs tests/development-test-mode.browser.mjs`:
+  passed. Vercel TypeScript passed. Next and Vinext production builds passed
+  with the test flag; default legacy build artifacts were restored afterward.
+- Read-only document audit: **36 local links/fragments passed**.
+  `git diff --check` passed with existing LF/CRLF notices.
+
+Initial attempts: Vinext with its default localhost binding was not reachable
+at the test's IPv4 address; startup also emitted declaration-file scan warnings.
+Using the explicit IPv4 host opened the server. Initial optimizer reloads then
+reported invalid-hook/multiple-renderer messages; a clean restart after dependency
+optimization passed both cases with no source/framework configuration change.
+The test initially read state before the provider's first save and seeded the
+Next dev tools' sandboxed frames. It now waits for persisted state and seeds
+only its own origin. Those failed attempts are not counted as verification.
+
+No shared App Box geometry, chapter versions, budget, Athena, merge/clearing or
+06:00-day rule changed. No new geometry measurements or broad optimization are
+claimed. Hosted auth/SMTP, physical phones, prior Reflect failures, broad
+lint/suite and dependency-audit gaps remain as recorded above/below. Test mode
+never authorizes a server request or claims legacy data for a new account.
+
+---
+
+## Supabase account entry - 2026-10-31
+
+### Scope and isolation
+
+Approved browser login slice: invitations only, confirmed email, password entry
+and recovery, alias, persistent sessions, offline local use, and logout. No real
+account, owner profile/day records, provider, or hosted Supabase project was
+accessed. The existing `.vscode/settings.json` was preserved. Branch
+`paing-branch`, starting HEAD `e3dcb3e`; application changes remain uncommitted.
+
+`tests/supabase-auth.browser.mjs` bundles a static harness importing the real
+auth boundary, official SDK, provider, and local stores. Its isolated Auth fixture
+signs ES256 JWTs and intercepts token, user, verification, recovery, logout, and
+JWKS requests at a synthetic origin. All other external traffic is blocked.
+The two production cases use the actual Next app at `127.0.0.1:3218`. Chromium
+viewports are 390x844 and 360x844 with Bangkok timezone. The actual service worker
+and `context.setOffline(true)` verify cached navigation/code, rather than merely
+mocking an online flag. Generated harnesses/screenshots stay under ignored `work/`.
+
+### Final checks
+
+- `node --test tests/account-scope.test.mjs tests/day-one.test.mjs tests/day-one-simplification.test.mjs tests/phases.test.mjs tests/chapter-engine.test.mjs tests/day-door.test.mjs tests/protocol-home.test.mjs tests/first-use-setup.test.mjs tests/habit-identity.test.mjs tests/chapter-capabilities.test.mjs tests/chapter-splash.test.mjs tests/supabase-auth.test.mjs`: **101/101 passed**.
+- Build Next with `NEXT_PUBLIC_CIRCLE_AUTH_MODE=supabase`,
+  `NEXT_PUBLIC_SUPABASE_URL=https://circle-auth.test`, and
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=synthetic-publishable-key`, using
+  `node node_modules/next/dist/bin/next build`. Start with
+  `node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3218`.
+  With `CIRCLE_AUTH_PRODUCTION_ORIGIN=http://127.0.0.1:3218`, run
+  `node --test --test-reporter=tap tests/supabase-auth.browser.mjs`:
+  **12/12 passed, none skipped** on final application code.
+- `node --test --test-reporter=tap tests/account-storage.browser.mjs`:
+  **11/11 passed**. Earlier storage invariants remain covered.
+- Rebuilt Next in default legacy mode, started the same production server,
+  then ran `node --test --test-reporter=tap tests/day-one.browser.mjs` with
+  `TZ=Asia/Bangkok`: **9/9 passed**. Existing Day One, old-version resume,
+  publication/Quest paths, and Protocol/Week setup remain covered.
+- `node node_modules/next/dist/bin/next build` passed in Supabase and default
+  legacy modes, including the Vercel TypeScript configuration.
+- `node node_modules/vinext/dist/cli.js build`: passed; existing route
+  classification limitations remain. No server configuration was published.
+- `node node_modules/eslint/bin/eslint.js app/os/auth app/os/pwa-register.tsx public/os-sw.js tests/supabase-auth.test.mjs tests/supabase-auth.browser.mjs app/os/layout.tsx app/os/mirror/page.tsx`: passed.
+- Shell ESLint JSON diagnostics were compared against `git show HEAD:app/os/circle-os-shell.tsx`
+  using `--stdin --stdin-filename app/os/circle-os-shell.tsx`. Both retain
+  six memoization, two purity, and one immutability errors, plus one unused-import
+  warning. The changed condition adds no diagnostic; full lint is not clean.
+- A read-only Node audit checked 34 local document links/fragments: passed.
+  `git diff --check` passed with existing LF/CRLF notices.
+
+Coverage includes A/B login and return, reload, retained legacy bytes, empty
+other-account state, wrong credentials, unconfirmed email, reset request,
+invalid/expired links, invitation password/alias steps, password-step reload,
+successful recovery retaining evidence, offline reload with an expired signed
+proof, offline edits and logout, reconnect rejection, cross-tab logout, delayed
+session checks, forged markers/proofs, and invalid configuration. Production
+accounts enter Day One without real name/age and can log out above its splash.
+No final browser page errors occurred. Synthetic login/logout screenshots at
+both widths were inspected; login had no horizontal overflow and its account
+touch target measured at least 44px. Shared App Box tokens were not changed.
+
+### Attempts, fixes, and remaining limits
+
+The npm shim was blocked by NVM, so installation used the installed npm CLI
+directly; network installation required escalation. Initial interrupted network
+installation and two incorrect CLI paths are not successful checks. Installation
+reported 43 audit findings across the dependency tree; they were not triaged
+here. The new dependency versions are pinned in the manifest/lockfile.
+
+Early development-harness offline runs failed due to environment/caching and
+readiness issues; the harness now builds static production-style resources.
+Subsequent checks exposed the root `/os` scope, first-load asset priming, and
+client-claim timing. The worker now awaits claims and acknowledges completed
+cache priming before the test disconnects. A production run exposed the splash
+blocking the account control; its menu now stays above the splash without
+unmounting the underlying form. All affected cases were rerun after these fixes.
+
+Synthetic Auth responses do not certify actual email delivery, invitation-only
+project settings, real token rotation/revocation, redirect configuration, hosted
+policies, or phone/browser behavior. No Supabase evidence schema or sync exists
+yet. Cached keys/records are not device encryption; expired-token acceptance is
+only for the approved local offline path. The default legacy runtime and owner
+data remain separate until migration is reviewed. Manual lost-email recovery,
+existing Reflect failures, broad-suite/lint, and wider release gates remain open.
+
+---
+
 ## Account-separated storage - 2026-10-31
 
 ### Scope and setup

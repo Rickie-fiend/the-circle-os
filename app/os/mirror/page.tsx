@@ -36,6 +36,7 @@ import {
 } from "../app-session";
 import { sizeTextAreaToContent } from "../text-area-size";
 import { useAppBack } from "../app-back";
+import { getAccountScope } from "../account-scope";
 import { useStableRouteAnchor } from "../stable-route-anchor";
 import {
   normalizeChapterPublication,
@@ -754,8 +755,7 @@ export default function CircleOSMirror() {
   const betweenPageCount = profileReady ? 4 : 1;
   const setupComplete = Boolean(
     ready &&
-      state.profile.name &&
-      state.profile.age,
+      (getAccountScope().kind === "account" || (state.profile.name && state.profile.age)),
   );
 
   async function saveFirstProfile(event: FormEvent<HTMLFormElement>) {

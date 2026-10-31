@@ -1,5 +1,102 @@
 # Session handoff
 
+## 2026-10-31 - Development onboarding test mode
+
+**Approval and context.** The developer approved a development-only test mode
+to exercise new onboarding without login or existing data, a fresh-session
+action, synthetic isolation, production rejection, tests and implementation
+records. Branch `paing-branch`, HEAD `e3dcb3e`. The preceding Supabase login
+implementation and `.vscode/settings.json` remain uncommitted and preserved.
+No environment file, personal profile/day data, remote project, or deployment
+was changed. Nothing was staged, committed or pushed by this slice.
+
+**Implemented.** Set `NEXT_PUBLIC_CIRCLE_AUTH_MODE=test` in `.env.local`, restart
+the dev server, and fully reload the browser. Test mode opens the existing Day
+One flow without email/password, real name or age. Reload resumes the same test.
+The visible **New test session** action creates a new synthetic owner and empty
+state; old test records are retained. Existing provider remounting, persistence,
+chapter caches and pins handle the switch. No new onboarding or reset engine
+was added. A dedicated development selection marker preserves the real/legacy
+selection byte for byte, and only generated `dev-test-<uuid>` accounts can open.
+Test accounts cannot use the legacy profile server. No Supabase client is
+created in this mode. Production rejects the mode, with a second guard on the
+development storage helper. Legacy remains the default; `.env.local` is unchanged.
+
+**Verification.** 103/103 focused cases passed, including development namespace
+isolation and production rejection. New browser cases passed at 390x844 and
+360x844 on both actual development targets: Vinext and Next. They cover fresh
+entry, saving an answer, reload/resume, a new empty session, retention of the old
+test run, unchanged legacy/account/auth bytes, and no external requests. An
+actual Next production build with `test` selected stays locked and creates no
+test marker. Existing storage cases passed 11/11 and auth harness cases 10/10;
+the two optional Supabase production cases were skipped in this slice. Both
+build targets, Vercel TypeScript and focused lint passed. Exact evidence and
+initial attempts are in the [journey record](USER_JOURNEY_TESTING.md#development-onboarding-test-mode---2026-10-31).
+
+**Limits and next action.** Initial dev startup/optimizer and fixture timing
+failures are recorded; the final runs passed without changing the development
+framework configuration. No shared geometry/type/gap tokens, chapters, budgets,
+reading-publication or evidence-merge/day-boundary rules changed. No new geometry
+measurements or broad optimization are claimed. Hosted Supabase/email delivery,
+physical phones, existing Reflect failures, broad lint/suite and previous
+dependency-audit gaps remain open. Next: developer use of test mode and review
+of onboarding, followed by the separately reviewed hosted setup. Earlier
+snapshots retain their unique verification evidence below.
+
+---
+
+## 2026-10-31 - Supabase account entry
+
+**Approval and Git context.** The developer approved invitation-only
+email/password entry, verified email, alias, password reset, persistent sessions,
+offline use after a prior sign-in, local logout, synthetic tests, and implementation
+records. Existing owner data stays untouched. Branch `paing-branch`, starting
+HEAD `e3dcb3e`. The pre-existing `.vscode/settings.json` remains untouched.
+This slice is unstaged and uncommitted; nothing was pushed, provisioned,
+migrated, or deployed. Earlier snapshots remain below as historical evidence.
+
+**Implemented.** `app/os/auth/` wraps the existing state provider with the
+official Supabase client and a guarded lifecycle. Verified account IDs select
+the existing storage boundary. Email links lead to password entry before any
+evidence reader mounts; reload resumes that step. Alias is user metadata, not
+an authorization role. Account mode bypasses legacy real-name/age requirements.
+Wrong credentials, unverified email, invalid links, forged markers, late results,
+and invalid project configuration stay locked. Logout closes views immediately,
+clears offline proof/SDK credentials, and propagates across tabs. Browser storage
+failure reports incomplete logout. The account menu works above onboarding and
+does not unmount unsaved forms.
+
+A prior verified signed token and cached public keys allow local entry offline,
+including after expiry. This grants no server authority and is not device
+encryption. Reconnection/foreground checks close rejected sessions; remote
+revocation cannot be detected offline. Legacy mode stays the default until
+owner migration is reviewed. Supabase mode needs explicit public build settings.
+
+**Checks and corrections.** 101/101 focused cases, 12/12 auth browser cases,
+11/11 storage cases, and 9/9 legacy Day One browser cases passed. Auth cases include the actual Next
+production app at 390x844 and 360x844, plus a bundled static harness using the
+real SDK/provider/storage with intercepted synthetic Auth endpoints. Next in
+both modes, Vinext, focused lint, and Vercel TypeScript checks passed. Mobile
+screenshots were inspected. Exact evidence and earlier failures are in the
+[journey record](USER_JOURNEY_TESTING.md#supabase-account-entry---2026-10-31).
+Offline checks led to the `/os` worker scope fix, first-load static caching,
+awaited client claiming, and completed-cache acknowledgement. Production checks
+found the splash blocking logout; the account control now stays above it. No
+broader optimization was justified.
+
+**Limits and next action.** No shared App Box geometry/type/gap tokens, chapter
+contents/budgets, publication rules, merge/clearing semantics, or 06:00 day rules
+changed. No new geometry measurements are claimed. Hosted invitations, SMTP,
+real refresh/revocation, project policies, and physical phones remain unverified.
+Existing Reflect and broad-suite/lint gaps remain open. Dependency installation
+reported 43 audit findings across the tree; this scope did not triage or fix
+that tree. Next: review project/mail setup and synthetic hosted verification
+using the [architecture instructions](PRODUCTION_ARCHITECTURE.md#supabase-account-entry-implementation---2026-10-31).
+Owner migration, evidence sync, membership, live Athena, and deployment remain
+separate scopes. Never automatically attach legacy writing to an invited account.
+
+---
+
 ## 2026-10-31 - Account-separated storage foundation
 
 **Approval and Git context.** The developer explicitly approved the proposed

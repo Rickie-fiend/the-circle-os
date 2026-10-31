@@ -1987,6 +1987,7 @@ export function TodayExperience() {
   useEffect(() => {
     if (
       ready &&
+      getAccountScope().kind === "legacy" &&
       (!state.profile.name ||
         !state.profile.age)
     ) {

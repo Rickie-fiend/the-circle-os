@@ -1,5 +1,64 @@
 # Current task
 
+## Development onboarding test mode - 2026-10-31
+
+Status: implemented and locally verified. The developer approved a development-only
+mode that skips login/name/age, isolates synthetic data, resumes on reload, and
+starts empty through **New test session**. `NEXT_PUBLIC_CIRCLE_AUTH_MODE=test`
+enables it only under a development server. Production rejects that setting.
+Restart the server and fully reload after changing modes. `.env.local` remains
+unchanged; legacy remains the default.
+
+Test mode has a separate selection marker and reuses existing account-specific
+state, chapter-cache, pin and provider lifecycle engines. Starting another test
+keeps prior test records and leaves real/legacy records and auth markers intact.
+No auth/profile-server connection or real data migration is involved.
+
+Checks: 103/103 focused cases, two mobile test-mode cases on each of Vinext and
+Next development servers, one actual production rejection case, 11/11 storage
+browser cases, and 10/10 auth harness cases passed. The latter suite's two
+optional Supabase production cases were skipped in this slice. Both build
+targets, Vercel TypeScript and focused lint passed. Detailed commands and early
+attempts: [journey record](USER_JOURNEY_TESTING.md#development-onboarding-test-mode---2026-10-31).
+
+Next: developer onboarding use with test mode. Hosted Supabase/SMTP verification,
+owner migration, existing Reflect issues, and wider release gates remain open.
+All earlier uncommitted work is preserved; nothing staged, committed, pushed or
+deployed. Earlier task entries retain their evidence and are historical.
+
+---
+
+## Supabase account entry - 2026-10-31
+
+Status: browser implementation verified locally with synthetic authentication;
+hosted Supabase settings and real email delivery remain unverified. Legacy
+profile mode stays the default. The owner's profile was not migrated.
+Branch `paing-branch`, starting HEAD `e3dcb3e`; this slice is uncommitted.
+
+The developer approved invitations only, email/password entry, verified email,
+alias, password reset, persistent login, offline use after a prior online
+sign-in, logout, tests, and implementation records. Account mode uses the
+existing scoped stores and requires no real name or exact age. A browser
+marker alone cannot grant access. Invitation/recovery sessions finish password
+entry before evidence opens. The account menu remains usable over onboarding
+without unmounting unsaved forms. Worker scope, first-load static caching, and
+client claiming/readiness were corrected for the approved offline journey.
+
+Checks: 101/101 focused cases, 12/12 auth browser cases (including two actual
+Next production app cases), 11/11 storage and 9/9 legacy Day One browser cases, Next builds in both
+auth modes, Vinext build, focused lint, and the Vercel TypeScript configuration
+passed. Commands, attempts, and limits:
+[journey record](USER_JOURNEY_TESTING.md#supabase-account-entry---2026-10-31).
+
+Next: review project/SMTP setup and synthetic hosted verification using the
+[architecture instructions](PRODUCTION_ARCHITECTURE.md#supabase-account-entry-implementation---2026-10-31).
+No provisioning, real-data migration, evidence sync, membership, live Athena,
+manual lost-email recovery procedure, or deployment was performed. Prior
+Reflect and wider release gaps remain open. Earlier entries retain historical
+evidence; their next actions are superseded by this entry.
+
+---
+
 ## Account-separated storage foundation - 2026-10-31
 
 Status: implemented and verified for the approved storage scope. Supabase login

@@ -15,10 +15,26 @@ export function CircleOSPwa() {
     }
     void navigator.serviceWorker
       .register("/os-sw.js", {
-        scope: "/os/",
+        scope: "/os",
         updateViaCache: "none",
       })
-      .then((registration) => registration.update());
+      .then(async (registration) => {
+        await registration.update();
+        const ready = await navigator.serviceWorker.ready;
+        // On the first sign-in these files loaded before the worker existed.
+        // Cache them now so the very next open can work without a connection.
+        const urls = performance.getEntriesByType("resource")
+          .filter((entry) => ["script", "link", "css"].includes((entry as PerformanceResourceTiming).initiatorType))
+          .map((entry) => entry.name);
+        const channel = new MessageChannel();
+        channel.port1.onmessage = (event) => {
+          if (event.data?.ready) document.documentElement.dataset.osOfflineReady = "true";
+          channel.port1.close();
+        };
+        ready.active?.postMessage({ type: "CACHE_LOADED_ASSETS", urls }, [channel.port2]);
+      }).catch(() => {
+        // An installed shell can still open offline when an update check fails.
+      });
   }, []);
   return null;
 }

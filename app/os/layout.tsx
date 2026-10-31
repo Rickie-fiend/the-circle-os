@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CircleStateProvider, OSFrame } from "./circle-os-shell";
 import { CircleOSPwa } from "./pwa-register";
+import { CircleAuthBoundary } from "./auth/auth-boundary";
 import "./os-app.css";
 
 export const metadata: Metadata = {
@@ -46,9 +47,9 @@ export default function CircleOSLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <CircleStateProvider>
+    <CircleAuthBoundary><CircleStateProvider>
       <CircleOSPwa />
       <OSFrame>{children}</OSFrame>
-    </CircleStateProvider>
+    </CircleStateProvider></CircleAuthBoundary>
   );
 }
