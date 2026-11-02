@@ -1,5 +1,117 @@
 # Circle OS user-journey test record
 
+## Local writing engine (2026-11-02)
+
+Approved scope: five new local-engine/type/store/test files, plus personal-records
+plan, current task, handoff and this evidence record. Branch `paing-branch`,
+HEAD `f08c117`; the four existing modified documentation paths are preserved.
+No live UI/provider/legacy transport, personal records, environment, database
+service or remote setting was edited. Nothing staged, committed or deployed.
+
+### Setup and actual coverage
+
+`tests/writing-storage.browser.mjs` starts a test-only Vite harness on an
+ephemeral loopback port, importing the actual model/store/account-scope modules.
+Chromium contexts use Bangkok time, mobile touch and 390x844 or 360x844 viewports.
+Each context has isolated synthetic browser storage; external requests are
+blocked. There is no production test route, account bypass or new app control.
+The browser cases exercise IndexedDB directly through the actual public store
+API. These are local-storage integration checks, not the future writing UI.
+
+At both widths, the browser checks recover a draft after reload, exclude it from
+saved history/evidence, save it as Untitled, retry the same request after a
+simulated lost response/reload, correct it with the earlier version retained,
+and keep two Notes/day. Offline operations run while the harness is already
+loaded; reconnection followed by reload retains both a saved Note and a draft.
+There is no claim of offline app-shell loading/reloading from this test harness.
+Trash hides entries and their edit drafts; Restore preserves identity/versions/
+drafts; confirmed deletion and stale-retry rejection survive reload.
+
+Further browser cases establish request-success before transaction completion
+before promise resolution; abort after put success rolls back content and its
+receipt together. Injected `QuotaExceededError` on an actual transaction's put
+leaves the prior draft/version intact, rejects the operation and allows the
+same Save to retry once. Unavailable IndexedDB rejects reads/writes; unknown
+schema bytes remain unchanged rather than being reset. Separate draft-update
+failure rejects instead of claiming the newer editor text is recoverable.
+These are synthetic injected failures, not a device filled to its physical limit.
+
+Account cases preserve a legacy localStorage sentinel, keep A/B records separate,
+reject owner-mismatched requests, and reject delayed reads or writes across
+hashing/session change and live transaction abort. Two actual tabs preserve
+unrelated entries and competing corrections: one accepted version and one
+recoverable candidate, with no duplicate recovery copy. A real Save/draft-update
+race retains newer typing. A 05:50 start/06:10 save retains the starting Circle day,
+timezone, actual save time and unknown occurrence time after browser reload.
+Final browser contexts recorded no uncaught page errors.
+
+Model cases additionally check unchanged-save suppression, tag normalization,
+immutable original source/question/edition links, clone-isolated read views,
+discard/stale-discard handling, both Save/draft-update commit orders, explicit
+conflict resolution, immutable earlier versions, deliberate backdating and
+travel, both New York DST transitions, canonical timestamp/named-timezone
+validation and content-free deletion metadata. A's evidence selector excludes
+drafts/Trash/deletion; existing Athena/legacy-source integration remains B work.
+
+### Commands and results
+
+| Command | Final result |
+| --- | --- |
+| `node --test tests/writing-model.test.mjs tests/account-scope.test.mjs` | 33/33 passed: 25 new model cases and eight existing account-scope cases. |
+| `node --test --test-reporter=tap tests/writing-storage.browser.mjs` | 18/18 passed; final reported suite duration about 8.4 seconds, including setup. |
+| `node node_modules/eslint/bin/eslint.js app/os/writing-model.js app/os/writing-model.d.ts app/os/writing-store.ts tests/writing-model.test.mjs tests/writing-storage.browser.mjs` | Passed on the final five files. |
+| `node node_modules/typescript/bin/tsc --noEmit --incremental false --strict --skipLibCheck --target ES2022 --lib ES2022,DOM --module ESNext --moduleResolution bundler app/os/writing-store.ts` | Passed; checks the new store and imported type contracts without repository build/cache output. |
+
+Baseline before edits: `node --test tests/account-scope.test.mjs` passed 8/8.
+Initial implementation passed 31/31 model/account cases and 15/15 storage cases.
+Review then added three focused edge assertions. The command
+`node --test --test-name-pattern='conflicting saved correction|timestamps require|Trash hides' tests/writing-model.test.mjs`
+failed 3/3: conflict recovery duplicated an already durable candidate, timestamp
+validation accepted ambiguous dates, and ordinary draft recovery included
+trashed entries. The fixes reused an existing identical candidate, required
+canonical UTC/named timezone input, and hid associated drafts until Restore.
+After these fixes the full model/account run passed 33/33 and storage passed
+15/15. The three final additional storage cases cover the actual Save/update
+race, failed draft update and browser timestamp round-trip; the final complete
+storage run passed 18/18 and focused lint passed again. Earlier attempts are
+not added together as separate unique coverage.
+
+Documentation review passed 88 local links including 29 heading fragments across
+the plan, current task, handoff, this record and the preserved decision log.
+Whitespace/tables/fences/conflict-marker checks and `git diff --check` passed
+with existing LF/CRLF warnings. A 242-file startup hash baseline found only the
+four approved record changes, 238 unchanged files and five approved new files,
+with no removals. Hash checks preserved each startup historical tail after
+newline normalization and the decision log byte-for-byte. New-file formatting
+checks also passed. These are document/scope checks, not further runtime tests.
+
+### Limits, invariants and next action
+
+This is the new local engine, not a connected multi-entry editor or general
+history UI. Actual New Note/Save/Send/Versions/Undo/confirmation placement,
+failure/recovery wording, focus, accessibility and idle/swipe integration still
+need B/C implementation and app/browser verification. The existing Note
+placeholder fallback and premature Sent source concerns are unchanged.
+No full app build, broad suite/lint, repository TypeScript, chapter check,
+physical phone/other browser, hosted auth/revocation, Supabase evidence sync,
+backup/restore or personal import ran for A. Earlier Reflect fixture/swipe and
+tooling gaps remain. Local deletion does not certify remote/derived/log/backup
+deletion. Phase 1 is not certified.
+
+The engine reused scoped transactions and verified local atomicity, retry,
+account separation, no stale resurrection and local 06:00/DST behavior. No App
+Box geometry/type/gap, published chapter/reading, cadence/budget or personal state
+changed. No new geometry measurement is claimed. No performance optimization
+was justified; the whole-ledger layout is not a measured large-history/startup
+budget. Future capacity/retention work must preserve saved versions, drafts,
+receipts and deletion protection until a reviewed replacement exists.
+
+Next: review the compatibility/evidence contract and precise B file/check scope
+before code, including legacy ownership/unknown dates and invalid derived
+context. UI, real import, SQL/cloud work and deployment remain separately reviewed.
+
+---
+
 ## Hosted Supabase connection - 2026-10-31
 
 Developer follow-up: after guided Gmail SMTP/template setup, the developer

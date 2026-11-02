@@ -1,5 +1,108 @@
 # Current task
 
+## Local writing engine A - 2026-11-02
+
+Status: implemented and verified for the approved synthetic local engine scope.
+Live writing/history integration, personal import and cloud work remain unapproved.
+
+The developer explicitly approved five new files: `app/os/writing-model.js`,
+`app/os/writing-model.d.ts`, `app/os/writing-store.ts`,
+`tests/writing-model.test.mjs` and `tests/writing-storage.browser.mjs`; plus updates
+to the personal records plan, this task, handoff and journey evidence. Branch
+`paing-branch`, HEAD `f08c117`. The four pre-existing modified documentation
+paths remain preserved, including the decision log, which this slice did not edit.
+Nothing staged, committed, pushed or deployed.
+
+Delivered the account-scoped IndexedDB ledger, stable sources, separate drafts,
+saved versions, starting-day attribution, current/history/evidence selectors,
+durable receipts, retry/conflict handling, Trash/Restore and confirmed local
+deletion. Newer typing survives an earlier Save; conflicts retain candidates;
+session changes reject late work. Untitled is display-only. Invalid storage,
+ambiguous timestamps and unsupported timezones fail without resetting records.
+The live editor/provider/transport and personal records are untouched.
+
+Final verification: `node --test tests/writing-model.test.mjs tests/account-scope.test.mjs`
+passed 33/33; `node --test --test-reporter=tap tests/writing-storage.browser.mjs`
+passed 18/18 using isolated Chromium at 390x844/360x844. Focused ESLint across
+all five new files and strict targeted TypeScript for the store passed. Initial
+31/31 and 15/15 passes preceded three added failing edge checks, fixed before
+the final runs. Detailed commands, attempts and limits are in
+[the journey record](USER_JOURNEY_TESTING.md#local-writing-engine-2026-11-02);
+the delivered contract is in [plan section 14.5](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#145-local-engine-a-delivered---2026-11-02).
+
+Documentation format/link audit passed 88 local links, including 29 fragments,
+across five records; `git diff --check` passed with existing LF/CRLF warnings.
+Compared with the 242-file startup baseline, only the four approved records
+changed, 238 files stayed unchanged and the five approved code/test files were
+added. No removals; startup histories and the decision-log bytes are preserved.
+
+No geometry/type/gap, cadence/budget, published chapter/reading or live app state
+changed. The 06:00 boundary, DST, local atomicity, retry and account isolation were
+checked for A. No full build/app journey, physical phone/other browser, hosted,
+sync, backup or real import result is claimed. Local deletion covers only this
+new ledger; existing remote/derived copies are B/later work. Existing Note
+placeholder/Sent concerns, Reflect fixture/swipe failures, hosted refresh/
+revocation/device and broad-tooling gaps remain. Phase 1 is not certified.
+No performance optimization was justified or attempted.
+
+Next: review B's compatibility/evidence contract and exact file/test scope,
+including unknown legacy dates/ownership, active-source and stale-memory handling,
+and rendering current state rather than old receipts. Obtain manual approval
+before integration; C's physical controls/draft routing, personal import, SQL/
+cloud work and deployment remain separate. Earlier snapshots retain evidence.
+
+---
+
+## Local writing interactions and implementation proposal - 2026-11-02
+
+Status: writing behavior confirmed; four-file documentation update approved.
+Documentation completed and checked. No application implementation authorized.
+
+The developer confirmed Untitled for an absent title; saved Note visibility with
+New Note; automatic reopening and deliberate discard of recovered drafts;
+day-grouped History in the same App Box with Versions; real-writing-only Save
+and no version for unchanged content; starting Circle day with separate actual
+save time; menu-based Trash/Undo, Trash inside History, Restore and confirmed
+Delete forever; shared Thought rules with Send/Save changes and retained question
+sources; durable save feedback, failure/retry handling and no automatic draft expiry.
+
+Approved paths: `docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md`,
+`docs/DECISION_LOG.md`, this task and `docs/SESSION_HANDOFF.md`. The plan owns the
+[walkthrough](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#55-one-week-walkthrough-for-implementation-review)
+and [proposed contracts/files/checks](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#141-proposed-local-contracts).
+Technical choices and the A/B/C implementation split remain proposals. The
+recommended first code review is A's synthetic local engine; compatibility,
+live UI and personal import/activation have later review boundaries.
+
+Branch `paing-branch`, starting HEAD `f08c117`; initial working tree clean.
+Preserve prior task/handoff/decision evidence. No code, test, private record,
+environment, external runtime file, database or remote service changed. No
+runtime invariant or geometry changed; nothing staged, committed or deployed.
+
+Verification: consistency/format review passed; the read-only audit checked 75
+local links including 24 heading fragments. Earlier task/handoff/decision entries
+remain intact after newline normalization. The 242-file hash comparison found
+only these four documents changed and 238 files unchanged, with no additions or
+removals. `git diff --check` passed with existing LF/CRLF warnings. No new runtime,
+build/lint, browser, chapter, hosted, sync or backup result is claimed.
+
+Source findings: Note still replaces legacy answer values and its blur fallback
+can use placeholder text; drafts are in memory and Sent precedes the async local
+save. These are source findings requiring runtime checks, not bug fixes.
+Reflect fixture/swipe failures, hosted refresh/revocation/cross-device checks,
+physical phones/other browsers, broad suite/lint/TypeScript/dependency-audit gaps
+and real evidence sync/backup/deletion remain open. Phase 1 is not certified.
+Sign-in/loading polish remains an early separate proposal; Day One follows
+history/safe sync. No confirmed writing choice needs to be asked again.
+
+Next: review the proposed local contracts and A's exact five code/test files and
+synthetic checks, settle dependent engineering questions, and obtain manual code
+approval. B/C need compatibility and control-placement review before integration;
+owner mapping/import, cloud work and deployment stay separately reviewed.
+Earlier snapshots below retain unique evidence and historical next actions.
+
+---
+
 ## Plan reconciliation and ordered work queue - 2026-11-02
 
 Status: approved documentation reconciliation and work queue completed and

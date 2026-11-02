@@ -4,6 +4,47 @@ Record confirmed decisions, preferences, proposals, and unresolved questions
 separately. Older handoff entries remain historical evidence; this log records
 the decisions that supersede their active product assumptions.
 
+## 2026-11-02 - Local writing interactions and save feedback
+
+The developer confirmed the writing choices in conversation, then explicitly
+approved a documentation-only update to the personal records plan, this log,
+current task and handoff. The detailed target is in the
+[writing journeys](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#5-writing-journeys).
+
+- A missing Note title saves as **Untitled**. Actual user writing in title or
+  body is required; the automatic label and placeholder alone do not count.
+- Save leaves the saved Note visible with **New Note** available. Return to
+  unfinished writing by reopening its recovered draft; **Discard draft** leaves
+  saved Notes intact. Drafts have no automatic expiry and remain until successful
+  Save/Send or deliberate discard.
+- **History** groups writing by Circle day, newest first, and opens an entry in
+  the same App Box. Corrections preserve earlier **Versions**; unchanged saves
+  create no extra version.
+- New writing keeps the Circle day when writing began, with actual save time
+  recorded separately, including a 05:50 start and 06:10 save.
+- **Move to Trash** is in the saved Note's menu with immediate **Undo**. **Trash**
+  is inside History and offers **Restore** and **Delete forever**; permanent
+  deletion requires confirmation. Complete deletion coverage still needs review.
+- Thoughts shares draft/date/history/version/Trash rules. Use **Send** for new
+  entries and **Save changes** for corrections. Keep Deep Thought/reading
+  questions and sources; corrections do not resend, replay outcomes or request
+  an Athena reply.
+- **Saved on this device** or **Sent** follows successful local persistence.
+  Failed saves keep text open with duplicate-safe retry; a failed recovery-store
+  write shows a warning rather than a promise of draft recovery.
+
+Reasons: remove the title barrier, keep saved writing visible, preserve unfinished
+work and earlier wording, make review/removal deliberate, and distinguish local
+save from typing or cloud backup. The starting-day choice avoids moving an entry
+because writing crossed 06:00.
+
+The plan's [local contracts and file proposal](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#141-proposed-local-contracts)
+are engineering proposals for the next review. This decision approves no code,
+schema, real-data migration, provider integration or deployment. Exact physical
+layout, compatibility mapping and remaining technical contracts remain open.
+Earlier decisions below retain their reasons; these choices resolve their
+previously open writing details without certifying implementation or Phase 1.
+
 ## 2026-11-02 - Plan reconciliation, UI priority and five Protocol durations
 
 The developer requested a review and ordering of current/previous plans, tasks,
