@@ -1,6 +1,6 @@
 # Circle OS roadmap
 
-Updated: 2026-11-02.
+Updated: 2026-11-03 (bounded Note contract only; delivery order unchanged).
 
 Destination: an Athena-powered iOS and Android app with Supabase as its backend.
 Delivery goal for this project: a web MVP for friends and family to test before
@@ -129,8 +129,15 @@ Work:
 - Define a versioned database schema and user ownership. Separate private
   lifestyle evidence from authentication and optional public summaries.
 - Establish the reviewed record/history contract locally first: multiple titled
-  Notes, separate Thoughts, recovered drafts outside evidence, Save/Send,
-  accessible saved versions, App histories and a shared day view.
+  Notes with autosave, separate Thoughts with Send, internal recovery outside evidence,
+  internal Note save revisions, existing Thought version review, App histories
+  and a shared day view. Note has direct History with row trash-bin buttons and
+  restoration in Trash; its Versions/Undo UI is removed under the later
+  2026-11-03 refinement. New Note is in the Note editor Footer; Note/History/Trash
+  grow to 480px (60% of a short viewport, never below the shared minimum), then
+  Body scrolls with header/actions in place. Trashing a Note is silent. See the
+  [current contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1411-bounded-note-pages---2026-11-03).
+  The delivery order is unchanged.
 - Preserve earlier habit/Protocol meaning through prospective changes and
   support dated past-day and weekly-review corrections. Keep original day/timezone
   assignments; new entries follow current local time and the 06:00 boundary.

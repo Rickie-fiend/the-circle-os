@@ -26,10 +26,17 @@ export const LOCAL_DEEP_THOUGHTS: readonly Readonly<DeepThoughtQuestion>[];
 export function unaskedDeepThoughts(
   state: unknown,
   questions?: readonly Readonly<DeepThoughtQuestion>[],
+  writing?: DeepThoughtWritingContext,
 ): Readonly<DeepThoughtQuestion>[];
 export function countDeepThoughtWords(value?: string): number;
 export function isDeepThoughtRewardEligible(options?: { text?: string; activeMs?: number }): boolean;
 export function isSentenceWorthBreakingFor(text?: string): boolean;
-export function createLocalDeepThoughtPrompt(state: unknown, dateKey: string, offset?: number): DeepThoughtPrompt;
+export function createLocalDeepThoughtPrompt(state: unknown, dateKey: string, offset?: number, writing?: DeepThoughtWritingContext): DeepThoughtPrompt;
 export function selectDeepThoughtPrompt(state: unknown, dateKey: string, visit?: number): DeepThoughtPrompt;
+export function selectDeepThoughtPrompt(state: unknown, dateKey: string, visit: number, writing: DeepThoughtWritingContext | undefined): DeepThoughtPrompt | null;
 export function deepThoughtSourceLabel(source?: string, questionId?: string): string;
+import type { WritingCompatibilityView } from "./writing-compatibility-model.js";
+export type DeepThoughtWritingContext = {
+  view: WritingCompatibilityView | null;
+  curiosity: readonly Record<string, unknown>[];
+};

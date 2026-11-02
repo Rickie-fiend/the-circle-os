@@ -78,7 +78,11 @@ export type WritingState = {
   entries: Record<string, WritingEntry>;
   drafts: Record<string, WritingDraft>;
   receipts: Record<string, WritingReceipt>;
-  tombstones: Record<string, { id: string; generation: number; deletedAt: string }>;
+  tombstones: Record<string, {
+    id: string; generation: number; deletedAt: string;
+    /** Absent on older deletion markers; never reconstruct missing history. */
+    usage?: { kind: WritingKind; answeredAt: string; questionId?: string; question?: string };
+  }>;
 };
 export type WritingResult = { state: WritingState; receipt: WritingReceipt };
 export type WritingHistoryEntry = Omit<WritingEntry, "versions" | "currentVersionId"> & {

@@ -168,6 +168,14 @@ export function assertWritingState(state, owner = state?.owner) {
   }
   for (const [key, tombstone] of Object.entries(state.tombstones)) {
     requireValue(tombstone && tombstone.id === key, "Invalid writing deletion marker."); integer(tombstone.generation, 1); instant(tombstone.deletedAt);
+    if (tombstone.usage !== undefined) {
+      const usage = tombstone.usage;
+      requireValue(usage && kinds.has(usage.kind) && Object.keys(usage).every(name => ["kind", "questionId", "question", "answeredAt"].includes(name)), "Invalid saved-use metadata.");
+      instant(usage.answeredAt);
+      for (const name of ["questionId", "question"]) if (usage[name] !== undefined) {
+        requireValue(usage.kind === "deep-thought" && typeof usage[name] === "string", "Invalid answered-question metadata.");
+      }
+    }
   }
   return state;
 }
@@ -246,7 +254,8 @@ export function applyWritingOperation(original, prepared) {
     const existing = state.drafts[input.id];
     requireValue(existing && existing.entryId === entryId && existing.status !== "discarded", "The draft is no longer available.", "draft-closed");
     matchSource(existing, input);
-    requireValue(input.content.title.trim() || input.content.body.trim(), "Write something before saving.");
+    // Clearing an existing Note is a dated correction, never removal of its value.
+    requireValue(input.content.title.trim() || input.content.body.trim() || (entry?.kind === "note" && input.kind === "note"), "Write something before saving.");
     requireValue(existing.version >= input.version, "The requested draft revision does not exist.");
     if (existing.version === input.version) requireValue(existing.status === "active" && same(existing.content, input.content) && same(existing.attribution, input.attribution), "The saved snapshot does not match its draft.");
     if (entry) matchSource(entry, input);
@@ -285,7 +294,12 @@ export function applyWritingOperation(original, prepared) {
     else {
       if (command.type === "delete") {
         requireValue(entry.status === "trashed", "Move writing to Trash before deleting it forever.");
-        state.tombstones[entryId] = { id: entryId, deletedAt: command.at, generation: entry.generation + 1 };
+        // Remember use and the original question, never the answer or its versions.
+        const usage = { kind: entry.kind, answeredAt: entry.createdAt };
+        if (entry.kind === "deep-thought") for (const name of ["questionId", "question"]) {
+          if (entry.source?.[name] !== undefined) usage[name] = entry.source[name];
+        }
+        state.tombstones[entryId] = { id: entryId, deletedAt: command.at, generation: entry.generation + 1, usage };
         delete state.entries[entryId];
         for (const [key, draft] of Object.entries(state.drafts)) if (draft.entryId === entryId) delete state.drafts[key];
         receipt.outcome = "deleted"; receipt.versionId = null; receipt.generation = entry.generation + 1;

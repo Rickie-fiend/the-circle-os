@@ -24,6 +24,13 @@ Reported during the mobile-web user journey on 2026-10-29.
 
 ## Status
 
+2026-11-02 account-writing follow-up: bug 6 is fixed and browser-verified for
+the new account Note editor. Focus alone leaves values empty and creates no
+draft; only typed values can be saved. The isolated legacy editor still
+reproduces the report and remains on its existing path. This is not a claim
+that legacy writing was migrated or that every Note path is fixed. See
+[account UI evidence](docs/USER_JOURNEY_TESTING.md#account-writing-ui-2026-11-02).
+
 These are user-reported observations. Bug 17 was reproduced in the isolated
 Playwright run recorded below and fixed in the 2026-10-30 follow-up. Bug 10 was
 not reproduced in the focused 2026-10-30 check below. Bug 11's forward-left

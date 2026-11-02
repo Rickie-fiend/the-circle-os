@@ -68,6 +68,16 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await server?.close(); });
 
+test("permanently deleted Deep Thought retains question/use metadata across real store reload", { timeout: 60_000 }, async () => isolated(390, async page => {
+  const entryId = await page.evaluate(async () => {
+    const a=window.api,d=a.input("Answer that must leave the ledger",{kind:"deep-thought",source:{questionId:"deep-source",question:"Original question?",source:"local"}});
+    await a.write(d);await a.save((await a.load()).drafts[d.id]);await a.life("trash",d.entryId);await a.life("delete",d.entryId,{confirmed:true});return d.entryId;
+  });
+  await page.reload();await page.waitForFunction(()=>Boolean(window.api));
+  const result=await page.evaluate(async id=>{const state=await window.api.load();return {usage:state.tombstones[id].usage,containsAnswer:JSON.stringify(state).includes("Answer that must leave"),history:window.api.writingHistory(state)};},entryId);
+  assert.deepEqual(result,{usage:{kind:"deep-thought",answeredAt:"2026-11-02T03:00:00.000Z",questionId:"deep-source",question:"Original question?"},containsAnswer:false,history:[]});
+}));
+
 async function open(page) {
   await page.goto(`${baseURL}/__writing-storage-test`);
   await page.waitForFunction(() => Boolean(window.api));

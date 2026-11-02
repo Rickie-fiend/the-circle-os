@@ -1,10 +1,83 @@
 # Circle OS architecture
 
-Updated: 2026-11-02. Read [product](PRODUCT.md), [roadmap](ROADMAP.md), and
+Updated: 2026-11-03. Read [product](PRODUCT.md), [roadmap](ROADMAP.md), and
 [decisions](DECISION_LOG.md) alongside this document. Target designs below need
 reviewed implementation and verification under the current web beta sequence.
 
 ## Current prototype
+
+### Bounded account Note pages - 2026-11-03
+
+The approved refinement moves New Note to the editor Footer and removes the
+Note trash-success notice. New Note waits for local acceptance, including newer
+typing during an in-flight save, before replacing the buffer. Composition,
+failed saves and conflicts preserve current text. The persistent action reuses
+the shared button engine's repeatable mode.
+
+Scoped Note CSS caps the existing Page within the App Box: at most 480px for the
+whole frame, or 60% of the dynamic viewport on short screens, never below the
+shared resting minimum. Body is the single scroll region; Header, Heading and
+Footer remain fixed within the box. Footer keeps its full intrinsic content row
+and its action gap follows actual footer content when replacing an empty list;
+Note resets native textarea scroll offsets after shared content sizing, so Body
+owns the single scroll region. Navigation/new writing resets content scroll.
+The existing Page, App-back and swipe engines remain; Habit/Protocol and other
+writing keep their growth rules. No schema/provider/store or sync change occurs.
+See the [contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1411-bounded-note-pages---2026-11-03).
+
+### Account Note History controls - 2026-11-03
+
+The later approved Note refinement removes its Versions routes/controls, Undo
+and routine local-save messages. Revision IDs, saved content versions, schema,
+provider/store and conflict guards remain internal and unchanged. Direct HISTORY
+navigation shares NOTE's header styling; focused Note fields keep the caret
+without an outline/box. Other writing controls are unchanged.
+
+Local History rows use separate open and orange trash-bin buttons. Saved rows
+reuse generation-checked Trash commands. A recovery row saves its exact stored
+snapshot before moving that entry to Trash; failure/conflict leaves text
+recoverable and shows an alert. No buffer is discarded or imported. Trashing
+cannot open the row editor; restoration occurs through the retained Trash page,
+with confirmed permanent deletion. Legacy compatibility sources remain read only.
+See the [current Note contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1410-note-history-controls---2026-11-03).
+
+### Account Note autosave - 2026-11-03
+
+The approved Note-only refinement uses the same account ledger and queued
+commands. Per-input recovery still uses internal draft records; the Note UI has
+no draft workflow or manual Save. A one-second typing pause, editor departure,
+visibility loss or pagehide requests a saved revision. Input composition defers
+autosave until composition ends. Route unmount makes a best-effort flush while
+the account provider remains open; browser/account closure can stop that work,
+so durable recovery is reopened and autosaved on the next visit. New typing
+during a save remains live and receives a subsequent save. Conflicts stop
+autosave for explicit review; failed writes retain text and a retry action.
+
+Note adopts initial recovery once, so an idle second tab cannot begin autosaving
+another tab's new recovery buffer. Older buffers remain reachable as Note rows
+in History and save when opened. Existing Note corrections may save empty
+title/body as a new immutable version; new empty entries and empty Thoughts
+remain invalid. Legacy identifiers/schema, account epochs, local-only storage,
+original day attribution and no-AI-on-save remain. Thoughts and reading answers
+keep explicit Send/Save changes. The dated editor snapshot below records the
+previous controls. See the [current evidence](USER_JOURNEY_TESTING.md#note-autosave-refinement-2026-11-03).
+
+### Account writing editors - 2026-11-02
+
+The approved C slice connects `writing-pages.tsx` through Today and Reflect to
+the account-bound writing provider. A live editor buffer survives provider
+refreshes. Per-editor queued draft/save commands use version/generation checks;
+only that editor's accepted save advances its base. New typing during Save
+remains a newer draft. Conflicts preserve both copies and require an explicit
+review choice. Account epochs close stale callbacks. No writing is copied into
+CircleState, its outbox or a legacy payload. No AI runs on Save/Send.
+
+History, immutable versions and local Trash/Restore/Delete forever read the
+current provider view. Deletion requires Trash and confirmation. Older
+compatibility sources appear read only; no migration links or ownership claims
+were created. Shared Page/App-back/swipe/button engines still own layout and
+motion. The reading answer is embedded in its existing reading Page. See
+[UI verification](USER_JOURNEY_TESTING.md#account-writing-ui-2026-11-02).
 
 ```text
 Browser: Today / Reflect / chapter player / authoring
@@ -41,6 +114,49 @@ It does not yet connect lifestyle records to a Supabase database.
 
 Runtime files may still reference the vault. Replacing missing product-document
 authorities does not remove these integrations or migrate personal data.
+
+### Account-bound local writing provider - 2026-11-02
+
+The separately approved local writing engine, compatibility adapter and B2
+provider are implemented. `WritingProvider` in `app/os/writing-provider.tsx`
+mounts below `CircleStateProvider` only for account scopes, after account entry
+and scoped state loading. Legacy mode keeps its existing provider/transport.
+This is a React/local-storage provider, not an AI provider or cloud service.
+
+The writing ledger remains in its account-specific IndexedDB database, separate
+from `CircleState`, its outbox and `buildServerPayload`. Drafts stay in the ledger
+and outside saved evidence. No personal records are imported or assigned to an
+account. Existing same-account answers are a read-only compatibility snapshot;
+unknown dates remain unknown and no real compatibility links are generated.
+
+Every action captures its account scope. Reads also carry input/request guards
+through IndexedDB and asynchronous hashing. Superseded/closed results cannot
+publish. A commit's receipt reports local acceptance; rendering uses a fresh
+store read. A successful commit followed by failed refresh remains locally
+accepted with a separate read error. Failed writes keep their recoverable
+drafts and permit stable-operation retry; the editor must retain newer open text.
+
+Committed writes emit content-free same-tab/BroadcastChannel/storage signals.
+Other tabs and foreground/visibility events refresh the ledger. When both
+cross-tab channels are unavailable, foreground refresh remains the fallback;
+no immediate background freshness guarantee is made in that degraded case.
+Circle-state storage events also refresh the read-only old-answer snapshot.
+This does not repair the older whole-state store's concurrent-write protocol.
+
+Deep Thought and first-use checks use shared question/app-use metadata, without
+editable answer copies. Reflect gates writing-derived context by current
+owner/source/version dependencies, withholding mixed/unknown dependencies.
+Independent unscoped tool context retains its existing behavior; this is not a
+new authorization/correction system for those other domains. Received reading
+prose/editions stay unchanged and no generation runs on writes.
+
+Permanent local deletion retains minimal question/app-use metadata beside its
+tombstone, while removing answer/version/draft content. Old markers without that
+metadata load honestly as unknown and cannot reset questions/first use. Wider
+derived/device/server/log/backup deletion remains separate. Writing controls,
+history UI and real migration/sync remain unfinished. See the
+[delivered contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#147-account-bound-provider-delivered---2026-11-02)
+and [verification](USER_JOURNEY_TESTING.md#account-bound-writing-provider-2026-11-02).
 
 ### Supabase account entry implementation - 2026-10-31
 
@@ -443,7 +559,9 @@ operational backup is implemented or verified by this documentation.
 Target boundaries:
 
 - Multiple titled Notes and separate untitled Thoughts have stable entry IDs.
-  Recover drafts locally, but only Save/Send creates saved history/evidence.
+  Note autosaves with internal local recovery; Thoughts retain drafts and Send.
+  Only committed versions supply saved evidence. Recovery rows in Note History
+  are recoverable text, not accepted saved evidence.
   Keep earlier saved versions after corrections; do not create a permanent
   user-facing version for every keystroke.
 - Domain records retain their own shape. App histories and the shared day view

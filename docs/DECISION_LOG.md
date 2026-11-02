@@ -4,6 +4,160 @@ Record confirmed decisions, preferences, proposals, and unresolved questions
 separately. Older handoff entries remain historical evidence; this log records
 the decisions that supersede their active product assumptions.
 
+## 2026-11-03 - Bounded Note pages and editor New Note
+
+The developer requested New Note on the Note page, bounded growth with scrolling
+on Note/History/Trash, and removal of Moved to Trash feedback. They explicitly
+approved the reviewed proposal: retain the shared minimum, cap the whole App Box
+at 480px, reduce that ceiling to 60% of the dynamic viewport on short phones,
+and never shrink below the shared minimum. Body alone scrolls; Header, Heading
+and Footer stay in place. This is an account Note exception to continuous growth;
+the Protocol/Routine reasons and behavior remain unchanged.
+
+New Note is the editor Footer action, removed from History. It saves current
+text before opening a fresh blank Note, including typing that arrives during
+save. Failure, unfinished composition or conflict keeps text available. History
+row bins still move only their Note; the move has no success text or Undo.
+Restore and confirmed Delete forever remain in Trash. Keep actual error alerts.
+
+Reason: bound the writing/history surfaces to a comfortable phone-sized area
+while keeping navigation/actions reachable and starting another Note directly
+from writing. This supersedes earlier New Note-in-History and unlimited Note
+frame growth; it does not limit writing length. Implementation, focused checks
+and owning records are approved. No personal migration, store/schema, cloud
+service or deployment change is included. See the
+[contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1411-bounded-note-pages---2026-11-03)
+and [evidence](USER_JOURNEY_TESTING.md#bounded-note-pages-2026-11-03).
+
+## 2026-11-03 - Direct Note History and row Trash controls
+
+After trying the earlier Note refinement, the developer requested removal of
+Versions, Saving/Saved on this device messages, and the orange input box. They
+confirmed that the Trash page stays, with Move to Trash moved to an orange bin
+icon beside each Note in History. HISTORY replaces the ellipsis and must align
+with NOTE. They then explicitly rejected Undo and approved implementation,
+tests and records with restoration only from the Trash page.
+
+This is Note-only scope. Remove Note Versions controls/screens while retaining
+internal revision records for save/conflict safety. Save silently; retain actual
+failure alerts. Remove only writing-field focus outlines/boxes, preserving the
+caret and button keyboard focus. Keep 44px header/bin targets, the shared App
+Box geometry, autosave/recovery, History/New Note and Trash/Restore/Delete forever.
+Read-only older sources stay read only. Thoughts/reading answers retain their
+existing controls and Send behavior.
+
+Reason: writing and history should stay direct, with removal handled in one
+place and restoration handled in Trash. This supersedes Note Versions, Undo,
+ellipsis and routine save-feedback requirements in earlier decisions below.
+No personal/legacy migration, schema change, cloud sync or deployment is included.
+See the [contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1410-note-history-controls---2026-11-03)
+and [verification](USER_JOURNEY_TESTING.md#note-history-controls-2026-11-03).
+
+## 2026-11-03 - Note autosave and simpler writing controls
+
+The developer supplied the writing/history/Trash reference image, confirmed
+Note-only scope and autosave after a short typing pause and on leaving, then
+explicitly approved the concrete implementation, tests and owning records.
+Thoughts, Deep Thoughts and reading answers retain Send and their draft flow.
+
+- Use Circle Orange `#E36B37` for Note labels, navigation and text actions.
+  Keep authored title/body in Ink, the shared App Box geometry and Geist.
+- Remove Note Save, Clear, Discard, Drafts, draft recovery controls and draft
+  messages. Keep automatic local recovery internally, preserving existing text.
+- Autosave after a one-second pause and on leaving the editor; finish input
+  composition first. A local success message requires durable acceptance.
+- Keep the saved Note visible. History opens entries directly for editing,
+  groups by Circle day with times, and carries New Note and Trash. Keep earlier
+  versions, Move to Trash, Undo, Restore and confirmed Delete forever.
+- Manual selection/deletion can clear an existing Note. Store that empty value
+  as a new version so earlier text cannot return; retain its earlier versions.
+  Empty new composers create no saved entry. Competing copies still need review.
+
+Reason: writing should save naturally without a separate draft-management job.
+These choices supersede earlier Note Save/draft/Clear requirements below and in
+the writing plan. They do not migrate personal/legacy writing, enable cloud sync,
+request Athena or authorize deployment. Verification is recorded in the
+[journey record](USER_JOURNEY_TESTING.md#note-autosave-refinement-2026-11-03).
+
+## 2026-11-02 - Account writing provider and deleted-question metadata
+
+Later approval on the same day: the developer explicitly approved C's account
+Note/Thought/reading-answer Save/Send editors, draft recovery, History, Versions
+and Trash using the existing App Box, the five listed application/test paths,
+Page standard, bug record and nine owning/evidence records. Existing older
+writing remains read only pending separate migration review. The generated
+preview was a placement aid, not authority to change Circle's visual language
+or shared geometry. The local UI implementation and bounded verification are
+recorded in [section 14.8](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#148-account-writing-ui-delivered---2026-11-02).
+
+The developer chose to keep a permanently deleted Deep Thought's question
+answered and skip first-use greetings. The answer and its saved versions are
+removed. The reviewed provider scope retains only question/app-use metadata
+beside the local deletion marker; it retains no answer text, saved versions or
+drafts. Older markers without this metadata remain unknown. They do not justify
+reopening questions, rewarding another answer or greeting the person again.
+
+Reason: deleting writing does not mean the question was never answered or that
+the person needs another first-use introduction. This does not change the
+existing local question-pool exhaustion rule, which cycles after all questions
+are spent. Complete remote/derived/log/backup deletion remains separate work.
+
+The developer explicitly approved B2's exact provider/store/contract/consumer/
+test files and nine records after review, then said to continue implementation.
+The provider is mounted only inside an account's existing boundary. It exposes
+current local views, rejects old-epoch and superseded reads, refreshes after
+commits/cross-tab changes and separates write acceptance from refresh failures.
+Deep Thought, first-use and Reflect consume read views without copying writing
+into editable survey answers. Existing independent tool context and received
+readings retain their separate paths. No model runs on saving.
+
+Writing controls/history UI, personal owner mapping/import, cloud sync and
+deployment remain separately reviewed. The delivered contract and actual
+verification are in [plan section 14.7](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#147-account-bound-provider-delivered---2026-11-02)
+and [the provider evidence](USER_JOURNEY_TESTING.md#account-bound-writing-provider-2026-11-02).
+Earlier decisions below remain dated evidence; their open deletion-metadata and
+unmounted-provider statements are superseded for this approved local scope.
+
+---
+
+## 2026-11-02 - Writing compatibility, Trash question status and launch languages
+
+The developer confirmed that a trashed Deep Thought keeps its question marked
+answered while its writing stays excluded from Athena. Trash does not reopen
+the question. Question/first-use metadata after permanent deletion still needs
+review before live activation; this decision does not choose its retention.
+
+The users are Burmese people with varied English, mostly basic. At web launch,
+the UI and Athena's responses use simple English. Users can write in Burmese,
+English or mixed language; Athena must understand that writing and respond in
+English. After web launch, UI and Athena support both Burmese and English.
+Thailand is a location/connectivity requirement, not a Thai language requirement.
+This supersedes the earlier open launch-language wording. Exact instructions,
+provider quality and later dual-language delivery still require implementation
+and verification. No live AI capability is certified by preserving Unicode text.
+
+After a read-only source/test review, the developer explicitly approved the
+compatibility/evidence adapter and record-update scope: three new adapter/type/
+test files, changes to the memory model and memory tests, and eight documents
+(personal-records plan, this log, Product, beta plan, Work Plan, Current Task,
+Session Handoff and journey evidence). Provider/UI activation, personal import,
+cloud work and deployment remain separate scopes. The earlier B grouping is
+split into this adapter (B1) and a later account-bound provider (B2).
+
+Reason: preserve existing saved writing without inventing ownership/dates,
+prevent duplicate evidence, carry exact source/version dependencies and withhold
+stale interpretations. The adapter is a pure read view over explicitly scoped
+snapshots. Supplied compatibility links are synthetic mapping rehearsals, not
+permission to claim/import records. It preserves authored reading history and
+does not call a model. A legacy interpretation without verifiable dependencies
+cannot become a current claim merely because it was copied into a new view.
+
+Delivered contract and limits: [plan section 14.6](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#146-compatibility-and-evidence-adapter-delivered---2026-11-02).
+Actual checks and remaining live gaps: [adapter evidence](USER_JOURNEY_TESTING.md#writing-compatibility-and-evidence-adapter-2026-11-02).
+Earlier decisions and reasons follow unchanged.
+
+---
+
 ## 2026-11-02 - Local writing interactions and save feedback
 
 The developer confirmed the writing choices in conversation, then explicitly

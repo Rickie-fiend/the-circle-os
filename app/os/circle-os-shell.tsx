@@ -95,6 +95,8 @@ import {
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
+import { WritingProvider, useWriting } from "./writing-provider";
+import { AccountWritingPage } from "./writing-pages";
 import {
   assertAccountScope,
   getAccountScope,
@@ -1540,7 +1542,9 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
 
   return (
     <CircleStateContext.Provider value={value}>
-      {children}
+      <WritingProvider scope={scope} enabled={ready} answers={state.profile.profileCase.survey.answers} memory={state.athenaMemory}>
+        {children}
+      </WritingProvider>
     </CircleStateContext.Provider>
   );
 }
@@ -1778,6 +1782,10 @@ function hourFromTime(value: string, fallback: number) {
 export function TodayExperience() {
   const { state, today, ready, dateKey, updateState, updateDay, updateToday } =
     useCircleState();
+  const writing = useWriting();
+  const writingView = writing ? writing.view : undefined;
+  const [accountNoteBusy, setAccountNoteBusy] = useState(false);
+  const [accountThoughtBusy, setAccountThoughtBusy] = useState(false);
   const router = useRouter();
   const surveyAnswers = state.profile.profileCase.survey.answers;
   const wakeTime = surveyAnswer(surveyAnswers, "routine-wake");
@@ -1806,7 +1814,7 @@ export function TodayExperience() {
   // now clear button doesnt show creative lines."
   const [noteGreeted, setNoteGreeted] = useState(false);
   const notePlaceholder =
-    (!noteGreeted ? firstUsePlaceholder(state, "note") : "") ||
+    (!noteGreeted ? firstUsePlaceholder(state, "note", writingView) : "") ||
     notePlaceholderPool.placeholders.find(
       (placeholder) => placeholder.id === notePlaceholderId,
     )?.text ||
@@ -1901,9 +1909,9 @@ export function TodayExperience() {
   // is rather than asking a question written for someone who already knows.
   const thoughtPlaceholder = useMemo(
     () =>
-      firstUsePlaceholder(state, "thoughts") ||
+      firstUsePlaceholder(state, "thoughts", writingView) ||
       selectThoughtPrompt(state, dateKey, liveNow),
-    [dateKey, liveNow, state],
+    [dateKey, liveNow, state, writingView],
   );
   const [thoughtSent, setThoughtSent] = useState(false);
   // "clicked" is the button's own success beat; "departing" is the written
@@ -3462,6 +3470,10 @@ export function TodayExperience() {
   }
 
   function openNoteLine(event: ReactMouseEvent<HTMLButtonElement>) {
+    openNoteLineFrom(event.currentTarget);
+  }
+
+  function openNoteLineFrom(source: HTMLElement) {
     if (noteBack.flipping) return;
     const line = selectLine(linePool, state.seenLines);
     if (!line) return;
@@ -3470,7 +3482,7 @@ export function TodayExperience() {
       setRevealedLinePage(0);
       setLineFeedbackOpen(false);
       updateState((current) => markLineSeen(current, line.id));
-    }, event.currentTarget);
+    }, source);
   }
 
   function closeNoteLine(source?: HTMLElement | null) {
@@ -3812,6 +3824,10 @@ export function TodayExperience() {
   }
 
   function openDeepThoughts(event: ReactMouseEvent<HTMLButtonElement>) {
+    openDeepThoughtsFrom(event.currentTarget);
+  }
+
+  function openDeepThoughtsFrom(source: HTMLElement) {
     if (thoughtBack.flipping || thoughtTransition !== "idle") return;
     const nextMode = thoughtMode === "deep" ? "regular" : "deep";
     // A different question every time it is opened. Sai: "better be refresh
@@ -3820,8 +3836,9 @@ export function TodayExperience() {
     // so the one skipped is still there to come back to.
     const prompt =
       nextMode === "deep"
-        ? selectDeepThoughtPrompt(state, dateKey, deepThoughtVisits.current)
+        ? selectDeepThoughtPrompt(state, dateKey, deepThoughtVisits.current, writing ? { view: writing.view, curiosity: writing.memory.curiosity || [] } : undefined)
         : null;
+    if (nextMode === "deep" && !prompt) return;
     if (nextMode === "deep") deepThoughtVisits.current += 1;
     pauseDeepWriting();
     concealThoughtButton();
@@ -3832,7 +3849,7 @@ export function TodayExperience() {
       } else {
         setDeepThoughtPrompt(null);
       }
-    }, event.currentTarget);
+    }, source);
   }
 
   async function sendThought(event: FormEvent<HTMLFormElement>) {
@@ -3993,6 +4010,7 @@ export function TodayExperience() {
   }
 
   function checkInIdleCard() {
+    if (writing) return <AccountWritingPage kind="note" placeholder={notePlaceholder} onLabel={openNoteLineFrom} onBusyChange={setAccountNoteBusy} />;
     return (
       <InfoPage
         className="os-note-page os-survey-card os-survey-complete"
@@ -4114,6 +4132,15 @@ export function TodayExperience() {
   }
 
   function checkInThoughtsCard() {
+    if (writing && !adminUnlockMode) return <AccountWritingPage
+      kind={thoughtMode === "deep" ? "deep-thought" : "thought"}
+      source={thoughtMode === "deep" && deepThoughtPrompt ? { questionId: deepThoughtPrompt.id, question: deepThoughtPrompt.text, source: deepThoughtPrompt.source } : null}
+      placeholder={thoughtMode === "deep" ? "Write what comes up..." : thoughtPlaceholder}
+      onLabel={openDeepThoughtsFrom}
+      onBusyChange={setAccountThoughtBusy}
+      onAdmin={() => { setAdminUnlockMode(true); setAdminCodeDraft(""); revealThoughtButton(); }}
+      onSent={() => { thoughtBack.reset("regular"); setDeepThoughtPrompt(null); setHoldThoughtsAfterSend(true); }}
+    />;
     const deepThoughtsActive = thoughtMode === "deep" && Boolean(deepThoughtPrompt);
     const thoughtInput = adminUnlockMode ? (
       <div className="os-admin-unlock-field">
@@ -4295,7 +4322,7 @@ export function TodayExperience() {
             onBackwardBoundary={noteLineActive ? dismissLineBackward : undefined}
             onForwardBoundary={noteLineActive ? passLineForward : undefined}
             rotateMs={IDLE_PAGE_DWELL_MS}
-            rotatePaused={!noteLineActive && Boolean(thoughtDraft.trim())}
+            rotatePaused={!noteLineActive && (writing ? accountNoteBusy || accountThoughtBusy : Boolean(thoughtDraft.trim()))}
             onIndexChange={(nextIndex) => {
               if (noteLineActive) {
                 setRevealedLinePage(nextIndex);

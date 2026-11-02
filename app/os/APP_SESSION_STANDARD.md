@@ -2,6 +2,34 @@
 
 ## Terms
 
+Latest Note sizing/action refinement (2026-11-03): New Note belongs in the Note
+editor Footer. Account Note, History and Trash share a 480px App Box ceiling,
+reduced to 60% of the dynamic viewport but never below the shared minimum.
+Only Body scrolls beyond that ceiling; Header, Heading and Footer stay visible.
+This is a Note-only exception to natural growth below. Trashing a Note is silent.
+
+Later Note controls refinement (2026-11-03): direct HISTORY replaces the ellipsis
+and aligns with NOTE. Note saves silently, has borderless focused writing, and
+has no Versions UI or Undo. Each local History row carries an orange trash-bin
+button; restoration remains in the separate Trash page. Internal revisions stay
+for save safety. This supersedes Note controls in the dated snapshots below.
+
+Account Note refinement (2026-11-03): Note autosaves after a short typing pause
+and on departure, with automatic local recovery and no Save, Clear, Discard,
+Drafts or draft messages. Orange navigation, History/New Note, Versions and
+Trash/Restore stay in the shared App Box. Thoughts and reading answers keep
+Send and their existing draft workflow. This supersedes Note controls in the
+dated connection snapshot below; see the current Note section.
+
+Account writing connection (2026-11-02): Note, Thoughts and reading-answer
+editors use the existing Page and App Box. Save/Send accepts writing on this
+device before showing success or letting text depart. More opens History,
+Drafts and Trash; Versions and deletion confirmation stay inside the same
+frame. Reading answers remain embedded in the existing reading Page. History
+does not rotate. Header actions keep 44px targets outside the label's layout
+flow, so `--os-label-gap` still owns the forehead. Older writing stays read only
+pending migration review. See the [runtime evidence](../../docs/USER_JOURNEY_TESTING.md#account-writing-ui-2026-11-02).
+
 - **App Box**: the stable, rounded container. It owns the theme, clipping,
   border, radius, shadow, minimum size, and height transition.
 - **Page**: one swipeable visual inside an App Box. Pages never own a second
@@ -204,22 +232,41 @@ Used for charts, weekly views, and other things worth reading again.
 
 ## Note
 
-The bullets below describe the current single-Note editor. The confirmed
-[multi-entry writing target](../../docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md)
-adds recovered drafts, explicit Save, saved versions, history and Trash. Its
-exact interaction still needs review; it is not implemented by this standard.
-Clear, draft discard and deleting a saved entry must remain distinct actions.
+The developer approved the account Note refinement on 2026-11-03. It supersedes
+the earlier explicit-Save/draft controls for Note only. See the
+[writing journeys](../../docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md#5-writing-journeys).
 
-- Note takes as much writing as a person wants, in Main Body and in Sub Body
-  both. Neither is capped; the App Box grows downward for real content.
-- While a Note is being written, the Header carries one right-hand action:
-  **Clear**. It empties Main and Sub together and leaves the caret in Main, so
-  the next thing that happens is writing.
-- Clear is only present while writing. It never appears on a Note at rest,
-  where the only thing to press would be a way to lose what is there.
+- Note takes as much writing as a person wants in Main Body and Sub Body.
+  Account Note views grow from the shared minimum to a 480px App Box ceiling,
+  reduced to 60% of the dynamic viewport on short phones, never below that
+  minimum. Note, History, Trash and opened Trash content scroll only Body past
+  the ceiling. Header, Heading and Footer remain outside the scroll area.
+  Other Apps retain their existing height rules; Habit/Protocol grow naturally.
+- Note saves after a short typing pause and when leaving the editor. Text
+  composition finishes before autosave. Focus keeps idle rotation paused.
+- There is no Save, Clear, Discard, Drafts, Versions, Undo or save-status UI.
+  Recovery/revisions remain internal; failure keeps text available and offers
+  Try again. Do not show Saving/Saved on this device for Note.
+- NOTE and HISTORY use matching typography and a measured equal baseline in
+  the header, preserving 44px targets and the shared forehead. Focused title/body
+  fields keep the caret without an outline, border or box; button focus remains.
+- Note/header/text actions use `#E36B37`; title/body remain Ink. History
+  has a Note back action, Trash in its header and grouped dated entries with times.
+  One full-width New Note action lives in the Note editor Footer. It finishes
+  saving current text before opening a blank Note; failure keeps the text open.
+  Opening a saved Note edits it directly.
+  A separate 44px orange trash-bin button sits at the right of each editable
+  local row. It moves that Note to Trash silently, without opening it. Restore from the
+  Trash page; there is no Undo shortcut. Read-only legacy sources stay read only.
+- Existing Notes can be emptied by ordinary text selection/deletion. Save that
+  as an empty version; do not remove the value or recover old wording. An empty
+  new composer creates no saved entry. Internal revisions and Trash/Restore remain.
 - An empty Note shows one short phrase from the separate Note placeholder pool.
-  Clear advances to a different phrase. Placeholder words never become saved
-  evidence and never use Line runs, cooldowns, or completion.
+  Placeholder words never become saved evidence and never use Line runs,
+  cooldowns, or completion. The Note label retains its Line action.
+- The older legacy single-Note editor is not migrated by this refinement.
+  Thoughts, Deep Thoughts and reading answers retain Send/Save changes and
+  their existing draft/history rules.
 
 ## Protocol
 

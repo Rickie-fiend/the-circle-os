@@ -1,5 +1,235 @@
 # Current task
 
+## Bounded Note pages - 2026-11-03
+
+Status: explicitly approved Note-only changes implemented and locally verified.
+New Note is in the Note editor Footer and
+saves current text before opening a blank Note. History has no New Note action.
+Moving a Note to Trash is silent, with restoration still in Trash.
+
+Note, History and Trash grow from the shared minimum to a 480px App Box ceiling,
+reduced to 60% of a short dynamic viewport, never below the shared minimum.
+Only Body scrolls; Header, Heading and Footer stay in place. At 390x844 the
+measured ceiling is 480px; at 360x667 it is 400.19px. Empty/short frames still
+measure 346px with the shared 80px header gap. Habit/Protocol grow naturally.
+See the [current contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1411-bounded-note-pages---2026-11-03)
+and [verification](USER_JOURNEY_TESTING.md#bounded-note-pages-2026-11-03).
+
+Final checks: 23/23 actual-component browser journeys and 35/35 focused model/
+account tests passed. Focused lint, strict targeted types and both Vinext/Next
+production builds passed. Tests caught and verified fixes for a native textarea
+offset and a transient Trash footer gap. The journey record owns attempts,
+screenshots, exact commands and limits. No further optimization was justified.
+
+Runtime scope: existing writing Page and scoped CSS, with browser tests and
+owning records. Branch `paing-branch`, HEAD `8890fb1`; earlier working-tree work
+is preserved. No staging, commit, deployment, store/schema/provider, personal
+data or cloud-service change. Physical phones/native keyboards, hosted sessions,
+cloud sync and lived acceptance remain separate checks. Next: developer
+use/review of bounded writing and histories; migration/sync remain separate.
+
+## Note History controls - 2026-11-03
+
+Status: explicitly approved Note-only controls implemented and locally verified.
+The developer approved the proposal with one correction: remove Undo, keeping
+restoration in the Trash page. See the
+[current contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1410-note-history-controls---2026-11-03)
+and [verification](USER_JOURNEY_TESTING.md#note-history-controls-2026-11-03).
+
+NOTE and direct HISTORY align exactly and use matching header typography. Note
+has no ellipsis/menu, Versions UI, Undo or routine Saving/Saved on this device
+messages. Focused writing keeps the cursor without an orange box. Each local
+History row has a separate orange trash-bin button; the Trash page retains
+Restore and confirmed Delete forever. Recovery rows save before moving to Trash;
+failures/conflicts keep text available. Internal revisions and other writing
+controls remain unchanged.
+
+Final checks: 20/20 actual-component UI browser cases and 35/35 focused model/
+account tests passed. Focused lint/types and both production builds passed.
+At 360px/390px the NOTE/HISTORY text bounds match exactly; all four measured
+Apps retain 344px Pages, 346px frames and an 80px header gap. The journey record
+owns commands, screenshots, corrected attempts and limits. No additional
+performance change was justified.
+
+Branch `paing-branch`, HEAD `8890fb1`; prior uncommitted/untracked work preserved.
+No staging, commit, deployment, data import, schema/store/provider or cloud
+change. Physical phones/native keyboards, hosted sessions, cloud sync and lived
+acceptance remain unverified. Next: developer use/review of the simpler Note
+flow; personal migration and safe sync remain separately reviewed. Prior
+snapshots below preserve their dated checks and superseded Note controls.
+
+## Note autosave refinement - 2026-11-03
+
+Status: explicitly approved Note-only scope implemented and locally verified.
+The developer confirmed autosave after a short typing pause and when leaving;
+Thoughts/Deep Thoughts/Athena answers retain Send and their draft workflow.
+See the [current contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#149-note-autosave-refinement---2026-11-03)
+and [verification](USER_JOURNEY_TESTING.md#note-autosave-refinement-2026-11-03).
+
+Note labels/navigation/text actions use `#E36B37`. The writer has no Save,
+Clear, Discard, Drafts or draft messages. Internal recovery remains, with
+one-second pause/departure saves, composition handling, newer-typing protection,
+failure retry and explicit conflict review. History groups by Circle day with
+times, opens Notes for editing, and carries New Note and Trash. Earlier versions,
+Undo/Restore and confirmed Delete forever remain. Manually deleting all text
+saves an empty version of an existing Note; empty new writing saves no entry.
+
+Final checks: 17/17 actual-component UI browser scenarios, 46/46 account/provider/
+storage browser cases and 184/184 focused model cases passed. Selected lint has
+no errors; focused strict types and both Vinext/Next production builds passed.
+At 360px/390px, empty and short Note/Thoughts/Habit/Protocol frames remain 346px
+(344px Page) with the shared 80px header gap; long content grows without an
+inner scroll panel. Commands, screenshots, initial timeout and exact limits are
+in the journey record. No further measured runtime optimization was justified.
+
+Branch `paing-branch`, HEAD `8890fb1`; earlier uncommitted work is preserved.
+No staging, commit, deployment, personal/legacy import or cloud change. Real
+phone keyboards, hosted sessions, cloud sync and week-long lived acceptance
+remain unverified. Next: developer use/review of this Note flow; personal
+migration and safe sync remain separately reviewed. Earlier snapshots below
+retain their dated evidence; their manual Note Save/draft controls are superseded.
+
+## Account writing UI - 2026-11-02
+
+Status: explicitly approved C scope implemented and locally verified with
+synthetic accounts. Final evidence and boundaries are in
+[the journey record](USER_JOURNEY_TESTING.md#account-writing-ui-2026-11-02) and
+[section 14.8](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#148-account-writing-ui-delivered---2026-11-02).
+
+Added `app/os/writing-pages.tsx` and `tests/writing.browser.mjs`; connected
+Today/Reflect and scoped CSS. Note Save/New Note, Thought/reading-answer Send,
+corrections, durable drafts, History, Versions and Trash use the shared local
+provider and App Box. Competing edits require review; newer typing survives
+Save. Prompts remain placeholders. Existing older writing stays read only.
+
+Checks: 13 actual-UI browser scenarios, 46 provider/account/storage browser
+cases and 183 model cases passed. Focused types and both production builds
+passed. The selected lint check has one existing shell unused-import warning;
+the new UI/test and Reflect have no diagnostics. Mobile geometry is measured
+in the journey record. These checks do not certify hosted auth, physical
+keyboards/devices, cloud sync or a week of lived use.
+
+Branch `paing-branch`, HEAD `8890fb1`; all prior work preserved. No staging,
+commit, deployment, personal import, owner mapping or remote service change.
+Next: try the working writing/history flow with synthetic data, then review
+any personal migration/cloud slice separately. Neither is authorized here.
+
+The earlier provider snapshot below is retained as dated evidence. Its
+then-pending UI review was resolved by the developer's explicit C approval.
+
+## Account-bound writing provider - 2026-11-02
+
+Status: approved provider/read-consumer scope implemented and verified locally
+with synthetic data. Writing/history UI (C) awaits its own exact review/approval.
+
+The developer approved the concrete B2 proposal and confirmed continuing.
+Scope: new `app/os/writing-provider.tsx` and provider browser harness; writing
+store/model/types, compatibility model/types, shell, Deep Thought/first-use
+models/types, Reflect and five affected tests; nine owning/continuity/evidence
+records. Branch `paing-branch`, HEAD `8890fb1`. Preserved all ten modified tracked
+paths and three untracked B1 paths present at startup. Nothing staged, committed,
+pushed or deployed; no personal account mapping/import or remote change.
+
+The account-only provider captures session epochs, refreshes after writes and
+cross-tab/foreground changes, rejects old input/read/hash results, and exposes
+current history/versions/drafts/Trash/evidence. It separates accepted local
+writes from read/refresh errors and keeps conflict candidates recoverable.
+Old receipts never rebuild deleted writing. Notifications carry no writing.
+Deep Thought, first-use and Reflect read the shared view without editable
+survey copies; no model runs on saving. Existing writers still use their old paths.
+
+The developer chose to retain minimal question/app-use metadata after permanent
+deletion, while removing the answer, versions and drafts. Older missing metadata
+stays unknown and cannot reset questions/first use. Received readings remain
+unchanged. The [delivered contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#147-account-bound-provider-delivered---2026-11-02)
+records the exact behavior, scope and limitations.
+
+Verification and attempts are in [the provider evidence](USER_JOURNEY_TESTING.md#account-bound-writing-provider-2026-11-02).
+The focused selection passed 183/183; browser selection passed 46/46, including
+16 provider cases and 30 existing/extended storage cases at 390x844/360x844.
+Focused lint/strict provider types and both production build targets passed;
+the journey record owns exact commands and the corrected build/harness attempts.
+Shell lint retains HEAD's nine errors/one warning; Reflect lint passes.
+
+Record audit passed 175 local links including 51 fragments across nine files,
+plus format/whitespace checks. The 250-file startup comparison found exactly
+25 approved existing-file changes, two additions, 225 unchanged files and no
+removals. Prior task/handoff/journey histories remain intact after newline
+normalization; pre-existing memory-model/test bytes are unchanged by this slice.
+
+No geometry/type/gap, budget, immutable chapter or received reading changed;
+no new geometry measurements are claimed. Physical devices, hosted auth/session,
+real import, Supabase evidence sync, backup/complete deletion and live AI quality
+remain unverified. Existing placeholder/Sent and Reflect fixture/swipe gaps
+remain; Phase 1 is not certified. No measured problem justified optimization.
+
+Next: review C's Note/Thought/reading-answer controls, draft routing, conflict/
+failure states and exact files/checks. Reproduce the placeholder path before
+affected edits and verify the week-long mobile writing/history walkthrough.
+Personal migration, cloud work and deployment remain separately reviewed.
+Earlier snapshots below retain their unique evidence and historical next actions.
+
+---
+
+## Writing compatibility and evidence adapter - 2026-11-02
+
+Status: approved adapter/record scope implemented and verified with synthetic
+data. The account-bound provider and live writing/history UI remain unapproved.
+
+The developer explicitly approved three new files (`writing-compatibility-model.js`,
+its `.d.ts`, and `tests/writing-compatibility.test.mjs`), updates to the memory
+model/tests, and eight records: personal-records plan, Decision Log, Product,
+beta plan, Work Plan, this task, Session Handoff and journey evidence. Branch
+`paing-branch`, starting HEAD `8890fb1`; initial tree clean. No staging, commit,
+push, deployment, real account mapping/import or remote-service change.
+
+Delivered a pure read-only adapter over explicitly owned snapshots. Existing
+Note fields form one source; original text/IDs/prompts and unknown dates remain
+honest. Supplied links prevent double counting or fallback from old snapshots
+after Trash/deletion. Current saved versions alone supply writing evidence.
+The writing-memory gate checks every dependency's owner, namespace, ID, type
+and version, excludes stale/unknown/forgotten sources, and keeps received prose
+separate and unchanged. Scoped dependencies survive merges, including invalid
+ones needed to reject a whole summary. No AI runs on save.
+
+Recorded the confirmed language scope: simple English UI/Athena responses at
+launch, Burmese/English/mixed writing accepted, dual Burmese/English UI/responses
+after web launch. A trashed Deep Thought keeps its question answered; its answer
+text stays outside evidence. The adapter exposes this metadata, but no live
+consumer is connected. Permanent-deletion question/first-use retention still
+needs review before activation. Work Plan now reflects the engine/adapter status.
+
+Final verification: 177/177 focused model/compatibility/consumer checks, 29/29
+isolated browser-storage checks, two additional browser adapter/store smokes at
+390x844/360x844, focused lint, declaration/strict virtual-consumer type checks,
+and both Next.js/Vinext production builds passed. Initial 50 focused checks
+passed; three added edge checks failed and were fixed before the final run.
+Exact commands, attempts and scope limits are in
+[the adapter evidence](USER_JOURNEY_TESTING.md#writing-compatibility-and-evidence-adapter-2026-11-02).
+The delivered contract is [plan section 14.6](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#146-compatibility-and-evidence-adapter-delivered---2026-11-02).
+
+The eight-record audit passed 155 local links, including 38 heading fragments;
+format and `git diff --check` passed with existing LF/CRLF warnings. The
+247-file startup comparison found ten approved existing-file changes, three
+approved additions, 237 unchanged files and no removals. All prior task/handoff/
+decision/journey history was preserved after newline normalization.
+
+No geometry/type/gap, delivery budget, chapter version, authored edition or
+personal record changed. No performance optimization was justified. Provider
+epoch/freshness, actual editor/history journeys, real import, hosted/device,
+Supabase evidence sync, backup/deletion coverage and AI language quality remain
+unverified. Existing placeholder/Sent, Reflect fixture/swipe and wider release
+gaps remain; Phase 1 is not certified.
+
+Next: review the account-bound provider and its exact files/tests before code.
+Require fresh views after writes/cross-tab changes, rejected old-epoch results,
+honest failure/status handling, current-state rather than old-receipt rendering,
+and Deep Thought/first-use consumers without copied editable writing. UI,
+personal migration, cloud work and deployment retain separate approval boundaries.
+Earlier snapshots below preserve their unique evidence and historical next actions.
+
+---
+
 ## Local writing engine A - 2026-11-02
 
 Status: implemented and verified for the approved synthetic local engine scope.

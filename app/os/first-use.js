@@ -59,7 +59,10 @@ function countValues(record) {
  * Deep Thoughts counts as Thoughts: they are two faces of one App, and a person
  * who has answered a deep question has plainly found the App.
  */
-export function hasUsedApp(state, app) {
+export function hasUsedApp(state, app, writing) {
+  if (writing !== undefined && (app === "note" || app === "thoughts")) {
+    return Boolean(writing?.hasSavedWriting[app]);
+  }
   switch (app) {
     case "note":
       return hasAnswerOfKind(state, "note");
@@ -86,8 +89,10 @@ export function hasUsedApp(state, app) {
  * has. An empty string means "carry on with the ordinary placeholder", so a
  * caller never has to know whether a first-time state exists.
  */
-export function firstUsePlaceholder(state, app) {
+export function firstUsePlaceholder(state, app, writing) {
   if (!FIRST_USE_APPS.includes(app)) return "";
-  if (hasUsedApp(state, app)) return "";
+  // Loading or incomplete old deletion metadata cannot justify greeting again.
+  if ((app === "note" || app === "thoughts") && writing !== undefined && (!writing || !writing.usageKnown)) return "";
+  if (hasUsedApp(state, app, writing)) return "";
   return FIRST_USE_PLACEHOLDERS[app] || "";
 }

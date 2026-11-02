@@ -1,8 +1,22 @@
 # Personal records, history, and Athena plan
 
 Date: 2026-11-02, Asia/Bangkok.
-Status: developer-confirmed product decisions; local engine A implemented and
-verified with synthetic data. Live writing/history integration has not started.
+Note-only updates: 2026-11-03. The developer approved pause/departure autosave,
+then direct HISTORY aligned with NOTE, silent borderless writing, orange History
+row trash-bin buttons and removal of Versions/Undo. Restore from the retained
+Trash page. The later approved refinement puts New Note in the Note editor Footer
+and caps Note/History/Trash at 480px (60% of a short viewport, never below the
+shared minimum), with Body scrolling and header/actions in place. Trashing is
+silent. Note has no Save/Clear/Discard/Drafts controls or draft messages.
+Internal recovery/revisions remain for save safety; Thoughts and reading answers
+keep their existing Send/draft/version/Undo controls. This supersedes earlier Note
+control requirements, including dated snapshots/proposals in section 14; see
+section 5, section 14.11 and the
+[current decision](DECISION_LOG.md#2026-11-03---bounded-note-pages-and-editor-new-note).
+Status: developer-confirmed product decisions; local engine A and read-only
+compatibility/evidence adapter B1 and account-bound provider B2 verified with
+synthetic data. The separately approved account writing/history UI C is now
+connected and locally verified; lived acceptance and personal migration remain.
 
 The developer reviewed the decision questions and approved creating this plan
 and aligning eight owning/continuity documents. This approval covers documents
@@ -13,12 +27,19 @@ personal-data migration, provider integration, or deployment is authorized here.
 On 2026-11-02 the developer also confirmed the writing interactions below and
 approved updating this plan, the decision log, current task and handoff only.
 Sections 5 and 7 record those choices. Section 14 contains a proposed local
-implementation and checks for the next review; no code scope is approved yet.
+implementation and checks for the next review; that review approved no code.
 
 Later in the same session the developer reviewed and explicitly approved A's
 five code/test files and updates to this plan, current task, handoff and journey
 record. A's delivered contract and limits are in section 14.5. B/C, personal
 import, cloud work and deployment remain outside that approval.
+
+The developer subsequently approved B1's five adapter/type/memory/test files and
+eight record updates. Its read-only delivered contract is in section 14.6.
+The developer later explicitly approved B2's provider/store/consumer/tests and
+nine record updates. Its delivered contract is in section 14.7. Live UI (C),
+personal import and cloud work remain separately reviewed. Confirmed choices
+below include launch languages and answered-question status after removal.
 
 ## 1. Outcome and boundaries
 
@@ -50,10 +71,10 @@ the later reviewed sync design. They are not an implemented backend.
 | --- | --- | --- |
 | D01 | Multiple Notes, grouped by Circle day | A new entry does not overwrite another Note. |
 | D02 | Notes are titled, revisitable writing; Thoughts are quick untitled captures | Keep distinct writing jobs, with independent entry IDs. |
-| D03 | Recover drafts automatically; use Save for Notes and Send for Thoughts | A recoverable draft is separate from saved history. |
-| D04 | Drafts stay outside history and Athena evidence until saved | Unsaved text does not become a personal observation. |
+| D03 | Note autosaves after a short pause and when leaving; Thoughts keep Send | Recovery remains automatic internally; Note has no Save/Clear/Discard/Drafts UI. |
+| D04 | Recovery buffers stay outside saved evidence until committed | Older Note recovery text remains reachable in History without becoming evidence before a successful save. |
 | D05 | History inside each App plus a shared day view | Find a record by its purpose or by the day it belongs to. |
-| D06 | Past writing is editable with earlier saved versions available | Corrections preserve reviewable history. |
+| D06 | Past writing is editable; Note exposes the current saved entry | Internal Note revisions preserve save safety; other writing retains version review. |
 | D07 | Deleted Notes/Thoughts move to Trash; restore or permanently delete | Trash is a separate recoverable state, excluded from Athena. |
 | D08 | Trash has no automatic expiry | It remains until restoration or deliberate permanent deletion. |
 | D09 | Habit and active Protocol changes apply going forward | Earlier records keep the applicable wording and terms. |
@@ -66,14 +87,16 @@ the later reviewed sync design. They are not an implemented backend.
 | D16 | Core writing, reading, history, corrections, and sync are free | Payment gates new personalized generation, not personal records. |
 | D17 | Beta requires essential history/corrections across existing tools, safe sync, and basic memory controls | Advanced search/filtering follows later; essential review is a release gate. |
 | D18 | A Note without a user-entered title is called Untitled | The generated label and placeholder are not user-authored evidence. |
-| D19 | Save keeps the saved Note visible, with New Note available | Saving does not immediately open a fresh composer. |
-| D20 | Return to unfinished writing by reopening its recovered draft; offer Discard draft | Saved entries remain intact; drafts have no automatic expiry and remain until successful Save/Send or deliberate discard. |
-| D21 | History groups writing by Circle day, newest first; open entries in the same App Box | Versions exposes earlier saved wording; a correction creates a new saved version. |
-| D22 | Saving requires user writing in the title or body; unchanged content creates no extra version | The automatic Untitled label alone is not writing. |
+| D19 | Autosave keeps the Note visible; New Note is in the Note editor Footer | Save current text successfully before starting a separate entry. |
+| D20 | Note recovers automatically without a draft-management workflow | Preserve recovery text; Thoughts retain recovery/discard controls and no automatic draft expiry. |
+| D21 | History groups writing by Circle day, newest first; open entries in the same App Box | Note has no Versions UI; internal saved revisions and other writing's version review remain. |
+| D22 | New saved entries require user writing; an existing Note can save an empty correction | Generated labels never count as writing; unchanged content creates no extra version. |
 | D23 | New writing keeps the Circle day when writing began, with actual save time recorded separately | Starting at 05:50 and saving at 06:10 does not silently move the entry to the new Circle day. |
-| D24 | Move to Trash is in the saved Note's menu, with immediate Undo; Trash is inside History | Trash offers Restore and Delete forever; Delete forever requires confirmation. |
-| D25 | Thoughts share draft/date/history/version/Trash rules, using Send for new entries and Save changes for corrections | Preserve Deep Thought/reading-question sources; correction neither resends an entry nor requests an Athena reply. |
-| D26 | Confirm Saved on this device or Sent only after the local write succeeds | Failed saves keep text open with safe retry; draft recovery-storage failures show a warning. |
+| D24 | Each local Note in History has an orange trash-bin button; Note has no Undo | Keep the Trash page for Restore and confirmed Delete forever. |
+| D25 | Thoughts retain their own draft/date/history/version/Trash rules, with Send and Save changes | The Note-only autosave refinement does not change Thought or reading-answer submission/source/outcome rules. |
+| D26 | Note autosaves silently; Thoughts retain local-save/Sent feedback after acceptance | Failed saves keep text with retry; Note shows no routine Saving/Saved on this device text. |
+| D27 | Launch UI and Athena responses use simple English; users can write in Burmese, English or mixed language | Athena must understand that writing and answer in English. Burmese/English UI and Athena responses follow after web launch; Thai support is not required. |
+| D28 | A trashed or permanently deleted Deep Thought keeps its question marked answered; first-use greetings do not restart | Retain minimal question/app-use metadata without deleted answer/version/draft text. Older missing metadata remains unknown; wider deletion coverage stays separate. |
 
 The developer selected these choices after reviewing their tradeoffs. Earlier
 one-Note-per-day and single-ongoing-Note recommendations are not the chosen
@@ -134,19 +157,32 @@ and provider/model remain separate open decisions. No automated billing is added
 
 1. The person opens Note and writes a title, a body, or both. A missing title
    saves as **Untitled**. The automatic label and placeholder do not count as
-   writing; a completely empty Note cannot be saved.
-2. The app recovers and reopens unfinished writing under the correct account.
-   **Discard draft** removes only the unsaved changes; saved Notes stay intact.
-3. **Save** commits an entry and its first saved version. Only a successful
-   durable local write earns **Saved on this device**.
-4. The saved Note stays visible with **New Note** available. Another Note is a
+   writing; an empty new composer creates no saved entry.
+2. The app recovers unfinished writing under the correct account internally.
+   Note has no Save, Clear, Discard, Drafts or draft messages.
+3. A short typing pause (one second) and leaving the editor automatically save
+   the Note. Finish text composition first. Only a successful durable local write
+   becomes accepted evidence. Note saves silently; failure retains text and
+   offers **Try again**. Do not show Saving/Saved on this device for Note.
+4. The saved Note stays visible with **New Note** in the editor Footer. Save
+   current text successfully before opening the blank Note. Another Note is a
    separate entry, even on the same Circle day or with identical text.
 5. The next day starts no automatic replacement or clearing of saved entries.
 6. **History** groups saved Notes by Circle day, newest first. Opening an entry
-   shows it in the same App Box. The later shared day view reads the same source.
+   opens it directly for editing in the same App Box. Show Today/Yesterday or a
+   date and the entry's time. Trash is in History's header. The later shared day
+   view reads the same source. Older recovery copies remain reachable as Note
+   rows, without a separate Drafts screen; they save when opened.
+7. Selecting and deleting all text in an existing Note saves an empty version.
+   Keep internal revisions for save/conflict safety. Note has no version-review
+   feature. Clearing text is not Move to Trash or permanent deletion.
 
-These controls and behaviors are confirmed. Exact button/menu placement,
-keyboard/focus behavior and visual treatment still need the bounded UI review.
+These Note controls were explicitly approved on 2026-11-03 using the supplied
+reference. Note labels/navigation/text actions use `#E36B37`; authored text stays
+Ink. NOTE and HISTORY share typography and a measured equal header baseline.
+HISTORY opens the list directly. Focused writing keeps the caret without an
+orange outline/box. Each local History row has an orange trash-bin button on its
+right; there is no Note menu, Versions or Undo. Restore from the Trash page.
 Preserve the Note label's existing Line action and the shared App Box engines.
 
 ### 5.2 Quick Thoughts
@@ -156,8 +192,8 @@ Thought becomes an entry. Deep Thoughts preserves the question, question source,
 and related metadata so an answer can be understood later. A reading answer
 also retains the reading/question connection.
 
-The developer confirmed the same draft/date/history/version/Trash rules for
-Thoughts. A new entry uses **Send**; a correction uses **Save changes** and
+Thoughts retains its draft/date/history/version/Trash rules after the Note-only
+refinement. A new entry uses **Send**; a correction uses **Save changes** and
 keeps the existing entry identity. **Sent** follows a successful local write.
 Deep Thoughts and reading answers retain their original question/source links.
 Opening or correcting an old answer must not send another entry, replay a
@@ -165,17 +201,19 @@ chapter outcome, or request an Athena reply.
 
 ### 5.3 Editing and saved versions
 
-A saved entry has one stable identity and a current saved version. An edit is
-a recoverable draft until the person saves the correction. Saving creates a
-new version; earlier saved versions remain readable through **Versions**.
+A saved entry has one stable identity and a current saved version. Note edits
+autosave; Thought/reading-answer corrections retain explicit Save changes.
+Internal recovery stays separate from committed evidence. Saving creates a
+new internal revision. Note removes Versions controls/screens; other writing
+retains version review. Existing revision records are not deleted by UI removal.
 Saving without changes creates no extra version. Recovery must not turn every
 keystroke into a user-facing permanent version.
 
-Drafts have no automatic expiry. Keep them until successful Save/Send or
-deliberate discard. If saving fails, keep the text open, explain the failure,
+Recovery has no automatic expiry. Thoughts keep draft recovery/discard controls;
+Note removes that user-facing workflow. If saving fails, keep the text open, explain the failure,
 and allow retry without duplicate entries. If local recovery storage fails,
 show a warning rather than promising recovery after reload. These are target
-requirements, not verified behavior of the current in-memory editors.
+requirements; exact verified coverage belongs to the dated journey evidence.
 
 Do not merge two Notes merely because their text matches. Do not count five
 versions of one corrected sentence as five independent pieces of evidence.
@@ -187,10 +225,13 @@ retrieval and places it in Trash. Trash remains until restored or permanently
 deleted. Restoration keeps the identity/history. A stale device cannot silently
 restore a trashed or permanently deleted entry through sync.
 
-The confirmed interaction puts **Move to Trash** in the saved Note's menu,
-with an immediate **Undo**. **Trash** lives inside History and offers **Restore**
-and **Delete forever**. Delete forever asks for confirmation. Thoughts shares
-these Trash rules. Undo/Restore must retain the entry's identity and saved versions.
+Note History places **Move to Trash** in an orange bin button beside each local
+entry. The button moves only that row's Note, without opening its editor. Note
+has no Undo action. **Trash** stays accessible from History and offers **Restore**
+and confirmed **Delete forever**. A recovery row saves its exact stored snapshot
+before moving to Trash; failure/conflict retains recoverable text and stops the
+move. Read-only older sources remain read only. Other writing keeps its existing
+Trash/Undo controls. Restoration retains the entry's identity and internal revisions.
 
 Before implementing permanent deletion, review exact confirmation wording,
 complete revision coverage, derived-memory removal/suppression, connected-device
@@ -201,11 +242,11 @@ does not settle complete deletion coverage or prove current implementation.
 
 | When | Action | Expected target result |
 | --- | --- | --- |
-| Monday | Write body text without a title; leave and return | Recover the draft automatically; it is absent from history/evidence. Discard would leave saved Notes intact. |
-| Monday | Save, then choose New Note and save another | The first displays Untitled and stays visible after Save; two distinct saved Notes belong to Monday. |
+| Monday | Write body text without a title; leave and return | Note autosaves and reopens; accepted writing is in history/evidence. Recovery is internal and there are no draft controls. |
+| Monday | Choose New Note from the Note editor and write another | The first displays Untitled and stays visible after autosave; two distinct saved Notes belong to Monday. |
 | Tuesday before 06:00 | Start at 05:50, then save at 06:10 | Keep Monday's Circle day; retain the actual Tuesday save time separately. |
-| Wednesday | Find Monday in History and correct an entry | Open it in the same App Box; Save creates a new current version; Versions still shows earlier wording. A second unchanged Save adds nothing. |
-| Thursday | Move the entry to Trash; use Undo or later Restore | Remove it from ordinary history/context while trashed; restoration keeps its identity and versions. Delete forever asks first. |
+| Wednesday | Find Monday in History, edit an entry, then select/delete all its text | Autosave saves the current value, including an empty correction; internal revisions remain without Note Versions UI. Unchanged autosaves add nothing. |
+| Thursday | Use a History row's bin, then restore from Trash | Remove only that Note from ordinary history/context. No Undo shortcut; restoration keeps identity/revisions. Delete forever asks first. |
 | Friday | Send a quick Thought; correct an older question answer | New Thought uses Send; correction uses Save changes, retains source/question links, and triggers no new entry/outcome/AI reply. |
 | Weekend | Reload offline, simulate failed writes and switch synthetic accounts | Recover only the correct account's drafts/saves; show failures honestly and retry without duplicates. No cloud backup is implied. |
 
@@ -280,7 +321,7 @@ and declaration into an undifferentiated text blob.
 
 | Layer | Content | Rule |
 | --- | --- | --- |
-| Drafts | Uncommitted text and editor context | Local recovery, account-separated, excluded from history/AI. |
+| Recovery buffers | Uncommitted text and editor context | Account-separated, excluded from saved evidence/AI; older Note copies are reachable through History. Thoughts retain Drafts UI. |
 | Source records | Saved writing, actions, commitments, answers | Stable identity, owner, type, dates, source links. |
 | Saved revisions | Accepted wording/status/date corrections | Earlier saved versions reviewable; current version clearly identified. |
 | Current read views | App lists, day view, completion summaries | Derived from source records; no duplicate ownership of the same fact. |
@@ -295,8 +336,9 @@ status and origin. A's new-writing local schema is now implemented in section
 14.5. SQL, indexes, ownership/import mapping and integration remain reviewed
 follow-up work, not database decisions hidden inside this document.
 
-Automatic local draft recovery and reopening are required. Drafts have no
-automatic expiry; successful Save/Send or deliberate discard ends that draft.
+Automatic local recovery and reopening are required. Recovery has no automatic
+expiry; a successful Note autosave or Thought Save/Send closes its committed
+revision. Thoughts retain deliberate discard; Note removes that action.
 Cross-device draft sync, technical cleanup of completed/discarded drafts,
 revision compaction and receipt retention still need review. No cleanup may
 make an old retry become a new write or erase reviewable saved history.
@@ -319,7 +361,11 @@ Proposed categorization separates:
 Mind/Body/Spirit/Social remain useful lenses, not the only taxonomy. A record
 may concern several topics or dimensions. No category is mandatory merely to
 make a database simpler. English regex matches cannot establish universal
-language understanding; Myanmar, English and mixed-language cases need checks.
+language understanding; Burmese, English and mixed-language cases need checks.
+The audience is Burmese people, mostly with basic English. UI and Athena
+responses are English-only at web launch; understanding Burmese input is still
+required. Dual Burmese/English UI and responses follow after web launch. Text
+preservation tests do not certify a future provider's language understanding.
 
 Examples:
 
@@ -555,14 +601,17 @@ IndexedDB save.
 ### 14.3 Proposed files and bounded order
 
 A's exact five-file code scope and four evidence/continuity documents were
-reviewed and explicitly approved after the documentation review. **A is now
-implemented and verified for its synthetic engine scope.** B and C remain
-proposals; their compatibility/UI details must be resolved before code approval.
+reviewed and explicitly approved after the documentation review. A is verified
+for its synthetic local-engine scope. The developer then approved a smaller
+read-only adapter portion of B (B1), now delivered. B2 was subsequently reviewed,
+explicitly approved and delivered as recorded in section 14.7. C still requires
+exact control/routing/file review and approval before code.
 
 | Slice | Exact proposed paths | Purpose and boundary |
 | --- | --- | --- |
 | A: local record engine | New `app/os/writing-model.js`, `app/os/writing-model.d.ts`, `app/os/writing-store.ts`, `tests/writing-model.test.mjs`, `tests/writing-storage.browser.mjs` | Implement/test the local contracts, lifecycle, selectors, atomic commits, drafts, retry/conflict handling and account guards using the existing scoped transaction helper. No live editor or personal import. |
-| B: compatibility and evidence integration | New `app/os/writing-provider.tsx`; existing `app/os/circle-os-model.js`, `app/os/circle-os-shell.tsx`, `app/os/circle-os-ai.ts`, `app/os/athena-memory-model.js`, `app/os/mirror/page.tsx`; existing `tests/circle-os-model.test.mjs`, `tests/account-storage.browser.mjs`, `tests/athena-memory.test.mjs`, `tests/vision-declaration.test.mjs` | Bind shared writing state/actions to account changes; review legacy IDs/unknown dates, active-source selection and stale derived-context exclusion. Preserve prepared editions. Test compatibility with synthetic fixtures before any owner mapping/import. No new model call on save. |
+| B1: read-only compatibility/evidence adapter, delivered | New `app/os/writing-compatibility-model.js`, `.d.ts`, `tests/writing-compatibility.test.mjs`; existing `app/os/athena-memory-model.js`, `tests/athena-memory.test.mjs` | Read explicitly scoped snapshots, preserve unknown existing dates, rehearse supplied links without import, select active saved versions and gate writing-derived memory by exact dependencies. Preserve received editions and Burmese text; no provider activation. |
+| B2: account-bound provider, delivered | Exact approved provider/store/contract/consumer/test files are listed in section 14.7; `circle-os-model.js` and `circle-os-ai.ts` required no edits | Captured account sessions, fresh current-state reads, cross-tab refresh, late-result rejection, independent load/write status and shared read consumers. No model call on save. |
 | C: writing/history UI | New `app/os/writing-pages.tsx`, `tests/writing.browser.mjs`; existing `app/os/circle-os-shell.tsx`, `app/os/mirror/page.tsx`, `app/os/os-app.css` | Reuse InfoPage, shared App Box, App-back, editing, gesture and button engines for the agreed Note/Thought/history/version/Trash flows and honest status. Includes bounded sign-off on control placement; no new brand language. |
 
 Proposed action placement for C: Save or Save changes is the editor's main
@@ -596,14 +645,15 @@ in their later stages; sign-in/loading polish remains a separate bounded slice.
 For A, proposed commands are
 `node --test tests/writing-model.test.mjs tests/account-scope.test.mjs` and
 `node --test --test-reporter=tap tests/writing-storage.browser.mjs`.
-For B, run affected model/memory tests and the existing account-storage browser
-harness. For C, add `node --test --test-reporter=tap tests/writing.browser.mjs`
+For B2, run affected model/memory tests and the existing account-storage browser
+harness. B1's actual checks are recorded with section 14.6. For C, add
+`node --test --test-reporter=tap tests/writing.browser.mjs`
 against the app and run affected account/reading/chapter regressions. Use focused
 lint and the relevant build targets (`npm run build:vercel` and `npm run build`)
 when integration changes reach the app, distinguishing recorded baseline failures.
 Repeat affected checks after fixes or any measured optimization. A's test files
-are now delivered and its commands passed as recorded below. B/C tests and live
-app journeys remain proposed and unrun for this slice. The preceding writing-
+are now delivered and its commands passed as recorded below. B2/C tests and live
+app journeys remain proposed and unrun. The preceding writing-
 interaction documentation pass itself ran no implementation checks.
 
 ### 14.5 Local engine A delivered - 2026-11-02
@@ -669,6 +719,111 @@ No performance optimization was justified; large-history footprint and live
 startup/rendering were not measured. Geometry, budgets and immutable published
 chapter/reading content are unchanged.
 
+### 14.6 Compatibility and evidence adapter delivered - 2026-11-02
+
+Approved files: new [adapter](../app/os/writing-compatibility-model.js),
+[types](../app/os/writing-compatibility-model.d.ts) and
+[behavioral tests](../tests/writing-compatibility.test.mjs), plus the existing
+[memory model](../app/os/athena-memory-model.js) and its tests. The eight approved
+records are this plan, Decision Log, Product, beta plan, Work Plan, Current Task,
+Session Handoff and journey evidence. Provider/UI activation is outside this slice.
+
+`buildWritingCompatibilityView` accepts an explicitly owned local ledger and an
+optional same-owner existing-answer snapshot. It never reads a real profile,
+claims an account, writes storage or imports records. The two existing Note
+fields form one source; Thoughts and reading answers keep their original IDs,
+question text/source and exact writing. Missing creation day, start time and
+timezone stay null. A known canonical field edit time is labelled separately;
+ambiguous original timestamp text stays in provenance, not guessed attribution.
+Existing source fingerprints detect changes; they are comparison markers, not
+reconstructed authored versions or a claim to recover overwritten writing.
+
+Explicit supplied links prevent duplicate evidence, including fallback from an
+old snapshot when its mapped ledger entry is in Trash or deleted. Owner conflicts,
+competing existing answers, collapsed unrelated entries and kind mismatches fail
+without changing input. Links are only a synthetic read-view rehearsal: no real
+owner map, persistent migration, backup or rollback is implemented here.
+
+The view selects current saved active versions only. Separate question metadata
+keeps a trashed Deep Thought answered without carrying its answer text. Restore
+retains identity/version. Provider use of this metadata and retention after
+permanent deletion remain review work; missing metadata must not be assumed to
+authorize a new question/reward or reset first-use state.
+
+`selectWritingMemory` checks the explicitly owned memory snapshot against the
+view. Every required source must match owner, namespace, type, ID and current
+saved version. Drafts, Trash, deletion, unversioned/unknown sources and stale or
+forgotten dependencies withhold the whole interpretation. This is a writing-
+derived context view, not authorization of other tools' evidence or server data.
+Received reading prose/editions are copied separately and remain unchanged;
+selection never normalizes them into new editions or sends them as current facts.
+
+Memory merging now retains exact scoped dependencies, including distinct versions
+and invalid/incomplete references. Removing one dependency from a versioned
+composite withholds it rather than leaving its wording attached only to the
+remaining citation. Existing unversioned memory behavior stays on its legacy
+path; the new gate must be used by the later provider. No model runs on Save.
+
+The immutable view captures its inputs before asynchronous hashing. It is a
+snapshot, not a live account reader. B2 must reject old-epoch results, rebuild
+after writes/cross-tab changes and render current stored state rather than old
+receipts. Preserve the separate ledger/draft transport boundary. B1 does not
+repair the live Note placeholder/Sent path or activate a personalized AI service.
+
+Checks and attempts are in [the adapter evidence](USER_JOURNEY_TESTING.md#writing-compatibility-and-evidence-adapter-2026-11-02).
+No geometry, cadence/budget, immutable chapter or authored reading content changed.
+Real import, hosted/device, cloud sync, backup/deletion coverage and AI language
+quality remain unverified. No measured performance problem justified optimization.
+
+### 14.7 Account-bound provider delivered - 2026-11-02
+
+The developer explicitly approved this scope after a read-only review and the
+permanent-deletion metadata choice. New files: `app/os/writing-provider.tsx` and
+`tests/writing-provider.browser.mjs`. Updated `app/os/writing-store.ts`, writing
+model/types, compatibility model/types, `circle-os-shell.tsx`, Deep Thought
+model/types, first-use model/types and `mirror/page.tsx`; tests for writing,
+storage, compatibility, Deep Thought and first use. Nine approved records:
+this plan, Product, Architecture, Decision Log, beta plan, Work Plan, Current
+Task, Session Handoff and journey evidence. Prior uncommitted B1 work is preserved.
+
+The provider mounts inside the existing account epoch, with no legacy/profile
+claim or personal import. Commands retain their captured scope. Read guards
+also track input snapshots and refresh requests through store reads and hashing;
+old results cannot publish over new input/commits or the next account. Current
+history/Trash/drafts/versions/evidence read the ledger after commits, never an
+old receipt. The provider separates loading/refresh errors, pending/accepted
+writes and conflicts. Commit success with failed refresh remains locally
+accepted. Failed writes retain recovery text and duplicate-safe retry.
+
+Store commits announce only a scoped change token through local events,
+BroadcastChannel and storage events, with foreground/visibility rechecks.
+Notification-channel failure cannot turn an accepted commit into a failed save.
+If both cross-tab channels fail, background freshness waits for foreground
+refresh. Existing Circle-state storage events refresh the old-answer read
+snapshot without importing it or replacing global editable state. This does
+not redesign the older whole-state store's concurrent-write behavior.
+
+Deep Thought and first-use consumers read question/use metadata directly.
+Permanent deletion keeps only kind, original question ID/text where known and
+the original saved-use time; no answer, saved version or draft survives in the
+new ledger. Older markers lack this information and stay explicitly unknown;
+questions/first-use are withheld rather than reset. Account question selection
+also excludes already-answered personalized questions. Existing pool exhaustion
+still cycles through its static floor; no new reward or budget is introduced.
+
+Reflect uses current writing-dependent context. Missing/stale/forgotten/mixed
+dependencies are withheld. Independent unscoped day/tool context retains its
+existing path; this does not authorize other domains' evidence. Received prose
+and editions remain separate and unchanged. The ledger/drafts never enter
+CircleState, its outbox or legacy payloads. No model runs on a save or correction.
+
+Actual checks and attempts: [provider evidence](USER_JOURNEY_TESTING.md#account-bound-writing-provider-2026-11-02).
+The current Note/Thought/reading-answer writers retain their old paths until C.
+This is not a verified editor/history journey, real import, hosted auth/device,
+Supabase evidence sync, backup or complete deletion result. No geometry/type/gap,
+immutable chapter/reading or delivery budget changed. UI placement/routing,
+personal migration, cloud work and deployment retain separate review boundaries.
+
 ## 15. Acceptance checks
 
 | Journey or risk | Required result |
@@ -731,7 +886,8 @@ needed for concrete implementation:
 - Record-specific deletion for non-writing types; Forget semantics/undo and
   qualifications of old readings after source correction/deletion.
 - Source attribution for imported records with unknown historical dates/wording.
-- Provider/model, supported languages, tone instructions, allowances, remaining
+- Provider/model, language instructions/quality within the confirmed English-only
+  launch response and Burmese-input scope, allowances, remaining
   reset math, spending controls, payment/prices and real region connectivity.
 - Manual lost-email recovery proof, admin audit/log retention, deletion coverage,
   restore suppression, operating/rollback instructions, beta devices/duration/success.
@@ -776,12 +932,125 @@ The 242-file baseline comparison found exactly the four intended changes and
 238 unchanged files, with no additions/removals. `git diff --check` passed with
 the existing LF/CRLF warnings. No runtime or implementation check is claimed.
 
-Next: review B's compatibility/evidence contract, including unknown legacy dates,
-owner mapping, stale derived-context exclusion and consumers of local receipts;
-present a bounded file/test proposal before integration. Review C's exact control
-placement and draft routing before UI code. Personal import/activation, cloud
-work and deployment remain separately reviewed. A is verified only for its local
-engine scope; the earlier single-Note sync proposal is not the next unchanged step.
+Next: try the working account writing/history UI, then separately review any
+personal migration or cloud slice. C's local UI checks are recorded in section
+14.8; the week-long lived walkthrough is still pending. Permanent-deletion
+question/use metadata is settled for this ledger; broader deletion coverage
+remains separate.
+Personal import/activation, cloud work and deployment remain separately reviewed.
+A/B1 are verified only for their delivered scopes; the earlier single-Note sync
+proposal is not the next unchanged step.
+
+### 14.8 Account writing UI delivered - 2026-11-02
+
+The developer explicitly approved the concrete C scope: new `writing-pages.tsx`
+and `writing.browser.mjs`; shell, Reflect and CSS updates; Page standard, bug
+record and the nine owning/evidence records. Existing older writing stays read
+only pending separate migration review. No personal data/import, cloud work,
+AI invocation, deployment, stage or commit was performed.
+
+Note has explicit Save/Save changes and New Note; a saved Note stays visible.
+Thoughts and reading answers Send new writing and Save changes for corrections.
+First edits capture attribution; prompts never become values. Draft writes and
+save snapshots are queued per editor. A failed write keeps the buffer; newer
+typing survives an earlier Save. A competing copy opens a review of both, with
+an explicit choice before rebasing. Original questions and edition links stay
+on the entry. Only locally accepted sends may show Sent or depart.
+
+More opens History, Drafts and Trash inside the shared App Box. Saved entries
+are grouped by attributed day; drafts are separate. Versions are read only.
+Trash supports Undo and Restore; Delete forever requires a second confirmation
+and uses the existing ledger deletion contract. Older compatibility sources
+show their known date or Date unknown and remain read only. Reading replies
+are embedded in the existing reading Page. No new frame, brand or motion engine
+was introduced. Note/Line and Thoughts/Deep label navigation remains.
+
+The [journey record](USER_JOURNEY_TESTING.md#account-writing-ui-2026-11-02) owns
+commands, measurements, outcomes and limitations. This is local synthetic
+verification, not hosted authentication, cross-device/cloud sync, a personal
+migration, native phone/keyboard certification or the week-long lived review.
+
+### 14.9 Note autosave refinement - 2026-11-03
+
+The developer approved the Note-only implementation and owning records after
+confirming pause/departure autosave and keeping Send elsewhere. This supersedes
+Note controls in the dated C snapshot and earlier engineering proposals above.
+
+Note has no Save, Clear, Discard, Drafts or draft messages. A one-second pause
+or editor departure saves an accepted version, with composition deferred until
+input finishes. Automatic internal per-input recovery remains. Pagehide and
+hidden-page events request a save; route unmount attempts a flush while the
+account provider remains open. Browser/account closure may interrupt it, so
+recovery reopens on the next visit. Empty new writing creates no saved entry;
+clearing an existing Note saves a dated empty version with earlier wording kept.
+Newer typing receives a later save; conflicts stop for review and failed writes
+keep text with Try again. Nothing calls Athena or promises cloud backup.
+
+History groups Note rows by Circle day with times and opens them directly for
+editing. Older recovery copies remain reachable without a Drafts screen; they
+save when opened and remain outside saved evidence until accepted. New Note
+starts separately from History. Trash is in History's header; saved Note menus
+retain Versions and Move to Trash. Undo, Restore and confirmed Delete forever
+use the existing engine. Circle Orange `#E36B37` applies to labels/navigation/
+text actions, while authored title/body stay Ink. Shared geometry, font and
+gesture/button engines remain. Thoughts/reading answers retain their controls.
+
+The [journey evidence](USER_JOURNEY_TESTING.md#note-autosave-refinement-2026-11-03)
+owns exact final commands, measurements, screenshots, attempts and limits.
+Legacy/personal migration, hosted auth, cloud sync, real mobile keyboards and
+week-long lived acceptance remain separate. No staging, commit or deployment
+is part of this refinement.
+
+### 14.10 Note History controls - 2026-11-03
+
+The developer approved the concrete Note controls/test/record proposal with one
+correction: remove Undo as well, using the retained Trash page for restoration.
+This supersedes the earlier Note UI snapshots in sections 14.8/14.9.
+
+Direct HISTORY replaces the ellipsis and shares NOTE's typography, baseline and
+44px target. Note's title/body keep the caret without an outline or box. Routine
+Saving/Saved on this device messages are removed, while actual failures remain
+visible. Note has no Versions controls or screens; internal revision records,
+schema and save/conflict guards remain unchanged. Other writing is unchanged.
+
+Each editable local History row has a separate 44px Circle Orange trash-bin
+button beside its open action. Saved Notes use the existing generation-checked
+Trash command. Older recovery rows first save their exact stored snapshot;
+failure/conflict preserves text and stops the move. The row does not open when
+its bin is clicked. Note exposes no Undo; keep Trash, Restore and confirmed
+Delete forever. Older read-only sources are not imported or made editable.
+
+The [journey evidence](USER_JOURNEY_TESTING.md#note-history-controls-2026-11-03)
+owns final checks, alignment/geometry measurements, screenshots and limits.
+No personal data, schema, provider/store, cloud service or deployment changes
+are included. Delivery order, shared geometry tokens and other App controls stay.
+
+### 14.11 Bounded Note pages - 2026-11-03
+
+The developer explicitly approved moving New Note from History to the Note editor
+Footer, limiting the three Note surfaces, and removing Moved to Trash text.
+Account Note, History, Trash and opened Trash detail grow from the shared default
+minimum to a 480px App Box ceiling, reduced to 60% of the dynamic viewport on short
+phones, never below the shared minimum. Body alone scrolls beyond that limit;
+Header, Heading and Footer stay in place. There is no writing-length limit.
+This is a scoped exception; Habit/Protocol retain continuous downward growth.
+
+New Note finishes local saving before opening a blank Note, including newer
+typing during an in-flight save. Unfinished composition, failure or conflict must
+not clear text. It remains usable after repeated creation or a failed attempt.
+New writing and navigation begin at the top of their content. History retains
+its row bins and Trash header action. Moving a Note to Trash is silent, with no
+Undo; Restore and confirmed Delete forever remain in Trash. Actual errors stay.
+Autosave, internal recovery/revisions, account separation, original attribution,
+legacy read-only sources and other writing's Send controls remain.
+
+The [journey evidence](USER_JOURNEY_TESTING.md#bounded-note-pages-2026-11-03)
+owns measured ceilings, resting geometry, scroll/caret/action checks, screenshots,
+final commands and verification gaps. Runtime scope is the existing writing Page
+and scoped CSS, with browser tests and owning records. No store/schema/provider,
+personal-data, cloud-service or deployment change is included. Dated 14.8-14.10
+snapshots retain their original evidence; this contract owns current placement
+and Note sizing. The delivery order stays the same.
 
 ## References
 

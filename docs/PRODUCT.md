@@ -1,10 +1,27 @@
 # Circle OS product
 
-Updated: 2026-11-02. This document records the developer's product direction.
+Updated: 2026-11-03. This document records the developer's product direction.
 Use [the decision log](DECISION_LOG.md) to distinguish confirmed decisions from
 preferences and unresolved choices.
 
 ## Purpose and destination
+
+Local account writing is connected as of 2026-11-02, with the Note-only
+autosave refinement approved on 2026-11-03. Notes autosave with internal
+recovery; Thoughts and reading answers keep Send and their draft workflow.
+Note uses direct History navigation and row trash-bin buttons, with restoration
+in Trash. It has no Versions UI, Undo, save-status messages or focused input box.
+Internal revisions remain for safe saving; other writing keeps its existing
+controls. New Note lives in the Note editor Footer and saves current text before
+opening a blank Note. Account Note, History and Trash grow from the shared minimum
+to a 480px App Box ceiling (60% of a short viewport, never below that minimum).
+Their content then scrolls with header/actions in place. Trashing a Note shows
+no Moved to Trash message. Other Apps keep their existing growth rules.
+Histories and Trash use the existing App Box. Saves accept writing on
+this device; they do not claim cloud sync or call Athena. Older writing remains
+read only until separately reviewed migration. This bounded implementation
+does not complete the wider beta history/sync requirements. See
+[the current Note contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1411-bounded-note-pages---2026-11-03).
 
 Circle OS helps a person reflect on the life they live, the life they want,
 and how their commitments connect the two. Athena is the AI that learns from
@@ -24,6 +41,14 @@ The bounded Day One action setup is now planned before beta, after the
 personal-record/history and safe-sync work. Broader optimization and other
 chapter simplification remain paused. Supabase lifestyle sync and expanded
 Athena access remain planned work, not implemented by these decisions.
+
+The invited users are Burmese people, including people with only basic English.
+For web launch, the app UI and Athena's responses use simple English. People
+can write in Burmese (Myanmar language), English or a mixture; Athena must
+understand that writing and respond in English. After the web app launches,
+the UI and Athena will support both Burmese and English. Location in Thailand
+does not add Thai language support to this scope. Live Athena understanding and
+response quality still require provider integration and verification.
 
 ## The experience
 
@@ -71,12 +96,21 @@ plan](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) on 2026-11-02 and approved recording
 it. These are target requirements, not claims of implemented history or sync.
 
 - Notes are multiple titled, revisitable entries grouped by Circle day.
-  Thoughts are quick untitled captures. Recover drafts automatically; Save
-  commits a Note and Send commits a Thought. Drafts stay outside history and
-  Athena evidence until saved.
+  Notes autosave after a short typing pause and when leaving, with automatic
+  local recovery and no Save, Clear, Discard or Drafts UI. Editing all text away
+  saves an empty version of an existing Note; an untouched empty composer saves
+  nothing. Note exposes current writing and History, with an orange trash-bin
+  button per local row and restoration from the Trash page. Note has no Versions
+  UI, Undo or routine saving/saved messages. Internal revision records remain for
+  save/conflict safety. Focused writing is borderless with the caret visible;
+  NOTE/HISTORY share the header baseline. Thoughts are
+  quick untitled captures, keeping Send and their separate draft workflow.
+  Recovery buffers stay outside saved evidence until committed. This Note-only
+  refinement was explicitly approved on 2026-11-03.
 - Each App has history, with a shared day view reading the same records.
-  Past writing and completed weekly reviews can be corrected while earlier
-  saved versions remain available.
+  Past writing and completed weekly reviews can be corrected. Note removes
+  user-facing version review while retaining internal saved revisions; other
+  domains keep their existing or planned version review.
 - Habit and active Protocol changes apply going forward. Earlier records keep
   the applicable wording/terms. Deliberate past-day writing, Log and habit
   corrections retain the attributed day and actual entry/correction time.
@@ -86,6 +120,11 @@ it. These are target requirements, not claims of implemented history or sync.
   stay until restored or permanently deleted; there is no automatic expiry.
   Permanent-deletion coverage still needs review. This is separate from the
   maximum 30-day deleted-backup rule and manual account deletion.
+- Moving an answered Deep Thought to Trash or deleting it forever keeps its
+  question marked answered and does not restart first-use greetings. Keep minimal
+  question/app-use metadata, without the deleted answer, versions or drafts.
+  Trash/deletion keeps the writing outside Athena's evidence. Wider deletion
+  coverage remains separately reviewed.
 - Tags are optional. Athena can suggest correctable topics/feelings when used.
   Show sourced observations with Wrong, Has changed and Forget controls. Exact
   control semantics and interaction need review; originals and inferences stay
@@ -155,8 +194,9 @@ straight to the point, calm, and advisory. Exact tone and language guidance will
 be configured later in a skill or similar instruction file. Follow-up questions
 have no fixed count limit beyond usage allowance; requested replies may use all
 evidence available to Athena for that person, including their whole history.
-Exact controls, supported languages, allowance amounts, and counting rules
-remain open. Provider/model selection is deferred until integration. Actual
+Exact controls, language instructions/quality checks, allowance amounts, and
+counting rules remain open within the confirmed language scope above.
+Provider/model selection is deferred until integration. Actual
 processing terms and spending controls must be reviewed before real evidence
 is sent to an AI provider.
 Existing prepared readings, history, and chapter evidence remain preserved.

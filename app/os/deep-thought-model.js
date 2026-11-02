@@ -110,15 +110,20 @@ function questionKey(value) {
   return String(value || "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
 }
 
-function unansweredCuriosityPrompt(state, dateKey) {
-  const answers = state?.profile?.profileCase?.survey?.answers || [];
+function questionAnswers(state, writing) {
+  return writing === undefined ? state?.profile?.profileCase?.survey?.answers || []
+    : (writing.view?.answeredQuestions || []).map(item => ({ ...item, kind: "deep-thought" }));
+}
+
+function unansweredCuriosityPrompt(state, dateKey, writing) {
+  const answers = questionAnswers(state, writing);
   const answeredQuestions = new Set(
     answers
       .filter((answer) => answer?.kind === "deep-thought")
       .map((answer) => questionKey(answer?.question))
       .filter(Boolean),
   );
-  const curiosity = (Array.isArray(state?.athenaMemory?.curiosity)
+  const curiosity = (writing !== undefined ? writing.curiosity : Array.isArray(state?.athenaMemory?.curiosity)
     ? state.athenaMemory.curiosity
     : [])
     .filter((item) => {
@@ -149,8 +154,8 @@ function unansweredCuriosityPrompt(state, dateKey) {
 }
 
 /** Every deep question this person has already answered, whenever it was. */
-function answeredQuestionKeys(state) {
-  const answers = state?.profile?.profileCase?.survey?.answers || [];
+function answeredQuestionKeys(state, writing) {
+  const answers = questionAnswers(state, writing);
   return new Set(
     answers
       .filter(
@@ -171,8 +176,8 @@ function answeredQuestionKeys(state) {
  * never reached. A question he has answered is spent; when every one is spent
  * the pool comes round again rather than the App going quiet.
  */
-export function unaskedDeepThoughts(state, questions = LOCAL_DEEP_THOUGHTS) {
-  const asked = answeredQuestionKeys(state);
+export function unaskedDeepThoughts(state, questions = LOCAL_DEEP_THOUGHTS, writing) {
+  const asked = answeredQuestionKeys(state, writing);
   const unasked = questions.filter(
     (question) => !asked.has(questionKey(question.text)),
   );
@@ -180,7 +185,11 @@ export function unaskedDeepThoughts(state, questions = LOCAL_DEEP_THOUGHTS) {
 }
 
 /** The shape of the last one he answered, so the next one is a different door. */
-function lastAnsweredKind(state) {
+function lastAnsweredKind(state, writing) {
+  if (writing !== undefined) {
+    const key = questionKey(writing.view?.lastAnsweredQuestion?.question);
+    return LOCAL_DEEP_THOUGHTS.find(item => questionKey(item.text) === key)?.kind || "";
+  }
   const answers = [...(state?.profile?.profileCase?.survey?.answers || [])].sort(
     (left, right) =>
       String(left?.answeredAt || "").localeCompare(String(right?.answeredAt || "")),
@@ -195,7 +204,7 @@ function lastAnsweredKind(state) {
   return "";
 }
 
-export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
+export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0, writing) {
 
   const identity = short(state?.profile?.identityFocus);
   const mission = short(state?.days?.[dateKey]?.mission?.text);
@@ -206,10 +215,12 @@ export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
   if (mission && mission !== "Do one small thing that feels like you.") {
     personalized.push({ text: `What are you avoiding by doing "${mission}" instead?`, kind: "stance", target: "gap" });
   }
-  const pool = unaskedDeepThoughts(state);
-  const avoid = lastAnsweredKind(state);
+  const pool = unaskedDeepThoughts(state, LOCAL_DEEP_THOUGHTS, writing);
+  const avoid = lastAnsweredKind(state, writing);
   const differentDoor = pool.filter((question) => question.kind !== avoid);
-  const questions = [...personalized, ...(differentDoor.length ? differentDoor : pool)];
+  const asked = answeredQuestionKeys(state, writing);
+  const availablePersonalized = writing === undefined ? personalized : personalized.filter(question => !asked.has(questionKey(question.text)));
+  const questions = [...availablePersonalized, ...(differentDoor.length ? differentDoor : pool)];
   const index = Math.max(0, Number(offset) || 0) % questions.length;
   return {
     id: `deep-local-${dateKey}-${Math.max(0, Number(offset) || 0)}`,
@@ -232,17 +243,18 @@ export function createLocalDeepThoughtPrompt(state, dateKey, offset = 0) {
 // question on every visit. so that there may be some questions that i am not in
 // the mood now." Leaving without answering spends nothing, so the one you
 // skipped comes back another time.
-export function selectDeepThoughtPrompt(state, dateKey, visit = 0) {
-  const answers = state?.profile?.profileCase?.survey?.answers || [];
+export function selectDeepThoughtPrompt(state, dateKey, visit = 0, writing) {
+  if (writing !== undefined && (!writing.view || !writing.view.questionHistoryKnown)) return null;
+  const answers = questionAnswers(state, writing);
   const athenaPrompt = state?.profile?.profileCase?.deepThoughtPrompt;
   const turns = [];
   if (
     athenaPrompt?.dateKey === dateKey &&
-    !answers.some((answer) => answer?.questionId === athenaPrompt.id)
+    !answers.some((answer) => answer?.questionId === athenaPrompt.id || (writing !== undefined && questionKey(answer?.question) === questionKey(athenaPrompt.text)))
   ) {
     turns.push(() => ({ ...athenaPrompt, source: "athena" }));
   }
-  const curiosity = unansweredCuriosityPrompt(state, dateKey);
+  const curiosity = unansweredCuriosityPrompt(state, dateKey, writing);
   if (curiosity) turns.push(() => curiosity);
 
   // The local floor is deep enough to keep offering, so it fills the rest of
@@ -250,10 +262,10 @@ export function selectDeepThoughtPrompt(state, dateKey, visit = 0) {
   const localOffset = answers.filter((answer) =>
     String(answer?.questionId || "").startsWith(`deep-local-${dateKey}-`),
   ).length;
-  const localTurns = Math.max(1, unaskedDeepThoughts(state).length);
+  const localTurns = Math.max(1, unaskedDeepThoughts(state, LOCAL_DEEP_THOUGHTS, writing).length);
   for (let step = 0; step < localTurns; step += 1) {
     turns.push(() =>
-      createLocalDeepThoughtPrompt(state, dateKey, localOffset + step),
+      createLocalDeepThoughtPrompt(state, dateKey, localOffset + step, writing),
     );
   }
   return turns[Math.max(0, Number(visit) || 0) % turns.length]();

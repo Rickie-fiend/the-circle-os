@@ -37,6 +37,8 @@ import {
 import { sizeTextAreaToContent } from "../text-area-size";
 import { useAppBack } from "../app-back";
 import { getAccountScope } from "../account-scope";
+import { useWriting } from "../writing-provider";
+import { WritingReadingAnswer } from "../writing-pages";
 import { useStableRouteAnchor } from "../stable-route-anchor";
 import {
   normalizeChapterPublication,
@@ -499,6 +501,7 @@ function DeclarationPage({
 }
 
 export default function CircleOSMirror() {
+  const writing = useWriting();
   const {
     state,
     ready,
@@ -603,7 +606,7 @@ export default function CircleOSMirror() {
   const loggedPastDays = pastDays.filter(
     (item) => item.day.timeBlocks.length > 0,
   ).length;
-  const athenaReading = buildAthenaReading(state.athenaMemory);
+  const athenaReading = buildAthenaReading(writing ? writing.memory : state.athenaMemory);
   const profileReady = athenaReading.ready || hasReadableProfileCase(profileCase);
   const readingUpdatedAt =
     String(athenaReading.updatedAt || "").localeCompare(
@@ -975,7 +978,7 @@ export default function CircleOSMirror() {
                 profileArticleSection(key, heading),
               )}
         </div>
-        {prompt ? (
+        {prompt && writing ? <WritingReadingAnswer prompt={prompt} editionId={athenaReading.latestEditionId} /> : prompt ? (
           <AthenaReadingReply
             answer={answer}
             onSend={(value) => sendAthenaReadingReply(prompt, value)}

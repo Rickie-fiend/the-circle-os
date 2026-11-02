@@ -1,5 +1,624 @@
 # Circle OS user-journey test record
 
+## Bounded Note pages (2026-11-03)
+
+### Approval and setup
+
+The developer explicitly approved moving New Note from History to the Note
+editor Footer, a shared 480px App Box ceiling reduced to 60% of a short dynamic
+viewport (never below the shared minimum), Body scrolling and silent Note Trash.
+Runtime scope is `writing-pages.tsx`, scoped `os-app.css` and the existing UI
+browser tests; owning/continuity records are included. The 254-file baseline and
+before-copies are ignored outputs. Branch `paing-branch`, HEAD `8890fb1`;
+earlier uncommitted/untracked work is preserved. No staging, commit, deployment,
+personal import, schema/store/provider, account/authentication or cloud change.
+
+The actual-component loopback Vite harness uses synthetic account data, real
+IndexedDB, Bangkok time and blocked external traffic. Existing 360x844/390x844
+cases remain; the new bounded journeys also run at 360x667 and resize to 560px
+height. Both normal and reduced motion are covered. Account cases assert no
+legacy transport/model requests. The separate legacy placeholder baseline remains
+a qualified known defect; these changes do not migrate that editor.
+
+### Checks and measurements
+
+- `node --test --test-reporter=tap tests/writing.browser.mjs`: **23/23 passed**
+  in the final run, separately from builds, with no source changes during it.
+- New Note appears only in the Note editor Footer. It waits for local saving,
+  including typing during an in-flight save, before showing a blank Note. A
+  simulated quota failure and unfinished composition keep the current writing.
+  Retry/repeated New Note use succeeds without losing accepted entries.
+- Long Note content, many History rows, many Trash rows and an opened long
+  trashed Note each have exactly one scrolling Body. Last rows remain reachable.
+  Native wheel and touch input leave History on the chosen page. Header/Footer
+  positions within the frame remain stable while content scrolls. Typing at the
+  end of a long Note keeps the caret line visible, with no textarea scroll area.
+- Trash retains Restore and confirmed Delete forever/Cancel. Its actions remain
+  visible at the ceiling and after a short viewport resize. Navigation and new
+  writing reset content to the top. Moving a Note to Trash shows no success text
+  or Undo. Error alerts remain, and other writing keeps Send.
+- `node --test tests/writing-model.test.mjs tests/account-scope.test.mjs`:
+  **35/35 passed**. No model/store changes; regression covers immutable revisions,
+  conflicts, empty dated corrections, lifecycle, account epochs and day attribution.
+- `node node_modules/eslint/bin/eslint.js app/os/writing-pages.tsx tests/writing.browser.mjs`:
+  final rerun passed with no errors or warnings.
+- Strict targeted types passed after the final component sizing change:
+  `node node_modules/typescript/bin/tsc --noEmit --incremental false --strict --skipLibCheck --allowJs --checkJs false --target ES2022 --lib ES2022,DOM --module ESNext --moduleResolution bundler --jsx react-jsx app/os/writing-pages.tsx`.
+- `node node_modules/vinext/dist/cli.js build` and
+  `node node_modules/next/dist/bin/next build`: both passed with exit 0 after
+  the final scoped CSS correction. They ran sequentially after the final UI run.
+
+| Measured frame | 390x844 | 360x667 |
+| --- | --- | --- |
+| Long Note / History / Trash ceiling | 480px | 400.19px |
+| Long Note Body | 257px | 177px |
+| Opened long Trash Note Body | 152px | 72px |
+| Overflowing scroll areas per Note view | 1 | 1 |
+
+At both 360x844 and 390x844, empty/short Note, Thoughts, Habit and Protocol retain
+344px Pages/346px frames and an 80px Header box-to-content gap. Visible label
+gaps remain Note/Thoughts 84px and Habit/Protocol 83.09px; NOTE/HISTORY tops and
+bottoms match exactly. Habit/Protocol rows retain natural growth without nested
+scrolling. No shared geometry/type/gap token changed. At a 560px-high viewport,
+Note keeps the shared 346px minimum frame instead of shrinking below it.
+
+Inspected screenshots: `outputs/note-bounded-write-390.png`,
+`outputs/note-bounded-history-390.png`, `outputs/note-bounded-trash-360.png`.
+The corresponding 360px write/history and 390px Trash captures are also saved.
+The write and Trash captures intentionally show scrolled content with stationary
+navigation/actions. No further runtime optimization was justified by measurements.
+
+### Attempts, preservation and limits
+
+Targeted checks caught the shared CreativeButton's default one-use lifecycle
+when moved onto a persistent editor. New Note now uses its existing repeatable
+mode, keeps clicks available during short provider refreshes, and guards duplicate
+pending starts. Save completion flushes newer typing before replacing the buffer.
+Tests now wait for the shared button's registration/focus and normal page-flip
+settling; synthetic seeding reads the store result's actual receipt. The targeted
+header/New Note checks then passed 3/3 and the bounded journeys passed 2/2.
+
+The first full regression run passed 21/23. A second-tab harness startup timed
+out waiting for `window.api` while builds also ran. The row-isolation test began
+typing before New Note's shared button registration; it now waits for the blank
+editor. The final full run was repeated separately from builds. Vinext
+emitted Build complete, but PowerShell redirection converted its plugin-timing
+warning into a NativeCommandError; direct CLI execution then passed with exit 0.
+These earlier attempts are not counted as final passes.
+
+The next full run passed 22/23: the short-screen caret check caught a transient
+22px textarea scroll offset after the shared zero-height sizing pass. Note now
+resets that internal field offset after sizing, leaving scrolling to Body. The
+affected bounded journeys passed 2/2 after the correction; targeted types passed.
+
+A subsequent full run passed 22/23 and exposed a 26px Trash footer shift on the
+short viewport. The Note grid now gives Footer its full intrinsic content row
+instead of an automatic row. That alone did not fix the repeated 22/23 result:
+diagnostics showed Footer padding briefly at 0px while detail actions were
+already present, then 26px after scrolling. The Note rule now attaches that gap
+to actual footer content. The final full run passed **23/23**, with stable 26px
+padding. Exact Header/Footer and field-offset assertions were not relaxed.
+
+Final `node outputs/note-bounds-audit.mjs`: passed 224 local links, including
+89 fragments across 12 records, and whitespace-format checks. The baseline
+comparison found exactly 15 approved changed files, 239 byte-identical files and
+no Git-visible additions/removals. `git diff --check` passed with existing
+LF/CRLF warnings. Baseline, before-copies, screenshots and helper are ignored
+outputs; prior working-tree work remains preserved.
+
+Internal recovery/revisions, original day/timezone and account separation remain.
+Shared Page/App-back/swipe/button engines are reused; Habit/Protocol, immutable
+chapters/readings and no-AI-on-save remain intact. Physical phones/native
+keyboards, hosted authentication, cloud/two-device sync, personal migration and
+week-long lived acceptance remain unverified. Next: developer use/review of the
+bounded Note flow, with migration/sync/publication separately reviewed.
+
+## Note History controls (2026-11-03)
+
+### Approval and setup
+
+The developer approved the Note controls proposal with a final correction:
+remove Undo and use the retained Trash page for restoration. Runtime scope:
+`writing-pages.tsx`, scoped `os-app.css` and `tests/writing.browser.mjs`.
+Owning/continuity records were approved too. The existing 254-file working tree,
+including earlier untracked writing files, is preserved. Branch `paing-branch`,
+HEAD `8890fb1`; nothing staged, committed or deployed. No personal/legacy import,
+schema, store/provider, account/authentication or cloud-service change occurred.
+
+The existing loopback Vite harness imports actual Today/Reflect, provider, Page,
+stores and CSS. Checks use synthetic accounts, real IndexedDB, Bangkok time,
+360x844/390x844 touch/mobile viewports and reduced/normal motion. External traffic
+is blocked, and account cases assert no legacy transport/model calls. The legacy
+placeholder baseline remains a qualified known defect outside this refinement.
+
+### Final checks
+
+- `node --test --test-reporter=tap tests/writing.browser.mjs`: **20/20**.
+  Note exposes direct HISTORY, with no ellipsis/menu, Versions or Undo controls.
+  Routine Saving/Saved on this device text is absent during a delayed save and
+  after acceptance. Autosave, offline reload, empty corrections, composition,
+  source/question retention, newer typing and account closure still pass.
+- The same run verifies that the orange row bin moves only its own Note and
+  leaves History open; another Note remains active. Trashed state survives
+  reload, and restoration occurs through the Trash page. Restore retains IDs
+  and internal revisions; Delete forever still asks for confirmation.
+- A recovery row saves its exact stored snapshot before Trash. Simulated quota
+  failure keeps both recovery buffers and leaves the row available; retrying
+  its bin succeeds. A stale recovery cannot trash a newer accepted Note; current
+  saved text stays active and the older text remains recoverable. Legacy sources
+  remain read only. Thought/Deep Thought/Reflect answer Send behavior still passes.
+- `node --test tests/writing-model.test.mjs tests/account-scope.test.mjs`:
+  **35/35**. Models/stores are unchanged in this slice; this focused regression
+  selection covers empty dated corrections, conflict preservation, revisions,
+  lifecycle rules, account epochs and 06:00/DST attribution.
+- `node node_modules/eslint/bin/eslint.js app/os/writing-pages.tsx tests/writing.browser.mjs`:
+  passed with no errors or warnings. No broader lint claim.
+- Strict targeted types passed:
+  `node node_modules/typescript/bin/tsc --noEmit --incremental false --strict --skipLibCheck --allowJs --checkJs false --target ES2022 --lib ES2022,DOM --module ESNext --moduleResolution bundler --jsx react-jsx app/os/writing-pages.tsx`.
+- `node node_modules/vinext/dist/cli.js build` and
+  `node node_modules/next/dist/bin/next build`: both passed.
+
+### Alignment, focus and geometry
+
+NOTE/HISTORY have identical measured text tops and bottoms at both widths
+(0px difference), with matching Geist, 10px size, 700 weight, 17.2px line-height
+and 1.3px letter spacing. Both header targets and row bins are at least 44x44px.
+Navigation/bin color resolves to `rgb(227, 107, 55)`. Focused title/body fields
+have no outline, border or shadow, remain the active text input and retain a
+nontransparent caret. Real Tab/Shift+Tab keeps the bin's keyboard focus visible;
+removing the writing box did not remove button focus.
+
+| At 360px and 390px | Note | Thoughts | Habit | Protocol |
+| --- | --- | --- | --- | --- |
+| Resting Page | 344px | 344px | 344px | 344px |
+| Frame with border | 346px | 346px | 346px | 346px |
+| Header box to first content | 80px | 80px | 80px | 80px |
+| Visible label text to first content | 84px | 84px | 83.09px | 83.09px |
+
+Short writing retains the shared minimum; long writing and actual Habit/Protocol
+rows grow without nested scrolling. No shared geometry/type/gap token changed.
+Inspected ignored screenshots: `outputs/note-controls-write-390.png`,
+`outputs/note-controls-history-390.png`, `outputs/note-controls-trash-390.png`
+and `outputs/note-controls-history-360.png` (the latter intentionally shows
+keyboard focus on one bin).
+
+### Attempts and limits
+
+The first 17-case run passed 15/17: wrapping header labels in spans moved Note's
+visible gap to 81.81px while the header-box gap stayed 80px. Plain text in the
+matching header buttons restored the original 84px visible gap; the targeted
+geometry/header selection then passed 4/4. The first expanded run passed 19/20:
+programmatic focus after touch did not trigger `:focus-visible`. The test now
+uses actual Tab/Shift+Tab; its focused rerun passed 1/1, then the final full
+20-case run passed. No product focus rule was weakened to pass that check.
+No additional runtime performance change was justified.
+
+Final record audit: `node outputs/note-controls-audit.mjs` passed 214 local
+links, including 79 fragments across 12 records, and whitespace-format checks.
+`git diff --check` passed with existing LF/CRLF warnings. The approval-baseline
+audit found exactly 15 approved changed files, 239 byte-identical files and no
+Git-visible additions/removals. Earlier uncommitted/untracked work is preserved;
+the baseline, before-copies, screenshots and audit helper are ignored outputs.
+
+Internal revisions remain for autosave/conflict safety, with no Note version
+browser. The shared schema/provider/store, saved evidence, original dates and
+chapter/reading content remain intact. No AI runs on save. Physical phones/native
+keyboards, hosted auth, cross-device/cloud sync, personal migration and week-long
+lived acceptance remain unverified. The earlier 46/184 selections below are
+historical results, not reruns for this UI-only slice. Next: developer use/review
+of the simpler Note flow, followed by separately reviewed migration/safe sync.
+
+## Note autosave refinement (2026-11-03)
+
+### Approved scope and setup
+
+The developer approved Note-only autosave and the reference-based UI refinement,
+tests and owning records after confirming pause/departure saving and retaining
+Send elsewhere. Changes use `writing-pages.tsx`, scoped CSS, the account Note
+connection and the existing writing model's empty-correction guard; no provider,
+store/schema, personal migration, cloud service or authentication flow changed.
+The pre-existing 254-file working tree and untracked writing work are preserved.
+Branch `paing-branch`, HEAD `8890fb1`; nothing staged, committed or deployed.
+
+The actual-component loopback Vite/Chromium harness uses synthetic accounts,
+real IndexedDB, touch/mobile viewports 360x844 and 390x844, Bangkok time and both
+reduced/normal motion. External traffic is blocked; account cases assert no
+legacy transport/model calls. The separate legacy baseline retains its known
+placeholder defect; this Note refinement does not claim to migrate/fix that path.
+
+### Final checks
+
+- `node --test --test-reporter=tap tests/writing.browser.mjs`: **17/17**.
+  Autosave works after a pause, after offline reload/recovery, on leaving the
+  editor, pagehide and Today-route departure. Composition defers publication;
+  mixed Burmese/English is retained. Focus does not create writing. The writer
+  has no manual Save/draft/Clear/Discard controls or draft messages. Orange
+  controls resolve to `rgb(227, 107, 55)` with at least 44x44px header targets.
+- The same run checks direct History editing, Today/day groups and entry times,
+  New Note separation, immutable Versions, Trash/Undo/Restore and confirmed
+  deletion. Selecting/deleting all title/body text saves an empty current version
+  that survives reload while the original stays in Versions. Erasing a new
+  composer before autosave creates no empty History entry. Two older recovery
+  copies remain reachable and save once without a Drafts screen. Failed local
+  commits keep text and retry once; delayed saves retain newer typing and save
+  it subsequently. Another tab's saved correction requires explicit review.
+  Account switching cannot move autosave/recovery to the next account.
+- Existing Thought, Deep Thought, normal-motion send and actual Reflect-answer
+  cases pass in the same UI run, preserving Send, source/question/edition links,
+  local acceptance before departure and no automatic Athena reply.
+- `node --test --test-reporter=tap tests/writing-provider.browser.mjs tests/writing-storage.browser.mjs tests/account-storage.browser.mjs`:
+  **46/46** (16 provider, 19 storage, 11 account storage). These are a separate
+  selection, not extra UI scenarios. It checks actual transactions, rollback,
+  retry, cross-tab refresh, account epochs, no stale resurrection and attribution.
+- `node --test tests/writing-compatibility.test.mjs tests/writing-model.test.mjs tests/account-scope.test.mjs tests/circle-os-model.test.mjs tests/athena-memory.test.mjs tests/vision-declaration.test.mjs tests/deep-thought-model.test.mjs tests/first-use.test.mjs`:
+  **184/184**. A new model case checks empty existing-Note versions and unchanged
+  retries while keeping empty new Notes/Thoughts/answers invalid. Earlier model
+  checks retain the 06:00/DST/timezone and immutable reading/chapter boundaries.
+- Focused strict types passed:
+  `node node_modules/typescript/bin/tsc --noEmit --incremental false --strict --skipLibCheck --allowJs --checkJs false --target ES2022 --lib ES2022,DOM --module ESNext --moduleResolution bundler --jsx react-jsx app/os/writing-pages.tsx`.
+- Selected lint:
+  `node node_modules/eslint/bin/eslint.js app/os/writing-pages.tsx app/os/writing-model.js app/os/circle-os-shell.tsx tests/writing-model.test.mjs tests/writing.browser.mjs`.
+  No errors; the shell's existing unused-import warning is tracked separately
+  from the clean component/model/test selection. No full-repository lint claim.
+- `node node_modules/vinext/dist/cli.js build` and
+  `node node_modules/next/dist/bin/next build`: both passed.
+
+### Geometry and visual verification
+
+| At both 360px and 390px | Note | Thoughts | Habit | Protocol |
+| --- | --- | --- | --- | --- |
+| Resting Page | 344px | 344px | 344px | 344px |
+| Frame with border | 346px | 346px | 346px | 346px |
+| Header box to first content | 80px | 80px | 80px | 80px |
+| Visible label text to first content | 84px | 84px | 83.09px | 83.09px |
+
+Short Notes retain the shared minimum. Long writing and real Habit/Protocol
+rows grow downward without nested scrolling. The final real-row sample measured
+Habit at 615.06px and Protocol at 978.27px; transition timing gives different
+intermediate growth samples across runs, so these are observed bounds rather
+than a new sizing rule. No shared geometry/type/gap token was changed. Note body
+text is 18px; headings retain the shared type. Inspected ignored artifacts:
+`outputs/note-autosave-write-390.png`, `outputs/note-autosave-history-390.png`,
+`outputs/note-autosave-trash-390.png` and the existing geometry screenshot.
+
+### Attempts, boundaries and next action
+
+Baseline model selection passed 26/26 before editing. The first UI run passed
+14/15: initial navigation to the unchanged legacy fixture exceeded 30 seconds
+during dependency optimization. The fixture now waits for DOM content with a
+60-second startup allowance. The next full run passed 15/15. After status/spacing
+refinements and two recovery/empty-composer cases, the final full run passed
+17/17. Initial unused purity suppressions were removed before final clean lint.
+No additional runtime performance change was justified.
+
+Final record audit: `node outputs/note-refinement-audit.mjs` passed all 206
+local links, including 71 heading fragments across 12 records, plus whitespace
+format checks. `git diff --check` passed with the existing LF/CRLF warnings.
+The 254-file approval baseline comparison found exactly 18 approved changed
+paths, 236 byte-identical paths and no additions/removals among Git-visible
+files. The Chromium GPU `debug.log` created during the browser run was moved
+to ignored `outputs/note-refinement-chromium-debug.log`; no pre-existing file
+was removed. The audit helper and baseline are also ignored outputs.
+
+The Note UI removes draft management, while internal legacy-named recovery IDs
+and the schema remain. Recovery rows are not accepted evidence until saved;
+no recovery text was silently discarded. Browser/account closure may stop a
+final flush, so only accepted local writes are claimed and durable recovery is
+used on return. The ledger remains outside CircleState, its outbox and legacy
+payloads. Saving makes no model call and changes no received edition/chapter.
+
+Physical phones/native keyboards, hosted auth, cross-device/cloud sync, personal
+legacy import, complete remote/backup deletion and week-long lived acceptance
+remain unverified. Local synthetic success does not certify beta readiness.
+Next: developer use/review, then separately review personal migration/safe sync.
+
+## Account writing UI (2026-11-02)
+
+### Scope and setup
+
+The developer explicitly approved C: `writing-pages.tsx`, `writing.browser.mjs`,
+shell/Reflect/CSS, Page standard, bug record and nine owning/evidence records.
+Older writing remains read only pending separately reviewed migration. Branch
+`paing-branch`, HEAD `8890fb1`; pre-existing A/B1/B2 work was preserved. No real
+owner data, mapping/import, remote account/service or deployment was changed.
+
+The isolated loopback Vite harness imports actual Today/Reflect, provider,
+stores, Page and CSS modules. It uses synthetic accounts, real IndexedDB,
+Bangkok timezone, touch viewports 360x844 and 390x844 with a proper mobile
+viewport, and reduced/normal motion. External traffic is blocked. A legacy-only
+fixture intercepts its loopback profile transport; account tests assert no
+legacy transport calls. No production test route or authentication bypass was
+added. This does not certify hosted Supabase sign-in or a physical keyboard.
+
+### Results
+
+- `node --test tests/writing.browser.mjs`: 13/13. Focus alone creates no writing;
+  Note recovers after reload, saves offline, stays saved and offers New Note.
+  Corrections preserve immutable versions. History, version reading, Trash,
+  Undo, Restore and confirmed Delete forever use the actual controls.
+- The same run checks normal Thoughts, Deep Thought source retention, the real
+  Reflect reading reply and edition link; failed commits retain the buffer;
+  cross-tab corrections require review; A/B/A returns only that account's draft;
+  newer typing survives delayed Save; normal-motion text waits for durable
+  acceptance before departure. Draft discard preserves the saved entry. Clear
+  keeps an empty draft unsaved; a body-only correction records an empty title
+  as a new version, rather than removing the field or restoring older text.
+- `node --test tests/writing-provider.browser.mjs tests/writing-storage.browser.mjs tests/account-storage.browser.mjs`:
+  46/46 (16 provider, 19 writing storage, 11 account storage).
+- `node --test tests/writing-compatibility.test.mjs tests/writing-model.test.mjs tests/account-scope.test.mjs tests/circle-os-model.test.mjs tests/athena-memory.test.mjs tests/vision-declaration.test.mjs tests/deep-thought-model.test.mjs tests/first-use.test.mjs`:
+  183/183. These are a separate model selection, not extra UI scenarios.
+- ESLint API selection: `app/os/writing-pages.tsx`, `app/os/circle-os-shell.tsx`,
+  `app/os/mirror/page.tsx`, `tests/writing.browser.mjs`. No errors; one existing
+  shell unused-import warning (`renderChapterTemplate`). No full-repository
+  lint claim. Two local purity suppressions document event-only active-writing
+  clock reads followed through button callbacks by the React compiler.
+- Focused types: `node node_modules/typescript/bin/tsc --noEmit --incremental false --strict --skipLibCheck --allowJs --checkJs false --target ES2022 --lib ES2022,DOM --module ESNext --moduleResolution bundler --jsx react-jsx app/os/writing-pages.tsx` passed.
+- `node node_modules/vinext/dist/cli.js build` and
+  `node node_modules/next/dist/bin/next build` passed. NVM rejected the npm
+  entrypoint as untrusted; no trust setting was changed. The repository-local
+  framework CLIs were used for these builds.
+
+### Geometry and visual check
+
+| At both 360px and 390px | Note | Thoughts | Habit | Protocol |
+| --- | --- | --- | --- | --- |
+| Empty Page height | 344px | 344px | 344px | 344px |
+| Frame including border | 346px | 346px | 346px | 346px |
+| Header box to first content | 80px | 80px | 80px | 80px |
+| Visible label text to first content | 84px | 84px | 83.09px | 83.09px |
+
+Short Note equality, long writing growth, and real Habit/Protocol row growth
+were measured without nested scrolling. An inspected generated screenshot is
+`outputs/writing-ui-390.png` (ignored artifact, not a committed design asset).
+Header actions keep 44px targets outside label flow. No token or shared layout
+engine was changed. The earlier 420px measurements came from a fixture missing
+the viewport meta tag and were superseded by the mobile measurements above.
+
+### Attempts and remaining boundaries
+
+Final review: the 252-file pre-C SHA-256 baseline found exactly 14 approved
+existing paths changed, two new UI/test files, 238 unchanged files and no
+removals. Prior engine/provider/adapter source and tests are unchanged by C.
+The two new files are untracked alongside five pre-existing untracked files;
+nothing was staged. All 187 local links, including 62 heading fragments, passed
+across the 11 approved Markdown records. `git diff --check` passed with the
+existing LF/CRLF warnings. This audit includes the final evidence text.
+
+Fixture fixes: the registry is an array, session selectors use the actual
+container, artificial Habit completion has archived setup markers for an empty
+measurement, and legacy requests are intercepted at loopback. A slow concurrent
+run hit a navigation timeout; final checks run against the corrected fixture.
+An empty-save test exposed an overly permissive UI guard; Save now matches the
+approved rule that completely empty writing cannot be saved. Legacy's original
+placeholder bug remains reproducible and is not called fixed by the account UI.
+
+No private writing was imported; no cloud acknowledgement, server merge,
+cross-device/native-phone behavior, complete old-writing migration, broader
+deletion coverage or week-long lived acceptance is claimed. Other-tool histories
+and sign-in polish remain separately reviewed work.
+
+## Account-bound writing provider (2026-11-02)
+
+### Approved scope and setup
+
+The developer explicitly approved the reviewed B2 scope and later said to
+continue. New `app/os/writing-provider.tsx` and `tests/writing-provider.browser.mjs`;
+updates to writing store/model/types, compatibility model/types, shell, Deep
+Thought/first-use models/types, Reflect and five affected tests; nine approved
+plan/product/architecture/continuity/evidence records. Branch `paing-branch`,
+HEAD `8890fb1`. Ten tracked modifications and three untracked B1 files were
+present initially and are preserved. No personal data, owner mapping/import,
+environment, external profile server, remote account/service or deployment changed.
+
+Baseline before edits: the existing 177-case focused selection and 29 storage-
+browser cases passed. Other overlapping read-only selections passed 93/93 and
+83/83; these are not additional unique coverage. New browser tests use ephemeral
+loopback Vite pages importing the actual provider/store, real isolated IndexedDB,
+synthetic accounts, mobile touch at 390x844/360x844, Bangkok timezone and blocked
+external requests. They add no production test route/auth bypass and use no
+owner browser, private writing, hosted account or AI provider.
+
+### Behavior checked
+
+- Account epochs, delayed IndexedDB opens, hashing and captured callbacks:
+  closed A/B/A or logout work cannot populate another session. Older hashes
+  cannot replace new inputs or a newer committed entry in the same account.
+- Actual commits/reloads, draft recovery, saved corrections and earlier Versions:
+  views come from current storage. Retrying an old successful Save after deletion
+  returns its receipt without restoring an entry/history/evidence.
+- Two tabs with BroadcastChannel and with storage-event fallback: notifications
+  refresh saved views; competing corrections retain accepted and candidate text.
+  An older in-flight action cannot replace the latest action status/newer typing.
+  Cross-tab old-answer snapshots stay fresh across later writing notifications.
+- Failed local reads/writes, recovery and stable-operation retry: failed saves
+  preserve drafts; committed saves with failed refresh remain saved alongside a
+  separate read error. Notification failures cannot undo accepted writes.
+- Permanent local deletion: only question/use metadata survives; answer/version/
+  draft text is removed. Metadata survives actual store reload, keeps questions
+  answered and skips first-use greetings. Missing older metadata stays unknown.
+- Exact current writing dependencies gate derived context. Mixed/unknown/stale/
+  forgotten sources are withheld; duplicate observation IDs cannot borrow another
+  item's valid dependencies. Independent unscoped day/tool context retains its
+  existing path. Received prose/editions are copied separately and unchanged.
+- The actual CircleStateProvider mounts the writing provider for accounts and
+  opens no writing ledger for legacy mode. Ledger writing/drafts do not enter
+  CircleState/profile answers, its outbox or `buildServerPayload`; saves do not
+  mutate stored Athena memory or make an external model/backend request.
+
+### Commands, results and attempts
+
+| Check | Result |
+| --- | --- |
+| `node --test tests/writing-compatibility.test.mjs tests/writing-model.test.mjs tests/account-scope.test.mjs tests/circle-os-model.test.mjs tests/athena-memory.test.mjs tests/vision-declaration.test.mjs tests/deep-thought-model.test.mjs tests/first-use.test.mjs` | 183/183 passed on the final model/type input changes; six added behavioral cases over the 177-case baseline. |
+| `node --test --test-reporter=tap tests/writing-provider.browser.mjs tests/writing-storage.browser.mjs tests/account-storage.browser.mjs` | 46/46 passed on the final source: 16 provider, 19 writing-storage and 11 account-storage cases; final reported duration about 50.8 seconds. |
+| `node node_modules/eslint/bin/eslint.js app/os/writing-provider.tsx app/os/writing-store.ts app/os/writing-model.js app/os/writing-model.d.ts app/os/writing-compatibility-model.js app/os/writing-compatibility-model.d.ts app/os/deep-thought-model.js app/os/deep-thought-model.d.ts app/os/first-use.js app/os/first-use.d.ts tests/writing-provider.browser.mjs tests/writing-storage.browser.mjs tests/writing-model.test.mjs tests/writing-compatibility.test.mjs tests/deep-thought-model.test.mjs tests/first-use.test.mjs` | Passed on the final source. |
+| `node node_modules/typescript/bin/tsc --noEmit --incremental false --strict --skipLibCheck --allowJs --checkJs false --target ES2022 --lib ES2022,DOM --module ESNext --moduleResolution bundler --jsx react-jsx app/os/writing-provider.tsx` | Passed targeted strict provider/contracts typing. Imported JavaScript is included for inference, not strict `checkJs` certification. |
+| `node node_modules/eslint/bin/eslint.js app/os/circle-os-shell.tsx app/os/mirror/page.tsx --format json` | Shell retains nine errors/one warning, with the same rule/severity sequence as `git show HEAD:app/os/circle-os-shell.tsx` through ESLint stdin; Reflect has zero diagnostics. This is not a full-lint pass. |
+| `node node_modules/next/dist/bin/next build` | Passed after the raw-memory input-type correction, including TypeScript and static generation. |
+| `node node_modules/vinext/dist/cli.js build` | Passed after the Next pass. Existing unknown-route classification notice and plugin timing warnings remain. |
+
+Initial focused run had one failure in an existing source-call assertion after
+adding the explicit read-view argument; its expectation was updated. The next
+78-case selection passed. Initial new-provider browser run passed 11/13: both
+Versions reads occurred before React published the refreshed view and received
+the intended refreshing error. The harness now waits for the observable ready
+state. Expanded runs passed 45/45, then 46/46 after a competing-action check.
+
+Initial targeted TypeScript without JavaScript inference could not find a
+declaration for the existing `circle-os-model.js`; including JS for inference
+resolved that targeted setup. Initial new-provider lint found a render-time ref
+read and two dependency warnings; these were removed. The first Next build then
+found that existing raw-memory arrays can contain incomplete records while the
+input type required an ID. The input now honestly permits raw records; runtime
+selection still rejects missing IDs/dependencies. The next Next build passed.
+Patch context failures applied no files before corrected patches. Verbose lint
+JSON exceeded output limits; reduced summaries confirmed
+the same baseline shell counts/rules. No runtime fix was hidden by test retries.
+
+The nine-record read-only link/format audit passed 175 local links including
+51 heading fragments. `git diff --check` passed with existing LF/CRLF warnings.
+The 250-file startup SHA-256 comparison found exactly 25 approved existing-file
+changes and two approved additions, 225 unchanged and no removals. Normalized
+suffix hashes preserve the complete earlier task/handoff/journey histories;
+pre-existing memory-model/test files retain their startup bytes. No staging,
+commit, push or deployment occurred.
+
+### Limits and next action
+
+This proves the local provider/read-view slice, not the future product editors,
+history/Trash controls, week-long writing journey or sign-in polish. Existing
+Note placeholder/blur and premature Sent paths remain unchanged. Actual Reflect
+route/swipe fixtures remain a separate unresolved gap; this provider harness
+checks its shared memory input, not the whole Reflect gesture journey.
+
+No geometry/type/gap tokens, budget, immutable chapter or received edition changed;
+no new geometry measurement or justified performance optimization is claimed.
+Existing account/clearing, local atomicity and 06:00/DST regressions passed.
+If both cross-tab notification channels fail, refresh waits for foreground;
+old whole-state concurrency is unchanged. Full lint/broad suite/repository-wide
+TypeScript, real phones/other browsers, hosted auth/session/device, real import,
+Supabase evidence sync, backup/complete deletion and AI quality remain unverified.
+Phase 1/beta readiness is not certified. Next: C's exact UI/routing/file/check
+review and manual approval; personal migration/cloud/deployment remain separate.
+
+---
+
+## Writing compatibility and evidence adapter (2026-11-02)
+
+### Approved scope and setup
+
+Developer-approved scope: new `app/os/writing-compatibility-model.js`, its type
+declaration and `tests/writing-compatibility.test.mjs`; existing memory model and
+memory tests; eight plan/product/continuity/evidence records. Branch
+`paing-branch`, starting HEAD `8890fb1`; initial working tree clean. No real
+profiles/day records, environment files, external vault, remote service,
+account mapping/import, provider/UI activation or deployment changed.
+
+Read-only baseline before edits: 127 selected model/account/memory/declaration
+checks, 19 Deep Thought/first-use checks and 29 isolated storage-browser checks
+passed. Extra synthetic probes reproduced stale fact capture after a legacy
+answer correction, forgotten-fact resurrection on merge, incomplete composite
+invalidation and discarded source-version metadata. Those legacy live paths
+are not declared fixed merely because the new unmounted gate handles them.
+
+### Behavior verified
+
+The adapter takes explicitly same-owner snapshots; a legacy snapshot is not
+assigned to a login. It reads without changing inputs, writing storage or
+calling a model. Existing Note title/body form one source with preserved IDs,
+exact text and per-field provenance. Start/day/timezone remain null when
+unknown. Canonical field edit time is labelled separately; ambiguous timestamp
+text remains original metadata. Repeated reads are stable; a correction changes
+a comparison fingerprint without inventing lost authored versions. Distinct
+entries with the same words stay distinct. Competing same-ID answers fail.
+
+Explicit supplied links rehearse deduplication only. Unknown/cross-owner,
+many-to-one, split-Note and cross-kind mappings fail. An old snapshot cannot
+become fallback evidence after a mapped source is trashed/deleted. No mapping
+is generated or persisted and no actual import/backup/rollback is verified.
+
+Current saved active versions supply writing evidence; drafts and older saved
+versions do not. Exact Burmese, English and mixed text survives without an
+English-regex eligibility gate. Question sources remain intact; missing old
+edition links are not invented. Trash keeps Deep Thought question metadata but
+not answer text in the read view. Restore retains the same source/version.
+Permanent-deletion question/first-use metadata still needs review before live use.
+
+Every writing-derived ledger/taste/rhythm/portrait/curiosity item needs current
+owner/namespace/type/ID/version dependencies. A missing, malformed, unversioned,
+stale, trashed, deleted, forgotten or suppressed dependency withholds the whole
+item. Scoped references survive merges, including distinct versions and invalid
+markers; subtracting a citation does not revalidate a composite's wording.
+Existing suppression/forget corrections still block a stale merged item.
+Received prose/editions are copied separately without mutation or publication.
+An old successful Save receipt cannot reconstruct an entry deleted in current state.
+
+### Commands, attempts and actual results
+
+| Check | Final result |
+| --- | --- |
+| `node --test tests/writing-compatibility.test.mjs tests/writing-model.test.mjs tests/account-scope.test.mjs tests/circle-os-model.test.mjs tests/athena-memory.test.mjs tests/vision-declaration.test.mjs tests/deep-thought-model.test.mjs tests/first-use.test.mjs` | 177/177 passed, including 29 new adapter cases and two added memory cases. |
+| `node --test --test-reporter=tap tests/writing-storage.browser.mjs tests/account-storage.browser.mjs` | 29/29 passed using the existing isolated harnesses at 390x844/360x844. |
+| `node node_modules/eslint/bin/eslint.js app/os/writing-compatibility-model.js app/os/writing-compatibility-model.d.ts app/os/athena-memory-model.js tests/writing-compatibility.test.mjs tests/athena-memory.test.mjs` | Passed after the fixes. |
+| `node node_modules/typescript/bin/tsc --noEmit --incremental false --strict --skipLibCheck --target ES2022 --lib ES2022,DOM --module ESNext --moduleResolution bundler app/os/writing-compatibility-model.d.ts app/os/writing-store.ts` | Passed. This checks the declarations/store, not strict static typing of all JavaScript implementation. |
+| Strict in-memory TypeScript consumer via `node --input-type=module` | Passed. Compiler-host virtual source exercises adapter inputs/outputs, required source version and readonly views; no file is written. |
+| `node node_modules/next/dist/bin/next build` | Passed, including Next's TypeScript/static generation. |
+| `node node_modules/vinext/dist/cli.js build` | Passed; existing unknown-route classification notice remains. |
+
+The initial adapter/memory run passed 50/50. Review then added three checks:
+`node --test --test-name-pattern='forgetting one versioned|malformed dependency|different writing kind' tests/writing-compatibility.test.mjs`
+failed 3/3. One forgotten dependency left a composite active; malformed metadata
+disappeared on merge; a link could hide a Note behind a Thought. Fixed by
+withholding affected versioned items, retaining an invalid scoped dependency
+marker and checking target kind. The full final selection passed 177/177 after
+those changes; lint and both builds also ran after them. Counts from overlapping
+runs are not added as unique coverage.
+
+An additional ad-hoc `node --input-type=module` Vite/Playwright smoke passed at
+both phone widths. It imports the actual account-scope, model/store and adapter
+into an ephemeral loopback-only page; contexts have Bangkok time, mobile touch,
+isolated synthetic accounts and all external requests blocked. Steps: save a
+Burmese/English Deep Thought through real IndexedDB; read an unknown-date existing
+answer; supply a link and verify one current source; select version-linked
+memory; Trash and check no evidence/one answered question; Restore; Trash/delete;
+retry the old Save and reload. Text, source counts, exclusions, reading bytes and
+deleted state were asserted with no page errors. This is two direct module/store
+browser checks, not a persistent new browser fixture or a product UI journey.
+
+An initial baseline capture included too much history text and exceeded output
+limits; a hash/length-only retry captured 247 Git-visible files without edits.
+Two documentation patches failed context validation and applied no changes;
+corrected patches succeeded. No code optimization was justified by a measurement.
+
+The final eight-document audit passed 155 local links, including 38 heading
+fragments, plus conflict-marker/fence/format checks. `git diff --check` passed
+with existing LF/CRLF warnings. The 247-file startup hash comparison found
+exactly ten approved existing paths changed and the three approved new files;
+237 existing files stayed unchanged, with no removals. Normalized history hashes
+preserved all earlier task/handoff/journey text and reconstructed the earlier
+Decision Log exactly after removing only this pass's new entry. No staging or
+commit occurred.
+
+### Limits and next action
+
+The adapter is unmounted. It requires fresh owned snapshots and is not an auth
+boundary, account-epoch guard, live subscription, importer, cloud outbox or
+complete Athena evidence selector for other domains. The later provider must
+rebuild it after writes/cross-tab changes, reject old-session results and render
+current state rather than old receipts. Existing editors/transport still use
+their original paths. The stored ledger/schema and personal data were untouched.
+
+No geometry, type/gap token, budget, chapter or authored-edition content changed;
+no geometry measurements are claimed. Existing local-first/account/06:00/DST
+regressions passed. Provider/editor/history journeys, physical phones/other
+browsers, hosted refresh/revocation/devices, real import/sync/backup/deletion and
+AI language quality remain unverified. Existing placeholder/Sent and Reflect
+fixture/swipe gaps remain; Phase 1 is not certified. No full lint/broad suite or
+standalone repository TypeScript result is claimed beyond the checks above.
+Next is an exact account-bound provider proposal, followed by separate UI review.
+
+---
+
 ## Local writing engine (2026-11-02)
 
 Approved scope: five new local-engine/type/store/test files, plus personal-records

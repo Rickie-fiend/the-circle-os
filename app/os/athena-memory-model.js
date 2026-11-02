@@ -43,7 +43,18 @@ function stableId(prefix, ...parts) {
   return `${prefix}-${stableHash(parts.join("|"))}`;
 }
 
+function isScopedSourceRef(value) {
+  return value && typeof value === "object" && ["owner", "sourceSystem", "versionId"].some(key => Object.hasOwn(value, key));
+}
+
 function normalizeSourceRef(value = {}) {
+  // Keep exact scoped dependencies, including incomplete ones. Dropping or repairing
+  // one could make a partially stale summary appear fully grounded after a merge.
+  if (isScopedSourceRef(value)) {
+    return Object.fromEntries(["sourceType", "sourceId", "capturedAt", "owner", "sourceSystem", "versionId"]
+      .filter(key => Object.hasOwn(value, key)).map(key => [key, structuredClone(value[key])]));
+  }
+  if (!value || typeof value !== "object") return null;
   const sourceId = cleanText(value.sourceId, 160);
   if (!sourceId) return null;
   return {
@@ -55,10 +66,13 @@ function normalizeSourceRef(value = {}) {
 
 function mergeSourceRefs(left = [], right = []) {
   const refs = new Map();
-  for (const candidate of [...left, ...right]) {
-    const ref = normalizeSourceRef(candidate);
+  const candidates = [...left, ...right];
+  const scoped = candidates.some(isScopedSourceRef);
+  for (const candidate of candidates) {
+    const ref = normalizeSourceRef(candidate)
+      || (scoped ? { sourceType: "invalid", sourceId: "", versionId: null } : null);
     if (!ref) continue;
-    refs.set(`${ref.sourceType}:${ref.sourceId}`, ref);
+    refs.set(JSON.stringify([ref.owner ?? null, ref.sourceSystem ?? null, ref.sourceType, ref.sourceId, ref.versionId ?? null]), ref);
   }
   return [...refs.values()].sort((a, b) =>
     String(a.capturedAt).localeCompare(String(b.capturedAt)),
@@ -659,10 +673,15 @@ export function captureAthenaThought(memoryValue, evidence) {
 
 function removeSourceRefs(items, sourceId) {
   return items
-    .map((item) => ({
-      ...item,
-      sourceRefs: (item.sourceRefs || []).filter((ref) => ref.sourceId !== sourceId),
-    }))
+    .map((item) => {
+      const refs = item.sourceRefs || [];
+      // A versioned composite is not safely recomputed by subtracting one citation.
+      // Keep its dependency record and withhold it until it can be refreshed.
+      if (refs.some(isScopedSourceRef) && refs.some(ref => ref?.sourceId === sourceId)) {
+        return { ...item, status: "suppressed", sourceRefs: refs };
+      }
+      return { ...item, sourceRefs: refs.filter(ref => ref?.sourceId !== sourceId) };
+    })
     .filter((item) => !Array.isArray(item.sourceRefs) || item.sourceRefs.length > 0);
 }
 

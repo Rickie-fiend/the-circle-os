@@ -44,6 +44,23 @@ test("drafts are recovered data, outside saved history and evidence", async () =
   assert.equal(result.receipt.outcome, "drafted");
 });
 
+test("deletion retains only saved-use and Deep Thought question metadata, including old-marker uncertainty", async () => {
+  for (const kind of ["note", "thought", "deep-thought", "reading-answer"]) {
+    const first = await fixture({ kind, source: { questionId: "deep-question", question: "Original question?", source: "local" } });
+    const trashed = await run(first.state, "trash", { entryId: first.entry.id, expectedGeneration: first.entry.generation });
+    const deleted = await run(trashed.state, "delete", { entryId: first.entry.id,
+      expectedGeneration: trashed.state.entries[first.entry.id].generation, confirmed: true });
+    const marker = deleted.state.tombstones[first.entry.id];
+    assert.deepEqual(marker.usage, { kind, answeredAt: first.entry.createdAt,
+      ...(kind === "deep-thought" ? { questionId: "deep-question", question: "Original question?" } : {}) });
+    assert.equal(JSON.stringify(deleted.state).includes("Synthetic writing"), false);
+    const old = structuredClone(deleted.state); delete old.tombstones[first.entry.id].usage;
+    assert.equal(assertWritingState(old), old, "old markers load without invented question history");
+    marker.usage.answer = "must not hide deleted writing here";
+    assert.throws(() => assertWritingState(deleted.state), /saved-use/);
+  }
+});
+
 test("an absent title displays Untitled without becoming authored evidence", async () => {
   const result = await fixture();
   assert.equal(writingHistory(result.state)[0].title, "Untitled");
@@ -70,6 +87,25 @@ test("two identical Notes on one day retain separate identities", async () => {
   const entries = writingHistory(saved.state);
   assert.equal(entries.length, 2); assert.notEqual(entries[0].id, entries[1].id);
   assert.equal(entries[0].attribution.day, entries[1].attribution.day);
+});
+
+test("clearing an existing Note saves an empty version without erasing earlier wording", async () => {
+  const first = await fixture(), input = correction(first.entry, { content: { title: "", body: "", tags: [] } });
+  const written = await start(input, first.state), cleared = await save(written.state, written.state.drafts[input.id]);
+  assert.equal(cleared.receipt.outcome, "saved");
+  assert.deepEqual(writingHistory(cleared.state)[0].content, { title: "", body: "", tags: [] });
+  assert.equal(writingHistory(cleared.state)[0].title, "Untitled");
+  assert.equal(writingVersions(cleared.state, first.entry.id)[1].content.body, "Synthetic writing");
+  assert.equal(writingEvidence(cleared.state)[0].content.body, "");
+  const unchanged = await start(correction(cleared.state.entries[first.entry.id], { content: { title: "", body: "", tags: [] } }), cleared.state);
+  const repeated = await save(unchanged.state, Object.values(unchanged.state.drafts).find(item => item.status === "active"));
+  assert.equal(repeated.receipt.outcome, "unchanged");
+  assert.equal(writingVersions(repeated.state, first.entry.id).length, 2);
+  for (const kind of ["thought", "deep-thought", "reading-answer"]) {
+    const prior = await fixture({ kind }), empty = correction(prior.entry, { content: { title: "", body: "", tags: [] } });
+    const pending = await start(empty, prior.state);
+    await assert.rejects(save(pending.state, pending.state.drafts[empty.id]), /Write something/);
+  }
 });
 
 test("saved corrections preserve versions; typing itself creates none", async () => {

@@ -1,6 +1,6 @@
 # Circle OS work plan
 
-Updated: 2026-11-02, Asia/Bangkok.
+Updated: 2026-11-03, Asia/Bangkok (Note contract refinement).
 Status: documentation reconciliation and ordered planning approved. No application
 implementation, database change, personal migration or deployment is authorized
 by this file.
@@ -13,15 +13,32 @@ creating a competing product specification.
 
 ## Start here
 
-Review one week of writing and returning: start a Note, leave a draft, save two
-Notes on one day, return tomorrow, find an older entry, correct it, inspect an
-earlier version, move it to Trash and restore it. Walk through a quick Thought
-and a reading answer too. Decide the controls and record contracts together.
+The later approved 2026-11-03 Note controls supersede its earlier Versions/Undo/
+save-feedback/ellipsis requirements: Note has direct HISTORY, silent borderless
+writing and orange History row bins. Keep Trash for restoration. Internal save
+revisions remain. The latest approved slice moves New Note to the editor Footer,
+caps Note/History/Trash at 480px (60% of a short viewport, never below the shared
+minimum), scrolls only Body and removes Moved to Trash text. Other writing
+controls and the delivery sequence are unchanged. See the
+[current Note contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1411-bounded-note-pages---2026-11-03).
 
-The output is a bounded local Notes/Thoughts proposal with exact files, user
-journeys and synthetic checks, presented for approval before code. Include
-account separation, local-write failures and honest save status. Do not implement
-the old single-Note backend proposal unchanged.
+The local writing engine, read-only compatibility/evidence adapter and account-bound provider are
+implemented and verified for their approved synthetic scopes. See
+[the delivered contracts](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#145-local-engine-a-delivered---2026-11-02)
+and [provider contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#147-account-bound-provider-delivered---2026-11-02).
+Account editors now use the shared local writing provider; older writing and
+legacy editors retain their existing paths. See the
+[UI contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#148-account-writing-ui-delivered---2026-11-02).
+
+The developer approved C's exact UI scope, and it is connected and locally
+verified. Next, walk through the working writing/history UI with synthetic
+data before separately reviewing personal import and cloud sync. The week-long
+writing/history walkthrough remains a lived acceptance journey; confirmed
+Note autosave (approved 2026-11-03), Thought Send, title and Trash choices apply.
+The Note refinement supersedes earlier explicit Note Save/draft controls.
+Personal import and safe cloud
+sync remain separately reviewed. Do not implement the old single-Note proposal
+unchanged.
 
 UI work belongs in this sequence. The developer chose **core flows and sign-in
 polish first; broader visual changes later**. Early interaction review does not
@@ -38,7 +55,7 @@ authorize a brand redesign or unreviewed runtime changes.
 | Habit answer projection, bug 12 | Fixed and verified, including old-run recovery and later-edit protection. Keep regression coverage. |
 | Repeating Log setup, bug 17 | Fixed and verified. Keep regression coverage. |
 | Prepared Athena content | Prepared-content display/local calculations exist. A live requested paid service is not implemented. |
-| Local writing and records | Existing tools save records, but the planned multi-entry Notes, general histories/corrections and safe Supabase sync are not implemented. |
+| Local writing and records | Local engine, adapter, provider and account writing/history UI verified with synthetic data. General histories/corrections, lived acceptance, personal import and safe Supabase sync remain unfinished. |
 
 Evidence: [journey record](USER_JOURNEY_TESTING.md), [bugs](../bugs.md), and
 [capability audit](APP_CAPABILITY_AUDIT_2026-11-01.md). Separate test selections
@@ -54,9 +71,9 @@ change does not have to be finished before records work begins.
 
 | Order | Work and status | Dependency | Evidence needed |
 | --- | --- | --- | --- |
-| 1 | **Records and UI contracts: next review.** Define stable sources/revisions, drafts, dates/timezones, lifecycle states and writing/history/Trash flows. Review essential history across other tools and task scheduling before choosing shared fields. | Confirmed personal-record decisions. | Reviewable walkthrough, bounded open choices, exact local implementation/test proposal. |
+| 1 | **Records and UI contracts: partly delivered.** Writing choices, local engine, adapter and provider are confirmed/delivered for their scopes. Review remaining UI placement/routing and other tools' history/task scheduling. | Confirmed personal-record decisions and delivered local contracts. | Exact UI proposal and checks before activation; later week-long walkthrough. |
 | 2 | **Critical checks and fixes: unresolved.** Reproduce the Note placeholder concern, accidental phase changes, broader Continue/onboarding reports, Routine idle reset and Reflect fixture/swipe failures. Verify hosted auth refresh/revocation and account switching. | Synthetic isolation and a recorded baseline. Triage begins alongside contract review; fixes precede affected implementation. | Reproduction or qualified non-reproduction; focused tests and affected mobile/runtime paths. Separate fixture faults from app faults. |
-| 3 | **Local writing and early UI: planned.** Multiple titled Notes/day, untitled Thoughts, draft recovery, Save/Send, saved versions, optional tags, App history and writing Trash. Review sign-in/loading polish as a separate small early slice. | Approved contracts/interaction and exact file scope; relevant blockers addressed. | Write/reload/correct/restore journeys, account isolation, storage-failure behavior, current/earlier versions and no placeholder/draft evidence. |
+| 3 | **Local writing and early UI: account writing UI locally verified.** Multiple-entry Note/Thought/reading-answer editors, drafts, History, Versions and Trash are connected. Lived acceptance, older-writing migration, other-tool histories and sign-in/loading polish remain. | C's exact scope was explicitly approved; later slices need their own review. | Local write/reload/correct/restore, isolation, failure/conflict and geometry checks are recorded in the journey evidence; hosted/device/lived acceptance remains separate. |
 | 4 | **Existing-tool history: planned.** Historical Habit/Protocol wording, dated completion corrections, Log all-recorded-day navigation, versioned weekly corrections, task/goal links, declaration/chapter-answer/reading review and shared day view. | Shared record/time contracts and reviewed record-specific behavior. | Same records in App/day history, no copied ownership or replayed outcomes, preserved terms/dates/seals/links and free/expired access. |
 | 5 | **Safe account sync and recovery: planned.** Ownership schema/access policies, durable operations, exact receipts, retries, multi-tab/device conflicts, explicit clearing/deletion, protected admin access/logs, backup/restore and migration rehearsal. | Locally verified records/history and reviewed SQL, retention and conflict UI. | Real synthetic database allow/deny checks; offline/retry/clear/Trash/conflict/recovery; no late cross-account application. Personal import requires separate ownership/backup/rollback approval. |
 | 6 | **Day One action setup: planned beta requirement.** New immutable version offering Try once, Make a habit or Keep for later, with at most one confirmed commitment. | Records/history and safe sync verified; reviewed task-date, confirmation and optional existing-user contracts. | Confirm/skip/interruption/offline/retry checks, no duplicates or replayed creation, all entry points, preserved old runs/access and no automatic AI request. |
@@ -79,14 +96,15 @@ estimate predates the expanded history scope and needs re-estimation.
 
 | Timing | UI review | Boundary and verification |
 | --- | --- | --- |
-| First, with record contracts | New Note, title/body, Save/Send, recovered drafts, correction/version views, App history/shared day view, Trash/restore and meaningful source links. | Decide control meanings before wiring storage. Title requirements and placement remain open. Saved on device, waiting for sync, cloud confirmation, failure and conflict must be distinguishable. |
+| First, with record contracts | New Note, title/body, Note autosave/internal recovery, Thought Send/drafts, correction/version views, App history/shared day view, Trash/restore and meaningful source links. | The 2026-11-03 Note refinement supersedes its earlier Save/draft controls; other writing keeps Send. Saved on device, waiting for sync, cloud confirmation, failure and conflict must be distinguishable. |
 | Early bounded slice | Sign-in, password setup/reset, alias entry, account menu and startup loading wording, including the recorded "Opening Circle OS…" / "Checking your sign-in." request. | Review actual mobile states. Preserve verified-email enforcement, offline entry limits, form state and account isolation. This request reopens planning, not implementation approval. |
 | With each owning tool | Routine checkmarks/titles, Protocol separation/intentional corrections, Log time picker, history date controls, Day One confirmation and Reflect sources/memory controls. | Reproduce faults first; reuse shared Page, gesture, button, editing and App-back engines. Preserve the five Protocol durations. |
 | Later, after the core | Broader Today/Reflect composition, optional Character/Six-month front Pages and general visual refinement. | Separate developer/design review. Existing Character authority/history remains required; new front Pages are not assumed to be a beta gate. |
 
 Preserve Bone/Ink/Orange/Charcoal, Geist within Apps, Cormorant only for outer
 editorial headings, comfortable mobile gutters and 44px targets. One shared
-minimum and forehead anchor remain. Real content grows downward; Habit/Protocol
+minimum and forehead anchor remain. Account Note views use their approved
+bounded Body scrolling exception. Other real content grows downward; Habit/Protocol
 rows do not become nested scrolling panels. Geometry/type/gap changes require
 rendered Note, Thoughts, Habit and Protocol heights and forehead measurements,
 including empty/short and real-content states. Check motion, keyboard, focus,
@@ -162,16 +180,20 @@ Resolve these details before the slice that depends on them:
 
 | Needed before | Remaining review |
 | --- | --- |
-| Local writing | Title requirements; New/Save/history/version/Trash placement; status/failure wording; local IDs/revisions, transaction failure/recovery and draft cleanup. |
+| Local writing | New/Save/history/version/Trash placement, draft routing and status/failure/conflict wording. Provider freshness/read consumers have bounded verification; those checks do not verify the later editor/history journeys. Title/Save/Send/Trash choices are confirmed. |
 | Time/history | Attributed day/timezone versus occurrence/recorded/corrected time; serialization/DST, deliberate backdating, unknown legacy dates/wording, scheduled tasks and historical Habit/Protocol snapshots. |
 | Record-specific corrections | Weekly revisions; chapter-answer correction/outcome boundary; non-writing archive/delete rules; received-reading paging/retention beyond the current 60-edition browser bound. No blanket deletion or outcome replay. |
 | Sync/recovery | SQL/grants/functions/indexes; operation/receipt/revision retention; conflict UI; cross-device drafts; stale-device suppression; migration ownership/rollback; admin auditing/log retention; deletion coverage/turnaround and restore suppression. |
 | Day One | Copy/layout, optional completed-user entry, supplemental runs, source/version choice, scheduled-day and atomic confirmation/receipt recovery. Its five product choices are settled. |
-| Membership/Athena | Allowance amounts/counting; reset hour/cycle math/renewal; retries/no-change accounting; spending/alert/pause levels; provider/model/processing facts; languages/tone; control semantics/undo and source invalidation. |
+| Membership/Athena | Allowance amounts/counting; reset hour/cycle math/renewal; retries/no-change accounting; spending/alert/pause levels; provider/model/processing facts; English response instructions and Burmese-input quality; control semantics/undo and source invalidation. English UI/responses at launch and Burmese/English UI/responses after launch are confirmed. |
 | Beta readiness | Lost-email ownership proof; support/feedback/rollback; devices/browsers, regional connections, duration/success criteria, data-use wording and a new evidence-based estimate. |
 
 Wrong, Has changed and Forget are confirmed controls; their scope, undo,
 recurrence prevention and qualifications on old immutable readings need review.
+Trashing a Deep Thought keeps its question answered while excluding its writing.
+Permanent local deletion also keeps minimal question/app-use metadata, without
+answer/version/draft text; older missing metadata remains unknown. Wider
+derived/device/server/log/backup deletion still needs review and verification.
 Corrections must not start a paid model call. Trash has no automatic expiry;
 permanently deleted backup data has a separate maximum 30-day limit. No user data
 download/export is offered in beta. Chapter authoring export is a different tool.
@@ -199,8 +221,9 @@ download/export is offered in beta. Chapter authoring export is a different tool
   conflicts, migration recovery, backup restore, manual account deletion and
   backup expiry are unimplemented/unverified release work.
 
-No new runtime checks, builds, lint, browser tests, hosted inspection or geometry
-measurements ran for this document pass. Phase 1 and beta readiness remain
+The earlier reconciliation-only pass ran no runtime checks. Subsequent provider
+checks are in [the journey evidence](USER_JOURNEY_TESTING.md#account-bound-writing-provider-2026-11-02);
+they do not certify UI, hosted/device, cloud or geometry work. Phase 1 and beta readiness remain
 uncertified. Use synthetic isolated accounts; never clear or hand-edit personal
 profile/day records to make tests pass.
 

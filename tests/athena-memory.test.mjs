@@ -16,6 +16,25 @@ import {
   suppressAthenaObservation,
 } from "../app/os/athena-memory-model.js";
 
+test("memory merge preserves exact writing owner, namespace and version dependencies", () => {
+  const base = { owner: "account:synthetic-a", sourceSystem: "writing", sourceType: "note", sourceId: "entry", capturedAt: "2026-11-02T03:00:00.000Z" };
+  const refs = [
+    { ...base, versionId: "version-one" }, { ...base, versionId: "version-two" },
+    { ...base, owner: "account:synthetic-b", versionId: "version-two" },
+    { ...base, sourceSystem: "existing", versionId: "version-two" },
+  ];
+  const memory = mergeAthenaMemory({ ledger: [{ id: "fact", sourceRefs: refs.slice(0, 2) }] },
+    { ledger: [{ id: "fact", sourceRefs: [refs[0], ...refs.slice(2)] }] });
+  assert.deepEqual(memory.ledger[0].sourceRefs, refs);
+  assert.equal(refs[0].versionId, "version-one");
+});
+
+test("incomplete scoped references survive merge so the context gate can reject the whole summary", () => {
+  const incomplete = { owner: "account:synthetic-a", sourceSystem: "writing", sourceType: "note", sourceId: "entry", versionId: null };
+  const memory = mergeAthenaMemory({}, { tastes: [{ id: "summary", sourceRefs: [incomplete] }] });
+  assert.deepEqual(memory.tastes[0].sourceRefs, [incomplete]);
+});
+
 test("an authored Reading question becomes one reply prompt", () => {
   const reading = buildAthenaReading({
     updatedAt: "2026-08-18T06:15:00.000Z",

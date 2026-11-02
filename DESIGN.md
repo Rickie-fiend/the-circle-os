@@ -98,6 +98,11 @@ Session
   content may grow the frame downward, including Routine rows and Protocol
   terms. One set of tokens owns the minimum, padding, drop to the first line,
   Main-to-Sub gap and Body-to-Footer gap; an App does not restate them.
+- Account Note is the approved bounded-growth exception: Note, History and Trash
+  grow from that minimum to a 480px App Box ceiling, reduced to 60% of the dynamic
+  viewport on short screens, never below the shared minimum. Only Body scrolls
+  past the ceiling; Header, Heading and Footer remain in place. Habit/Protocol
+  keep their continuous downward growth.
 - Main content begins at the shared forehead anchor for every line count. It
   never recentres as text changes; a fourth and every later line grows the Page
   downward after the ordinary three-line height budget is used.
@@ -178,18 +183,36 @@ is itself the point of the final week Page.
 
 ### Note Page
 
-- Header shows the app label, and while writing, a Clear action on the right
-  that empties Main and Sub together.
-- Main and Sub both take unlimited writing.
+- Account Note uses NOTE on the left and direct HISTORY navigation on the right.
+  Both labels share typography, baseline and 44px touch targets. Labels,
+  navigation and text actions use Circle Orange (`#E36B37`); authored title and
+  body stay Ink. Use Geist, the shared minimum and forehead, and 44px targets.
+- Main and Sub both take unlimited writing. Account Note scrolls its Body after
+  the shared Note ceiling; writing length itself is not limited.
 - Header shows the app label or app action.
 - Main text uses the same forehead anchor as a Cover Page. Optional Sub text
   follows Main at the shared gap without moving it.
 - Text can be edited directly with its display typography.
-- Keep the borderless writing surface instead of a separate edit box. The current
-  single-Note editor commits on blur. The confirmed multi-entry target recovers
-  drafts and uses explicit **Save** for Notes and **Send** for Thoughts; drafts
-  stay outside history and Athena evidence. Review exact controls under the
-  [personal records plan](docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md) before code.
+- Keep the borderless writing surface. Account Note saves after a short typing
+  pause and when leaving; it has no Save, Clear, Discard or Drafts controls or
+  draft messages. Writing fields have no focus outline or box; the text cursor
+  remains. Save silently, with failure alerts when needed. Local recovery
+  remains automatic behind the scenes.
+- HISTORY opens the list directly. Note has no Versions controls or screens.
+  History groups entries by Circle day, shows times, opens writing directly for
+  editing, and carries Trash in the header. The full-width New Note action lives
+  in the Note editor Footer and saves the current text before opening a blank Note.
+  Each editable local Note row has a Circle Orange trash-bin button on its right.
+  That button moves only its Note to Trash, without a Moved to Trash message.
+  There is no Note Undo action;
+  restoration happens from the Trash page.
+  Trash detail keeps the title/body hierarchy with Restore and Delete forever.
+- Selecting and deleting all text saves an empty correction of an existing Note;
+  internal revision records remain for save/conflict safety. Untouched empty
+  composers create no saved entry.
+  Thoughts and reading answers retain Send and their draft workflow. The legacy
+  single-Note editor remains separate pending migration. See the
+  [writing journeys](docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md#5-writing-journeys).
 
 ### Thoughts Page
 

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { createWritingState } from "../app/os/writing-model.js";
+import { buildWritingCompatibilityView } from "../app/os/writing-compatibility-model.js";
 
 import { createEmptyState } from "../app/os/circle-os-model.js";
 import {
@@ -33,6 +35,22 @@ test("a fresh install greets every App it can", () => {
   }
   // An App nobody named gets no invented greeting.
   assert.equal(firstUsePlaceholder(empty, "athena"), "");
+});
+
+test("account first-use reads the shared writing view and withholds unknown/loading greetings", async () => {
+  const state = createEmptyState(), ledger = createWritingState("account:synthetic-a");
+  const view = await buildWritingCompatibilityView({ owner: ledger.owner, writingState: ledger });
+  assert.equal(firstUsePlaceholder(state, "note", view), FIRST_USE_PLACEHOLDERS.note);
+  for (const app of ["note", "thoughts"]) assert.equal(firstUsePlaceholder(state, app, null), "");
+  ledger.tombstones.deleted = { id: "deleted", generation: 1, deletedAt: "2026-11-02T03:00:00.000Z",
+    usage: { kind: "deep-thought", questionId: "deep-question", question: "Original?", answeredAt: "2026-11-02T03:00:00.000Z" } };
+  const used = await buildWritingCompatibilityView({ owner: ledger.owner, writingState: ledger });
+  assert.equal(hasUsedApp(state, "thoughts", used), true);
+  assert.equal(firstUsePlaceholder(state, "thoughts", used), "");
+  delete ledger.tombstones.deleted.usage;
+  const unknown = await buildWritingCompatibilityView({ owner: ledger.owner, writingState: ledger });
+  for (const app of ["note", "thoughts"]) assert.equal(firstUsePlaceholder(state, app, unknown), "");
+  assert.equal(firstUsePlaceholder(state, "habit", unknown), FIRST_USE_PLACEHOLDERS.habit);
 });
 
 // Nothing new is stored to know this. The evidence already in the App is the
@@ -84,9 +102,9 @@ test("Note and Thoughts show their first words ahead of the rotations", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   assert.match(
     shell,
-    /firstUsePlaceholder\(state, "thoughts"\) \|\|\s*\n\s*selectThoughtPrompt/,
+    /firstUsePlaceholder\(state, "thoughts", writingView\) \|\|\s*\n\s*selectThoughtPrompt/,
   );
-  assert.match(shell, /firstUsePlaceholder\(state, "note"\)/);
+  assert.match(shell, /firstUsePlaceholder\(state, "note", writingView\)/);
 });
 
 // It greets once. It used to win outright until a note was written, so Clear
@@ -94,7 +112,7 @@ test("Note and Thoughts show their first words ahead of the rotations", () => {
 // clear button doesnt show creative lines."
 test("Clear hands the Note back to its rotation", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(shell, /!noteGreeted \? firstUsePlaceholder\(state, "note"\) : ""/);
+  assert.match(shell, /!noteGreeted \? firstUsePlaceholder\(state, "note", writingView\) : ""/);
   const clear = shell.match(/function clearNote\(\)[\s\S]*?\n  \}/)?.[0] ?? "";
   assert.ok(clear, "clearNote moved");
   assert.match(clear, /setNoteGreeted\(true\)/);

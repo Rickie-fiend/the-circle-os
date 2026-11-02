@@ -3,6 +3,32 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DEEP_THOUGHT_KINDS, LOCAL_DEEP_THOUGHTS, countDeepThoughtWords, createLocalDeepThoughtPrompt, isDeepThoughtRewardEligible, selectDeepThoughtPrompt, unaskedDeepThoughts } from "../app/os/deep-thought-model.js";
 import * as deepThoughtModel from "../app/os/deep-thought-model.js";
+import { createWritingState } from "../app/os/writing-model.js";
+import { buildWritingCompatibilityView } from "../app/os/writing-compatibility-model.js";
+
+test("account question metadata survives deletion without copied answers or repeated prompts", async () => {
+  const ledger = createWritingState("account:synthetic-a"), question = LOCAL_DEEP_THOUGHTS[0].text;
+  ledger.tombstones.deleted = { id: "deleted", generation: 2, deletedAt: "2026-11-02T03:00:00.000Z",
+    usage: { kind: "deep-thought", questionId: "deep-original", question, answeredAt: "2026-11-02T02:00:00.000Z" } };
+  const view = await buildWritingCompatibilityView({ owner: ledger.owner, writingState: ledger });
+  const state = { profile: { profileCase: { deepThoughtPrompt: { id: "different-id", text: question, dateKey: "2026-11-02" } } } };
+  const writing = { view, curiosity: [] };
+  assert.equal(unaskedDeepThoughts(state, LOCAL_DEEP_THOUGHTS, writing).some(item => item.text === question), false);
+  assert.notEqual(selectDeepThoughtPrompt(state, "2026-11-02", 0, writing).text, question);
+  assert.equal(selectDeepThoughtPrompt(state, "2026-11-02", 0, { view: null, curiosity: [] }), null);
+  delete ledger.tombstones.deleted.usage;
+  const unknown = await buildWritingCompatibilityView({ owner: ledger.owner, writingState: ledger });
+  assert.equal(selectDeepThoughtPrompt(state, "2026-11-02", 0, { view: unknown, curiosity: [] }), null);
+});
+
+test("a deleted personalized question stays answered through the account view", async () => {
+  const ledger = createWritingState("account:synthetic-a");
+  ledger.tombstones.deleted = { id: "deleted", generation: 2, deletedAt: "2026-11-02T03:00:00.000Z",
+    usage: { kind: "deep-thought", questionId: "personalized-original", question: 'What are you avoiding by doing "Call my sister" instead?', answeredAt: "2026-11-02T02:00:00.000Z" } };
+  const view = await buildWritingCompatibilityView({ owner: ledger.owner, writingState: ledger });
+  const state = { profile: { identityFocus: "Yourself" }, days: { "2026-11-02": { mission: { text: "Call my sister" } } } };
+  assert.equal(selectDeepThoughtPrompt(state, "2026-11-02", 0, { view, curiosity: [] }).source, "local");
+});
 
 test("deep reward follows a sentence, not an essay", () => {
   const sentence = "I love this day, I am grateful for today";
@@ -288,7 +314,7 @@ test("the App counts openings, and holds the question while it is answered", () 
   assert.match(shell, /const deepThoughtVisits = useRef\(0\)/);
   assert.match(
     shell,
-    /selectDeepThoughtPrompt\(state, dateKey, deepThoughtVisits\.current\)/,
+    /selectDeepThoughtPrompt\(state, dateKey, deepThoughtVisits\.current, writing \?/,
   );
   // Counted on the way in only, so closing the side does not skip a question.
   assert.match(shell, /if \(nextMode === "deep"\) deepThoughtVisits\.current \+= 1;/);

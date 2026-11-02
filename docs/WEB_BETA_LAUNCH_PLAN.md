@@ -1,6 +1,6 @@
 # Circle OS web beta launch plan
 
-Date: 2026-10-31. Updated: 2026-11-02. Status: launch planning approved;
+Date: 2026-10-31. Updated: 2026-11-03 (Note contract). Status: launch planning approved;
 account/local-isolation foundation exists; history/sync and live Athena remain
 planned work. This update is documentation only.
 The developer approved saving this plan and aligning the product, roadmap,
@@ -22,10 +22,24 @@ addition does not reopen other deferred chapter work or authorize code.
 
 ## Launch target
 
+The approved 2026-11-03 account Note refinement moves New Note to its editor
+Footer and bounds Note/History/Trash at 480px, reduced to 60% of a short viewport
+but never below the shared minimum. Body scrolls with header/actions in place;
+moving to Trash is silent. Other writing keeps its controls. See the
+[current contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1411-bounded-note-pages---2026-11-03).
+This local UI slice does not complete history/sync gates or change delivery order.
+
 Invite 10-20 people, mainly in Myanmar and Thailand, to the current web app
 with Home Screen installation, email/password login, safe sync, and paid Athena.
 Keep the Circle identity, shared App Box/Page system, and existing core tools.
 No native app or app-store distribution is in this release.
+
+The users are Burmese people; some understand English well and most have basic
+English. At web launch, the app UI and Athena's responses are in simple English.
+Users may write in Burmese, English or mixed language. Athena must understand
+that input and answer in English. Burmese/English UI and Athena responses follow
+after web launch. Thai support is not part of this language scope. This records
+the developer's 2026-11-02 clarification, not verified live AI capability.
 
 This plan supersedes the earlier core-first, personalized-Athena-later release
 order. It does not certify Phase 1, erase bugs, or waive the development cycle.
@@ -81,18 +95,32 @@ separate from the deletion and backup rules below.
 | 6. Beta readiness | Verified Day One action setup after Stage 3; Home Screen installation, app updates, critical fixes, manual deletion, backups/restore, admin-only diagnostics, operating and recovery instructions | Day One confirm/skip/recovery and compatibility checks pass; agreed real-phone journeys and production-build checks pass; deletion and 30-day backup expiration are verified; no user export/download in beta |
 | 7. Release | Invite instructions, processing explanation, feedback route, deployment and monitoring | Explicit developer deployment approval, then verification in the deployed environment |
 
-Next reviewed slice: the personal-record contracts and writing/history
-interactions, then an exact local Notes/Thoughts file/test proposal. Account
-entry/local separation exists; hosted/session/device gaps remain in the current
-task. Real-data ownership and migration remain separate approval gates. A device
+The separately approved C slice connects account Note/Thought/reading-answer
+editors, drafts, saved versions, History and local Trash. The local engine,
+adapter, provider and UI have bounded synthetic verification; see the
+[UI contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#148-account-writing-ui-delivered---2026-11-02).
+Older writing and legacy editors retain their previous paths. A lived writing
+walkthrough, reviewed personal migration, other-tool histories and safe cloud
+sync remain separate work; none is certified by the local UI tests.
+Account entry/local separation exists; hosted/session/device gaps remain in the
+current task. Real-data ownership and migration remain separate approval gates. A device
 must never silently attach the previous person's records to the next account.
 
-Confirmed target: draft recovery with explicit Save/Send; drafts outside evidence;
+Confirmed target (Note refined 2026-11-03): silent Note autosave with internal
+recovery/revisions, direct HISTORY and orange row trash-bin buttons. Note has
+no Save/Clear/Discard/Drafts/Versions/Undo UI or focused writing box. Keep the
+Trash page for Restore and confirmed Delete forever. Thoughts keep explicit Send
+and drafts with their existing controls.
+Recovery buffers stay outside saved evidence until committed;
 editable saved writing/weekly reviews with accessible earlier versions; prospective
 habit/Protocol changes; past-day correction with actual recording time; preserved
 old day/timezone and current local 06:00 attribution for new records. Notes/Thoughts
 Trash is recoverable, excluded from Athena and has no automatic expiry. Exact
-deletion coverage and technical retention still require review.
+deletion coverage and technical retention still require review. The developer
+confirmed that permanent local deletion keeps the original Deep Thought question
+answered and skips first-use greetings through minimal question/app-use metadata;
+answer text, versions and drafts are removed from the writing ledger. This is
+not proof of complete remote/derived/log/backup deletion.
 
 Optional tags and correctable Athena topics/feelings are planned. AI interpretation
 runs only when a paid user requests it; no background profiling or interpretation
@@ -137,7 +165,8 @@ Requested follow-up questions have no fixed count limit beyond usage allowance.
 Replies may use all evidence available to Athena for that person, including
 their whole history within the allowed categories. This supersedes the earlier
 bounded-follow-up proposal. Automatic replies and autonomous actions remain
-outside scope. Exact controls, supported languages, and usage amounts remain open.
+outside scope. Exact controls, language instructions/quality checks within the
+confirmed launch scope, and usage amounts remain open.
 
 Provider/model selection is deliberately deferred until integration. No AI API
 account exists yet according to the developer. No provider, credentials, or
