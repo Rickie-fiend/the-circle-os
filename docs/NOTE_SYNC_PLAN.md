@@ -2,6 +2,26 @@
 
 Date: 2026-10-31. Status: approved documentation scope; implementation proposed.
 
+## 2026-11-02 supersession
+
+The developer confirmed and approved documenting the
+[personal records and Athena plan](PERSONAL_RECORDS_AND_ATHENA_PLAN.md).
+Multiple titled Notes grouped by Circle day, separate Thoughts, recoverable
+drafts, saved versions, history/corrections and Trash replace this earlier
+proposal's single ongoing editable Note constraint. The earlier constraint
+must not drive an unchanged implementation proposal.
+
+The remaining sections preserve the 2026-10-31 proposal as historical evidence.
+Its durable local writes, exact acknowledgements/receipts, retries, ownership,
+clearing/deletion, multi-tab protection and person-chosen conflicts remain useful
+requirements to adapt to the new record model. Preserve `checkin-note` and other
+legacy identifiers until a reviewed migration maps them; do not invent old
+entries or dates. No sync/schema, personal migration, or deployment is implemented
+or authorized by this documentation update.
+
+Next is the new plan's contracts and writing/history interaction review, then
+an exact local implementation proposal. Database work remains a separate slice.
+
 ## Outcome and scope
 
 Keep Today's Note available offline and copy saved changes to the person's

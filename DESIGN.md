@@ -185,7 +185,11 @@ is itself the point of the final week Page.
 - Main text uses the same forehead anchor as a Cover Page. Optional Sub text
   follows Main at the shared gap without moving it.
 - Text can be edited directly with its display typography.
-- No separate edit box and no Save-message step.
+- Keep the borderless writing surface instead of a separate edit box. The current
+  single-Note editor commits on blur. The confirmed multi-entry target recovers
+  drafts and uses explicit **Save** for Notes and **Send** for Thoughts; drafts
+  stay outside history and Athena evidence. Review exact controls under the
+  [personal records plan](docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md) before code.
 
 ### Thoughts Page
 
@@ -261,10 +265,11 @@ Hidden for v1 behind `SHOW_DREAMLINE` in `app/os/circle-os-shell.tsx`. The
 record, the model and the Pages are untouched, so returning to it is a flag
 rather than a migration.
 
-- Dreamline lives after the hour-by-hour timeline inside Log's single saved
-  journey. Log does not idle-rotate.
-- Its front order is Setup, Having, Being, Doing and Income. Its shared App
-  back is Now, Tomorrow and Day After.
+- Log currently has a daily timeline and a Week Page; neither idle-rotates.
+- Disabled Dreamline idle/sheet Pages are conditionally attached to the Routine
+  session in current source, not an enabled sequence behind Log. Older
+  Setup/Having/Being/Doing/Income and Now/Tomorrow/Day After layouts are historical,
+  not instructions to rebuild or enable them. Future placement needs review.
 - Being requires the Doing that proves it. Only starred lines receive steps
   or enter the income calculation.
 - Dreamline is dated, costed and finite. Vision declarations remain separate

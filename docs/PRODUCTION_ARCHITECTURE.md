@@ -1,6 +1,6 @@
 # Circle OS architecture
 
-Updated: 2026-10-31. Read [product](PRODUCT.md), [roadmap](ROADMAP.md), and
+Updated: 2026-11-02. Read [product](PRODUCT.md), [roadmap](ROADMAP.md), and
 [decisions](DECISION_LOG.md) alongside this document. Target designs below need
 reviewed implementation and verification under the current web beta sequence.
 
@@ -21,6 +21,10 @@ File-based profile server (local-ai/server.mjs)
   +-- profile recovery / authorized device attachment
   +-- prepared readings, memory, and chapter publications
 ```
+
+The diagram describes legacy profile mode. Supabase account entry now selects
+separate browser stores, and account mode rejects the legacy profile transport.
+It does not yet connect lifestyle records to a Supabase database.
 
 - `app/os/circle-os-store.ts` saves local state and reads the newest local copy.
 - `CircleStateProvider` in `circle-os-shell.tsx` owns state, startup, and sync.
@@ -45,10 +49,12 @@ public connection details. Ignored local configuration now selects Supabase mode
 restart/reload is required. Hosted read-only checks confirmed email auth, required
 email confirmation and ES256 signing. After the developer changed settings,
 a read-only recheck confirmed public signup disabled, email login enabled and
-email confirmation still required. SMTP,
-redirects/templates and real account journeys remain unverified. No remote settings
-or personal records changed in this connection step. Required setup below is not
-a claim of completed configuration.
+email confirmation still required. The developer later reported successful
+sign-in, reset, logout and offline local persistence. These are reported journeys,
+not agent-observed hosted certification. Final SMTP/redirect/template settings,
+refresh/revocation and cross-device checks remain unverified. No personal
+records were migrated. Required setup below is a checklist, not proof that every
+item is complete; see the [hosted evidence](USER_JOURNEY_TESTING.md#hosted-supabase-connection---2026-10-31).
 
 The reviewed login slice adds `app/os/auth/` in front of the existing state
 provider. It uses the official Supabase browser client; no lifestyle database,
@@ -111,9 +117,11 @@ NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
 ```
 
-Before hosted verification, create the reviewed Singapore project, disable
-public signup, require email confirmation, configure an asymmetric JWT signing
-key (ES256 or RS256), and set up custom SMTP. No administrator/service-role key
+For hosted verification, review the created project's chosen Singapore region,
+disabled public signup, required email confirmation, asymmetric JWT signing
+key (ES256 or RS256), and custom SMTP. Public settings and ES256 have recorded
+checks; do not repeat project creation or assume the remaining setup is verified.
+No administrator/service-role key
 is used by this browser implementation. Configure the app origin and allow
 `<app-origin>/os/auth/confirm` as a redirect. Use these email template link
 targets, substituting the actual app origin for `<app-origin>`:
@@ -145,7 +153,8 @@ certify them. Current evidence belongs in the
 The [approved launch plan](WEB_BETA_LAUNCH_PLAN.md) now includes Supabase
 accounts, safe sync, manual paid membership, and a bounded personalized Athena
 integration in the first invited beta. This supersedes the earlier core-first
-sequence; none of those target services is implemented by this plan.
+sequence. Account entry/local isolation exist; lifestyle sync, membership and
+live Athena remain target services, not implemented by this plan.
 Existing prepared readings remain part of current-feature verification.
 
 ```mermaid
@@ -361,11 +370,13 @@ these target membership or privacy behaviors is implemented by this plan.
 
 ## Beta infrastructure and content delivery
 
-There is no Supabase project or AI API account yet according to the developer.
-Singapore is the chosen database region for the 10-20 Myanmar/Thailand beta
-users (confirmed 2026-10-31). Setup availability and actual connections from
-both Myanmar and Thailand must be checked before launch; no project is
-provisioned or connectivity verified by this decision. Database location does not
+The developer created and connected a hosted Supabase project; the account-entry
+section above distinguishes settings checks from reported journeys and remaining
+gaps. Lifestyle sync/backup remain unimplemented. No live AI provider integration
+is configured or verified by this review; provider/account setup needs review
+when integration is reached. Singapore is the chosen database region for the
+10-20 Myanmar/Thailand beta users. Confirm the actual project region and measure
+connections from both countries before launch. Database location does not
 settle AI processing location or actual provider terms. Admin access, logs,
 manual deletion, and maximum backup retention are defined above; their
 implementation and remaining details still require review and verification.
@@ -382,18 +393,86 @@ supported schemas, publish immutable versions, preserve in-progress runs, and
 support caching and rollback. New actions/page types still require code; do not
 treat content publishing as permission to execute arbitrary instructions.
 
+## Planned Day One action setup
+
+The [Day One action plan](DAY_ONE_ACTION_PLAN.md) records the confirmed target
+and documentation approval on 2026-11-02. Implement after personal-record/history
+and safe-sync work, before beta readiness; this is not built behavior.
+
+- Keep source answers, resumable unconfirmed setup, and confirmed domain records
+  separate. Answers retain owner, run/chapter version, question identity and time.
+  Unconfirmed branch details are not active commitments or Athena evidence.
+- An explicit Try once confirmation creates one task; Make a habit creates one
+  habit with a cue. Keep for later or skip creates neither. Reuse domain actions,
+  setup controls, scoped stores and the reviewed sync protocol. Do not invent a
+  goal, Habit setup completion or identity to make these branches work.
+- Link confirmation to its stable domain record and source. Local recovery,
+  repeat confirmation, tabs and sync retries must not duplicate creation. Review
+  an atomic/recoverable local write and receipt contract; success requires local
+  durability, while cloud acknowledgement may follow offline completion.
+- A task defaults to the current Circle day, with another day available. Review
+  a scheduled-day contract against existing task/date handling; basic task creation
+  does not itself supply that field. Keep intended day separate from recording
+  time, retain timezone attribution and preserve the 06:00 boundary.
+- History reads and answer corrections never replay creation or overwrite later
+  task/habit edits. Preserve older completed access and unfinished run versions;
+  expose new setup optionally to completed users without resetting onboarding.
+- Use a new immutable chapter version. Audit the current version-at-least-3
+  no-outcome guard and V3-specific Habit/empty-Routine checks across all Day One
+  entry points. Preserve V1/V2 outcomes, V3 behavior and Protocol/Week gates.
+- Saving/finishing makes no AI request. Relevant saved source answers and
+  confirmed commitments may inform a later paid requested reading; a wish or
+  commitment never counts as evidence that the action was performed.
+
+Exact schema, confirmation receipts, interruption/conflict handling, supplemental
+existing-user runs, copy and UI need bounded implementation review. This plan
+does not implement sync, change published content or migrate personal records.
+
 ## Data and sync design to preserve
 
-The [Today's Note sync plan](NOTE_SYNC_PLAN.md) is the approved documentation
-for a bounded first evidence-sync slice (2026-10-31). Implementation remains
-proposed: atomically saved local Note operations, authenticated owner-scoped
-records, idempotent operation receipts, exact acknowledgements, explicit empty
-revisions, and person-chosen conflicts. Keep the existing `checkin-note`
-identifier and current editable Note behavior; do not create daily notes as a
-side effect. Device timestamps and the legacy reason-grouped outbox are not the
-proposed conflict/acknowledgement protocol. Other writing and legacy migration
-remain separate. No database schema, evidence sync, real-data migration, or
-operational backup is implemented or verified by this plan.
+The [personal records and Athena plan](PERSONAL_RECORDS_AND_ATHENA_PLAN.md)
+records the developer's confirmed target and documentation approval on
+2026-11-02. It supersedes the earlier single-ongoing-Note assumption. The
+[earlier Note sync mechanisms](NOTE_SYNC_PLAN.md) remain design inputs:
+atomically saved local operations, owner-scoped records, exact receipts and
+acknowledgements, explicit clearing/deletion and person-chosen conflicts.
+Device clocks and the legacy reason-grouped outbox are not the target protocol.
+No new schema, history implementation, evidence sync, personal migration or
+operational backup is implemented or verified by this documentation.
+
+Target boundaries:
+
+- Multiple titled Notes and separate untitled Thoughts have stable entry IDs.
+  Recover drafts locally, but only Save/Send creates saved history/evidence.
+  Keep earlier saved versions after corrections; do not create a permanent
+  user-facing version for every keystroke.
+- Domain records retain their own shape. App histories and the shared day view
+  read the same records; linked goal steps remain the same Routine tasks.
+- Preserve historical habit/Protocol wording through prospective changes.
+  Weekly-review corrections use saved versions. Past-day writing/Log/habit
+  corrections keep attributed day/time and actual recording/correction time.
+- Preserve each record's assigned day/timezone through travel; new entries use
+  current local time and the 06:00 boundary. Exact serialization/DST behavior
+  and deliberate attribution corrections still need implementation review.
+- Notes/Thoughts Trash has no automatic expiry, supports restore/permanent
+  deletion, and is excluded from Athena. Source/revision and derived-context
+  deletion, stale-device recovery and backup suppression need explicit design.
+- User tags are optional. Separate original evidence, explicit labels,
+  calculations, inferred memory and authored immutable readings. Source/version
+  references must let corrections/Trash/deletion invalidate derived context.
+- AI interpretation runs on a paid explicit request, using relevant authorized
+  saved history and applicable corrections. No model call is triggered by saving
+  a record or correction, or by background profiling of free/paid users.
+- Basic sourced observations and Wrong / Has changed / Forget controls are beta
+  requirements. Their exact semantics, undo/recurrence behavior and display of
+  old readings after source correction/deletion remain implementation proposals.
+- Preserve legacy identifiers such as `checkin-note` until a reviewed migration
+  maps them. Never invent old Note dates, wording snapshots or missing history.
+
+Exact tables, indexes, local contracts, draft cross-device behavior, receipt and
+revision retention, UI and migration scopes follow reviewed implementation slices.
+The current browser reading archive's 60-edition bound needs an explicit archive
+and paging review; do not discard received editions or silently raise budgets.
 
 - Versioned migrations from existing browser/profile-server records, with a
   backup and validated recovery path before migration is exercised on real data.
@@ -405,8 +484,9 @@ operational backup is implemented or verified by this plan.
 - Separate user evidence, derived observations, immutable chapter definitions,
   chapter runs, current app projections, and reading editions.
 - Consistent domain actions for a chapter completed through any entry point.
-- The Circle day starts at 06:00 and its timezone follows the person. Exact
-  travel handling and preservation of dated evidence need implementation review.
+- The Circle day starts at 06:00 and its timezone follows the person. Retaining
+  old attribution and using current local time for new entries is confirmed;
+  exact travel/DST/correction implementation and verification remain open.
 
 The future schema should represent those ownership and lifecycle boundaries.
 Actual tables and indexes follow the stabilization/data-model audit; no schema

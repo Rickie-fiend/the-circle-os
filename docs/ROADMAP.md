@@ -1,6 +1,6 @@
 # Circle OS roadmap
 
-Updated: 2026-10-31.
+Updated: 2026-11-02.
 
 Destination: an Athena-powered iOS and Android app with Supabase as its backend.
 Delivery goal for this project: a web MVP for friends and family to test before
@@ -10,14 +10,30 @@ Current priority: **prepare the invited web beta with accounts and paid
 Athena**, following [the launch plan](WEB_BETA_LAUNCH_PLAN.md). The developer
 approved recording this new sequence on 2026-10-31. Phase 1 is not certified;
 its evidence and unresolved gaps remain. Critical data-safety and blocked launch
-journeys must be fixed. Broad optimization and further chapter simplification
-are deferred, not declared complete.
+journeys must be fixed. Broad optimization and other chapter simplification
+are deferred, not declared complete. The developer approved the bounded
+[Day One action setup](DAY_ONE_ACTION_PLAN.md) for implementation after the
+personal-record/history and safe-sync work and before beta readiness.
 
-The active order is launch contract, accounts/local isolation, private records
-and sync, membership admin, Athena, beta verification, then authorized release.
+The active order is launch contract, accounts/local isolation, reviewed personal
+record/history contracts and local implementation, safe record sync, membership
+admin, requested Athena and basic memory controls, beta verification, then
+authorized release. The developer approved recording the
+[personal records and Athena plan](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) on
+2026-11-02. Essential histories/corrections across existing tools, safe sync and
+basic memory controls are beta gates; advanced search/filtering follows later.
+Day One's optional confirmed task/habit setup is also a beta requirement under
+its approved dependency order. This is documentation approval; current V3 and
+existing completed/unfinished runs remain unchanged pending implementation.
 The development cycle still applies to each change. The numbered phases below
 retain the earlier work breakdown; their original strict sequencing is
 superseded where it conflicts with this approved beta route.
+
+Use [WORK_PLAN.md](WORK_PLAN.md) as the ordered queue of slices, fixes, UI work,
+dependencies and remaining decisions. Core flows and sign-in/loading polish are
+early priorities under the developer's 2026-11-02 clarification; broader visual
+changes remain later. This does not authorize implementation or waive critical
+checks. Detailed plans retain each slice's acceptance criteria.
 
 ## Phase 0 — establish the product and working rules
 
@@ -46,8 +62,9 @@ Work:
 1. Establish an exact baseline: branch, current changes, build, focused tests,
    lint, and the supported production build. Record existing failures rather
    than attributing them to later fixes.
-2. Complete the two known verification gaps: recovery of an already-completed
-   broken Habit run, and Reflect's response to saved synthetic activity.
+2. Preserve the recorded Habit recovery and synthetic Reflect evidence. Diagnose
+   the later unresolved Reflect fixture-reference/first-swipe failures before
+   release; earlier passing checks do not certify those later runs.
 3. Reproduce and resolve reported failures in order of impact: lost or wrong
    data, blocked journeys, unintended changes, then presentation defects.
 4. Cover fresh setup, return visits, skipped/resumed chapters, edits, final
@@ -111,6 +128,14 @@ Work:
   records. Review session renewal, revocation, and lost-device behavior.
 - Define a versioned database schema and user ownership. Separate private
   lifestyle evidence from authentication and optional public summaries.
+- Establish the reviewed record/history contract locally first: multiple titled
+  Notes, separate Thoughts, recovered drafts outside evidence, Save/Send,
+  accessible saved versions, App histories and a shared day view.
+- Preserve earlier habit/Protocol meaning through prospective changes and
+  support dated past-day and weekly-review corrections. Keep original day/timezone
+  assignments; new entries follow current local time and the 06:00 boundary.
+- Add Notes/Thoughts Trash with restore/permanent deletion, no automatic expiry
+  and exclusion from Athena. Review complete deletion and stale-copy handling.
 - Implement authorization policies and tests for both allowed access and
   denied cross-user access, including server and background-job paths.
 - Migrate existing local/profile-server records with backup, validation, and
@@ -125,7 +150,8 @@ Work:
   against sensitive input. Publish actual provider processing facts when chosen.
 - Resolve timestamp details, person-chosen conflicting edits, duplicate requests,
   and clearing edits. The Circle day starts at 06:00 and follows the person's
-  timezone; exact travel handling still needs review.
+  timezone; retaining old attribution during travel is confirmed, while exact
+  serialization, DST and correction behavior still need implementation review.
 
 Exit criteria:
 
@@ -135,12 +161,16 @@ Exit criteria:
 - Manual deletion, 30-day backup expiration, admin read-only access/admin-only
   logs, persistent sessions and retained-local isolation pass their checks.
 - Migration preserves representative histories and can be recovered.
+- Essential writing, habit/task, Log/Week, Protocol, declaration, chapter-answer
+  and received-reading review paths preserve identity/history and corrections;
+  free/expired users retain core access. UI placement needs separate review.
 - Supabase is configured and tested; a schema document alone is insufficient.
 
 ## Phase 4 — deliver and evaluate the core web MVP
 
-Depends on: launch-critical fixes, Supabase accounts/sync, manual membership
-controls, the reviewed personalized Athena slice, privacy/recovery checks,
+Depends on: launch-critical fixes, essential histories/corrections, Supabase
+accounts/sync, manual membership controls, requested Athena and basic memory
+controls, privacy/recovery checks,
 real-device verification, and explicit release authorization. This supersedes
 the earlier proposal for a core trial before Supabase and new Athena.
 
@@ -195,6 +225,11 @@ Work:
   person's goals, completion history, and own words.
 - Keep source references, observation versus inference, uncertainty, freshness,
   and the person's corrections explicit.
+- Run AI interpretation and relevant memory updates only on a paid explicit
+  request. Optional tags and sourced correctable suggestions belong to the new
+  record experience; drafts and Trash are excluded. Saving triggers no model call.
+- Provide sourced observations and Wrong / Has changed / Forget controls before
+  beta; review exact semantics and correction propagation before implementation.
 - Preserve authored reading editions and versioned content. Clarify when a
   conversational reply becomes evidence or a new reading.
 - Handle empty evidence, stale data, service failure, cost limits, and prompt
@@ -238,9 +273,17 @@ during the current stabilization phase.
 
 ## Immediate next action
 
-Review the open launch-contract decisions, then prepare a bounded accounts and
-account-separated local storage proposal with exact files and synthetic-user
-checks. Saved-state Habit recovery and fixture-based Reflect checks already
-passed within their recorded scope; broader Phase 1 gaps remain. Follow
-[the launch plan](WEB_BETA_LAUNCH_PLAN.md), keeping bugs visible and obtaining
-approval before implementation, provisioning, migration, or deployment.
+Review Stage 1 of the [personal records and Athena
+plan](PERSONAL_RECORDS_AND_ATHENA_PLAN.md): source/revision/draft/time contracts
+and writing/history interactions. Then prepare a bounded local Notes/Thoughts
+implementation proposal with exact files and synthetic checks. Include the early
+UI priorities in [the work plan](WORK_PLAN.md). Account entry
+and local isolation exist; their remaining hosted/device gaps are retained in
+the current task. The old single-Note sync proposal is superseded in product scope.
+After the personal-record/history and safe-sync work, review the exact
+implementation scope for [Day One action setup](DAY_ONE_ACTION_PLAN.md).
+Implement and verify that bounded addition before beta readiness. Membership
+and Athena requirements remain; the broader chapter plan stays deferred.
+Follow [the launch plan](WEB_BETA_LAUNCH_PLAN.md), keeping Phase 1 bugs and
+verification gaps visible. Obtain approval before code, provisioning, personal
+migration or deployment; no phase is certified by this documentation update.

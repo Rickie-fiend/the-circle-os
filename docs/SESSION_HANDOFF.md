@@ -1,5 +1,186 @@
 # Session handoff
 
+## 2026-11-02 - Plan reconciliation and ordered work queue
+
+**Approval and Git context.** The developer requested review/ordering of current
+and prior plans, tasks, fixes and UI work, chose core flows/sign-in polish first
+with broader visual changes later, then asked to resolve conflicts before
+consolidation. They approved the reviewed resolutions and confirmed keeping the
+five Protocol durations: 1, 3, 7, 14 and 21 days. Documentation scope covers
+AGENTS, README, DESIGN, the Page standard, Product, Architecture, beta plan,
+Decision Log, Roadmap, Current Task, this handoff and the new work plan. Branch
+`paing-branch`, HEAD `a0a96e6`; nine tracked documents were modified and three
+documents untracked at the start. Their prior work remains preserved. Nothing
+staged, committed, pushed or deployed; no private records or remote services changed.
+
+**Completed.** Added [WORK_PLAN.md](WORK_PLAN.md) as an ordered index, retaining
+the detailed plans as their own references. It records implemented foundations,
+contracts/core UI, critical reproduction and fixes, local writing, existing-tool
+history, safe sync/recovery, Day One, membership, requested Athena, readiness and
+authorized release. It includes all 19 bug statuses, UI timing, unresolved
+implementation choices, coverage gaps and deferred work. Day One remains after
+history/safe sync and before beta; broader chapter work stays deferred.
+
+Aligned current authorities with the later accounts/paid-Athena beta route,
+implemented account entry and limited hosted evidence, explicit planned Note
+Save/Thought Send, requested paid interpretation versus legacy daily preparation,
+one shared App Box minimum, five Protocol durations and disabled Dreamline's
+current placement. Counted source bundles at 27 main IDs/36 versions, 20 spark
+IDs/versions and three Quests. Login does not imply evidence sync or backup.
+Old single-Note and chapter proposals retain historical scope and safety evidence.
+
+**Verification and limits.** Consistency and incremental-diff review passed.
+A read-only Node audit passed 377 local links, including 59 heading fragments,
+across 20 active Markdown documents. Format checks passed for all 12 edited/new
+documents, including the untracked work plan. `git diff --check` passed with
+existing LF/CRLF warnings. A pre-edit snapshot covered 241 Git-visible files:
+only the 11 intended existing documents changed, 230 remained unchanged and
+WORK_PLAN.md is the sole new file. Earlier task/handoff/decision entries remain
+intact after newline normalization. One initial patch had a context mismatch
+and applied no changes; the corrected patch succeeded.
+No runtime/browser, build/lint, chapter compilation, hosted configuration, sync,
+backup or device check ran. The review found an empty-title placeholder fallback
+in the Note editor; bug 6 still requires focused browser reproduction. Existing
+Reflect fixture/swipe failures, hosted refresh/revocation and cross-device gaps,
+physical-phone/other-browser coverage, broader tooling and real-sync/recovery
+gaps remain. Source assertions and dated passing fixtures are not fresh runtime
+certification. Bugs 12 and 17 remain verified only for their recorded scopes.
+
+**Invariants.** Documentation only; no geometry, type, gap, cadence/budget, domain
+action, persistence or immutable-content change. Preserve source evidence,
+account isolation, exact local-first acknowledgements/clearing, immutable chapter
+versions/readings and local 06:00 days. No new measurements are claimed.
+
+**Next action.** Review the personal-record plan's Stage 1 through the work
+queue's week-long writing/history walkthrough. Settle source/revision/draft/time,
+Save/Send/history/Trash interactions and bounded open details, then obtain
+approval for exact local implementation files and synthetic checks. Critical
+reports need reproduction before affected code; early sign-in/loading polish
+needs a bounded UI proposal. Code, SQL, real-data migration, provider integration
+and deployment remain separate reviewed work. Prior snapshots follow unchanged
+as dated evidence and do not restore superseded next actions.
+
+---
+
+## 2026-11-02 - Day One action setup plan
+
+**Approval and Git context.** After reviewing the example and concrete proposal,
+the developer explicitly approved all five recommendations and the nine-file
+documentation scope. Added [DAY_ONE_ACTION_PLAN.md](DAY_ONE_ACTION_PLAN.md) and
+aligned product, decision log, architecture, roadmap, beta plan, earlier chapter
+plan, current task and this handoff. Approval covers documentation only; code,
+tests, chapter publication and external source edits need a separate reviewed
+scope. Branch `paing-branch`, HEAD `a0a96e6`. The eight pre-existing modified
+tracked documents and two untracked documents remain preserved. Nothing staged,
+committed, pushed or deployed. No personal data or remote service changed.
+
+**Completed.** Day One will keep the short priority/direction/optional-action
+introduction, then offer Try once, Make a habit or Keep for later. Explicit
+confirmation creates at most one task or one habit through shared engines.
+Try once defaults to the current Circle day with another day available; Habit
+asks for a cue. Confirmation or explicit skip leads to the shared terminal
+ending; leaving midway keeps resumable progress. Save source answers separately
+from unconfirmed setup and linked confirmed commitments. Repeated confirmation,
+reload and sync retries must not duplicate records or overwrite later edits.
+
+Existing completed onboarding, commitments and access remain. Offer new setup
+optionally to completed users, and resume unfinished old versions unchanged.
+Use a new immutable version; V3 keeps its no-commitment behavior. No automatic
+identity, declaration, goal, Protocol, next exercise or AI reading is added.
+Implement after current personal-record/history and safe-sync work, before beta
+readiness. This is the only new exception to deferred chapter simplification.
+
+**Verification and limits.** Consistency review completed. A read-only Node audit
+passed all 102 local links, including 20 heading fragments, across the nine
+approved documents. Reversing this pass's patches in memory reproduced the
+normalized SHA-256 baselines for all 11 pre-existing documents checked, preserving
+their prior content. Whitespace/fences passed, including the new plan;
+`git diff --check` passed with existing LF/CRLF warnings. An initial preservation
+check mishandled Unicode in script transport; escaped transport passed without
+a document fix. Source inspection identified the version-at-least-3 no-outcome
+guard, V3-specific Habit
+and empty-Routine checks, and the basic task record's lack of a scheduled-day
+field. The plan requires a shared task-date contract rather than inventing a
+goal to carry the date. This is an audit input, not a runtime defect fix. No
+runtime, browser, chapter compilation, lint/build, hosted, sync or device check
+is claimed. Prior verification and unresolved gaps remain in the snapshots below.
+
+**Invariants and uncertainty.** No runtime invariant or geometry changed.
+Preserve account isolation, local-first acknowledgements, explicit clearing,
+immutable chapter/readings, original evidence and local 06:00 days. Exact copy,
+layout, optional existing-user discovery, supplemental runs, task dates,
+confirmation receipts and interruption/conflict handling need implementation
+review. Existing Reflect, hosted-session/device and real-sync/backup gaps remain.
+
+**Next action.** Continue the personal records plan's Stage 1 contract and
+writing/history review, then obtain approval for its exact local implementation.
+Day One's code/content proposal follows records/history and safe sync. Personal
+migration, provisioning, provider integration and deployment remain separate
+reviewed work. Previous snapshots retain their evidence and are historical
+where the new Day One decision supersedes a deferral.
+
+---
+
+## 2026-11-02 - Personal records, history and Athena plan
+
+**Approval and Git context.** The developer answered five batches of product
+questions and explicitly approved the concrete documentation proposal. Added
+[PERSONAL_RECORDS_AND_ATHENA_PLAN.md](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) and
+aligned product, architecture, decision log, roadmap, beta plan, the old Note
+plan, current task and this handoff. Approval is documentation only. Branch
+`paing-branch`, starting HEAD `a0a96e6`; the pre-existing untracked capability
+audit remains unchanged. Nothing staged, committed, pushed or deployed. No
+application, environment, database, private record or external runtime file changed.
+
+**Completed.** The target now supports multiple titled Notes by Circle day,
+quick untitled Thoughts, recovered drafts with explicit Save/Send, and no draft
+history/AI evidence before saving. Each App has history plus shared day review.
+Past writing and weekly reviews allow corrections with earlier saved versions.
+Habit/Protocol edits apply prospectively, while deliberate past-day records keep
+actual recording/correction times. Old day/timezone attribution remains fixed
+through travel; new records follow current local time and the 06:00 boundary.
+
+Deleted Notes/Thoughts enter recoverable Trash without automatic expiry and
+stay outside Athena. Tags are optional; inferred topics/feelings are correctable.
+Sourced observations expose Wrong, Has changed and Forget controls. AI
+interpretation/relevant memory updates run only on a paid explicit request,
+not saving or background profiling. Core writing, reading, history, corrections
+and sync stay free; received readings remain readable after expiry. Essential
+history/corrections, safe sync and basic memory controls precede beta; advanced
+search/filtering follows later. The old Note plan has a supersession notice;
+its safety mechanisms and historical evidence are preserved.
+
+**Verification and limits.** Reviewed consistency across the nine approved
+documents. A read-only Node check passed 95 local links, including 20 heading
+fragments. `git diff --check` passed with existing LF/CRLF warnings; new-plan
+whitespace/fences were checked separately. Comparisons confirmed prior task,
+handoff, decision and Note-plan evidence is preserved; the audit's SHA-256 is
+unchanged. An initial preservation check missed a heading; a stable date-prefix
+comparison passed without a document fix. No new runtime, lint/build, browser,
+SQL, restore or hosted verification is claimed.
+The preceding audit's 255/256 local-test result includes a CRLF-sensitive source
+assertion; it was not fixed or rerun here. Earlier physical-device, other-browser,
+Reflect fixture/swipe, hosted refresh/revocation, broad-suite/lint/type/dependency
+and real sync/backup gaps remain. Sign-in UI remains deferred. Account entry/local
+isolation exists, but lifestyle sync and new paid Athena remain planned.
+
+**Invariants and uncertainty.** No runtime invariant or geometry changed.
+Preserve account isolation/local-first acknowledgement, explicit clearing,
+immutable chapters/readings and original evidence. Exact UI/visual review, local
+and SQL contracts, draft sync/cleanup, technical receipt/revision retention,
+Forget/undo semantics, non-writing deletion, old-reading qualifications,
+provider/allowances, operating recovery and migration ownership remain open.
+Trash retention is separate from the maximum 30-day deleted-backup requirement;
+neither deletion nor restore is verified by this plan.
+
+**Next action.** Review the plan's Stage 1 source/revision/draft/time contracts
+and writing/history interaction, then obtain approval for an exact local
+Notes/Thoughts implementation and synthetic checks. Code, provisioning, real-data
+migration, model integration and deployment require separate reviewed scopes.
+Earlier snapshots follow unchanged as historical evidence.
+
+---
+
 ## 2026-10-31 - Today's Note safe sync plan
 
 **Session close and delivery approval.** The developer requested stopping here,

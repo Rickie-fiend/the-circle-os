@@ -10,6 +10,24 @@ commits, and deployment are not authorized by that approval. The proposals below
 remain reviewable design choices, not implemented behavior or replacements for
 the current product decisions.
 
+### Day One update - 2026-11-02
+
+The developer approved the [Day One action plan](DAY_ONE_ACTION_PLAN.md) and
+targeted documentation updates. That plan is now the current direction for
+Day One: keep the short introduction, then optionally confirm one task or one
+habit through shared setup. It settles the action type, confirmation and skip
+boundary, task day choice, compatibility policy and beta placement that remained
+open below. Implement after personal-record/history and safe sync, before beta
+readiness. Other chapter simplification stays deferred.
+
+The original draft and baseline below remain historical evidence. V3 has since
+been implemented with saved answers and no commitments; the new behavior needs
+a new immutable version and separate implementation approval. Preserve completed
+access and existing records, offer new setup optionally to completed users, and
+resume unfinished older versions unchanged. This supersedes earlier conflicting
+completed-user proposals without rewriting their history. No runtime behavior,
+published source or chapter budget changes through this documentation update.
+
 ## Goal and user direction
 
 Make the main path short while keeping the depth available by choice.

@@ -54,8 +54,9 @@ context remains missing or unclear, ask before dependent edits. Do not reread
 unchanged material already available in the session.
 
 Inspect relevant source when the task touches profiles, persistence, Athena,
-schedules, or chapter generation. Supabase is the target backend; the current
-runtime is still the browser plus a file-based profile server.
+schedules, or chapter generation. Supabase account entry and account-separated
+local storage exist. Supabase lifestyle sync remains planned; the file-based
+profile server serves legacy mode, not signed-in account evidence.
 
 Then inspect the relevant source and run `git status --short`. Existing changes
 belong to the user unless proven otherwise. Never discard or overwrite
@@ -97,10 +98,13 @@ if verification is blocked, record the gap and remind the developer.
 - Preserve local-first behavior. Keep phone data safe before server sync.
 - The current delivery goal is a web MVP for friends and family. iOS/Android
   and Supabase-backed personalized Athena are the long-term direction.
-- The first friends-and-family test covers the stabilized core. Add new
-  personalized Athena afterward; audit existing prepared content as core.
-- Fix and verify existing features, optimize with evidence, then test and verify
-  again before feature expansion. Follow `docs/DEVELOPMENT_WORKFLOW.md`.
+- The invited friends-and-family web beta includes accounts, safe sync and
+  requested paid Athena under `docs/ROADMAP.md`. This supersedes the earlier
+  core-first/Athena-after route. Audit existing prepared content separately.
+- Fix data-safety and blocked launch journeys before dependent expansion.
+  Broad optimization remains deferred; each approved slice follows code, test,
+  fix, verify, measured optimization when justified, then test and verify again.
+  Follow `docs/DEVELOPMENT_WORKFLOW.md` and the ordered `docs/WORK_PLAN.md` queue.
 - One user has one profile. Do not edit generated profile state or day data by
   hand unless the task explicitly requires that workflow.
 

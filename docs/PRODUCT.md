@@ -1,6 +1,6 @@
 # Circle OS product
 
-Updated: 2026-10-31. This document records the developer's product direction.
+Updated: 2026-11-02. This document records the developer's product direction.
 Use [the decision log](DECISION_LOG.md) to distinguish confirmed decisions from
 preferences and unresolved choices.
 
@@ -19,9 +19,11 @@ The immediate delivery priority is the approved
 [web beta launch plan](WEB_BETA_LAUNCH_PLAN.md): 10-20 invited users mainly in
 Myanmar and Thailand, with Home Screen installation, accounts, safe sync,
 and paid Athena. This supersedes the earlier core-first release order.
-Critical data-safety and blocked-journey fixes remain launch requirements;
-broader optimization and further chapter simplification are paused. Supabase
-and expanded Athena access are planned work, not the current runtime.
+Critical data-safety and blocked-journey fixes remain launch requirements.
+The bounded Day One action setup is now planned before beta, after the
+personal-record/history and safe-sync work. Broader optimization and other
+chapter simplification remain paused. Supabase lifestyle sync and expanded
+Athena access remain planned work, not implemented by these decisions.
 
 ## The experience
 
@@ -38,6 +40,67 @@ Chapters teach or ask one thing at a time. Quests group chapters into a path.
 Tasks and completion records are evidence for reflection. They do not by
 themselves measure the value of a life. Athena must distinguish what the person
 said, what was recorded, and what she infers.
+
+### Day One and a chosen beginning
+
+The developer confirmed the [Day One action plan](DAY_ONE_ACTION_PLAN.md) on
+2026-11-02 and approved documentation only. Keep the short introduction about
+what matters now, wanted change and one optional small action. Offer Try once,
+Make a habit, or Keep for later; create at most one task or one habit only after
+explicit confirmation. Try once defaults to the current Circle day with another
+day available; the Habit branch asks for a cue. Reuse existing setup and Today
+tools rather than requiring another chapter or a full life plan.
+
+Day One finishes after confirmation or explicit skip using the shared terminal
+interaction. Leaving midway saves resumable progress. Saved answers remain
+dated source records, not automatic goals, Protocol terms, identity, Vision,
+Mission or Character declarations. Completion makes no Athena request.
+Existing completions, commitments and access remain; new setup is optional for
+completed users, while unfinished older runs retain their versions and behavior.
+Protocol/Week gates and next-Circle-day Week Setup timing stay unchanged.
+
+Implement this addition after personal-record/history and safe-sync work and
+before beta readiness. V3 remains unchanged until a new immutable version is
+reviewed, implemented and verified. Exact copy, controls and contracts still
+require an implementation proposal.
+
+### Personal records and history
+
+The developer confirmed the [personal records and Athena
+plan](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) on 2026-11-02 and approved recording
+it. These are target requirements, not claims of implemented history or sync.
+
+- Notes are multiple titled, revisitable entries grouped by Circle day.
+  Thoughts are quick untitled captures. Recover drafts automatically; Save
+  commits a Note and Send commits a Thought. Drafts stay outside history and
+  Athena evidence until saved.
+- Each App has history, with a shared day view reading the same records.
+  Past writing and completed weekly reviews can be corrected while earlier
+  saved versions remain available.
+- Habit and active Protocol changes apply going forward. Earlier records keep
+  the applicable wording/terms. Deliberate past-day writing, Log and habit
+  corrections retain the attributed day and actual entry/correction time.
+- The Circle day starts at 06:00. Old records keep their assigned day/timezone;
+  new records use the current local timezone. Deliberate corrections are allowed.
+- Deleted Notes/Thoughts enter recoverable Trash, excluded from Athena. They
+  stay until restored or permanently deleted; there is no automatic expiry.
+  Permanent-deletion coverage still needs review. This is separate from the
+  maximum 30-day deleted-backup rule and manual account deletion.
+- Tags are optional. Athena can suggest correctable topics/feelings when used.
+  Show sourced observations with Wrong, Has changed and Forget controls. Exact
+  control semantics and interaction need review; originals and inferences stay
+  separate.
+- Writing, reading, history, corrections, core tools and sync are available to
+  free and paid users. Paid access gates new requested AI generation; previously
+  received readings remain readable after expiry.
+- AI interpretation and relevant memory updates run when a paid user requests
+  Athena, not on every save or through background profiling. Saved lifestyle
+  evidence may inform Athena, with draft/Trash and login/payment exclusions.
+
+Essential history/corrections across existing tools, safe sync and basic Athena
+memory controls are beta requirements. Advanced search/filtering follows later.
+Exact UI/visual design, schemas, migration and implementation slices need review.
+This supersedes the single ongoing Note assumption in the earlier storage plan.
 
 ### Wanted-life records
 
@@ -100,7 +163,8 @@ Existing prepared readings, history, and chapter evidence remain preserved.
 
 ## Membership
 
-The planned free tier includes existing core tools, records, and sync. Paid
+The planned free tier includes core writing/reading, reviewable history,
+corrections, existing tools, personal records, and sync. Paid
 membership enables new personalized Athena generation in the browser and Home
 Screen app alike. The developer manually confirms payment and grants access
 for 30, 90, 180, or 365 days, with automatic expiry. No
@@ -134,14 +198,16 @@ The developer wants people to use Circle OS without disclosing a real-world
 identity to other users. Email/password login with a separate display alias is
 now confirmed, superseding the earlier username-only preference.
 
-New users must verify their email before using their account. This beta
-requirement is confirmed for implementation; the access gate is not yet built.
+New users must verify their email before using their account. The optional
+Supabase-mode gate is implemented and locally tested; hosted public settings
+also confirmed email confirmation is required. Complete hosted/device coverage
+remains open in the [journey record](USER_JOURNEY_TESTING.md).
 
 Password recovery uses a reset link sent to the account's verified email
 address. Manual recovery will also be offered when the person loses access
-to that email. Both beta routes are confirmed for implementation; how the
-person proves ownership and the manual process remain open. No recovery flow
-is built by this documentation decision.
+to that email. Browser reset-link handling exists, and the developer reported
+successful hosted reset. That report does not certify every recovery/device
+path. Lost-email ownership proof and the manual process remain open.
 
 Login should last until logout, and local records may remain stored. They must
 remain account-separated and inaccessible to another account or a signed-out
@@ -165,9 +231,10 @@ These are requirements to implement and verify, not security
 claims about the current prototype. See [architecture](PRODUCTION_ARCHITECTURE.md).
 
 Singapore is the chosen database region for the invited beta. Connection checks
-from Myanmar and Thailand are required before launch. This is a planned setup
-choice, not a provisioned database or a verified connection. It does not settle
-AI processing location or other infrastructure transfers.
+from Myanmar and Thailand are required before launch. A hosted project has been
+created and connected, but this review did not inspect its region or certify
+regional connections. The chosen region does not settle AI processing location
+or other infrastructure transfers.
 
 Requesting an Athena reading requires no separate AI opt-in prompt. The person
 requests the reading directly. This beta interaction is confirmed for
@@ -208,7 +275,7 @@ Do not implement these proposals as settled rules during stabilization.
 
 ## Current inventory
 
-Source inspection on 2026-10-30 found:
+Current source inventory, reviewed on 2026-11-02:
 
 | Area | Existing implementation |
 | --- | --- |
@@ -219,14 +286,18 @@ Source inspection on 2026-10-30 found:
 | Evidence | Browser state, migrations, outbox, revisions, profile sync |
 | Personal memory | Source references, observations, confidence, corrections, editions |
 | Installation | Web manifest and service worker |
+| Accounts | Supabase entry, account-separated local stores, development-only test mode |
 | Hidden work | Dreamline and The Four behind disabled flags |
 
-The bundled chapter registry contains 27 chapter IDs across 35 versions and
-three Quests. This inventory means code exists; it does not certify each path.
+The main chapter bundle contains 27 IDs across 36 versions; the spark bundle
+adds 20 IDs/versions, for 47 IDs across 56 versions combined, plus three Quests.
+These are source counts, not verification of chapter behavior or external sources.
 [The journey record](USER_JOURNEY_TESTING.md) holds actual verification evidence.
 
-The prototype uses browser storage and a file-based profile server. Supabase
-accounts, production access policies, and mobile apps are not implemented.
+The prototype uses browser storage. Legacy mode connects to the file-based
+profile server; Supabase accounts use separate local stores and reject that
+transport. Supabase lifestyle sync/access policies, membership, live Athena,
+and native mobile apps remain planned work.
 
 ## Boundaries
 

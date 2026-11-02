@@ -4,6 +4,137 @@ Record confirmed decisions, preferences, proposals, and unresolved questions
 separately. Older handoff entries remain historical evidence; this log records
 the decisions that supersede their active product assumptions.
 
+## 2026-11-02 - Plan reconciliation, UI priority and five Protocol durations
+
+The developer requested a review and ordering of current/previous plans, tasks,
+fixes and UI work. They chose core flows and sign-in polish first, with broader
+visual changes later. After reviewing the conflicts, they approved reconciliation
+and explicitly chose to keep the current five Protocol durations: **1, 3, 7, 14
+and 21 days**. This corrects the four-choice standard; it changes no runtime
+duration, ratio, budget or layout.
+
+Reconciled rules and facts:
+
+- The later approved invited beta includes accounts, safe sync, membership and
+  requested paid Athena. Correct earlier core-first/Athena-after summaries;
+  critical data-safety and blocked journeys remain gates, broad optimization later.
+- Account entry/local isolation exist; hosted settings and reported journeys
+  have dated evidence. Lifestyle sync/backup, full hosted/device certification,
+  membership and live Athena remain unfinished. Do not recreate the project or
+  describe login as cloud evidence backup.
+- The confirmed multi-entry target uses recovered drafts and explicit Note Save /
+  Thought Send. Current single-Note blur commits are existing behavior, not the
+  target save contract. Exact controls still require implementation review.
+- Daily preparation describes legacy prepared content. New paid interpretation
+  requires an explicit request, never a save/background profile. Preserve prepared
+  content until reviewed migration and retain immutable editions.
+- Keep one shared App Box minimum; real content grows downward. Remove the
+  conflicting per-App minimum exception without changing geometry here.
+- Log currently has daily/Week Pages. Dreamline remains hidden, with disabled
+  idle/sheet Pages conditionally in Routine. Older Log/Dreamline prose is
+  historical, not permission to enable it.
+- Correct the Page standard's Admin shorthand to match the existing password
+  gate: the reserved phrase opens a prompt; only a valid server-checked password
+  grants access. This records current behavior, not a new access policy.
+
+Reason: resolve contradictory instructions before turning plans into an execution
+queue, preserve behavior/history already agreed, and avoid building storage around
+an obsolete writing flow. [WORK_PLAN.md](WORK_PLAN.md) is an ordered index, not a
+replacement for product, roadmap, architecture, design or detailed acceptance
+criteria. Core interaction work belongs with its records; sign-in/loading polish
+is now an early planning priority, superseding older deferral wording.
+
+Approval is documentation only. Source concerns such as placeholder evidence,
+Reflect failures and reported accidental phase changes still need reproduction
+and separately reviewed fixes. No code, personal records, external runtime files,
+database, remote settings or deployment changed. Earlier decisions/audits/handoffs
+retain dated evidence; unresolved implementation choices are listed in the
+work plan rather than silently decided.
+
+## 2026-11-02 — Day One offers one confirmed action
+
+The developer reviewed the step-by-step example, then explicitly approved the
+five recommended choices and the documentation scope. The
+[Day One action plan](DAY_ONE_ACTION_PLAN.md) records the flow and verification
+requirements. Approval covers that new plan and targeted updates to product,
+architecture, roadmap, beta plan, earlier chapter plan, current task and handoff.
+It does not authorize application or chapter edits, migration or deployment.
+
+Confirmed:
+
+- Keep the short priority/direction/optional-action introduction. Offer Try once,
+  Make a habit, or Keep for later. Create at most one task or one habit, and only
+  after explicit confirmation; do not create other declarations or commitments.
+- Finish after confirmation or explicit skip, using the shared terminal
+  interaction. Leaving midway keeps resumable progress without completing setup.
+- Try once defaults to today with another day available before confirmation.
+  Today is the current Circle day starting at local 06:00. Habit setup asks for
+  a cue, reuses the person's words and avoids unrelated identity questions.
+- Preserve older completions, commitments, access and unfinished run versions.
+  Offer the new setup optionally to completed users without resetting onboarding.
+- Implement after current personal-record/history and safe-sync work, before
+  beta readiness. This bounded addition is an exception to the broader chapter
+  simplification deferral; other deferred work stays deferred.
+
+Reason: answering Day One should lead to a usable chosen beginning while keeping
+entry short and preserving the person's control. Saving an answer alone is not
+permission to create a task, habit, declaration or AI reading. Broad priorities
+remain dated source answers for later reflection, not permanent traits.
+
+The V3 no-commitment behavior remains immutable. New behavior requires a new
+published version and reviewed shared-engine integration. The existing Protocol
+and Week gates, Week Setup offer timing and paid requested-Athena boundary stay
+in force. Exact copy/layout, optional existing-user entry, supplemental runs,
+task-date and confirmation/recovery contracts remain implementation review work.
+Earlier decisions and handoffs remain historical where this entry supersedes
+their no-new-Day-One-work direction. No runtime verification is claimed here.
+
+## 2026-11-02 — reviewable personal records and requested Athena memory
+
+The developer answered five batches of product questions, then reviewed and
+explicitly approved the documentation scope: a new
+[personal records and Athena plan](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) and
+targeted updates to product, architecture, roadmap, beta plan, earlier Note plan,
+current task and handoff. This is documentation approval, not code, database,
+migration, provider or deployment approval.
+
+Confirmed:
+
+- Multiple titled Notes grouped by Circle day; separate quick untitled Thoughts.
+- Automatic draft recovery, with Save for Notes and Send for Thoughts. Unsaved
+  drafts stay outside history and Athena evidence.
+- App-specific history plus a shared day view over the same underlying records.
+- Editable past writing and weekly reviews with earlier saved versions available.
+- Prospective habit/active Protocol changes preserve earlier wording and terms.
+- Past-day writing, Log entries and habit-completion corrections are permitted;
+  keep actual entry/correction time distinct from the attributed day/time.
+- The 06:00 Circle day uses current local time for new entries. Old records keep
+  their assigned day/timezone through travel; deliberate corrections are allowed.
+- Deleted Notes/Thoughts enter Trash, can be restored/permanently deleted, stay
+  excluded from Athena, and have no automatic expiry. The existing maximum
+  30-day deleted-backup limit and account-deletion rules remain separate.
+- Optional user tags and correctable topic/feeling suggestions when Athena is
+  used; sourced observations with Wrong / Has changed / Forget controls.
+- AI interpretation and relevant memory updates run when a paid user requests
+  Athena. No model interpretation on every save or unrequested background
+  profiling of either free or paid users. Saving a reflection still requests no reply.
+- Writing/reading/history/corrections/core tools/sync are free; paid access
+  enables new requested generation. Received readings stay readable after expiry.
+- Essential histories/corrections across existing tools, safe sync and basic
+  memory controls precede invited beta; advanced search/filtering follows later.
+
+Reasons: preserve useful personal history, support flexible capture, correct
+accidental or late records, keep original evidence distinct from interpretations,
+and make AI use deliberate without charging for access to personal records.
+These choices supersede the single-ongoing-Note product constraint in the
+2026-10-31 storage plan; they do not discard its useful safety mechanisms.
+
+Exact visuals/interaction, SQL/local contracts, retention of technical records,
+Forget semantics, non-writing deletion, old-reading qualifications, draft sync,
+personal migration and implementation files remain reviewed follow-up work.
+Published chapters and authored readings remain immutable. Existing privacy,
+membership, operator access, verification warnings and beta gates stay in force.
+
 ## 2026-10-30 — product destination and stabilization
 
 Confirmed by the developer:

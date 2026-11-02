@@ -6,12 +6,15 @@ motivation grounded in that person's records and commitments.
 
 This project's delivery goal is a web MVP for friends and family. The long-term
 destination is an iOS/Android app with Supabase as its backend. Current priority:
-fix, verify, and optimize existing features before adding new ones.
+the invited web beta with accounts, safe sync, and requested paid Athena. Fix
+data-safety failures and blocked journeys before dependent changes; broad
+optimization and broader visual changes follow later.
 
 ## Project documents
 
 - [Product](docs/PRODUCT.md): destination, scope, and current inventory.
 - [Roadmap](docs/ROADMAP.md): phases, dependencies, and completion criteria.
+- [Work plan](docs/WORK_PLAN.md): ordered work, UI priorities, fixes, and open choices.
 - [Decisions](docs/DECISION_LOG.md): confirmed choices and unresolved questions.
 - [Architecture](docs/PRODUCTION_ARCHITECTURE.md): current and target systems.
 - [Development workflow](docs/DEVELOPMENT_WORKFLOW.md): implementation and verification.
@@ -31,17 +34,20 @@ remaining gaps are in [the journey record](docs/USER_JOURNEY_TESTING.md).
 
 ## Current data behavior
 
-The browser saves records in IndexedDB and a localStorage copy under
-`circle-os-state-v2`, with migration support for older records. The current
-file-based profile server can synchronize profile and day records into an
-Obsidian vault using private profile keys. The app's default connection points
-to that server; this is not a strictly device-only prototype.
+The browser saves records in IndexedDB and a localStorage copy, with migration
+support for older records. Supabase mode uses verified accounts and separate
+local stores. Legacy mode uses `circle-os-state-v2` and can synchronize profile
+and day records through the file-based profile server. Signed-in account mode
+does not use that legacy transport. Development test mode uses isolated synthetic
+accounts and is rejected in production.
 
 Consequences:
 
-- Supabase authentication and database storage have not been implemented;
+- Supabase authentication/local isolation exist; lifestyle database sync does not;
+- hosted sign-in/reset/logout/offline return have developer-reported success,
+  while refresh/revocation, cross-device behavior, and wider device checks remain open;
 - local records must remain safe while the server is unavailable;
-- clearing browser data may require profile recovery;
+- clearing unsynced browser data can lose records; login is not a cloud backup;
 - privacy, recovery, and cross-user access need explicit verification before
   treating the prototype as a private multi-user service.
 
@@ -100,13 +106,15 @@ it. Lifestyle evidence may sync to the separate profile server described above.
 
 ## Roadmap
 
-1. Stabilize the existing features and complete the missing journey checks.
-2. Optimize measured problems and repeat tests and browser verification.
-3. Add private Supabase accounts/storage after login and recovery are decided.
-4. Deliver and evaluate the stabilized core with friends and family.
-5. Add personalized Athena afterward through authorized server-side evidence access.
-6. Continue to iOS/Android using the evidence from the web trial.
+1. Review record/history interactions and contracts; reproduce critical defects.
+2. Build and verify local writing and essential histories; polish sign-in early.
+3. Implement safe Supabase evidence sync and separately reviewed migration/recovery.
+4. Add optional confirmed Day One action setup after history and safe sync.
+5. Implement membership controls and requested paid Athena with sourced corrections.
+6. Verify real-phone, installation, privacy, recovery, and release journeys.
+7. Release only with developer authorization, then use beta evidence for later work.
 
 Streaks and/or a leaderboard are planned possibilities with undecided scoring
 and release timing. The [roadmap](docs/ROADMAP.md) records their decision gates,
-the confirmed core-first test, and the exit criteria for each phase.
+the invited beta route, and the exit criteria for each phase. The
+[work plan](docs/WORK_PLAN.md) links the detailed plans without replacing them.

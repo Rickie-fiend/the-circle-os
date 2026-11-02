@@ -87,8 +87,8 @@ Every Cover, Chapter, and App Page uses the same five regions.
   shared forehead. Record and Protocol home are content Pages and must never be
   measured from nested row text. An App-back handoff may reuse a surface, but
   it may not reuse the previous side's height.
-- A content-heavy App may define a slightly larger stable minimum so its Main
-  action and Footer never collide on a narrow phone.
+- A content-heavy App grows for real content while keeping the shared default
+  minimum. It does not introduce its own minimum to reserve empty space.
 
 ## Structure
 
@@ -185,10 +185,14 @@ Used for charts, weekly views, and other things worth reading again.
 - Athena's reading is published as **editions**: dated, immutable, and
   accumulating. A reading that is overwritten every morning can never be new,
   never be unread, and never be read back.
-- An edition is identified by its own words, not by the morning it was
-  prepared. Athena prepares daily whether or not the evidence moved, so a
-  quiet morning publishes nothing and the tab does not claim something new
-  when nothing was said.
+- An edition is identified by its own words, not merely by a preparation date.
+  Unchanged prose does not claim a new edition.
+- Daily preparation describes the legacy prepared-content integration, whose
+  external scheduler is not certified by this standard. The planned paid beta
+  runs interpretation only on an explicit reading/reply request; saving or
+  correcting a record starts no generation. A requested result appears when
+  ready without a second reveal request. Preserve existing prepared content
+  until its separately reviewed migration; request accounting remains open.
 - Only authored prose is published. The derived observations that stand in for
   a page Athena has not written are a fallback for display, never a
   publication.
@@ -199,6 +203,12 @@ Used for charts, weekly views, and other things worth reading again.
 - The phone carries a bounded archive; the vault keeps the full history.
 
 ## Note
+
+The bullets below describe the current single-Note editor. The confirmed
+[multi-entry writing target](../../docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md)
+adds recovered drafts, explicit Save, saved versions, history and Trash. Its
+exact interaction still needs review; it is not implemented by this standard.
+Clear, draft discard and deleting a saved entry must remain distinct actions.
 
 - Note takes as much writing as a person wants, in Main Body and in Sub Body
   both. Neither is capped; the App Box grows downward for real content.
@@ -232,7 +242,10 @@ Used for charts, weekly views, and other things worth reading again.
 - A Page must put its content in Main Body and Sub Body. Loose children fall
   into the Body tracks by position, which is how the Protocol name alone came
   to be stretched to fill the Main track.
-- The four durations are one even row, not a wrapping list.
+- Keep the five current duration choices: **1, 3, 7, 14 and 21 days**, confirmed
+  by the developer on 2026-11-02. Keep the existing shared choice presentation.
+  Any layout change requires a reviewed UI scope with readable phone labels
+  and 44px targets; correcting this count does not authorize a layout change.
 - Ending a run early lives inside the editor reached by `Edit phase` and asks
   once. The terms were agreed before the run began and the days do not come
   back, so the action states what the next press does and the question expires
@@ -486,6 +499,10 @@ back up a little slower.
 
 ## Athena Reading replies
 
+These bullets describe the current answer-as-evidence flow on prepared readings.
+The planned paid service separately supports explicitly requested AI follow-ups;
+saving an answer requests no AI reply. Exact new controls remain under review.
+
 - An authored Reading paragraph may end with one real question. Only the
   latest Reading can be replied to; an older immutable edition stays read-only.
 - `Reply` opens one textarea on that Reading Page. Sending uses the shared
@@ -501,11 +518,10 @@ back up a little slower.
 - The App Box owns background, border, radius, clipping and shadow. Until its
   second App exists, Log shows no back control.
 - Log owns one persisted outer `SwipeSession` and never rotates itself. Its
-  first Page remains the hour-by-hour timeline. Its saved Dreamline journey
-  follows as Setup, Having, Being, Doing and Income.
-- Dreamline uses the shared App-back controller. Its back contains Now,
-  Tomorrow and Day After only. The top-left `Dreamline` mode label flips the
-  current record; it does not start, save, conclude or edit one.
+  Pages are the daily timeline and Week. Dreamline is disabled behind
+  `SHOW_DREAMLINE`; current source conditionally attaches its idle/sheet Pages
+  to Routine, not to Log. Older multi-Page Dreamline layouts are historical.
+  Preserve hidden records and keep the flag off; future placement needs review.
 - A Dreamline is separate from Vision declarations. It is dated, costed and
   finite; a concluded record remains immutable and readable while a new
   Dreamline begins with a new id.
@@ -533,9 +549,11 @@ back up a little slower.
 - Button Studio keeps its preview action mounted. The `Background` toggle
   changes only the preview surface, never the button lifecycle.
 - Admin is intentionally absent from public navigation. Entering `admin`
-  (ignoring surrounding spaces and letter case) in Thoughts unlocks it for the
-  current browser session and is intercepted before
-  Thoughts persistence. Unauthorized direct visits return to Today.
+  (ignoring surrounding spaces and letter case) in Thoughts opens the password
+  prompt; only a valid server-checked password unlocks the protected browser
+  session. The phrase and password are intercepted before Thoughts persistence.
+  Missing/invalid server configuration stays locked. Unauthorized direct visits
+  return to Today; entering the phrase alone grants no access.
 - Chapter Library groups by Foundation, Short, Guided Learning, Reflection,
   and Information in that order, with empty groups hidden.
 - A matching version restores the saved page.
