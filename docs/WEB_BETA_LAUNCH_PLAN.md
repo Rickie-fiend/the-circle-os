@@ -22,6 +22,14 @@ addition does not reopen other deferred chapter work or authorize code.
 
 ## Launch target
 
+The later approved 2026-11-03 writing slice replaces ordinary Thoughts with
+Deep Thoughts in Today. It shares Note's History/Trash controls and bounded
+scrolling while retaining Send/Save changes and source-linked recovery. Sending
+keeps the answer visible with Next question. Its label opens a curated quote;
+the existing Admin can add/remove quotes in a separate public Supabase catalog.
+This supersedes the separate Thoughts controls below. It does not implement
+personal evidence sync, migrate legacy writing or authorize deployment.
+
 The approved 2026-11-03 account Note refinement moves New Note to its editor
 Footer and bounds Note/History/Trash at 480px, reduced to 60% of a short viewport
 but never below the shared minimum. Body scrolls with header/actions in place;

@@ -1,6 +1,10 @@
 # Circle OS roadmap
 
-Updated: 2026-11-03 (bounded Note contract only; delivery order unchanged).
+Updated: 2026-11-03 (Note/Deep Thoughts and managed quote slice; delivery order unchanged).
+
+The developer separately approved the bounded writing simplification and shared
+quote library. Its [contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1412-note-deep-thoughts-and-quotes---2026-11-03)
+does not complete personal sync, other-tool histories or beta readiness.
 
 Destination: an Athena-powered iOS and Android app with Supabase as its backend.
 Delivery goal for this project: a web MVP for friends and family to test before

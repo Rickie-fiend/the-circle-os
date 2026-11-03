@@ -1,5 +1,13 @@
 # Onboarding bugs
 
+## Habit controls follow-up - 2026-11-03
+
+Missing Add task after Day One v3 is fixed and verified locally. Routine's Footer
+no longer requires a real Habit Building completion when its usable Page is open.
+The size portion of bug 13 is fixed: Habit discs match Tasks at 30px, with 5x11px
+checks and 44px touch areas. Other bug 13 color/title reports remain unresolved.
+See [verification](docs/USER_JOURNEY_TESTING.md#habit-task-controls-2026-11-03).
+
 Reported during the mobile-web user journey on 2026-10-29.
 
 1. **Today tab skips first-use setup.** On the first onboarding page, before entering a name or age, tapping the Today tab glitches and show the main app screen for less than a second.

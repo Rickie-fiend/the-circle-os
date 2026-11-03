@@ -45,10 +45,25 @@ geometry and hierarchy.
   route titles.
 - Main app text is bold, direct, and easy to read.
 - Supporting text is short and quieter, but never faint enough to feel broken.
+- Editable reading surfaces use 29px titles/questions and 18px
+  content/answers. This covers account Note/Deep Thoughts and opened history/trash
+  entries, Athena's reply editor, Vision declarations, Week goals/steps, and
+  Chapter short/long text questions with their matching Workshop preview.
+  Retain existing weights and line heights; use the shared spacing below.
+  Lists keep their compact row scale. Reading-only lessons, covers, Athena prose,
+  Quest descriptions, locked-app explanations and Protocol summaries retain
+  their existing typography. This developer-approved refinement supersedes
+  the shared Cover/Note/Chapter size statements below for these editable surfaces.
 - Do not shrink type to fit content. Let the body grow or scroll.
 - Write at a fourth-grade reading level whenever possible.
 
 ## Layout
+
+- Approved spacing refinement (2026-11-03): the shared label-to-content gap is
+  48px; Main-to-Sub and Body-to-Footer gaps are both 25px. This supersedes older
+  spacing statements for these values. Preserve the shared App Box minimum and
+  downward growth. Note/Deep Thoughts Trash detail omits “In Trash” and its
+  divider; Restore and Delete forever have a 4px layout gap and retain touch targets.
 
 - Mobile first, with 24px as the normal phone gutter.
 - Prefer centered containers and stable editorial alignment.
@@ -62,7 +77,7 @@ geometry and hierarchy.
 - A published chapter cover appears directly inside its assigned App Box.
 - Note opens on its editable front. Its label flips the same App Box to a
   Line (a quote, fact, or joke); it does not recall a Chapter. New deliveries
-  that previously belonged to Note use Thoughts. Preserve legacy immutable
+  that previously belonged to Note use Deep Thoughts (internal `thoughts`). Preserve legacy immutable
   Note publications, their versions, and saved records as required by the
   [Page standard](app/os/APP_SESSION_STANDARD.md#state).
 - Thoughts, Habit, Log, Vision, Week Review, and Athena use one-time deliveries
@@ -98,7 +113,8 @@ Session
   content may grow the frame downward, including Routine rows and Protocol
   terms. One set of tokens owns the minimum, padding, drop to the first line,
   Main-to-Sub gap and Body-to-Footer gap; an App does not restate them.
-- Account Note is the approved bounded-growth exception: Note, History and Trash
+- Account Note and Deep Thoughts are the approved bounded-growth exception:
+  their writing, History and Trash Pages
   grow from that minimum to a 480px App Box ceiling, reduced to 60% of the dynamic
   viewport on short screens, never below the shared minimum. Only Body scrolls
   past the ceiling; Header, Heading and Footer remain in place. Habit/Protocol
@@ -162,16 +178,16 @@ is itself the point of the final week Page.
 - One optional short subtitle.
 - Footer cue: `Swipe to begin` or `Swipe to see`.
 - Never editable.
-- Main text uses the shared Info Page type token and top anchor. It looks
-  identical to the Main text on Note and Thoughts Pages.
+- Main text retains the shared Cover type token and top anchor. Editable Note
+  and Deep Thoughts share that anchor with their own 29px main-text size.
 
 ### Chapter Page
 
 - Header has progress on the right only.
-- Main Body contains one question or lesson. It uses the same shared Main type
-  token and forehead anchor as Cover, Note and Thoughts, so a published Page and
-  its authoring preview are the same words at the same size. Confirm and Result
-  keep their own closing anchor.
+- Main Body contains one question or lesson. Short/long text questions use 29px
+  main text and 18px supporting copy/answers; the Workshop preview matches.
+  Other types retain their existing scale. All retain the shared forehead anchor.
+  Confirm and Result keep their own closing anchor.
 - Sub Body contains one interaction: choice, slider, short input, or paragraph.
 - Footer contains the full-width Continue or Confirm action.
 - A choice, slider, or short answer stays at the default App Box height. Grow
@@ -214,13 +230,28 @@ is itself the point of the final week Page.
   single-Note editor remains separate pending migration. See the
   [writing journeys](docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md#5-writing-journeys).
 
-### Thoughts Page
+### Deep Thoughts Page
 
 - Uses the Info Page geometry.
 - Inviting editable typography in the body.
-- Its placeholder uses the same size, weight, line-height, and forehead anchor
-  as Cover and Note Main text.
-- One full-width black Send action in the Footer.
+- Its question uses the same 29px size as Note Main text, with 18px answers.
+  Existing weights, line heights and forehead anchors remain.
+- Question in Main, answer in Sub, with a full-width black Send action.
+- Keep an accepted answer visible; Next question advances only on a deliberate
+  press. Corrections use Save changes and preserve the original question.
+- Recover unfinished answers silently. Omit routine saving/sent and
+  recovered/discarded messages and the Discard draft control. Clearing the answer
+  clears its recovery text; keep actual save errors visible.
+- Match Note's direct HISTORY/header baseline, orange navigation and row bins,
+  dated grouping/times, silent trashing, Trash/Restore and confirmed Delete forever.
+  Reuse its bounded Body scrolling and shared resting geometry. Internal revisions
+  remain; Versions UI and Undo are absent from this surface. Recovery stays local
+  and unsent rows are marked Unsent. Reading-answer embedded controls stay separate.
+- Its label flips to one quote from the managed catalog. Return to the same
+  question and answer, with existing Line swipe/reaction exits. Keep quote travel
+  on the shared App-back engine; quote reading has no timer or question advance.
+- Ordinary Thoughts is retained as a historical record kind, including correction;
+  it has no new-writing composer in Today. Legacy sources remain read only.
 
 ### Blog Page
 
@@ -332,7 +363,7 @@ typeface, motion pattern, or interaction.
 ## App modes and publications
 
 - The top-left app label is a mode control, not navigation. Note opens its
-  Line back; Thoughts changes between Thoughts and Deep Thoughts; Habit
+  Line back; Deep Thoughts opens a Quote; Habit
   cycles Habit, Habit Record, and Habit Tracker.
 - A Line does not dismiss itself on a timer. Swipe backward past its first
   Page to return to Note. Swiping forward past its last Page reveals reactions;
@@ -348,7 +379,7 @@ typeface, motion pattern, or interaction.
 ## Secret Admin and authoring library
 
 - Admin has no public tab, shortcut, or login page. A reserved phrase entered
-  through Thoughts opens a password prompt in the same Page. The phrase is a
+  through a fresh Deep Thoughts answer opens a password prompt in the same Page. The phrase is a
   hidden doorway, not the password itself. The password lives only in the
   server-side CIRCLE_OS_ADMIN_CODE environment setting; there is no fallback
   password, and missing or too-short configuration keeps Admin locked.

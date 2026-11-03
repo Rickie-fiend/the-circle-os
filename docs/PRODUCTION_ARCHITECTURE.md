@@ -6,6 +6,31 @@ reviewed implementation and verification under the current web beta sequence.
 
 ## Current prototype
 
+### Deep Thoughts and managed quotes - 2026-11-03
+
+Today now presents Note and Deep Thoughts. The shared account writing Page owns
+both History/Trash surfaces, preserving existing entry kinds, versions, question
+sources, recovery buffers and account epochs. Send retains the accepted answer;
+Next question alone advances it. A quote is another side of that Page, so reading
+never unmounts the live account editor or submits its draft. Internal `thoughts`
+destinations and immutable publications are preserved. Legacy mode retains its
+existing record transport and is not migrated by this change.
+
+`public.circle_quotes` is the first bounded shared quote catalog, separate from
+personal evidence. Its checked-in Supabase migration grants public read access
+and server-role add/remove only, with RLS enabled. Server route modules use
+`SUPABASE_SECRET_KEY`; client modules receive quote text/author/UUID only. Existing
+signed Admin cookies and same-origin JSON checks protect mutations. No AI or
+personal profile evidence is involved. Setup and routes are in [Quotes](QUOTES.md).
+
+Catalog reads follow PostgREST pagination. The device caches the last valid public
+catalog and stores seen IDs under its account namespace; it remembers the entire
+active pool. Each tap tries a fresh read. Offline reading can retain a cached
+removal until a successful refresh. A successful empty catalog is authoritative.
+The developer applied/configured the hosted setup; live public/server access
+checks and cleanup passed. This does not implement lifestyle sync or certify
+hosted app sessions, authenticated A/B quote-table access, physical devices or AI.
+
 ### Bounded account Note pages - 2026-11-03
 
 The approved refinement moves New Note to the editor Footer and removes the

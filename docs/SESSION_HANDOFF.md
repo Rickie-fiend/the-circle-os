@@ -1,5 +1,175 @@
 # Session handoff
 
+## 2026-11-03 - Habit task controls
+
+**Approval and scope.** The developer approved restoring Add task on the normal
+Habit/Routine Page, matching Habit checkbox/checkmark size to Tasks, focused
+browser checks and bug/continuity records. Branch `paing-branch`, HEAD `2bd8502`.
+All 19 modified tracked paths and seven untracked status entries present at
+startup are preserved. No staging, commit, deployment or personal-data edit.
+
+**Completed and verified.** Removed the obsolete Habit Building completion gate
+from the Routine Footer. Day One v3 already exposes the usable Page without
+completing that chapter. Habit discs match Tasks at 30px with 5x11px checks.
+Both row ticks have 44px hit areas, including a verified off-disc tap. Five
+actual-component browser cases passed at 360/390px, covering fresh-v3 task/habit
+entry, toggling, completion, local persisted reload, Record undo, absence of
+false setup completion, geometry and natural row growth. Next production build
+and targeted ESLint passed, with one existing unused-import warning; whitespace
+passed. Exact commands and attempts are in
+[the journey record](USER_JOURNEY_TESTING.md#habit-task-controls-2026-11-03).
+
+**Invariants and gaps.** Note, Deep Thoughts, Habit and Protocol remain 346px at
+rest with 48px header gaps. Real rows grow without nested scrolling. No shared
+geometry token, persistence contract, chapter version, Circle-day rule or
+delivery budget changed. Other bug 13 color/title reports remain open. No
+performance issue justified optimization. Physical phones, hosted sessions,
+real sync and a fresh Vinext build remain unverified. Prior ResizeObserver and
+other historical gaps remain in the entries below.
+
+**Next action.** Developer use/review of the local Habit controls. Further bug
+fixes need their own reviewed scope. Earlier snapshots retain unique evidence.
+
+## 2026-11-03 - Larger editable titles and shared spacing
+
+**Approval and scope.** The developer approved 29px titles/questions with 18px
+content/answers on the previously named editable surfaces and Chapter previews,
+the 48px shared top gap, equal 25px Main-to-Sub/Body-to-Footer spacing, and the
+Note/Deep Thoughts Trash cleanup. Runtime edits are limited to `os-app.css` and
+`writing-pages.tsx`; browser checks and owning design/product/decision/continuity
+records were updated. Branch `paing-branch`, HEAD `2bd8502`. All 19 modified
+tracked paths and seven untracked status entries present at this slice's start
+remain preserved. Nothing staged, committed or deployed.
+
+**Completed and verified.** Removed the Trash status and divider and reduced
+the Restore-to-Delete layout gap to 4px. Restore keeps its raised shared button;
+both actions retain touch targets and deletion still requires confirmation.
+The initial browser run passed 41/43. Two new assertions measured the lifted
+Restore face instead of its shell; correcting those assertions required no
+runtime change. The final focused run passed 4/4, including two new Page audits.
+Across runs, 45 distinct browser cases passed. At 360px and 390px, 17 Today/
+Reflect states each measured 48px top gaps. Note, Deep Thoughts, Habit and
+Protocol retain equal 346px frames/344px Pages; real rows grow downward and
+bounded writing retains its ceilings and single Body scroller. Next production
+build, targeted lint and whitespace passed. Note and small-phone Trash images
+were visually inspected. Exact commands, attempts and limits are in
+[the journey record](USER_JOURNEY_TESTING.md#editable-titles-and-shared-spacing-2026-11-03).
+
+**Gaps and invariants.** Existing ResizeObserver warnings remain; no claim is
+made that this slice fixes them. Physical phones/keyboards, hosted sessions,
+hidden Week Review flows and a fresh Vinext build remain unverified. Initial
+audit selectors also picked supporting or hidden content and were corrected to
+measure the first visible layout anchor. No personal data, persistence, cloud
+configuration, chapter versions, reading editions or delivery budgets changed.
+The shared default minimum, stable top anchor, local-first rules and Circle day
+remain. No measured performance issue justified optimization.
+
+**Next action.** Developer use/review of these approved local changes. The
+previous development server remains stopped; temporary test servers shut down
+after their checks. Earlier snapshots retain their unique evidence and gaps;
+their 24px/80px values are historical, superseded by this approved refinement.
+
+
+## 2026-11-03 - Editable reading typography
+
+**Approval and scope.** After reviewing a 24px/18px preview and the wider audit,
+the developer authorized font-size changes only where reading and writing are
+needed. Updated scoped rules in `os-app.css`, actual-component browser checks,
+and Product, design, Page standard, decisions and continuity records. Branch
+`paing-branch`, HEAD `2bd8502`; prior working changes preserved. Nothing staged,
+committed or deployed.
+
+**Completed.** Note/Deep Thoughts, opened history/trash entries, Athena's reply
+editor, Vision declarations, Week goals/steps and Chapter short/long text pages
+with their Workshop preview use 24px main / 18px body. Compact rows and other
+reading-only Pages retain their scale. Weights, line heights, spacing, saved
+records and interaction logic are unchanged.
+
+**Checks and gaps.** 43 distinct actual-component browser cases passed across
+the broad run and focused reruns. The broad run passed 40/41; a Note header
+check was intercepted by the new-day splash during the 06:00 boundary and then
+passed in the final 5/5 rerun. Next production build, targeted test lint and
+whitespace passed. Four resting App Boxes remain 346px with 80px header gaps
+at 360/390px; natural row growth and bounded writing remain verified. Existing
+resize warnings also occur without the added type rules. No physical-phone,
+hosted-session or fresh Vinext production-build certification is claimed.
+Details and attempts: [journey record](USER_JOURNEY_TESTING.md#editable-reading-typography-2026-11-03).
+No storage, cloud, immutable-content or budget change; no measured performance
+problem justified optimization. Next: developer use of the local typography.
+
+## 2026-11-03 - Quiet Deep Thoughts writing
+
+The developer requested removing routine saving/sent and recovered/discarded
+messages and the Discard draft control. Updated the existing writing Page,
+browser checks and owning product/design/interaction records. Branch
+`paing-branch`, HEAD `2bd8502`; all earlier uncommitted/untracked work preserved.
+Nothing staged, committed or deployed.
+
+Four focused browser journeys passed: held answers/corrections, silent recovery
+and clearing across reload, failed-save retry, and normal-motion delayed durable
+acceptance without routine messages. Targeted lint and whitespace passed. The
+first new assertion mistakenly matched the word sent inside synthetic answer
+text; narrowed it to the Footer and reran successfully. Details are in
+[the journey record](USER_JOURNEY_TESTING.md#quiet-deep-thoughts-writing-2026-11-03).
+No storage/schema, geometry tokens, cloud configuration, budgets or immutable
+content changed. No build or physical-device check was needed/run for this scoped
+rendering change. Earlier Admin resize and legacy placeholder gaps remain.
+Next: developer use of the local page. Prior verification follows.
+
+## 2026-11-03 - Note, Deep Thoughts and managed quotes
+
+**Approval and Git context.** The developer approved the concrete writing,
+History/Trash, Admin quote storage/UI, tests and documentation scope. They chose
+an Admin-managed shared database and keeping an answer visible with Next question.
+Starting branch `paing-branch`, HEAD `2bd8502`, tracked tree clean. Nothing is
+staged or committed; there is no push or deployment. The developer separately
+saved the ignored Supabase server key and applied the reviewed quote migration.
+The secret was never printed or received by the model.
+
+**Completed.** Today retains Note first and replaces new ordinary Thoughts with
+Deep Thoughts. Note's History/Trash layout and controls are shared, preserving
+Circle-day attribution, account ownership, immutable revisions and original
+question/source links. Send retains an answer; Next question alone advances it.
+Older account Thoughts remain correctable without invented questions; unsent
+recovery remains outside saved evidence. Legacy sources are not migrated.
+The label opens a single managed Quote within the live account writing Page,
+using existing App-back/Line exits and preserving its question and draft.
+
+The existing hidden Admin gains Quotes with add/remove confirmation and 44px
+controls. A separate public Supabase table has read-only public grants and
+server-only protected mutations. Rotation covers the complete active catalog,
+follows server pagination, keeps account-separated seen IDs and caches public
+content for offline reading. An empty successful catalog has no bundled fallback.
+No quote text is seeded, and no writing/reading action calls Athena.
+
+**Checks and gaps.** The focused model/route selection passed 105/105 and the
+consolidated actual-component browser command passed 32/32. Strict selected types,
+lint (one existing shell warning), and Next/Vinext production builds passed. Live
+temporary quote checks confirmed public reading, denied public add/delete,
+server add/remove and zero remaining fixture rows. The built Next quote routes
+also passed real cookie/origin authorization, Admin add/read/remove and cleanup.
+The 59-file client-output scan found no configured secret values; ignored
+`.env.local` stays outside Git. Exact commands, attempts and limits are in
+[the journey record](USER_JOURNEY_TESTING.md#deep-thoughts-and-managed-quotes-2026-11-03).
+Scoped Footer transitions were corrected after a measured 0-to-26px gap under
+reduced motion; the focused small-phone check now retains the 26px action gap.
+Resting geometry remains 346px frames/344px Pages and an 80px forehead for Note,
+Deep Thoughts, Habit and Protocol. History caps remain 480px/400.19px at the
+tested large/small phone viewports, with only Body scrolling.
+
+Admin navigation resize notifications also reproduce on unchanged `2bd8502`
+before the Quotes tool is opened; that shared issue is not fixed here. Physical
+phones/keyboards, hosted app sessions, authenticated A/B database access and
+lifestyle sync are not certified. Legacy Note placeholder remains unresolved.
+No budget, chapter version, authored reading edition or personal record changed.
+
+**Records and next action.** Updated Product, decisions, architecture, design,
+Page standard, personal-record contract, beta/roadmap/work-plan alignment, this
+task/handoff and journey evidence; [Quotes](QUOTES.md) owns setup/operation.
+Next is developer review of the local flow and adding authored quotes in Admin.
+Broader sync, migration and release remain separately reviewed.
+Prior dated snapshots follow, retaining their unique evidence and warnings.
+
 ## 2026-11-03 - Bounded Note pages and editor New Note
 
 **Approval and context.** The developer explicitly approved New Note on the

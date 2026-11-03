@@ -97,6 +97,9 @@ import {
 import { loadCircleState, saveCircleState } from "./circle-os-store";
 import { WritingProvider, useWriting } from "./writing-provider";
 import { AccountWritingPage } from "./writing-pages";
+import { pickQuote } from "./quotes/quote-client";
+import { QuotePage, type QuoteNavigation } from "./quotes/quote-page";
+import type { Quote } from "./quotes/quote-model.js";
 import {
   assertAccountScope,
   getAccountScope,
@@ -243,13 +246,6 @@ import type {
  * were. Nothing about the feature is being deleted or migrated here.
  */
 const SHOW_DREAMLINE = false;
-
-/**
- * How long a sent thought takes to leave the Page. Matches
- * `os-thought-departure` in the stylesheet; the draft is cleared as the last
- * of the words fade, so the placeholder never appears underneath them.
- */
-const THOUGHT_DEPARTURE_MS = 420;
 
 /**
  * The Send button's design.
@@ -1885,9 +1881,13 @@ export function TodayExperience() {
   const checkInIdleTimer = useRef<number | null>(null);
   const [checkInApp, setCheckInApp] = useState(0);
   const noteBack = useAppBack<"note" | "line">("note");
-  const thoughtBack = useAppBack<"regular" | "deep">("regular");
-  const thoughtMode = thoughtBack.side;
-  const [regularThoughtDraft, setRegularThoughtDraft] = useState("");
+  const thoughtBack = useAppBack<"deep" | "quote">("deep");
+  const thoughtMode = "deep";
+  const [quoteNavigation, setQuoteNavigation] = useState<QuoteNavigation | null>(null);
+  const [legacyQuote, setLegacyQuote] = useState<Quote | null>(null);
+  const [legacyQuoteFeedback, setLegacyQuoteFeedback] = useState(false);
+  const legacyQuoteFeedbackRef = useRef(false);
+  const [legacyQuoteError, setLegacyQuoteError] = useState("");
   const [deepThoughtDraft, setDeepThoughtDraft] = useState("");
   const [adminUnlockMode, setAdminUnlockMode] = useState(false);
   const [adminCodeDraft, setAdminCodeDraft] = useState("");
@@ -1895,11 +1895,24 @@ export function TodayExperience() {
   const [adminUnlocking, setAdminUnlocking] = useState(false);
   const adminCodeInputRef = useRef<HTMLInputElement>(null);
   const [deepThoughtPrompt, setDeepThoughtPrompt] = useState<DeepThoughtPrompt | null>(null);
-  // How many times Deep Thoughts has been opened. It counts visits, not
-  // answers, which is what makes the next one a different question.
+  // Only Next question advances this counter. Reading a quote keeps the question.
   const deepThoughtVisits = useRef(0);
   const [thoughtRewarded, setThoughtRewarded] = useState(false);
-  const thoughtDraft = thoughtMode === "deep" ? deepThoughtDraft : regularThoughtDraft;
+  const thoughtDraft = deepThoughtDraft;
+  useEffect(() => {
+    if (deepThoughtPrompt || (writing && writing.status !== "ready")) return;
+    const draft = writing?.drafts.find(item => item.kind === "deep-thought" && item.source?.question);
+    const saved = writing?.history.find(item => item.kind === "deep-thought" && item.attribution.day === dateKey && item.source?.question);
+    const restored = draft || saved;
+    const prompt: DeepThoughtPrompt | null = restored?.source?.question && restored.source.questionId ? {
+      id: restored.source.questionId, text: restored.source.question, target: "whatMatters", dateKey: restored.attribution.day,
+      source: (["athena", "curiosity", "local-personalized"].includes(restored.source.source || "") ? restored.source.source : "local") as DeepThoughtPrompt["source"],
+      preparedAt: restored.startedAt,
+    } : selectDeepThoughtPrompt(state, dateKey, 0, writing ? { view: writing.view, curiosity: writing.memory.curiosity || [] } : undefined);
+    let active = true;
+    queueMicrotask(() => { if (active && prompt) setDeepThoughtPrompt(prompt); });
+    return () => { active = false; };
+  }, [deepThoughtPrompt, writing, state, dateKey]);
   useEffect(() => {
     if (adminUnlockMode) adminCodeInputRef.current?.focus();
   }, [adminUnlockMode]);
@@ -1923,11 +1936,9 @@ export function TodayExperience() {
   const [holdThoughtsAfterSend, setHoldThoughtsAfterSend] = useState(false);
   const [thoughtButtonVisible, setThoughtButtonVisible] = useState(false);
   const thoughtSubmissionLocked = useRef(false);
-  const thoughtOutcome = useRef({ deep: false, rewarded: false });
   const deepWritingActiveMs = useRef(0);
   const deepWritingFocusStartedAt = useRef<number | null>(null);
   const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const thoughtResetTimer = useRef<number | null>(null);
   const routineBack = useAppBack<"habit" | "yesterday">("habit");
   const habitMode = routineBack.side;
   const [newProtocolItemId, setNewProtocolItemId] = useState<string | null>(null);
@@ -1984,9 +1995,6 @@ export function TodayExperience() {
     () => () => {
       if (checkInIdleTimer.current) {
         window.clearTimeout(checkInIdleTimer.current);
-      }
-      if (thoughtResetTimer.current) {
-        window.clearTimeout(thoughtResetTimer.current);
       }
     },
     [],
@@ -3806,8 +3814,7 @@ export function TodayExperience() {
   }
 
   function setThoughtDraft(value: string) {
-    if (thoughtMode === "deep") setDeepThoughtDraft(value);
-    else setRegularThoughtDraft(value);
+    setDeepThoughtDraft(value);
   }
 
   function pauseDeepWriting() {
@@ -3828,28 +3835,34 @@ export function TodayExperience() {
   }
 
   function openDeepThoughtsFrom(source: HTMLElement) {
-    if (thoughtBack.flipping || thoughtTransition !== "idle") return;
-    const nextMode = thoughtMode === "deep" ? "regular" : "deep";
-    // A different question every time it is opened. Sai: "better be refresh
-    // with new question on every visit. so that there may be some questions
-    // that i am not in the mood now." Leaving without answering spends nothing,
-    // so the one skipped is still there to come back to.
-    const prompt =
-      nextMode === "deep"
-        ? selectDeepThoughtPrompt(state, dateKey, deepThoughtVisits.current, writing ? { view: writing.view, curiosity: writing.memory.curiosity || [] } : undefined)
-        : null;
-    if (nextMode === "deep" && !prompt) return;
-    if (nextMode === "deep") deepThoughtVisits.current += 1;
-    pauseDeepWriting();
-    concealThoughtButton();
-    thoughtBack.flip(nextMode, () => {
-      if (nextMode === "deep") {
-        setDeepThoughtPrompt(prompt);
-        resetDeepWritingClock();
-      } else {
-        setDeepThoughtPrompt(null);
-      }
-    }, source);
+    if (thoughtBack.flipping) return;
+    void pickQuote(getAccountScope()).then(quote => {
+      if (!quote) { setLegacyQuoteError("No quotes are available yet."); return; }
+      setLegacyQuoteError(""); legacyQuoteFeedbackRef.current = false; setLegacyQuoteFeedback(false);
+      thoughtBack.flip("quote", () => {
+        setLegacyQuote(quote);
+        setQuoteNavigation({ back: closeLegacyQuote, forward: () => {
+          if (legacyQuoteFeedbackRef.current) closeLegacyQuote();
+          else { legacyQuoteFeedbackRef.current = true; setLegacyQuoteFeedback(true); }
+        } });
+      }, source);
+    }).catch(() => setLegacyQuoteError("Could not open quotes. Try again."));
+  }
+
+  function closeLegacyQuote() {
+    thoughtBack.flip("deep", () => { setLegacyQuote(null); setQuoteNavigation(null); });
+  }
+
+  function nextDeepThought() {
+    deepThoughtVisits.current += 1;
+    const prompt = selectDeepThoughtPrompt(state, dateKey, deepThoughtVisits.current, writing ? { view: writing.view, curiosity: writing.memory.curiosity || [] } : undefined);
+    if (!prompt) return;
+    // An exhausted pool may revisit a question, but it must create a new entry.
+    if (writing?.history.some(item => item.source?.questionId === prompt.id)) prompt.id = `${prompt.id}-${deepThoughtVisits.current}`;
+    setDeepThoughtPrompt(prompt);
+    setDeepThoughtDraft(""); setThoughtSent(false); setThoughtRewarded(false);
+    setThoughtTransition("idle"); thoughtSubmissionLocked.current = false;
+    resetDeepWritingClock();
   }
 
   async function sendThought(event: FormEvent<HTMLFormElement>) {
@@ -3923,7 +3936,6 @@ export function TodayExperience() {
         deep ? "deep-thought" : "thought",
       ),
     );
-    thoughtOutcome.current = { deep, rewarded };
     setThoughtRewarded(rewarded);
     setThoughtSent(true);
     setThoughtTransition("clicked");
@@ -3949,59 +3961,6 @@ export function TodayExperience() {
     adminCodeInputRef.current?.blur();
   }
 
-  // What a send looks like.
-  //
-  // It used to empty the whole App Box and play the arrival choreography over
-  // it, so the answer to "did that go?" was the App vanishing and coming back
-  // — the same thing that happens when a Page changes for any other reason,
-  // and a second of it. Sai: "instead of whole app box refresh, what can we do
-  // to obviously signal message sent?"
-  //
-  // The thing that was sent is the thing that leaves. The written words lift
-  // off the Page and fade while the button under them holds on "Sent"; the App
-  // Box, its Label and its Footer never move. Then the placeholder is back and
-  // the App is ready for the next one.
-  //
-  // Nothing in the Footer moves either. The button is not taken away and put
-  // back — it goes flat and disabled, exactly as it sits before a word is
-  // typed, and lifts again on the next one.
-  function beginThoughtDeparture() {
-    if (thoughtTransition !== "clicked") return;
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    setThoughtTransition("departing");
-    if (thoughtResetTimer.current) {
-      window.clearTimeout(thoughtResetTimer.current);
-    }
-    thoughtResetTimer.current = window.setTimeout(() => {
-      const outcome = thoughtOutcome.current;
-      // The button stays. Sai: "the button should stay flat and change into
-      // disabled send button, the state before we type." Clearing the draft is
-      // what disables it, and a disabled key has no leg and no light, so it
-      // settles flat where it already is instead of leaving the Footer.
-      if (outcome.deep) {
-        setDeepThoughtDraft("");
-        resetDeepWritingClock();
-        // One question, one answer. A deep question used to ask a second time
-        // for anything short of the reward, which turned the one deep thing
-        // the day asks for into an interrogation. Sai: "i dont think we need
-        // follow up."
-        thoughtBack.reset("regular");
-        setDeepThoughtPrompt(null);
-      } else {
-        setRegularThoughtDraft("");
-      }
-      setThoughtSent(false);
-      setThoughtRewarded(false);
-      setHoldThoughtsAfterSend(true);
-      setThoughtTransition("idle");
-      thoughtSubmissionLocked.current = false;
-      thoughtTextareaRef.current?.blur();
-      thoughtTextareaRef.current?.style.removeProperty("height");
-      thoughtResetTimer.current = null;
-    }, reducedMotion ? 40 : THOUGHT_DEPARTURE_MS);
-  }
 
   function defaultTitleForHour(hour: number) {
     if (hour === wakeHour) return "Wake up";
@@ -4133,14 +4092,18 @@ export function TodayExperience() {
 
   function checkInThoughtsCard() {
     if (writing && !adminUnlockMode) return <AccountWritingPage
-      kind={thoughtMode === "deep" ? "deep-thought" : "thought"}
+      kind="deep-thought"
       source={thoughtMode === "deep" && deepThoughtPrompt ? { questionId: deepThoughtPrompt.id, question: deepThoughtPrompt.text, source: deepThoughtPrompt.source } : null}
       placeholder={thoughtMode === "deep" ? "Write what comes up..." : thoughtPlaceholder}
-      onLabel={openDeepThoughtsFrom}
+      nextQuote={() => pickQuote(getAccountScope())}
+      onQuoteNavigation={setQuoteNavigation}
+      onQuoteReaction={(quote, reaction) => updateState(current => reactToLineSeen(current, `quote-${quote.id}`, reaction))}
+      onNextQuestion={nextDeepThought}
       onBusyChange={setAccountThoughtBusy}
       onAdmin={() => { setAdminUnlockMode(true); setAdminCodeDraft(""); revealThoughtButton(); }}
-      onSent={() => { thoughtBack.reset("regular"); setDeepThoughtPrompt(null); setHoldThoughtsAfterSend(true); }}
+      onSent={() => { setHoldThoughtsAfterSend(true); }}
     />;
+    if (thoughtBack.side === "quote" && legacyQuote) return <QuotePage quote={legacyQuote} feedback={legacyQuoteFeedback} onReact={reaction => { updateState(current => reactToLineSeen(current, `quote-${legacyQuote.id}`, reaction)); closeLegacyQuote(); }} />;
     const deepThoughtsActive = thoughtMode === "deep" && Boolean(deepThoughtPrompt);
     const thoughtInput = adminUnlockMode ? (
       <div className="os-admin-unlock-field">
@@ -4173,6 +4136,7 @@ export function TodayExperience() {
         className={deepThoughtsActive ? "os-deep-thought-answer" : "os-regular-thought-input"}
         maxLength={800}
         onBlur={pauseDeepWriting}
+        readOnly={thoughtSent}
         onChange={(event) => {
           const input = event.currentTarget;
           const value = input.value;
@@ -4199,17 +4163,18 @@ export function TodayExperience() {
     return (
       <InfoPage
         className={`os-thoughts-page os-survey-card${thoughtMode === "deep" ? " deep-mode" : ""}`}
-        header={<button aria-label={adminUnlockMode ? "Cancel admin access" : undefined} aria-pressed={adminUnlockMode ? false : thoughtMode === "deep"} className="os-card-label os-thoughts-mode-toggle" type="button" onClick={adminUnlockMode ? cancelAdminUnlock : openDeepThoughts}>{adminUnlockMode ? "Cancel" : thoughtMode === "deep" ? "Deep Thoughts" : "Thoughts"}</button>}
+        header={<button aria-label={adminUnlockMode ? "Cancel admin access" : "Show a Quote"} className="os-card-label os-thoughts-mode-toggle" type="button" onClick={adminUnlockMode ? cancelAdminUnlock : openDeepThoughts}>{adminUnlockMode ? "Cancel" : "Deep Thoughts"}</button>}
         footer={
           <div className="os-creative-button-slot">
-            {thoughtButtonVisible ? (
+            {legacyQuoteError ? <p role="alert">{legacyQuoteError}</p> : null}
+            {thoughtSent ? <CreativeButton type="button" styleId="default" keepMountedOnSuccess onClick={nextDeepThought}>Next question</CreativeButton> : thoughtButtonVisible ? (
               <CreativeButton
                 disabled={adminUnlockMode
                   ? !adminCodeDraft.trim() || adminUnlocking
                   : !thoughtDraft.trim() || thoughtSent}
                 form="check-in-thought-form"
                 keepMountedOnSuccess
-                onSuccessComplete={beginThoughtDeparture}
+                onSuccessComplete={() => { setThoughtTransition("idle"); setThoughtRewarded(false); }}
                 // What replaces Send is the flat disabled Send, so coming back
                 // up on the release and going down again would be a flinch.
                 release="latch"
@@ -4259,7 +4224,7 @@ export function TodayExperience() {
   const checkInIndex = noteLineActive
     ? revealedLinePage
     : visibleCheckInApp;
-  const checkInAvailableIndices = noteLineActive
+  const checkInAvailableIndices = quoteNavigation ? [checkInThoughtsApp] : noteLineActive
     ? revealedLine?.kind === "quote" ? [0] : [0, 1]
     : thoughtSent
       ? [checkInThoughtsApp]
@@ -4317,12 +4282,12 @@ export function TodayExperience() {
               noteBack.className ? ` ${noteBack.className}` : ""
             }`}
             index={checkInIndex}
-            label={noteLineActive ? "A Line" : "Check-in session"}
+            label={quoteNavigation ? "A Quote" : noteLineActive ? "A Line" : "Check-in session"}
             maxIndex={Math.max(...checkInAvailableIndices)}
-            onBackwardBoundary={noteLineActive ? dismissLineBackward : undefined}
-            onForwardBoundary={noteLineActive ? passLineForward : undefined}
+            onBackwardBoundary={quoteNavigation?.back || (noteLineActive ? dismissLineBackward : undefined)}
+            onForwardBoundary={quoteNavigation?.forward || (noteLineActive ? passLineForward : undefined)}
             rotateMs={IDLE_PAGE_DWELL_MS}
-            rotatePaused={!noteLineActive && (writing ? accountNoteBusy || accountThoughtBusy : Boolean(thoughtDraft.trim()))}
+            rotatePaused={Boolean(quoteNavigation) || (!noteLineActive && (writing ? accountNoteBusy || accountThoughtBusy : Boolean(thoughtDraft.trim())))}
             onIndexChange={(nextIndex) => {
               if (noteLineActive) {
                 setRevealedLinePage(nextIndex);
@@ -4646,7 +4611,7 @@ export function TodayExperience() {
                 </button>
               )}
               idleFooter={
-                habitBuildingRun?.status === "completed" && habitMode === "habit" ? (
+                habitMode === "habit" ? (
                   <button
                     className="os-add-habit-row"
                     type="button"

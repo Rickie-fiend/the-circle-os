@@ -7,10 +7,12 @@ import { CreativeButton, ButtonRewardBackdrop } from "./button-engine";
 import { isDeepThoughtRewardEligible } from "./deep-thought-model.js";
 import { sizeTextAreaToContent } from "./text-area-size";
 import { useWriting, type WritingContextValue } from "./writing-provider";
+import { QuotePage, type QuoteNavigation } from "./quotes/quote-page";
+import type { Quote } from "./quotes/quote-model.js";
 import { writingAttribution, type WritingCommand, type WritingContent, type WritingDraft, type WritingDraftInput, type WritingHistoryEntry, type WritingKind, type WritingSource, type WritingVersion } from "./writing-model.js";
 
 type Session = { draft: WritingDraftInput; version: number; revision: number; savedRevision: number; conflict: boolean };
-type Page = "editor" | "history" | "detail" | "versions" | "version" | "trash" | "trash-detail" | "delete" | "drafts" | "conflict";
+type Page = "editor" | "history" | "detail" | "versions" | "version" | "trash" | "trash-detail" | "delete" | "drafts" | "conflict" | "quote";
 type Props = {
   kind: WritingKind;
   source?: WritingSource;
@@ -21,6 +23,10 @@ type Props = {
   onAdmin?: () => void;
   onClear?: () => void;
   embedded?: boolean;
+  onNextQuestion?: () => void;
+  nextQuote?: () => Promise<Quote | null>;
+  onQuoteNavigation?: (navigation: QuoteNavigation | null) => void;
+  onQuoteReaction?: (quote: Quote, reaction: string) => void;
 };
 const blank = (): WritingContent => ({ title: "", body: "", tags: [] });
 const id = () => crypto.randomUUID();
@@ -39,8 +45,14 @@ function TrashIcon() {
 
 /** The live buffer is independent of provider refreshes. Commands are queued per
  * editor; only this editor's accepted Save may advance its optimistic base. */
-function WritingPage({ writing, kind, source = null, placeholder = "Write what comes up...", onLabel, onBusyChange, onSent, onAdmin, onClear, embedded = false }: Props & { writing: WritingContextValue }) {
+function WritingPage({ writing, kind, source = null, placeholder = "Write what comes up...", onLabel, onBusyChange, onSent, onAdmin, onClear, embedded = false, onNextQuestion, nextQuote, onQuoteNavigation, onQuoteReaction }: Props & { writing: WritingContextValue }) {
   const back = useAppBack<Page>("editor");
+  const noteNavigation = isNote(kind) || (kind === "deep-thought" && !embedded);
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [quoteFeedback, setQuoteFeedback] = useState(false);
+  const quoteFeedbackRef = useRef(false);
+  const [openingQuote, setOpeningQuote] = useState(false);
+  const [quoteError, setQuoteError] = useState(false);
   const formId = useId();
   const [menu, setMenu] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
@@ -84,10 +96,13 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     && (!isNote(kind) || draft.baseVersionId || draft.content.title.trim() || draft.content.body.trim()));
   const recovered = !fresh && (isNote(kind) || matchingDrafts.length === 1) ? matchingDrafts[0] : null;
   const selectedEntry = [...entries, ...trashed].find(entry => entry.id === selected);
-  const defaultEntry = !fresh && isNote(kind) ? entries[0] : !fresh && embedded ? entries.find(entry => entry.source?.questionId === source?.questionId) : undefined;
+  const defaultEntry = !fresh && isNote(kind) ? entries[0] : !fresh && (embedded || kind === "deep-thought") && source?.questionId ? entries.find(entry => entry.source?.questionId === source.questionId) : undefined;
   const shown = session?.draft.content || recovered?.content || defaultEntry?.content || blank();
-  const sourceShown = session?.draft.source || recovered?.source || source;
+  const sourceShown = session ? session.draft.source : recovered ? recovered.source : defaultEntry ? defaultEntry.source : source;
+  const composingKind = session?.draft.kind || recovered?.kind || defaultEntry?.kind || kind;
   const editingSaved = Boolean(session ? session.draft.baseVersionId : recovered ? recovered.baseVersionId : defaultEntry);
+  const spentQuestion = kind === "deep-thought" && !session && !recovered && !defaultEntry
+    && Boolean(read.view?.answeredQuestions.some(item => item.questionId === source?.questionId));
   const dirty = Boolean(session ? session.revision !== session.savedRevision : recovered);
   const textareas = useRef<HTMLFormElement | null>(null);
   const noteContent = useRef<HTMLDivElement | null>(null);
@@ -97,10 +112,11 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       sizeTextAreaToContent(editor);
       // Native caret scrolling can outlive the temporary zero-height sizing
       // pass. Note scrolls the enclosing Body, never an offset inside a field.
-      if (isNote(kind)) editor.scrollTop = 0;
+      if (noteNavigation) editor.scrollTop = 0;
     });
-  }, [shown.title, shown.body, back.side, kind]);
-  useEffect(() => { onBusyChange?.((isNote(kind) && focused) || dirty || pending > 0 || back.side !== "editor" || menu); }, [kind, focused, dirty, pending, back.side, menu, onBusyChange]);
+  }, [shown.title, shown.body, back.side, noteNavigation]);
+  useEffect(() => { onBusyChange?.(focused || dirty || pending > 0 || openingQuote || back.side !== "editor" || menu); }, [focused, dirty, pending, openingQuote, back.side, menu, onBusyChange]);
+  useEffect(() => () => onQuoteNavigation?.(null), [onQuoteNavigation]);
   useLayoutEffect(() => { saveLatest.current = save; });
   useEffect(() => {
     mounted.current = true;
@@ -175,7 +191,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     const target = ensureSession();
     target.draft.content = { ...target.draft.content, [field]: value };
     ++target.revision;
-    setNotice(""); setError(""); setSent(false); acceptedSend.current = null;
+    setNotice(""); setError(""); setQuoteError(false); setSent(false); acceptedSend.current = null;
     animationDone.current = false;
     // Called only by input/Clear handlers. The compiler follows Action callbacks
     // as if they ran during render; this clock belongs to user interaction.
@@ -247,11 +263,12 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       target.draft.baseGeneration = receipt.generation;
       target.savedRevision = revision;
       if (!mounted.current || live.current !== target) return true;
-      publish(target); setNotice(isNote(kind) || target.revision !== revision ? "" : wasSaved ? "Saved on this device." : "Sent.");
+      publish(target); setNotice(noteNavigation || target.revision !== revision ? "" : wasSaved ? "Saved on this device." : "Sent.");
       if (!isNote(kind) && !wasSaved && target.revision === revision) {
         setSent(true);
         setRewarded(kind === "deep-thought" && isDeepThoughtRewardEligible({ text: content.body, activeMs: activeMs.current }));
-        acceptedSend.current = target; maybeDepart();
+        if (kind === "deep-thought") onSent?.();
+        else { acceptedSend.current = target; maybeDepart(); }
       }
       return true;
     }).catch(() => false).finally(() => { saving.current = null; });
@@ -265,6 +282,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   }
   function go(page: Page, element?: HTMLElement) {
     setMenu(false);
+    if (noteNavigation && page !== "editor") setNotice("");
     if (isNote(kind) && back.side === "editor" && page !== "editor") {
       void save().then(accepted => { if (accepted && mounted.current) back.flip(page, undefined, element); });
     } else back.flip(page, undefined, element);
@@ -279,8 +297,8 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     }).finally(() => { startingNote.current = false; });
   }
   function openEntry(entry: WritingHistoryEntry, element: HTMLElement) {
-    if (isNote(kind) && entry.status === "active") { setSelected(entry.id); editEntry(entry); return; }
-    if (isNote(kind)) setNotice("");
+    if (noteNavigation && entry.status === "active") { setSelected(entry.id); editEntry(entry); return; }
+    if (noteNavigation) setNotice("");
     setSelected(entry.id); go(entry.status === "trashed" ? "trash-detail" : "detail", element);
   }
   function editEntry(entry: WritingHistoryEntry) {
@@ -290,7 +308,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       id: id(), entryId: entry.id, kind: entry.kind, startedAt: entry.startedAt, attribution: entry.attribution,
       content: { ...entry.content }, source: entry.source, baseVersionId: entry.versionId, baseGeneration: entry.generation,
     }, version: draft?.version || 0, revision: draft ? 1 : 0, savedRevision: 0, conflict: false });
-    setFresh(true); setNotice(""); go("editor");
+    setFresh(true); setNotice(""); setSent(false); setRewarded(false); go("editor");
     if (isNote(kind) && draft) scheduleNoteSave();
   }
   function discard() {
@@ -300,7 +318,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       const receipt = await current.current.commit({ ...header(), type: "discard-draft", draftId: target.draft.id, expectedDraftVersion: target.version });
       if (receipt.outcome === "conflict") throw new Error("Draft changed");
       if (live.current === target) publish(null);
-      setFresh(true); setError(""); setNotice("Draft discarded."); go("editor");
+      setFresh(true); setError(""); setNotice(kind === "deep-thought" ? "" : "Draft discarded."); go("editor");
     }).catch(() => undefined);
   }
   async function applyLifecycle(type: "trash" | "restore" | "delete", entry: Pick<WritingHistoryEntry, "id" | "generation">) {
@@ -313,7 +331,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     if (!mounted.current) return;
     if (live.current?.draft.entryId === entry.id) publish(null);
     setFresh(true); setError("");
-    if (type === "trash") { if (!isNote(kind)) setUndo(entry.id); setNotice(isNote(kind) ? "" : "Moved to Trash."); go("history"); }
+    if (type === "trash") { if (!noteNavigation) setUndo(entry.id); setNotice(noteNavigation ? "" : "Moved to Trash."); go("history"); }
     else { setUndo(null); setNotice(type === "restore" ? "Restored." : "Deleted forever."); go(type === "restore" ? "history" : "trash"); }
   }
   function lifecycle(type: "trash" | "restore" | "delete", entry: WritingHistoryEntry) {
@@ -338,13 +356,38 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     target.conflict = false; publish(target); setError(""); setNotice(isNote(kind) ? "" : "Your draft is open. Save changes when ready."); go("editor");
     if (isNote(kind)) scheduleNoteSave();
   }
-  const disabled = pending > 0 || !ready;
-  const status = <>{error || writing.error ? <p role="alert">{error || writing.error} <Action text="Try again" click={() => { setError(""); void writing.refresh().then(open => { if (open && isNote(kind)) void save(); }); }} disabled={pending > 0} /></p> : null}<span role="status" aria-live="polite">{isNote(kind) ? notice : pending ? "Saving on this device…" : notice}</span></>;
+  function closeQuote() {
+    back.flip("editor", () => { setQuote(null); onQuoteNavigation?.(null); });
+  }
+  function passQuote() {
+    if (quoteFeedbackRef.current) closeQuote();
+    else { quoteFeedbackRef.current = true; setQuoteFeedback(true); }
+  }
+  async function openQuote(element: HTMLElement) {
+    if (!nextQuote || openingQuote || composing.current || back.flipping) return;
+    setOpeningQuote(true); setError("");
+    try {
+      // Preserve the unfinished answer as a draft, without submitting it.
+      await queue.current;
+      if (live.current?.conflict) return;
+      const selectedQuote = await nextQuote();
+      if (!mounted.current) return;
+      if (!selectedQuote) { setQuoteError(true); setError("No quotes are available yet."); return; }
+      quoteFeedbackRef.current = false; setQuoteFeedback(false);
+      back.flip("quote", () => {
+        setQuote(selectedQuote);
+        onQuoteNavigation?.({ back: closeQuote, forward: passQuote });
+      }, element);
+    } catch (cause) { if (mounted.current) { setQuoteError(true); setError(cause instanceof Error ? cause.message : "Could not open quotes. Try again."); } }
+    finally { if (mounted.current) setOpeningQuote(false); }
+  }
+  const disabled = pending > 0 || !ready || openingQuote;
+  const status = <>{error || writing.error ? <p role="alert">{error || writing.error} <button className="os-writing-action" type="button" disabled={pending > 0 || openingQuote} onClick={event => { setError(""); if (quoteError) { void openQuote(event.currentTarget); return; } void writing.refresh().then(open => { if (open && isNote(kind)) void save(); }); }}>Try again</button></p> : null}<span role="status" aria-live="polite">{noteNavigation ? notice : pending ? "Saving on this device…" : notice}</span></>;
   let body: ReactNode;
   let footer: ReactNode;
   let heading = "";
   if (back.side === "editor") {
-    const input = <textarea aria-label={isNote(kind) ? "Write a note" : embedded ? `Reply to Athena: ${sourceShown?.question || ""}` : sourceShown?.question ? "Answer the deep thought" : "Write a thought"} className={sourceShown?.question ? "os-deep-thought-answer" : "os-regular-thought-input"} disabled={read.status !== "ready"} rows={1} maxLength={isNote(kind) ? undefined : (session?.draft.kind || kind) === "reading-answer" ? 1600 : 800} placeholder={isNote(kind) ? "Write a note..." : placeholder} value={shown.body} onFocus={() => { if (shown.body.trim() && focusAt.current === null) focusAt.current = performance.now(); }} onBlur={pauseClock} onChange={event => change("body", event.currentTarget.value)} />;
+    const input = spentQuestion ? <p>This question was answered.</p> : <textarea aria-label={isNote(kind) ? "Write a note" : embedded ? `Reply to Athena: ${sourceShown?.question || ""}` : sourceShown?.question ? "Answer the deep thought" : "Write a thought"} className={sourceShown?.question ? "os-deep-thought-answer" : "os-regular-thought-input"} disabled={read.status !== "ready"} rows={1} maxLength={isNote(kind) ? undefined : (session?.draft.kind || kind) === "reading-answer" ? 1600 : 800} placeholder={isNote(kind) ? "Write a note..." : placeholder} value={shown.body} onFocus={() => { if (shown.body.trim() && focusAt.current === null) focusAt.current = performance.now(); }} onBlur={pauseClock} onChange={event => change("body", event.currentTarget.value)} />;
     body = <><ButtonRewardBackdrop active={sent && rewarded} styleId="default" /><form id={formId} ref={textareas}
       onFocus={() => setFocused(true)}
       onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) { setFocused(false); if (isNote(kind)) void save(); } }}
@@ -353,8 +396,8 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       onSubmit={event => { event.preventDefault(); if (!disabled && (shown.title.trim() || shown.body.trim())) void save(); }} onAnimationEnd={event => { if (event.target === event.currentTarget.firstElementChild || event.animationName === "os-thought-departure") finishDeparture(); }} className={`${isNote(kind) ? "os-inline-checkin-note" : "os-thoughts-form"}${sourceShown?.question ? " deep-compose" : ""}${departing ? " is-departing" : ""} os-writing-editor`}>
       {isNote(kind) ? <><div className="os-info-page-main"><textarea aria-label="Note title" disabled={read.status !== "ready"} className="os-inline-checkin-title" rows={1} placeholder={placeholder} value={shown.title} onChange={event => change("title", event.currentTarget.value)} /></div><div className="os-info-page-sub">{input}</div></> : sourceShown?.question ? <><div className="os-info-page-main os-deep-thought-question-wrap"><h2 className="os-deep-thought-question">{sourceShown.question}</h2></div><div className="os-info-page-sub os-deep-thought-response">{input}</div></> : <div className="os-info-page-main">{input}</div>}
     </form></>;
-    footer = <div className="os-writing-footer">{status}{!isNote(kind) ? <>{recovered && !session ? <span>Recovered draft. {<Action text={"Discard draft"} click={discard} disabled={disabled} />}</span> : null}{matchingDrafts.length > 1 && !session ? <Action text={"Review drafts"} click={() => go("drafts")} disabled={disabled} /> : null}
-      <CreativeButton disabled={disabled || sent || (!dirty && editingSaved) || (!shown.title.trim() && !shown.body.trim())} form={formId} type="submit" release="latch" styleId="default" keepMountedOnSuccess onSuccessComplete={() => { animationDone.current = true; maybeDepart(); }}>{sent ? "Sent" : editingSaved ? "Save changes" : "Send"}</CreativeButton></> : <CreativeButton type="button" disabled={read.status !== "ready" || Boolean(session?.conflict)} onClick={newNote} styleId="default" keepMountedOnSuccess>New Note</CreativeButton>}
+    footer = <div className="os-writing-footer">{status}{!isNote(kind) ? <>{recovered && !session && kind !== "deep-thought" ? <span>Recovered draft. {<Action text={"Discard draft"} click={discard} disabled={disabled} />}</span> : null}{matchingDrafts.length > 1 && !session ? <Action text={"Review drafts"} click={() => go("drafts")} disabled={disabled} /> : null}
+      {kind === "deep-thought" && (editingSaved || spentQuestion) && !dirty && onNextQuestion ? <CreativeButton type="button" disabled={disabled} styleId="default" keepMountedOnSuccess onClick={onNextQuestion}>Next question</CreativeButton> : <CreativeButton disabled={disabled || (!dirty && editingSaved) || (!shown.title.trim() && !shown.body.trim()) || (composingKind === "deep-thought" && !sourceShown?.question)} form={formId} type="submit" release="latch" styleId="default" keepMountedOnSuccess onSuccessComplete={() => { animationDone.current = true; if (kind === "deep-thought") setRewarded(false); else maybeDepart(); }}>{sent && kind !== "deep-thought" ? "Sent" : editingSaved ? "Save changes" : "Send"}</CreativeButton>}</> : <CreativeButton type="button" disabled={read.status !== "ready" || Boolean(session?.conflict)} onClick={newNote} styleId="default" keepMountedOnSuccess>New Note</CreativeButton>}
     </div>;
   } else if (back.side === "history" || back.side === "trash") {
     const list = back.side === "trash" ? trashed : entries;
@@ -362,11 +405,11 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     // adopted only when opened; no wording, ownership or dates are invented.
     const rows = [
       ...list.map(entry => ({ key: entry.id, content: entry.content, day: entry.attribution.day, at: entry.createdAt, kind: entry.kind,
-        open: (element: HTMLElement) => openEntry(entry, element), trash: isNote(kind) && back.side === "history" ? () => lifecycle("trash", entry) : null })),
-      ...(isNote(kind) && back.side === "history" ? matchingDrafts.map(item => ({
+        open: (element: HTMLElement) => openEntry(entry, element), trash: noteNavigation && back.side === "history" ? () => lifecycle("trash", entry) : null })),
+      ...(noteNavigation && back.side === "history" ? (isNote(kind) ? matchingDrafts : read.drafts.filter(item => belongs(item) && !entries.some(entry => entry.id === item.entryId) && (item.content.title.trim() || item.content.body.trim()))).map(item => ({
         key: item.id, content: item.content, day: item.attribution.day, at: item.updatedAt, kind: item.kind,
-        open: () => { publish({ draft: { ...item, content: { ...item.content } }, version: item.version, revision: 1, savedRevision: 0, conflict: false }); setFresh(true); setNotice(""); go("editor"); scheduleNoteSave(); },
-        trash: () => trashRecovery(item),
+        open: () => { publish({ draft: { ...item, content: { ...item.content } }, version: item.version, revision: 1, savedRevision: 0, conflict: false }); setFresh(true); setNotice(""); setSent(false); go("editor"); if (isNote(kind)) scheduleNoteSave(); },
+        trash: isNote(kind) ? () => trashRecovery(item) : null,
       })) : []),
     ].sort((a, b) => b.day.localeCompare(a.day) || b.at.localeCompare(a.at) || a.key.localeCompare(b.key));
     heading = back.side === "trash" ? "Trash" : "History";
@@ -376,13 +419,14 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     const dayLabel = (value: string) => value === today ? "Today" : value === previousDay.toISOString().slice(0, 10) ? "Yesterday" : new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
     body = <div className="os-writing-list os-info-page-main">{rows.length ? rows.map(row => {
       const showDay = day !== row.day; day = row.day;
-      const title = row.kind === "note" ? row.content.title || "Untitled" : row.content.body.slice(0, 100) || "Untitled";
-      const open = <button className="os-writing-entry" type="button" onClick={event => row.open(event.currentTarget)}><strong>{title}</strong><span>{isNote(kind) ? <time dateTime={row.at}>{new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(row.at))}</time> : labelFor(row.kind)}</span></button>;
-      return <div key={row.key}>{showDay ? <p className="os-writing-day">{isNote(kind) ? dayLabel(day) : day}</p> : null}{row.trash ? <div className="os-writing-history-row">{open}<button className="os-writing-trash-button" type="button" aria-label={`Move ${title} to Trash`} disabled={disabled} onClick={row.trash}><TrashIcon /></button></div> : open}</div>;
+      const entry = [...entries, ...trashed].find(item => item.id === row.key);
+      const title = row.kind === "note" ? row.content.title || "Untitled" : entry?.source?.question || row.content.body.slice(0, 100) || "Untitled";
+      const open = <button className="os-writing-entry" type="button" onClick={event => row.open(event.currentTarget)}><strong>{title}</strong><span>{noteNavigation ? <><time dateTime={row.at}>{new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(row.at))}</time>{!isNote(kind) && !entry ? " · Unsent" : null}</> : labelFor(row.kind)}</span></button>;
+      return <div key={row.key}>{showDay ? <p className="os-writing-day">{noteNavigation ? dayLabel(day) : day}</p> : null}{row.trash ? <div className="os-writing-history-row">{open}<button className="os-writing-trash-button" type="button" aria-label={`Move ${title} to Trash`} disabled={disabled} onClick={row.trash}><TrashIcon /></button></div> : open}</div>;
     }) : <p>{back.side === "trash" ? "Trash is empty." : "No saved writing yet."}</p>}
       {back.side === "history" ? read.view?.sources.filter(item => item.sourceSystem === "existing" && belongs(item)).map(item => <details key={item.id}><summary>{item.content.title || item.content.body.slice(0, 80) || "Untitled"}</summary><p>{item.content.body}</p><small>{item.attribution.day || "Date unknown"} · Older writing · Read only</small></details>) : null}
     </div>;
-    footer = isNote(kind) ? error || writing.error || notice ? <div className="os-writing-footer">{status}</div> : undefined : <div className="os-writing-footer">{status}{undo && trashed.find(entry => entry.id === undo) ? <Action text={"Undo"} click={() => lifecycle("restore", trashed.find(entry => entry.id === undo)!)} disabled={disabled} /> : null}{back.side === "history" ? <Action text={"Trash"} click={() => go("trash")} disabled={disabled} /> : null}</div>;
+    footer = noteNavigation ? error || writing.error || notice ? <div className="os-writing-footer">{status}</div> : undefined : <div className="os-writing-footer">{status}{undo && trashed.find(entry => entry.id === undo) ? <Action text={"Undo"} click={() => lifecycle("restore", trashed.find(entry => entry.id === undo)!)} disabled={disabled} /> : null}{back.side === "history" ? <Action text={"Trash"} click={() => go("trash")} disabled={disabled} /> : null}</div>;
   } else if (back.side === "drafts") {
     heading = "Drafts";
     body = <div className="os-info-page-main os-writing-list">{read.drafts.filter(belongs).map(draft => <button key={draft.id} type="button" onClick={() => { publish({ draft: { ...draft, content: { ...draft.content } }, version: draft.version, revision: 1, savedRevision: 0, conflict: false }); setFresh(true); go("editor"); }}><strong>{draft.content.title || draft.content.body || "Empty draft"}</strong><span>{draft.source?.question || labelFor(draft.kind)}</span></button>)}</div>;
@@ -391,7 +435,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     heading = "Review both copies";
     const latest = entries.find(entry => entry.id === session?.draft.entryId);
     body = <div className="os-info-page-main os-writing-review"><h3>{isNote(kind) ? "Your text" : "Your draft"}</h3><p>{shown.title}</p><p>{shown.body}</p><h3>Saved copy</h3><p>{latest?.content.title}</p><p>{latest?.content.body || "This entry is no longer active."}</p></div>;
-    footer = <div className="os-writing-footer">{status}{<Action text={isNote(kind) ? "Keep my text" : "Keep editing my draft"} click={reviewDraft} disabled={disabled} />}{!isNote(kind) ? <Action text={"Discard draft"} click={discard} disabled={disabled} /> : null}</div>;
+    footer = <div className="os-writing-footer">{status}{<Action text={isNote(kind) ? "Keep my text" : "Keep editing my draft"} click={reviewDraft} disabled={disabled} />}{!noteNavigation ? <Action text={"Discard draft"} click={discard} disabled={disabled} /> : null}</div>;
   } else if (!isNote(kind) && back.side === "version" && selectedVersion && selectedEntry) {
     heading = `Version ${selectedVersion.sequence}`;
     body = <div className="os-info-page-main os-writing-review"><p>{selectedVersion.savedAt}</p><h2>{selectedVersion.content.title}</h2><p>{selectedVersion.content.body || "Empty writing"}</p></div>;
@@ -403,10 +447,10 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     body = <div className="os-info-page-main os-writing-review"><p>{isNote(kind) ? "This removes this note from this device. You cannot undo this." : "This removes this saved entry, its versions, and its drafts from this device. You cannot undo this."}</p></div>;
     footer = <div className="os-writing-footer">{status}{selectedEntry ? <Action text={"Delete forever"} click={() => lifecycle("delete", selectedEntry)} disabled={disabled} danger={true} /> : null}{<Action text={"Cancel"} click={() => go("trash-detail")} disabled={disabled} />}</div>;
   } else {
-    heading = isNote(kind) ? "" : back.side === "trash-detail" ? "In Trash" : "Saved writing";
-    if (isNote(kind) && selectedEntry) {
-      body = <><div className="os-info-page-main os-writing-review"><h2>{selectedEntry.content.title || "Untitled"}</h2></div><div className="os-info-page-sub os-writing-review"><p>{selectedEntry.content.body}</p></div></>;
-      footer = <div className="os-writing-footer">{status}{back.side === "trash-detail" ? <><p className="os-writing-trash-state">In Trash</p><CreativeButton type="button" disabled={disabled} onClick={() => lifecycle("restore", selectedEntry)} styleId="default">Restore</CreativeButton><Action text="Delete forever" click={() => go("delete")} disabled={disabled} /></> : <Action text="Edit" click={() => editEntry(selectedEntry)} disabled={disabled} />}</div>;
+    heading = noteNavigation ? "" : back.side === "trash-detail" ? "In Trash" : "Saved writing";
+    if (noteNavigation && selectedEntry) {
+      body = <><div className="os-info-page-main os-writing-review"><h2>{selectedEntry.source?.question || selectedEntry.content.title || (isNote(kind) ? "Untitled" : "Thoughts")}</h2></div><div className="os-info-page-sub os-writing-review"><p>{selectedEntry.content.body}</p></div></>;
+      footer = <div className={`os-writing-footer${back.side === "trash-detail" ? " is-trash-detail" : ""}`}>{status}{back.side === "trash-detail" ? <><CreativeButton type="button" disabled={disabled} onClick={() => lifecycle("restore", selectedEntry)} styleId="default">Restore</CreativeButton><Action text="Delete forever" click={() => go("delete")} disabled={disabled} /></> : <Action text="Edit" click={() => editEntry(selectedEntry)} disabled={disabled} />}</div>;
     } else {
     body = <div className="os-info-page-main os-writing-review">{selectedEntry ? <><small>{selectedEntry.attribution.day} · {labelFor(selectedEntry.kind)}</small>{selectedEntry.source?.question ? <h2>{selectedEntry.source.question}</h2> : null}<h2>{selectedEntry.content.title}</h2><p>{selectedEntry.content.body || "Empty writing"}</p>{selectedEntry.source?.editionId ? <small>Reading: {selectedEntry.source.editionId}</small> : null}</> : <p>This entry is no longer here.</p>}</div>;
     footer = <div className="os-writing-footer">{status}{selectedEntry ? back.side === "trash-detail" ? <>{<Action text={"Restore"} click={() => lifecycle("restore", selectedEntry)} disabled={disabled} />}{<Action text={"Delete forever"} click={() => go("delete")} disabled={disabled} danger={true} />}</> : <>{<Action text={"Edit"} click={() => editEntry(selectedEntry)} disabled={disabled} />}{<Action text={"Versions"} click={() => { setVersions(writing.versions(selectedEntry.id)); go("versions"); }} disabled={disabled} />}{<Action text={"Move to Trash"} click={() => lifecycle("trash", selectedEntry)} disabled={disabled} />}</> : null}</div>;
@@ -414,12 +458,13 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   }
   const headerLeft = back.side === "editor" ? <button className="os-card-label" type="button" aria-label={isNote(kind) ? "Show a Line" : kind === "deep-thought" ? "Show Thoughts" : "Show Deep Thoughts"} disabled={disabled || !onLabel} onClick={event => onLabel?.(event.currentTarget)}>{labelFor(kind)}</button> : <button className="os-card-label" type="button" onClick={event => go(back.side === "version" ? "versions" : back.side === "versions" ? "detail" : back.side === "trash-detail" || back.side === "delete" ? "trash" : "editor", event.currentTarget)}>Back</button>;
   const menuButton = <div className="os-writing-menu"><button className="os-card-label" type="button" aria-label="Writing options" aria-expanded={menu} onClick={() => setMenu(!menu)}>More</button>{menu ? <div className="os-writing-menu-items">{<Action text={"History"} click={() => go("history")} disabled={disabled} />}{<Action text={"Drafts"} click={() => go("drafts")} disabled={disabled} />}{<Action text={"Trash"} click={() => go("trash")} disabled={disabled} />}{dirty ? <>{<Action text={"Clear"} click={() => { change("title", ""); change("body", ""); onClear?.(); setMenu(false); }} disabled={disabled} />}{<Action text={"Discard draft"} click={discard} disabled={disabled} />}</> : null}</div> : null}</div>;
-  if (isNote(kind)) {
+  if (kind === "deep-thought" && back.side === "quote" && quote) return <QuotePage className={back.className} quote={quote} feedback={quoteFeedback} onReact={reaction => { onQuoteReaction?.(quote, reaction); closeQuote(); }} />;
+  if (noteNavigation) {
     const returnPage: Page = back.side === "delete" ? "trash-detail" : back.side === "trash-detail" ? "trash" : back.side === "trash" ? "history" : "editor";
-    const returnLabel = returnPage === "trash" || returnPage === "trash-detail" ? "Trash" : returnPage === "history" ? "History" : "Note";
-    const left = back.side === "editor" ? <button className="os-card-label" type="button" data-os-note-header-text aria-label="Show a Line" disabled={!onLabel || !ready} onClick={event => { const element = event.currentTarget; void save().then(accepted => { if (accepted && mounted.current) onLabel?.(element); }); }}>Note</button> : <button className="os-card-label os-writing-back" type="button" onClick={event => go(returnPage, event.currentTarget)}><span aria-hidden="true">‹</span> {returnLabel}</button>;
-    const right = back.side === "history" ? <button className="os-card-label" type="button" onClick={event => go("trash", event.currentTarget)} disabled={disabled}>Trash</button> : back.side === "editor" ? <button className="os-card-label" type="button" data-os-note-header-text onClick={event => go("history", event.currentTarget)} disabled={!ready}>History</button> : undefined;
-    return <InfoPage className={`os-writing-page os-note-page ${back.className}`} header={left} headerAction={right} heading={heading ? <h2 className="os-writing-heading">{heading}</h2> : undefined} footer={footer}><div className="os-note-content" ref={noteContent}>{body}</div></InfoPage>;
+    const returnLabel = returnPage === "trash" || returnPage === "trash-detail" ? "Trash" : returnPage === "history" ? "History" : labelFor(kind);
+    const left = back.side === "editor" ? <button className="os-card-label" type="button" data-os-note-header-text aria-label={isNote(kind) ? "Show a Line" : "Show a Quote"} disabled={!ready || openingQuote || (isNote(kind) ? !onLabel : !nextQuote)} onClick={event => { const element = event.currentTarget; if (!isNote(kind)) { void openQuote(element); return; } void save().then(accepted => { if (accepted && mounted.current) onLabel?.(element); }); }}>{labelFor(kind)}</button> : <button className="os-card-label os-writing-back" type="button" onClick={event => go(returnPage, event.currentTarget)}><span aria-hidden="true">‹</span> {returnLabel}</button>;
+    const right = back.side === "history" ? <button className="os-card-label" type="button" onClick={event => go("trash", event.currentTarget)} disabled={disabled}>Trash</button> : back.side === "editor" ? <button className="os-card-label" type="button" data-os-note-header-text onClick={event => go("history", event.currentTarget)} disabled={!ready || openingQuote}>History</button> : undefined;
+    return <InfoPage className={`os-writing-page os-writing-bounded ${isNote(kind) ? "os-note-page" : "os-thoughts-page os-deep-thoughts-page"} ${back.className}`} header={left} headerAction={right} heading={heading ? <h2 className="os-writing-heading">{heading}</h2> : undefined} footer={footer}><div className="os-note-content" ref={noteContent}>{body}</div></InfoPage>;
   }
   if (embedded) return <section className="athena-reading-reply-form os-writing-embedded" aria-label="Reading answer"><div className="os-writing-embedded-header">{headerLeft}{menuButton}</div>{heading ? <h3>{heading}</h3> : null}{body}{footer}</section>;
   return <InfoPage className={`os-writing-page ${isNote(kind) ? "os-note-page" : "os-thoughts-page"} ${back.className}`} header={headerLeft} headerAction={menuButton} heading={heading || undefined} footer={footer}>{body}</InfoPage>;

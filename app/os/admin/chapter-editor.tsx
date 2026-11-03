@@ -35,13 +35,14 @@ import {
   type ChapterDraft,
 } from "./chapter-authoring.js";
 import { readChapterDrafts, removeChapterDraft, writeChapterDraft } from "./chapter-draft-store";
+import { QuoteEditor } from "./quote-editor";
 import { CHAPTER_COMPLETION_MODES } from "../chapters/chapter-capabilities.js";
 import { CHAPTER_APPS, CHAPTER_KINDS } from "../chapters/chapter-scheduler.js";
 
 /** Where a chapter that names no App collects, so nothing is unreachable. */
 const UNASSIGNED_APP = "unassigned";
 
-type AdminModule = "chapters" | "buttons";
+type AdminModule = "chapters" | "buttons" | "quotes";
 type ChapterView = "library" | "workshop";
 type LibraryKind = "draft" | "starter" | "published";
 type LibraryItem = { draft: ChapterDraft; kind: LibraryKind };
@@ -62,7 +63,7 @@ const CHAPTER_THEMES: { label: string; value: ChapterTheme; color: string }[] = 
 ];
 const BUTTON_STUDIO_STORAGE_KEY = "circle-os-button-studio-draft-v1";
 const APP_TARGETS: { label: string; value: AppTarget }[] = [
-  { label: "Thoughts", value: "thoughts" },
+  { label: "Deep Thoughts", value: "thoughts" },
   { label: "Habit", value: "habit" },
   { label: "Log", value: "log" },
   { label: "Vision", value: "vision" },
@@ -540,13 +541,15 @@ export function ChapterEditor() {
 
   return (
     <main className="os-admin">
-      <header className="os-admin-head"><div><p>Admin mode</p><h1>{module === "chapters" ? "Chapter Workshop" : "Button Studio"}</h1></div><span>{module === "chapters" ? saveState : "Safe preview"}</span></header>
+      <header className="os-admin-head"><div><p>Admin mode</p><h1>{module === "chapters" ? "Chapter Workshop" : module === "quotes" ? "Quotes" : "Button Studio"}</h1></div><span>{module === "chapters" ? saveState : module === "quotes" ? "Shared library" : "Safe preview"}</span></header>
       <div className="os-admin-modules" role="tablist" aria-label="Admin tools">
         <button aria-selected={module === "chapters"} role="tab" type="button" onClick={() => setModule("chapters")}>Chapters</button>
         <button aria-selected={module === "buttons"} role="tab" type="button" onClick={() => setModule("buttons")}>Button Studio</button>
+        <button aria-selected={module === "quotes"} role="tab" type="button" onClick={() => setModule("quotes")}>Quotes</button>
       </div>
 
       {module === "buttons" ? <ButtonStudio /> : null}
+      {module === "quotes" ? <QuoteEditor /> : null}
 
       {module === "chapters" && view === "library" ? (
         <section className="os-admin-library" aria-label="Chapter library">

@@ -13,6 +13,8 @@ import {AppRouterContext} from "next/dist/shared/lib/app-router-context.shared-r
 import {PathnameContext} from "next/dist/shared/lib/hooks-client-context.shared-runtime.js";
 import {CircleStateProvider,OSFrame,TodayExperience,useCircleState} from "/app/os/circle-os-shell.tsx";
 import Mirror from "/app/os/mirror/page.tsx";
+import {ChapterEditor} from "/app/os/admin/chapter-editor.tsx";
+import {ChapterPlayer} from "/app/os/chapters/chapter-player.tsx";
 import * as scopes from "/app/os/account-scope.js";
 import * as circle from "/app/os/circle-os-model.js";
 import * as circleStore from "/app/os/circle-os-store.ts";
@@ -33,9 +35,13 @@ function fixture(){let s=circle.ensureDay(circle.createEmptyState(),circle.getDa
  if(c.id==="day-open"){const key=dayOpenRunId(c,circle.getDateKey());s.chapters.runs[key]={...s.chapters.runs[id],runId:key};}}
  return s;}
 function Probe(){const c=useCircleState(),w=useWriting();window.circle=c;window.writing=w;return null;}
+function TypeChapterFixture(){const config=window.typeChapter;const original=publishedChapters.find(c=>c.id===config.id&&c.version===config.version);
+ const [definition,setDefinition]=useState(()=>({...original,pages:original.pages.map(p=>p.type===config.type?{...p,body:"Synthetic supporting text."}:p)}));const target=definition.pages.find(p=>p.type===config.type);
+ const [run,setRun]=useState(()=>({...createChapterRun(definition),currentPageId:target.id,furthestPageId:target.id}));
+ return React.createElement(ChapterPlayer,{definition,run,label:"Typography fixture",onRunChange:setRun,previewMode:config.edit,onEditPage:config.edit?(id,field,value)=>setDefinition(d=>({...d,pages:d.pages.map(p=>p.id===id?{...p,[field]:value}:p)})):undefined});}
 function Root(){const [path,setPath]=useState("/os");window.goto=setPath;const router={push:setPath,replace:setPath,prefetch:()=>Promise.resolve(),refresh(){},back(){setPath("/os");},forward(){}};
  return React.createElement(AppRouterContext.Provider,{value:router},React.createElement(PathnameContext.Provider,{value:path},
- React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(OSFrame,null,path==="/os/mirror"?React.createElement(Mirror):React.createElement(TodayExperience)))));}
+ React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(OSFrame,null,path==="/os/type-chapter"?React.createElement(TypeChapterFixture):path==="/os/mirror"?React.createElement(Mirror):path==="/os/admin"?React.createElement(ChapterEditor):React.createElement(TodayExperience)))));}
 const root=createRoot(document.getElementById("root"));
 window.api={...scopes,...circle,...circleStore,...writingStore,...writingModel,fixture,
  async init(account=true){if(account)scopes.activateAccountScope("synthetic-writer-a");await circleStore.saveCircleState(scopes.getAccountScope(),fixture());sessionStorage.setItem("writing-fixture-ready","yes");root.render(React.createElement(Root));},
@@ -62,6 +68,7 @@ async function ready(page){await expect(page.locator(".os-route-stage")).toHaveA
 async function isolated(width,work,{account=true,reducedMotion="reduce",height=844}={}){
   const context=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,timezoneId:"Asia/Bangkok",reducedMotion});
   const errors=[],external=[];context.on("page",page=>page.on("pageerror",cause=>errors.push(cause.message)));
+  await context.addInitScript(()=>{window.resizeNotifications=0;window.addEventListener("error",event=>{if(event.message.includes("ResizeObserver"))window.resizeNotifications++;});});
   await context.route("**/*",route=>{if(new URL(route.request().url()).origin===baseURL)return route.continue();external.push(route.request().url());return route.abort();});
   try{const page=await context.newPage();page.setDefaultTimeout(30_000);await open(page);await page.evaluate(account=>window.api.init(account),account);await ready(page);await work(page,context);assert.deepEqual(errors,[],"no uncaught errors");assert.deepEqual(external,[],"no external backend/model traffic");if(account)assert.deepEqual(await page.evaluate(()=>window.backendCalls),[],"account writing never calls the legacy transport");}
   finally{await context.close();}
@@ -76,11 +83,127 @@ test("baseline legacy placeholder report is reproducible without touching owner 
 },{account:false}));
 
 const notePage=page=>page.locator(".os-writing-page.os-note-page");
-async function options(box,name){if(name==="History"&&await box.getAttribute("class").then(value=>value.includes("os-note-page"))){await box.getByRole("button",{name:"History",exact:true}).click();return;}await box.getByRole("button",{name:"Writing options",exact:true}).click();await box.getByRole("button",{name,exact:true}).click();}
+async function options(box,name){if(name==="History"&&await box.getAttribute("class").then(value=>value.includes("os-writing-bounded"))){await box.getByRole("button",{name:"History",exact:true}).click();return;}await box.getByRole("button",{name:"Writing options",exact:true}).click();await box.getByRole("button",{name,exact:true}).click();}
 async function saved(page,count=1){await expect.poll(()=>page.evaluate(async()=>Object.keys((await window.api.load()).entries).length)).toBe(count);}
 async function accepted(page,body){await expect.poll(()=>page.evaluate(async body=>Object.values((await window.api.load()).entries).some(entry=>entry.versions.at(-1).content.body===body),body)).toBe(true);await expect.poll(()=>page.evaluate(()=>window.writing.status)).toBe("ready");}
 const row=(box,title)=>box.locator(".os-writing-entry").filter({hasText:title});
 const trashRow=(box,title)=>box.getByRole("button",{name:`Move ${title} to Trash`,exact:true});
+
+async function checkTrashSpacing(box){
+  await expect(box.getByText("In Trash",{exact:true})).toHaveCount(0);
+  const restore=box.getByRole("button",{name:"Restore",exact:true}),remove=box.getByRole("button",{name:"Delete forever",exact:true});
+  await expect(restore).toBeVisible();await expect(remove).toBeVisible();
+  await expect(box.locator(".os-writing-footer")).toHaveCSS("gap","4px");
+  await expect(box.locator(".os-page-footer")).toHaveCSS("padding-top","25px");
+  const a=await restore.boundingBox(),b=await remove.boundingBox();
+  const shell=await restore.evaluate(el=>el.closest(".os-creative-button-shell").getBoundingClientRect().toJSON());
+  assert.ok(a.height>=44&&b.height>=44,"Trash actions retain touch targets");
+  assert.ok(Math.abs(b.y-shell.y-shell.height-4)<=1,"rendered Trash layout gap is 4px");
+}
+
+const syntheticQuote=n=>({id:`00000000-0000-4000-8000-${String(n).padStart(12,"0")}`,text:`Synthetic quote ${n}`,author:"Synthetic author"});
+async function quoteBackend(context) {
+  const state={pool:[syntheticQuote(1),syntheticQuote(2),syntheticQuote(3)],fail:false};
+  await context.route("**/os/quotes",route=>state.fail?route.abort():route.fulfill({json:state.pool}));
+  await context.route("**/os/admin/quotes",async route=>{
+    if(state.fail)return route.fulfill({status:503,json:{error:"Synthetic database failure."}});
+    const request=route.request();if(request.method()==="GET")return route.fulfill({json:state.pool});
+    const value=request.postDataJSON();
+    if(request.method()==="POST"){const added={id:crypto.randomUUID(),...value};state.pool.push(added);return route.fulfill({json:[added]});}
+    const removed=state.pool.filter(item=>item.id===value.id);state.pool=state.pool.filter(item=>item.id!==value.id);return route.fulfill({json:removed});
+  });
+  return state;
+}
+async function swipeBoundary(page,deltaX){await page.locator(".os-checkin-session").evaluate((el,deltaX)=>el.dispatchEvent(new WheelEvent("wheel",{deltaX,deltaY:0,bubbles:true,cancelable:true})),deltaX);}
+
+test("Quote visits rotate, preserve the question/draft, survive reload/offline, and honor an empty catalog",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
+  const backend=await quoteBackend(context),box=await thoughts(page),question=await box.locator(".os-deep-thought-question").textContent();
+  const input=box.getByRole("textbox",{name:"Answer the deep thought",exact:true});await input.fill("An unfinished synthetic answer.");
+  for(const n of [1,2,3,1]){
+    await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(page.locator(".os-quote-page")).toContainText(`Synthetic quote ${n}`);
+    await swipeBoundary(page,-500);await expect(input).toHaveValue("An unfinished synthetic answer.");await expect(box.locator(".os-deep-thought-question")).toHaveText(question);
+  }
+  assert.equal(Object.keys((await page.evaluate(()=>window.api.load())).entries).length,0,"viewing quotes never submits a draft");
+  await options(box,"History");await expect(row(box,"An unfinished synthetic answer.")).toContainText("Unsent");await box.getByRole("button",{name:"Deep Thoughts",exact:true}).click();
+  await page.reload();await ready(page);await thoughts(page);backend.fail=true;
+  await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(page.locator(".os-quote-page")).toContainText("Synthetic quote 2");
+  await swipeBoundary(page,500);await expect(page.getByRole("button",{name:"Loved this",exact:true})).toBeVisible();await page.getByRole("button",{name:"Loved this",exact:true}).click();
+  await expect(input).toHaveValue("An unfinished synthetic answer.");
+  backend.fail=false;backend.pool=[];await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(box.getByRole("alert")).toContainText("No quotes are available yet");
+  backend.fail=true;await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(page.locator(".os-quote-page")).toHaveCount(0);await expect(input).toHaveValue("An unfinished synthetic answer.");
+  await page.locator(".os-checkin-session").screenshot({path:"outputs/deep-thoughts-quote-return-390.png"});
+}));
+
+for(const [width,height]of[[360,667],[390,844]])test(`Deep Thoughts History/Trash matches Note at ${width}x${height}`,{timeout:90_000},async()=>isolated(width,async(page)=>{
+  const box=await thoughts(page),question=await box.locator(".os-deep-thought-question").textContent();
+  await box.getByRole("textbox",{name:"Answer the deep thought",exact:true}).fill("A saved synthetic answer for Trash.");await box.getByRole("button",{name:"Send",exact:true}).click();await saved(page);
+  await options(box,"History");await expect(box.getByText("Today",{exact:true})).toBeVisible();await expect(box.getByRole("button",{name:/Undo|Versions|Writing options/})).toHaveCount(0);
+  const bounds=await trashRow(box,question).boundingBox();assert.ok(bounds.width>=44&&bounds.height>=44);
+  await trashRow(box,question).click();await expect(row(box,question)).toHaveCount(0);await expect(box).not.toContainText("Moved to Trash");
+  await box.getByRole("button",{name:"Trash",exact:true}).click();await row(box,question).click();await expect(box.getByRole("heading",{name:question,exact:true})).toBeVisible();await expect(box).toContainText("A saved synthetic answer for Trash.");
+  await box.getByRole("button",{name:"Restore",exact:true}).click();await row(box,question).click();await expect(box.getByRole("textbox",{name:"Answer the deep thought",exact:true})).toHaveValue("A saved synthetic answer for Trash.");
+  await options(box,"History");await trashRow(box,question).click();await box.getByRole("button",{name:"Trash",exact:true}).click();await row(box,question).click();await box.getByRole("button",{name:"Delete forever",exact:true}).click();await box.getByRole("button",{name:"Delete forever",exact:true}).click();
+  const ledger=await page.evaluate(()=>window.api.load());assert.equal(Object.keys(ledger.entries).length,0);assert.equal(Object.values(ledger.tombstones)[0].usage.question,question);
+  await box.getByRole("button",{name:"History",exact:true}).click();await box.getByRole("button",{name:"Deep Thoughts",exact:true}).click();await expect(box.getByText("This question was answered.",{exact:true})).toBeVisible();await expect(box.getByRole("button",{name:"Send",exact:true})).toHaveCount(0);
+  await box.getByRole("button",{name:"Next question",exact:true}).click();await expect(box.locator(".os-deep-thought-question")).not.toHaveText(question);
+  await page.evaluate(async()=>{const a=window.api,scope=a.getAccountScope(),owner="account:"+scope.accountId;
+    for(let i=0;i<18;i++){const at=new Date(Date.now()-i*60_000-60_000).toISOString(),draft={id:crypto.randomUUID(),entryId:crypto.randomUUID(),kind:"deep-thought",baseVersionId:null,baseGeneration:0,startedAt:at,attribution:a.writingAttribution(at,"Asia/Bangkok"),content:{title:"",body:"Synthetic saved answer "+i,tags:[]},source:{questionId:"synthetic-"+i,question:"Synthetic saved question "+i,source:"local"}};const commit=v=>a.commitWritingOperation(scope,{owner,operationId:crypto.randomUUID(),at,...v});await commit({type:"write-draft",draft,expectedDraftVersion:0});await commit({type:"save",draft:{...draft,version:1}});}
+  });
+  await options(box,"History");const frame=page.locator(".os-checkin-session");await expect(box).not.toHaveClass(/\bos-app-flip\b/);await expect.poll(async()=>Math.abs((await frame.boundingBox()).height-Math.min(480,height*.6))).toBeLessThan(1);
+  const metrics=await box.evaluate(el=>{const body=el.querySelector(".os-page-body");return{height:el.closest(".os-swipe-session").getBoundingClientRect().height,overflow:body.scrollHeight-body.clientHeight,scrollers:[...el.querySelectorAll("*")].filter(e=>["auto","scroll"].includes(getComputedStyle(e).overflowY)&&e.scrollHeight>e.clientHeight+1).length};});
+  assert.ok(Math.abs(metrics.height-Math.min(480,height*.6))<1,JSON.stringify(metrics));assert.ok(metrics.overflow>100);assert.equal(metrics.scrollers,1);
+  await frame.screenshot({path:`outputs/deep-thoughts-history-${width}.png`});
+},{height}));
+
+test("Quotes Admin adds/removes shared quotes and preserves failed input",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
+  const backend=await quoteBackend(context);await page.evaluate(()=>window.goto("/os/admin"));await ready(page);await page.waitForTimeout(900);const existingResize=await page.evaluate(()=>window.resizeNotifications);await page.getByRole("tab",{name:"Quotes",exact:true}).click();
+  const editor=page.getByRole("region",{name:"Quote library",exact:true});await expect(editor).toContainText("Synthetic quote 1");
+  for(const action of [editor.getByRole("button",{name:"Add quote",exact:true}),editor.getByRole("button",{name:"Remove quote",exact:true}).first()])assert.ok((await action.boundingBox()).height>=44);
+  await editor.getByLabel("Quote",{exact:true}).fill("A newly authored synthetic quote.");await editor.getByLabel("Author (optional)",{exact:true}).fill("Synthetic writer");backend.fail=true;
+  await editor.getByRole("button",{name:"Add quote",exact:true}).click();await expect(editor.getByRole("alert")).toContainText("Synthetic database failure");await expect(editor.getByRole("textbox",{name:"Quote",exact:true})).toHaveValue("A newly authored synthetic quote.");
+  backend.fail=false;await editor.getByRole("button",{name:"Add quote",exact:true}).click();await expect(editor.locator("blockquote").filter({hasText:"A newly authored synthetic quote."})).toBeVisible();
+  const article=editor.locator("article").filter({hasText:"A newly authored synthetic quote."});await article.getByRole("button",{name:"Remove quote",exact:true}).click();await article.getByRole("button",{name:"Confirm removal",exact:true}).click();await expect(article).toHaveCount(0);
+  await page.locator(".os-admin").screenshot({path:"outputs/quote-admin-390.png"});
+  assert.equal(await page.evaluate(()=>window.resizeNotifications),existingResize,"Quote controls add no resize notifications after the existing Admin navigation settles");console.log("Existing Admin navigation resize notifications",existingResize);
+}));
+
+test("Note Line keeps its existing first-swipe reactions and second-swipe exit",{timeout:90_000},async()=>isolated(390,async page=>{
+  const note=notePage(page);await note.getByRole("button",{name:"Show a Line",exact:true}).click();const line=page.locator(".os-line-page");await expect(line).toBeVisible();await expect(page.getByRole("button",{name:"Loved this",exact:true})).toHaveCount(0);
+  await swipeBoundary(page,500);await expect(page.getByRole("button",{name:"Loved this",exact:true})).toBeVisible();await expect(line).toBeVisible();await swipeBoundary(page,500);await expect(note.getByRole("button",{name:"Show a Line",exact:true})).toBeVisible();
+}));
+
+test("legacy Deep Thoughts keeps the answer and uses the quote back without migrating writing",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
+  await quoteBackend(context);await swipeBoundary(page,500);const box=page.locator(".os-thoughts-page"),question=await box.locator(".os-deep-thought-question").textContent();
+  const input=box.getByRole("textbox",{name:"Answer the deep thought",exact:true});await input.fill("A synthetic legacy answer.");await box.getByRole("button",{name:"Send",exact:true}).click();await expect(box.getByRole("button",{name:"Next question",exact:true})).toBeVisible();await expect(input).toHaveValue("A synthetic legacy answer.");
+  await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(page.locator(".os-quote-page")).toContainText("Synthetic quote 1");await swipeBoundary(page,-500);await expect(input).toHaveValue("A synthetic legacy answer.");await expect(box.locator(".os-deep-thought-question")).toHaveText(question);
+  await box.getByRole("button",{name:"Next question",exact:true}).click();await expect(input).toHaveValue("");await expect(box.locator(".os-deep-thought-question")).not.toHaveText(question);
+},{account:false}));
+
+test("older untitled Thoughts remain correctable without inventing a question",{timeout:90_000},async()=>isolated(360,async page=>{
+  await page.evaluate(async()=>{const a=window.api,scope=a.getAccountScope(),owner="account:"+scope.accountId,at=new Date().toISOString(),draft={id:crypto.randomUUID(),entryId:crypto.randomUUID(),kind:"thought",baseVersionId:null,baseGeneration:0,startedAt:at,attribution:a.writingAttribution(at,"Asia/Bangkok"),content:{title:"",body:"An older synthetic untitled Thought.",tags:[]},source:null};const commit=v=>a.commitWritingOperation(scope,{owner,operationId:crypto.randomUUID(),at,...v});await commit({type:"write-draft",draft,expectedDraftVersion:0});await commit({type:"save",draft:{...draft,version:1}});});
+  const box=await thoughts(page);await options(box,"History");await row(box,"An older synthetic untitled Thought.").click();
+  await expect(box.locator(".os-deep-thought-question")).toHaveCount(0);const input=box.getByRole("textbox",{name:"Write a thought",exact:true});await input.fill("A corrected older Thought.");await box.getByRole("button",{name:"Save changes",exact:true}).click();await accepted(page,"A corrected older Thought.");
+  const entries=Object.values((await page.evaluate(()=>window.api.load())).entries);assert.equal(entries.length,1);assert.equal(entries[0].kind,"thought");assert.equal(entries[0].source,null);assert.equal(entries[0].versions[0].content.body,"An older synthetic untitled Thought.");
+}));
+
+test("Deep Thought save failures and in-flight typing keep recoverable writing",{timeout:90_000},async()=>isolated(390,async page=>{
+  const box=await thoughts(page),input=box.getByRole("textbox",{name:"Answer the deep thought",exact:true});await input.fill("Initial synthetic answer.");
+  await expect.poll(()=>page.evaluate(()=>window.writing.status)).toBe("ready");
+  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&Object.keys(value.entries).length){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
+  await box.getByRole("button",{name:"Send",exact:true}).click();await expect(box.getByRole("alert")).toBeVisible();await expect(input).toHaveValue("Initial synthetic answer.");await expect(box.getByRole("button",{name:"Next question",exact:true})).toHaveCount(0);
+  await page.reload();await ready(page);await thoughts(page);await expect(input).toHaveValue("Initial synthetic answer.");
+  await page.evaluate(()=>{const digest=crypto.subtle.digest.bind(crypto.subtle);crypto.subtle.digest=async(...args)=>{if(new TextDecoder().decode(args[1]).includes('"type":"save"')){crypto.subtle.digest=digest;await new Promise(resolve=>window.releaseSend=resolve);}return digest(...args);};});
+  await box.getByRole("button",{name:"Send",exact:true}).click();await page.waitForFunction(()=>Boolean(window.releaseSend));await input.fill("Newer synthetic answer while saving.");await page.evaluate(()=>window.releaseSend());await saved(page);
+  await expect(input).toHaveValue("Newer synthetic answer while saving.");await box.getByRole("button",{name:"Save changes",exact:true}).click();await accepted(page,"Newer synthetic answer while saving.");
+  const entry=Object.values((await page.evaluate(()=>window.api.load())).entries)[0];assert.equal(entry.versions[0].content.body,"Initial synthetic answer.");assert.equal(entry.versions.at(-1).content.body,"Newer synthetic answer while saving.");
+}));
+
+test("normal-motion Quote flips keep the frame filled and return to the same answer",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
+  await quoteBackend(context);const box=await thoughts(page),input=box.getByRole("textbox",{name:"Answer the deep thought",exact:true});await input.fill("A synthetic answer held through a flip.");await box.getByRole("button",{name:"Show a Quote",exact:true}).click();
+  const quote=page.locator(".os-quote-page");await expect(quote).toBeVisible();await expect(quote).not.toHaveClass(/\bos-app-flip\b/);
+  const rect=await page.locator(".os-checkin-session").boundingBox();assert.ok(rect.height>=346);await swipeBoundary(page,-500);await expect(input).toHaveValue("A synthetic answer held through a flip.");await expect(box).not.toHaveClass(/\bos-app-flip\b/);
+  await page.locator(".os-checkin-session").screenshot({path:"outputs/deep-thoughts-motion-390.png"});
+},{reducedMotion:"no-preference"}));
 test("Note autosaves silently offline and restores only through the Trash page",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
   let box=notePage(page);
   const title=box.getByRole("textbox",{name:"Note title",exact:true});
@@ -115,20 +238,38 @@ async function thoughts(page){
   const session=page.locator(".os-checkin-session");
   await session.scrollIntoViewIfNeeded();
   await session.evaluate(element=>{element.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true}));});
-  const box=page.locator(".os-writing-page.os-thoughts-page");await expect(box.getByRole("button",{name:"Show Deep Thoughts",exact:true})).toBeVisible();return box;
+  const box=page.locator(".os-writing-page.os-thoughts-page");await expect(box.getByRole("button",{name:"Show a Quote",exact:true})).toBeVisible();await expect(box.locator(".os-deep-thought-question")).toBeVisible();return box;
 }
-test("Thought sends only after acceptance; Deep answer retains its original question",{timeout:90_000},async()=>isolated(360,async page=>{
+test("Deep Thoughts opens directly, holds its saved answer, and advances only on Next question",{timeout:90_000},async()=>isolated(360,async page=>{
   const box=await thoughts(page);
-  await box.getByRole("textbox",{name:"Write a thought",exact:true}).fill("Synthetic ordinary thought.");
-  await expect(box.getByRole("button",{name:"Send",exact:true})).toBeEnabled();await box.getByRole("button",{name:"Send",exact:true}).click();await saved(page);
-  await expect(box.getByRole("textbox",{name:"Write a thought",exact:true})).toHaveValue("");
-  await box.getByRole("button",{name:"Show Deep Thoughts",exact:true}).click();
   const question=await box.locator(".os-deep-thought-question").textContent();
   await box.getByRole("textbox",{name:"Answer the deep thought",exact:true}).fill("Synthetic answer with enough words to keep.");
-  await expect(box.getByRole("button",{name:"Send",exact:true})).toBeEnabled();await box.getByRole("button",{name:"Send",exact:true}).click();await saved(page,2);
+  await expect(box.getByRole("button",{name:"Send",exact:true})).toBeEnabled();await box.getByRole("button",{name:"Send",exact:true}).click();await saved(page);
   const ledger=await page.evaluate(()=>window.api.load());const deep=Object.values(ledger.entries).find(e=>e.kind==="deep-thought");assert.equal(deep.source.question,question);assert.ok(deep.source.questionId);
-  await expect(box.getByRole("button",{name:"Show Deep Thoughts",exact:true})).toBeVisible();
-  await options(box,"History");await box.getByRole("button",{name:/Synthetic answer with enough words to keep/}).click();await expect(box.getByRole("heading",{name:question,exact:true})).toBeVisible();
+  await expect(box.getByRole("textbox",{name:"Answer the deep thought",exact:true})).toHaveValue("Synthetic answer with enough words to keep.");
+  await expect(box.getByRole("button",{name:"Next question",exact:true})).toBeVisible();
+  await page.reload();await ready(page);await thoughts(page);await expect(box.getByRole("textbox",{name:"Answer the deep thought",exact:true})).toHaveValue("Synthetic answer with enough words to keep.");
+  await box.getByRole("button",{name:"Next question",exact:true}).click();await expect(box.locator(".os-deep-thought-question")).not.toHaveText(question);
+  await expect(box.getByRole("textbox",{name:"Answer the deep thought",exact:true})).toHaveValue("");
+  await options(box,"History");await row(box,question).click();await expect(box.getByRole("heading",{name:question,exact:true})).toBeVisible();
+  await box.getByRole("textbox",{name:"Answer the deep thought",exact:true}).fill("A corrected synthetic answer.");
+  await box.getByRole("button",{name:"Save changes",exact:true}).click();await accepted(page,"A corrected synthetic answer.");
+  assert.equal(Object.keys((await page.evaluate(()=>window.api.load())).entries).length,1);
+}));
+
+test("Deep Thoughts quietly recovers drafts and clearing an answer survives reload",{timeout:90_000},async()=>isolated(390,async page=>{
+  let box=await thoughts(page);
+  const quiet=async()=>{await expect(box.locator(".os-writing-footer")).not.toContainText(/Saving on this device|Saved on this device|Recovered draft|Draft discarded|\bSent\b/i);await expect(box.getByRole("button",{name:"Discard draft",exact:true})).toHaveCount(0);};
+  const input=()=>box.getByRole("textbox",{name:"Answer the deep thought",exact:true});
+  await input().fill("An unfinished synthetic answer.");
+  await expect.poll(()=>page.evaluate(async()=>Object.values((await window.api.load()).drafts).some(d=>d.status==="active"&&d.content.body==="An unfinished synthetic answer."))).toBe(true);
+  await quiet();await page.reload();await ready(page);box=await thoughts(page);
+  await expect(input()).toHaveValue("An unfinished synthetic answer.");await quiet();
+  await input().fill("");
+  await expect.poll(()=>page.evaluate(async()=>Object.values((await window.api.load()).drafts).filter(d=>d.status==="active").every(d=>d.content.body===""))).toBe(true);
+  await page.reload();await ready(page);box=await thoughts(page);await expect(input()).toHaveValue("");await quiet();
+  await input().fill("An answer deliberately sent.");await box.getByRole("button",{name:"Send",exact:true}).click();await accepted(page,"An answer deliberately sent.");
+  await expect(box.getByRole("button",{name:"Next question",exact:true})).toBeVisible();await quiet();
 }));
 
 test("failed local commit keeps open text and retry saves once",{timeout:90_000},async()=>isolated(390,async page=>{
@@ -157,6 +298,8 @@ test("real Reflect reading reply uses the shared ledger and edition source",{tim
   const session=page.locator(".athena-reader-session");
   for(let i=0;i<3;i++){await session.evaluate(element=>element.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await page.waitForTimeout(450);}
   const reply=page.locator(".os-writing-embedded");await expect(reply).toBeVisible();
+  await expect(reply.locator(".os-deep-thought-question")).toHaveCSS("font-size","29px");
+  await expect(reply.locator("textarea")).toHaveCSS("font-size","18px");
   await reply.getByRole("textbox",{name:"Reply to Athena: What would you like to notice today?",exact:true}).fill("Synthetic reading answer.");await expect(reply.getByRole("button",{name:"Send",exact:true})).toBeEnabled();await reply.getByRole("button",{name:"Send",exact:true}).click();await saved(page);
   const entry=Object.values((await page.evaluate(()=>window.api.load())).entries)[0];assert.equal(entry.kind,"reading-answer");assert.equal(entry.source.question,"What would you like to notice today?");assert.match(entry.source.editionId,/^edition-/);
 }));
@@ -167,6 +310,43 @@ test("account change closes autosave and recovers only the original account's te
   await page.evaluate(async()=>{const scope=window.api.activateAccountScope("synthetic-writer-b");await window.api.saveCircleState(scope,window.api.fixture());});
   await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-writer-b");await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toHaveValue("");assert.equal(Object.keys((await page.evaluate(()=>window.api.load())).drafts).length,0);
   await page.evaluate(()=>window.api.activateAccountScope("synthetic-writer-a"));await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-writer-a");await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toHaveValue("Only account A");
+}));
+
+for(const width of [360,390])test(`Day One v3 Routine task controls at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  // Keep Day One v3 complete, but remove the older setup completions and
+  // recovery markers that would hide the actual fresh-v3 regression.
+  await page.evaluate(()=>window.circle.updateState(state=>{
+    const runs=Object.fromEntries(Object.entries(state.chapters.runs).filter(([id])=>!id.includes("habit")));
+    return {...state,chapters:{...state.chapters,runs},habits:{...state.habits,definitions:{}}};
+  }));
+  const routine=page.locator(".os-habit-session");
+  const add=routine.getByRole("button",{name:"Add task",exact:true});
+  await expect(add).toBeVisible();
+  await add.click();
+  const task=routine.getByRole("textbox",{name:"Edit task: New Task",exact:true});
+  await task.fill("Synthetic task after v3");await routine.getByRole("textbox",{name:"Edit task: Synthetic task after v3",exact:true}).blur();
+  await routine.getByRole("button",{name:"New habit",exact:true}).click();
+  const habit=routine.getByRole("textbox",{name:"Edit habit: New Habit",exact:true});
+  await habit.fill("Synthetic habit after v3");await routine.getByRole("textbox",{name:"Edit habit: Synthetic habit after v3",exact:true}).blur();
+  const habitTick=routine.locator(".os-repeated-habit .os-row-tick-habit");
+  const taskTick=routine.getByRole("button",{name:"Complete task: Synthetic task after v3",exact:true});
+  for(const tick of [habitTick,taskTick]){
+    await expect(tick).toHaveCSS("width","30px");await expect(tick).toHaveCSS("height","30px");
+    const hit=await tick.locator(".os-creative-button-label").boundingBox();assert.ok(hit.width>=44&&hit.height>=44,"row tick touch area");
+  }
+  await habitTick.locator(".os-creative-button-label").click({position:{x:1,y:22}});await expect(habitTick).toHaveAttribute("aria-pressed","true");
+  const check=await habitTick.evaluate(el=>{const c=getComputedStyle(el,"::after");return {width:c.width,height:c.height};});assert.deepEqual(check,{width:"5px",height:"11px"});
+  await habitTick.click();await expect(habitTick).toHaveAttribute("aria-pressed","false");
+  await taskTick.click();
+  await expect.poll(()=>page.evaluate(()=>Object.values(window.circle.state.tasks.items).find(t=>t.text==="Synthetic task after v3")?.status)).toBe("completed");
+  await expect.poll(()=>page.evaluate(async()=>{const s=await window.api.loadCircleState(window.api.getAccountScope());return Object.values(s.tasks.items).some(t=>t.text==="Synthetic task after v3"&&t.status==="completed");})).toBe(true);
+  await page.reload();await ready(page);await expect(add).toBeVisible();
+  await expect(routine.getByRole("textbox",{name:"Edit habit: Synthetic habit after v3",exact:true})).toBeVisible();
+  assert.equal(await page.evaluate(()=>Object.values(window.circle.state.chapters.runs).some(r=>r.chapterId==="habit-building"&&r.status==="completed")),false,"no false setup completion");
+  await routine.getByRole("button",{name:"Routine",exact:true}).click();
+  await expect(add).toHaveCount(0);
+  const undo=routine.getByRole("button",{name:"Undo task: Synthetic task after v3",exact:true});await expect(undo).toBeVisible();await undo.click();
+  await expect.poll(()=>page.evaluate(()=>Object.values(window.circle.state.tasks.items).find(t=>t.text==="Synthetic task after v3")?.status)).toBe("open");
 }));
 
 for(const width of [360,390])test(`shared App Box geometry at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
@@ -181,13 +361,13 @@ for(const width of [360,390])test(`shared App Box geometry at ${width}px`,{timeo
   assert.ok(Math.abs(result.note.height-result.habit.height)<=1,"empty Habit shares default");
   assert.ok(Math.abs(result.note.height-result.protocol.height)<=1,"short Protocol shares default");
   for(const item of Object.values(result))assert.equal(item.scroll,false,"no inner scrolling");
-  for(const item of Object.values(result)){assert.equal(item.gap,80,"shared header gap");assert.ok(Math.abs(item.visibleGap-result.habit.visibleGap)<=1,"visible label gaps agree");}
+  for(const item of Object.values(result)){assert.equal(item.gap,48,"shared header gap");assert.ok(Math.abs(item.visibleGap-result.habit.visibleGap)<=1,"visible label gaps agree");}
   await page.locator(".os-checkin-session").evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:-500,deltaY:0,bubbles:true,cancelable:true})));await page.waitForTimeout(450);
   await notePage(page).getByRole("textbox",{name:"Note title",exact:true}).fill("A short Note");await notePage(page).getByRole("textbox",{name:"Write a note",exact:true}).fill("A short body.");
   assert.ok(Math.abs((await measure(".os-writing-page.os-note-page")).height-result.note.height)<=1,"short Note rests at default");
   if(width===390)await page.locator(".os-checkin-session").screenshot({path:"outputs/writing-ui-390.png"});
   await notePage(page).getByRole("textbox",{name:"Write a note",exact:true}).fill(Array(25).fill("A longer synthetic paragraph grows downward.").join("\n"));
-  const grown=await measure(".os-writing-page.os-note-page");assert.ok(grown.height>result.note.height);assert.ok(grown.height<=480);assert.equal(grown.scroll,false);assert.equal(grown.gap,80);
+  const grown=await measure(".os-writing-page.os-note-page");assert.ok(grown.height>result.note.height);assert.ok(grown.height<=480);assert.equal(grown.scroll,false);assert.equal(grown.gap,48);
   assert.equal(await notePage(page).locator(".os-page-body").evaluate(el=>el.scrollHeight>el.clientHeight+1),true,"long Note scrolls only its body");
 }));
 
@@ -202,13 +382,78 @@ test("new typing during delayed autosave is saved again without losing either ve
   await expect(box).not.toContainText(/Saving on this device|Saved on this device/);
 }));
 
-test("normal-motion Thoughts wait for durable acceptance before departure",{timeout:90_000},async()=>isolated(390,async page=>{
-  const box=await thoughts(page);const input=box.getByRole("textbox",{name:"Write a thought",exact:true});await input.fill("Synthetic thought waiting for acceptance.");await expect(box.getByRole("button",{name:"Send",exact:true})).toBeEnabled();
+test("normal-motion Deep Thoughts waits for durable acceptance and retains the answer",{timeout:90_000},async()=>isolated(390,async page=>{
+  const box=await thoughts(page);const input=box.getByRole("textbox",{name:"Answer the deep thought",exact:true});await input.fill("Synthetic thought waiting for acceptance.");await expect(box.getByRole("button",{name:"Send",exact:true})).toBeEnabled();
   await page.evaluate(()=>{const digest=crypto.subtle.digest.bind(crypto.subtle);crypto.subtle.digest=async(...args)=>{if(new TextDecoder().decode(args[1]).includes('"type":"save"')){crypto.subtle.digest=digest;await new Promise(resolve=>window.releaseSend=resolve);}return digest(...args);};});
   await box.getByRole("button",{name:"Send",exact:true}).click();await page.waitForFunction(()=>Boolean(window.releaseSend));await page.waitForTimeout(800);
+  await expect(box.locator(".os-writing-footer")).not.toContainText(/Saving on this device|Saved on this device|\bSent\b/);
   await expect(input).toHaveValue("Synthetic thought waiting for acceptance.");assert.equal(await box.locator(".is-departing").count(),0);assert.equal(Object.keys((await page.evaluate(()=>window.api.load())).entries).length,0);
-  await page.evaluate(()=>window.releaseSend());await saved(page);await expect(input).toHaveValue("");
+  await page.evaluate(()=>window.releaseSend());await saved(page);await expect(input).toHaveValue("Synthetic thought waiting for acceptance.");await expect(box.getByRole("button",{name:"Next question",exact:true})).toBeVisible();
+  await expect(box.locator(".os-writing-footer")).not.toContainText(/Saving on this device|Saved on this device|\bSent\b/);
 },{reducedMotion:"no-preference"}));
+
+for(const width of [360,390])test(`Page spacing across Today and Reflect at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  const measurements=[];
+  for(const route of ["/os","/os/mirror"]){
+    await page.evaluate(path=>window.goto(path),route);await ready(page);
+    await expect(page.locator(route==="/os"?".os-checkin-session":".vision-life-apps")).toBeVisible();
+    if(route==="/os/mirror")await expect(page.locator(".os-checkin-session")).toHaveCount(0);
+    const sessions=page.locator(".os-swipe-session:visible");
+    for(let s=0;s<await sessions.count();s++){
+      const session=sessions.nth(s),seen=new Set();
+      for(let i=0;i<12;i++){
+        const current=session.locator(".os-app-page.current");
+        const key=await current.innerText();if(seen.has(key))break;seen.add(key);
+        const metrics=await current.evaluate(el=>{
+          const layout=el.querySelector(".os-page-layout"),header=layout?.querySelector(".os-page-header-left"),label=header||el.querySelector(".os-card-label");
+          const heading=layout?.querySelector(".os-page-heading");
+          const main=layout?(heading?.getBoundingClientRect().height>0?heading:[...layout.querySelectorAll(".os-page-body > *")].find(e=>e.getBoundingClientRect().height>0)):el.querySelector("h2");
+          return label&&main?{label:label.textContent.trim(),gap:main.getBoundingClientRect().top-label.getBoundingClientRect().bottom,footer:layout?getComputedStyle(layout).getPropertyValue("--os-body-footer-gap").trim():null}:null;
+        });
+        if(metrics){measurements.push({route,...metrics});assert.ok(Math.abs(metrics.gap-48)<=1,JSON.stringify(metrics));if(metrics.footer)assert.equal(metrics.footer,"25px");}
+        await session.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await page.waitForTimeout(450);
+      }
+    }
+    if(route==="/os/mirror"){
+      const gap=await page.locator(".vision-suggestion-app").evaluate(el=>el.querySelector("h2").getBoundingClientRect().top-el.querySelector(".os-card-label").getBoundingClientRect().bottom);
+      measurements.push({route,label:"Suggestion",gap});assert.ok(Math.abs(gap-48)<=1);
+    }
+  }
+  console.log("Page spacing audit",width,JSON.stringify(measurements));assert.ok(measurements.length>=10);
+}));
+
+for(const width of [360,390])test(`read and write typography at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  const size=async(locator,expected)=>{await expect(locator).toHaveCSS("font-size",`${expected}px`);};
+  const note=notePage(page);await size(note.getByRole("textbox",{name:"Note title",exact:true}),29);await size(note.getByRole("textbox",{name:"Write a note",exact:true}),18);
+  await note.getByRole("textbox",{name:"Note title",exact:true}).fill("A short title");await note.getByRole("textbox",{name:"Write a note",exact:true}).fill("An editable body.");await accepted(page,"An editable body.");if(width===390)await page.locator(".os-checkin-session").screenshot({path:"outputs/writing-type-note-390.png"});
+  await options(note,"History");await size(note.locator(".os-writing-list strong").first(),18);await trashRow(note,"A short title").click();await note.getByRole("button",{name:"Trash",exact:true}).click();await row(note,"A short title").click();await size(note.locator(".os-writing-review h2"),29);await size(note.locator(".os-writing-review p"),18);await checkTrashSpacing(note);
+  await page.reload();await ready(page);const deep=await thoughts(page);await size(deep.locator(".os-deep-thought-question"),29);await size(deep.getByRole("textbox",{name:"Answer the deep thought",exact:true}),18);
+  const question=await deep.locator(".os-deep-thought-question").textContent();await deep.getByRole("textbox",{name:"Answer the deep thought",exact:true}).fill("A readable answer.");await deep.getByRole("button",{name:"Send",exact:true}).click();await accepted(page,"A readable answer.");await options(deep,"History");await size(deep.locator(".os-writing-list strong").first(),18);await trashRow(deep,question).click();await deep.getByRole("button",{name:"Trash",exact:true}).click();await row(deep,question).click();await size(deep.locator(".os-writing-review h2"),29);await size(deep.locator(".os-writing-review p"),18);await checkTrashSpacing(deep);
+}));
+
+for(const type of ["short-text","long-text"])for(const edit of [false,true])test(`Chapter ${type} typography ${edit?"Workshop":"runtime"}`,{timeout:90_000},async()=>isolated(390,async page=>{
+  await page.evaluate(({type,edit})=>{window.typeChapter={id:"declare-dreamline",version:1,type,edit};window.goto("/os/type-chapter");},{type,edit});
+  const card=page.locator(`.os-chapter-card.os-chapter-${type}`);await expect(card).toBeVisible();
+  await expect(card.locator(edit?"textarea.os-chapter-inline-copy.main":".os-page-main > h2")).toHaveCSS("font-size","29px");
+  await expect(card.locator(edit?"textarea.os-chapter-inline-copy.sub":".os-chapter-body")).toHaveCSS("font-size","18px");
+  const input=card.locator("textarea.os-chapter-text-input");await expect(input).toHaveCSS("font-size","18px");await input.fill("Synthetic chapter answer.");await expect(input).toHaveValue("Synthetic chapter answer.");
+}));
+
+for(const width of [360,390])test(`Vision and Week read and write sizes at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  await page.evaluate(()=>{window.circle.updateState(state=>window.api.declareLife(state,"vision",{life:"A quiet life",why:"Time with my family"}));window.goto("/os/mirror");});await ready(page);
+  const vision=page.locator(".vision-life-apps .vision-declaration-page");await expect(vision).toBeVisible();
+  await expect(vision.locator(".os-page-main .vision-declaration-field p")).toHaveCSS("font-size","29px");await expect(vision.locator(".os-page-sub .vision-declaration-field p")).toHaveCSS("font-size","18px");
+  await vision.locator(".vision-declaration-copy").click();const main=vision.getByRole("textbox",{name:"Edit Vision: The life",exact:true}),sub=vision.getByRole("textbox",{name:"Edit Vision: Why it is worth wanting",exact:true});
+  await expect(main).toHaveCSS("font-size","29px");await expect(sub).toHaveCSS("font-size","18px");await sub.fill("Time to notice my family");await vision.getByRole("button",{name:"Save declaration",exact:true}).click();await expect(vision.locator(".os-page-sub .vision-declaration-field p")).toHaveText("Time to notice my family");
+  await page.evaluate(()=>window.goto("/os"));await ready(page);const log=page.locator(".os-log-session");await log.scrollIntoViewIfNeeded();await log.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
+  await log.getByRole("button",{name:"Add goal",exact:true}).click();const goal=log.getByRole("textbox",{name:"Goal for this week",exact:true});await expect(goal).toHaveCSS("font-size","29px");await goal.fill("An editable week goal");await goal.blur();
+  await log.getByRole("button",{name:"Add a step toward a goal",exact:true}).click();const step=log.getByRole("textbox",{name:"One step toward this goal",exact:true});await expect(step).toHaveCSS("font-size","18px");await step.fill("An editable step");await expect(step).toHaveValue("An editable step");
+}));
+
+for(const type of ["cover","info"])test(`reading-only Chapter ${type} keeps its type scale`,{timeout:90_000},async()=>isolated(390,async page=>{
+  await page.evaluate(type=>{window.typeChapter={id:"day-one",version:1,type,edit:false};window.goto("/os/type-chapter");},type);
+  const title=page.locator(type==="cover"?".os-cover-page h2":".os-chapter-info .os-page-main > h2");await expect(title).toBeVisible();await expect(title).toHaveCSS("font-size","32px");
+}));
 
 test("real Habit and Protocol rows grow down without nested scrolling",{timeout:90_000},async()=>isolated(390,async page=>{
   await page.evaluate(()=>window.circle.updateState(state=>{const a=window.api;for(let i=0;i<8;i++){const added=a.addHabitDefinition(state,"synthetic-habit-"+i);state=a.updateHabitDefinitionParts(added.state,added.id,{action:"Synthetic walk "+i,cue:"After lunch",identity:"Someone who notices"});}const started=a.startProtocolDraft(state,"synthetic-phase");state=started.state;for(let i=0;i<8;i++){const added=a.addProtocolItem(state,started.id,"non-negotiable","synthetic-term-"+i);state=a.updateProtocolItem(added.state,started.id,added.id,"Synthetic term "+i);}return a.beginProtocolRun(state,started.id,a.getDateKey());}));
@@ -225,7 +470,7 @@ for(const width of [360,390])test(`Note header alignment, borderless focus and m
   for(const input of [title,body]){await input.focus();await input.press("ControlOrMeta+A");await input.press("Backspace");}
   await expect.poll(()=>page.evaluate(async()=>Object.values((await window.api.load()).entries)[0].versions.at(-1).content)).toEqual({title:"",body:"",tags:[]});
   await page.reload();await ready(page);await expect(title).toHaveValue("");await expect(body).toHaveValue("");
-  const entries=Object.values((await page.evaluate(()=>window.api.load())).entries);assert.equal(entries.length,1);assert.equal(entries[0].versions[0].content.title,"First synthetic Note");assert.equal(entries[0].versions.length,2);
+  const entries=Object.values((await page.evaluate(()=>window.api.load())).entries);assert.equal(entries.length,1);assert.equal(entries[0].versions[0].content.title,"First synthetic Note");assert.ok(entries[0].versions.length>=2,"each accepted clearing edit can retain its own revision");
   for(const button of [box.getByRole("button",{name:"Show a Line",exact:true}),box.getByRole("button",{name:"History",exact:true})]){
     assert.equal(await button.evaluate(el=>getComputedStyle(el).color),"rgb(227, 107, 55)");const bounds=await button.boundingBox();assert.ok(bounds.height>=44&&bounds.width>=44);
   }
@@ -324,6 +569,7 @@ for(const [width,height] of [[390,844],[360,667]])test(`Note, History and Trash 
   const ceiling=Math.min(480,height*.6),initial=await dimensions();console.log("Bounded Note",width,height,JSON.stringify(initial));assert.ok(Math.abs(initial.height-ceiling)<=1);assert.ok(initial.bodyHeight>50);assert.ok(initial.overflow>500);assert.equal(initial.scrollers,1);
   await frame.scrollIntoViewIfNeeded();await box.locator(".os-page-body").evaluate(el=>el.scrollTop=el.scrollHeight);
   const before=await dimensions();await body.press("ControlOrMeta+End");await body.press("Enter");await body.pressSequentially("Last visible line");
+  await expect.poll(()=>body.evaluate(el=>el.scrollTop)).toBe(0);
   const caret=await box.locator(".os-page-body").evaluate(el=>{const field=el.querySelector('textarea[aria-label="Write a note"]'),line=parseFloat(getComputedStyle(field).lineHeight);return{bottom:field.getBoundingClientRect().bottom,viewport:el.getBoundingClientRect().bottom,line,innerScroll:field.scrollTop,client:field.clientHeight,scroll:field.scrollHeight};});
   assert.ok(caret.bottom<=caret.viewport+caret.line,"typing at the end stays in the visible body");assert.equal(caret.innerScroll,0,`textarea does not create a second scroll area: ${JSON.stringify(caret)}`);
   const after=await dimensions();assert.equal(after.header,before.header);assert.equal(after.footer,before.footer);assert.equal(after.height,before.height);

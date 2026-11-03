@@ -6,6 +6,38 @@ preferences and unresolved choices.
 
 ## Purpose and destination
 
+Approved spacing refinement (2026-11-03): Pages use a 48px shared label gap and
+25px Main-to-Sub and Body-to-Footer gaps. This supersedes earlier spacing values;
+App Boxes retain their shared minimum and grow downward. Note/Deep Thoughts
+Trash detail omits “In Trash” and its divider, with 4px between Restore and Delete
+forever and unchanged touch targets and deletion confirmation.
+
+Editable reading typography (2026-11-03): the developer approved a 29px main /
+18px body scale only where people read and write. It applies to Note/Deep
+Thoughts and opened history/trash entries, Athena's reply editor, Vision
+declarations, Week goals/steps, and Chapter short/long text questions with their
+matching Workshop preview. Lists retain compact row sizes. Other reading-only
+Pages retain their type, weights and navigation; use the approved spacing above.
+
+Latest approved writing flow (2026-11-03): Today has Note for free writing and
+Deep Thoughts for a question and answer. Ordinary Thoughts is retired from new
+writing; earlier entries and recovery text remain reachable in history without
+conversion. Note remains first and opens a Line from its label. Deep Thoughts
+opens a managed quote from its label, keeping its question and answer in place
+when returning. Send keeps the saved answer visible with Next question.
+
+Deep Thoughts shares Note's direct HISTORY, dated groups/times, saved-row trash
+buttons, silent removal, Trash/Restore/confirmed Delete forever and bounded
+scrolling. It keeps explicit Send/Save changes and silent draft recovery. Routine
+saving/sent and recovered/discarded messages and the Discard draft control are
+absent; clearing the answer clears its recovery text. Actual save errors remain.
+Question and
+source links remain intact. Quotes are managed in the existing Admin using a
+shared Supabase catalog and cached locally for offline reading. No AI runs on
+writing or quote visits. See [the latest contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1412-note-deep-thoughts-and-quotes---2026-11-03).
+
+The earlier account Note refinement remains in effect below; references to
+Thoughts' separate History controls are superseded by the flow above.
 Local account writing is connected as of 2026-11-02, with the Note-only
 autosave refinement approved on 2026-11-03. Notes autosave with internal
 recovery; Thoughts and reading answers keep Send and their draft workflow.
@@ -103,8 +135,9 @@ it. These are target requirements, not claims of implemented history or sync.
   button per local row and restoration from the Trash page. Note has no Versions
   UI, Undo or routine saving/saved messages. Internal revision records remain for
   save/conflict safety. Focused writing is borderless with the caret visible;
-  NOTE/HISTORY share the header baseline. Thoughts are
-  quick untitled captures, keeping Send and their separate draft workflow.
+  NOTE/HISTORY share the header baseline. Deep Thoughts begins with a question
+  and keeps Send, Save changes and recoverable drafts. Ordinary Thoughts remains
+  a historical record kind; new free writing belongs in Note.
   Recovery buffers stay outside saved evidence until committed. This Note-only
   refinement was explicitly approved on 2026-11-03.
 - Each App has history, with a shared day view reading the same records.
@@ -319,7 +352,7 @@ Current source inventory, reviewed on 2026-11-02:
 
 | Area | Existing implementation |
 | --- | --- |
-| Daily input | Note, Thoughts, Deep Thoughts, Log and moments |
+| Daily input | Note, Deep Thoughts, Log and moments; historical Thoughts remain readable/correctable |
 | Commitments | Habits, tasks, Protocol terms and phases, daily and weekly goals |
 | Reflection | Vision declarations and history, Athena readings and replies |
 | Learning | Chapter player, authoring, publishing, delivery, and Quests |

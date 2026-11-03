@@ -13,6 +13,17 @@ creating a competing product specification.
 
 ## Start here
 
+Latest approved slice (2026-11-03): Note now handles free writing and Deep
+Thoughts opens directly as the other Today Page. Deep Thoughts shares Note's
+History/Trash and bounded scrolling; Send retains the answer with Next question.
+The label opens a managed quote, with add/remove controls in the existing Admin
+and a separate public Supabase catalog. Existing record kinds and chapter IDs
+are preserved. The developer applied the quote SQL/configuration; live public
+read, denied public writes, server add/remove and cleanup passed. Final local
+verification is recorded in [the journey evidence](USER_JOURNEY_TESTING.md#deep-thoughts-and-managed-quotes-2026-11-03).
+This supersedes older separate Thoughts History/Versions descriptions, not the
+personal-sync queue or its readiness gates.
+
 The later approved 2026-11-03 Note controls supersede its earlier Versions/Undo/
 save-feedback/ellipsis requirements: Note has direct HISTORY, silent borderless
 writing and orange History row bins. Keep Trash for restoration. Internal save

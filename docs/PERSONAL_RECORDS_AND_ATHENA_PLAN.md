@@ -1,6 +1,9 @@
 # Personal records, history, and Athena plan
 
 Date: 2026-11-02, Asia/Bangkok.
+Latest approved flow: [Note, Deep Thoughts and managed quotes](#1412-note-deep-thoughts-and-quotes---2026-11-03)
+(2026-11-03). This supersedes ordinary Thoughts as a new-writing surface and
+its former separate History/Trash controls. Historical records retain their kinds.
 Note-only updates: 2026-11-03. The developer approved pause/departure autosave,
 then direct HISTORY aligned with NOTE, silent borderless writing, orange History
 row trash-bin buttons and removal of Versions/Undo. Restore from the retained
@@ -70,11 +73,11 @@ the later reviewed sync design. They are not an implemented backend.
 | ID | Decision | Practical result |
 | --- | --- | --- |
 | D01 | Multiple Notes, grouped by Circle day | A new entry does not overwrite another Note. |
-| D02 | Notes are titled, revisitable writing; Thoughts are quick untitled captures | Keep distinct writing jobs, with independent entry IDs. |
-| D03 | Note autosaves after a short pause and when leaving; Thoughts keep Send | Recovery remains automatic internally; Note has no Save/Clear/Discard/Drafts UI. |
+| D02 | Note receives new free writing; Deep Thoughts starts from a question | Retire ordinary Thoughts from the visible composer; preserve old entries and optional Note titles. |
+| D03 | Note autosaves after a short pause and when leaving; Deep Thoughts keeps Send | Deep answers retain question/source links and recovery without becoming evidence before Send. |
 | D04 | Recovery buffers stay outside saved evidence until committed | Older Note recovery text remains reachable in History without becoming evidence before a successful save. |
 | D05 | History inside each App plus a shared day view | Find a record by its purpose or by the day it belongs to. |
-| D06 | Past writing is editable; Note exposes the current saved entry | Internal Note revisions preserve save safety; other writing retains version review. |
+| D06 | Past writing is editable; Note and Deep Thoughts expose the current saved entry | Internal revisions preserve save safety; embedded reading answers retain their existing controls. |
 | D07 | Deleted Notes/Thoughts move to Trash; restore or permanently delete | Trash is a separate recoverable state, excluded from Athena. |
 | D08 | Trash has no automatic expiry | It remains until restoration or deliberate permanent deletion. |
 | D09 | Habit and active Protocol changes apply going forward | Earlier records keep the applicable wording and terms. |
@@ -88,13 +91,13 @@ the later reviewed sync design. They are not an implemented backend.
 | D17 | Beta requires essential history/corrections across existing tools, safe sync, and basic memory controls | Advanced search/filtering follows later; essential review is a release gate. |
 | D18 | A Note without a user-entered title is called Untitled | The generated label and placeholder are not user-authored evidence. |
 | D19 | Autosave keeps the Note visible; New Note is in the Note editor Footer | Save current text successfully before starting a separate entry. |
-| D20 | Note recovers automatically without a draft-management workflow | Preserve recovery text; Thoughts retain recovery/discard controls and no automatic draft expiry. |
-| D21 | History groups writing by Circle day, newest first; open entries in the same App Box | Note has no Versions UI; internal saved revisions and other writing's version review remain. |
+| D20 | Note recovers automatically without a draft-management workflow | Deep Thoughts retains recovery/discard where offered, without automatic draft expiry or evidence before Send. |
+| D21 | History groups writing by Circle day, newest first; open entries in the same App Box | Note and Deep Thoughts omit Versions UI while retaining immutable internal revisions. |
 | D22 | New saved entries require user writing; an existing Note can save an empty correction | Generated labels never count as writing; unchanged content creates no extra version. |
 | D23 | New writing keeps the Circle day when writing began, with actual save time recorded separately | Starting at 05:50 and saving at 06:10 does not silently move the entry to the new Circle day. |
-| D24 | Each local Note in History has an orange trash-bin button; Note has no Undo | Keep the Trash page for Restore and confirmed Delete forever. |
-| D25 | Thoughts retain their own draft/date/history/version/Trash rules, with Send and Save changes | The Note-only autosave refinement does not change Thought or reading-answer submission/source/outcome rules. |
-| D26 | Note autosaves silently; Thoughts retain local-save/Sent feedback after acceptance | Failed saves keep text with retry; Note shows no routine Saving/Saved on this device text. |
+| D24 | Each saved local entry in Note/Deep Thoughts History has an orange trash-bin button; neither surface has Undo | Keep the Trash page for Restore and confirmed Delete forever. |
+| D25 | Deep Thoughts shares Note's History/Trash while retaining Send and Save changes | Keep draft/evidence separation, attribution, source links and original outcome rules; ordinary Thoughts survives as a historical kind. |
+| D26 | Note autosaves silently; Deep Thoughts retains accepted Send/correction feedback in its editor | Failed saves keep text with retry; Note shows no routine Saving/Saved on this device text. |
 | D27 | Launch UI and Athena responses use simple English; users can write in Burmese, English or mixed language | Athena must understand that writing and answer in English. Burmese/English UI and Athena responses follow after web launch; Thai support is not required. |
 | D28 | A trashed or permanently deleted Deep Thought keeps its question marked answered; first-use greetings do not restart | Retain minimal question/app-use metadata without deleted answer/version/draft text. Older missing metadata remains unknown; wider deletion coverage stays separate. |
 
@@ -185,16 +188,21 @@ orange outline/box. Each local History row has an orange trash-bin button on its
 right; there is no Note menu, Versions or Undo. Restore from the Trash page.
 Preserve the Note label's existing Line action and the shared App Box engines.
 
-### 5.2 Quick Thoughts
+### 5.2 Deep Thoughts and historical Thoughts
 
-Thoughts keeps its quick untitled composer and Send action. Each newly sent
-Thought becomes an entry. Deep Thoughts preserves the question, question source,
-and related metadata so an answer can be understood later. A reading answer
-also retains the reading/question connection.
+Deep Thoughts replaces ordinary Thoughts in the visible Today flow. Each newly
+sent answer becomes an entry, retaining its question, question source and related
+metadata. Keep the accepted answer visible and offer Next question. A quote visit
+does not choose another question or submit text. Reading answers retain their
+reading/question connections.
 
-Thoughts retains its draft/date/history/version/Trash rules after the Note-only
-refinement. A new entry uses **Send**; a correction uses **Save changes** and
-keeps the existing entry identity. **Sent** follows a successful local write.
+History/Trash uses Note's navigation, controls, dated rows and bounded scrolling.
+Saved entries open for correction, with question above answer where known.
+There is no Versions UI or Undo on this surface; immutable revisions remain
+internally. Unsent recovery rows are marked Unsent. Historical ordinary Thoughts
+remain editable without acquiring a question or a new kind. A new answer uses
+**Send**; a correction uses **Save changes** and keeps its entry identity.
+**Sent** follows a successful local write.
 Deep Thoughts and reading answers retain their original question/source links.
 Opening or correcting an old answer must not send another entry, replay a
 chapter outcome, or request an Athena reply.
@@ -1051,6 +1059,50 @@ and scoped CSS, with browser tests and owning records. No store/schema/provider,
 personal-data, cloud-service or deployment change is included. Dated 14.8-14.10
 snapshots retain their original evidence; this contract owns current placement
 and Note sizing. The delivery order stays the same.
+
+### 14.12 Note, Deep Thoughts and Quotes - 2026-11-03
+
+The developer approved the full implementation scope after selecting an
+Admin-managed shared quote database and keeping an accepted answer visible with
+Next question. This supersedes the ordinary Thoughts composer and its separate
+History/Trash/Versions controls in earlier dated sections.
+
+- Note stays first, handles free writing with an optional title and autosave,
+  and retains its existing Line back.
+- Deep Thoughts opens directly as the other Today Page. Send accepts an answer
+  locally, keeping it and its question visible. Only Next question chooses a new
+  prompt. Corrections retain entry identity/source and use Save changes.
+- Deep Thoughts recovers unfinished answers silently, with no routine saving/sent
+  or recovered/discarded messages and no Discard draft control. Removing the answer
+  writes empty recovery text; actual save/conflict errors stay visible.
+- Both account writing surfaces use the shared bounded Page, direct HISTORY,
+  Circle Orange navigation, dated groups/times and saved-row trash bins. Trashing
+  is silent; restoration and confirmed permanent deletion are in Trash. Questions
+  remain attached to their answers. There is no Versions UI or Undo; immutable
+  internal revisions, original Circle day/timezone and account isolation remain.
+- Unsent recovery remains outside evidence. Older buffers are reachable as
+  Unsent rows, without silently submitting them or marking a question answered.
+  Historical ordinary Thoughts remain correctable under their original kind;
+  missing question links remain missing. Read-only legacy sources are not imported.
+- The label opens one managed quote using the shared App-back controller and
+  existing Line exits/reactions. The account editor stays mounted, so a quote
+  return restores the same source, saved correction or unfinished answer.
+- The existing hidden Admin gains Quotes add/remove controls using its styles
+  and 44px targets. The public Supabase catalog, SQL, server-only key, permission
+  checks, full-pool rotation, pagination and offline behavior are in [Quotes](QUOTES.md).
+  No authored content is seeded; Note's mixed Line shelf remains separate.
+
+The prototype's `thoughts` destination and old record IDs remain stable, including
+chapter deliveries and first-use metadata. Trash/deletion still keeps a question
+answered without retaining deleted answer text. Quotes add no run/version/budget,
+and no writing action or quote visit invokes Athena. Shared minimum size and
+80px forehead remain; bounded content uses the existing 480px/60dvh ceiling.
+
+The developer applied/configured the hosted quote setup. Live public read,
+denied public add/delete, server add/remove and cleanup passed. Local browser,
+type/lint/build results and current gaps belong in [the journey evidence](USER_JOURNEY_TESTING.md#deep-thoughts-and-managed-quotes-2026-11-03).
+This slice does not migrate personal writing, implement safe lifestyle sync,
+change chapter/reading versions or deploy the app.
 
 ## References
 

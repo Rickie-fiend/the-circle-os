@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DEEP_THOUGHT_KINDS, LOCAL_DEEP_THOUGHTS, countDeepThoughtWords, createLocalDeepThoughtPrompt, isDeepThoughtRewardEligible, selectDeepThoughtPrompt, unaskedDeepThoughts } from "../app/os/deep-thought-model.js";
 import * as deepThoughtModel from "../app/os/deep-thought-model.js";
@@ -306,20 +305,4 @@ test("a question he has answered is not asked again", () => {
   const spent = answered(LOCAL_DEEP_THOUGHTS.map((question) => question.text));
   assert.equal(unaskedDeepThoughts(spent).length, LOCAL_DEEP_THOUGHTS.length);
   assert.ok(createLocalDeepThoughtPrompt(spent, "2026-09-02", 0).text);
-});
-
-// The counter is visits, not answers: that is the whole point of it.
-test("the App counts openings, and holds the question while it is answered", () => {
-  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(shell, /const deepThoughtVisits = useRef\(0\)/);
-  assert.match(
-    shell,
-    /selectDeepThoughtPrompt\(state, dateKey, deepThoughtVisits\.current, writing \?/,
-  );
-  // Counted on the way in only, so closing the side does not skip a question.
-  assert.match(shell, /if \(nextMode === "deep"\) deepThoughtVisits\.current \+= 1;/);
-  // And the question is captured once, into state, rather than re-read on every
-  // render — a question must not change under someone who is answering it.
-  assert.match(shell, /setDeepThoughtPrompt\(prompt\)/);
-  assert.match(shell, /\{deepThoughtPrompt\?\.text\}/);
 });

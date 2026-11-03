@@ -1,8 +1,83 @@
 # Circle OS decision log
 
+## 2026-11-03 - Larger editable titles and tighter Page spacing
+
+The developer approved 29px titles/questions with 18px content/answers on the
+same editable surfaces as the earlier typography decision: Note/Deep Thoughts,
+opened History/Trash entries, Athena replies, Vision declarations, Week goals/
+steps, and Chapter text questions with matching Workshop previews. This
+supersedes the earlier 24px main-text size, retaining weights and line heights.
+
+The shared label gap changes from 80px to 48px because the top felt too empty.
+Main-to-Sub and Body-to-Footer both use 25px for a consistent rhythm. These
+values supersede the earlier forehead/footer numbers while retaining one top
+anchor and the shared App Box minimum. Note/Deep Thoughts Trash detail removes
+the “In Trash” status and divider and uses a 4px gap between Restore and Delete
+forever. Touch targets and deletion confirmation remain. Other spacing is unchanged.
+
 Record confirmed decisions, preferences, proposals, and unresolved questions
 separately. Older handoff entries remain historical evidence; this log records
 the decisions that supersede their active product assumptions.
+
+## 2026-11-03 - Balance typography only where people read and write
+
+After reviewing the 24px/18px preview and the wider typography audit, the
+developer approved size changes only on reading-and-writing surfaces. Use a
+4:3 main/body scale on account Note/Deep Thoughts and opened history/trash
+entries, the embedded Athena reply editor, Vision declarations, Week goals/steps,
+and Chapter short/long text questions with their matching Workshop preview.
+Keep compact list rows and reading-only covers, lessons, Athena prose, Quest
+descriptions, locked-app explanations and Protocol summaries at their existing
+sizes. Only font sizes change; weights, line heights, spacing and behavior stay.
+
+Reason: titles/questions should not overpower the person's writing. Scoped
+roles also avoid the mobile 16px field rule making reading and editing differ.
+This supersedes earlier same-size Cover/Note/Chapter requirements only for the
+named editable surfaces; the shared forehead and App Box minimum remain.
+
+## 2026-11-03 - Quiet Deep Thoughts writing
+
+The developer requested removing saving/sent and recovered/discarded messages
+and the Discard draft control from Deep Thoughts. Reason: users can discard an
+unfinished answer by removing its text. Recovery remains automatic and silent;
+clearing writes an empty recovery value so old text does not return on reload.
+Send, Save changes, Next question and actual save/conflict errors remain.
+This refines Deep Thoughts only; embedded reading answers keep their controls.
+
+## 2026-11-03 - Note, Deep Thoughts and managed quotes
+
+The developer approved replacing ordinary Thoughts in the visible Today flow
+with Deep Thoughts, matching Note's History/Trash navigation, design and controls,
+and adding an Admin-managed shared quote database. They chose to keep an answered
+question and its answer visible after Send, with Next question as the next action,
+then explicitly approved implementation, tests and owning records.
+
+Reason: title versus no title does not give Note and ordinary Thoughts distinct
+jobs. Note now receives all new free writing; Deep Thoughts starts with a question.
+Note remains the first Page and its label opens the existing Line pool. Deep
+Thoughts opens directly as the other Page; its label opens one curated quote.
+Reading and returning restores the same question and unfinished answer.
+
+Both account writing surfaces share direct HISTORY, orange navigation, dated
+rows/times, saved-row bins, silent trashing, Trash/Restore/confirmed Delete
+forever and the existing bounded Body scrolling. Deep Thoughts keeps explicit
+Send, Save changes, automatic draft recovery and immutable question/source links.
+Unsent recovery rows are marked Unsent and stay outside saved evidence. Existing
+Thoughts and reading answers remain reachable, retaining their original kinds,
+IDs, attribution and source links. Legacy writing is not imported or converted.
+
+The quote catalog uses Supabase with public SELECT and server-only Admin
+mutations through the existing signed cookie. The developer adds/removes content;
+no new philosophy or quote text is authored here. Rotation visits the whole pool
+before repeating; cached reading works offline, and an authoritative empty
+catalog never falls back to bundled quotes. The existing Line exits/reactions
+are reused. Quotes never gain a run, cooldown, completion or version.
+
+The internal `thoughts` app/delivery identifiers remain unchanged. Existing
+chapters, editions, local-first writing and the 06:00 Circle day remain intact.
+Personal sync, deployment and broader Admin/geometry optimization are separate.
+See [the contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1412-note-deep-thoughts-and-quotes---2026-11-03),
+[quote setup](QUOTES.md) and [verification](USER_JOURNEY_TESTING.md#deep-thoughts-and-managed-quotes-2026-11-03).
 
 ## 2026-11-03 - Bounded Note pages and editor New Note
 

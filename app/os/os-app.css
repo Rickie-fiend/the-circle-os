@@ -21,7 +21,7 @@
   /* The gap between the last line of Body and the Footer. Fixed: as a Page
    * grows this stays the same, so writing never opens a field of empty colour
    * above the action and never pushes the action out of the frame. */
-  --os-body-footer-gap: 26px;
+  --os-body-footer-gap: 25px;
   /* The four Page tracks: Header, Heading, Body, Footer.
    *
    * The Heading track is min-content rather than auto. An auto track is
@@ -49,7 +49,7 @@
    * so three Apps that should have read as one family each began at a
    * different height. This sits under the Label instead, where it applies
    * whether a Heading exists or not. */
-  --os-label-gap: 80px;
+  --os-label-gap: 48px;
   /* One height for a Page's primary action. Sai: "Completed Today button and
    * Start a Phase button are very thin. it should follow the button standard."
    * They had no height at all and collapsed onto their own line box. */
@@ -1108,8 +1108,7 @@
  * the surface, and done keeps it there: sunk in, with the light coming from
  * inside the hole rather than from a shadow underneath.
  *
- * The habit is the larger key and the task the smaller one, so the two parts of
- * the Page stay legible from a glance without reading the labels. */
+ * Habits and tasks share the same key size. */
 .circle-os .os-creative-button-shell.role-habit:has(.os-row-tick) {
   height: auto;
   margin-top: 0;
@@ -1141,14 +1140,15 @@
   will-change: transform;
 }
 
-.circle-os .os-row-tick-habit.os-creative-button {
-  height: 42px;
-  width: 42px;
-}
-
+.circle-os .os-row-tick-habit.os-creative-button,
 .circle-os .os-row-tick-task.os-creative-button {
   height: 30px;
   width: 30px;
+}
+
+/* Keep the small visible disc easy to tap without changing row geometry. */
+.circle-os .os-row-tick.os-creative-button .os-creative-button-label {
+  inset: -9px;
 }
 
 /* Open: standing up on its leg, lit along the top edge. */
@@ -1235,12 +1235,7 @@
   transform: rotate(43deg);
 }
 
-.circle-os .os-row-tick-habit[aria-pressed="true"]::after {
-  height: 15px;
-  margin-top: -3px;
-  width: 7px;
-}
-
+.circle-os .os-row-tick-habit[aria-pressed="true"]::after,
 .circle-os .os-row-tick-task[aria-pressed="true"]::after {
   border-width: 0 2px 2px 0;
   height: 11px;
@@ -10116,38 +10111,44 @@
 .circle-os .os-writing-embedded { width: 100%; }
 
 /* Note navigation uses Circle Orange; authored writing retains Ink. */
-.circle-os .os-note-page.os-writing-page {
+.circle-os .os-writing-bounded.os-writing-page {
   /* The frame adds a 1px border on each side. Keep the shared resting minimum
      and cap the whole App Box at 480px, or 60% of a short viewport. */
   max-height: max(var(--os-app-box-min-height), calc(min(480px, 60dvh) - 2px));
   grid-template-rows: auto min-content minmax(0, 1fr) max-content;
   overflow: hidden;
 }
-.circle-os .os-note-page.os-writing-page > .os-page-body {
+.circle-os .os-writing-bounded.os-writing-page > .os-page-body {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
-.circle-os .os-note-page.os-writing-page > .os-page-body > * { flex-shrink: 0; }
+.circle-os .os-writing-bounded.os-writing-page > .os-page-body > * { flex-shrink: 0; }
 .circle-os .os-note-content { display: flex; flex-direction: column; width: 100%; }
-.circle-os .os-note-page.os-writing-page > .os-page-footer:has(> .os-writing-footer) {
+.circle-os .os-writing-bounded.os-writing-page > .os-page-footer {
+  /* A global reduced-motion duration otherwise transitions every property,
+     briefly turning the action gap from zero into the shared gap. Page motion owns travel;
+     the Footer's layout must be final before it becomes visible. */
+  transition-property: none;
+}
+.circle-os .os-writing-bounded.os-writing-page > .os-page-footer:has(> .os-writing-footer) {
   /* The shared footer is reused between an empty list and detail actions.
      Attach the action gap to its actual content throughout that change. */
   padding-top: var(--os-body-footer-gap);
 }
-.circle-os .os-note-page.os-writing-page .os-card-label,
-.circle-os .os-note-page.os-writing-page .os-writing-action {
+.circle-os .os-writing-bounded.os-writing-page .os-card-label,
+.circle-os .os-writing-bounded.os-writing-page .os-writing-action {
   color: var(--c-orange, #e36b37);
 }
-.circle-os .os-note-page.os-writing-page .os-card-label { min-width: 44px; }
-.circle-os .os-note-page.os-writing-page .os-page-header-left > button,
-.circle-os .os-note-page.os-writing-page .os-page-header-right > button {
+.circle-os .os-writing-bounded.os-writing-page .os-card-label { min-width: 44px; }
+.circle-os .os-writing-bounded.os-writing-page .os-page-header-left > button,
+.circle-os .os-writing-bounded.os-writing-page .os-page-header-right > button {
   align-items: flex-start;
   display: flex;
   padding: 0;
 }
-.circle-os .os-note-page.os-writing-page .os-page-header-right > button {
+.circle-os .os-writing-bounded.os-writing-page .os-page-header-right > button {
   justify-content: flex-end;
   min-height: 44px;
   padding: 0;
@@ -10155,28 +10156,28 @@
   right: 0;
   top: 0;
 }
-.circle-os .os-note-page.os-writing-page .os-inline-checkin-note .os-info-page-sub textarea {
+.circle-os .os-writing-bounded.os-writing-page .os-inline-checkin-note .os-info-page-sub textarea {
   font-size: 1.125rem;
   line-height: 1.5;
 }
-.circle-os .os-note-page .os-writing-back { gap: 6px; }
-.circle-os .os-note-page .os-writing-back > span { font-size: 1.4em; line-height: 0.8; }
-.circle-os .os-note-page.os-writing-page .os-writing-editor textarea:focus-visible {
+.circle-os .os-writing-bounded .os-writing-back { gap: 6px; }
+.circle-os .os-writing-bounded .os-writing-back > span { font-size: 1.4em; line-height: 0.8; }
+.circle-os .os-writing-bounded.os-writing-page .os-writing-editor textarea:focus-visible {
   outline: 0;
   box-shadow: none;
 }
-.circle-os .os-note-page .os-writing-history-row {
+.circle-os .os-writing-bounded .os-writing-history-row {
   align-items: center;
   border-bottom: 1px solid rgb(25 24 19 / 0.15);
   display: flex;
   gap: 12px;
 }
-.circle-os .os-note-page .os-writing-history-row > .os-writing-entry {
+.circle-os .os-writing-bounded .os-writing-history-row > .os-writing-entry {
   border-bottom: 0;
   flex: 1;
   min-width: 0;
 }
-.circle-os .os-note-page .os-writing-history-row > .os-writing-trash-button {
+.circle-os .os-writing-bounded .os-writing-history-row > .os-writing-trash-button {
   align-items: center;
   border: 0;
   color: var(--c-orange, #e36b37);
@@ -10186,24 +10187,55 @@
   padding: 0;
   width: 44px;
 }
-.circle-os .os-note-page .os-writing-trash-button:disabled { cursor: default; opacity: 0.45; }
-.circle-os .os-note-page .os-writing-heading {
+.circle-os .os-writing-bounded .os-writing-trash-button:disabled { cursor: default; opacity: 0.45; }
+.circle-os .os-writing-bounded .os-writing-heading {
   font-size: var(--os-page-main-font-size);
   font-weight: 700;
   letter-spacing: var(--os-page-main-letter-spacing);
   line-height: var(--os-page-main-line-height);
 }
-.circle-os .os-note-page.os-writing-page > .os-page-heading:not(:empty) { padding-bottom: 16px; }
-.circle-os .os-note-page .os-writing-footer > .os-writing-action { text-align: center; }
-.circle-os .os-note-page .os-writing-list strong { font-size: 1.125rem; }
-.circle-os .os-note-page .os-writing-day { font-size: 0.9rem; opacity: 1; }
-.circle-os .os-note-page .os-writing-list span { font-size: 0.9rem; }
-.circle-os .os-note-page .os-writing-review p { font-size: 1.125rem; }
-.circle-os .os-note-page .os-writing-review h2 { margin: 0; }
-.circle-os .os-note-page .os-writing-trash-state {
-  border-top: 1px solid rgb(25 24 19 / 0.15);
-  color: var(--c-charcoal, #403e35);
-  font-size: 0.9rem;
-  margin: 0;
-  padding-top: 16px;
+.circle-os .os-writing-bounded.os-writing-page > .os-page-heading:not(:empty) { padding-bottom: 16px; }
+.circle-os .os-writing-bounded .os-writing-footer > .os-writing-action { text-align: center; }
+.circle-os .os-writing-bounded .os-writing-list strong { font-size: 1.125rem; }
+.circle-os .os-writing-bounded .os-writing-day { font-size: 0.9rem; opacity: 1; }
+.circle-os .os-writing-bounded .os-writing-list span { font-size: 0.9rem; }
+.circle-os .os-writing-bounded .os-writing-review p { font-size: 1.125rem; }
+.circle-os .os-writing-bounded .os-writing-review h2 { margin: 0; }
+.circle-os .os-writing-bounded .os-writing-footer.is-trash-detail { gap: 4px; }
+
+.circle-os .os-admin-quotes button { min-height: 44px; }
+.circle-os .os-admin-quotes blockquote { margin: 0; padding: 18px; overflow-wrap: anywhere; }
+.circle-os .os-admin-quotes blockquote p { margin: 0; white-space: pre-wrap; }
+.circle-os .os-admin-quotes cite { color: var(--c-neutral-500); display: block; font-size: var(--text-xs); font-style: normal; margin-top: 8px; }
+
+/* Editable titles/questions use 29px; content/answers stay at 18px.
+   Keep existing weights, line heights and reading-only type. */
+.circle-os {
+  --os-writing-main-size: 1.8125rem;
+  --os-writing-body-size: 1.125rem;
 }
+.circle-os .os-writing-page textarea.os-inline-checkin-title,
+.circle-os .os-writing-page .os-deep-thought-question,
+.circle-os .os-writing-page .os-writing-review h2,
+.circle-os .os-writing-embedded .os-deep-thought-question,
+.circle-os .vision-declaration-copy > .os-page-main .vision-declaration-field :is(textarea, p),
+.circle-os textarea.os-week-goal-text {
+  font-size: var(--os-writing-main-size) !important;
+}
+.circle-os .os-writing-page .os-inline-checkin-note .os-info-page-sub textarea,
+.circle-os .os-writing-page .os-thoughts-form.deep-compose textarea.os-deep-thought-answer,
+.circle-os .os-writing-page .os-writing-review p,
+.circle-os .os-writing-embedded .os-thoughts-form.deep-compose textarea.os-deep-thought-answer,
+.circle-os .vision-declaration-copy > .os-page-sub .vision-declaration-field :is(textarea, p),
+.circle-os textarea.os-week-step-text {
+  font-size: var(--os-writing-body-size) !important;
+}
+.circle-os .os-chapter-card:is(.os-chapter-short-text, .os-chapter-long-text) {
+  --os-page-main-font-size: var(--os-writing-main-size);
+}
+.circle-os .os-chapter-card:is(.os-chapter-short-text, .os-chapter-long-text) .os-chapter-body,
+.circle-os .os-chapter-card:is(.os-chapter-short-text, .os-chapter-long-text) textarea.os-chapter-inline-copy.sub,
+.circle-os .os-chapter-card:is(.os-chapter-short-text, .os-chapter-long-text) textarea.os-chapter-text-input {
+  font-size: var(--os-writing-body-size) !important;
+}
+.circle-os .os-admin-quotes .os-admin-quote-actions.is-single { grid-template-columns: 1fr; }

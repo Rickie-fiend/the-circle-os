@@ -2,6 +2,35 @@
 
 ## Terms
 
+Approved spacing refinement (2026-11-03): the shared label gap is 48px;
+Main-to-Sub and Body-to-Footer gaps are both 25px. These values supersede older
+spacing statements and historical 80px measurements below. Preserve the shared
+minimum and top anchor. Note/Deep Thoughts Trash detail omits “In Trash” and its
+divider, with a 4px Restore-to-Delete layout gap and at least 44px touch targets.
+
+Editable typography refinement (2026-11-03): use 29px main and 18px body text
+on Note/Deep Thoughts editors and opened history/trash entries, the embedded
+Athena reply editor, Vision declarations, Week goals/steps, and Chapter short/long
+text questions with their Workshop preview. List rows keep their compact scale.
+Reading-only type, weights and line heights retain their existing rules;
+use the shared spacing above. This supersedes shared type-size statements
+below for the named editable surfaces.
+
+Latest writing flow (2026-11-03): Note and Deep Thoughts are the Today writing
+Pages. Ordinary Thoughts remains a historical kind, without a new composer.
+Deep Thoughts shares Note's direct HISTORY, dated rows/times, orange saved-row
+bins, silent trashing, Trash/Restore/confirmed Delete forever and bounded Body
+scrolling. It keeps Send/Save changes and unsent recovery. The saved answer stays
+visible with Next question; source/question links and internal revisions remain.
+Deep Thoughts recovers silently, without routine saving/sent, recovered/discarded
+messages or a Discard draft control. Clearing the answer clears its recovery text;
+save errors remain visible.
+No Versions UI or Undo on these account writing surfaces. Its label opens one
+managed Quote, returning to the same question/draft through existing Line exits.
+Reading answers keep their embedded controls; legacy sources are not migrated.
+This supersedes the Note-only sizing exception and Thoughts mode/navigation
+descriptions in the dated snapshots below. See [the current contract](../../docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1412-note-deep-thoughts-and-quotes---2026-11-03).
+
 Latest Note sizing/action refinement (2026-11-03): New Note belongs in the Note
 editor Footer. Account Note, History and Trash share a 480px App Box ceiling,
 reduced to 60% of the dynamic viewport but never below the shared minimum.
@@ -189,6 +218,11 @@ Used for charts, weekly views, and other things worth reading again.
 - Content that gives is unrationed. Content that asks stays rationed. Being
   asked constantly is what stops a person answering honestly, and honest
   answers are the whole input to Athena; a quote costs nothing to see.
+- Deep Thoughts' label opens a single Quote from the Admin-managed Supabase
+  catalog, using the same App Box and existing Line exits/reactions. The Quote
+  stays until dismissed, never advances the question and never saves its draft.
+  A valid public catalog is cached for offline reading; an authoritative empty
+  catalog has no bundled fallback. This does not change Note's mixed Line pool.
 - The Note label flips the same App Box to its Line back. It never summons a
   Chapter. Chapters arrive on their own in Thoughts and return to Thoughts when
   completed or dismissed.
@@ -303,7 +337,7 @@ the earlier explicit-Save/draft controls for Note only. See the
 ## Idle rotation
 
 - The Today check-in session is the only App session that turns its own Page.
-  Note and Thoughts turn between themselves after one
+  Note and Deep Thoughts turn between themselves after one
   `IDLE_PAGE_DWELL_MS` dwell.
 - Routine, Protocol, Log, Vision, Week Review, and Athena stay on the Page the
   person chose. A hidden action is a placement defect, not a reason to turn a
@@ -357,12 +391,12 @@ the earlier explicit-Save/draft controls for Note only. See the
 - Every Page keeps Header, Heading, Main Body, Sub Body, and Footer. Empty
   optional text does not move those anchors.
 - **The forehead is one number for every App.** The space between the App Label
-  and whatever comes under it is `--os-label-gap`, currently `80px`, and it
+  and whatever comes under it is `--os-label-gap`, currently `48px`, and it
   hangs off the Label rather than off the Heading track. Sai set Routine as the
   reference first — *"i want the forehead size of the routine app to apply
-  everywhere"* — and then set the number: **80px**. Every App matches it: Note,
+  everywhere"* — and originally set the number: **80px** (reduced to **48px** on 2026-11-03). Every App matches it: Note,
   Thoughts, Routine, Protocol, Log, Dreamline, Vision, Week Review, Athena's
-  Reading, Suggestion. Measured across **every Page**, not one per session:
+  Reading, Suggestion. Earlier 80px measurements covered **every Page**, not one per session:
   five Apps on Today at `80.9px`, and all twenty Pages on Reflect at `80px` or
   `80.9px` — the three Vision declarations, the nine Week Review Pages, the four
   Athena Pages and Suggestion. At phone width the App Box still sits on its
@@ -404,9 +438,9 @@ the earlier explicit-Save/draft controls for Note only. See the
   moment it gains a second line.
 - On Cover, Note, Thoughts and Vision declaration Pages, Main begins at the
   forehead and Sub hangs from its last line at the shared gap.
-- Cover Main text, Note Main text, the Thoughts placeholder and the Vision
-  declaration editor use one shared typography token and forehead anchor. They
-  remain left-aligned.
+- Cover Main text and editable reading surfaces share the forehead anchor and
+  remain left-aligned. Cover retains its existing scale; the editable surfaces
+  named above use 29px main and 18px body text.
 - **A label is dimmed by choosing a lighter step, never by using the surface's
   own text colour on the wrong surface.** Section labels on a dark App Box use
   a neutral step that clears 4.5:1 against it. The Dreamline shipped its section
@@ -515,7 +549,7 @@ back up a little slower.
 
 - An optional App back is a side change inside the same stable App Box. Its
   front is what is needed today; its back is what the App holds.
-- Note / Line, Thoughts / Deep Thoughts, Routine / Record and Protocol / Phases
+- Note / Line, Deep Thoughts / Quote, Routine / Record and Protocol / Phases
   use the same controller and timings: 260ms to leave, a 500ms calm arrival and
   840ms for the complete handoff.
 - The controller holds the old measured height through the leave, then eases

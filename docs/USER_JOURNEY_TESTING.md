@@ -1,5 +1,282 @@
 # Circle OS user-journey test record
 
+## Habit task controls (2026-11-03)
+
+Approved scope: restore Add task on normal Routine, match Habit checkbox sizes
+to Tasks, focused checks and bug/continuity records. Runtime edits are limited
+to `circle-os-shell.tsx` and `os-app.css`; existing changes remain preserved.
+No personal records were edited.
+
+The fresh-v3 fixture removes synthetic Habit setup runs/recovery markers while
+retaining completed Day One v3. Before the fix the 360px case failed because
+Add task was absent. The Footer required the real Habit Building completion,
+while the displayed idle Page uses a separate usable view after v3. The fix
+shows Add task whenever normal Routine is open; Record omits it and no false
+setup completion is stored.
+
+Final command:
+`node --test --test-name-pattern="Day One v3 Routine task controls|shared App Box geometry|real Habit and Protocol rows" tests/writing.browser.mjs`:
+**5/5 passed** in isolated Chromium at 360x844 and 390x844, Bangkok timezone,
+synthetic account/storage and blocked external requests. No uncaught page
+errors or external traffic. Covered task/habit entry, habit toggling, task
+completion, local persisted reload, Record undo and unchanged setup completion.
+Discs measure 30px with 5x11px checks and 44px label hit regions. An off-disc
+Habit tap in the extended hit region works.
+
+Four resting App Boxes measure 346px (344px Pages) with 48px header-box gaps
+at both widths. Visible gaps are 52px for Note/Deep Thoughts and 51.09px for
+Habit/Protocol. Eight Habit rows and Protocol terms grow without inner scrolling.
+No shared geometry token changed.
+
+Intermediate failures were test locators retaining old accessible names after
+editing/completion, and an initial 40px hit area because absolute insets start
+inside the 2px border. Corrected locators and extended insets to 9px; the final
+run verifies 44px and actual off-disc input. No optimization was justified.
+
+`node node_modules/next/dist/bin/next build` passed after final CSS changes.
+`node node_modules/eslint/bin/eslint.js app/os/circle-os-shell.tsx tests/writing.browser.mjs`
+passed with one existing `renderChapterTemplate` unused-import warning.
+`git diff --check` passed with existing line-ending warnings. Physical devices,
+hosted sessions, real sync and a fresh Vinext build remain unverified; earlier
+ResizeObserver gaps remain. Only bug 13's checkbox-size portion is closed.
+
+## Editable titles and shared spacing (2026-11-03)
+
+The developer approved 29px editable titles/questions with 18px content/answers,
+a 48px shared label gap, equal 25px Main-to-Sub/Body-to-Footer gaps, and the
+Note/Deep Thoughts Trash cleanup. Removed the status line and divider; the
+Restore-to-Delete layout gap is 4px. Existing raised-button geometry means the
+visible button face and its layout box have different bounds. Touch targets
+remain at least 44px and deletion still requires confirmation.
+
+Verification used actual components, synthetic account records and isolated
+mobile Chromium with external requests blocked:
+
+- `node --test tests/writing.browser.mjs`: 41/43 passed initially. Both new
+  typography cases failed because the Trash measurement used the lifted button
+  face instead of its shell. Corrected the assertion; no runtime fix was needed.
+  Log: `outputs/type-spacing-browser.log`.
+- Final `node --test --test-name-pattern="Page spacing across|read and write typography" tests/writing.browser.mjs`:
+  4/4 passed. This covers both corrected cases and two added Page audits, bringing
+  the distinct passing cases across the runs to 45. Log:
+  `outputs/type-spacing-final.log`.
+- The Page audit measures 17 states at each of 360px and 390px: Note, Deep
+  Thoughts, Routine, Protocol, Log, Week, three Vision declarations, four Athena
+  Pages, three Quest categories and Suggestion. All measured top gaps are 48px.
+  Initial audit attempts selected Protocol's supporting paragraph and hidden
+  Week content; corrected the measurement to the first visible layout anchor.
+  Route auditing waits for the outgoing Today session to unmount.
+- Note/Deep Thoughts/Habit/Protocol resting frames remain 346px, with 344px
+  Pages, 48px header gaps and no internal resting scroll at both widths. Real
+  Habit/Protocol rows still grow continuously. Long Note/History/Trash retain
+  one Body scroller and the 480px/400.19px tested ceilings. Footer padding is
+  25px. Restore and confirmed deletion journeys pass for both writing kinds.
+- Computed sizes pass for Note, Deep Thoughts, opened Trash entries, Athena's
+  reply, Vision read/edit, Week goals/steps, Chapter short/long questions and
+  Workshop previews. Reading-only Chapter cover/info retain 32px type.
+- `node node_modules/next/dist/bin/next build`: passed, including TypeScript
+  and route generation. Log: `outputs/type-spacing-build.log`.
+- `node node_modules/eslint/bin/eslint.js app/os/writing-pages.tsx tests/writing.browser.mjs`:
+  passed. Whitespace verification passed.
+
+Visually inspected `outputs/writing-type-note-390.png` and
+`outputs/note-bounded-trash-360.png`. Existing ResizeObserver notifications
+remain on navigation/Workshop paths, as recorded by the earlier baseline.
+Physical phones, native keyboards, hosted sessions, hidden Week Review flows
+and a fresh Vinext build are not certified here. No persistence, cloud,
+chapter content, edition or budget changed. No measured performance problem
+justified an optimization. The test servers shut down after verification.
+
+
+## Editable reading typography (2026-11-03)
+
+The developer approved 24px main / 18px body sizes only where people both read
+and write. Scoped CSS covers account Note/Deep Thoughts and opened history/trash,
+Athena's embedded reply editor, Vision declarations, Week goals/steps and Chapter
+short/long text questions with the same Workshop preview. Only sizes change;
+list rows, reading-only pages, weights, line heights and spacing retain their
+rules. New tests use actual components and synthetic account data, not personal
+records or external services.
+
+Commands and results:
+
+- `node --test tests/writing.browser.mjs`: 40/41 passed. The Note header test at
+  390px encountered `.os-splash-host` intercepting History during the run across
+  06:00. Other cases, including bounded Note/History/Trash at both phone sizes,
+  passed. Log: `outputs/type-writing-final.log`.
+- `node --test --test-name-pattern="Note header alignment.*390px|reading-only Chapter|read and write typography" tests/writing.browser.mjs`:
+  final 5/5 passed. Includes the previously blocked header case and two new
+  cover/info exclusions. In total 43 distinct cases have passed across these
+  runs. Log: `outputs/type-final-recheck.log`.
+- `node --test --test-name-pattern="Vision and Week|real Reflect reading reply" tests/writing.browser.mjs`:
+  3/3 passed. Vision read/edit sizes match, corrections save, Week goals/steps
+  remain editable, and the actual Athena reply keeps its ledger/source behavior.
+- `node node_modules/next/dist/bin/next build`: passed including TypeScript and
+  static generation. Log: `outputs/type-next-build.log`.
+- `node node_modules/eslint/bin/eslint.js tests/writing.browser.mjs` and
+  `git -c core.safecrlf=false diff --check`: passed.
+
+At 360px and 390px, empty Note, Deep Thoughts, Habit and Protocol frames remain
+346px (344px Pages), with 80px header gaps and no internal resting scroll.
+Short Note remains at its minimum; real Habit/Protocol rows still grow naturally.
+Writing/History/Trash remain bounded with one Body scroller. Actual Note image:
+`outputs/writing-type-note-390.png`.
+
+Earlier new-test attempts used Add step instead of the actual Add a step toward
+a goal label; corrected the selector and reran successfully. ResizeObserver
+notifications appear on Workshop/route transitions. A diagnostic with only the
+new type block removed also emitted them (`outputs/type-baseline.log`); those
+separate layout warnings are not claimed fixed here. Physical phones, hosted
+sessions and a fresh Vinext production build remain unverified. No persistence,
+day-boundary logic, immutable content, cloud configuration or performance
+optimization changed. No further optimization was justified by these checks.
+
+## Quiet Deep Thoughts writing (2026-11-03)
+
+The developer requested removing routine saving/sent and recovered/discarded
+messages and the Discard draft control. The shared writing Page now suppresses
+these on Deep Thoughts while preserving actual errors, local recovery, Send,
+Save changes and Next question. Embedded reading-answer controls remain separate.
+
+Actual-component isolated Chromium checks passed at 360x844 and 390x844 using
+synthetic account data; no personal data or external service was used:
+
+- `node --test --test-name-pattern="Deep Thoughts quietly|Deep Thoughts opens directly|failed.*commit" tests/writing.browser.mjs`: 3/3 passed. Held answer,
+  correction, reload, silent recovery, cleared draft remaining empty after reload,
+  absence of Discard draft, and failed local save/retry verified.
+- `node --test --test-name-pattern="normal-motion Deep Thoughts" tests/writing.browser.mjs`: 1/1 passed. Deliberately delayed durable acceptance;
+  Footer stays free of routine saving/sent messages both during and after Send.
+- `node node_modules/eslint/bin/eslint.js app/os/writing-pages.tsx tests/writing.browser.mjs`
+  and `git -c core.safecrlf=false diff --check`: passed.
+
+The first new assertion matched sent inside the synthetic answer itself. Scoped
+it to the Footer and reran successfully; no product fix was required for that
+test failure. No geometry/type tokens or persistence commands changed. No new
+build, physical-device, cloud-sync or deployed-session certification is claimed.
+Existing Admin resize and legacy placeholder gaps remain as recorded below.
+
+## Deep Thoughts and managed quotes (2026-11-03)
+
+### Approval, setup and behavior
+
+The developer approved replacing ordinary Thoughts in Today with Deep Thoughts,
+matching Note's History/Trash, keeping an answered question visible with Next
+question, and Admin-managed shared quotes. Work began on `paing-branch` at
+`2bd8502` with a clean tracked tree. No staging, commit or deployment is included.
+
+The existing Vite harness imports actual Today/Reflect, shared writing/Page/CSS,
+Admin and account stores. Synthetic accounts and isolated Chromium use
+360x667/360x844/390x844, Bangkok and both motion settings. Quote API responses
+are synthetic; other external traffic is blocked. No personal records are read.
+The legacy fixture uses only its intercepted transport and is not a migration.
+
+New browser journeys cover direct Deep Thoughts, held answers and reload,
+Next question, source-preserving correction, old untitled Thoughts without an
+invented question, failed Send/recovered drafts, typing during a delayed save,
+question/answer Trash/Restore/Delete forever and retained answered metadata.
+History matches Note's controls and bounded Body scrolling. Unsent recovery rows
+are marked Unsent. Quotes rotate through a full pool, preserve the live draft and
+question, retain reading position across reload, use cached content offline,
+honor an empty catalog, and preserve normal-motion travel and Line exits.
+Admin checks add/remove confirmation, 44px controls and retained failed input.
+The existing Note/Line, Note autosave/failure/conflict, Reflect reply, account
+switching and geometry checks remain in the consolidated browser command.
+
+### Verification
+
+The focused model/route selection passed **105/105**. It includes actual
+transpiled Admin route handlers with missing/forged/expired cookie and cross-origin
+denial before backend access; public versus server key separation; input/failure
+handling; pagination when the server returns smaller pages; full 300-quote
+rotation; writing compatibility, immutable revisions and account ownership.
+
+The developer reported applying the SQL and saving the ignored server key.
+`node scripts/check-quotes-live.mjs --write` then passed against the configured
+project: public SELECT, server INSERT, denied anonymous INSERT/DELETE, server
+DELETE and a final zero temporary-row check. The catalog was empty before the
+test and afterward; no authored quotes were added. The model never received the
+secret value. Initial checks saw a missing saved key/table; the developer
+completed setup. Sandboxed networking returned EACCES; approved network checks
+then succeeded. Shell quoting was corrected before any live request.
+
+The final consolidated actual-component browser run passed **32/32**. Focused
+strict types and both Next/Vinext production builds passed. Selected ESLint has
+zero errors and the starting shell's one unused `renderChapterTemplate` warning.
+The generated Next and Vinext browser outputs were checked: **59 files**, zero
+occurrences of the configured Supabase secret or Admin code. `.env.local` remains
+ignored and untracked. The 13-record link audit passed 243 local links and 102
+heading fragments after final result edits; whitespace checks passed.
+
+`node scripts/check-quotes-live.mjs --app` also passed against the final built
+Next app and live catalog: public reading, missing/forged Admin cookie denial,
+cross-origin denial, accepted signed Admin add/read/remove and zero remaining
+fixture rows. Its temporary loopback server closed afterward. No app was deployed.
+The subsequent server-only fixes were rechecked by the 105-case route/model
+selection, strict types, production builds and this live HTTP journey; the 32-case
+browser run verifies the final writing/CSS and mocked quote/Admin UI behavior.
+
+Commands (direct installed CLIs):
+
+```text
+node --test tests/writing.browser.mjs
+node --test tests/quotes.test.mjs tests/deep-thought-model.test.mjs tests/writing-model.test.mjs tests/writing-compatibility.test.mjs tests/account-scope.test.mjs tests/admin-access.test.mjs tests/line-pool.test.mjs tests/line-feedback.test.mjs
+node node_modules/eslint/bin/eslint.js app/os/writing-pages.tsx app/os/circle-os-shell.tsx app/os/admin/quote-editor.tsx app/os/quotes app/os/admin/quotes/route.ts app/os/admin/chapter-editor.tsx tests/quotes.test.mjs tests/writing.browser.mjs tests/deep-thought-model.test.mjs tests/line-feedback.test.mjs scripts/check-quotes-live.mjs
+node node_modules/typescript/bin/tsc --noEmit --incremental false --strict --skipLibCheck --allowJs --checkJs false --target ES2022 --lib ES2022,DOM --module ESNext --moduleResolution bundler --jsx react-jsx app/os/writing-pages.tsx app/os/quotes/quote-server.ts app/os/admin/quote-editor.tsx
+node node_modules/next/dist/bin/next build
+node node_modules/vinext/dist/cli.js build
+node scripts/check-quotes-live.mjs --write
+node scripts/check-quotes-live.mjs --app
+git -c core.safecrlf=false diff --check
+```
+
+### Attempts, measurements and limits
+
+Early assertions sampled Note after reload instead of opening Deep Thoughts,
+sampled frame growth before settling, and used an exact textarea label that
+included its controlled text; the harness now follows the actual Page/role.
+One intermediate broad run overlapped source HMR/build load and was not final
+verification. A clearing-edit assertion now permits extra accepted revisions
+while checking original and empty current text. An immediate native caret offset
+is sampled after layout has committed. An obsolete source-regex mode test was
+replaced by actual-component behavior, and boundary routing is browser-checked.
+
+A repeated small-phone check exposed a real transient Footer gap: the global
+reduced-motion duration transitioned every property, showing 0px before 26px.
+Adding a render-presence class did not solve it and was removed. Scoped writing
+Footers now set `transition-property: none`, retaining the shared Page motion
+and gap token; the focused 360x667 run then kept 26px before/after body scrolling.
+
+Live HTTP testing also caught two server integration issues that mocks did not:
+Next normalizes loopback IPs in Request.url, so origin checking now uses the
+actual Host with the request protocol, keeping host/port and cross-site rejection.
+A real NextRequest regression covers this. PostgREST rejected ordering an INSERT
+by a column absent from its returned projection; INSERT now selects its returned
+fields without a reading-order clause. Actual module and built HTTP add/remove
+checks passed afterward. Failed attempts and final runs left zero temporary rows.
+
+The measured resting frames are 346px (344px Page) for Note, Deep Thoughts,
+Habit and Protocol at both widths, with an 80px header-box gap. Deep History
+ceilings are 480px at 390x844 and 400.19px at 360x667, with one Body scroller.
+Existing Habit/Protocol rows still grow naturally. Screenshots inspected include
+`outputs/deep-thoughts-history-390.png` and `outputs/quote-admin-390.png`;
+motion/return and small-phone captures are retained under ignored `outputs/`.
+
+Admin navigation emits ResizeObserver loop notifications before opening Quotes.
+A separate isolated baseline loaded the unchanged HEAD shell, writer, CSS and
+Admin using Vite read overrides (no checkout or source replacement): `2bd8502`
+also emitted **10** notifications. The current Quotes control journey checks it
+adds no notifications after that navigation settles. This existing shared-route
+issue remains unresolved; no shared geometry/route engine was modified for it.
+
+Physical phones/keyboards, deployed app/session routes and live authenticated A/B
+quote-table sessions were not exercised. The hosted data checks certify the
+public/server quote path, not personal sync or beta readiness. The older legacy
+Note placeholder concern remains reproducible and unresolved. No personal data
+or immutable chapter/reading content changed. No further measured performance
+problem justified optimization; pagination fixes completeness rather than
+expanding a content budget. See [quote setup](QUOTES.md) and the
+[current contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1412-note-deep-thoughts-and-quotes---2026-11-03).
+
 ## Bounded Note pages (2026-11-03)
 
 ### Approval and setup

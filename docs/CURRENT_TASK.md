@@ -1,5 +1,96 @@
 # Current task
 
+## Habit task controls - 2026-11-03
+
+Approved fix implemented and locally verified: Add task is available on the
+normal Routine Page after Day One v3 without completing Habit Building. Habit
+discs/checkmarks match Tasks at 30px and 5x11px, with 44px touch areas. Five
+focused mobile browser cases, Next production build and targeted lint passed
+(one existing lint warning). Four Apps retain 346px frames and 48px top gaps.
+See [evidence and limits](USER_JOURNEY_TESTING.md#habit-task-controls-2026-11-03).
+Existing work is preserved; nothing staged, committed or deployed. Next:
+developer use/review of the local Habit controls. Earlier records follow.
+
+## Larger editable titles and tighter Page spacing - 2026-11-03
+
+Implemented the developer-approved 29px title/question and 18px content/answer
+scale on the named editable surfaces and Chapter previews. Shared label spacing
+is 48px; Main-to-Sub and Body-to-Footer use 25px. Note/Deep Thoughts Trash detail
+omits “In Trash” and its divider, with a 4px layout gap between Restore and Delete
+forever. Touch targets and deletion confirmation remain.
+
+45 distinct actual-component browser cases passed across the broad run and
+focused reruns; the final 4/4 includes mobile spacing audits and corrected
+button-shell measurements. Seventeen Page states per width measured 48px top
+gaps; Note/Deep Thoughts/Habit/Protocol still rest at equal 346px frames.
+Next production build, targeted lint and whitespace passed. See
+[verification and gaps](USER_JOURNEY_TESTING.md#editable-titles-and-shared-spacing-2026-11-03).
+Prior ResizeObserver warnings and physical-device/hosted gaps remain. All
+pre-existing work is preserved; nothing staged, committed or deployed. The
+development server remains stopped. Next: developer use of the approved sizes
+and spacing. Earlier entries retain their historical measurements.
+
+
+## Balance editable reading typography - 2026-11-03
+
+Implemented the developer-approved 24px main / 18px body scale only on editable
+reading surfaces: Note/Deep Thoughts and opened history/trash, Athena replies,
+Vision declarations, Week goals/steps, and short/long text Chapter questions
+with matching Workshop preview. Only font sizes change. Compact lists and
+reading-only pages retain their sizes; weights, spacing and behavior remain.
+
+Verified 43 distinct browser cases across the broad run and focused reruns,
+including reading/editing parity, saved writing, History/Trash, Chapter preview,
+reading-only exclusions and geometry. The broad run was 40/41; the blocked Note
+header case passed in the final 5/5 rerun after the 06:00 new-day splash.
+Next production build, targeted lint and whitespace passed. Four resting frames
+remain 346px with 80px header gaps at 360/390px. See [the evidence](USER_JOURNEY_TESTING.md#editable-reading-typography-2026-11-03).
+Existing resize notifications also occur with the new type rules removed;
+physical-device and hosted checks remain separate. Work remains uncommitted;
+nothing staged or deployed. Next: developer use of the local font-size changes.
+
+## Quiet Deep Thoughts writing - 2026-11-03
+
+Implemented the developer's request to remove routine saving/sent and
+recovered/discarded messages and the Discard draft control from Deep Thoughts.
+Draft recovery remains silent; clearing an unfinished answer persists an empty
+value. Send/Save changes, Next question and actual error alerts remain.
+Four focused actual-component browser journeys passed, including reload,
+clearing, delayed acceptance in normal motion and failed-save retry. Targeted
+lint and whitespace checks passed. See [the evidence](USER_JOURNEY_TESTING.md#quiet-deep-thoughts-writing-2026-11-03).
+Existing uncommitted work remains preserved; no staging, commit or deployment.
+Next: developer use of the updated local page. Prior scope and gaps follow.
+
+## Note, Deep Thoughts and managed quotes - 2026-11-03
+
+Status: explicitly approved scope implemented and verified for the bounded
+writing/quote scope. Today retains Note first and replaces the ordinary Thoughts
+composer with Deep Thoughts. Answers stay visible after Send with Next question.
+History/Trash matches Note, preserving source links, older account entries,
+unsent recovery, revisions and the existing bounded geometry. The label opens
+one managed quote, returning to the same question/answer.
+
+The existing Admin gains Quotes add/remove controls. The developer applied the
+Supabase SQL and configured the ignored server-only key. Live public read,
+denied public writes, server add/remove and zero temporary rows passed. The
+focused model/route suite passed 105/105 and actual-component browser journeys
+passed 32/32. Strict types, selected lint (one existing warning), both production
+builds and the built Next quote routes against the live catalog passed. Client
+asset checks found no configured secret values in 59 files. Exact evidence and
+attempts are in [the journey record](USER_JOURNEY_TESTING.md#deep-thoughts-and-managed-quotes-2026-11-03).
+Setup is in [Quotes](QUOTES.md); the [current contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1412-note-deep-thoughts-and-quotes---2026-11-03)
+supersedes dated ordinary-Thoughts controls below.
+
+Branch `paing-branch`, starting HEAD `2bd8502`, initially clean tracked tree.
+All changes remain reviewable and uncommitted. No staging, push, deployment,
+personal import or lifestyle sync. The existing Admin navigation resize
+notifications also reproduce on the unchanged starting commit; legacy Note
+placeholder, physical-device and hosted-session gaps remain separate.
+
+Next: developer use/review of Note, Deep Thoughts and Admin Quotes. Older
+snapshots below retain their unique checks and superseded
+instructions; they do not grant new scope.
+
 ## Bounded Note pages - 2026-11-03
 
 Status: explicitly approved Note-only changes implemented and locally verified.
