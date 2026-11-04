@@ -14,6 +14,7 @@ import {
   PROTOCOL_DEFAULT_NAME,
   endProtocolRun,
   mergeServerState,
+  normalizeState,
   protocolPhaseRecords,
   protocolStanding,
   sealProtocolDay,
@@ -21,6 +22,7 @@ import {
   setProtocolDays,
   startProtocolDraft,
   toggleProtocolItem,
+  toggleProtocolRecordItem,
   updateProtocolItem,
 } from "../app/os/circle-os-model.js";
 import { goalById, setWeekGoal, weekGoal } from "../app/os/goal-model.js";
@@ -32,6 +34,53 @@ function phaseWithOneTerm(id, days = 3) {
   state = updateProtocolItem(item.state, id, item.id, "Write one line");
   return beginProtocolRun(state, id, "2026-08-12");
 }
+
+function sealedPhase() {
+  let state = phaseWithOneTerm("correction", 1);
+  state = addProtocolItem(state, "correction", "negotiable", "extra").state;
+  state = updateProtocolItem(state, "correction", "extra", "Read a page");
+  state = toggleProtocolItem(state, "correction-write", "2026-08-12");
+  return sealProtocolDay(state, "2026-08-12");
+}
+
+test("ordinary ticks reject finished/archived phases and invalid or out-of-range dates", () => {
+  const active = phaseWithOneTerm("guard", 3);
+  for (const date of ["bad-date", "2026-02-30", "2026-08-11", "2026-08-15"]) {
+    assert.equal(toggleProtocolRecordItem(active, "guard", "guard-write", date), active);
+  }
+  const future = structuredClone(active);
+  future.protocol.runs.guard.startDateKey = "2099-01-01";
+  assert.equal(toggleProtocolRecordItem(future, "guard", "guard-write", "2099-01-01"), future);
+  const finished = sealedPhase();
+  assert.equal(toggleProtocolRecordItem(finished, "correction", "correction-write", "2026-08-12"), finished);
+  const archived = archiveProtocolRun(finished, "correction");
+  assert.equal(toggleProtocolRecordItem(archived, "correction", "correction-write", "2026-08-12"), archived);
+  const before = structuredClone(finished);
+  for (const restored of [normalizeState(JSON.parse(JSON.stringify(finished))), mergeServerState(finished, before)]) {
+    assert.equal(toggleProtocolRecordItem(restored, "correction", "correction-write", "2026-08-12"), restored);
+    assert.deepEqual(restored.protocol.completions, before.protocol.completions);
+    assert.deepEqual(restored.protocol.seals, before.protocol.seals);
+  }
+});
+
+test("retired correction receipts remain intact through reload and merge", () => {
+  const state = sealedPhase();
+  const receipt = {
+    id: "existing-receipt", runId: "correction", dateKey: "2026-08-12",
+    correctedAt: "2026-08-13T07:00:00.000Z", updatedAt: "2026-08-13T07:00:00.000Z",
+    terms: [{ id: "correction-write", text: "Write one line", kind: "non-negotiable" }],
+    before: { completions: {}, seal: null }, after: { completions: {}, seal: null },
+  };
+  state.protocol.corrections[receipt.id] = receipt;
+  const reloaded = normalizeState(JSON.parse(JSON.stringify(state)));
+  const older = structuredClone(state);
+  delete older.protocol.corrections[receipt.id];
+  for (const merged of [mergeServerState(reloaded, older), mergeServerState(older, reloaded)]) {
+    assert.deepEqual(merged.protocol.corrections[receipt.id], receipt);
+    assert.deepEqual(merged.protocol.completions, state.protocol.completions);
+    assert.deepEqual(merged.protocol.seals, state.protocol.seals);
+  }
+});
 
 test("a completed phase is read from its real completion records", () => {
   let state = phaseWithOneTerm("complete", 3);

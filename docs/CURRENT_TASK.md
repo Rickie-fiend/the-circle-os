@@ -1,5 +1,145 @@
 # Current task
 
+## Tighter past-phase spacing - 2026-11-03
+
+Approved CSS refinement implemented and locally verified. Read-only term rows
+no longer reserve a 44px control height or vertical padding. Terms and Remove
+use the same 0.65rem gap, measured at 10.39px. Remove keeps a 44x44px target
+with its label at the top. Six affected mobile browser cases passed; targeted
+test lint and the Next production build passed. Counts, confirmation, scrolling and records retain their
+behavior. Four resting frames remain 346px with 48px header gaps. See
+[verification](USER_JOURNEY_TESTING.md#tighter-past-phase-spacing-2026-11-03).
+
+Branch `paing-branch`, HEAD `a4cd328`; all 16 already-modified paths are preserved.
+Runtime change is scoped CSS only, with existing browser tests and owning records
+updated. No shared tokens, personal data, staging, commit or deployment.
+Next: developer review of the tighter list on the affected device. Previous
+historical-term/device/hosted/sync gaps and grey-input-box confirmation remain.
+
+## Bounded Protocol past phases - 2026-11-03
+
+Approved cleanup implemented and locally verified. Expanded Past phases uses
+Note's 480px/60dvh frame ceiling, never below the shared minimum; only Body
+scrolls, leaving Header/Footer fixed. Phase titles retain the full days-kept
+summary. Individual term counts use `1/7`/`0/7`, without white row dividers.
+Different phases retain separation. Running/draft Pages keep natural growth.
+
+82/82 focused model/spacing checks and 10/10 distinct actual-component browser
+cases passed; the two affected cases passed again after adding a running-phase
+return check. Both production builds passed and targeted lint is clean.
+Resting frames remain 346px with 48px
+header gaps; long history caps at 400.19px on 360x667 and 480px on 390x844.
+See [verification and limits](USER_JOURNEY_TESTING.md#bounded-protocol-past-phases-2026-11-03).
+
+Branch `paing-branch`, HEAD `a4cd328`; 15 existing modified paths preserved,
+with DESIGN.md also updated for the explicitly approved history exception.
+Nothing staged, committed or deployed. Next: developer review of the cleaned
+Past phases on the affected device. Historical term versions, other remaining
+bug/device/hosted/sync gaps and the prior input-grey-box confirmation remain
+separate. Earlier unbounded-history instructions below are superseded.
+
+## Protocol simplification and input scrollbars - 2026-11-03
+
+The developer approved the input fix and requested removal of Correct last day.
+The action, editor, dedicated model write functions and shell wiring are removed.
+Finished-phase terms remain read only. Already-saved correction receipts remain
+intact through normalization and merge. Both Protocol term inputs hide native
+scrollbar chrome while wrapped text grows downward.
+
+120/120 focused model/account/setup/phase checks and 9/9 actual-component browser
+cases passed at 360, 390 and 1280px. Both production builds passed after final
+cleanup. Targeted lint has no errors and the existing
+shell unused-import warning. Resting Note, Deep Thoughts, Habit and Protocol
+remain 346px with 48px header gaps. See
+[checks and limits](USER_JOURNEY_TESTING.md#protocol-simplification-and-input-scrollbars-2026-11-03).
+
+Branch `paing-branch`, HEAD `a4cd328`; all 15 pre-existing modified paths remain
+preserved/refined within the approved scope. Nothing staged, committed or
+deployed. The reported grey box was not visible in isolated Chromium: native
+scrollbar attribution remains an inference. Next: developer confirmation of
+the input in the affected browser. Earlier correction-editor instructions below
+are superseded. Past-phase grouping/labels, full term history and the previous
+physical-device/hosted/sync and other bug gaps remain separate work.
+
+## Protocol correction protections - 2026-11-03
+
+Approved bounded slice implemented and locally verified. Finished-phase term
+rows are read only. `Correct last day` opens the latest completed phase's
+scheduled final date, with explicit Save correction, Cancel and Phases back.
+Returning keeps Past phases expanded. Draft selections write nothing; accepted
+corrections retain before/after completion and seal evidence with actual time.
+Required-term changes explicitly unseal; optional changes leave the seal alone.
+Repeated/unchanged saves do nothing. Invalid dates, archived targets and stale
+edits are rejected. Running-day controls and durations retain their behavior.
+
+123/123 focused model/account/setup/phase checks and 17/17 distinct mobile browser
+cases passed. Two affected cases passed again with actual offline saving at
+360px. Both production builds, targeted lint (one existing shell warning) and
+whitespace checks passed. Four resting frames remain 346px with 48px header gaps;
+long correction terms grow naturally without an inner scroller. Exact checks,
+attempts and limits are in
+[the evidence](USER_JOURNEY_TESTING.md#protocol-correction-protections-2026-11-03).
+
+Branch `paing-branch`, HEAD `a4cd328`. All 11 pre-existing modified paths remain
+preserved, with the approved additions reviewable and uncommitted. Nothing
+staged, deployed, imported or changed remotely. Bug 16 is partially resolved;
+past-phase separation/labels, full term history, other-day corrections, bug 13,
+ResizeObserver, legacy placeholder, two recorded Week source assertions and
+physical-device/hosted/sync gaps remain. Next: developer use/review of the local
+History and explicit Protocol correction flow before another bounded slice.
+Earlier snapshots retain their evidence and superseded interaction rules.
+
+## Habit History page and flexible entry - 2026-11-03
+
+Approved refinement implemented and locally verified. Record shows today's
+completions/Undo and opens a separate History Page from its top-right label.
+Past groups scroll within the shared writing ceiling; Yesterday has no date,
+older days do. Dropdown, wording notices and dark divider are removed. Snapshots
+and internal provenance remain unchanged.
+
+New habit accepts action, time/location or identity first. A name is required
+to save as active; unnamed work stays a hidden recoverable draft, reopened by
+New habit after leaving or reload. Routine's editable focus/title is unchanged.
+
+114/114 focused model/account/spacing/setup checks and 11/11 actual-component
+mobile cases passed. Both production builds, targeted lint (one existing warning),
+whitespace and document checks passed. Details are in
+[the evidence](USER_JOURNEY_TESTING.md#habit-history-page-and-flexible-entry-2026-11-03).
+Resting App Boxes remain 346px with 48px header gaps. Long History measures
+400.19px at 360x667 and 480px at 390x844, with only Body scrolling.
+
+Branch `paing-branch`, starting HEAD `a4cd328`; all 11 pre-existing modified
+paths are preserved and refined within scope. Nothing staged, committed or
+deployed. Protocol's direct historical toggle, bug 13 color/title, ResizeObserver,
+legacy placeholder, two recorded Week source assertions and physical-device/
+hosted/sync gaps remain open. Next: developer use/review of the new History and
+unordered Habit entry, then a separately reviewed Protocol correction slice.
+Earlier snapshots retain historical checks and superseded picker/notices rules.
+
+## Habit dated history - 2026-11-03
+
+Approved slice implemented and locally verified. Record retains today's Undo
+and adds Past days, initially Yesterday. New completion snapshots keep text,
+action, cue and identity through later edits/archiving. Legacy entries remain
+reachable with clear missing-original-wording notices. Past days are read only;
+Week's counts and task date/wording rules retain their existing meaning.
+
+101/101 focused model/account checks and 7/7 actual-component mobile browser
+cases passed. Both production builds passed. Four resting App Boxes remain
+346px with 48px header gaps; real rows grow without inner scrolling. Exact
+commands, attempts and remaining limits are in
+[the evidence](USER_JOURNEY_TESTING.md#habit-dated-history-2026-11-03).
+The developer confirmed the preceding Habit task controls in use. No new
+physical-device or hosted history verification is claimed.
+
+Branch `paing-branch`, starting HEAD `a4cd328`, initially clean. Changes remain
+uncommitted; nothing staged or deployed. Protocol's direct historical toggle,
+bug 13 color/title reports, ResizeObserver warnings and two pre-existing Week
+source-assertion failures remain open. Past corrections, full definition history,
+task date migration and safe sync remain separate scopes. Next: developer use
+of Record's dated history, then review Protocol's deliberate correction flow.
+Earlier entries retain their unique evidence and superseded startup Git state.
+
 ## Habit task controls - 2026-11-03
 
 Approved fix implemented and locally verified: Add task is available on the

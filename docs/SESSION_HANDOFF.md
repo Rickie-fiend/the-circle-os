@@ -1,5 +1,278 @@
 # Session handoff
 
+## 2026-11-03 - Tighter past-phase spacing
+
+**Approval and state.** The developer approved using the existing roughly 10px
+page rhythm between past terms and before Remove, dropping unused touch-height
+spacing from read-only rows and keeping Remove's 44px target/top-aligned label.
+Branch `paing-branch`, HEAD `a4cd328`; 16 modified paths at startup preserved.
+Scoped CSS, existing browser checks, Page standard, decision/evidence and
+continuity records are updated. Nothing staged, committed, deployed or changed
+remotely; no personal evidence or shared tokens changed.
+
+**Verified.** Six affected actual-component mobile browser cases passed at
+360x667/390x844 with reduced/normal motion. Gaps measure 10.39px between terms
+and before Remove; rows are 20.625px and Remove remains 44x44px with its label
+2px from the top. Two-tap removal/confirmation preserves completion evidence.
+Counts, read-only protection, touch/wheel scrolling, resize, reload and return
+to the running phase pass. Four resting frames remain 346px with 48px header
+gaps; history ceilings remain 400.19px/480px. Targeted lint and the Next production
+build passed, and the
+390px screenshot was inspected. Commands, build results, timing fixes and limits
+are in [the evidence](USER_JOURNEY_TESTING.md#tighter-past-phase-spacing-2026-11-03).
+
+**Attempts and next action.** Test-only waits now allow App-back and frame
+growth animations to finish before tapping/measuring; the final selection
+passes without further runtime changes. No additional optimization was justified.
+Next is developer review of the tighter list. Physical-device/hosted/sync gaps,
+historical term versions, unrelated prior bug/test gaps and grey-input-box
+confirmation remain separate. Earlier unique verification evidence is retained
+below; no broader work or deployment is authorized by this handoff.
+
+## 2026-11-03 - Bounded Protocol past phases
+
+**Approval and Git context.** The developer approved the exact Past phases
+cleanup: Note's height limit/Body scrolling, compact term counts, full phase
+summary retained and white row dividers removed. Branch `paing-branch`, HEAD
+`a4cd328`. Fifteen modified tracked paths existed at startup; their work is
+preserved. This slice changes Protocol rendering/scoped CSS, browser checks,
+DESIGN, Page standard and decision/bug/journey/continuity records. Nothing staged,
+committed, pushed, deployed or changed remotely; no personal evidence touched.
+
+**Completed and verified.** Expanded Past phases reuses the existing Note
+480px/60dvh frame ceiling, never below the shared minimum. Body alone scrolls;
+Header/Footer stay fixed. Closing returns to natural collapsed sizing. Draft
+and running phases retain natural growth. Each phase keeps its full days-kept
+summary under the title; terms show `1/7`/`0/7` without white row lines. Different
+phases remain separated. Records and count calculations are unchanged.
+
+82/82 focused model/spacing checks and 10/10 distinct actual-component browser
+cases passed. The two history cases passed again after removing an unused test
+alias and adding an active-phase history/return check; counts overlap. Targeted
+lint is clean and both production builds passed. Mobile cases cover touch/wheel scrolling, empty/collapsed states,
+12 finished/early-ended phases, last-record reachability, close/reopen, resize,
+reload, unchanged evidence and return to a running eight-term phase. Exact
+commands and build/check results are in
+[the journey record](USER_JOURNEY_TESTING.md#bounded-protocol-past-phases-2026-11-03).
+
+**Invariants and limits.** Resting Note, Deep Thoughts, Habit and Protocol remain
+346px with 48px header gaps. Expanded history measures 400.19px at 360x667 and
+480px at 390x844, with one Body scroller and fixed Header/Footer offsets. A 560px
+viewport retains the 346px minimum. Inspected the top and bottom 390px screenshots.
+Shared tokens, active-term sizing, local-first records, 06:00 day boundary and
+immutable chapters/readings are unchanged. No additional measured optimization
+was justified. DESIGN/Page rules record the explicitly approved finished-history
+exception; earlier unbounded-history statements are superseded.
+
+**Next action.** Developer review of Past phases on the affected device.
+Physical-device/hosted/sync checks, historical term versions and other prior
+bug/test gaps remain separate. The earlier grey-input-box report still awaits
+confirmation in its affected browser. This UI slice does not certify beta
+readiness or authorize broader work. Earlier evidence remains below.
+
+## 2026-11-03 - Protocol simplification and input scrollbars
+
+**Approval and Git context.** The developer approved the input-scrollbar fix and
+explicitly requested removal of Correct last day as unnecessary. Branch
+`paing-branch`, HEAD `a4cd328`; all 15 already-modified paths are preserved/refined.
+This scope covers Protocol UI/model/shell/CSS, affected tests and owning records.
+No staging, commit, push, deployment, import or remote configuration changes.
+
+**Completed and verified.** Removed the correction action/editor, dedicated
+draft/write functions, shell props/callback and transient navigation state.
+Finished-phase rows remain read only; ordinary active-day ticks/seals, phase
+creation and the five durations retain their behavior. Existing correction
+receipts remain accepted by normalization and merge. Both Protocol term inputs
+hide native scrollbar chrome while wrapped text grows naturally downward.
+
+Final focused model/account/setup/phase selection passed **120/120**. Final
+actual-component browser selection passed **9/9**, covering read-only finished
+history, no correction controls, reload, native-scrollbar suppression, wrapped
+text, phase creation/current-day ticks and geometry at 360/390px plus wide-input
+checks at 1280px. Targeted lint has no errors and the existing shell unused-import
+warning. Next and Vinext production builds passed after final cleanup. Exact
+commands, attempts and limits are in
+[the journey record](USER_JOURNEY_TESTING.md#protocol-simplification-and-input-scrollbars-2026-11-03).
+
+**Attempts, invariants and limits.** Initial new-test failures were fixture-clock
+and measurement-selector issues, corrected before passing reruns. Four resting
+frames remain 346px with 48px header gaps; long finished history grows to 819.56px
+without an inner scroller. Mobile term inputs grow from 20px to 60px without
+clipping. Inspected the 390px screenshot. No shared geometry/type/gap tokens,
+06:00 day boundary, personal evidence, chapter/reading versions or cloud protocol
+changed. No measured issue justified more optimization. The stylesheet-size
+question received a read-only audit; no broad CSS split or consolidation occurred.
+
+**Durable records and next action.** Updated Page standard, architecture,
+decisions, bug/journey evidence and continuity. The newest decision supersedes
+older correction-editor instructions below. The grey box was not visible in the
+baseline isolated browser, so native-scrollbar attribution remains an inference:
+next is developer confirmation in the affected browser. Physical-device/native
+keyboard/hosted/sync gaps, past-phase labels/grouping, full term history and
+previous unrelated bug/test gaps remain. No further implementation is authorized
+by this handoff; earlier unique evidence remains below.
+
+## 2026-11-03 - Protocol correction protections
+
+**Approval and Git context.** The developer requested History review followed by
+Protocol protections, then explicitly approved the bounded proposal: read-only
+past terms, dated last-day editor, explicit saves/cancellation, model guards,
+retained evidence, tests and owning/continuity records. Branch `paing-branch`,
+HEAD `a4cd328`; all 11 pre-existing modified Habit/history paths are preserved.
+This slice changes model, shell, Protocol page, scoped CSS, three existing test
+files, Page standard, bug record, architecture, decisions and continuity/evidence.
+Nothing staged, committed, deployed, imported or changed remotely.
+
+**Completed and verified.** Past rows no longer change results on tap. The latest
+completed phase offers Correct last day on its actual scheduled final date.
+Selections remain transient until Save correction. Cancel and Phases back
+discard them; returning keeps Past phases expanded. Each accepted correction
+retains before/after completions and seals in an immutable receipt, including
+actual correction time and missing-evidence nulls. Required changes explicitly
+unseal; optional changes retain the original seal. Reticking never silently
+reseals, and phase completion/end time stay intact. Repeated/unchanged saves and
+invalid, future, out-of-range, archived or stale targets are rejected.
+
+Final checks: **123/123** focused model/account/setup/phase cases, **17/17** distinct
+actual-component mobile cases, and **2/2** affected reruns adding actual offline
+saving at 360px. The latter overlap the 17 cases. Both Next and Vinext production
+builds passed. Targeted lint has only the existing shell unused-import warning;
+whitespace passed with existing line-ending warnings. Exact commands and evidence
+are in [the journey record](USER_JOURNEY_TESTING.md#protocol-correction-protections-2026-11-03).
+
+**Attempts and invariants.** Browser work caught a collapsed Past phases section
+on return, an undersized new back control, and shared-button completion state
+carrying into a second editor visit. These were fixed and reverified. Test setup
+also needed the changed accessible name and back label. The first Next build
+exposed nullable-date inference; the explicit guard passes the fresh build.
+Resting Note, Deep Thoughts, Habit and Protocol remain 346px with 48px header gaps.
+Long correction terms measure 1103.92px at 360x667 with no inner/horizontal scroll;
+shared sizing/type/gap tokens are unchanged. The 06:00 Circle day, local evidence,
+original seals and immutable chapter/reading records remain. No measured problem
+justified further optimization.
+
+**Gaps and next action.** Bug 16's accidental count changes are locally resolved;
+its past-phase grouping/labels and full prospective term history remain open,
+alongside other-day/early-ended-phase corrections. Bug 13's remaining reports,
+ResizeObserver, legacy placeholder, two historical Week assertions and physical
+phones/hosted sessions/real sync/recovery remain unverified. The new receipt map
+uses existing local persistence and timestamp merge, not the planned durable
+Supabase sync protocol. Beta readiness is not certified. Developer use/review of
+History and deliberate corrections is next; further implementation needs its own
+reviewed scope. Earlier entries remain historical evidence.
+
+## 2026-11-03 - Habit History page and flexible entry
+
+**Approval and Git context.** The developer approved replacing the past-day
+picker with a separate scrollable History Page, removing the wording notices
+and divider, keeping Yesterday without its date and preserving today's Undo.
+They also explicitly requested any-field-first Habit entry with the name
+required to save/remain visible. Branch `paing-branch`, starting HEAD `a4cd328`.
+All 11 already-modified paths remain preserved/refined: model, shell, scoped CSS,
+two tests, Page standard, architecture, decisions and continuity/evidence records.
+Nothing staged, committed, deployed, imported or changed remotely.
+
+**Completed and verified.** Record now shows today only; top-right History opens
+past-day groups on the shared App back. The body scrolls within the same ceiling
+as writing while Header stays fixed. Yesterday appears alone; older days show
+dates. There is no dropdown, dark divider or wording notice. Snapshot/provenance
+data remains intact internally, and browsing does not write records or replay
+outcomes. Back returns to Record with its existing Undo actions.
+
+New habit shows action, time/location and identity together. Any field can be
+first. An unnamed entry remains a locally recoverable draft, hidden on leaving
+and reopened by New habit after reload. It cannot count/complete as an active
+habit. A committed nonblank name activates it with its other fields preserved.
+Clearing a previously saved habit retains archive behavior. The Routine's
+separate editable daily focus/title remains unchanged.
+
+The focused model/account/spacing/setup selection passed **114/114**; the final
+actual-component mobile selection passed **11/11**, including normal-motion
+History, actual wheel scrolling, short-phone ceiling, empty History, today Undo,
+cue-first/identity-first entry and recovery. Both production builds passed after
+the last fix. Targeted lint has one existing unused-import warning; whitespace,
+nine added local links/fragments and earlier-record preservation checks passed.
+Exact commands, attempts and limits are in
+[the evidence](USER_JOURNEY_TESTING.md#habit-history-page-and-flexible-entry-2026-11-03).
+
+**Attempts, gaps and invariants.** One old source-wiring assertion needed the
+new back-Page condition. The first browser run was 8/9 because it measured the
+History ceiling before the shared frame settled; waiting for the measured frame
+fixed the check without a runtime sizing change. The final 11-case run passed.
+An added compatibility check exposed optional-field loss when recreating an
+older empty placeholder. It now resumes as a draft without clearing its fields;
+all final model/browser/Next checks passed again after that fix.
+Note, Deep Thoughts, Habit and Protocol still rest at 346px with 48px header gaps.
+Long History is 400.19px at 360x667 and 480px at 390x844; only Body scrolls. Real
+Habit/Protocol rows keep natural growth. No shared geometry/type/gap token,
+immutable chapter/reading, delivery budget, Circle-day or acknowledgement rule
+changed. No measured performance issue justified optimization.
+
+Protocol's direct historical toggle, bug 13 color/title, legacy placeholder,
+ResizeObserver and two recorded Week source assertions remain open. Physical
+phones/touch scrolling, hosted sessions, real sync/backup/recovery and beta
+readiness remain unverified. Further definition history, past corrections and
+task date/timezone migration remain separate scopes. Architecture, Page standard,
+decisions, current task and journey evidence record the revised contracts; the
+older picker/notices entries below are historical.
+
+**Next action.** Developer use/review of History and unordered Habit entry, then
+a separately reviewed Protocol correction/terms/seal proposal. No further
+implementation, staging, deployment or personal migration is authorized here.
+
+## 2026-11-03 - Habit dated history
+
+**Approval and Git context.** The developer confirmed the previous Habit task
+controls in use, then explicitly approved the bounded Habit history proposal:
+recorded-day browsing, new completion wording snapshots, honest legacy notices,
+unchanged today Undo, model/browser checks and owning/continuity records. Branch
+`paing-branch`, starting HEAD `a4cd328`, initially clean. Runtime edits are in
+`circle-os-model.js`, `circle-os-shell.tsx` and scoped `os-app.css`; tests extend
+the existing Habit model and actual-component browser files. Nothing staged,
+committed, deployed, imported or changed remotely; no personal data was edited.
+
+**Completed and verified.** Record keeps Today so far and its Undo controls.
+Past days uses a 44px native picker, initially Yesterday. Newly ticked completions
+store text/action/cue/identity; renames and archives leave snapshots unchanged.
+Undo writes false without deleting its snapshot. A new tick records its current
+wording. Legacy entries explicitly identify missing original wording and label
+any displayed current wording. Archived and missing-definition completions stay
+reachable. Past browsing has no correction actions and does not write records or
+replay outcomes. Today's Undo and Week counts keep their existing reader.
+
+The focused model/account selection passed **101/101** and the final mobile
+browser selection passed **7/7**, at 360x844/390x844 with synthetic isolated
+accounts and blocked external traffic. Tests cover reload, archived/orphan/empty
+and legacy wording, stale merges, false-value preservation, day navigation,
+today Undo and unchanged task controls. Both Next and Vinext production builds
+passed. Targeted lint has no errors and one existing shell unused-import warning.
+Exact commands, attempts, logs and limits are in
+[the journey evidence](USER_JOURNEY_TESTING.md#habit-dated-history-2026-11-03).
+
+**Attempts and gaps.** The first browser run was 6/7 because an existing test
+clicked during the button's busy success state; it now waits for readiness.
+Both subsequent runs passed. The first Vinext command used the wrong installed
+CLI path; the corrected command passed. An expanded model/Week run was 121/123,
+with two unchanged source-assertion failures (newline/font-ready and the existing
+Week important font rule). Protocol's direct last-day historical toggle, bug 13
+color/title reports, legacy placeholder and ResizeObserver warnings remain.
+Physical phones/native pickers, normal-motion history, hosted sessions, real
+acknowledgements/recovery and cross-device sync remain unverified. No old wording
+is reconstructed; uncompleted-day definition versions, dated correction controls,
+task date/timezone migration and safe cloud sync remain later work.
+
+**Invariants and durable records.** Note, Deep Thoughts, Habit and Protocol retain
+346px resting frames and 48px header gaps at both widths. Real rows grow without
+inner scrolling. No shared geometry token, budget, chapter version or reading
+edition changed. Local-first acknowledgement rules and the 06:00 day remain.
+Updated architecture, Page standard, decisions, current task and journey evidence.
+No measured performance issue justified optimization. Phase 1/beta are not certified.
+
+**Next action.** Developer use/review of Record's dated history, then a separate
+proposal for deliberate Protocol corrections and preserved historical terms/seals.
+That further implementation is not authorized by this slice. Earlier snapshots
+retain unique evidence; their old Git context is historical.
+
 ## 2026-11-03 - Habit task controls
 
 **Approval and scope.** The developer approved restoring Add task on the normal

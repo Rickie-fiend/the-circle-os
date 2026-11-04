@@ -47,10 +47,11 @@ import {
   canBeginProtocolRun,
   completeTask,
   dayRecord,
+  habitHistoryDates,
+  habitHistoryRecord,
   discardEmptyProtocolItem,
   endProtocolRun,
   protocolDay,
-  latestCompletedProtocol,
   protocolPhaseRecords,
   protocolToday,
   renameProtocolRun,
@@ -63,7 +64,6 @@ import {
   setDreamlineStepDone,
   startDreamline,
   toggleProtocolItem,
-  toggleProtocolRecordItem,
   updateProtocolItem,
   previousDateKey,
   reopenTask,
@@ -946,7 +946,7 @@ export type CircleState = {
         action: string;
         cue: string;
         identity: string;
-        status: "active" | "archived";
+        status: "active" | "archived" | "draft";
         createdAt: string;
         updatedAt: string;
         setupRunId?: string;
@@ -961,6 +961,12 @@ export type CircleState = {
         completed: boolean;
         completedAt: string | null;
         updatedAt: string;
+        snapshot?: {
+          text: string;
+          action: string;
+          cue: string;
+          identity: string;
+        };
       }
     >;
   };
@@ -1051,6 +1057,7 @@ export type CircleState = {
     runs: Record<string, Record<string, unknown>>;
     completions: Record<string, Record<string, unknown>>;
     seals: Record<string, Record<string, unknown>>;
+    corrections: Record<string, Record<string, unknown>>;
   };
   evidence: {
     localRevision: number;
@@ -1939,7 +1946,7 @@ export function TodayExperience() {
   const deepWritingActiveMs = useRef(0);
   const deepWritingFocusStartedAt = useRef<number | null>(null);
   const thoughtTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const routineBack = useAppBack<"habit" | "yesterday">("habit");
+  const routineBack = useAppBack<"habit" | "yesterday" | "history">("habit");
   const habitMode = routineBack.side;
   const [newProtocolItemId, setNewProtocolItemId] = useState<string | null>(null);
   const [sealedProtocolDay, setSealedProtocolDay] =
@@ -2531,7 +2538,10 @@ export function TodayExperience() {
       ? { ...habitBuildingRun, status: "completed" as const }
       : habitBuildingRun;
   const habits = Object.values(state.habits.definitions)
-    .filter((habit) => habit.status === "active")
+    .filter((habit) =>
+      (habit.status === "active" && Boolean(habit.text.trim())) ||
+      ((habit.status === "draft" || habit.status === "active") && habit.id === newHabitId),
+    )
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
   useEffect(() => {
     const publication = completedHabitSetupPublication;
@@ -2595,9 +2605,12 @@ export function TodayExperience() {
       return !step.dateKey || step.dateKey === dateKey;
     })
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
-  // Habit shows one finished day behind the label, not a week of dots.
+  // Today keeps its Undo controls. Past days read the same completion records
+  // without exposing correction actions or rewriting their original wording.
   const yesterdayKey = previousDateKey(dateKey);
-  const yesterday = dayRecord(state, yesterdayKey);
+  const historyRecords = habitHistoryDates(state, dateKey)
+    .map((day) => habitHistoryRecord(state, day))
+    .filter((record) => record.total > 0);
   const todaySoFar = dayRecord(state, dateKey);
 
   // Habit leads this App Box and Protocol is one swipe across. Habits and Tasks
@@ -2613,7 +2626,6 @@ export function TodayExperience() {
   );
   const protocol = protocolToday(state, dateKey);
   const protocolRun = activeProtocolRun(state);
-  const completedProtocol = latestCompletedProtocol(state);
   const phaseRecords = protocolPhaseRecords(state);
 
   useEffect(() => {
@@ -2974,13 +2986,16 @@ export function TodayExperience() {
   }
 
   function beginNewHabit() {
-    const existing = habits.find((habit) => !habit.text.trim());
+    const existing = Object.values(state.habits.definitions).find(
+      (habit) => habit.status === "draft" || (habit.status === "active" && !habit.text.trim()),
+    );
     if (existing) {
+      updateState((current) => addHabitDefinition(current, existing.id, { draft: true }).state);
       setNewHabitId(existing.id);
       return;
     }
     const id = freshInlineEditorId("habit");
-    updateState((current) => addHabitDefinition(current, id).state);
+    updateState((current) => addHabitDefinition(current, id, { draft: true }).state);
     setNewHabitId(id);
   }
 
@@ -3020,16 +3035,19 @@ export function TodayExperience() {
     );
   }
 
-  function finishHabitEdit(id: string) {
+  function finishHabitEdit(id: string, leavingRow = false) {
     updateState((current) => {
       const habit = current.habits.definitions[id];
       if (!habit) return current;
+      // Moving among the three fields must not discard an unnamed draft.
+      // Only leaving the whole row may archive a cleared, previously saved habit.
+      if (!leavingRow && !habit.action.trim()) return current;
       return discardEmptyHabit(
         updateHabitDefinition(current, id, habit.action || ""),
         id,
       );
     });
-    setNewHabitId((current) => (current === id ? null : current));
+    if (leavingRow) setNewHabitId((current) => (current === id ? null : current));
   }
 
   function changeTask(id: string, text: string) {
@@ -4351,20 +4369,41 @@ export function TodayExperience() {
         ) : activeHabitChapter && activeHabitRun ? (
           <section className="os-habit" aria-label="Routine session">
             <ChapterPlayer
-              className={`os-habit-session${routineBack.className ? ` ${routineBack.className}` : ""}`}
+              className={`os-habit-session${habitMode === "history" ? " is-history" : ""}${routineBack.className ? ` ${routineBack.className}` : ""}`}
               definition={activeHabitChapter}
               key={activeHabitChapter.id}
               idleLabel={
                 <button
-                  aria-pressed={habitMode === "yesterday"}
+                  aria-pressed={habitMode !== "habit"}
                   className="os-card-label os-habit-mode-toggle"
-                  onClick={toggleHabitMode}
+                  onClick={habitMode === "history"
+                    ? (event) => routineBack.flip("yesterday", undefined, event.currentTarget)
+                    : toggleHabitMode}
                   type="button"
                 >
-                  {habitMode === "yesterday" ? "Record" : "Routine"}
+                  {habitMode === "history" ? <><span aria-hidden="true">‹</span> Record</>
+                    : habitMode === "yesterday" ? "Record" : "Routine"}
                 </button>
               }
-              idleBody={habitMode === "yesterday" ? (
+              idleBody={habitMode === "history" ? (
+                <section className="os-habit-history-list" aria-label="Habit history">
+                  {historyRecords.length ? historyRecords.map((record) => (
+                    <section className="os-habit-history-day" key={record.dateKey} aria-label={record.dateKey}>
+                      <p className="os-record-label">
+                        {record.dateKey === yesterdayKey ? "Yesterday" : record.dateKey}
+                      </p>
+                      <div className="os-yesterday-list">
+                        {record.habits.map((habit) => (
+                          <p className="os-yesterday-row" key={habit.id}>{habit.text}</p>
+                        ))}
+                        {record.tasks.map((task: { id: string; text: string }) => (
+                          <p className="os-yesterday-row is-task" key={task.id}>{task.text}</p>
+                        ))}
+                      </div>
+                    </section>
+                  )) : <p className="os-yesterday-empty">No past records yet.</p>}
+                </section>
+              ) : habitMode === "yesterday" ? (
                 <section className="os-habit-body-session os-yesterday" aria-label="Habit record">
                   <p className="os-record-label">Today so far</p>
                   {todaySoFar.total ? (
@@ -4405,20 +4444,6 @@ export function TodayExperience() {
                   ) : (
                     <p className="os-yesterday-empty">Nothing completed yet today.</p>
                   )}
-                  <hr className="os-record-seam" />
-                  <p className="os-record-label">Yesterday</p>
-                  {yesterday.total ? (
-                    <div className="os-yesterday-list">
-                      {yesterday.habits.map((habit: { id: string; text: string }) => (
-                        <p className="os-yesterday-row" key={habit.id}>{habit.text}</p>
-                      ))}
-                      {yesterday.tasks.map((task: { id: string; text: string }) => (
-                        <p className="os-yesterday-row is-task" key={task.id}>{task.text}</p>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="os-yesterday-empty">Nothing was recorded yesterday.</p>
-                  )}
                 </section>
               ) : (
                 <input
@@ -4435,7 +4460,7 @@ export function TodayExperience() {
                   value={state.habits.identity.text}
                 />
               )}
-              idleContent={habitMode === "yesterday" || (habits.length === 0 && oneTimeTasks.length === 0) ? undefined : (
+              idleContent={habitMode !== "habit" || (habits.length === 0 && oneTimeTasks.length === 0) ? undefined : (
                 <div className="os-routine-body">
                   <section className="os-habit-body-session" aria-labelledby="habit-session-title">
                     <p className="os-record-label" id="habit-session-title">Habits</p>
@@ -4449,12 +4474,16 @@ export function TodayExperience() {
                         return (
                           <article
                             className={`os-extra-mission os-repeated-habit${completed ? " completed" : ""}${
-                              editingHabitId === habit.id ? " is-editing" : ""
+                              editingHabitId === habit.id || newHabitId === habit.id ? " is-editing" : ""
                             }`}
                             key={habit.id}
                             onBlurCapture={(event) => {
                               const next = event.relatedTarget as Node | null;
-                              if (next && event.currentTarget.contains(next)) return;
+                              if (next && event.currentTarget.contains(next)) {
+                                finishHabitEdit(habit.id);
+                                return;
+                              }
+                              finishHabitEdit(habit.id, true);
                               setEditingHabitId((current) =>
                                 current === habit.id ? null : current,
                               );
@@ -4475,11 +4504,11 @@ export function TodayExperience() {
                               <div className="os-habit-action-copy">
                                 <textarea
                                   aria-label={`Edit habit: ${action || "New Habit"}`}
+                                  aria-required
                                   autoFocus={newHabitId === habit.id}
                                   data-inline-editor-id={habit.id}
                                   className="os-extra-mission-copy os-mission-text-edit"
                                   maxLength={240}
-                                  onBlur={() => finishHabitEdit(habit.id)}
                                   onChange={(event) => changeHabit(habit.id, event.target.value)}
                                   placeholder="Habit"
                                   rows={1}
@@ -4494,7 +4523,6 @@ export function TodayExperience() {
                                   // the narrow-screen size the action takes.
                                   className="os-extra-mission-copy os-mission-text-edit os-habit-cue-edit"
                                   maxLength={120}
-                                  onBlur={() => finishHabitEdit(habit.id)}
                                   onChange={(event) =>
                                     changeHabitCue(habit.id, event.target.value)
                                   }
@@ -4506,7 +4534,6 @@ export function TodayExperience() {
                                   aria-label={`Who this makes you: ${action || "New Habit"}`}
                                   className="os-habit-identity-edit"
                                   maxLength={120}
-                                  onBlur={() => finishHabitEdit(habit.id)}
                                   onChange={(event) =>
                                     changeHabitIdentity(habit.id, event.target.value)
                                   }
@@ -4551,7 +4578,7 @@ export function TodayExperience() {
                               aria-label={`${completed ? "Undo" : "Mark done"}: ${action || "New Habit"}`}
                               aria-pressed={completed}
                               className="os-row-tick os-row-tick-habit"
-                              disabled={!habit.text.trim()}
+                              disabled={!action.trim()}
                               keepMountedOnSuccess
                               onClick={() => toggleHabit(habit.id)}
                               release="latch"
@@ -4603,9 +4630,16 @@ export function TodayExperience() {
                 </div>
               )}
               idlePlacement={
-                habitMode === "yesterday" ? "content-flow" : "identity-stack"
+                habitMode !== "habit" ? "content-flow" : "identity-stack"
               }
-              idleHeaderAction={habitMode === "yesterday" ? undefined : (
+              idleHeaderAction={habitMode === "history" ? (
+                <span className="os-card-label">History</span>
+              ) : habitMode === "yesterday" ? (
+                <button className="os-new-habit" type="button"
+                  onClick={(event) => routineBack.flip("history", undefined, event.currentTarget)}>
+                  History
+                </button>
+              ) : (
                 <button className="os-new-habit" type="button" onClick={beginNewHabit}>
                   New habit
                 </button>
@@ -4645,7 +4679,6 @@ export function TodayExperience() {
                 <ProtocolPage
                   key={`protocol-${protocolRun?.id || "home"}`}
                   protocol={protocol}
-                  completedProtocol={completedProtocol}
                   phaseRecords={phaseRecords}
                   canBegin={canBeginProtocolRun(protocolRun)}
                   editingItemId={newProtocolItemId}
@@ -4676,11 +4709,6 @@ export function TodayExperience() {
                   }
                   onToggleItem={(itemId) =>
                     updateState((current) => toggleProtocolItem(current, itemId, dateKey))
-                  }
-                  onToggleCompletedItem={(runId, itemId, completedDateKey) =>
-                    updateState((current) =>
-                      toggleProtocolRecordItem(current, runId, itemId, completedDateKey)
-                    )
                   }
                   onArchiveRecord={(runId) =>
                     updateState((current) => archiveProtocolRun(current, runId))

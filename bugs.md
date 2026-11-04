@@ -1,5 +1,47 @@
 # Onboarding bugs
 
+## Past-phase presentation follow-up - 2026-11-03
+
+The approved cleanup bounds expanded Past phases at Note's 480px/60dvh ceiling,
+never below the shared minimum. Only Body scrolls; Header/Footer stay fixed.
+Phase summaries retain full days-kept wording, while individual terms show
+compact fractions and no white row dividers. Different phases retain separation.
+Ten actual-component browser cases passed, with two affected reruns adding the
+running-phase return path. Records/counts remain unchanged through scrolling and
+reload. See [evidence](docs/USER_JOURNEY_TESTING.md#bounded-protocol-past-phases-2026-11-03).
+This verifies the requested presentation slice, not full historical wording or
+all remaining grouping/label concerns in bugs 15/16. Physical-device and hosted
+checks remain separate.
+
+## Protocol simplification follow-up - 2026-11-03
+
+The developer removed Correct last day as unnecessary. Its editor, action and
+dedicated write functions are removed; finished-phase terms remain read only.
+Existing correction receipts are retained. This supersedes the correction UI
+described in the earlier follow-up without reopening accidental history changes.
+
+Protocol term inputs now hide native scrollbars for both term kinds. The reported
+small grey box was not visible in isolated Chromium; a native-scrollbar cause is
+an inference. Wrapped-text/save/reload checks pass, but the original visual
+report awaits confirmation in the developer's affected browser. Do not mark bug
+14 fixed from this report: its earlier name-field arrow may be a different control.
+See [verification](docs/USER_JOURNEY_TESTING.md#protocol-simplification-and-input-scrollbars-2026-11-03).
+
+## Protocol correction follow-up - 2026-11-03
+
+Bug 16's accidental count-change portion is fixed and verified locally.
+Finished-phase term rows are read only. The latest completed phase's last day
+can be changed through a dated editor and explicit Save correction; Cancel/back
+leave records untouched. Original completion/seal evidence is retained, required
+changes explicitly unseal, and optional changes preserve the seal. Repeated and
+stale saves cannot silently flip or overwrite a result. See
+[verification and limits](docs/USER_JOURNEY_TESTING.md#protocol-correction-protections-2026-11-03).
+
+This is a partial resolution of bug 16: past-phase labels/separation and full
+prospective historical term wording remain open with bug 15. Other-day and
+early-ended-phase corrections remain separately reviewed work. No physical-device,
+hosted or real cross-device sync verification is claimed.
+
 ## Habit controls follow-up - 2026-11-03
 
 Missing Add task after Day One v3 is fixed and verified locally. Routine's Footer

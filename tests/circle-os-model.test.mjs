@@ -1554,7 +1554,7 @@ test("a kept Protocol day seals once, stays editable, and ignores negotiables", 
   );
 });
 
-test("the last kept day lands home with the finished phase and remains reversible", () => {
+test("the last kept day lands home with the finished phase and stays read only", () => {
   let state = startProtocolDraft(createEmptyState(), "run-finish").state;
   state = setProtocolDays(state, "run-finish", 3);
   state = updateProtocolItem(
@@ -1572,28 +1572,14 @@ test("the last kept day lands home with the finished phase and remains reversibl
   assert.equal(finished.dateKey, "2026-08-14");
   assert.equal(finished.nonNegotiable[0].completed, true);
 
-  state = toggleProtocolRecordItem(
-    state,
-    "run-finish",
-    "i-sit",
-    "2026-08-14",
-  );
-  const corrected = latestCompletedProtocol(state);
-  assert.equal(corrected.nonNegotiable[0].completed, false);
-  assert.equal(corrected.sealed, false, "the dated seal is reversed, not deleted");
-
-  const server = structuredClone(state);
-  server.protocol.seals["run-finish:2026-08-14"] = {
-    ...server.protocol.seals["run-finish:2026-08-14"],
-    sealed: true,
-    updatedAt: "2026-08-14T00:00:00.000Z",
-  };
-  const merged = mergeServerState(state, server);
-  assert.equal(
-    merged.protocol.seals["run-finish:2026-08-14"].sealed,
-    false,
-    "an older server seal cannot restore a correction",
-  );
+  assert.equal(toggleProtocolRecordItem(state, "run-finish", "i-sit", "2026-08-14"), state,
+    "a finished phase cannot be changed by an ordinary tick");
+  const reloaded = normalizeState(JSON.parse(JSON.stringify(state)));
+  const merged = mergeServerState(reloaded, structuredClone(state));
+  const restored = latestCompletedProtocol(merged);
+  assert.equal(restored.nonNegotiable[0].completed, true);
+  assert.equal(restored.sealed, true);
+  assert.equal(merged.protocol.runs["run-finish"].status, "completed");
 });
 
 test("clearing a protocol term survives the server merge", () => {
@@ -1613,6 +1599,6 @@ test("clearing a protocol term survives the server merge", () => {
 
 test("an older saved state receives a protocol slice", () => {
   const migrated = normalizeState({ version: 4, profile: {}, days: {} });
-  assert.deepEqual(migrated.protocol, { runs: {}, completions: {}, seals: {} });
+  assert.deepEqual(migrated.protocol, { runs: {}, completions: {}, seals: {}, corrections: {} });
   assert.equal(activeProtocolRun(migrated), null);
 });

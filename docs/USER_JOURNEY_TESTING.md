@@ -1,5 +1,447 @@
 # Circle OS user-journey test record
 
+## Tighter past-phase spacing (2026-11-03)
+
+The developer approved matching past-term and Remove spacing to the page's
+existing roughly 10px rhythm. Branch `paing-branch`, HEAD `a4cd328`; all 16
+already-modified paths preserved. Runtime edits are scoped CSS: record-local
+0.65rem spacing, no read-only row touch minimum/padding, and a top-aligned Remove
+label with a retained 44x44px target. Existing browser checks and owning records
+updated; no model/personal-data/remote/staging/commit/deployment changes.
+
+Final checks:
+
+- `node --test --test-name-pattern="Protocol finished|Protocol past phases|shared App Box geometry" tests/writing.browser.mjs`:
+  **6/6 passed**. Actual components/CSS, isolated synthetic accounts, Bangkok
+  time, blocked external requests, 360x667/390x844 and reduced/normal motion.
+  Existing history tests now measure all 12 records' term/Remove gaps, read-only
+  row heights, label alignment and touch targets. Also verify two-tap Remove
+  confirmation/archive without deleting completion evidence, touch/wheel scroll,
+  resize, reload, unchanged counts, fixed Header/Footer and return to a running
+  phase. No new standalone test suite or unrelated model checks were added.
+- Both widths measure **10.390625px** between terms and before Remove. Read-only
+  rows are **20.625px** tall; Remove is **44x44px** and its visible label begins
+  **2px** below its top. Long-history frames remain **400.1875px** at 360x667 and
+  **480px** at 390x844 with one Body scroller. Body overflow is 2340px/2260px for
+  the 12-record fixtures; Header/Footer remain fixed when scrolling.
+- Note, Deep Thoughts, Habit and Protocol resting frames remain **346px**, Pages
+  **344px**, header gaps **48px** at both widths. Shared geometry/type/gap tokens
+  are unchanged.
+- `node node_modules/eslint/bin/eslint.js tests/writing.browser.mjs`: **clean**.
+- `node node_modules/next/dist/bin/next build`: **passed**, including TypeScript
+  and static generation. The model suite, broad lint and Vinext build were not
+  repeated for this scoped CSS refinement; affected runtime/geometry journeys
+  and the Next production target were selected. Whitespace and added local
+  links/fragments passed.
+- Inspected `outputs/protocol-history-bounded-top-390.png`: compact term and
+  Remove spacing is visible, with existing summary/count/divider rules retained.
+
+Attempts: the initial run passed 5/6 but the normal-motion test tapped Phases
+while its App-back transition was still active. It now waits for that transition
+to finish. A rerun also sampled the frame before ResizeObserver began its growth
+animation and compared it with the settled scrolled frame. The test now waits
+two animation frames and for the frame's current animations to finish before
+recording fixed positions. The final 6/6 run passed with no additional runtime
+fix. These are timing corrections to the verification setup, not new motion
+behavior. No measured issue justified further optimization.
+
+Physical-device/hosted/sync verification, historical term versions, prior
+unrelated bug/test gaps and the original grey-input-box confirmation remain
+separate. Next is developer use/review of the tighter past-phase list.
+
+## Bounded Protocol past phases (2026-11-03)
+
+### Approved scope and baseline
+
+The developer approved the proposal to bound expanded Past phases like Note,
+keep full phase summaries, shorten term counts and remove white term-row lines.
+Branch `paing-branch`, HEAD `a4cd328`; 15 already-modified tracked paths preserved.
+The preceding verified history grew to 819.56px on a short phone without scrolling.
+No personal data, remote configuration, staging, commits or deployment.
+
+### Delivered behavior
+
+The shared existing bounded-page CSS now also matches Protocol home while Past
+phases is open. Its frame uses the same 480px/60dvh ceiling and shared minimum;
+only Body scrolls, with Header and Footer outside the scroll area. Direct Body
+children retain their intrinsic height rather than shrinking to fit. Closing
+Past phases removes that bound. Draft/running term Pages retain natural growth.
+
+Full `1 of 7 days kept` summaries stay under titles. Individual terms display
+`1/7` and `0/7`, with white row borders removed and between-phase separation kept.
+No model, stored record, count formula or correction permission changes. DESIGN,
+Page standard and the decision log record the approved history-only exception.
+
+### Checks and measurements
+
+- `node --test --test-reporter=dot tests/protocol-home.test.mjs tests/circle-os-model.test.mjs tests/habit-spacing.test.mjs`:
+  **82/82 passed**, covering phase read models, finished-record protection and
+  existing model/spacing behavior.
+- `node --test --test-name-pattern="Protocol finished|Protocol past phases|Protocol term inputs|shared App Box geometry|real Habit and Protocol rows" tests/writing.browser.mjs`:
+  **10/10 passed**. Actual components/CSS with synthetic isolated accounts,
+  Bangkok time and blocked external traffic. Retains input-scrollbar and
+  running-row regression checks alongside the new bounded history journeys.
+- `node --test --test-name-pattern="Protocol past phases" tests/writing.browser.mjs`:
+  **2/2 passed** after removing an unused test alias and adding the active-phase
+  history/return check. These overlap the 10 cases. Checks include empty/collapsed
+  rest, 12 finished/early-ended phases, exact 1/1/0/1/1/7/0/7 text, no white row
+  borders, wheel and CDP touch scrolling, last-record reachability, fixed Header/
+  Footer, close/reopen, resize to 560px height, reload and unchanged saved records.
+  The 390px case also opens history behind an active eight-term phase and returns
+  to its naturally growing running Page. Both reduced and normal motion used.
+- `node node_modules/eslint/bin/eslint.js app/os/protocol-page.tsx tests/writing.browser.mjs`:
+  **clean** after removing the unused test alias.
+- `node node_modules/next/dist/bin/next build` and
+  `node node_modules/vinext/dist/cli.js build`: **both passed** on the final
+  application changes. Next includes TypeScript/static generation. Vinext's
+  route-classification notice and a plugin-timing advisory remain build output,
+  not runtime failures. Whitespace and added local links/fragments were checked.
+- At 360x667: expanded frame **400.1875px**, Body **210px**, Header offset **23px**,
+  Footer offset **300.1875px**. At 390x844: frame **480px**, Body **290px**, Header
+  offset **23px**, Footer offset **380px**. Exactly one inner scroller, no
+  horizontal overflow. A wheel scroll moves Body by 260px without moving either
+  fixed area. Empty/collapsed frames remain **346px**. At 560px viewport height,
+  the shared minimum wins and the frame remains 346px.
+- Resting Note, Deep Thoughts, Habit and Protocol frames remain **346px**, Pages
+  **344px**, header-box gaps **48px** at 360/390px. Real Habit/running Protocol
+  rows still grow naturally with no inner scroller. Shared geometry/type/gap
+  tokens unchanged.
+- Inspected `outputs/protocol-history-bounded-top-390.png` and
+  `outputs/protocol-history-bounded-390.png`: title/summary/count hierarchy stays
+  readable, white row dividers are absent and the footer remains visible at the
+  bottom of the list. A short-phone screenshot is also retained at
+  `outputs/protocol-history-bounded-360.png`.
+
+### Limits and next action
+
+The first lint run identified an unused test-only alias; it was removed and lint
+and both affected browser cases passed again. No application failure required a
+follow-up fix, and no measured issue justified additional optimization. This
+reuses existing bounded Page rules instead of introducing a separate scroller.
+
+Physical devices/native keyboards, hosted sessions, real cloud sync and beta
+readiness remain unverified. Historical term versions and other prior bug/test
+gaps remain separate. The earlier grey-box cause still needs developer
+confirmation. Next is developer use/review of Past phases. Earlier entries retain
+their unique evidence, with unbounded finished-history rules superseded here.
+
+## Protocol simplification and input scrollbars (2026-11-03)
+
+### Approved scope and behavior
+
+The developer approved hiding the small grey box on the term input and requested
+removal of Correct last day as unnecessary. Branch `paing-branch`, HEAD `a4cd328`,
+with 15 modified tracked paths at startup. Existing Habit/history work is
+preserved. No personal data, remote configuration, staging or deployment.
+
+Removed the correction action/editor, its transient navigation/state, shell
+props/callback and dedicated model draft/write functions. Finished-phase terms
+remain read only; running-day ticks and phase creation still work. Existing
+correction receipts remain accepted by normalization and merge for compatibility.
+Both Protocol term kinds share scoped native-scrollbar suppression; content
+sizing and multiline input remain.
+
+### Checks and measurements
+
+- `node --test --test-reporter=dot tests/habit-identity.test.mjs tests/habit-spacing.test.mjs tests/circle-os-model.test.mjs tests/protocol-home.test.mjs tests/account-scope.test.mjs tests/first-use-setup.test.mjs tests/phases.test.mjs`:
+  **120/120 passed** after the final cleanup. Includes completed/archived/date
+  guards, immutable finished results through reload/merge, retained older receipts,
+  ordinary running-day edits and the pre-existing Habit/account/setup checks.
+- `node --test --test-name-pattern="Protocol finished|Protocol term inputs|shared App Box geometry|real Habit and Protocol rows" tests/writing.browser.mjs`:
+  **9/9 passed** after final cleanup. Actual components/CSS with synthetic
+  account/storage, blocked external requests and Bangkok time. Mobile history
+  checks use 360/390px with reduced/normal motion. Input checks use 360/390/1280px,
+  verify empty/short/wrapped text, phase creation, reload and a running-day tick.
+  The 1280px case uses the harness's touch/mobile context at a wide viewport;
+  it is not physical desktop-browser certification.
+- Targeted ESLint on model, shell, Protocol page and the three changed test files:
+  **no errors**, existing `renderChapterTemplate` unused-import warning only.
+- `node node_modules/next/dist/bin/next build` and
+  `node node_modules/vinext/dist/cli.js build`: **both passed** after final cleanup.
+  Next includes TypeScript/static generation. Vinext retains its existing
+  route-classification notice. No deployment/runtime certification is inferred.
+- `git diff --check`: passed with existing LF/CRLF warnings. Local links/fragments
+  in the updated sections were checked; historical evidence remains below.
+- Four resting frames remain **346px**, Pages **344px**, header-box gaps **48px**
+  at 360/390px. Wrapped input grows from **20px to 60px** on mobile with equal
+  client/scroll heights and no horizontal overflow. Wide inputs grow to 45px
+  (required) and 35px (optional). Expanded finished history measures **819.56px**
+  at 360x667 with no inner/horizontal scroll and a 48px first-content gap. Real
+  Habit/Protocol rows still grow downward. Shared sizing/type/gap tokens unchanged.
+- Inspected `outputs/protocol-inputs-390.png`: wrapped terms are fully visible
+  and there is no grey box or scrollbar chrome. The baseline isolated browser
+  also did not show the reported box; this is not a reproduction of its cause.
+
+### Attempts and remaining limits
+
+The first model run was 119/120: the new compatibility test compared independently
+created fixtures whose timestamps differed by one millisecond. Reusing the same
+baseline with only its receipt removed fixes the test setup. The first browser
+selection was 8/9: its history measurement targeted the nested term list instead
+of the first visible standing section. Correcting the measurement yielded 9/9;
+the final run after removing leftover correction navigation also passed 9/9.
+An initial patch attempt failed verification because PowerShell decoded UTF-8
+as a legacy encoding. Re-reading explicitly as UTF-8 allowed the intended patch;
+no encoding rewrite is part of this change.
+
+Native scrollbar chrome is the inferred cause of the original grey box, pending
+developer confirmation in the affected browser. Physical phones, native
+keyboards, hosted sessions and real cloud sync remain unverified. Earlier
+ResizeObserver, placeholder, bug 13, past-phase grouping/labels, full prospective
+term history and historical Week-assertion gaps remain. No wider correction UI,
+stylesheet split, personal migration or deployment is included. No measured
+problem justified further optimization.
+
+## Protocol correction protections (2026-11-03)
+
+### Scope and baseline
+
+The developer approved the bounded correction proposal after read-only History
+review. Branch `paing-branch`, HEAD `a4cd328`, with 11 pre-existing modified paths
+preserved. No personal data, remote configuration, staging or deployment.
+The History baseline passed 114 focused tests and 11 actual-component cases.
+An in-memory reuse of this browser harness reproduced bug 16 at 360/390px:
+one last-day term tap changed 1/1 to 0/1, unsealed the day and survived reload.
+Synthetic model probes also accepted malformed/out-of-run dates and archived
+targets, and showed later wording replacing earlier wording in phase summaries.
+Full prospective term history remains a separate gap.
+
+### Delivered behavior
+
+Past term rows are read only. The latest completed phase opens Correct last day
+on its scheduled final date, with selected booleans, Save correction, Cancel
+and Phases back. Returning preserves expanded Past phases. Selection/cancellation
+does not write evidence. Each accepted correction keeps an immutable receipt
+with available wording, actual time and before/after completions/seal. Required
+changes explicitly unseal; optional changes preserve the seal. Reticking never
+silently reseals. No-op/repeated saves, stale edits, invalid/out-of-run/future
+dates and archived targets are rejected. Existing running-day controls remain.
+
+### Final checks
+
+- `node --test tests/habit-identity.test.mjs tests/habit-spacing.test.mjs tests/circle-os-model.test.mjs tests/protocol-home.test.mjs tests/account-scope.test.mjs tests/first-use-setup.test.mjs tests/phases.test.mjs`:
+  **123/123 passed**, log `outputs/protocol-correction-model.log`. Covers explicit
+  values/no-ops/repeated IDs, stale run/completion changes, target guards, original
+  seal/completion retention, optional/required semantics, missing seals, actual
+  time versus merge ordering under clock skew, reload and both stale-merge
+  directions. Earlier receipts survive later corrections and merges.
+- `node --test --test-name-pattern="Habit dated history|new Habit accepts|empty Habit History|Day One v3 Routine task controls|shared App Box geometry|real Habit and Protocol rows|Protocol correction|Protocol deliberate|Protocol stale" tests/writing.browser.mjs`:
+  **17/17 passed**, log `outputs/protocol-correction-browser.log`. Isolated
+  Chromium, synthetic account/storage, blocked external traffic, 360/390px,
+  reduced motion and normal motion. Six new cases cover read-only taps, keyboard
+  selection, disabled unchanged saves, Cancel/back, three consecutive accepted
+  corrections with retained evidence, reload and a competing accepted edit.
+  No uncaught page errors or external backend/model requests.
+- `node --test --test-name-pattern="Protocol deliberate" tests/writing.browser.mjs`:
+  **2/2 passed** after extending the 360px case to save all three corrections
+  with `context.setOffline(true)`, verify local persistence, restore the harness
+  connection and reload. Log `outputs/protocol-correction-offline.log`. These
+  reruns overlap the 17 cases; they are not two extra distinct cases.
+- `node node_modules/next/dist/bin/next build`: passed, including TypeScript and
+  static generation; log `outputs/protocol-correction-next.log`.
+- `node node_modules/vinext/dist/cli.js build`: passed; log
+  `outputs/protocol-correction-vinext.log`. Its route-classification notice
+  remains build output, not runtime certification.
+- Targeted ESLint for model, shell, Protocol page and the three changed test files:
+  no errors, one existing `renderChapterTemplate` unused-import warning in shell.
+  `git diff --check` passed with existing LF/CRLF warnings.
+  A read-only document audit passed 14 added local links/fragments (including
+  the preserved Habit additions) and confirmed four earlier HEAD record bodies
+  remain intact in the decision log, task, handoff and journey record.
+
+### Geometry, attempts and limits
+
+Note, Deep Thoughts, Habit and Protocol rest at **346px frames / 344px Pages**
+with **48px header-box gaps** at both widths. Visible text gaps are 52px for
+writing and 51.09px for Habit/Protocol. History ceilings remain 400.19px at
+360x667 and 480px at 390x844. Real Habit/Protocol rows grow naturally. Eight
+required correction terms plus one optional term measure **1103.92px** at
+360x667, with a 48px top gap, 44px controls, no horizontal overflow and no inner
+scroll panel. Inspected `outputs/protocol-correction-360.png`. No shared sizing,
+type or gap token changed; no measured issue justified further optimization.
+
+The first six-case browser attempt failed: two assertions retained the old
+accessible term name; returning collapsed Past phases; and the new back control
+needed a 44px target outside header flow. A five-case follow-up passed cancellation
+and stale protection but exposed a shared footer button retaining its committed
+state between editor visits. Each correction now keys its own save button.
+The final six-case run, combined 17-case run and offline reruns passed after
+these fixes. Some exploratory runs overlapped local edits and builds; only the
+stable final runs above establish verification. The initial Next build failed
+on nullable-date inference; the explicit string guard passes the fresh build.
+
+Bug 16 is partially resolved: its accidental count-change behavior is fixed
+locally; past-phase labels/separation and full prospective wording remain open.
+Other-day/early-ended corrections, physical phones/native touch, hosted sessions,
+real acknowledgements/cross-device conflicts/recovery and beta readiness are
+unverified. Existing ResizeObserver, legacy placeholder, remaining bug 13 reports
+and two recorded Week source assertions remain separate. No real data migration,
+cloud schema, paid AI request, chapter/reading version or delivery budget changed.
+
+## Habit History page and flexible entry (2026-11-03)
+
+### Approved scope and implementation
+
+The developer approved a separate History Page, opened from Record's top right,
+with scrollable past-day groups, Yesterday without its date, older-day dates,
+no dropdown/wording notices/dark divider, and unchanged today Undo. They also
+explicitly requested any-field-first Habit entry with action/name required to
+save and remain visible. Runtime remains limited to model, shell and scoped CSS;
+the existing Habit model/browser checks and owning records are updated.
+Branch `paing-branch`, HEAD `a4cd328`; all 11 already-modified paths are preserved.
+No personal data, import, remote service or deployment was involved.
+
+History reuses the shared App-back controller and the bounded writing-body CSS.
+It reads the same completion snapshots and keeps provenance internal. Record
+stays today-only. The existing inline Habit editor now keeps a new unnamed
+definition in draft status. All three fields are visible while adding it.
+Moving between fields does not archive it; committing a nonblank action makes
+it active. Unnamed work is hidden when leaving and reopens through New habit,
+including after reload. Drafts cannot be completed or counted as active habits.
+Saved-Habit clearing retains the existing archive behavior.
+
+### Verification
+
+- `node --test tests/habit-identity.test.mjs tests/habit-spacing.test.mjs tests/circle-os-model.test.mjs tests/protocol-home.test.mjs tests/account-scope.test.mjs tests/first-use-setup.test.mjs`:
+  **114/114 passed**. Log: `outputs/habit-history-refinement-model-verified.log`.
+  The new draft case first failed on the old archive behavior, then passed for
+  optional-field-first draft persistence, whitespace name rejection, no queued
+  active save/completion, and promotion with preserved cue/identity. A further
+  regression confirms that resuming an older unnamed active placeholder keeps
+  its existing optional fields instead of recreating it. Prior
+  snapshot/merge/archive, spacing, account and setup cases remain passing.
+- `node --test --test-name-pattern="Habit dated history|new Habit accepts|empty Habit History|Day One v3 Routine task controls|shared App Box geometry|real Habit and Protocol rows" tests/writing.browser.mjs`:
+  **11/11 passed** after the last runtime change. Log:
+  `outputs/habit-history-refinement-browser-final.log`. Isolated Chromium,
+  synthetic account/storage and blocked external requests. New-history journeys
+  use 360x667 reduced motion and 390x844 normal motion; other cases use
+  360x844/390x844 reduced motion. No uncaught page errors or external traffic.
+  Covered Record/History/back, untouched domain records while browsing, fixed
+  headers during actual wheel scrolling, Yesterday/older labels, no dropdown or
+  notices, read-only snapshots and legacy rows, today Undo across reload, and
+  empty History. Cue-first and identity-first both retain all fields through
+  saving/reload; unfinished and whitespace-name drafts hide and recover without
+  becoming active. Existing task controls and completion snapshots still pass.
+- Long History frames: **400.19px at 360x667**, **480px at 390x844**, with one
+  Body scroller and no horizontal overflow. Empty History rests at **346px**.
+  Note, Deep Thoughts, Habit and Protocol resting frames remain **346px** with
+  **48px** header-box gaps at 360/390px. Visible text gaps remain 52px for writing
+  and 51.09px for Habit/Protocol. Real Habit/Protocol rows still grow naturally
+  without inner scrolling. Visually inspected `outputs/habit-history-list-360.png`;
+  the 390px image is also saved. No shared geometry/type/gap value changed.
+- `node node_modules/next/dist/bin/next build`: passed after the last runtime
+  change, including TypeScript. Log: `outputs/habit-history-refinement-next.log`.
+- `node node_modules/vinext/dist/cli.js build`: passed again after the final
+  compatibility fix. Log: `outputs/habit-history-refinement-vinext.log`.
+- `node node_modules/eslint/bin/eslint.js app/os/circle-os-model.js app/os/circle-os-shell.tsx tests/habit-identity.test.mjs tests/writing.browser.mjs`:
+  passed with the existing `renderChapterTemplate` unused-import warning only.
+  `git diff --check` passed with line-ending warnings. The read-only document
+  audit passed nine added local links/fragments and preserved all four earlier
+  continuity/evidence/decision record bodies from HEAD.
+
+### Attempts and limits
+
+The first focused model run was 101/102: an existing source-wiring assertion
+still expected the old yesterday-only conditional; updated it for both back
+Pages and reran. The first browser run was 8/9: a reduced-motion History test
+asserted the frame ceiling before the shared frame had settled. Waiting for
+the measured frame required no runtime sizing fix. The next two History cases
+passed; the final expanded 11-case run also passed with actual wheel scrolling,
+short-phone ceilings and empty History checks.
+
+The older-placeholder compatibility case initially failed because recreating
+its ID cleared the optional fields. The model now resumes that existing empty
+record as a draft and the shell uses that action. After this fix the final
+114-case model selection, 11-case browser selection and Next build all passed
+again. Reopening an existing draft leaves it unchanged; named/archived records
+are not overwritten by the draft-resume path.
+
+The previous dated-history evidence remains below, including its two pre-existing
+Week source-assertion failures; they were not fixed or recertified here. Protocol's
+direct historical toggle/seal issue, bug 13 color/title reports, legacy placeholder
+and ResizeObserver warnings remain open. Physical phones/native touch scrolling,
+hosted auth/session, real sync/receipts, recovery and beta readiness remain
+unverified. Normal-motion History now has synthetic browser coverage; this is
+not physical-device certification. Old wording reconstruction, uncompleted-day
+definition versions, explicit past corrections and task date/timezone migration
+remain outside scope. No chapter/reading version, delivery budget, paid AI,
+cloud schema or local-first clearing/acknowledgement rule changed. No measured
+performance issue justified an optimization.
+
+## Habit dated history (2026-11-03)
+
+### Scope and baseline
+
+The developer approved recorded-day browsing, new completion wording snapshots,
+legacy wording notices, unchanged today Undo, focused checks and owning records.
+Starting HEAD `a4cd328`, branch `paing-branch`, clean tree. The preceding Habit
+controls were confirmed by the developer in use; this is separate from the new
+history checks. No personal records or external services were used.
+
+The existing `dayRecord` reads today's definition and hides archived habits.
+The focused regression demonstrates rename then archive on that unchanged
+reader. History now uses `habitHistoryRecord` over the same completions, retaining
+snapshot wording and archived/orphan records, without changing Week's current
+habit-count semantics. Five initial new model cases failed before implementation
+(missing snapshots/readers); all pass after implementation, with a sixth edge
+case for known-empty snapshots and missing definitions.
+
+### Final checks
+
+- `node --test tests/habit-identity.test.mjs tests/circle-os-model.test.mjs tests/protocol-home.test.mjs tests/account-scope.test.mjs`: **101/101 passed**.
+  Covers rename/archive/reload, stale merge and explicit false values, snapshot
+  retention, legacy current/unknown wording, empty snapshots, missing definitions,
+  recorded-day selection, independent new-day wording and existing domain/account
+  behavior. Log: `outputs/habit-history-focused.log`.
+- `node --test --test-name-pattern="Habit dated history|Day One v3 Routine task controls|shared App Box geometry|real Habit and Protocol rows" tests/writing.browser.mjs`:
+  **7/7 passed** after the last model change. Isolated Chromium, 360x844 and
+  390x844, Bangkok timezone, reduced motion, synthetic account/storage, blocked
+  external requests. New journeys open an older day, show original archived-habit
+  wording, label legacy current/missing wording, retain tasks, expose no past-day
+  writing/toggle controls and leave domain records byte-for-byte unchanged while
+  browsing. Today's Undo persists across reload and leaves past ticks intact.
+  A 44px day picker, no horizontal overflow, existing task controls and natural
+  row growth pass. Log: `outputs/habit-history-browser-verified.log`.
+- Resting Note, Deep Thoughts, Habit and Protocol: **346px frames / 344px Pages**
+  and **48px header-box gaps** at both widths. Visible text gaps: 52px for writing,
+  51.09px for Habit/Protocol. Final real-row frames: 600.09px Habit and 926.11px
+  Protocol, with no inner scrolling. Scoped history CSS changes no shared tokens.
+  Visually inspected `outputs/habit-history-360.png`; the 390px image is also saved.
+- `node node_modules/next/dist/bin/next build`: passed after final runtime code,
+  including TypeScript. Log: `outputs/habit-history-next-final.log`.
+- `node node_modules/vinext/dist/cli.js build`: passed. Log:
+  `outputs/habit-history-vinext-final.log`. Initial attempt used the wrong CLI
+  path (`dist/cli/index.js`); corrected using the installed package's bin entry.
+- Targeted ESLint for model, shell and both changed tests: no errors; the existing
+  shell `renderChapterTemplate` unused-import warning remains. `git diff --check`
+  passed with line-ending warnings. A read-only Node audit passed all five added
+  local links/fragments and confirmed preservation of four earlier record bodies.
+
+### Attempts and retained gaps
+
+The first seven-case browser run was 6/7: the existing 360px control test sent
+its second tick while the button's success lifecycle was busy. It now waits
+for aria-busy=false. Both subsequent seven-case runs passed; the last followed
+the empty-snapshot model fix. No button-engine runtime change was made.
+
+An expanded model/Week run passed 121/123. Both failures are existing source
+assertions in `week-app.test.mjs`: the newline-sensitive font-ready assertion
+reads unchanged `app-session.tsx`, and the 16px-floor assertion rejects the
+already-approved Week `!important` typography rule also present in HEAD's CSS.
+Those failures are retained, not fixed in this scope. Protocol's latest-finished
+term still directly toggles its last day and may unseal it; that remains the next
+separate correction review. Bug 13 color/title reports, legacy placeholder and
+ResizeObserver warnings remain open.
+
+Physical phones/native select behavior, normal-motion history transitions,
+hosted auth/session history, real server acknowledgement/backup/recovery and
+cross-device sync are unverified. This slice does not reconstruct old wording,
+version uncompleted-day definitions, add past-day corrections or migrate task
+date/timezone semantics. No model call, chapter/reading mutation, account schema,
+cloud setting or deployment changed. Local Circle-day rules and dated empty/false
+values are preserved. No measured performance problem justified optimization;
+Phase 1 and beta readiness remain uncertified.
+
 ## Habit task controls (2026-11-03)
 
 Approved scope: restore Add task on normal Routine, match Habit checkbox sizes

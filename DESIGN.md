@@ -117,8 +117,9 @@ Session
   their writing, History and Trash Pages
   grow from that minimum to a 480px App Box ceiling, reduced to 60% of the dynamic
   viewport on short screens, never below the shared minimum. Only Body scrolls
-  past the ceiling; Header, Heading and Footer remain in place. Habit/Protocol
-  keep their continuous downward growth.
+  past the ceiling; Header, Heading and Footer remain in place. Expanded
+  Protocol Past phases uses the same ceiling and Body scrolling. Routine and
+  draft/running Protocol keep their continuous downward growth.
 - Main content begins at the shared forehead anchor for every line count. It
   never recentres as text changes; a fourth and every later line grows the Page
   downward after the ordinary three-line height budget is used.
@@ -131,9 +132,12 @@ Session
 - Real added rows may extend a fluid App Box without colliding with the Footer.
   Habit tasks stay visible in one continuous Sub Body rather than an inner
   scrolling panel.
-- Protocol terms follow the same continuous-page rule. Draft, running and
-  finished Protocol Pages grow to show their real terms instead of hiding them
-  in a nested scrolling region.
+- Draft and running Protocol terms follow the same continuous-page rule and
+  grow downward. Expanded Past phases is the approved history exception: its
+  Body scrolls at the same 480px/60dvh frame ceiling as Note, never below the
+  shared minimum. Header and Footer stay fixed. Past terms show compact counts
+  such as `1/7`, without white row dividers; each phase keeps its title, full
+  days-kept summary, dates and separation from other phases.
 - Repeated habits use that same continuous stack: one quiet divider and one row
   rhythm per habit, with no nested card or doubled spacing.
 - Empty optional regions collapse cleanly and leave no dead gap.

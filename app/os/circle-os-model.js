@@ -758,6 +758,7 @@ export function createEmptyState() {
       runs: {},
       completions: {},
       seals: {},
+      corrections: {},
     },
     evidence: {
       localRevision: 0,
@@ -913,6 +914,7 @@ export function normalizeState(state) {
       runs: { ...(state.protocol?.runs || {}) },
       completions: { ...(state.protocol?.completions || {}) },
       seals: { ...(state.protocol?.seals || {}) },
+      corrections: { ...(state.protocol?.corrections || {}) },
     },
     habits: {
       identity: storedHabitIdentity,
@@ -1894,6 +1896,10 @@ export function mergeServerState(state, serverState) {
         remote.protocol.seals,
         local.protocol.seals,
       ),
+      corrections: mergeUpdatedRecords(
+        remote.protocol.corrections,
+        local.protocol.corrections,
+      ),
     },
     evidence: {
       localRevision: Math.max(
@@ -1939,8 +1945,27 @@ function freshRecordId(prefix) {
     : `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function addHabitDefinition(state, id = freshRecordId("habit")) {
+export function addHabitDefinition(state, id = freshRecordId("habit"), { draft = false } = {}) {
   const timestamp = new Date().toISOString();
+  const existing = state.habits.definitions[id];
+  if (draft && existing) {
+    // Older inline editors left unnamed active placeholders. Resume their
+    // actual fields as a draft, rather than recreating or archiving them.
+    if (existing.status !== "active" || existing.text.trim()) return { state, id };
+    return {
+      state: {
+        ...state,
+        habits: {
+          ...state.habits,
+          definitions: {
+            ...state.habits.definitions,
+            [id]: { ...existing, status: "draft", updatedAt: timestamp },
+          },
+        },
+      },
+      id,
+    };
+  }
   return {
     state: {
       ...state,
@@ -1954,7 +1979,7 @@ export function addHabitDefinition(state, id = freshRecordId("habit")) {
             action: "",
             cue: "",
             identity: "",
-            status: "active",
+            status: draft ? "draft" : "active",
             createdAt: timestamp,
             updatedAt: timestamp,
           },
@@ -2087,12 +2112,14 @@ export function updateHabitDefinitionParts(state, id, parts) {
           action,
           cue,
           identity,
+          status: current.status === "draft" && action ? "active" : current.status,
           updatedAt: new Date().toISOString(),
         },
       },
     },
   };
-  return cleanText.trim() ? queueProfileUpdate(next, "habit") : next;
+  return cleanText.trim() && next.habits.definitions[id].status !== "draft"
+    ? queueProfileUpdate(next, "habit") : next;
 }
 
 // Clearing a habit archives it rather than removing the record.
@@ -2104,7 +2131,7 @@ export function updateHabitDefinitionParts(state, id, parts) {
 // lists only active habits.
 export function discardEmptyHabit(state, id) {
   const current = state.habits.definitions[id];
-  if (!current || current.text.trim() || current.status === "archived") {
+  if (!current || current.text.trim() || current.status === "archived" || current.status === "draft") {
     return state;
   }
   return {
@@ -2124,7 +2151,8 @@ export function discardEmptyHabit(state, id) {
 }
 
 export function toggleHabitForDay(state, id, dateKey) {
-  if (!state.habits.definitions[id]) return state;
+  const habit = state.habits.definitions[id];
+  if (!habit || habit.status === "draft") return state;
   const key = habitCompletionId(id, dateKey);
   const current = state.habits.completions[key];
   const timestamp = new Date().toISOString();
@@ -2136,12 +2164,24 @@ export function toggleHabitForDay(state, id, dateKey) {
         completions: {
           ...state.habits.completions,
           [key]: {
+            ...current,
             id: key,
             habitId: id,
             dateKey,
             completed: !current?.completed,
             completedAt: current?.completed ? null : timestamp,
             updatedAt: timestamp,
+            // Capture the accepted wording when this completion is recorded.
+            // Undo retains it; later definition edits never rewrite it. A new
+            // tick after Undo records the wording of that new completion.
+            ...(!current?.completed ? {
+              snapshot: {
+                text: habit.text || composeHabitText(habit),
+                action: habit.action ?? habit.text,
+                cue: habit.cue || "",
+                identity: habit.identity || "",
+              },
+            } : {}),
           },
         },
       },
@@ -3671,6 +3711,45 @@ export function dayRecord(state, dateKey) {
   return { dateKey, habits, tasks, total: habits.length + tasks.length };
 }
 
+// History reads completions, including archived or missing definitions. The
+// existing current-definition dayRecord remains the source for Week's present
+// habit counts and today's Undo controls; history must not change that ratio.
+export function habitHistoryRecord(state, dateKey) {
+  const habits = Object.values(state.habits?.completions || {})
+    .filter((completion) => completion.dateKey === dateKey && completion.completed)
+    .sort((left, right) =>
+      String(left.completedAt || left.updatedAt || "").localeCompare(
+        String(right.completedAt || right.updatedAt || ""),
+      ) || left.id.localeCompare(right.id),
+    )
+    .map((completion) => {
+      const hasSnapshot = typeof completion.snapshot?.text === "string";
+      const snapshotText = hasSnapshot ? completion.snapshot.text.trim() : "";
+      const currentText = state.habits.definitions[completion.habitId]?.text?.trim();
+      return {
+        id: completion.habitId,
+        text: (hasSnapshot ? snapshotText : currentText) || "Habit",
+        wordingSource: hasSnapshot ? "snapshot" : currentText ? "current" : "unknown",
+      };
+    });
+  // Tasks remain their existing records, with their existing date semantics.
+  const { tasks } = dayRecord(state, dateKey);
+  return { dateKey, habits, tasks, total: habits.length + tasks.length };
+}
+
+export function habitHistoryDates(state, todayKey = getDateKey()) {
+  const days = Object.values(state.habits?.completions || {}).map((record) => record.dateKey);
+  for (const task of Object.values(state.tasks?.items || {})) {
+    if (task.status === "completed" && task.completedAt) {
+      const at = new Date(task.completedAt);
+      if (Number.isFinite(at.getTime())) days.push(getDateKey(at));
+    }
+  }
+  return [...new Set(days)]
+    .filter((day) => typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day) && day < todayKey)
+    .sort().reverse();
+}
+
 
 // ---------------------------------------------------------------------------
 // Protocol
@@ -3997,13 +4076,28 @@ export function protocolDay(run, dateKey) {
   return Math.floor((current - start) / 86400000) + 1;
 }
 
+function validProtocolDate(dateKey) {
+  if (typeof dateKey !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return false;
+  const time = Date.parse(`${dateKey}T00:00:00Z`);
+  return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === dateKey;
+}
+
+function protocolDateIsInRun(run, dateKey) {
+  if (!validProtocolDate(run?.startDateKey) || !validProtocolDate(dateKey)) return false;
+  const day = protocolDay(run, dateKey);
+  return Number.isInteger(run.days) && day >= 1 && day <= run.days;
+}
+
 export function toggleProtocolRecordItem(state, runId, itemId, dateKey) {
   const run = state.protocol?.runs?.[runId];
   const item = run?.items?.[itemId];
   if (
     !run ||
     !item ||
-    (run.status !== "active" && run.status !== "completed") ||
+    run.status !== "active" ||
+    run.archivedAt ||
+    !protocolDateIsInRun(run, dateKey) ||
+    dateKey > getDateKey() ||
     item.status !== "active"
   ) {
     return state;
@@ -4147,9 +4241,8 @@ export function protocolToday(state, dateKey) {
   };
 }
 
-// The Protocol home keeps the most recently finished phase in view. It reads
-// the current completion records rather than freezing the controls, so even the
-// last day can still be corrected after it has been sealed.
+// Read the most recently finished phase on its actual scheduled final day.
+// Earlier seals must never be presented as that final day.
 export function latestCompletedProtocol(state) {
   const run =
     Object.values(state.protocol?.runs || {})
@@ -4162,11 +4255,9 @@ export function latestCompletedProtocol(state) {
         ),
       )[0] || null;
   if (!run) return null;
-  const seals = Object.values(state.protocol?.seals || {})
-    .filter((seal) => seal.runId === run.id)
-    .sort((left, right) => right.dateKey.localeCompare(left.dateKey));
-  const seal = seals[0] || null;
-  const dateKey = seal?.dateKey || run.startDateKey;
+  if (!validProtocolDate(run.startDateKey) || !Number.isInteger(run.days) || run.days < 1) return null;
+  const dateKey = addProtocolDays(run.startDateKey, run.days - 1);
+  const seal = state.protocol.seals?.[protocolSealId(run.id, dateKey)] || null;
   const decorate = (item) => ({
     ...item,
     completed: Boolean(
@@ -4191,7 +4282,8 @@ function protocolDateFromTimestamp(value) {
 function addProtocolDays(dateKey, amount) {
   const start = Date.parse(`${dateKey}T00:00:00Z`);
   if (Number.isNaN(start)) return null;
-  return new Date(start + amount * 86400000).toISOString().slice(0, 10);
+  const end = new Date(start + amount * 86400000);
+  return Number.isFinite(end.getTime()) ? end.toISOString().slice(0, 10) : null;
 }
 
 // Protocol home is a read model over the records the phone already keeps. No

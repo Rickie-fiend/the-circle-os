@@ -1,5 +1,120 @@
 # Circle OS decision log
 
+## 2026-11-03 - Tighter spacing in past-phase records
+
+The developer approved reducing the gaps between past Protocol terms and
+Remove using the page's existing 0.65rem rhythm. Read-only terms no longer
+reserve a 44px touch height or per-row vertical padding. Remove keeps at least
+a 44x44px target, with its label at the top and the same gap before it as
+between terms. A record-scoped spacing property keeps these gaps consistent.
+Phase separation, summaries, compact counts, scrolling and saved records retain
+their existing behavior. This is a scoped CSS change, not a shared-token change.
+
+Reason: read-only terms should read as a compact list; the actual control stays
+easy to tap. Checks and limits are in
+[the evidence](USER_JOURNEY_TESTING.md#tighter-past-phase-spacing-2026-11-03).
+
+## 2026-11-03 - Bounded and simpler Protocol past phases
+
+The developer approved making expanded Past phases scroll like Note: grow to
+the same 480px/60dvh frame ceiling, never below the shared minimum, then scroll
+only Body while Header and Footer stay fixed. This is an explicit exception
+to Protocol's previous unbounded finished-history rule. Collapsed history and
+draft/running phases retain their normal sizing.
+
+Keep the full `1 of 7 days kept` summary under each phase title. Each individual
+term instead shows its existing count as `1/7` or `0/7`. Remove the white term-row
+dividers while retaining separation between different phases. No count formula,
+record, correction permission or persistence behavior changes.
+
+Reason: make past phases easier to review without an excessively tall Page or
+repeated count wording. Checks are in
+[the evidence](USER_JOURNEY_TESTING.md#bounded-protocol-past-phases-2026-11-03).
+
+## 2026-11-03 - Remove Protocol last-day corrections
+
+The developer requested removal of `Correct last day`: it is not needed.
+This supersedes the correction-editor decision below. Finished-phase terms
+remain read only; remove the editor, its action and dedicated write functions.
+Ordinary running-day ticks, seals, durations and phase archiving keep their
+existing behavior. Already-saved correction receipts remain intact through
+normalization, reload and merge; removing a feature is not a data migration.
+
+The developer also approved hiding the native scrollbar in Protocol term inputs
+to address a small grey box at the input's right edge. Both term kinds share
+that input style. Wrapped text must remain visible and grow downward. The
+reported grey box was not visible in isolated Chromium, so its native-scrollbar
+cause remains an inference pending developer confirmation in the affected browser.
+No broad stylesheet refactor is included.
+
+Checks and limits are in [the evidence](USER_JOURNEY_TESTING.md#protocol-simplification-and-input-scrollbars-2026-11-03).
+
+## 2026-11-03 - Deliberate Protocol last-day corrections
+
+The developer approved the bounded correction-protection proposal after the
+History review. Finished-phase term rows become read only. The latest completed
+phase offers `Correct last day`, showing the scheduled final date. The person
+selects kept/not-kept values, then chooses `Save correction`. Cancel and Phases
+back discard selections; returning preserves the expanded Past phases section.
+This replaces the one-tap last-day toggle, preserving legitimate corrections.
+
+An accepted save keeps dated before/after completion and seal evidence under a
+stable correction ID. Required-term changes explicitly unseal; optional-term
+changes preserve the seal. Reticking never silently reseals or reopens a phase.
+Unchanged and repeated saves do nothing. Invalid/out-of-phase/future dates,
+archived targets and stale edits are rejected. The editor stays on a stale
+candidate until the person cancels and reopens the accepted day.
+
+Reason: reading history must not accidentally alter it, and a deliberate change
+must retain what was originally recorded. Running-day controls and the five
+durations remain. Full prospective term history and correction of other phase
+days remain separately reviewed work. Verification is recorded in
+[the journey evidence](USER_JOURNEY_TESTING.md#protocol-correction-protections-2026-11-03).
+
+## 2026-11-03 - Separate Habit History and flexible new-Habit entry
+
+The developer approved moving past completions out of today's Record to a
+separate History Page, opened from Record's top-right label. Keep Routine's
+New habit action and today's Undo controls. Reuse shared App-back navigation
+and bounded writing-body scrolling; group past completions newest first.
+Yesterday appears alone, with dates only for older days. Remove the dropdown,
+dark divider and visible original-wording notices. Internal snapshot/provenance
+data is retained; no original wording is reconstructed or asserted from a guess.
+This supersedes the initial picker/notices interaction in the earlier entry.
+
+The developer also explicitly requested that action, time/location and identity
+can be entered in any order. Action (the Habit name) is required before a new
+Habit saves as active and stays visible in Routine. Unnamed work stays locally
+recoverable as a draft, hidden on leaving and reopened by New habit. Moving
+between fields must not archive it. Saved-Habit clearing retains its existing
+archive behavior. The separate Routine focus/title is unchanged.
+
+Reason: keep today's actions simple, reuse the familiar History pattern and
+let people start with whichever part of a Habit they know first. Verification
+and limits are in [the evidence](USER_JOURNEY_TESTING.md#habit-history-page-and-flexible-entry-2026-11-03).
+
+## 2026-11-03 - Habit Record browses dated completions
+
+The developer approved a bounded Habit history slice after confirming the
+previous Habit task controls in use. Record keeps Today so far and its Undo
+controls, with a Past days picker for recorded days. Yesterday remains the
+initial past day. Past entries are read only; browsing never replays outcomes.
+
+New completion records keep the habit's text, action, cue and identity at the
+time of that tick. Later definition edits or archiving do not rewrite those
+snapshots. Undo preserves the snapshot while recording completed=false; a new
+tick after Undo captures the wording of that new completion. Legacy entries
+without snapshots explicitly say the original wording was not saved. They may
+show labelled current wording, or Habit when no wording remains. Do not fill
+missing historical wording from today's definition and call it original.
+
+Reason: a past completion should stay reachable and describe what was recorded,
+while missing history stays honest. This does not decide missed-day definition
+history, past-day correction controls, task date migration or Protocol seal
+corrections. Week's current-definition counts and today's Undo retain their
+existing source and meaning. Exact implementation and checks are in
+[the journey evidence](USER_JOURNEY_TESTING.md#habit-dated-history-2026-11-03).
+
 ## 2026-11-03 - Larger editable titles and tighter Page spacing
 
 The developer approved 29px titles/questions with 18px content/answers on the

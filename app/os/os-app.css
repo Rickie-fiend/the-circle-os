@@ -9287,6 +9287,14 @@
   border-bottom: 0;
 }
 
+.circle-os .os-habit-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--os-main-sub-gap);
+  min-width: 0;
+  width: 100%;
+}
+
 .circle-os .os-yesterday-empty {
   color: rgb(255 248 241 / 0.72);
   font-size: var(--text-lg);
@@ -9295,8 +9303,7 @@
   margin: 0;
 }
 
-/* Yesterday mode holds two records on one Page: what is done so far today,
- * which can still be undone, and what happened yesterday, which cannot. */
+/* Record holds today's Undo controls; History reads past days separately. */
 .circle-os .os-record-label {
   color: var(--c-ink);
   font-size: var(--text-2xs);
@@ -9304,13 +9311,6 @@
   letter-spacing: 0.14em;
   margin: 0 0 0.5rem;
   text-transform: uppercase;
-}
-
-.circle-os .os-record-seam {
-  background: var(--c-ink);
-  border: 0;
-  height: 2px;
-  margin: 1rem 0;
 }
 
 .circle-os .os-record-row {
@@ -9538,6 +9538,7 @@
 }
 
 .circle-os .os-protocol-record {
+  --os-protocol-record-gap: 0.65rem;
   border-top: 1px solid rgb(25 24 19 / 0.34);
   padding: 0.8rem 0;
 }
@@ -9596,32 +9597,28 @@
 .circle-os .os-protocol-record-terms {
   border-top: 1px solid rgb(25 24 19 / 0.22);
   display: grid;
-  margin-top: 0.65rem;
+  gap: var(--os-protocol-record-gap);
+  margin-top: var(--os-protocol-record-gap);
+  padding-top: var(--os-protocol-record-gap);
 }
 
 .circle-os .os-protocol-record-term {
   align-items: baseline;
   background: none;
   border: 0;
-  border-bottom: 1px solid rgb(255 248 241 / 0.2);
   color: var(--c-warm-50);
   display: flex;
   flex-wrap: wrap;
   font-family: inherit;
   gap: 0.2rem 0.6rem;
   justify-content: flex-start;
-  min-height: var(--touch-min);
-  padding: 0.55rem 0;
+  padding: 0;
   text-align: left;
   width: 100%;
 }
 
 .circle-os button.os-protocol-record-term {
   cursor: pointer;
-}
-
-.circle-os .os-protocol-record-term:last-child {
-  border-bottom: 0;
 }
 
 .circle-os .os-protocol-record-term > span {
@@ -9636,16 +9633,21 @@
 }
 
 .circle-os .os-protocol-record-remove {
+  align-items: flex-start;
   appearance: none;
   background: transparent;
   border: 0;
   color: rgb(255 248 241 / 0.54);
   cursor: pointer;
+  display: flex;
   font-family: inherit;
   font-size: var(--text-2xs);
   font-weight: 650;
+  justify-content: flex-start;
+  margin-top: var(--os-protocol-record-gap);
   min-height: var(--touch-min);
-  padding: 0.6rem 0 0;
+  min-width: var(--touch-min);
+  padding: 0;
   text-align: left;
 }
 
@@ -9815,7 +9817,12 @@
   outline: none;
   padding: 0;
   resize: none;
+  scrollbar-width: none;
   width: 100%;
+}
+
+.circle-os .os-protocol-block-edit::-webkit-scrollbar {
+  display: none;
 }
 
 .circle-os .os-protocol-block.is-negotiable .os-protocol-block-edit {
@@ -10111,20 +10118,25 @@
 .circle-os .os-writing-embedded { width: 100%; }
 
 /* Note navigation uses Circle Orange; authored writing retains Ink. */
-.circle-os .os-writing-bounded.os-writing-page {
+.circle-os .os-writing-bounded.os-writing-page,
+.circle-os .os-habit-session.is-history .os-chapter-idle,
+.circle-os .os-protocol-home:has(.os-protocol-past[open]) {
   /* The frame adds a 1px border on each side. Keep the shared resting minimum
      and cap the whole App Box at 480px, or 60% of a short viewport. */
   max-height: max(var(--os-app-box-min-height), calc(min(480px, 60dvh) - 2px));
   grid-template-rows: auto min-content minmax(0, 1fr) max-content;
   overflow: hidden;
 }
-.circle-os .os-writing-bounded.os-writing-page > .os-page-body {
+.circle-os .os-writing-bounded.os-writing-page > .os-page-body,
+.circle-os .os-habit-session.is-history .os-chapter-idle > .os-page-body,
+.circle-os .os-protocol-home:has(.os-protocol-past[open]) > .os-page-body {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
-.circle-os .os-writing-bounded.os-writing-page > .os-page-body > * { flex-shrink: 0; }
+.circle-os .os-writing-bounded.os-writing-page > .os-page-body > *,
+.circle-os .os-protocol-home:has(.os-protocol-past[open]) > .os-page-body > * { flex-shrink: 0; }
 .circle-os .os-note-content { display: flex; flex-direction: column; width: 100%; }
 .circle-os .os-writing-bounded.os-writing-page > .os-page-footer {
   /* A global reduced-motion duration otherwise transitions every property,

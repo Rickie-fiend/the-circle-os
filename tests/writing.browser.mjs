@@ -336,6 +336,7 @@ for(const width of [360,390])test(`Day One v3 Routine task controls at ${width}p
   }
   await habitTick.locator(".os-creative-button-label").click({position:{x:1,y:22}});await expect(habitTick).toHaveAttribute("aria-pressed","true");
   const check=await habitTick.evaluate(el=>{const c=getComputedStyle(el,"::after");return {width:c.width,height:c.height};});assert.deepEqual(check,{width:"5px",height:"11px"});
+  await expect(habitTick).toHaveAttribute("aria-busy","false");
   await habitTick.click();await expect(habitTick).toHaveAttribute("aria-pressed","false");
   await taskTick.click();
   await expect.poll(()=>page.evaluate(()=>Object.values(window.circle.state.tasks.items).find(t=>t.text==="Synthetic task after v3")?.status)).toBe("completed");
@@ -348,6 +349,224 @@ for(const width of [360,390])test(`Day One v3 Routine task controls at ${width}p
   const undo=routine.getByRole("button",{name:"Undo task: Synthetic task after v3",exact:true});await expect(undo).toBeVisible();await undo.click();
   await expect.poll(()=>page.evaluate(()=>Object.values(window.circle.state.tasks.items).find(t=>t.text==="Synthetic task after v3")?.status)).toBe("open");
 }));
+
+for(const width of [360,390])test(`Habit dated history scrolls separately and keeps today's Undo at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  const dates=await page.evaluate(()=>{
+    const a=window.api,today=a.getDateKey(),yesterday=a.previousDateKey(today);
+    let past=yesterday;for(let i=0;i<7;i++)past=a.previousDateKey(past);
+    window.circle.updateState(s=>{
+      let added=a.addHabitDefinition(s,"history-snapshot");
+      s=a.updateHabitDefinitionParts(added.state,added.id,{action:"Original walk",cue:"after coffee",identity:"A steady walker"});
+      s=a.toggleHabitForDay(s,added.id,past);
+      s=a.toggleHabitForDay(s,added.id,yesterday);
+      let older=past;for(let i=0;i<12;i++){older=a.previousDateKey(older);s=a.toggleHabitForDay(s,added.id,older);}
+      s=a.updateHabitDefinitionParts(s,added.id,{action:"Renamed action",cue:"at night",identity:"New identity"});
+      s.habits.definitions[added.id].status="archived";
+      added=a.addHabitDefinition(s,"history-legacy");s=a.updateHabitDefinition(added.state,added.id,"Legacy current wording");s=a.toggleHabitForDay(s,added.id,past);delete s.habits.completions[past+":"+added.id].snapshot;
+      added=a.addHabitDefinition(s,"history-orphan");s=a.updateHabitDefinition(added.state,added.id,"Unavailable old wording");s=a.toggleHabitForDay(s,added.id,past);delete s.habits.completions[past+":"+added.id].snapshot;delete s.habits.definitions[added.id];
+      added=a.addHabitDefinition(s,"history-today");s=a.updateHabitDefinition(added.state,added.id,"Today only");s=a.toggleHabitForDay(s,added.id,today);
+      s.tasks.items["history-task"]={id:"history-task",text:"Older task",status:"completed",createdAt:past+"T12:00:00+07:00",updatedAt:past+"T12:00:00+07:00",completedAt:past+"T12:00:00+07:00"};
+      return s;
+    });return {today,yesterday,past};
+  });
+  await expect.poll(()=>page.evaluate(async()=>Boolean((await window.api.loadCircleState(window.api.getAccountScope())).habits.completions[window.api.getDateKey()+":history-today"]?.completed))).toBe(true);
+  const routine=page.locator(".os-habit-session");await routine.getByRole("button",{name:"Routine",exact:true}).click();
+  const historyButton=routine.getByRole("button",{name:"History",exact:true});await expect(historyButton).toBeVisible();await expect(routine).not.toHaveClass(/\bos-app-flip\b/);
+  await expect(routine.getByRole("combobox")).toHaveCount(0);await expect(routine.locator(".os-record-seam")).toHaveCount(0);
+  await expect(routine.locator(".os-habit-history-list")).toHaveCount(0);
+  assert.ok((await historyButton.boundingBox()).height>=44,"History touch target");
+  const before=await page.evaluate(()=>JSON.stringify({habits:window.circle.state.habits,tasks:window.circle.state.tasks,protocol:window.circle.state.protocol}));
+  await historyButton.click();const history=routine.locator('[aria-label="Habit history"]');await expect(history).toBeVisible();await expect(routine).not.toHaveClass(/\bos-app-flip\b/);
+  const past=history.locator(`[aria-label="${dates.past}"]`);
+  await expect(past).toContainText("To become A steady walker, I will Original walk after coffee.");
+  await expect(past).not.toContainText("Renamed action");await expect(past).toContainText("Legacy current wording");
+  await expect(history).not.toContainText("Original wording");await expect(past).toContainText("Older task");
+  await expect(history.locator(`[aria-label="${dates.yesterday}"] .os-record-label`)).toHaveText("Yesterday");
+  await expect(history).not.toContainText(dates.yesterday);await expect(past.locator(".os-record-label")).toHaveText(dates.past);
+  await expect(history.getByRole("button")).toHaveCount(0);await expect(history.getByRole("textbox")).toHaveCount(0);
+  assert.equal(await page.evaluate(()=>JSON.stringify({habits:window.circle.state.habits,tasks:window.circle.state.tasks,protocol:window.circle.state.protocol})),before,"browsing does not write records or replay outcomes");
+  const body=routine.locator(".os-page-body");
+  const layout=await body.evaluate(el=>({scroll:el.scrollHeight>el.clientHeight+1,overflow:el.scrollWidth>el.clientWidth+1}));assert.deepEqual(layout,{scroll:true,overflow:false});
+  const ceiling=Math.min(480,(width===360?667:844)*0.6);
+  await expect.poll(async()=>Math.round((await routine.boundingBox()).height)).toBe(Math.round(ceiling));
+  console.log("Measured Habit History",width,JSON.stringify({frame:(await routine.boundingBox()).height,ceiling,...layout}));
+  await routine.scrollIntoViewIfNeeded();await body.hover();
+  const headerBefore=await routine.locator(".os-page-header").boundingBox();await page.mouse.wheel(0,1200);
+  await expect.poll(()=>body.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+  const headerAfter=await routine.locator(".os-page-header").boundingBox();assert.equal(headerAfter.y,headerBefore.y,"header stays outside the body scroller");
+  await body.evaluate(el=>el.scrollTop=0);await routine.screenshot({path:`outputs/habit-history-list-${width}.png`});
+  // Today remains its own Page with its existing Undo controls.
+  await routine.getByRole("button",{name:"Record",exact:true}).click();await expect(historyButton).toBeVisible();await expect(routine).not.toHaveClass(/\bos-app-flip\b/);
+  await routine.getByRole("button",{name:"Undo: Today only",exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>window.circle.state.habits.completions[window.api.getDateKey()+":history-today"].completed)).toBe(false);
+  await expect.poll(()=>page.evaluate(async()=>Boolean((await window.api.loadCircleState(window.api.getAccountScope())).habits.completions[window.api.getDateKey()+":history-today"]?.completed))).toBe(false);
+  assert.equal(await page.evaluate(()=>window.circle.state.habits.completions[Object.keys(window.circle.state.habits.completions).find(k=>k.endsWith(":history-snapshot"))].completed),true);
+  await page.reload();await ready(page);await routine.getByRole("button",{name:"Routine",exact:true}).click();await expect(historyButton).toBeVisible();await expect(routine).not.toHaveClass(/\bos-app-flip\b/);await historyButton.click();await expect(past).toContainText("Original walk after coffee");await expect(routine).not.toHaveClass(/\bos-app-flip\b/);
+  assert.equal(await page.evaluate(()=>window.circle.state.habits.completions[window.api.getDateKey()+":history-today"].completed),false);
+  await routine.getByRole("button",{name:"Record",exact:true}).click();await expect(historyButton).toBeVisible();await expect(routine).not.toHaveClass(/\bos-app-flip\b/);
+  await routine.getByRole("button",{name:"Record",exact:true}).click();await expect(routine.getByRole("button",{name:"Add task",exact:true})).toBeVisible();
+},{reducedMotion:width===390?"no-preference":"reduce",height:width===360?667:844}));
+
+for(const width of [360,390])test(`new Habit accepts cue and identity before its required name at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  const routine=page.locator(".os-habit-session"),add=routine.getByRole("button",{name:"New habit",exact:true});
+  const action=()=>routine.getByRole("textbox",{name:"Edit habit: New Habit",exact:true});
+  const cue=()=>routine.getByRole("textbox",{name:"When you do it: New Habit",exact:true});
+  const identity=()=>routine.getByRole("textbox",{name:"Who this makes you: New Habit",exact:true});
+  const revision=await page.evaluate(()=>window.circle.state.evidence.localRevision);
+  await add.click();await expect(identity()).toBeVisible();await cue().fill("After lunch");await identity().fill("A steady walker");
+  await expect(action()).toHaveValue("");await expect(routine.getByRole("button",{name:"Mark done: New Habit",exact:true})).toBeDisabled();
+  await routine.getByRole("textbox",{name:"Routine identity",exact:true}).focus();await expect(action()).toHaveCount(0);
+  const draft=await page.evaluate(()=>Object.values(window.circle.state.habits.definitions).find(h=>h.status==="draft"));assert.equal(draft.cue,"After lunch");assert.equal(draft.identity,"A steady walker");
+  assert.equal(await page.evaluate(()=>window.circle.state.evidence.localRevision),revision,"unnamed fields do not save an active habit");
+  await expect.poll(()=>page.evaluate(async()=>Object.values((await window.api.loadCircleState(window.api.getAccountScope())).habits.definitions).find(h=>h.status==="draft")?.identity)).toBe("A steady walker");
+  await page.reload();await ready(page);await expect(action()).toHaveCount(0);await add.click();await expect(cue()).toHaveValue("After lunch");await expect(identity()).toHaveValue("A steady walker");
+  await action().fill("Cue first walk");await routine.getByRole("textbox",{name:"When you do it: Cue first walk",exact:true}).focus();
+  await routine.getByRole("textbox",{name:"Routine identity",exact:true}).focus();await expect(routine.getByRole("textbox",{name:"Edit habit: Cue first walk",exact:true})).toBeVisible();
+  await add.click();await identity().fill("A reader");await cue().fill("Before bed");await action().fill("Identity first read");await routine.getByRole("textbox",{name:"Routine identity",exact:true}).focus();
+  await expect.poll(()=>page.evaluate(()=>Object.values(window.circle.state.habits.definitions).filter(h=>h.status==="active"&&h.text.trim()).length)).toBe(2);
+  const names=await page.evaluate(()=>Object.values(window.circle.state.habits.definitions).filter(h=>h.status==="active").map(h=>({action:h.action,cue:h.cue,identity:h.identity})));assert.deepEqual(names,[{action:"Cue first walk",cue:"After lunch",identity:"A steady walker"},{action:"Identity first read",cue:"Before bed",identity:"A reader"}]);
+  await add.click();await cue().fill("Unfinished cue");await action().fill("   ");await routine.getByRole("textbox",{name:"Routine identity",exact:true}).focus();await expect(action()).toHaveCount(0);
+  assert.equal(await page.evaluate(()=>Object.values(window.circle.state.habits.definitions).filter(h=>h.status==="draft").length),1);
+  await routine.getByRole("button",{name:"Mark done: Cue first walk",exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>Object.values(window.circle.state.habits.completions).find(c=>c.snapshot?.action==="Cue first walk")?.completed)).toBe(true);
+  await expect.poll(()=>page.evaluate(async()=>Object.values((await window.api.loadCircleState(window.api.getAccountScope())).habits.definitions).filter(h=>h.status==="active"&&h.text.trim()).length)).toBe(2);
+  await page.reload();await ready(page);await expect(routine.getByRole("textbox",{name:"Edit habit: Identity first read",exact:true})).toBeVisible();await expect(action()).toHaveCount(0);
+}));
+
+for(const width of [360,390])test(`empty Habit History keeps the shared resting frame at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  const routine=page.locator(".os-habit-session");await routine.getByRole("button",{name:"Routine",exact:true}).click();await routine.getByRole("button",{name:"History",exact:true}).click();
+  await expect(routine.locator('[aria-label="Habit history"]')).toHaveText("No past records yet.");
+  await expect.poll(async()=>Math.round((await routine.boundingBox()).height)).toBe(346);
+  assert.equal(await routine.locator(".os-page-body").evaluate(el=>el.scrollHeight>el.clientHeight+1),false);
+  await expect(routine.getByRole("combobox")).toHaveCount(0);
+}));
+
+async function finishedProtocol(page, terms = 1) {
+  return page.evaluate(terms=>{
+    const a=window.api,key=a.previousDateKey(a.getDateKey());
+    window.circle.updateState(s=>{
+      s=a.startProtocolDraft(s,"review-phase").state;s=a.setProtocolDays(s,"review-phase",1);
+      for(let i=0;i<terms;i++){
+        s=a.addProtocolItem(s,"review-phase","non-negotiable","review-term-"+i).state;
+        s=a.updateProtocolItem(s,"review-phase","review-term-"+i,"Synthetic required term "+i);
+      }
+      s=a.addProtocolItem(s,"review-phase","negotiable","review-extra").state;
+      s=a.updateProtocolItem(s,"review-phase","review-extra","Synthetic extra term");
+      s=a.beginProtocolRun(s,"review-phase",key);
+      for(let i=0;i<terms;i++)s=a.toggleProtocolItem(s,"review-term-"+i,key);
+      return a.sealProtocolDay(s,key);
+    });return key;
+  },terms);
+}
+
+async function protocolHistory(page) {
+  const routine=page.locator(".os-habit-session");
+  await routine.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
+  const home=routine.locator(".os-protocol-home");await expect(home).toBeVisible();
+  await home.locator(".os-protocol-past-head").click();return {routine,home};
+}
+
+for(const width of [360,390])test(`Protocol finished history stays read only without correction controls at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  await finishedProtocol(page);const {home}=await protocolHistory(page);
+  const before=await page.evaluate(()=>JSON.stringify(window.circle.state.protocol));
+  await home.locator(".os-protocol-record-term").first().click();
+  await expect(home.locator(".os-protocol-record-kept")).toHaveText("1 of 1 days kept");
+  await expect(home.getByRole("button",{name:/Correct last day|Save correction|last day:/})).toHaveCount(0);
+  await expect(home.locator("button.os-protocol-record-term")).toHaveCount(0);
+  assert.equal(await page.evaluate(()=>JSON.stringify(window.circle.state.protocol)),before,"browsing cannot alter a completed phase");
+  await page.reload();await ready(page);
+  assert.equal(await page.evaluate(()=>JSON.stringify(window.circle.state.protocol)),before,"reload preserves the complete history");
+},{reducedMotion:width===390?"no-preference":"reduce"}));
+
+for(const width of [360,390,1280])test(`Protocol term inputs hide native scrollbars and keep wrapped text at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  const routine=page.locator(".os-habit-session");
+  await routine.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
+  await routine.getByRole("button",{name:"Start a phase",exact:true}).click();
+  const terms=["A synthetic non-negotiable with enough words to wrap across multiple lines in the term field.","A synthetic negotiable with enough words to wrap across multiple lines in the term field."];
+  const measure=field=>field.evaluate(el=>({height:el.getBoundingClientRect().height,client:el.clientHeight,scroll:el.scrollHeight,width:el.clientWidth,scrollWidth:el.scrollWidth,scrollbar:getComputedStyle(el).scrollbarWidth,webkit:getComputedStyle(el,"::-webkit-scrollbar").display}));
+  for(const [index,kind] of ["non-negotiable","negotiable"].entries()){
+    await routine.getByRole("button",{name:`Add a ${kind}`,exact:true}).click();
+    const field=routine.locator(".os-protocol-block-edit").nth(index);await expect(field).toHaveValue("");
+    await field.fill("Short term");const short=await measure(field);
+    await field.fill(terms[index]);const long=await measure(field);
+    assert.equal(long.scrollbar,"none");assert.equal(long.webkit,"none");
+    assert.ok(long.scroll<=long.client+1,"wrapped text is not clipped vertically");assert.ok(long.scrollWidth<=long.width+1,"no horizontal overflow");
+    if(width<500)assert.ok(long.height>short.height,"term grows with real content");
+    await expect(field).toHaveValue(terms[index]);console.log("Protocol term input",width,kind,JSON.stringify({short,long}));
+  }
+  if(width===390)await routine.screenshot({path:"outputs/protocol-inputs-390.png"});
+  await routine.getByRole("button",{name:"Begin 7 days",exact:true}).click();
+  await expect(routine.locator(".os-protocol-block-text")).toHaveText(terms);
+  await page.reload();await ready(page);
+  await routine.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
+  await expect(routine.locator(".os-protocol-block-text")).toHaveText(terms);
+  await routine.getByRole("button",{name:`Keep: ${terms[0]}`,exact:true}).click();
+  await expect(routine.getByRole("button",{name:`Undo: ${terms[0]}`,exact:true})).toHaveAttribute("aria-pressed","true");
+},{height:width===360?667:844}));
+
+for(const [width,height] of [[360,667],[390,844]])test(`Protocol past phases use Note's ceiling and compact read-only rows at ${width}px`,{timeout:90_000},async()=>isolated(width,async(page,context)=>{
+  const {routine,home}=await protocolHistory(page),body=home.locator(".os-page-body"),summary=home.locator(".os-protocol-past-head");
+  async function dimensions(){return home.evaluate(el=>{const body=el.querySelector(".os-page-body"),frame=el.closest(".os-swipe-session").getBoundingClientRect(),header=el.querySelector(".os-page-header").getBoundingClientRect(),footer=el.querySelector(".os-page-footer").getBoundingClientRect();return {height:frame.height,header:header.top-frame.top,footer:footer.top-frame.top,body:body.clientHeight,overflow:body.scrollHeight-body.clientHeight,top:body.scrollTop,horizontal:el.scrollWidth>el.clientWidth+1,scrollers:[...el.querySelectorAll("*")].filter(e=>["auto","scroll"].includes(getComputedStyle(e).overflowY)&&e.scrollHeight>e.clientHeight+1).length};});}
+  await expect(home.locator(".os-protocol-past")).toHaveAttribute("open","");
+  const empty=await dimensions();assert.equal(empty.height,346);assert.equal(empty.scrollers,0);
+  await summary.click();
+  await page.evaluate(()=>window.circle.updateState(s=>{
+    const a=window.api;let key=a.previousDateKey(a.getDateKey());for(let i=0;i<6;i++)key=a.previousDateKey(key);
+    for(let i=0;i<12;i++){
+      const id="past-phase-"+i,days=i%2?7:1;s=a.startProtocolDraft(s,id).state;s=a.setProtocolDays(s,id,days);s=a.renameProtocolRun(s,id,"Synthetic phase "+i);
+      for(const kind of ["non-negotiable","negotiable"]){const term=id+"-"+kind;s=a.addProtocolItem(s,id,kind,term).state;s=a.updateProtocolItem(s,id,term,kind==="non-negotiable"?"Write a line":"Read a page");}
+      s=a.beginProtocolRun(s,id,key);s=a.toggleProtocolItem(s,id+"-non-negotiable",key);s=a.endProtocolRun(s,id,i%3?"completed":"ended");
+    }return s;
+  }));
+  await expect(home.locator(".os-protocol-past-count")).toHaveText("12");
+  await expect.poll(async()=>(await dimensions()).height).toBe(346);
+  const before=await page.evaluate(()=>JSON.stringify(window.circle.state.protocol));
+  await summary.click();const ceiling=Math.min(480,height*.6);
+  await expect.poll(async()=>Math.abs((await dimensions()).height-ceiling)).toBeLessThan(1);
+  await routine.evaluate(async el=>{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));await Promise.all(el.querySelector(".os-app-window").getAnimations().map(animation=>animation.finished.catch(()=>{})));});
+  const opened=await dimensions();assert.equal(opened.scrollers,1);assert.ok(opened.overflow>1000);assert.ok(opened.body>50);assert.equal(opened.horizontal,false);
+  if(width===390)await routine.screenshot({path:"outputs/protocol-history-bounded-top-390.png"});
+  for(let i=0;i<12;i++){const record=home.locator(".os-protocol-record").filter({has:page.getByRole("heading",{name:"Synthetic phase "+i,exact:true})}),days=i%2?7:1;
+    await expect(record.locator(".os-protocol-record-kept")).toHaveText(`1 of ${days} days kept`);
+    await expect(record.locator(".os-protocol-record-term small")).toHaveText([`1/${days}`,`0/${days}`]);
+    for(const term of await record.locator(".os-protocol-record-term").all())await expect(term).toHaveCSS("border-bottom-width","0px");
+    await expect(record.locator("button.os-protocol-record-term")).toHaveCount(0);
+    const spacing=await record.evaluate(el=>{const rows=[...el.querySelectorAll(".os-protocol-record-term")],remove=el.querySelector(".os-protocol-record-remove"),text=document.createRange();text.selectNodeContents(remove);return {gap:rows[1].getBoundingClientRect().top-rows[0].getBoundingClientRect().bottom,removeGap:remove.getBoundingClientRect().top-rows.at(-1).getBoundingClientRect().bottom,removeHeight:remove.getBoundingClientRect().height,removeWidth:remove.getBoundingClientRect().width,labelInset:text.getBoundingClientRect().top-remove.getBoundingClientRect().top,rowHeights:rows.map(e=>e.getBoundingClientRect().height)};});
+    assert.ok(Math.abs(spacing.gap-10.4)<1);assert.ok(Math.abs(spacing.removeGap-spacing.gap)<1);
+    assert.ok(spacing.rowHeights.every(value=>value<44));assert.ok(spacing.removeHeight>=44&&spacing.removeWidth>=44);assert.ok(spacing.labelInset<5);
+    if(i===0)console.log("Past phase spacing",width,JSON.stringify(spacing));
+  }
+  await body.hover();await page.mouse.wheel(0,260);await expect.poll(()=>body.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+  const scrolled=await dimensions();assert.equal(scrolled.header,opened.header);assert.equal(scrolled.footer,opened.footer);assert.equal(scrolled.height,opened.height);
+  const touch=await context.newCDPSession(page),rect=await body.boundingBox(),x=rect.x+rect.width/2,y=rect.y+rect.height-12;
+  await touch.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x,y}]});for(let delta=15;delta<Math.min(rect.height-15,100);delta+=15)await touch.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y:y-delta}]});await touch.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});await touch.detach();
+  await expect(home).toBeVisible();await body.evaluate(el=>el.scrollTop=el.scrollHeight);
+  const last=home.locator(".os-protocol-record").last();await expect(last.getByRole("button",{name:/Remove phase record:/})).toBeInViewport();
+  assert.equal(await page.evaluate(()=>JSON.stringify(window.circle.state.protocol)),before,"scrolling/history presentation writes no records");
+  console.log("Bounded Protocol history",width,height,JSON.stringify({empty,opened,scrolled}));await routine.screenshot({path:`outputs/protocol-history-bounded-${width}.png`});
+  await body.evaluate(el=>el.scrollTop=0);await summary.click();
+  await expect.poll(async()=>(await dimensions()).height).toBe(346);assert.equal((await dimensions()).scrollers,0);
+  await summary.click();await expect.poll(async()=>Math.abs((await dimensions()).height-ceiling)).toBeLessThan(1);
+  await page.setViewportSize({width,height:560});await expect.poll(async()=>(await dimensions()).height).toBe(346);
+  await page.setViewportSize({width,height});await expect.poll(async()=>Math.abs((await dimensions()).height-ceiling)).toBeLessThan(1);
+  await page.reload();await ready(page);const reopened=await protocolHistory(page);await expect(reopened.home.locator(".os-protocol-record")).toHaveCount(12);
+  assert.equal(await page.evaluate(()=>JSON.stringify(window.circle.state.protocol)),before,"reload retains original counts and records");
+  const remove=reopened.home.locator(".os-protocol-record").last().getByRole("button",{name:/Remove phase record:/});
+  await remove.click();await expect(remove).toHaveText("Tap again to remove");
+  await expect(reopened.home.locator(".os-protocol-record")).toHaveCount(12);
+  await remove.click();await expect(reopened.home.locator(".os-protocol-record")).toHaveCount(11);
+  assert.deepEqual(await page.evaluate(()=>window.circle.state.protocol.completions),JSON.parse(before).completions,"removal preserves completion evidence");
+  if(width===390){
+    await page.evaluate(()=>window.circle.updateState(s=>{const a=window.api;s=a.startProtocolDraft(s,"ongoing-phase").state;for(let i=0;i<8;i++){const id="ongoing-term-"+i;s=a.addProtocolItem(s,"ongoing-phase","non-negotiable",id).state;s=a.updateProtocolItem(s,"ongoing-phase",id,"Ongoing synthetic term "+i);}return a.beginProtocolRun(s,"ongoing-phase",a.getDateKey());}));
+    await routine.getByRole("button",{name:"Protocol",exact:true}).click();await expect(home).toBeVisible();
+    await expect(home).not.toHaveClass(/\bos-app-flip\b/);
+    await summary.click();await expect.poll(async()=>Math.abs((await dimensions()).height-ceiling)).toBeLessThan(1);
+    await expect(home.locator(".os-protocol-current")).toBeVisible();assert.equal((await dimensions()).scrollers,1);
+    await home.getByRole("button",{name:"Phases",exact:true}).click();await expect(home).toHaveCount(0);
+    await expect(routine.locator(".os-protocol-block-text")).toHaveCount(8);
+    await expect.poll(()=>routine.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThan(480);
+  }
+},{height,reducedMotion:width===390?"no-preference":"reduce"}));
 
 for(const width of [360,390])test(`shared App Box geometry at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
   async function measure(selector){return page.locator(selector).evaluate(el=>{const frame=el.closest(".os-swipe-session"),label=el.querySelector(".os-page-header-left"),main=el.querySelector("textarea,input,h1,h2,[data-os-main-text],.os-protocol-past");const range=document.createRange();range.selectNodeContents(label.querySelector(".os-card-label"));return {height:frame.getBoundingClientRect().height,page:el.getBoundingClientRect().height,gap:main?.getBoundingClientRect().top-label.getBoundingClientRect().bottom,visibleGap:main?.getBoundingClientRect().top-range.getBoundingClientRect().bottom,scroll:el.scrollHeight>el.clientHeight+1};});}

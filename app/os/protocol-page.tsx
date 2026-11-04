@@ -86,7 +86,6 @@ export function ProtocolKeptPage({ seal }: { seal: ProtocolSealView }) {
 
 type ProtocolPageProps = {
   protocol: ProtocolView;
-  completedProtocol: CompletedProtocolView;
   phaseRecords: ProtocolPhaseRecord[];
   canBegin: boolean;
   editingItemId: string | null;
@@ -98,7 +97,6 @@ type ProtocolPageProps = {
   onFinishItemEdit: (itemId: string) => void;
   onBegin: () => void;
   onToggleItem: (itemId: string) => void;
-  onToggleCompletedItem: (runId: string, itemId: string, dateKey: string) => void;
   onArchiveRecord: (runId: string) => void;
   onSealToday: () => void;
   onEndRun: () => void;
@@ -107,12 +105,10 @@ type ProtocolPageProps = {
 
 function ProtocolHome({
   className = "",
-  completedProtocol,
   currentPhase,
   onReturnToPhase,
   onStart,
   onArchiveRecord,
-  onToggleCompletedItem,
   phaseRecords,
   running = false,
 }: {
@@ -124,21 +120,15 @@ function ProtocolHome({
     termsToday: number;
   } | null;
   className?: string;
-  completedProtocol: CompletedProtocolView;
   onReturnToPhase?: (event: MouseEvent<HTMLButtonElement>) => void;
   onStart?: () => void;
   onArchiveRecord: ProtocolPageProps["onArchiveRecord"];
-  onToggleCompletedItem: ProtocolPageProps["onToggleCompletedItem"];
   phaseRecords: ProtocolPhaseRecord[];
   running?: boolean;
 }) {
   const [confirmingRemoval, setConfirmingRemoval] = useState<string | null>(null);
   const removalTimer = useRef<number | null>(null);
   const standing = protocolStanding(phaseRecords);
-  const completedItems = completedProtocol
-    ? [...completedProtocol.nonNegotiable, ...completedProtocol.negotiable]
-    : [];
-
   useEffect(
     () => () => {
       if (removalTimer.current) window.clearTimeout(removalTimer.current);
@@ -268,7 +258,6 @@ function ProtocolHome({
         </summary>
       <div className="os-page-main os-protocol-home-records">
         {phaseRecords.length ? phaseRecords.map((record) => {
-          const canCorrect = completedProtocol?.run.id === record.id;
           return (
             <article className="os-protocol-record" key={record.id}>
               <div className="os-protocol-record-head">
@@ -288,32 +277,13 @@ function ProtocolHome({
               {record.terms.length ? (
                 <div className="os-protocol-record-terms">
                   {record.terms.map((term) => {
-                    const completedItem = completedItems.find(
-                      (item) => item.id === term.id,
-                    );
                     const contents = (
                       <>
                         <span>{term.text}</span>
-                        <small>{term.keptDays} of {record.days} days</small>
+                        <small>{term.keptDays}/{record.days}</small>
                       </>
                     );
-                    return canCorrect && completedItem && completedProtocol ? (
-                      <button
-                        aria-label={`${completedItem.completed ? "Undo" : "Mark"} last day: ${term.text}`}
-                        className="os-protocol-record-term"
-                        key={term.id}
-                        onClick={() =>
-                          onToggleCompletedItem(
-                            record.id,
-                            term.id,
-                            completedProtocol.dateKey,
-                          )
-                        }
-                        type="button"
-                      >
-                        {contents}
-                      </button>
-                    ) : (
+                    return (
                       <div className="os-protocol-record-term" key={term.id}>
                         {contents}
                       </div>
@@ -365,7 +335,6 @@ function ProtocolHome({
  */
 export function ProtocolPage({
   protocol,
-  completedProtocol,
   phaseRecords,
   canBegin,
   editingItemId,
@@ -377,7 +346,6 @@ export function ProtocolPage({
   onFinishItemEdit,
   onBegin,
   onToggleItem,
-  onToggleCompletedItem,
   onArchiveRecord,
   onSealToday,
   onEndRun,
@@ -438,10 +406,8 @@ export function ProtocolPage({
   if (!protocol) {
     return (
       <ProtocolHome
-        completedProtocol={completedProtocol}
         onArchiveRecord={onArchiveRecord}
         onStart={onStart}
-        onToggleCompletedItem={onToggleCompletedItem}
         phaseRecords={phaseRecords}
       />
     );
@@ -453,7 +419,6 @@ export function ProtocolPage({
     return (
       <ProtocolHome
         className={protocolBack.className}
-        completedProtocol={completedProtocol}
         currentPhase={{
           name: run.name,
           day,
@@ -465,7 +430,6 @@ export function ProtocolPage({
         onReturnToPhase={(event) =>
           protocolBack.flip("phase", undefined, event.currentTarget)
         }
-        onToggleCompletedItem={onToggleCompletedItem}
         phaseRecords={phaseRecords}
         running
       />

@@ -6,6 +6,73 @@ reviewed implementation and verification under the current web beta sequence.
 
 ## Current prototype
 
+### Protocol history is read only - 2026-11-03
+
+The developer removed Correct last day as unnecessary, superseding the earlier
+correction-editor slice. Protocol history has no last-day action or editor.
+The dedicated draft/write functions and shell wiring are removed. Ordinary
+ticks still reject completed and archived phases, malformed dates, dates
+outside their run and future dates. Running-day editing/sealing and phase
+archiving retain their existing behavior.
+
+The account-separated state still accepts and merges `protocol.corrections`
+for compatibility with already-saved immutable receipts. There is no current
+writer for that map. Removing the feature does not discard earlier evidence,
+rewrite completion/seal records or migrate personal data. Full prospective
+historical term versions remain separate work.
+
+Protocol term inputs hide native scrollbar chrome in their scoped CSS while
+retaining content sizing and multiline growth. The reported grey box was not
+visible in isolated Chromium; native-scrollbar attribution remains an inference.
+
+Checks and limits are in
+[the journey evidence](USER_JOURNEY_TESTING.md#protocol-simplification-and-input-scrollbars-2026-11-03).
+
+### Habit dated history - 2026-11-03
+
+The developer's follow-up replaces the initial picker with a separate History
+Page opened from Record's top-right History label. Shared App-back navigation
+returns to today's Record. Completed past days appear newest first in one
+scrollable Body, with a fixed Header and the shared writing ceiling. Yesterday
+has no date beside it; older groups show their dates. Original-wording notices
+are removed from the UI by request; internal current/unknown provenance remains.
+Empty/fully undone days do not produce completion groups. See
+[the refinement checks](USER_JOURNEY_TESTING.md#habit-history-page-and-flexible-entry-2026-11-03).
+
+Habit Record reads past completions directly from the existing account-separated
+Circle state. Each new tick adds an optional snapshot (text, action, cue,
+identity) to that completion, alongside its existing dateKey, completedAt and
+updatedAt. Definition edits/archiving do not modify it. Undo writes a dated false
+value and retains the snapshot; a subsequent tick captures its new wording.
+Normalization, local storage and the existing timestamp-based merge retain the
+fields. This is not the planned durable-operation Supabase sync protocol.
+
+`habitHistoryRecord` includes completed entries even if their definition is
+archived or missing. Older completions without snapshots carry an explicit
+current/unknown wording source; reading does not backfill data. A saved empty
+snapshot also never borrows later wording. `habitHistoryDates` lists past days
+from completion records (including undone ticks) and existing completed tasks.
+The History list reads those same source records without a second editable store
+or outcome calls. The picker described in the initial evidence is superseded.
+
+The same follow-up allows any new Habit field first. The existing definition
+record supports status=draft for the new inline entry path; older chapter/model
+creation paths retain their existing defaults. Raw action/cue/identity fields
+persist locally for recovery without queuing an unnamed draft as a saved Habit.
+Normalizers and the existing merge retain draft fields. Drafts are excluded from
+ordinary Routine rows, active-habit counts and completion actions. New habit
+reopens an unfinished draft. Committing a nonblank action promotes it to active;
+blank action stays draft. A cleared previously saved habit still archives. The
+resume action also preserves fields on an older unnamed active placeholder while
+marking it as a draft; it never recreates over an existing named/archived record.
+This does not certify cross-device draft sync or introduce a new cloud protocol.
+
+Today's Undo and Week's current-definition counts still use `dayRecord`.
+Task wording/date semantics are unchanged, including their known travel/timezone
+limitations. Definition versions on missed days, explicit past corrections,
+cross-device ownership/receipts, import and safe cloud sync remain later slices.
+See [verification and limits](USER_JOURNEY_TESTING.md#habit-dated-history-2026-11-03).
+
 ### Deep Thoughts and managed quotes - 2026-11-03
 
 Today now presents Note and Deep Thoughts. The shared account writing Page owns

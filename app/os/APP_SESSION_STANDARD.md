@@ -134,9 +134,10 @@ Every Cover, Chapter, and App Page uses the same five regions.
 - Real added rows may extend a fluid App Box while the Footer remains below
   them. Habit tasks stay visible in one continuous Sub Body; they do not move
   into an inner scrolling panel.
-- Protocol terms use the same continuous-page behavior in draft, running and
-  finished states. They remain visible as the App Box grows downward rather
-  than moving into an inner scrolling panel.
+- Draft and running Protocol terms remain visible as the App Box grows downward.
+  Expanded Past phases is the approved exception: the frame uses Note's
+  480px/60dvh ceiling, never below the shared minimum, with only Body scrolling
+  and Header/Footer fixed. Collapsed, empty and short history rests naturally.
 - A fluid App Box commits its first measured height only after child editors
   have sized and the font state has settled. It remeasures when fonts finish or
   fail and when an in-Page side changes; the CSS minimum carries first paint.
@@ -275,7 +276,8 @@ the earlier explicit-Save/draft controls for Note only. See the
   reduced to 60% of the dynamic viewport on short phones, never below that
   minimum. Note, History, Trash and opened Trash content scroll only Body past
   the ceiling. Header, Heading and Footer remain outside the scroll area.
-  Other Apps retain their existing height rules; Habit/Protocol grow naturally.
+  Routine and draft/running Protocol retain natural downward growth; expanded
+  Protocol Past phases shares this history ceiling.
 - Note saves after a short typing pause and when leaving the editor. Text
   composition finishes before autosave. Focus keeps idle rotation paused.
 - There is no Save, Clear, Discard, Drafts, Versions, Undo or save-status UI.
@@ -451,6 +453,22 @@ the earlier explicit-Save/draft controls for Note only. See the
   Optional Sub text begins beneath Main without moving it.
 - Routine App Pages place the editable app identity in Main Body, habits then
   Tasks in one continuous Sub Body, and Add task in Footer.
+- Habit Record keeps Today so far with its existing Undo controls. Its top-right
+  History label opens a separate read-only Page using the shared App back.
+  History groups completions by day, newest first, showing Yesterday without
+  its date and dates for older days. It has no picker, wording notices or dark
+  divider. Provenance remains internal; missing original wording is never
+  invented. The History body alone scrolls at the same 480px/60dvh frame ceiling
+  as writing; its header stays fixed. The header's Record action returns to
+  today's completions. Routine and draft/running Protocol retain natural
+  downward growth; expanded Protocol Past phases also uses the history ceiling.
+  See [the refinement checks](../../docs/USER_JOURNEY_TESTING.md#habit-history-page-and-flexible-entry-2026-11-03).
+- New habit shows action, time/location and identity together, accepting any
+  field first. Its action is required to become an active visible Habit.
+  Unnamed work remains a recoverable draft and is hidden on leaving the row;
+  New habit reopens it, including after reload. Moving between fields does not
+  discard it. A saved Habit cleared deliberately retains the existing archive
+  behavior. The Routine focus/title remains a separate editable field.
 - Repeated habits form one continuous Sub Body stack. Each habit uses one
   quiet divider and one row rhythm; it never creates a nested card or double gap.
 - Routine is the first Page and Protocol is one swipe across. Their Headers are
@@ -468,9 +486,9 @@ the earlier explicit-Save/draft controls for Note only. See the
 - Note, Thoughts, short Chapter, empty Routine and resting Protocol Pages all
   use the same default App Box height. Only real added content may request a
   larger stable height.
-- Draft, running and finished Protocol Pages grow downward for their real terms.
-  They share the default minimum but do not hold that height or nest a terms
-  scroller.
+- Draft and running Protocol Pages grow downward for their real terms, with no
+  inner terms scroller. Expanded Past phases instead shares Note's bounded
+  Body scrolling, retaining the same default minimum.
 
 ## State
 
@@ -495,8 +513,11 @@ the earlier explicit-Save/draft controls for Note only. See the
   likewise one-time journeys that retire back to their normal App.
   Dismissal, when that App offers it, also retires the delivery rather than
   adding it to a recall queue.
-- Closing a kept Protocol day writes a dated seal but never locks its ticks. A
-  newer correction records an explicit unseal. The factual kept-day Page is
+- Closing a kept Protocol day writes a dated seal. A running day's ordinary
+  ticks remain editable. Finished-phase rows are read only, with no last-day
+  correction action or editor. The developer removed that feature on 2026-11-03.
+  Any already-saved correction receipts remain intact for persistence and merge.
+  The factual kept-day Page is
   transient, occupies the Protocol slot, pauses idle rotation, and one swipe
   removes it without adding a stack or chapter run.
 
@@ -613,6 +634,19 @@ saving an answer requests no AI reply. Exact new controls remain under review.
   phase is front and home is the `Phases` back.
 - Home reads completed and early-ended runs from existing local records. It
   stores no aggregate and presents only within-phase counts, dates and terms.
+- Past terms cannot be ticked while browsing. There is no past-day correction
+  control. Full prospective term history remains separate work. Protocol term
+  inputs hide native scrollbar chrome while wrapped text grows downward.
+- Opening Past phases allows the frame to grow to Note's 480px/60dvh ceiling,
+  never below the shared minimum. Beyond that only Body scrolls; Header and
+  Footer stay fixed. Closing removes this bound. Active phase editing/running
+  Pages retain natural downward growth.
+- Each past phase retains its full `1 of 7 days kept` summary under the title.
+  Individual term counts use `1/7` and `0/7`; term rows have no white dividers.
+  Dividers between different phases remain.
+- Past terms are read-only text and reserve no 44px control height. Use the
+  existing 0.65rem rhythm between term rows and before Remove. Remove retains
+  at least a 44x44px target, with its label aligned at the top of that target.
 - Starting from home uses the existing one-run draft path. A second draft is
   never created to satisfy navigation.
 - Removing a finished or early-ended record archives its run with a newer
