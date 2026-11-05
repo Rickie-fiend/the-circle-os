@@ -188,12 +188,6 @@
   width: 26px;
 }
 
-.os-local-status {
-  color: var(--c-neutral-500);
-  font-size: var(--text-2xs);
-  letter-spacing: 0.05em;
-}
-
 .circle-os .os-nav {
   background: var(--c-neutral-950);
   border: 1px solid rgb(241 239 232 / 0.08);
@@ -380,7 +374,10 @@
   line-height: 1;
   margin: 0.42rem 0 0;
   max-width: 390px;
+  overflow-wrap: anywhere;
 }
+
+.circle-os .os-context-row > div { min-width: 0; }
 
 .circle-os .os-save-state {
   color: var(--c-neutral-500);
@@ -6231,16 +6228,67 @@
 }
 .circle-os.os-auth-bar { min-height: 44px; padding: 0 24px; position: relative; text-align: right; z-index: 100; }
 .circle-os.os-auth-bar button { max-width: 100%; overflow-wrap: anywhere; }
-.circle-os .os-auth-menu {
+.circle-os .os-account-control {
+  font-family: var(--font-sans), Arial, sans-serif;
+  position: relative;
+  max-width: 48%;
+  min-width: 44px;
+}
+.circle-os .os-account-trigger {
+  background: transparent;
+  border: 0;
+  color: var(--c-bone);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-xl);
+  max-width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+.circle-os .os-account-trigger > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.circle-os .os-account-menu {
   background: var(--c-bone);
   border-radius: var(--r-md);
   color: var(--c-ink);
-  max-width: calc(100vw - 48px);
-  padding: 16px;
+  width: max-content;
+  max-width: calc(100vw - 36px);
+  padding: 12px;
   position: absolute;
-  right: 24px;
-  top: 44px;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 100;
 }
+.circle-os .os-account-menu :is(button, input) {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+  min-height: 44px;
+  min-width: 44px;
+}
+.circle-os .os-account-menu.is-editing { width: min(192px, calc(100vw - 36px)); }
+.circle-os .os-account-menu button { cursor: pointer; font-weight: 650; padding: 8px 12px; text-align: left; }
+.circle-os .os-account-menu > button { display: block; width: 100%; }
+.circle-os .os-account-menu button:disabled { cursor: default; opacity: .5; }
+.circle-os .os-account-menu label { display: grid; gap: 8px; font-size: var(--text-sm); }
+.circle-os .os-account-menu input { border-bottom: 1px solid var(--c-charcoal); padding: 8px; width: 100%; }
+.circle-os .os-account-menu p { margin: 8px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; }
+.circle-os .os-account-actions { display: flex; justify-content: space-between; margin-top: 12px; }
+.circle-os .os-account-control :focus-visible { outline: 2px solid var(--c-orange); outline-offset: 3px; }
+.circle-os .os-account-floating {
+  position: absolute;
+  top: 12px;
+  right: max(18px, calc((100vw - 480px) / 2 + 18px));
+  z-index: 100;
+}
+body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
 
 .circle-os .os-connect > section {
   background: var(--c-bone);
@@ -9993,6 +10041,10 @@
 .circle-os .os-writing-list details p { font-size: 1rem; line-height: 1.5; white-space: pre-wrap; }
 .circle-os .os-writing-review h2 { font-size: var(--os-page-main-font-size); line-height: var(--os-page-main-line-height); }
 .circle-os .os-writing-review h2:empty { display: none; }
+.circle-os .os-writing-sync-copy { padding-block: 16px; border-top: 1px solid color-mix(in srgb, var(--os-ink, #191813) 18%, transparent); }
+.circle-os .os-writing-sync h3 { font: inherit; font-weight: 650; }
+.circle-os .os-writing-sync summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: #E36B37; }
+.circle-os .os-writing-sync time { font-size: 0.875rem; }
 .circle-os .os-writing-embedded-header { display: flex; justify-content: space-between; }
 .circle-os .os-writing-embedded { width: 100%; }
 

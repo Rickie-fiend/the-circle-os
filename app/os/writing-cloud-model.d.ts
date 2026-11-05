@@ -1,5 +1,6 @@
 import type { WritingEntry, WritingState } from "./writing-model.js";
 import type { WritingSyncState, WritingSyncAcknowledgement } from "./writing-sync-model.js";
+import type { WritingChoice } from "./writing-conflict-model.js";
 export type WritingSnapshot = { entry: WritingEntry | null; tombstone: WritingState["tombstones"][string] | null };
 export type WritingHead = { owner: string; entryId: string; serverVersion: number; snapshot: WritingSnapshot };
 export type WritingCloudState = {
@@ -7,6 +8,9 @@ export type WritingCloudState = {
   heads: Record<string, { serverVersion: number; signature: string }>;
   conflicts: Record<string, WritingHead>;
   suppressed: Record<string, { entryId: string; fingerprint: string }>;
+  choices?: Record<string, WritingChoice>;
+  resolved?: Record<string, { request: WritingChoice; head: WritingHead }>;
+  settled?: Record<string, { entryId: string; fingerprint: string; resolutionId: string }>;
 };
 export type WritingCloudBundle = { state: WritingState; queue: WritingSyncState; cloud: WritingCloudState };
 export type WritingUpload = {

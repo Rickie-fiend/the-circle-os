@@ -59,6 +59,22 @@ geometry and hierarchy.
 
 ## Layout
 
+- Writing sync (2026-11-06): open a separate Writing sync Page from writing
+  History. Keep normal Note autosave silent and keep save/sync labels out of
+  the global header. Compare This device and Cloud copy vertically, show dates
+  and active/Trash state, and make the current-copy choice explicit. Retained
+  histories remain readable. Reuse shared App-back travel, Geist, orange actions,
+  44px targets and the existing bounded writing Body; the Footer stays visible.
+
+- Account controls (2026-11-06): a three-dot button sits at the top right of
+  the existing Circle OS header. It opens Edit alias and Sign out in a menu
+  sized to its labels, with equal space around the longest label. The alias
+  editor retains enough width for its field. There is no
+  separate account row or Saved/Synced status in the header. Keep 44px targets,
+  keep the alias in the greeting and wrap long aliases there.
+  Account access remains reachable during full-screen onboarding.
+  Menu actions use Geist at the existing 650 control weight.
+
 - Approved spacing refinement (2026-11-03): the shared label-to-content gap is
   48px; Main-to-Sub and Body-to-Footer gaps are both 25px. This supersedes older
   spacing statements for these values. Preserve the shared App Box minimum and

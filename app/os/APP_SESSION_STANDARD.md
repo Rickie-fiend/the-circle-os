@@ -312,6 +312,13 @@ Used for charts, weekly views, and other things worth reading again.
 
 ## Note
 
+2026-11-06 writing-sync addition: History opens a separate Writing sync Page.
+Status and conflict controls live there, not in the silent Note editor or global
+header. Review vertically stacked This device and Cloud copy with dates/Trash
+state; explicitly choose the current copy while preserving both histories. Keep
+the shared App-back engine, bounded writing Body and visible Footer. Changed
+copies require renewed review. No draft upload or automatic winner is implied.
+
 The developer approved the account Note refinement on 2026-11-03. It supersedes
 the earlier explicit-Save/draft controls for Note only. See the
 [writing journeys](../../docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md#5-writing-journeys).

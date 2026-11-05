@@ -1,5 +1,198 @@
 # Circle OS user-journey test record
 
+## Writing sync status and conflict resolution (2026-11-06)
+
+**Scope and setup.** Approved repository implementation only. Used the installed
+Node at `C:/Users/wickie''/AppData/Local/Author Software/nvm/installs/v24.22.1/node.exe`.
+The SQL fixture applies the unchanged original migration and the new
+`202611060001_writing_resolution.sql` in isolated PGlite PostgreSQL with synthetic
+Auth claims. Browser checks use actual writing provider/pages, IndexedDB,
+authenticated transport and a local HTTP RPC fixture backed by that database.
+No hosted credentials, personal writing, legacy profile-server writes or model
+calls are part of these tests. Browser requests outside the fixture origin are
+blocked. Test tokens/accounts are synthetic; this is not hosted JWT evidence.
+
+**Final commands and results.** Commands run from the repository root. `node`
+below means the installed executable above; PowerShell uses `&` and the quoted
+absolute path. Browser runs set `PLAYWRIGHT_BROWSERS_PATH` to
+`C:/Users/wickie''/AppData/Local/ms-playwright`. Build runs prepend the installed
+Node directory to `PATH` so CSS-worker subprocesses use the same executable.
+
+```text
+node --test tests/writing-resolution.test.mjs tests/writing-cloud-database.test.mjs tests/writing-transport.test.mjs tests/writing-model.test.mjs tests/writing-sync.test.mjs tests/writing-compatibility.test.mjs
+100/100 passed; exit 0.
+
+node --test tests/writing-cloud.browser.mjs
+13/13 passed; exit 0 after editor-return/shared-transition corrections.
+
+node --test --test-name-pattern="writing sync view|mobile conflict|review detects" tests/writing-cloud.browser.mjs
+Final 5/5 affected cases passed; exit 0 after conflict-reply validation tightening.
+
+node --test --test-name-pattern="shared App Box geometry" tests/writing.browser.mjs
+2/2 passed; exit 0.
+
+node node_modules/next/dist/bin/next build
+Final production build, TypeScript, all 14 static pages and route collection passed; exit 0.
+
+node node_modules/eslint/bin/eslint.js app/os/writing-conflict-model.js app/os/writing-cloud-model.js app/os/writing-cloud-runner.tsx app/os/writing-cloud-sync.js app/os/writing-pages.tsx app/os/writing-provider.tsx app/os/writing-sync-provider.tsx app/os/writing-sync-page.tsx app/os/writing-store.ts app/os/writing-transport.ts tests/writing-resolution.test.mjs tests/writing-cloud.browser.mjs tests/writing-transport.test.mjs tests/helpers/writing-cloud.mjs
+Passed without warnings; exit 0.
+```
+
+Documentation audit of added links passed: 14 local links, including 13 heading
+fragments. `git diff --check` passed with the existing LF/CRLF notices.
+
+**Observed behavior.** At 360x844 and 390x844 (Bangkok timezone, reduced motion),
+History → Writing sync shows cloud-off/device-only states without putting status
+back into the Note editor. Separate synthetic devices produce competing saved
+copies; the screen shows both labels/text/dates, and both choice directions work.
+Choice targets measure at least 44px; no horizontal page overflow. Histories can
+be reopened after resolution, and the clean Note editor shows the chosen text.
+Changes during review require updated review. Offline choices are disabled.
+An accepted resolution with its HTTP response deliberately aborted stays locally
+queued, survives reload, retries exactly once and leaves one server resolution.
+The original browser transport cases also pass: normal/offline save/reload,
+clearing/Trash/restore/deletion, failed acknowledgement storage, late old-account
+responses, newer in-flight edits, conflicts and the enabled runner.
+
+Focused SQL/model evidence checks immutable cloud-prefix versions and untouched
+branch histories, exact retry/changed-request denial, owner-only archives and
+denied anonymous/missing-identity/service-role resolution/history access. A new
+device recovers both histories. Newer local work after lost replies remains a
+conflict; stale server choices do not overwrite newer heads. Terminal deletion
+scrubs server request/result bodies and local archived copies; replay cannot
+restore writing. All four writing kinds preserve Unicode, original source and
+the original Circle attribution across a choice made on a later day.
+
+**Measurements and artifacts.** At both phone widths, Note/Thoughts/Habit/
+Protocol outer frames are **346px**, Page heights **344px**, header gaps **48px**.
+Visible text gaps are 52px for Note/Thoughts and 51.09375px for Habit/Protocol.
+No resting inner scroll; short Note rests at the shared size, and long Note
+grows within the existing 480px cap with only Body scrolling. Conflict screenshots:
+`outputs/writing-conflict-360.png` and `outputs/writing-conflict-390.png`; inspected
+the 360px image. It shows the first copy and fixed choice Footer; Body scrolling
+reveals the second copy/history within the approved writing ceiling.
+
+**Attempts, limits and next step.** An initial deletion assertion found an archive
+left in the local-tombstone receive path; fixed and rerun. Code review found a
+clean Note buffer retaining old text after a choice; fixed and browser-verified.
+Initial `node` resolved to an unavailable version launcher; used installed Node.
+The sandbox's altered browser path was corrected to the installed browser cache;
+Chromium then hit `ERR_NETWORK_ACCESS_DENIED` on loopback. Production builds first
+failed through the Node launcher and then a sandboxed CSS-worker connection.
+Approved outside-sandbox browser/build runs passed. These attempts do not certify
+or disprove hosted behavior. Final affected counts overlap the full selections;
+do not add them as unique coverage. No performance issue justified optimization.
+
+The new SQL file is **not applied remotely**. No environment change, activation,
+personal import, deployment, physical-phone/Opera acceptance, real hosted device
+recovery, true multi-connection lock contention or backup/retention proof.
+Existing Week model date expectation, ResizeObserver and wider beta gaps remain.
+Next is developer UI review and separately reviewed follow-up migration/hosted
+checks under [the current contract](ACCOUNT_WRITING_SYNC.md#writing-status-and-conflict-resolution---2026-11-06).
+
+## Account header and alias greeting (2026-11-06)
+
+Font correction: Chromium's `CSS.getPlatformFontsForNode` confirmed the prior
+menu already used custom Geist. Actions used regular weight; they now use the
+existing **650** control weight, with an explicit brand-family binding. The
+test checks the actual platform font (Geist, custom) and computed 650 weight.
+All **3 affected browser cases**, **2 geometry cases** and targeted test lint
+passed after this change. Menu now measures **100.89px** at both phone widths,
+still with **24px left/right** and **44px** actions. Inspected the updated 360px
+capture. No new full production build for this CSS correction; previous build
+results remain dated to the earlier implementation. The measurements below
+describe prior refinements where they differ.
+
+Latest spacing correction: fit the action menu to its labels rather than a
+fixed 192px. At 360px and 390px it measures **97.25px**, with **24px left and
+24px right** around the longest label and **44px** action heights. Only the
+alias editing form retains 192px. The three affected alias/browser cases passed
+again using the `account header|edited alias` selection; targeted lint passed.
+Inspected the new 360px capture. The first geometry run passed both resting-frame
+measurements but failed the immediate long-Note growth assertion at 390px;
+timing is an inference. An unchanged rerun passed **2/2**, including growth,
+with the same 346px frames/48px gaps. No product or test fix was made for that
+intermittent assertion. No new full Next build was run for this spacing-only
+correction; previous build evidence remains dated to the prior refinement.
+
+Follow-up requested by the developer: the account trigger now shows three dots
+instead of the alias, and the menu is **192px** wide rather than 288px. The full
+alias remains in the greeting. Reverified with
+`node --test --test-reporter=spec --test-name-pattern="account header|edited alias|invite link is scrubbed" tests/supabase-auth.browser.mjs`:
+**4/4 passed**, including the measured menu width at both phone widths and the
+44px target. Geometry cases passed **2/2** again with the same measurements
+below. Targeted lint and a new Next production build including types passed.
+Inspected the updated 360px menu capture. This supersedes the initial alias-on-
+button description below; other behavior and limitations remain.
+
+Developer approved the reviewed header/account-menu and missing-alias fix and
+explicitly removed the header Saved status. Started with a clean tree on
+`paing-branch`, HEAD `df2b397`. No staging, commit, push, deployment, hosted
+configuration or personal-data change by this slice.
+
+### Behavior and verification setup
+
+The existing header now contains the alias button, opening Edit alias and Sign
+out. The separate signed-in account bar and header Saved/Waiting to sync/Synced
+status are removed. A context supplies verified, account-scoped display identity
+and reuses the current auth controller/adapter for alias changes. The greeting
+reads this alias instead of the account's empty legacy profile-name field. No
+alias is copied into personal records; legacy mode retains its old name source.
+Changing accounts unmounts the old menu. Full-screen chapter dialogs expose an
+account control while the covered header control is hidden, preserving logout
+during first onboarding. Long aliases fit the button and wrap in the greeting.
+
+The existing auth browser harness now includes the actual OSFrame and an
+optional actual Today shell. Tests run the real Supabase JS client, auth
+controller, offline proof, account storage and UI against synthetic Auth
+responses/signed tokens. Accounts A and B use different aliases. Chromium uses
+Bangkok time and 360x844/390x844 mobile viewports. No real hosted identities,
+credentials or personal evidence are used.
+
+### Checks
+
+- `node --test --test-reporter=spec tests/supabase-auth.test.mjs tests/account-scope.test.mjs`:
+  **18/18 passed**.
+- `node --test --test-reporter=spec tests/supabase-auth.browser.mjs`:
+  **13 passed, 2 optional production-origin cases skipped**. Covers account
+  alias in header/greeting, 44px targets within the header, keyboard open/Escape
+  and restored focus, outside dismissal, cancelled/Unicode/40-character alias
+  edits, unchanged profile name, reload, A/B/A isolation, closed menus on account
+  change, onboarding logout access, offline alias return and rejected offline
+  edit. Existing login/recovery/revocation/offline record checks also passed.
+- After the long-alias wrapping fix,
+  `node --test --test-reporter=spec --test-name-pattern="account header|edited alias" tests/supabase-auth.browser.mjs`:
+  **3/3 passed**. Includes a direct scroll-width assertion against clipped
+  greeting text. Inspected `work/account-menu-360.png` before and after the fix.
+- `node --test --test-reporter=spec --test-name-pattern="shared App Box geometry" tests/writing.browser.mjs`:
+  **2/2 passed**, repeated after the wrap fix. Note, Thoughts, Habit and Protocol
+  each rest at **346px**, rendered page **344px**, shared header gap **48px** at
+  both widths, no inner scroller. Visible glyph gaps remain **52px** for writing
+  and **51.09px** for Habit/Protocol. Short Note stays at rest; long Note grows
+  within its existing bound and scrolls only its body.
+- Targeted ESLint passed for both new account modules, auth boundary, shell
+  and auth browser test. Final
+  `node node_modules/next/dist/bin/next build` passed including TypeScript after
+  the wrap fix. Final `git diff --check` passed with existing LF/CRLF notices;
+  29 current-section local links/fragments passed.
+
+### Attempts and limits
+
+The first test-harness build found a missing parenthesis in new test wiring;
+the harness root was rewritten as JSX. Initial inspection then exposed a
+40-character alias clipped by the heading's existing sizing. Added local
+greeting wrapping/min-width rules and reran affected browser/geometry checks
+plus lint/build. No App Box type scale, spacing token or default size changed.
+No measured performance issue justified further optimization.
+
+The static harness emits unresolved-at-build asset-path and large-chunk notices;
+these are test-build notices, not a new product build failure. Optional tests
+requiring `CIRCLE_AUTH_PRODUCTION_ORIGIN` were skipped; the Next build is separate
+evidence. Actual hosted alias edits, physical phones, Opera and desktop layouts
+remain unverified. Existing Week date-test/ResizeObserver and broader beta
+gaps are not closed. Saving/queue/error behavior, account boundaries, 06:00 day,
+sync activation and hosted data are unchanged by this UI slice.
+
 ## Direct entry after Day One (2026-11-06)
 
 Developer approved removing automatic entry prompts after Day One, retaining

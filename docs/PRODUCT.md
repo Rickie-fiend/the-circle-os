@@ -4,6 +4,16 @@ Updated: 2026-11-03. This document records the developer's product direction.
 Use [the decision log](DECISION_LOG.md) to distinguish confirmed decisions from
 preferences and unresolved choices.
 
+2026-11-06 writing-sync decision: History has a separate Writing sync view;
+Note keeps silent autosave and the global header stays free of save/sync labels.
+Show where saved writing stands and let the person compare This device with
+Cloud copy. Choosing a current copy preserves both saved histories and creates
+a new current revision; it does not merge prose or choose by device time. If
+either copy changes, ask the person to review again. Drafts stay on the device;
+permanent deletion remains final. Repository UI/resolution support is locally
+verified; its follow-up SQL migration and activation still need separate hosted
+review. See [the current contract](ACCOUNT_WRITING_SYNC.md#writing-status-and-conflict-resolution---2026-11-06).
+
 2026-11-06 entry decision: after any completed Day One, enter directly into the
 app. Week setup, Log setup, Week review and the daily greeting do not open
 automatically. Existing manual chapter/review controls and saved progress remain.
@@ -284,6 +294,15 @@ longer grants, renewal effects, and retry/no-change accounting remain open.
 Total spending budget, prices, and payment details are deferred.
 
 ## Privacy and identity
+
+2026-11-06 account controls: the header's three-dot button opens Edit alias and
+Sign out in a menu that fits its labels with equal side padding. Keep the alias
+in the greeting rather than
+on the button. Remove the separate account bar and header save/sync status. The Today
+greeting uses the signed-in account's alias, including after an edit or offline
+return. Keep the alias in authentication metadata, separate from profile/name
+evidence. Legacy mode retains its existing name source. Alias edits require a
+connection; a failed edit keeps the currently saved alias.
 
 The developer wants people to use Circle OS without disclosing a real-world
 identity to other users. Email/password login with a separate display alias is

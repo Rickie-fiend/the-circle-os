@@ -1,5 +1,19 @@
 # Onboarding bugs
 
+## Account controls and missing alias greeting - 2026-11-06
+
+Developer reported awkward alias/sign-out placement and an alias missing after
+Good evening. The greeting read legacy `profile.name` instead of account alias.
+Locally fixed: a three-dot button opens compact account actions in the existing
+top-right header;
+the separate account row and header save status are removed by developer choice.
+The scoped auth alias supplies the greeting and edits reuse the existing auth
+handler. Long aliases wrap in the greeting and fit the header; sign out remains
+reachable during onboarding. Synthetic real-client checks cover edits, cancel,
+reload, offline failure/return and account switching. See
+[evidence and limits](docs/USER_JOURNEY_TESTING.md#account-header-and-alias-greeting-2026-11-06).
+Actual hosted/Opera/phone acceptance remains pending.
+
 ## Automatic entry prompts after Day One - 2026-11-06
 
 Developer reported Week review/setup appearing at sign-in before the week was

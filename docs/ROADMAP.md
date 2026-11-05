@@ -1,5 +1,12 @@
 # Circle OS roadmap
 
+2026-11-06 status: original writing migration and bounded hosted two-account
+checks passed. Writing status/conflict UI and resolution protocol are now locally
+verified. The new resolution migration, its hosted checks, activation, actual-
+device recovery and backup/retention remain separate gates. See the current
+[writing contract](ACCOUNT_WRITING_SYNC.md#writing-status-and-conflict-resolution---2026-11-06)
+and current task; older next-action text below predates these delivered slices.
+
 2026-11-05 scope update: completed Week reviews remain read only; Week-review
 corrections are removed from current scope. Past Habit completion corrections
 and the shared day view are deferred and no longer block safe-sync work. App

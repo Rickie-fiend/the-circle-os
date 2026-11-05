@@ -116,6 +116,8 @@ import {
 } from "./app-session";
 import { sizeTextAreaToContent } from "./text-area-size";
 import { useAppBack } from "./app-back";
+import { AccountMenu } from "./auth/account-menu";
+import { useAccountIdentity } from "./auth/account-context";
 import { correctLogEntry, logHistoryDays, type LogCorrection } from "./log-history.js";
 import { LogHistoryPage } from "./log-history-page";
 import { weekHistory } from "./week-history.js";
@@ -567,6 +569,7 @@ export function ChapterSplash({
         ref={sheetRef}
         role="dialog"
       >
+        <AccountMenu floating />
         <div className="os-splash-frame" ref={frameRef}>
           {children}
         </div>
@@ -1667,7 +1670,7 @@ export function OSFrame({
 }: {
   children: ReactNode;
 }) {
-  const { state, ready } = useCircleState();
+  const { ready } = useCircleState();
   const pathname = usePathname();
   const router = useRouter();
   const active = pathname.startsWith("/os/mirror")
@@ -1677,18 +1680,6 @@ export function OSFrame({
     : pathname.startsWith("/os/connect")
       ? "connect"
       : "today";
-  const evidenceWaiting =
-    state.outbox.length > 0 ||
-    state.evidence.localRevision > state.evidence.acknowledgedRevision;
-  const syncLabel = !state.ai.profileId
-    ? "Saved"
-    : evidenceWaiting && state.ai.status === "offline"
-      ? "Waiting to sync"
-      : evidenceWaiting
-        ? "Saved"
-        : state.ai.lastSyncedAt
-          ? "Synced"
-          : "Saved";
 
   function moveToRoute(
     event: ReactMouseEvent<HTMLAnchorElement>,
@@ -1735,9 +1726,7 @@ export function OSFrame({
             <span className="os-brand-mark" aria-hidden="true" />
             <span>CIRCLE OS</span>
           </Link>
-          <span aria-live="polite" className="os-local-status">
-            {syncLabel}
-          </span>
+          <AccountMenu />
         </header>
         <nav className="os-nav" aria-label="Circle OS" data-active={active}>
           <Link
@@ -1789,6 +1778,9 @@ export function TodayExperience() {
   const { state, today, ready, dateKey, updateState, updateDay, updateToday } =
     useCircleState();
   const writing = useWriting();
+  const accountIdentity = useAccountIdentity();
+  const greetingName = accountIdentity?.alias.trim() ||
+    (getAccountScope().kind === "legacy" ? state.profile.name.trim() : "");
   const writingView = writing ? writing.view : undefined;
   const [accountNoteBusy, setAccountNoteBusy] = useState(false);
   const [accountThoughtBusy, setAccountThoughtBusy] = useState(false);
@@ -2040,7 +2032,7 @@ export function TodayExperience() {
       if (now.getHours() < CIRCLE_DAY_START_HOUR) {
         circleDate.setDate(circleDate.getDate() - 1);
       }
-      const name = state.profile.name.trim();
+      const name = greetingName;
       setDateLabel(
         circleDate.toLocaleDateString("en-US", {
           weekday: "long",
@@ -2061,7 +2053,7 @@ export function TodayExperience() {
     return () => {
       active = false;
     };
-  }, [dateKey, state.profile.name]);
+  }, [dateKey, greetingName]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setLiveNow(new Date()), 30_000);

@@ -7,12 +7,13 @@ import { CreativeButton, ButtonRewardBackdrop } from "./button-engine";
 import { isDeepThoughtRewardEligible } from "./deep-thought-model.js";
 import { sizeTextAreaToContent } from "./text-area-size";
 import { useWriting, type WritingContextValue } from "./writing-provider";
+import { WritingSyncPage } from "./writing-sync-page";
 import { QuotePage, type QuoteNavigation } from "./quotes/quote-page";
 import type { Quote } from "./quotes/quote-model.js";
 import { writingAttribution, type WritingCommand, type WritingContent, type WritingDraft, type WritingDraftInput, type WritingHistoryEntry, type WritingKind, type WritingSource, type WritingVersion } from "./writing-model.js";
 
 type Session = { draft: WritingDraftInput; version: number; revision: number; savedRevision: number; conflict: boolean };
-type Page = "editor" | "history" | "detail" | "versions" | "version" | "trash" | "trash-detail" | "delete" | "drafts" | "conflict" | "quote";
+type Page = "editor" | "history" | "sync" | "detail" | "versions" | "version" | "trash" | "trash-detail" | "delete" | "drafts" | "conflict" | "quote";
 type Props = {
   kind: WritingKind;
   source?: WritingSource;
@@ -386,6 +387,16 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   let body: ReactNode;
   let footer: ReactNode;
   let heading = "";
+  if (back.side === "sync") return <WritingSyncPage notes={isNote(kind)} className={`${isNote(kind) ? "os-note-page" : "os-thoughts-page"} ${back.className}`} onBack={() => {
+    const target = live.current;
+    const latest = [...writing.history, ...writing.trash].find(entry => entry.id === target?.draft.entryId);
+    // A reviewed cloud choice may replace this editor's already-saved copy.
+    // Only retire a clean buffer; unfinished writing keeps its conflict guard.
+    if (target && target.revision === target.savedRevision && (!latest || latest.generation !== target.draft.baseGeneration)) {
+      publish(null); setFresh(false); setError("");
+    }
+    go("history");
+  }} />;
   if (back.side === "editor") {
     const input = spentQuestion ? <p>This question was answered.</p> : <textarea aria-label={isNote(kind) ? "Write a note" : embedded ? `Reply to Athena: ${sourceShown?.question || ""}` : sourceShown?.question ? "Answer the deep thought" : "Write a thought"} className={sourceShown?.question ? "os-deep-thought-answer" : "os-regular-thought-input"} disabled={read.status !== "ready"} rows={1} maxLength={isNote(kind) ? undefined : (session?.draft.kind || kind) === "reading-answer" ? 1600 : 800} placeholder={isNote(kind) ? "Write a note..." : placeholder} value={shown.body} onFocus={() => { if (shown.body.trim() && focusAt.current === null) focusAt.current = performance.now(); }} onBlur={pauseClock} onChange={event => change("body", event.currentTarget.value)} />;
     body = <><ButtonRewardBackdrop active={sent && rewarded} styleId="default" /><form id={formId} ref={textareas}
@@ -417,7 +428,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     const today = writingAttribution(now(), Intl.DateTimeFormat().resolvedOptions().timeZone).day;
     const previousDay = new Date(`${today}T12:00:00Z`); previousDay.setUTCDate(previousDay.getUTCDate() - 1);
     const dayLabel = (value: string) => value === today ? "Today" : value === previousDay.toISOString().slice(0, 10) ? "Yesterday" : new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
-    body = <div className="os-writing-list os-info-page-main">{rows.length ? rows.map(row => {
+    body = <div className="os-writing-list os-info-page-main">{back.side === "history" ? <Action text="Writing sync" click={() => go("sync")} disabled={disabled} /> : null}{rows.length ? rows.map(row => {
       const showDay = day !== row.day; day = row.day;
       const entry = [...entries, ...trashed].find(item => item.id === row.key);
       const title = row.kind === "note" ? row.content.title || "Untitled" : entry?.source?.question || row.content.body.slice(0, 100) || "Untitled";

@@ -36,5 +36,7 @@ export function createWritingTransport(client: Pick<SupabaseClient, "auth">,
     receipts: operation_ids => rpc("circle_writing_receipts", { operation_ids }),
     inventory: after_id => rpc("circle_writing_inventory", { after_id, page_size: 50 }),
     apply: request => rpc("circle_writing_apply", { request }),
+    resolve: request => rpc("circle_writing_resolve", { request }),
+    resolutions: after_id => rpc("circle_writing_resolution_history", { after_id, page_size: 50 }),
   };
 }

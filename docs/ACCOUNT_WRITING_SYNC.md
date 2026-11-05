@@ -5,6 +5,49 @@ two-account RPC checks verified on 2026-11-06. Activation remains off.
 This covers the account writing ledger, not every Circle OS domain or legacy
 profile-server data. No personal migration is authorized by this implementation.
 
+## Writing status and conflict resolution - 2026-11-06
+
+Repository implementation now includes History → Writing sync. Note keeps silent
+autosave and the global header has no save/sync label. The separate view shows
+device-only, waiting, failure and confirmed-sync states, compares This device and
+Cloud copy, and offers an explicit choice. Drafts remain device-local. A choice
+is saved locally before upload; failure and response loss retain it for retry.
+Changes during review require reviewing updated copies. Clean Note buffers adopt
+the chosen current copy when leaving this view; unfinished writing is preserved.
+
+The new [follow-up migration](../supabase/migrations/202611060001_writing_resolution.sql)
+is **not applied to the hosted project**. It adds private owner-readable
+`writing_resolutions`, the confirmed-account `circle_writing_resolve` action,
+paged `circle_writing_resolution_history`, and a permanent-deletion scrub trigger.
+The original applied migration is unchanged. SHA-256 of the follow-up file:
+`60b823dcc45f8ca5ff3623913272501e8dba6886178111600e4c410ec6e929e2`.
+
+Resolution compares the exact reviewed cloud snapshot/server version under the
+same account transaction lock as normal uploads. It preserves both original
+saved histories in an immutable resolution record, appends a new chosen revision
+to the existing cloud history, and retains the chosen active/Trash state, source
+and Circle-day attribution. Device clocks never choose a winner. Same-request
+retry returns the original result; changed reuse is rejected. Permanent deletion
+scrubs request/result bodies and makes an old choice unable to restore writing.
+The history RPC recovers retained histories on another signed-in device.
+
+Locally, optional `choices`, `resolved` and body-free `settled` maps extend
+`cloud-v1` without replacing old stores. Exact captured pending operations are
+settled by the resolution response, not falsely acknowledged as normal uploads.
+Newer local edits stay pending and require another review. Both local deletion
+and downloaded deletion remove choice/archive bodies. The coordinator recovers
+pending choices before normal receipt recovery, inventory and uploads.
+
+These changes supersede the older "no resolver/status UI" descriptions below
+for repository capability only. Automatic sync activation remains separately
+reviewed. Before enabling it, review/apply this follow-up migration and verify
+both new RPCs against the hosted service: allowed owner access, denied other-
+account/anonymous/service-role/unconfirmed access, stale choices, retry/lost
+responses, deletion and retained-history recovery. Do not reapply the original
+non-idempotent migration. Hosted recovery, actual devices, backups, retention and
+other-domain sync remain open. Local proof is in the
+[journey evidence](USER_JOURNEY_TESTING.md#writing-sync-status-and-conflict-resolution-2026-11-06).
+
 ## Hosted verification - 2026-11-06
 
 The developer separately approved applying the exact migration to

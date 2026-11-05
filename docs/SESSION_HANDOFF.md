@@ -1,5 +1,137 @@
 # Session handoff
 
+## 2026-11-06 - Writing sync status and conflict resolution
+
+**Approval and Git context.** Developer confirmed direct-entry review and
+approved the proposed History sync view, comparison/choice, retained histories,
+stale-review protection, account-protected resolution protocol/new migration,
+tests and related records. Branch `paing-branch`, HEAD `df2b397`. Existing tracked
+account-menu/alias changes and its two untracked account modules are preserved.
+All work remains uncommitted; no staging, remote SQL/configuration change,
+personal import, activation or deployment. An untracked `debug.log` appeared
+during browser attempts and is retained rather than treated as source.
+
+**Completed and verified.** History opens Writing sync. Note retains silent
+autosave and the global header retains its current account menu. The separate
+view distinguishes device-only, waiting, failure and confirmed sync, compares
+dated This device/Cloud copy snapshots including Trash state, and explicitly
+chooses a current copy. Newer copies require renewed review. Shared App-back
+travel and bounded writing Body/visible Footer remain. Clean Note buffers show
+the chosen current revision on return; unsaved text is preserved.
+
+The follow-up migration adds private owner-scoped resolution archives, confirmed-
+account resolve/history RPCs and deletion scrubbing. Resolution appends a new
+current revision while preserving both saved histories unchanged. Stable durable
+choices recover lost replies; newer local edits retain a conflict. New-device
+sync recovers kept histories. Local/downloaded deletion scrubs choice/archive
+bodies and server deletion prevents old-choice resurrection. Drafts never upload.
+
+100/100 focused model/database/transport checks, 13/13 isolated Chromium cases,
+final 5/5 affected browser reruns, 2/2 shared geometry cases, targeted lint and
+final Next production build including TypeScript passed. At both 360px/390px,
+Note, Thoughts, Habit and Protocol rest at 346px with 48px header gaps. Short
+Note remains at rest and long Note grows to its existing bounded Body. Inspected
+the 360px conflict screenshot. Exact commands and evidence are in
+[the journey record](USER_JOURNEY_TESTING.md#writing-sync-status-and-conflict-resolution-2026-11-06).
+Added-link audit passed (14 links, 13 heading fragments); whitespace checks pass
+with existing LF/CRLF notices.
+
+**Attempts and gaps.** Fixed a retained-local-archive deletion case exposed by
+testing and the clean-editor return path found during review; affected checks
+were rerun. Initial Node launcher/PATH, installed-browser path and sandbox local
+network restrictions were tooling failures; approved outside-sandbox browser
+and production-build runs passed. No hosted proof of the follow-up migration,
+physical-phone/Opera acceptance, real hosted recovery, multi-connection lock
+contention, backup deletion/retention, other-domain sync or broader beta claim.
+Earlier Week date-test and ResizeObserver warnings remain unresolved.
+
+**Invariants and records.** Preserved account isolation, local-first evidence,
+immutable originals, terminal deletion, one answer/source identity and 06:00
+attribution. Archived branches do not become additional Athena evidence.
+Updated contract, product, architecture, decisions, design/Page standard,
+queue/roadmap status and continuity/evidence records. No measured performance
+issue justified optimization. Earlier snapshots retain their unique evidence.
+
+**Next action.** Developer UI review, then separately review applying the
+[follow-up SQL and hosted checks](ACCOUNT_WRITING_SYNC.md#writing-status-and-conflict-resolution---2026-11-06).
+The original applied migration remains unchanged. Automatic sync stays off;
+activation remains separately reviewed after hosted/operational limits.
+
+## 2026-11-06 - Account menu and alias greeting
+
+**Font correction.** Explicit Geist binding and existing 650 action weight now
+match app controls. Actual platform-font inspection confirmed Geist both before
+and after; the visible change is regular to 650 weight. Three affected browser
+cases, two geometry cases and targeted lint passed. Menu measured 100.89px with
+24px left/right and 44px actions at both phone widths; screenshot inspected.
+No new full build for this CSS correction. This supersedes earlier width/font
+measurements below; uncommitted/local status and other limits remain.
+
+**Latest spacing correction.** Action menu now fits the labels instead of a
+fixed width: measured 97.25px, 24px left/right text spacing and 44px action
+heights at both phone widths. The alias form alone stays 192px. Three affected
+browser cases and targeted lint passed; inspected the updated 360px screenshot.
+An immediate long-Note-growth assertion failed once at 390px, then the unchanged
+geometry rerun passed 2/2 with the same default measurements. No new full build
+for this correction. This supersedes the fixed action-menu width below.
+
+**Developer follow-up.** The account trigger now shows three dots instead of
+the alias and the menu is 192px wide. The greeting retains the alias. Four
+affected auth/browser cases, both geometry cases, targeted lint and a new Next
+production build including types passed after this refinement. Inspected the
+updated 360px screenshot. This supersedes the initial alias-on-button wording
+below; the same uncommitted/undeployed scope and verification gaps remain.
+
+**Approval and Git context.** Developer approved the concrete header/menu,
+alias-greeting fix, tests and related documentation. They explicitly removed
+the proposed Saved status because people do not need that header status.
+Started clean on `paing-branch`, HEAD `df2b397`. Changes remain uncommitted;
+`account-context.tsx` and `account-menu.tsx` are new/untracked. Nothing staged,
+pushed, deployed, imported or changed in hosted accounts/configuration.
+
+**Completed and verified.** Moved the alias into the existing header's top
+right and kept Edit alias/Sign out inside its menu. Removed the separate
+signed-in account row and header save/sync label. A scoped authenticated
+identity context supplies the greeting; the old greeting read `profile.name`,
+which account mode deliberately does not populate. Alias changes reuse the
+current auth controller/adapter and refresh offline proof, without writing
+profile records. Legacy name behavior remains. Menus reset across accounts;
+full-screen onboarding retains account access. Forty-character aliases fit the
+button and wrap in the heading rather than being clipped.
+
+Final evidence: 18/18 focused auth/account-boundary model checks, 13 runnable
+auth browser cases, three affected browser reruns after the wrap fix, two final
+geometry cases, targeted lint and the final Next production build including
+types passed. Two optional production-origin browser cases were skipped.
+The synthetic real-client harness checks actual header/Today components,
+onboarding account access, keyboard/Escape/focus, outside dismissal, cancel,
+Unicode/long aliases, reload, offline return/failure and A/B/A switching.
+Inspected the 360px menu capture after correcting clipping. Exact commands,
+attempts and distinctions are in
+[the journey evidence](USER_JOURNEY_TESTING.md#account-header-and-alias-greeting-2026-11-06).
+
+**Attempts and limits.** Fixed a parenthesis error in new test wiring by using
+JSX, then corrected the long-alias clipping found by screenshot inspection.
+Affected browser, geometry, lint and build checks passed after that fix.
+Synthetic Auth responses/signed tokens are not hosted alias-edit evidence.
+Physical phones, Opera and desktop layouts remain unverified. Test-build
+asset-path/chunk notices, existing Week date-test/ResizeObserver issues and
+wider beta gates remain recorded. No measured performance issue justified
+optimization; no broad-suite certification is claimed.
+
+**Invariants and records.** At 360px/390px, Note, Thoughts, Habit and Protocol
+rest at 346px (344px page) with 48px shared header gaps and no inner scroll.
+Visible glyph gaps remain 52px for writing and 51.09px for Habit/Protocol;
+short/long Note growth was also checked. No App Box scale/spacing tokens changed.
+Preserved account separation, local saves/queue, error paths and the 06:00 day.
+Updated design, product, architecture, decisions, bugs, journey, task and
+handoff; earlier snapshots below retain their unique evidence.
+Final whitespace checks and 29 current-section local links/fragments passed.
+
+**Next action.** Developer phone/Opera review of the header, menu and restored
+alias greeting. Then resume separately reviewed conflict/status and sync
+readiness. This slice neither activates sync nor changes hosted data.
+
 ## 2026-11-06 - Direct entry after Day One
 
 **Approval and Git context.** Developer approved removing automatic prompts

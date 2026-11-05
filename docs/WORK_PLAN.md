@@ -74,6 +74,15 @@ overlap; do not add their counts together as unique coverage.
 
 ## Ordered work
 
+2026-11-06 sync update: the original writing SQL migration and bounded hosted
+two-account checks are complete. Writing status/conflict UI and the repository
+resolution protocol now have local verification. The follow-up resolution SQL
+is not applied remotely; hosted verification of its two new RPCs, activation,
+actual-device recovery and backup/retention gates remain. Review the new UI, then
+separately review the follow-up migration and hosted checks under
+[the writing contract](ACCOUNT_WRITING_SYNC.md#writing-status-and-conflict-resolution---2026-11-06).
+This dated update supersedes older pending-hosted/no-conflict-UI wording in row 5.
+
 2026-11-05 developer update: retain read-only completed Week reviews rather than
 adding review corrections; defer past Habit completion corrections and the
 shared day view. Proceed from the delivered App histories to safe-sync work.

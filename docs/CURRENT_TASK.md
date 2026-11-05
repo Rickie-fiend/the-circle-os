@@ -1,5 +1,72 @@
 # Current task
 
+## Writing sync status and conflict resolution - 2026-11-06
+
+Developer reviewed direct entry and approved this bounded repository slice.
+Implemented History → Writing sync, distinct device/waiting/synced/failure
+states, comparison of This device and Cloud copy, explicit choice, retained
+histories, stale-review protection, durable retries and deletion scrubbing.
+Note keeps silent autosave; the global header keeps its existing account menu.
+The chosen current revision retains source, Circle attribution and active/Trash
+state. A clean Note editor returns to the selected copy; unfinished work stays.
+
+100/100 focused checks, 13/13 isolated browser cases, final 5/5 affected reruns,
+2/2 shared geometry cases, targeted lint and final Next production build including
+types passed. Note/Thoughts/Habit/Protocol rest at 346px with 48px header gaps at
+360px and 390px. See [commands, attempts and limits](USER_JOURNEY_TESTING.md#writing-sync-status-and-conflict-resolution-2026-11-06).
+
+The new resolution SQL migration is prepared and locally tested, **not applied
+remotely**. Original migration unchanged; no environment change or activation,
+personal import, staging, commit or deployment. Changes remain uncommitted on
+`paing-branch` at `df2b397`; existing account-menu/alias work is preserved.
+Hosted checks for the two new RPCs, actual devices, backup/retention and broader
+sync/beta gaps remain open. Prior Week date-test/ResizeObserver gaps remain.
+
+Next: developer review of the Writing sync view, then separately review applying
+the [follow-up migration and hosted checks](ACCOUNT_WRITING_SYNC.md#writing-status-and-conflict-resolution---2026-11-06).
+Activation follows its own review; this slice does not certify live cloud sync.
+
+## Account menu and alias greeting - 2026-11-06
+
+Latest font correction: explicit Geist and existing 650 menu-action weight.
+Browser platform-font inspection verifies the actual custom Geist face.
+Three affected browser cases, two geometry cases and lint pass; menu now
+measures 100.89px with equal 24px side spacing. Prior measurements below are
+historical. No full build rerun for this CSS correction.
+
+Developer follow-up: use a three-dot header button and compact 192px menu.
+The greeting still shows the alias; editing/sign-out behavior stays the same.
+Latest spacing correction: the action menu now fits its labels with equal
+left/right space; only the alias form keeps 192px. This replaces the fixed
+action-menu width above.
+Latest checks: three affected browser cases and lint passed. Menu measured
+97.25px with 24px spacing on both sides of its longest label. Geometry rerun
+passed 2/2 after one intermittent immediate long-Note-growth assertion; no new
+full build for this final spacing correction.
+Four affected auth/browser cases, both geometry cases, targeted lint and a new
+Next production build including types passed after the refinement.
+
+Approved slice implemented: account button in the existing top-right header,
+Edit alias/Sign out within its menu, no separate signed-in account row or
+header save-status text. Today greets the verified alias, including edits and
+offline return, without copying it into profile evidence. Long aliases wrap;
+account controls remain reachable during onboarding. Legacy names remain.
+
+18/18 model checks, 13 runnable auth browser cases (two optional production-
+origin cases skipped), three affected post-fix reruns, two post-fix geometry
+cases, targeted lint and final Next build including types passed. Four resting
+frames remain 346px with 48px header gaps. See
+[evidence and limits](USER_JOURNEY_TESTING.md#account-header-and-alias-greeting-2026-11-06).
+
+Started clean on `paing-branch`, HEAD `df2b397`; changes are uncommitted and
+the two new account modules are untracked. No staging, push, deployment, hosted
+account/configuration change or personal import. Hosted/Opera/phone acceptance,
+the existing Week date-test/ResizeObserver issues and broader beta gaps remain.
+
+Next: developer review of header placement, alias editing and the greeting on
+the affected device, then resume the separately reviewed conflict/status and
+sync-readiness work. Earlier entries retain their dated evidence below.
+
 ## Direct entry after Day One - 2026-11-06
 
 Approved entry slice implemented: any completed Day One enters the app without

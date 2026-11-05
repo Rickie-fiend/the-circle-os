@@ -15,6 +15,7 @@ import {
 } from "./writing-sync-model.js";
 import { assertWritingCloudState, canonicalWriting, createWritingCloudState,
   inventoryWritingChanges, type WritingCloudBundle } from "./writing-cloud-model.js";
+import { prepareWritingChoice, queueWritingChoice } from "./writing-conflict-model.js";
 
 export const WRITING_DATABASE_NAME = "circle-os-writing-v1";
 const STORE_NAME = "writing";
@@ -173,6 +174,12 @@ export async function inventoryWritingStore(scope: AccountScope): Promise<Writin
   throw new WritingError("sync-busy", "Your writing changed during sync. It is safe to retry.");
 }
 
+export async function chooseWritingCopy(scope: AccountScope, entryId: string, choice: "local" | "cloud", reviewed: WritingCloudBundle) {
+  const request = await prepareWritingChoice(reviewed, entryId, choice, new Date().toISOString(), `v_${crypto.randomUUID()}`);
+  assertAccountScope(scope);
+  return writingCloudTransaction(scope, latest => queueWritingChoice(latest, request));
+}
+
 /** Read/check/write the latest ledger inside ONE transaction, including across tabs.
  * A receipt is local acceptance only. It is not a Supabase/cloud acknowledgement.
  * No localStorage fallback, upload, automatic expiry, or existing-profile import.
@@ -205,6 +212,9 @@ export async function commitWritingOperation(scope: AccountScope, command: Writi
                     if (cloud.result !== undefined && result.receipt.outcome === "deleted") {
                       const next = structuredClone(assertWritingCloudState(cloud.result, owner));
                       delete next.conflicts[result.receipt.entryId];
+                      if (next.choices) delete next.choices[result.receipt.entryId];
+                      for (const [key, value] of Object.entries(next.resolved || {}))
+                        if (value.request.entryId === result.receipt.entryId) delete next.resolved![key];
                       store.put(next, CLOUD_KEY);
                     }
                     store.put(result.state, STATE_KEY);

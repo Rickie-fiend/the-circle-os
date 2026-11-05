@@ -1,0 +1,12 @@
+import type { WritingCloudBundle, WritingHead, WritingSnapshot } from "./writing-cloud-model.js";
+export type WritingChoice = { requestId: string; entryId: string; local: WritingSnapshot; cloud: WritingHead;
+  choice: "local" | "cloud"; at: string; versionId: string;
+  changes: Array<{ operationId: string; fingerprint: string; generation: number }> };
+export type WritingChoiceResult = { status: "resolved" | "changed" | "deleted"; requestId: string; head: WritingHead };
+export function assertWritingChoice(request: unknown, owner: string): WritingChoice;
+export function prepareWritingChoice(bundle: WritingCloudBundle, entryId: string, choice: "local" | "cloud", at: string, versionId: string): Promise<WritingChoice>;
+export function queueWritingChoice(bundle: WritingCloudBundle, request: WritingChoice): WritingCloudBundle;
+export function resolvedWritingHead(request: WritingChoice): WritingHead;
+export function receiveWritingChoice(bundle: WritingCloudBundle, request: WritingChoice, result: WritingChoiceResult): WritingCloudBundle;
+export function writingSyncLabel(bundle: WritingCloudBundle, state?: { enabled?: boolean; online?: boolean; error?: boolean; running?: boolean }): string;
+export function receiveWritingResolutionHistory(bundle: WritingCloudBundle, records: Array<{ request: WritingChoice; head: WritingHead }>): WritingCloudBundle;

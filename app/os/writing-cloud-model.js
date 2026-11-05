@@ -1,5 +1,6 @@
 import { assertWritingState, createWritingState, WritingError } from "./writing-model.js";
 import { acknowledgeWritingChanges, assertWritingSyncState, pendingWritingChanges } from "./writing-sync-model.js";
+import { assertWritingChoice } from "./writing-conflict-model.js";
 
 export function canonicalWriting(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
@@ -21,7 +22,8 @@ export function createWritingCloudState(owner) {
 }
 export function assertWritingCloudState(cloud, owner = cloud?.owner) {
   createWritingCloudState(owner);
-  requireCloud(keys(cloud, ["schemaVersion", "owner", "heads", "conflicts", "suppressed"]) && cloud.schemaVersion === 1 && cloud.owner === owner, "Invalid cloud writing store.");
+  requireCloud(cloud && keys(cloud, ["schemaVersion", "owner", "heads", "conflicts", "suppressed",
+    ...["choices", "resolved", "settled"].filter(key => Object.hasOwn(cloud, key))]) && cloud.schemaVersion === 1 && cloud.owner === owner, "Invalid cloud writing store.");
   for (const name of ["heads", "conflicts", "suppressed"]) {
     requireCloud(cloud[name] && typeof cloud[name] === "object" && !Array.isArray(cloud[name]), "Invalid cloud writing records.");
     for (const id of Object.keys(cloud[name])) requireCloud(validId(id), "Invalid cloud writing ID.");
@@ -30,6 +32,20 @@ export function assertWritingCloudState(cloud, owner = cloud?.owner) {
     Number.isSafeInteger(head.serverVersion) && head.serverVersion > 0 && typeof head.signature === "string", "Invalid cloud writing baseline.");
   for (const [id, head] of Object.entries(cloud.conflicts)) { assertWritingHead(head, owner); requireCloud(id === head.entryId, "Invalid conflict entry."); }
   for (const value of Object.values(cloud.suppressed)) requireCloud(keys(value, ["entryId", "fingerprint"]) && validId(value.entryId) && /^[a-f0-9]{64}$/.test(value.fingerprint), "Invalid deletion suppression.");
+  for (const name of ["choices", "resolved", "settled"]) if (Object.hasOwn(cloud, name)) {
+    requireCloud(cloud[name] && typeof cloud[name] === "object" && !Array.isArray(cloud[name]), "Invalid writing choices.");
+    for (const [id, value] of Object.entries(cloud[name])) {
+      requireCloud(validId(id), "Invalid writing choice ID.");
+      if (name === "choices") { assertWritingChoice(value, owner); requireCloud(id === value.entryId, "Invalid writing choice."); }
+      if (name === "resolved") {
+        requireCloud(keys(value, ["request", "head"]), "Invalid writing resolution.");
+        assertWritingChoice(value.request, owner); assertWritingHead(value.head, owner);
+        requireCloud(id === value.request.requestId && value.head.entryId === value.request.entryId, "Invalid writing resolution.");
+      }
+      if (name === "settled") requireCloud(keys(value, ["entryId", "fingerprint", "resolutionId"]) && validId(value.entryId)
+        && /^[a-f0-9]{64}$/.test(value.fingerprint) && /^[a-f0-9]{64}$/.test(value.resolutionId), "Invalid settled writing change.");
+    }
+  }
   return cloud;
 }
 export function writingSnapshot(state, entryId) {
@@ -115,9 +131,13 @@ export function receiveWritingHeads(original, heads, forceConflict = false) {
         delete queue.pending[change.operationId];
       }
       delete cloud.conflicts[id];
+      if (cloud.choices) delete cloud.choices[id];
+      for (const [key, value] of Object.entries(cloud.resolved || {})) if (value.request.entryId === id) delete cloud.resolved[key];
     } else if (local.tombstone) {
       // Never restore a local permanent deletion from an older active server copy.
       delete cloud.conflicts[id];
+      if (cloud.choices) delete cloud.choices[id];
+      for (const [key, value] of Object.entries(cloud.resolved || {})) if (value.request.entryId === id) delete cloud.resolved[key];
     } else if (localSignature !== signature && (forceConflict || (local.entry &&
       (!ownReceipt && (!prior || (prior.serverVersion !== head.serverVersion && (pending.length || localSignature !== prior.signature))))))) {
       cloud.conflicts[id] = head;
@@ -141,7 +161,7 @@ export async function writingUploadRequests({ state, queue, cloud }) {
   const requests = [];
   for (const [entryId, changes] of groups) {
     const snapshot = writingSnapshot(state, entryId), item = snapshot.entry || snapshot.tombstone;
-    if (cloud.conflicts[entryId] && !snapshot.tombstone) continue;
+    if ((cloud.conflicts[entryId] || cloud.choices?.[entryId]) && !snapshot.tombstone) continue;
     requireCloud(item && changes.at(-1).generation === item.generation, "Writing queue does not cover its current snapshot.");
     const body = { entryId, baseServerVersion: cloud.heads[entryId]?.serverVersion || 0, snapshot,
       changes: changes.map(({ operationId, fingerprint, generation }) => ({ operationId, fingerprint, generation })) };

@@ -1,5 +1,57 @@
 # Circle OS decision log
 
+## 2026-11-06 - Writing sync status and person-chosen conflicts
+
+The developer reviewed direct entry, then approved the concrete repository scope
+for a Writing sync view inside writing History, device/waiting/synced/failure
+states, comparison and choice of This device or Cloud copy, preserved histories,
+stale-review protection, a new account-protected resolution action/migration,
+tests and related records. Applying SQL, activation and deployment are separate.
+
+The header's removed Saved/Synced labels and Note's silent autosave remain.
+Conflicts pause uploads because choosing a winner by clock would lose writing.
+An explicit choice adds a new revision to the cloud's existing history while
+preserving both reviewed histories unchanged in a private resolution archive.
+The selected copy's active/Trash state, source and Circle attribution remain.
+No automatic text merge or new answer/commitment is created. A request captures
+both saved copies, excludes drafts, and survives response loss with a stable ID.
+Later changes require another review; permanent deletion scrubs archive bodies
+and prevents replay. Paged owner-scoped history recovers archives on new devices.
+
+Implemented and locally verified under the
+[writing contract](ACCOUNT_WRITING_SYNC.md#writing-status-and-conflict-resolution---2026-11-06).
+This is not hosted verification of the follow-up migration, activation, backup
+retention, real-device recovery or other-domain sync. The original migration's
+hosted checks retain their narrower dated scope.
+
+## 2026-11-06 - Account menu and alias greeting
+
+Follow-up: the developer requested a narrower menu and three dots instead of
+the alias on its trigger. The menu is 192px rather than 288px; the 44px
+Open account button shows `⋯`. The greeting still uses the full alias.
+The next spacing review supersedes the 192px action-menu width: fit the labels
+with equal space on their left and right. The alias form retains its 192px
+field width; the collapsed action menu has no fixed width.
+Font follow-up: the developer reported a typeface mismatch. Browser font
+inspection showed Geist was already rendering, at regular weight. Bind the
+control explicitly to the brand font and use the existing 650 action weight
+to match other app controls, keeping content-sized equal padding.
+
+The developer approved moving account controls into the existing header's top
+right and fixing the missing alias after the greeting. They explicitly removed
+the proposed Saved status: people do not need that header status. The alias
+button opens Edit alias and Sign out; no separate account row remains. Preserve
+account access during unfinished onboarding and 44px targets.
+
+The greeting formerly read `profile.name`, while verified accounts keep their
+alias in Supabase user metadata. Supply that authenticated display identity to
+the existing header and Today greeting, guarded by the current account scope.
+Do not copy aliases into generated personal records or use them for ownership.
+Existing legacy name behavior remains. Edits reuse the current auth adapter and
+refresh its offline proof; failed/offline edits keep the previous saved alias.
+No auth policy, persistence, sync activation, database or deployment change is
+approved by this UI slice.
+
 ## 2026-11-06 - Direct entry after Day One
 
 The developer reported an unwanted Week review/setup prompt at sign-in before

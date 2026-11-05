@@ -18,7 +18,8 @@ test("transport pins the account token and uses uncached POST RPCs with an abort
     calls.push({url,init}); return Response.json([]);
   });
   await api.inventory(""); await api.receipts(["operation"]); await api.apply({requestId:"test"});
-  assert.deepEqual(calls.map(c=>c.url),["circle_writing_inventory","circle_writing_receipts","circle_writing_apply"].map(name=>`${config.url}/rest/v1/rpc/${name}`));
+  await api.resolve({requestId:"choice"}); await api.resolutions("");
+  assert.deepEqual(calls.map(c=>c.url),["circle_writing_inventory","circle_writing_receipts","circle_writing_apply","circle_writing_resolve","circle_writing_resolution_history"].map(name=>`${config.url}/rest/v1/rpc/${name}`));
   for (const {init} of calls) {
     assert.equal(init.headers.Authorization,"Bearer synthetic-access-token"); assert.equal(init.headers.apikey,config.key);
     assert.equal(init.method,"POST"); assert.equal(init.cache,"no-store"); assert.equal(init.redirect,"error"); assert.ok(init.signal);

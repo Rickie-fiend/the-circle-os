@@ -16,6 +16,7 @@ export async function database() {
     grant usage on schema auth to anon,authenticated,service_role;
     insert into auth.users(id) values ('${A}'),('${B}');`);
   await db.exec(await readFile(new URL("../../supabase/migrations/202611050001_account_writing.sql", import.meta.url), "utf8"));
+  await db.exec(await readFile(new URL("../../supabase/migrations/202611060001_writing_resolution.sql", import.meta.url), "utf8"));
   return db;
 }
 export async function asAccount(db, account, work, role = "authenticated") {
@@ -33,6 +34,9 @@ export function remote(db, account = A) {
     inventory: cursor => rpc("circle_writing_inventory", cursor),
     receipts: ids => rpc("circle_writing_receipts", ids),
     apply: request => rpc("circle_writing_apply", request),
+    resolve: request => rpc("circle_writing_resolve", request),
+    resolutions: cursor => asAccount(db, account, async tx =>
+      (await tx.query("select public.circle_writing_resolution_history($1,50) as result", [cursor])).rows[0].result),
   };
 }
 export function fixture(account = A) {
@@ -44,9 +48,9 @@ export async function commit(bundle, command) {
   const result = writing.applyWritingOperation(bundle.state, prepared);
   return { ...bundle, state: result.state, queue: sync.enqueueWritingChange(bundle.queue, bundle.state, result) };
 }
-export async function save(bundle = fixture(), { entryId = "entry", body = "Synthetic saved words", title = "Synthetic", kind = "note" } = {}) {
+export async function save(bundle = fixture(), { entryId = "entry", body = "Synthetic saved words", title = "Synthetic", kind = "note", source = null } = {}) {
   const entry = bundle.state.entries[entryId];
-  const draft = { id: crypto.randomUUID(), entryId, kind, source: entry?.source || null,
+  const draft = { id: crypto.randomUUID(), entryId, kind, source: entry?.source || source,
     startedAt: entry?.startedAt || at, baseGeneration: entry?.generation || 0, baseVersionId: entry?.currentVersionId || null,
     attribution: writing.writingAttribution(at, "Asia/Bangkok"), content: { title: kind === "note" ? title : "", body, tags: [] } };
   bundle = await commit(bundle, { type: "write-draft", draft, expectedDraftVersion: 0 });

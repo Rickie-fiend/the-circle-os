@@ -6,6 +6,7 @@ import { createAuthController } from "./auth-controller";
 import { createSupabaseAdapter, readAuthConfig, type AuthConfig } from "./supabase-client";
 import { DevelopmentTestBoundary } from "./development-test-boundary";
 import { SupabaseConnection } from "./supabase-context";
+import { AccountContext } from "./account-context";
 
 export function CircleAuthBoundary({ children }: { children: ReactNode }) {
   const config = readAuthConfig();
@@ -30,7 +31,6 @@ export function SupabaseAuthBoundary({ config, children }: { config: AuthConfig;
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   const scope = useSyncExternalStore(subscribeAccountScope, getAccountScope, getServerAccountScope);
   const [reset, setReset] = useState(false);
-  const [account, setAccount] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -92,19 +92,25 @@ export function SupabaseAuthBoundary({ config, children }: { config: AuthConfig;
     finally { setBusy(false); }
   }
   async function signOut() {
-    setBusy(true); setAccount(false); setNotice("");
+    setBusy(true); setNotice("");
     try { await controller.signOut(); } finally { setBusy(false); }
   }
 
-  if (canOpen) return <>
-    <div className="circle-os os-auth-bar">
-      <button type="button" onClick={() => setAccount(!account)} aria-label="Open account" aria-expanded={account}>{state.alias}{state.offline ? " · Offline" : ""}</button>
-      {account && <div className="os-auth-menu" role="group" aria-label="Account">
-        <button className="os-page-primary-action" disabled={busy} onClick={() => { void signOut(); }}>Sign out on this device</button>
-      </div>}
-    </div>
+  async function saveAlias(value: string) {
+    if (busy) return false;
+    const owner = state.accountId;
+    setBusy(true);
+    try {
+      await controller.setAlias(value);
+      const next = controller.getSnapshot();
+      return next.phase === "ready" && next.accountId === owner && next.alias === value.trim();
+    } finally { setBusy(false); }
+  }
+
+  if (canOpen) return <AccountContext.Provider value={{ accountId: state.accountId, alias: state.alias, busy,
+    message: state.message, saveAlias, signOut }}>
     <SupabaseConnection.Provider value={{ client, config }}>{children}</SupabaseConnection.Provider>
-  </>;
+  </AccountContext.Provider>;
   if (state.phase === "checking") return <AuthSurface title="Opening Circle OS…"><p role="status">Checking your sign-in.</p></AuthSurface>;
   const passwordFlow = state.phase === "password";
   const aliasFlow = state.phase === "alias";

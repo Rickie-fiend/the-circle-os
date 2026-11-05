@@ -6,6 +6,49 @@ reviewed implementation and verification under the current web beta sequence.
 
 ## Current prototype
 
+### Writing sync status and conflict resolution - 2026-11-06
+
+`WritingSyncProvider` observes account-scoped cloud transactions and runner state.
+History opens `WritingSyncPage`; the Note editor and global header retain silent
+save behavior. `writing-conflict-model` captures reviewed saved snapshots and
+exact pending references into durable `cloud-v1.choices`. `resolved` retains both
+original histories; body-free `settled` records operations covered by a resolution
+without inventing normal upload receipts. Existing cloud-v1 stores remain valid.
+Provider/runner scope checks reject late account responses and fail closed.
+
+The follow-up migration `202611060001_writing_resolution.sql` is prepared locally,
+not applied remotely. `circle_writing_resolve` uses the existing confirmed-user
+check and account lock, exact reviewed server-version/snapshot comparison, stable
+retry hashes and immutable shared-version checks. It appends a new chosen revision
+to the current cloud history while private owner-scoped `writing_resolutions`
+preserves both original histories and the result. `circle_writing_resolution_history`
+paginates same-owner archives for recovery. Direct client writes and public/anon/
+service-role function calls are denied. A writing-head deletion trigger scrubs
+archived request/result bodies; replay after deletion returns the terminal head.
+
+Pending choices recover before normal sync. Newer local work remains a conflict;
+deletions scrub local choice/archive bodies. Archived branches are not additional
+writing evidence or answered questions. No legacy import, other-domain sync,
+remote configuration or activation is implied. Current details and limits:
+[contract](ACCOUNT_WRITING_SYNC.md#writing-status-and-conflict-resolution---2026-11-06).
+This supersedes earlier no-resolver/UI descriptions for repository capability.
+
+### Account header and alias greeting - 2026-11-06
+
+Follow-up: the trigger shows three dots, while the greeting retains the alias.
+The action dropdown fits its content with equal side padding; the editing
+form retains a 192px width without reducing the 44px touch target.
+
+`SupabaseAuthBoundary` supplies the verified alias and existing edit/sign-out
+actions through `auth/account-context.tsx`. Its consumer checks the selected
+account ID before exposing identity. `auth/account-menu.tsx` renders in the
+existing `OSFrame` header, keyed by account ID; full-screen chapter dialogs
+retain an account control while hiding the covered header control. Edit alias
+uses the existing auth controller/adapter and proof refresh. No profile data is
+written to make the greeting work. Today reads the scoped alias, falling back
+to `profile.name` only in legacy mode. The separate auth bar and header
+Saved/Waiting to sync/Synced label are removed; saving and error handling remain.
+
 ### Direct entry after Day One - 2026-11-06
 
 `day-door.js` now selects only unfinished Day One for automatic entry. The full
