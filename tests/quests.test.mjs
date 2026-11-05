@@ -7,6 +7,7 @@ import {
   questCatalogue,
   questProgress,
   questTopics,
+  questStepStatus,
 } from "../app/os/quests.js";
 
 // The manifest is compiled from the vault, so the test reads what the App
@@ -31,6 +32,37 @@ const completed = (id, version = 1) => [
   `${id}@${version}`,
   { runId: `${id}@${version}`, chapterId: id, status: "completed" },
 ];
+
+test("existing setup evidence completes only its own steps without inventing runs", () => {
+  const state = { habits: { definitions: { h: { status: "active", text: "Walk after breakfast" } } },
+    profile: { profileCase: { survey: { answers: [{ questionId: "routine-wake", answer: "07:00" }, { questionId: "routine-sleep", answer: "23:00" }] } } },
+    declarations: { records: { v: { kind: "vision", content: { life: "A quiet life" } } } } };
+  const before = structuredClone(state), runs = {};
+  for (const id of ["habit-building", "log-setup", "declare-vision"]) {
+    assert.deepEqual(questStepStatus(id, runs, { state }), { done: true, alreadySetUp: true, runId: null });
+  }
+  for (const id of ["week-setup", "week-review", "day-one", "profile-spark-01", "declare-mission-statement"]) assert.equal(questStepStatus(id, runs, { state }).done, false);
+  assert.deepEqual(runs, {}); assert.deepEqual(state, before);
+  state.habits.definitions.h.status = "draft";
+  assert.equal(questStepStatus("habit-building", runs, { state }).done, false);
+  state.profile.profileCase.survey.answers.pop();
+  assert.equal(questStepStatus("log-setup", runs, { state }).done, false);
+});
+
+test("a completed alternative first-use chapter counts, retaining its actual run link", () => {
+  const runs = { "custom-habit@1": { status: "completed", completedAt: "2020-01-01T01:00:00Z" } };
+  const publications = [{ firstUse: true, targetApp: "habit", chapter: { id: "custom-habit", version: 1 }, visibility: "public" }];
+  assert.deepEqual(questStepStatus("habit-building", runs, { publications }), { done: true, alreadySetUp: true, runId: "custom-habit@1" });
+  assert.equal(questStepStatus("log-setup", runs, { publications }).done, false);
+  assert.equal(questStepStatus("habit-building", runs, { publications: [{ ...publications[0], visibility: "private", audienceProfileId: "someone-else" }] }).done, false);
+  assert.equal(questStepStatus("habit-building", runs, { publications: [{ ...publications[0], firstUse: false }] }).done, false);
+  assert.equal(questStepStatus("habit-building", runs, { publications: [{ ...publications[0], chapter: { id: "custom-habit", version: 2 } }] }).done, false, "a newer definition cannot establish the older setup's App");
+});
+
+test("repeated actual chapter completions retain the latest completed run for history", () => {
+  const runs = { "week-review@1:old": { status: "completed", completedAt: "2020-01-01T01:00:00Z" }, "week-review@2:new": { status: "completed", completedAt: "2020-02-01T01:00:00Z" }, "week-review@3": { status: "in-progress" } };
+  assert.deepEqual(questStepStatus("week-review", runs), { done: true, alreadySetUp: false, runId: "week-review@2:new" });
+});
 
 // Sai: "they are just chapters, like any other chapters."
 test("every step of every Quest is a chapter that actually exists", () => {
@@ -130,7 +162,7 @@ test("the catalogue is an App Box under Athena's Reading", () => {
   const page = readFileSync("app/os/mirror/page.tsx", "utf8");
 
   // A real session with a window, not a list of cards.
-  assert.match(page, /className="quest-catalogue-apps"/);
+  assert.match(page, /className=\{`quest-catalogue-apps /);
   assert.match(page, /<SwipeSession[\s\S]*?attentionKey=\{`quests:\$\{questCatalogueVersion\}`\}/);
   // The position is in the header, the way a chapter shows its own.
   assert.match(page, /className="quest-place"/);
@@ -142,7 +174,7 @@ test("the catalogue is an App Box under Athena's Reading", () => {
   // Sai: "view steps button should be the boxy button with leg which
   // compliment the theme."
   assert.match(page, /<CreativeButton\s+aria-expanded=\{open\}\s+className="quest-view"/);
-  assert.match(page, /\{open \? "Hide steps" : "View steps"\}/);
+  assert.match(page, /quest\.complete \? "View history" : open \? "Hide steps" : "View steps"/);
   assert.match(page, /className="quest-steps"/);
   const css2 = readFileSync("app/os/os-app.css", "utf8");
   assert.match(css2, /\.circle-os \.quest-view \{\s+--os-key-leg: var\(--os-key-leg-ink\);/);
@@ -156,7 +188,7 @@ test("the catalogue is an App Box under Athena's Reading", () => {
   // do. Sai: "Steps in quests should be in boxes of blocks rather then lines."
   assert.match(page, /className="quest-step-meta"/);
   assert.match(css2, /\.circle-os \.quest-step \{[\s\S]*?border: 1px solid[\s\S]*?border-radius: var\(--r-lg\)/);
-  assert.match(page, /onClick=\{\(\) => startQuestStep\(step\.chapterId\)\}/);
+  assert.match(page, /: startQuestStep\(step\.chapterId\)/);
   assert.match(page, /function startQuestStep\(chapterId: string\)/);
   assert.match(page, /writePinnedChapter\(chapterId\)/);
 

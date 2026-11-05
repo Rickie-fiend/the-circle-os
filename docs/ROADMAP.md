@@ -1,5 +1,14 @@
 # Circle OS roadmap
 
+2026-11-05 scope update: completed Week reviews remain read only; Week-review
+corrections are removed from current scope. Past Habit completion corrections
+and the shared day view are deferred and no longer block safe-sync work. App
+histories and earlier wording preservation remain. The local writing queue and
+the later approved account-writing SQL/access/transport slice are implemented
+and locally verified. Hosted migration/activation, conflict/status UI,
+real-device recovery, backup/retention and wider domains remain open. This does
+not certify live cloud sync. See [the account-writing contract](ACCOUNT_WRITING_SYNC.md).
+
 Updated: 2026-11-03 (Note/Deep Thoughts and managed quote slice; delivery order unchanged).
 
 The developer separately approved the bounded writing simplification and shared
@@ -134,8 +143,8 @@ Work:
   lifestyle evidence from authentication and optional public summaries.
 - Establish the reviewed record/history contract locally first: multiple titled
   Notes with autosave, separate Thoughts with Send, internal recovery outside evidence,
-  internal Note save revisions, existing Thought version review, App histories
-  and a shared day view. Note has direct History with row trash-bin buttons and
+  internal Note save revisions, existing Thought version review and App histories.
+  The shared day view is deferred. Note has direct History with row trash-bin buttons and
   restoration in Trash; its Versions/Undo UI is removed under the later
   2026-11-03 refinement. New Note is in the Note editor Footer; Note/History/Trash
   grow to 480px (60% of a short viewport, never below the shared minimum), then
@@ -143,7 +152,8 @@ Work:
   [current contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#1411-bounded-note-pages---2026-11-03).
   The delivery order is unchanged.
 - Preserve earlier habit/Protocol meaning through prospective changes and
-  support dated past-day and weekly-review corrections. Keep original day/timezone
+  supported dated writing/Log corrections. Week reviews stay read only; past
+  Habit completion corrections are deferred. Keep original day/timezone
   assignments; new entries follow current local time and the 06:00 boundary.
 - Add Notes/Thoughts Trash with restore/permanent deletion, no automatic expiry
   and exclusion from Athena. Review complete deletion and stale-copy handling.

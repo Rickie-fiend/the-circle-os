@@ -1,5 +1,856 @@
 # Circle OS user-journey test record
 
+## Direct entry after Day One (2026-11-06)
+
+Developer approved removing automatic entry prompts after Day One, retaining
+explicit setup/review controls, focused tests and related records. Branch
+`paing-branch`, HEAD `ccdbe77`; existing tracked and untracked work is preserved.
+No staging, commit, migration, personal-data change or deployment by this slice.
+
+### Behavior and setup
+
+The automatic door offers only unfinished Day One. Any completed version is
+enough for direct entry; a newer version remains selectable manually. Week/Log
+setup, weekly review and daily greeting no longer interrupt entry. Explicit
+setup/review Quest pins use existing domain players/handlers so manual Week
+completion still creates its goal, step and phase. Other Quest chapters keep
+their existing player. Saved chapters, answers and access gates are retained.
+
+Mobile checks use the actual shell, providers, players, CSS and IndexedDB in
+the existing Vite harness, isolated synthetic account scopes, Chromium at
+360x844 and 390x844, Bangkok time and blocked external requests. This is not a
+hosted Supabase login, Opera or physical-phone certification. Fixed browser
+times cover Friday 2026-11-06 at noon, Sunday 2026-11-08 at 21:00 and Monday
+2026-11-09 at noon. Reload and simulated scope logout/re-entry preserve the
+saved chapter snapshot and show no splash. Both widths cover older Day One
+completion, chosen Week setup, unfinished Day One and the manual Sunday review
+button. At 360px, Week setup is fully answered through Quest entry; its goal,
+task and Protocol phase survive reload without another entry sheet. Opening a
+review alone creates no completed weekly review. Inspected the 360px quiet
+entry capture under `outputs/quiet-entry-360.png`.
+
+### Checks and limits
+
+`node --test --test-reporter=spec tests/day-door.test.mjs tests/week-review.test.mjs tests/day-one-simplification.test.mjs tests/phases.test.mjs tests/chapter-splash.test.mjs tests/account-scope.test.mjs`
+passed **46/46**. Targeted ESLint passed for `circle-os-shell.tsx`, `day-door.js`,
+`day-door.test.mjs`, `week-setup.test.mjs`, `writing.browser.mjs` and
+`day-one.browser.mjs`. Final `node node_modules/next/dist/bin/next build` passed
+including TypeScript after the manual-route change.
+Final `git diff --check` passed with existing LF/CRLF notices; the current-section
+document audit checked 29 local links/fragments successfully.
+
+Browser command:
+`node --test --test-reporter=spec --test-name-pattern="^Entry" tests/writing.browser.mjs`.
+Final result: **8/8 passed**, including clean teardown and process exit 0.
+An initial startup attempt exceeded the first test's deadline and was
+interrupted; the next run passed seven cases and failed the old generic-player
+selector after the chosen setup route was changed. The selector was corrected
+and the final run also added full Week completion and account-scope return.
+
+Baseline selection passed 25/29 before edits. Three stale source assertions
+were updated for affected entry behavior. The unrelated Week setup model test
+still fails with actual `2027-05` versus expected `2027-03`;
+`node --test --test-reporter=spec tests/week-setup.test.mjs` passes 2/3. The
+existing ResizeObserver notification loop was observed during manual Sunday
+review and remains unresolved; the harness counts these separately from page
+errors. No new runtime page errors or external backend requests were observed.
+The adapted production-server `day-one.browser.mjs` suite was not run in this
+slice; the actual-component tests above provide this slice's browser evidence.
+
+The original midweek prompt's exact trigger was not reproduced. Removal is an
+approved product change, not proof of a repaired calendar bug. No geometry,
+type or gap code changed; no geometry measurement or performance optimization
+is claimed. Hosted/device checks, Habit/setup sync, writing activation,
+conflict/status UI, backup/retention and wider beta gates remain separate work.
+
+## Hosted account writing checks (2026-11-06)
+
+### Authorization and setup
+
+Developer approved the previously reviewed migration, followed by the concrete
+development-only harness, hosted synthetic records/deletion checks and records
+updates. Project `gcqmblrkpfvjnewzdycj` / CircleOS Server / production / Singapore,
+PostgreSQL 17.11.0.011. Branch `paing-branch`, HEAD `ccdbe77`; all prior work
+preserved. SQL Editor execution reported Success. No rows returned. The saved
+migration matched the repo after CRLF normalization/trim, SHA-256
+`28f44e9c4ee054d3ac097748ebfbb3a39bf9e0f1650413626b0dea23d428cec4`.
+The dashboard migration history was empty before application; SQL Editor does
+not register the file as a CLI migration. Do not rerun CREATE statements blindly.
+
+Before application: no `circle_private`, only public `circle_quotes` with four
+columns and its anon/authenticated reading policy, and `rls_auto_enable` in
+public functions. Data API enabled, exposed schemas `public`/`graphql_public`,
+automatic new-table exposure off. No exposure settings changed.
+
+After application, eight catalog checks returned true: three private tables
+with RLS; three authenticated owner SELECT policies; authenticated SELECT-only
+table grants; no anon/service-role table privileges; three authenticated-only
+definer RPCs with empty search paths; seven helpers without client EXECUTE;
+three cascading Auth references; initially empty writing tables.
+
+### Hosted execution and results
+
+`http://localhost:3000/os/sync-check` uses the existing Supabase context,
+captured-token transport and sync coordinator. It requires local development,
+the exact target and sync off. It keeps synthetic bundles in memory and never
+opens the person's writing ledger. Two confirmed disposable sessions: normal
+Opera and private Opera. The normal run and final recheck were observed by
+Codex; private-window controls did not target reliably, so the developer copied
+the witness, ran account B and reported the PASS/STOP lines. No passwords or
+tokens were read into chat, logs, fixtures or evidence.
+
+Both accounts passed:
+
+- Anonymous and invalid-JWT calls denied for inventory, receipts and apply.
+- Own save/inventory, identical retry receipts and exact receipt recovery.
+- Changed request content rejected under an already accepted operation ID.
+- Simulated accepted-response loss followed by a newer local edit: receipt
+  recovery precedes the newer upload; three saved versions and no pending work.
+- Two in-memory devices' saved edits: server conflict response, both copies
+  retained by the coordinator, one conflict and one paused pending operation.
+- Trash, restore, Trash and terminal deletion; stale upload returns deleted;
+  the other simulated device removes its saved text and pending stale edit.
+
+Account B additionally verified that A's exact operation IDs returned no receipts
+and its head was absent, then independently used the same entry ID. A's final
+recheck verified its original server version, tombstone and all receipts remained
+unchanged. Synthetic entry ID: `hosted_ac60da4b88b247cd9f339d87`.
+
+Both pages stopped at the separate local-server service-role probe. A localhost
+diagnostic returned 502 with `networkError: true`; it did not reach a valid
+permission result. The route's catch covers fetch and response parsing, so the
+exact connection/response failure cause is not independently established.
+The developer approved a direct server-side probe using
+the existing `.env.local` key only in memory. Node `process.loadEnvFile`, exact
+project assertion and POST requests with `{after_id:"",page_size:1}`,
+`{operation_ids:[]}` and `{request:{}}` returned, respectively:
+
+```text
+inventory: HTTP 403, code 42501
+receipts:  HTTP 403, code 42501
+apply:     HTTP 403, code 42501
+```
+
+The probe asserts HTTP 401/403 plus exact `42501`, so a network failure or invalid
+key response cannot count as success. Secrets/error prose were not printed.
+This direct result is separate from the page's STOP, which remains a local
+server probe limitation. A read-only SQL query restricted to the exact
+synthetic entry returned three true checks: two owner-isolated terminal heads
+at server version 8, two conflict candidates set to SQL NULL and 16 exact
+receipts across both owners. No active synthetic writing remains. Minimal
+tombstones, receipts, scrubbed conflict metadata and test accounts remain.
+
+### Local verification, attempts and limits
+
+Using installed Node `C:/Users/wickie''/AppData/Local/Author Software/nvm/installs/v24.22.1/node.exe`:
+
+```powershell
+node --test tests/writing-hosted-harness.test.mjs tests/writing-transport.test.mjs
+node node_modules/eslint/bin/eslint.js app/os/sync-check tests/writing-hosted-harness.test.mjs
+```
+
+Final 11/11 tests passed: three harness/probe checks plus eight transport checks.
+Harness tests execute actual PGlite SQL and the real coordinator, verify both
+owners, scrubbed conflicts, retained receipts and reject malformed witnesses.
+Probe checks reject production/cross-origin requests and distinguish real
+permission denial from invalid credentials and network failure. Targeted lint
+passed after the diagnostic change. The first harness run had an incorrect
+expected result-line count (13 versus 11); fixed and rerun successfully.
+
+Ordinary `tsc --noEmit --incremental false` failed in existing generated
+`.next/dev/types/routes.d.ts` and `validator.ts` syntax. Source checking with
+the broad config also hit existing `db/index.ts` / `cloudflare:workers` typing.
+Final source type check passed using TypeScript's `readConfigFile` and
+`parseJsonConfigFileContent` for `tsconfig.vercel.json`, filtering `.next/`
+generated paths, then `createProgram(..., {incremental:false})` and
+`getPreEmitDiagnostics`. This covers app source, not generated route validation
+or a new production build. No full build was run against the active dev server.
+
+No environment flag was set, no deployment/import/staging/commit occurred, and
+no product Page/geometry tokens changed. Local-first evidence, account scopes,
+immutable saved versions and terminal deletion remain. No measured problem
+justified optimization. Expired/revoked *valid* JWTs, unconfirmed hosted users,
+true multi-connection lock contention, physical-device/IndexedDB recovery with
+the hosted service, private schema direct SQL access under real user sessions,
+admin/logs, backup restore/30-day deletion and broader beta readiness remain
+unverified. Invalid JWT denial is not revocation proof. Conflict/status UI is
+still absent. Writing sync remains off and activation requires separate review.
+
+## Account writing storage and transport (2026-11-05)
+
+Developer approved the concrete repository SQL/access/transport, initial
+inventory, conflict/deletion safety, tests and owning records. Branch
+`paing-branch`, HEAD `ccdbe77`; all existing changes preserved. No staging,
+commit, hosted SQL/configuration change, personal migration or deployment.
+[The contract and activation guide](ACCOUNT_WRITING_SYNC.md) describes tables,
+RPCs, lifecycle rules, bounds and remaining release gates.
+
+### Setup and verification
+
+PGlite `0.5.15` is a pinned development-only dependency. The actual migration
+runs in embedded PostgreSQL with synthetic `auth.users`, `anon`, `authenticated`
+and `service_role` roles and request-claim settings. No hosted credentials or
+real evidence are used. PostgreSQL's grants, RLS, functions and transactions
+execute; this is not a source-string or mocked SQL check. Concurrent client
+requests are serialized by PGlite's connection, so this does not certify
+multi-connection advisory-lock contention or hosted JWT validation.
+
+Focused command:
+
+```powershell
+node --test tests/writing-cloud-database.test.mjs tests/writing-transport.test.mjs tests/writing-model.test.mjs tests/writing-sync.test.mjs tests/writing-compatibility.test.mjs
+```
+
+**89/89 passed:** 14 database/coordinator cases, eight transport cases and 67
+existing local-model/queue/compatibility cases. Covers own reads/writes;
+cross-account isolation for heads/receipts/conflicts; denied anonymous,
+missing-identity, unconfirmed-account and service-role RPC calls; denied direct
+mutations; exact retry and changed-ID rejection; atomic failed requests;
+immutable source/version checks; null/extra-field rejection; inventory paging;
+lost responses; competing edits; clearing/Trash/restore; terminal deletion and
+conflict-body scrubbing; all four kinds with Burmese/English/emoji and retained
+day/timezone; pre-queue saved/deleted inventory. Transport checks pin the token,
+verify its confirmed owner, reject mismatched stored identity, failed verification
+and late account callbacks, and avoid displaying backend error bodies.
+
+Browser command:
+
+```powershell
+node --test tests/writing-cloud.browser.mjs tests/writing-storage.browser.mjs tests/writing-provider.browser.mjs
+```
+
+**43/43 passed:** eight new cloud cases, 19 existing store cases and 16 provider
+cases. The new harness uses real IndexedDB and HTTP against the actual SQL with
+synthetic Auth/RPC handling, isolated Chromium contexts at 390x844 and blocked
+external requests. Existing store/provider checks also use 360x844 and actual
+same-account tabs. New coverage includes real offline save/reload; restoration
+in a separate browser-storage context; clear/Trash/restore/delete propagation;
+failed acknowledgement transaction and receipt recovery; old-account request
+abort; newer typing during an upload; preserved conflicts and deletion scrubbing;
+absent session denial; and the enabled React runner automatically uploading a
+save. Two browser contexts are synthetic device equivalents, not physical phones.
+The runner's final affected case was rerun after removing unused internal status
+bookkeeping. No new user-facing status/conflict UI was added.
+
+Targeted ESLint covered the new source/test files plus changed auth boundary,
+writing provider/store and storage browser test. The Next production command
+`node node_modules/next/dist/bin/next build` passed including TypeScript.
+Final whitespace and local-document link checks are recorded at handoff.
+`git diff --check` passed with existing LF/CRLF notices. A read-only link audit
+checked 61 local links/fragments in the new guide and current updated sections;
+all passed. The final targeted lint, production build and affected runner case
+passed after source cleanup.
+
+### Attempts and limits
+
+An initial database test exposed receipt recovery marking a newer local edit as
+a conflict after a lost upload response. The coordinator now recognizes the
+server head named by its recovered receipt; the final test passes. Local deletion
+also clears an existing remote conflict in its transaction and bypasses the
+conflict upload pause so the terminal marker can reach the server.
+
+The account-switch browser test initially expected only a scope error; actual
+fetch cancellation correctly raised AbortError. The test now accepts either
+and waits for the intercepted callback to settle. The runner test initially
+used an asynchronous page predicate that returned before IndexedDB acceptance;
+explicit Node-side polling now waits for the durable acknowledgement. The
+existing transaction-completion test assumed one put; the queue already writes
+more than one record. It now verifies all request successes precede the single
+transaction commit and promise resolution, without assuming a write count.
+
+Standalone `tsc` initially found malformed generated `.next/dev/types` files.
+No tracked source was changed to hide this; subsequent Next production builds
+and their type checks passed. The npm shim was blocked by NVM, so the installed
+direct npm CLI was used. Its sandbox download failed with EACCES; the approved
+dependency download succeeded through escalation. No trust settings were changed.
+
+The runner stays off by default. Actual Supabase roles/default privileges,
+JWT validation, real token refresh/revocation, target-region networking, hosted
+RPC and device/Home Screen recovery remain unverified. The migration has not
+been applied remotely. Conflict/status UI, protected admin access/logs, complete
+account deletion, backup restore/30-day deleted-backup limits, other lifestyle
+domains and personal migration remain open. Prior unrelated Week/ResizeObserver
+and beta-readiness gaps remain. Full lint/broad suite and Vinext build were not
+run; the targeted checks above are the evidence for this slice.
+
+No visual tokens or geometry changed, so no geometry measurements are claimed.
+Local-first evidence, draft exclusion, retained assigned days/06:00 attribution,
+immutable saved versions and received readings/chapters remain. No measured
+performance issue justified optimization; full-inventory polling and per-entry
+upload limits remain explicit implementation bounds.
+
+## Durable local writing sync queue (2026-11-05)
+
+Developer approved the durable local writing queue, acknowledgement guards,
+focused tests and owning records. Branch `paing-branch`, HEAD `ccdbe77`; 32
+tracked changes and 11 untracked paths at startup preserved. No owner writing,
+remote database, credentials, migration or deployment used. Baseline writing,
+compatibility and account-scope tests passed 66/66 before edits.
+
+### Delivered and verified boundary
+
+The existing writing store now writes its ledger and a separate `sync-v1` key
+in one account-scoped IndexedDB transaction. Only new accepted saved/lifecycle
+changes queue. Drafts, no-op saves, local conflicts, redundant lifecycle actions
+and retries of prior receipts do not. Entries contain IDs/hashes, saved-version
+references, generations, lifecycle kind, local sequence and predecessor, never
+copied body/draft text. Clearing preserves the saved empty version. Trash,
+restore and permanent deletion remain distinct. No automatic prior-record
+backfill or legacy upload occurs.
+
+Exact synthetic acknowledgements validate owner/operation/hash/entry/generation,
+receipt identity and server version ordering. Only named operations retire, in
+the same transaction as their acknowledgement. Replays must match. Invalid
+batches do not partially retire records. A newer saved change/draft remains
+untouched by an older receipt. Corrupt queues fail closed. Scope changes abort
+in-flight work; callbacks check their original scope before continuing.
+
+### Final checks
+
+- `node --test --test-reporter=dot tests/writing-sync.test.mjs tests/writing-model.test.mjs tests/writing-compatibility.test.mjs tests/account-scope.test.mjs`:
+  **75/75 passed**, `outputs/writing-sync-model.log`. Nine new cases cover
+  queue selection/no-ops, stable retries, all writing kinds, clearing/lifecycle
+  markers, deletion without retained bodies, preserved newer saves/drafts,
+  partial/out-of-order/replayed acknowledgements, rejected mismatches/reused
+  receipt IDs, corrupt data and unsupported owners.
+- `node --test --test-reporter=tap --test-name-pattern="durable writing sync|new typing during delayed autosave|normal-motion Deep Thoughts waits|History bins move only|New Note flushes" tests/writing.browser.mjs`:
+  **9/9 passed**, `outputs/writing-sync-final-browser.log`. Five new queue cases
+  plus four affected existing journeys. Isolated Chromium at 360x667/390x844,
+  Bangkok timezone, reduced/normal motion, actual IndexedDB and blocked external
+  traffic. Offline saves survive restored-connectivity reload; offline history
+  opens the latest saved text. Synthetic older acknowledgements leave newer
+  operations pending and writing untouched. Injected record/queue/ack write
+  failures abort atomically, retain the recoverable draft/pending operation and
+  allow stable retry. In-flight account switching/logout and captured old-scope
+  receipts are rejected. Concurrent same-account tabs retain all changes.
+- `node --test --test-reporter=tap --test-name-pattern="Deep Thought save failures|failed local commit|a recovered History row|another tab.s correction|real Reflect reading reply|account change closes autosave" tests/writing.browser.mjs`:
+  **6/6 passed**, `outputs/writing-sync-regression-browser.log`. Additional
+  existing failure/retry, stale-editor review, reading-answer source and
+  account-switch recovery journeys. This selection is disjoint from the nine
+  above, giving **15 browser cases**. Harness assertions found no uncaught page
+  errors or backend/AI requests in final runs.
+- `node node_modules/next/dist/bin/next build`: passed including types/static
+  generation; `outputs/writing-sync-final-build.log`.
+- After strengthening the transaction test to abort after both put requests
+  succeeded, `node --test --test-reporter=tap --test-name-pattern="durable writing sync transaction failures" tests/writing.browser.mjs`
+  passed **1/1**, `outputs/writing-sync-transaction-abort.log`. The saved change
+  and queue both roll back; request success never reports a committed save.
+  This repeats one of the fifteen cases, rather than adding another case.
+- `node node_modules/eslint/bin/eslint.js app/os/writing-sync-model.js app/os/writing-store.ts tests/writing-sync.test.mjs tests/writing.browser.mjs`:
+  passed without warnings, `outputs/writing-sync-lint.log`.
+
+### Attempts and remaining work
+
+Initial mobile tests used an incorrect history selector and clicked before the
+normal-motion flip settled; corrected to open the actual row after settling.
+Initial failure injection also interrupted the draft commit instead of the
+saved change. Existing quota tests assumed every value in the writing store
+was a ledger; they now target only ledger-shaped values. The account-switch
+case exposed an uncaught second abort after the scope had already aborted the
+transaction; callbacks now return when the captured scope is no longer current.
+Two unused-variable lint warnings were removed. Final checks above ran after
+the source fixes. No measured performance issue justified optimization.
+
+No UI/CSS/geometry token changed; no new geometry measurements are claimed.
+The browser acknowledges local synthetic receipts only: no remote authentication,
+Supabase transport/RLS, actual server version arbitration, two-device conflicts,
+initial inventory, prior-writing import or backup/recovery is certified. Drafts
+remain local; a future transport must honor deletion tombstones rather than
+recovering removed content from an old pending reference. Technical queue
+receipts do not expire automatically. Server/deletion/backup retention and stale
+device suppression require reviewed implementation. Hosted/physical-device,
+other-browser, Vinext and broad-suite gaps remain, along with earlier unrelated
+warnings. Next: bounded server ownership/access and transport proposal.
+
+## Protocol prospective wording (2026-11-05)
+
+Developer approved next-Circle-day term changes, dated history, tests and owning
+records. Branch `paing-branch`, HEAD `ccdbe77`; pre-existing 31 tracked changes
+and ten untracked paths preserved. No owner data or remote services used. The
+previously recorded defect was phase summaries reading current item text for
+earlier days. Independent immutable snapshots now resolve each day's agreement.
+Edits/additions/clearing start next local Circle day at 06:00; the front retains
+today's terms and the editor shows pending words. History separates intervals
+and counts; each day's outcome uses its required terms or saved seal. An early
+ending before 06:00 stays on the finished Circle day. Unticked optional terms
+remain visible. Legacy baselines are observed without backdating; available
+seal/completion words are used and missing originals are explicitly unavailable.
+
+Checks:
+
+- `node --test --test-reporter=dot tests/protocol-wording.test.mjs tests/protocol-home.test.mjs tests/circle-os-model.test.mjs tests/account-scope.test.mjs`:
+  **96/96 passed**, `outputs/protocol-wording-model.log`. Nine new cases cover
+  repeated edits, additions/removals, interval counts, immutable existing
+  evidence, legacy words/optional terms, closed-phase guards, 06:00/early ending,
+  normalization and both stale-merge directions.
+- `node --test --test-reporter=tap --test-name-pattern="Protocol wording|Protocol finished|Protocol past phases|shared App Box geometry" tests/writing.browser.mjs`:
+  **8/8 passed**, `outputs/protocol-wording-verified-browser.log`. Actual
+  components in isolated Chromium, synthetic account/storage, Bangkok timezone,
+  360x667/390x844, reduced/normal motion, blocked external traffic. Actual edits
+  retain today's tick, save offline, reload pending words and show dated
+  read-only history; existing finished/bounded-history cases also pass. Harness
+  assertions found no uncaught page errors or backend/AI requests.
+- `node node_modules/next/dist/bin/next build`: passed including types/static
+  generation; `outputs/protocol-wording-verified-build.log`.
+- Targeted ESLint on `circle-os-model.js`, `protocol-page.tsx`,
+  `protocol-wording.test.mjs`, `circle-os-model.test.mjs` and
+  `writing.browser.mjs`: passed; `outputs/protocol-wording-lint.log`.
+- Resting Note/Thoughts/Habit/Protocol frames **346px**, Pages **344px**, header
+  gaps **48px**. History ceilings **400.19px**/**480px**, one Body scroller,
+  **44x44px** Remove targets, **10.39px** row/removal gaps, no horizontal overflow.
+  Inspected `outputs/protocol-wording-360.png` and
+  `outputs/protocol-wording-390.png`. No CSS/shared geometry tokens changed.
+
+Initial checks needed the new empty-map migration assertion, a wait for the
+animated tick's deferred commit before Edit, and a count selector excluding
+date labels. Corrected tests pass. Early-end Circle-day, snapshot-order and
+legacy sealed-day baseline refinements were tested again in the final runs.
+An intermediate four-case
+selection overlaps the final eight; it is not extra coverage. Screenshots also
+scroll to the later wording when needed. Product code stayed fixed during the
+final selection.
+
+No measured issue justified optimization. Independent snapshot merging retains
+history against stale runs; it does not solve concurrent editable-run conflicts
+or certify real sync/acknowledgements. Physical-device/hosted use, other browsers,
+real sync/recovery, Vinext and broad checks remain unverified. Existing
+ResizeObserver/Week/beta gaps remain open. Historical phase names/goals and
+past-day corrections remain separate. Next: developer phone use across a real
+Circle-day boundary.
+
+## Contextual chapter review cleanup (2026-11-05)
+
+The developer approved removing the standalone Chapter History control and
+visible version labels. Finished steps and completed Quests' View history keep
+the shared reader. Removed only that header markup, its two scoped CSS rules
+and version text in the reader/list. Original run/version references, exact
+definition lookup, stored questions/answers and setup/replay guards remain.
+Branch `paing-branch`, HEAD `ccdbe77`; all existing work is preserved, with no
+new source paths, staging, commit, deployment, import or remote changes.
+
+- `node --test tests/chapter-history.test.mjs tests/quests.test.mjs`:
+  **12/12 passed**, exit 0. Existing immutable/version-specific read and setup
+  evidence cases are preserved. Log: `outputs/quest-history-cleanup-model.log`.
+- `node --test --test-reporter=tap --test-name-pattern="Chapter history|Completed Quests|shared App Box geometry" tests/writing.browser.mjs`:
+  final **6/6 passed**, exit 0. Actual components/stores/CSS, isolated synthetic
+  accounts, external requests blocked, Bangkok timezone. At 360x667/390x844 with
+  reduced/normal motion: standalone control absent; contextual lists/detail
+  contain no version labels; saved paragraphs/publication instants, original
+  missing-question fallback, false/zero handling, unchanged domain records/
+  evidence/outbox/writing ledger, Back to the same non-first Quest, reload,
+  offline reading, account isolation, long-record resize, finished Quest review
+  and genuine unfinished launch passed. Fixtures keep repeated/internal versions
+  while entering only through the now-retained View history action.
+  Log: `outputs/quest-history-cleanup-browser-final.log`.
+- Resting Note, Deep Thoughts, Habit and Protocol still measure **346px** with
+  **48px** header gaps at both widths. The reader keeps the 48px anchor, no
+  horizontal overflow and downward growth without inner scrolling. Inspected
+  `outputs/chapter-history-390.png` after version-label removal.
+- `node node_modules/eslint/bin/eslint.js app/os/mirror/page.tsx app/os/chapter-history-page.tsx tests/writing.browser.mjs`:
+  clean, exit 0. Log: `outputs/quest-history-cleanup-lint-final.log`.
+- `node node_modules/next/dist/bin/next build`: passed including TypeScript and
+  static generation. Log: `outputs/quest-history-cleanup-build.log`.
+
+The first selection passed five of six. The normal-motion case tried to select
+a step before the deferred View history button/flip had settled. The fixture
+now waits for the list to appear, then for shared settling; the final selection
+passed without another runtime change. Existing ResizeObserver notifications
+remain visible. No shared tokens, engine, model/write/merge path, publication
+content, IDs, budgets or 06:00 attribution changed. No measured performance issue
+justified optimization. Physical-phone/hosted use, real sync/recovery, other
+browsers, Vinext and broad checks remain unverified; prior independent warnings
+remain. Next: developer phone review of the cleaner Quest header and saved-answer
+reader. A broader all-chapter archive is deferred.
+
+## Chapter History and Quest setup review (2026-11-05)
+
+The developer approved read-only Chapter History, then separately approved the
+reported Quest fixes: reusable View/Hide, existing setup status, finished-step
+answer reading, complete-Quest View history and affected setup/pinning guards.
+They confirmed the preceding Athena Reading History on their phone. Branch
+`paing-branch`, starting HEAD `ccdbe77`; all 27 changed tracked and seven
+untracked paths present at implementation start are preserved. Three new
+source/test files are added. Nothing staged, committed, deployed, imported or
+changed remotely; no personal records were used as fixtures.
+
+Global Chapter History reads completed answer-bearing runs, preserving repeated
+runs/versions. Stored question/display snapshots win; only exact original
+definitions may fill missing prompts, and conflicting/missing definitions never
+borrow newer text. Quest-specific History also represents completed setup with
+no saved answers, without manufacturing a chapter record/date/version. Shared
+App-back preserves catalogue position and locks outer travel while reading.
+
+Unfinished Quests keep View/Hide through the existing reusable button setting.
+Complete Quests offer View history; completed steps open readers. The shared
+status check reads named active Habits, both Log routine answers, corresponding
+nonempty declarations and audience-allowed completed replacement first-use
+publications at their original version. An unlocked App, draft Habit, partial
+Log answers or unrelated record does not complete a step. Habit/Log surfaces
+share this status and suppress duplicate setup; stale Quest pins are cleared.
+Ordinary reflections/Week setup/reviews still need their own completed runs;
+existing access gates and named Workshop/weekly doors remain.
+
+Checks:
+
+- `node --test tests/chapter-history.test.mjs tests/quests.test.mjs tests/first-use-setup.test.mjs tests/chapter-engine.test.mjs tests/habit-identity.test.mjs`:
+  **51/51 passed**, exit 0. New cases cover exact/missing/conflicting definitions,
+  snapshots, repeated runs, clone-isolated reads, false/zero/array/blank values,
+  unknown dates, actual setup evidence, insufficient/unrelated evidence,
+  first-use App/version/audience proof and actual completed-run links.
+  Log: `outputs/chapter-quest-model-verified.log`.
+- `node --test --test-reporter=tap --test-name-pattern="Quest setup status|Completed Quests|Chapter history" tests/writing.browser.mjs`:
+  final **6/6 passed**, exit 0. Actual product components/stores/CSS in isolated
+  synthetic accounts, Bangkok timezone, external requests blocked, at
+  360x667/390x844 with reduced/normal motion. Three consecutive View/Hide cycles,
+  Habit/Log Already set up without fabricated answers, finished Quest History,
+  genuine unfinished launch, stale Habit/Log pin rejection, exact saved answers,
+  versioned/repeated runs, missing originals, unchanged domain records/evidence/
+  outbox/writing ledger, return to a non-first Quest/reload, account isolation,
+  actual offline reading and long 26-answer detail/resize passed.
+  Log: `outputs/chapter-quest-browser-delivery.log`.
+- Screenshot review then aligned only the new header control with the existing
+  topic/counter. After this scoped CSS fix,
+  `node --test --test-reporter=tap --test-name-pattern="Quest setup status|shared App Box geometry" tests/writing.browser.mjs`:
+  **4/4 passed**, exit 0. Rechecks the new control and all three toggle cycles,
+  setup/status readers and stale pins at both widths. Four resting Note, Deep
+  Thoughts, Habit and Protocol frames remain **346px** with **48px** header gaps.
+  Chapter History detail also retains the 48px anchor. Long detail grows past
+  480px without inner scrolling or horizontal overflow. Log:
+  `outputs/chapter-quest-header-final.log`. The selections overlap; do not add
+  their counts as unique coverage.
+- `node node_modules/eslint/bin/eslint.js app/os/quests.js app/os/quests.d.ts app/os/chapter-history.js app/os/chapter-history-page.tsx app/os/mirror/page.tsx app/os/circle-os-shell.tsx tests/chapter-history.test.mjs tests/quests.test.mjs tests/writing.browser.mjs`:
+  final direct invocation clean, exit 0. The earlier state-in-effect error was
+  fixed by removing an unnecessary state update; the effect now synchronizes
+  only the stale pin in storage.
+- `node node_modules/next/dist/bin/next build`: final production rebuild after
+  header alignment passed, exit 0, including TypeScript and static generation.
+  Log: `outputs/chapter-quest-build-delivery.log`. The preceding JS/types build
+  also passed in `outputs/chapter-quest-build-verified.log`.
+  Builds use the installed Next CLI because the previous npm-launcher trust
+  problem remains; no trust settings changed.
+- Inspected `outputs/chapter-history-390.png`, `outputs/chapter-history-360.png`,
+  `outputs/quest-setup-390.png` and `outputs/completed-quest-history-390.png`.
+
+Attempts: old source-string assertions needed matching updates for dynamic
+classes and the new action branch; behavioral assertions were retained/added.
+The first new Quest browser selection used Log in a selector although that
+chapter's displayed title does not contain Log; corrected to its manifest step.
+An earlier ten-case regression selection passed before the final pin/publication
+cleanup. A later affected run passed five of six, timing out on full-load reload
+under concurrent build load; DOMContentLoaded plus the existing ready signal
+passed the complete final six-case run. No application change was made for that
+timeout. Existing ResizeObserver notifications remain visible. A redirected lint
+attempt returned failure without diagnostics; the direct final command passed.
+No measured performance issue justified further optimization.
+
+No published chapter/reading words, IDs/versions, budgets, 06:00 attribution,
+App access gates, personal evidence, sync/merge protocol or shared geometry/
+type/gap tokens changed. Navigation positions may persist through their existing
+engine; clearing a stale Quest pin is intentional navigation cleanup, not a
+personal-record write. Physical-phone/hosted use, real sync/recovery, offline
+network reload, Vinext and broad tests/lint remain unverified. Previous Week
+source-test failures and other independent gaps remain. Next: developer phone
+review of Chapter History, repeated View/Hide and completed/setup Quest steps.
+
+## Read-only Athena Reading History (2026-11-05)
+
+Approved source/UI/tests and owning-record slice after read-only audit. The
+developer confirmed the preceding Week History on their phone; that is lived
+acceptance, not new hosted/cloud certification. Branch `paing-branch`, starting
+HEAD `ccdbe77`; all 24 changed tracked and six untracked paths at implementation
+start are preserved. One new component is added; existing Mirror/CSS, model and
+browser tests and the approved design/architecture/decision/continuity records
+are updated. Nothing staged, committed, deployed, imported or changed remotely.
+
+The Athena cover label opens dated saved editions, then their saved cover and
+three prose parts. Missing parts say No saved words for this part; unknown dates
+say Date not recorded. Shared App-back returns through History to current cover,
+and outer travel stays locked to that slot while open. The current four Pages,
+reply flow, authored-edition semantics and 60-edition bound remain unchanged.
+
+Verification:
+
+- `node --test tests/athena-memory.test.mjs tests/athena-alignment.test.mjs`:
+  **39/39 passed**, exit 0. Added a pure-read case proving old sections/unknown
+  dates stay separate from live derived content, and read-model mutation cannot
+  alter input memory. Existing immutable/union/bounded-edition checks passed.
+  Log: `outputs/athena-history-model.log`.
+- `node --test --test-reporter=tap --test-name-pattern="Athena history|real Reflect reading reply|shared App Box geometry" tests/writing.browser.mjs`:
+  final **7/7 passed**, exit 0. Isolated actual components/stores/CSS, synthetic
+  accounts, external requests blocked, Bangkok timezone. At 360x667/390x844 with
+  reduced/normal motion: dated and undated editions, exact old paragraphs,
+  absent sections without current prose/derived fallback, keyboard/touch, 44px
+  targets, unchanged memory/profile/chapters/evidence/outbox/writing ledger,
+  return to current cover, reload, actual offline reading after load, account
+  switching, empty archive, all 60 retained rows and long 28-paragraph detail
+  through resize. The existing reading-answer Send/source case also passed.
+  Log: `outputs/athena-history-browser-final.log`.
+- Four resting frames (Note, Deep Thoughts, Habit, Protocol) remain **346px**
+  with **48px** header gaps at both widths. History retains the 48px anchor,
+  no horizontal overflow and natural downward growth without inner scrolling.
+  Long detail measured 2509.67px at both widths. Inspected
+  `outputs/athena-history-360.png` and `outputs/athena-history-390.png`.
+- `node node_modules/eslint/bin/eslint.js app/os/athena-history-page.tsx app/os/mirror/page.tsx tests/athena-memory.test.mjs tests/writing.browser.mjs`:
+  clean, exit 0. Log: `outputs/athena-history-lint-final.log`.
+- `node node_modules/next/dist/bin/next build`: passed including types and static
+  generation. Log: `outputs/athena-history-build.log`. Used the installed Next
+  CLI because the prior slice established an NVM trust block on the npm launcher;
+  no trust settings were changed.
+
+Attempts: initial seven-case browser selection passed five; two new cases
+sampled a 44px cover target during entrance motion. Waiting for shared frame
+settling and tolerating subpixel rounding fixed the test; no runtime fix was
+needed. Both affected cases then passed and the final seven-case selection
+passed after adding 60-row coverage. Existing ResizeObserver notifications
+remain visible. No measured performance issue justified optimization.
+
+No shared geometry/type/gap tokens, publication budgets, chapter/reading words,
+06:00 rule, persistence/merge protocol or account scope changed. This is access
+to existing local editions, not live generation, full server archive paging,
+safe sync or backup. Physical-phone/hosted use, offline network reload, real
+sync/recovery, Vinext and broad tests/lint remain unverified. The prior two Week
+source-test failures and other independent gaps remain. Next: developer phone
+review of Athena Reading History.
+
+## Read-only Week History (2026-11-05)
+
+The developer approved the concrete read-only Week History slice after a source
+audit, and confirmed the preceding past Log editor/caret behavior on their
+phone. That confirmation is developer-reported acceptance, not a new automated
+device check. Branch `paing-branch`, starting HEAD `ccdbe77`; 24 changed tracked
+paths and three untracked paths present at implementation start are preserved.
+Nothing staged, committed, deployed, imported or changed remotely.
+
+New `week-history.js` and `week-history-page.tsx` read existing weekly goals,
+linked tasks and saved reviews. Week's label opens the list, then a detail;
+shared App-back returns to History then current Week. Blank/current/future or
+invalid weeks stay out; goals-only/review-only weeks remain. Archived and
+missing task links are retained honestly. Goal/task words are current saved
+values, not reconstructed historical snapshots. Actual review recording time
+is formatted locally while its exact instant remains in the time element.
+
+Final checks:
+
+- `node --test tests/week-history.test.mjs tests/week-review.test.mjs tests/goal-model.test.mjs`:
+  **22/22 passed**, exit 0. Covers selection, invalid/future/current weeks,
+  incomplete/missing/archived links, pure reads, normalized JSON reload and
+  existing goal/review behavior. Log: `outputs/week-history-model-final.log`.
+- `node --test --test-name-pattern="Week history|shared App Box geometry|Log history grows" tests/writing.browser.mjs`:
+  **7/7 passed**, exit 0. Actual product components/stores/CSS in the isolated
+  Vite harness, synthetic accounts, blocked external effects, Bangkok timezone.
+  At 360x667 and 390x844 (reduced/normal motion), checked saved goals/reviews,
+  linked archived steps, keyboard/touch, 44px list targets, unchanged saved
+  goals/tasks/weeks/chapters/Protocol/outbox/evidence, reload, return to current
+  Week, account switch, actual offline reading after load, 26-week list,
+  25 missing links, resize and long downward growth without an inner scroller.
+  Includes existing Log-history-to-Week regression. Log:
+  `outputs/week-history-browser-final.log`.
+- Four resting frames (Note, Deep Thoughts, Habit, Protocol) remain **346px**
+  with **48px** header gaps at both widths. History detail retains the 48px
+  anchor and no horizontal overflow. Long detail grows beyond 480px with no
+  inner scroll panel. Inspected `outputs/week-history-390.png` and
+  `outputs/week-history-360.png`.
+- `node node_modules/eslint/bin/eslint.js app/os/week-history.js app/os/week-history-page.tsx tests/week-history.test.mjs tests/writing.browser.mjs app/os/circle-os-shell.tsx`:
+  clean, exit 0. Log: `outputs/week-history-lint-final.log`.
+- `node node_modules/next/dist/bin/next build`: passed including TypeScript,
+  static generation and route output. Log: `outputs/week-history-build-final.log`.
+
+Attempts and limits: first 5/5 browser selection passed before recording-time
+formatting and longer-history coverage; final seven cases verify the final code.
+The first production build found a TypeScript narrowing problem in the missing
+task fallback; explicit fallback selection fixed it before the final passing
+build. `npm run build:vercel` could not start because NVM distrusts its delegated
+npm entrypoint; the build used the installed Next CLI directly without changing
+trust settings. Initial wider Week selection passed 39/41, including all new
+selector cases; the two recorded `week-app.test.mjs` source assertions still
+fail (CRLF-sensitive font-ready regex and editable-line CSS expectation).
+No unrelated test/engine fixes were made. Existing ResizeObserver notifications
+remain visible. No measured performance issue justified optimization.
+
+No shared geometry/type/gap tokens, chapter/reading versions, attribution/06:00
+rules, review write/merge semantics or persistence protocol changed. Physical
+phone/hosted Week History, real sync/recovery, offline network reload, Vinext
+and broad suite/lint remain unverified. Weekly correction/versioning, historical
+goal/task wording, chapter answer review and shared day review remain separate.
+Next: developer phone review of Week History.
+
+## Past Log caret-only focus (2026-11-05)
+
+The developer requested removal of the orange writing-field box while keeping
+the cursor, then approved the scoped CSS, existing browser checks and records.
+Added `outline: 0` only to past-Log correction textareas. Other focus indicators,
+caret behavior, borders, sizing and saving retain their behavior. All existing
+working-tree changes are preserved; nothing staged, committed or deployed.
+
+- `node --test --test-name-pattern="Log corrections save" tests/writing.browser.mjs`:
+  final **2/2 passed**, exit 0, at 360x667/390x844 with reduced/normal motion.
+  Both writing fields stay focused, have no outline and keep a visible caret
+  color. Actual Tab/Shift+Tab navigation retains Cancel's keyboard focus ring.
+  The same journeys verify typing, Save/Cancel, reload, offline saving and
+  unchanged/legacy no-ops. Log: `outputs/log-caret-browser-final.log`.
+- `node node_modules/eslint/bin/eslint.js tests/writing.browser.mjs`: **clean**,
+  exit 0. Log: `outputs/log-caret-lint-final.log`.
+- Inspected the updated `outputs/log-correction-editor-390.png`.
+
+The initial two cases failed only on the button focus assertion: programmatic
+focus after pointer use did not activate `:focus-visible`. The check now uses
+real keyboard navigation; no further runtime change was needed. No geometry,
+font or gap changed, so no new geometry measurements are claimed. Model/build
+checks were not repeated for this outline-only CSS follow-up. Existing
+ResizeObserver and hosted/physical-device/sync gaps remain. Next: developer
+confirmation of caret-only focus on the affected device.
+
+## Past Log text corrections (2026-11-05)
+
+The developer confirmed the preceding History on their device, then approved
+the bounded text-correction proposal: domain/merge rules, shell types/wiring,
+history editor, scoped styling, tests, Page standard, architecture, decisions
+and evidence/continuity records. Branch `paing-branch`, HEAD `ccdbe77`; the
+22 pre-existing changed tracked paths and three untracked paths remain
+preserved/refined within scope. No staging, commit, deployment, import or
+remote configuration/personal-record changes.
+
+Tapping a saved past activity/moment opens one text editor. Save changes
+accepts activity/moment words; Cancel returns without a write. Original date,
+time range, entry ID, first-recorded time and unknown metadata remain fixed.
+Legacy notes are converted only by an accepted change; unchanged multiline
+legacy words keep their original representation. Actual correction time and
+exact before/after snapshots accumulate in `days[dateKey].logCorrections`.
+A saved clearing retains its dated empty block in the receipt, while active
+timeBlocks excludes it. Normalization/merge suppress older matching blocks;
+Week/Reflect readers therefore do not count cleared time. Stale editors cannot
+overwrite a newer change. Time/date changes and new past entries are not added.
+
+### Checks and results
+
+- Baseline `node --test tests/log-history.test.mjs tests/circle-os-model.test.mjs`:
+  **66/66 passed**. Log: `outputs/log-corrections-baseline.log`.
+- Final `node --test tests/log-history.test.mjs tests/log-app-box.test.mjs tests/circle-os-model.test.mjs`:
+  **78/78 passed**, exit 0. Log: `outputs/log-corrections-model-final.log`.
+  Covers before/after immutability, unchanged dates/ranges/metadata, unknown
+  legacy times, revisions/queue, stale/missing/current/future/invalid targets,
+  non-increasing timestamps, no-op/replayed saves, accumulating receipts,
+  clearing/normalization/stale merge in both directions, zero cleared-time
+  totals, a genuinely newer edit, and unchanged multiline legacy content.
+- Broader `node --test --test-name-pattern="Log corrections|Log history|shared App Box geometry" tests/writing.browser.mjs`:
+  **10/10 passed** before the final legacy comparison fix. These include the
+  four preceding History journeys plus four correction/two geometry cases.
+  Log after the clearing fix: `outputs/log-corrections-browser-final.log`.
+- Final affected `node --test --test-name-pattern="Log corrections|shared App Box geometry" tests/writing.browser.mjs`:
+  **6/6 passed**, exit 0. Log: `outputs/log-corrections-browser-verified.log`.
+  Existing actual-component Vite harness, isolated synthetic accounts, Bangkok
+  timezone, Chromium at 360x667/390x844, reduced/normal motion, blocked external
+  requests. Save/cancel/reload, unchanged saves and multiline legacy no-ops pass
+  at both widths. A 360px save and clearing use actual offline browser mode;
+  network reload occurs after reconnecting to the local harness. Stale changes
+  show an alert and disable Save without overwriting; account switching closes
+  the draft and preserves only the owner's saved entry. Clearing both original
+  and legacy entries retains two receipts, zero active blocks, and stays empty
+  through stale merge and reload. Counts overlap the broader run.
+- Note, Deep Thoughts, Habit and Protocol frames still measure **346px**, Pages
+  **344px**, header gaps **48px** at both widths. No shared geometry/type tokens
+  changed. Inspected the mobile editor screenshot, saved as
+  `outputs/log-correction-editor-360.png` / `outputs/log-correction-editor-390.png`.
+- `node node_modules/eslint/bin/eslint.js app/os/log-history.js app/os/log-history-page.tsx app/os/circle-os-shell.tsx app/os/circle-os-model.js tests/log-history.test.mjs tests/writing.browser.mjs`:
+  **clean**, exit 0. Log: `outputs/log-corrections-lint-verified.log`.
+- `node node_modules/next/dist/bin/next build`: **passed**, exit 0, including
+  TypeScript/static generation after all runtime fixes. Log:
+  `outputs/log-corrections-next-verified.log`. Vinext/broad suite/lint not repeated.
+
+### Attempts, invariants and limits
+
+The initial 76 model/structure and ten browser cases passed. Review then found
+that retaining cleared blocks in active timeBlocks would still count their
+duration in existing summaries. The dated empty value now stays in the receipt;
+normalization and merge prevent stale restoration into active blocks. Added
+summary/newer-edit regression coverage passed with 77 checks and ten browser
+cases. A targeted multiline-legacy no-op test then failed against the old
+comparison (`outputs/log-corrections-legacy-baseline.log`). Shared visible-word
+comparison now prevents an unnecessary correction or a pending editor; the
+final 78 checks and affected six-case rerun pass. No source change followed.
+
+No measured performance problem justified optimization. Immutable chapters and
+authored readings, the 06:00 boundary, account epochs and original date/time
+attribution remain intact. This is the existing local queue/timestamp merge,
+not the planned Supabase durable-operation/conflict system. Physical-device
+correction use, hosted/real sync acknowledgements, recovery and offline network
+reload remain unverified. Previously recorded ResizeObserver notifications
+still appear in the harness; existing checks report no external backend calls
+or uncaught page errors. Other prior unrelated verification gaps remain.
+Next: developer use/review of the past-entry editor.
+
+## Read-only Log history (2026-11-05)
+
+The developer approved the audited read-only slice, exact source/test/record
+scope and correction of the stale Log scrolling sentence in the Page standard.
+Branch `paing-branch`, starting HEAD `ccdbe77`; all 15 pre-existing changed
+tracked paths preserved. No staging, commit, deployment, personal-data edits,
+external records, database changes or sync implementation.
+
+The Log label opens History through `useAppBack`, within the existing daily
+SwipeSession slot. All past dates with saved titles, activities or moments
+appear newest first. Empty/range-only generated days, today and future plans
+are excluded. Day reading shows assigned dates and saved block times/content,
+including legacy `activity`/`note`, in 06:00 order. Title-only days remain
+readable. Today's routine never fills historical gaps. Back returns to History
+then today; Week remains available from today. Both history surfaces grow
+downward, reading the existing account records without writing another store.
+
+### Checks and results
+
+- Baseline `node --test tests/log-app-box.test.mjs`: **4/4 passed** before edits.
+- Final `node --test tests/log-history.test.mjs tests/log-app-box.test.mjs`:
+  **7/7 passed**: three behavioral model cases and four existing structure
+  checks. Covers filtering, old dates, title-only content, legacy notes,
+  moments-only entries, non-hour times, midnight ordering, nonmutation,
+  assigned date labels and the local 06:00 boundary.
+- Final `node --test --test-name-pattern="Log history|shared App Box geometry" tests/writing.browser.mjs`:
+  **6/6 passed**, exit 0. Actual components/CSS/stores in the existing Vite
+  harness; isolated synthetic accounts, Bangkok timezone, mobile Chromium,
+  360x667/390x844, reduced/normal motion and blocked external traffic.
+  Covers 20 dates reaching back to 2020, sorting, empty/title-only days,
+  activities/legacy moments, no editing/Now controls or routine suggestions,
+  no Week swipe from history, unchanged days/outbox/evidence revisions,
+  back navigation, reload, Now return, account switching and offline reading
+  after an online harness reload. A 24-block long day grows naturally, reaches
+  its last moment, resizes across 360/390px without an inner scroller or
+  horizontal overflow, accepts keyboard/touch, and returns to Week.
+- History's settled header-to-heading gap is **48px** at both widths; list
+  controls retain **44x44px** or larger targets. Note, Deep Thoughts, Habit and
+  Protocol rest at **346px** frames, **344px** Pages and **48px** header gaps.
+  Long Log content grows beyond 480px without an inner scroller.
+- `node node_modules/eslint/bin/eslint.js app/os/log-history.js app/os/log-history-page.tsx app/os/circle-os-shell.tsx tests/log-history.test.mjs tests/log-app-box.test.mjs tests/writing.browser.mjs`:
+  **clean**, exit 0. Final log: `outputs/log-history-lint-final.log`.
+- `node node_modules/next/dist/bin/next build`: **passed**, exit 0, including
+  TypeScript/static generation after the final runtime edits. Log:
+  `outputs/log-history-next.log`. No Vinext build or broad suite/lint repeated.
+- Inspected `outputs/log-history-day-390.png` after the header correction.
+  Final browser log: `outputs/log-history-browser-final.log`.
+
+### Attempts and limits
+
+The initial five-case selection passed before final refinements. Screenshot
+review found extra space from an in-flow 44px label; the scoped control now
+uses the existing out-of-flow header pattern. The next selection passed 5/6:
+the 360px measurement sampled a 29px gap during shared frame growth. The check
+now waits across queued resize animations and polls the settled 48px gap.
+The affected two-case rerun and final full six-case run passed without further
+runtime changes. Counts overlap.
+
+The harness still emits the previously recorded ResizeObserver notifications;
+their cause is not diagnosed or fixed here. Its existing checks report no
+external backend traffic or uncaught page errors. Physical-device/hosted use,
+real sync/recovery, offline network reload and DST/travel attribution migration
+remain unverified. Existing date keys are read directly; unknown historical
+timezone/occurrence metadata is not invented. Past-day editing needs separate
+correction-time review. No measured issue justified further optimization.
+Shared tokens, immutable chapters/readings and persistence behavior are unchanged.
+
+The developer separately reports Past phases presentation, placeholder,
+Continue/Routine-idle and Reflect-swipe concerns resolved in use. These are not
+fresh regression checks in this selection. Grey-input-box confirmation and
+other independent gaps remain. Next: developer device review of Log History.
+
 ## Tighter past-phase spacing (2026-11-03)
 
 The developer approved matching past-term and Remove spacing to the page's

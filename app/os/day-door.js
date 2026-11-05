@@ -20,25 +20,14 @@ import { accountStorageKey, getAccountScope } from "./account-scope.js";
  * gets back a single answer, and draws that. Everything about precedence is
  * this file.
  *
- * The rules the order encodes:
- *
- * 1. Setting up comes before living. A person who has not answered day one has
- *    no character, no habit and no goal, so nothing behind the door works yet.
- * 2. The week's hinge comes before the day's greeting. Sunday's review is the
- *    one thing that cannot be done later — the week ends whether or not he
- *    looks at it — so it stands in front of the day.
- * 3. The greeting is last, and is the only one a person sees on an ordinary
- *    day. It opens the day once and then gets out of the way: "for that day
- *    whenever the user login, it will be to use app."
- *
- * Every door is dismissible and every dismissal is dated, so putting one down
- * stands it down for the rest of the Circle day and it is offered again
- * tomorrow. Nothing here traps anybody behind a sheet.
+ * The 2026-11-06 entry decision supersedes the automatic greetings above:
+ * only unfinished Day One is offered automatically. Later setups, reviews and
+ * greetings open when chosen. Keep every door identifier for explicit Quest
+ * and Workshop entry and preserve all saved chapter runs.
  */
 
 /**
- * The order the doors are offered in. First one ready wins, and only one is
- * ever open, so a person answers at most one sheet per opening of the App.
+ * All supported doors, including those that only open by hand.
  */
 export const DAY_DOOR_ORDER = [
   "day-one",
@@ -58,14 +47,9 @@ export const DAY_DOOR_ORDER = [
  */
 export function dayDoor(offers, todayKey) {
   const today = typeof todayKey === "string" ? todayKey.trim().slice(0, 10) : "";
-  for (const kind of DAY_DOOR_ORDER) {
-    const offer = offers?.[kind];
-    if (!offer?.offered) continue;
-    // Put down today: it stands down until tomorrow, from where he left it.
-    if (today && offer.dismissedKey === today) continue;
-    return kind;
-  }
-  return null;
+  const offer = offers?.["day-one"];
+  if (!offer?.offered || (today && offer.dismissedKey === today)) return null;
+  return "day-one";
 }
 
 /**

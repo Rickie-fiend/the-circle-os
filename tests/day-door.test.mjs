@@ -18,55 +18,47 @@ function allReady(overrides = {}) {
   return { ...offers, ...overrides };
 }
 
-// Sai: "whenever we log into the app, splash screen act as greeting ... when
-// the user first visit, the first set-up ss would be displayed. first
-// onboarding ss > app."
-test("setting up stands in front of everything else", () => {
+// After first setup, the 2026-11-06 decision removes automatic entry prompts.
+test("only unfinished Day One can open automatically", () => {
   assert.equal(dayDoor(allReady(), TODAY), "day-one");
 
-  // A person who has not answered day one has no character, no habit and no
-  // goal, so nothing behind the door works yet.
   assert.equal(
     dayDoor(allReady({ "day-one": { offered: false } }), TODAY),
-    "week-setup",
+    null,
   );
   assert.equal(
     dayDoor(
       allReady({ "day-one": { offered: false }, "week-setup": { offered: false } }),
       TODAY,
     ),
-    "log-setup",
+    null,
   );
 });
 
-// Sai: "so when its time to review for the week, ss will inform that, and to
-// continue the process."
-test("the week's hinge stands in front of the day's greeting", () => {
+test("later setups, Sunday review and greetings never interrupt entry", () => {
   const ladderDone = {
     "day-one": { offered: false },
     "week-setup": { offered: false },
     "log-setup": { offered: false },
   };
-  // A week ends whether or not he looks at it, and the one evening it can be
-  // read honestly is the one it ended on.
-  assert.equal(dayDoor(allReady(ladderDone), TODAY), "week-review");
+  assert.equal(dayDoor(allReady(ladderDone), TODAY), null);
   assert.equal(
     dayDoor(allReady({ ...ladderDone, "week-review": { offered: false } }), TODAY),
-    "day-open",
+    null,
   );
 });
 
 // Sai: "for that day whenever the user login, it will be to use app."
-test("an ordinary day opens once, then the door is not there", () => {
+test("returning tomorrow or Sunday does not bring back automatic prompts", () => {
   const ordinary = {
     "day-one": { offered: false },
     "week-setup": { offered: false },
     "log-setup": { offered: false },
     "week-review": { offered: false },
   };
-  assert.equal(dayDoor(allReady(ordinary), TODAY), "day-open");
+  assert.equal(dayDoor(allReady(ordinary), TODAY), null);
 
-  // Put down today: not again until tomorrow.
+  // A dated dismissal of a later chapter cannot change automatic entry.
   assert.equal(
     dayDoor(
       allReady({ ...ordinary, "day-open": { offered: true, dismissedKey: TODAY } }),
@@ -74,14 +66,23 @@ test("an ordinary day opens once, then the door is not there", () => {
     ),
     null,
   );
-  // And tomorrow it is there again, from where he left it.
+  // A later day does not reopen it either.
   assert.equal(
     dayDoor(
       allReady({ ...ordinary, "day-open": { offered: true, dismissedKey: TODAY } }),
       "2026-09-09",
     ),
-    "day-open",
+    null,
   );
+  assert.equal(dayDoor(allReady(ordinary), "2026-11-08"), null);
+});
+
+test("dismissing unfinished Day One does not chain another setup", () => {
+  const offers = allReady({ "day-one": { offered: true, dismissedKey: TODAY } });
+  const original = structuredClone(offers);
+  assert.equal(dayDoor(offers, TODAY), null);
+  assert.equal(dayDoor(offers, "2026-09-09"), "day-one");
+  assert.deepEqual(offers, original);
 });
 
 test("only one door is ever open", () => {
@@ -127,7 +128,7 @@ test("the App asks the door once and draws one sheet", () => {
   // then the door deciding for itself.
   assert.match(
     shell,
-    /\(pinnedChapter \? "chapter" : pinned\) \|\|\s+\(reviewingWeekOf \? "week-review" : dayDoor\(doorOffers, dateKey\)\)/,
+    /\(pinnedChapter \? pinnedSetupDoor \|\| "chapter" : pinnedStepDone \? null : pinned\) \|\|\s+\(reviewingWeekOf \? "week-review" : dayDoor\(doorOffers, dateKey\)\)/,
   );
   for (const kind of DAY_DOOR_ORDER) {
     assert.ok(
@@ -190,7 +191,7 @@ test("the pin lives beside the state, not in it", () => {
   // paints once without the sheet and again with it.
   assert.match(shell, /const pinned = onTheClient && !pinLetGo \? readPinnedDoor\(\) : null;/);
   // And a pinned review has a week to read on a day that is not a Sunday.
-  assert.match(shell, /reviewIsDue \|\| pinned === "week-review" \? weekJustEnded : ""/);
+  assert.match(shell, /pinned === "week-review" \|\| pinnedChapterId\(pinned\) === "week-review" \? weekJustEnded : ""/);
 });
 
 // Sai: "Hide The Four app session for now."
@@ -241,7 +242,7 @@ test("a pin can name a chapter, not only a door", async () => {
 
 test("a pinned chapter is read in the sheet every chapter uses", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(shell, /const pinnedChapter = getPublishedChapter\(pinnedChapterId\(pinned\) \|\| ""\)/);
+  assert.match(shell, /const pinnedChapter = pinnedStepDone \? null : pinnedCandidate/);
   assert.match(shell, /doorKind === "chapter" && pinnedChapter && pinnedChapterRun/);
   // Its run is the chapter's own, so a step answered here counts everywhere:
   // in the Quest's progress, in the setup gates, in the record.

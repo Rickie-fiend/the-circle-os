@@ -25,12 +25,35 @@
  *    evidence you can be shown later. That wiring lives in each chapter's own
  *    save — this file only says which chapters make a Quest.
  *
- * Progress is read from the chapter runs that already exist, so a chapter
- * answered before its Quest existed is already counted. Nothing is duplicated
- * and there is no second source of truth about what has been done.
+ * Progress reads existing chapter runs and explicit setup/declaration evidence.
+ * Setup done elsewhere counts without manufacturing answers or a completed run.
  */
 
-import { chapterEverCompleted } from "./chapters/chapter-model.js";
+const SETUP_APPS = { "habit-building": "habit", "log-setup": "log" };
+const DECLARATIONS = { "declare-vision": "vision", "declare-mission-statement": "missionStatement", "declare-typical-tuesday": "typicalTuesday", "declare-dreamline": "dreamline" };
+
+/** Completion reads existing evidence; it never creates a chapter run. */
+export function questStepStatus(chapterId, runs = {}, context = {}) {
+  const state = context.state || {};
+  const publications = (context.publications || []).filter(item =>
+    (item.visibility || item.scope) === "public" || (item.audienceProfileId || "local") === "local" || item.audienceProfileId === state.ai?.profileId);
+  const own = Object.entries(runs).filter(([id, run]) => id.startsWith(`${chapterId}@`) && run?.status === "completed")
+    .sort(([, a], [, b]) => String(b.completedAt || b.updatedAt || "").localeCompare(String(a.completedAt || a.updatedAt || "")))[0];
+  if (own) return { done: true, alreadySetUp: false, runId: own[0] };
+  const setupApp = SETUP_APPS[chapterId] || publications.find(item => item.firstUse && item.chapter?.id === chapterId)?.targetApp;
+  const setupRun = setupApp && publications.filter(item => item.firstUse && item.targetApp === setupApp)
+    .flatMap(item => Object.entries(runs).filter(([id, run]) => {
+      const original = `${item.chapter.id}@${item.chapter.version}`;
+      return (id === original || id.startsWith(`${original}:`)) && run?.status === "completed";
+    }))
+    .sort(([, a], [, b]) => String(b.completedAt || b.updatedAt || "").localeCompare(String(a.completedAt || a.updatedAt || "")))[0];
+  const habitExists = setupApp === "habit" && Object.values(state.habits?.definitions || {}).some(habit => habit.status === "active" && String(habit.text || habit.action || "").trim());
+  const answers = state.profile?.profileCase?.survey?.answers || [];
+  const routineKnown = setupApp === "log" && ["routine-wake", "routine-sleep"].every(key => answers.some(answer => answer.questionId === key && String(answer.answer || "").trim()));
+  const declarationExists = DECLARATIONS[chapterId] && Object.values(state.declarations?.records || {}).some(record => record.kind === DECLARATIONS[chapterId] && Object.values(record.content || {}).some(value => typeof value === "string" && value.trim()));
+  const satisfied = Boolean(setupRun || habitExists || routineKnown || declarationExists);
+  return { done: satisfied, alreadySetUp: satisfied, runId: setupRun ? setupRun[0] : null };
+}
 
 /*
  * The manifest is authored in the vault beside the chapters it groups —
@@ -70,7 +93,7 @@ export function findQuest(quests, id) {
  * shown broken: a Quest naming a chapter that no longer exists should be a
  * shorter Quest, not an error in front of somebody trying to use it.
  */
-export function questProgress(quest, runs, getChapter) {
+export function questProgress(quest, runs, getChapter, context = {}) {
   const steps = [];
   for (const step of quest?.steps || []) {
     const chapter = getChapter(step.chapterId);
@@ -80,8 +103,8 @@ export function questProgress(quest, runs, getChapter) {
       minutes: step.minutes || 0,
       title: chapter.title || step.chapterId,
       session: chapter.session || "",
-      // Any version of it, answered once — the same rule the setup gates use.
-      done: chapterEverCompleted(runs, step.chapterId),
+      // An actual run or existing setup evidence; never a fabricated completion.
+      ...questStepStatus(step.chapterId, runs, context),
     });
   }
   const done = steps.filter((step) => step.done).length;
@@ -103,6 +126,6 @@ export function questProgress(quest, runs, getChapter) {
 }
 
 /** The whole catalogue, each Quest read against the runs. */
-export function questCatalogue(quests, runs, getChapter) {
-  return (quests || []).map((quest) => questProgress(quest, runs, getChapter));
+export function questCatalogue(quests, runs, getChapter, context = {}) {
+  return (quests || []).map((quest) => questProgress(quest, runs, getChapter, context));
 }

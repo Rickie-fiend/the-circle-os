@@ -5,6 +5,7 @@ import { getAccountScope, getServerAccountScope, subscribeAccountScope } from ".
 import { createAuthController } from "./auth-controller";
 import { createSupabaseAdapter, readAuthConfig, type AuthConfig } from "./supabase-client";
 import { DevelopmentTestBoundary } from "./development-test-boundary";
+import { SupabaseConnection } from "./supabase-context";
 
 export function CircleAuthBoundary({ children }: { children: ReactNode }) {
   const config = readAuthConfig();
@@ -102,7 +103,7 @@ export function SupabaseAuthBoundary({ config, children }: { config: AuthConfig;
         <button className="os-page-primary-action" disabled={busy} onClick={() => { void signOut(); }}>Sign out on this device</button>
       </div>}
     </div>
-    {children}
+    <SupabaseConnection.Provider value={{ client, config }}>{children}</SupabaseConnection.Provider>
   </>;
   if (state.phase === "checking") return <AuthSurface title="Opening Circle OS…"><p role="status">Checking your sign-in.</p></AuthSurface>;
   const passwordFlow = state.phase === "password";

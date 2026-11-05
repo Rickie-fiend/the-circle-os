@@ -142,15 +142,13 @@ test("the week setup leaves a week with a goal, terms and a way back", () => {
   assert.equal(Object.values(phase.items)[0].text, A["week-term"]);
 });
 
-// Not the calendar's second day: someone who comes back on Friday gets it then.
-test("the week is offered once a day has actually been kept", async () => {
+test("Week setup remains available by choice without an automatic entry offer", async () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(shell, /getDateKey\(new Date\(dayOneRunStored\.completedAt\)\) < dateKey/);
   assert.match(shell, /<ChapterSplash\s+label="Week setup"/);
-  assert.match(shell, /chapterEverCompleted\(state\.chapters\.runs, weekSetupChapter\.id\)/);
+  assert.doesNotMatch(shell, /"week-setup": \{\s+offered:/);
 
-  // One sheet at a time, and the week's setup stands in front of the Log's.
-  assert.match(shell, /"log-setup": \{[\s\S]*?logSetupPublication/);
+  // Both identifiers remain available for explicit entry, without auto offers.
+  assert.doesNotMatch(shell, /"log-setup": \{\s+offered:/);
   const { DAY_DOOR_ORDER } = await import("../app/os/day-door.js");
   assert.ok(
     DAY_DOOR_ORDER.indexOf("week-setup") < DAY_DOOR_ORDER.indexOf("log-setup"),

@@ -1,5 +1,276 @@
 # Current task
 
+## Direct entry after Day One - 2026-11-06
+
+Approved entry slice implemented: any completed Day One enters the app without
+automatic Week/Log setup, weekly review or daily greeting. Unfinished Day One
+remains resumable. Explicit Quest/Week/Workshop entry keeps saved progress and
+uses the existing setup/review handlers; completing chosen Week setup still
+creates its goal, step and phase.
+
+46/46 focused checks, targeted lint and final Next production build including
+types passed. All eight actual-component mobile cases passed at 360px
+and 390px; see [verification and run limits](USER_JOURNEY_TESTING.md#direct-entry-after-day-one-2026-11-06).
+The unrelated Week setup date expectation and existing ResizeObserver warning
+remain. Original midweek trigger, hosted sign-in and physical Opera/phone
+acceptance are not certified. No geometry/type/gap changes or new measurements.
+
+Branch `paing-branch`, HEAD `ccdbe77`; prior tracked/untracked work preserved,
+including concurrent sync-check/hosted-harness files. Nothing staged, committed,
+applied remotely, imported or deployed by this slice. Habit/setup state remains
+browser-local; a private window does not restore it. Writing sync activation,
+hosted access, conflict UI and backup verification remain separate work.
+
+Next: developer review of direct entry and chosen setup/review on the affected
+browser, then resume the separately reviewed writing migration/hosted checks.
+Earlier entries retain their dated evidence below.
+
+## Hosted account writing checks - 2026-11-06
+
+Developer approved the migration, then the development-only harness and synthetic
+two-account checks against `gcqmblrkpfvjnewzdycj`. Migration applied successfully;
+eight catalog checks passed. Both confirmed accounts passed authenticated RPC
+writing/lifecycle, retry, response-loss/newer-edit and conflict/deletion checks.
+Account B could not read A's head/receipts; the same entry ID remained independent
+and A's final recheck passed. Anonymous/invalid-JWT requests were denied.
+Direct server-side service-role probes returned 403/42501 for all three RPCs.
+The dev-server version of that probe fails in request/response handling and still stops;
+this limitation is distinct from the passing direct hosted probe.
+
+Final read-only audit: two account-owned terminal heads, both conflict bodies
+scrubbed and 16 receipts retained. Test accounts and minimal synthetic metadata
+remain. 11/11 focused harness/transport tests, targeted lint and the source-only
+Next-target type check passed. No new full build claim; existing generated
+`.next/dev` syntax errors prevented the ordinary full type command. See
+[evidence and limits](USER_JOURNEY_TESTING.md#hosted-account-writing-checks-2026-11-06).
+
+Writing sync remains off. No app environment change, personal migration,
+deployment, staging or commit. Existing work on `paing-branch` at `ccdbe77`
+preserved; new harness paths remain untracked. No product geometry changes or
+new geometry measurements. Conflict/status UI, real-device recovery, backups,
+retention, privileged admin/logs and broader beta gates remain pending.
+
+Next: review the hosted evidence, then agree the conflict/status UI slice before
+any user-facing activation. Activation remains separately approved work.
+
+Earlier dated implementation records below retain their original scope;
+statements that hosted SQL has not been applied are superseded by this entry.
+
+## Account writing storage and transport - 2026-11-05
+
+Approved repository slice implemented: private Supabase SQL, owner-scoped
+access, exact atomic receipts, authenticated transport, initial saved-writing
+inventory and safe conflict/deletion handling. Existing account writing and
+the local queue remain the foundation. Cloud activation defaults to off through
+`NEXT_PUBLIC_CIRCLE_WRITING_SYNC`; no environment or hosted database was changed.
+
+89/89 focused database/model/transport tests and 43/43 Chromium browser checks
+passed. The SQL runs in embedded PostgreSQL with synthetic Auth claims; browser
+checks use real IndexedDB/HTTP and synthetic authentication. Next production
+build including types passed; final checks are recorded in
+[the journey evidence](USER_JOURNEY_TESTING.md#account-writing-storage-and-transport-2026-11-05).
+No geometry/type/gap changes or new geometry measurements. Prior work preserved
+on `paing-branch`, HEAD `ccdbe77`; no staging, commit, import or deployment.
+
+Next: review [the migration and activation guide](ACCOUNT_WRITING_SYNC.md), then
+separately approve applying the SQL to the selected Supabase environment and
+running hosted two-account/anonymous/JWT checks. Keep activation off until that
+evidence and operational limits are reviewed. Conflict-resolution/status UI,
+real-device/hosted recovery, other domains, privileged admin access/logs,
+backup/retention and personal migration remain open; beta sync is not certified.
+
+Earlier entries retain their dated scope and evidence below.
+
+## Durable local writing sync queue - 2026-11-05
+
+Approved first sync slice implemented and locally verified. Accepted account
+writing changes and pending references commit in one IndexedDB transaction.
+Drafts stay outside the queue. Clearing/Trash/restore/deletion retain distinct
+markers without copied writing bodies. Exact acknowledgement validation retires
+only named operations, preserves newer work and rejects old-account callbacks.
+
+75/75 focused model cases and 15/15 browser cases (nine queue/writing checks plus
+six additional existing writing regressions), targeted lint and Next production
+build including types passed. See [evidence](USER_JOURNEY_TESTING.md#durable-local-writing-sync-queue-2026-11-05).
+No UI/geometry tokens changed; no new geometry measurements claimed.
+
+Recorded the developer's read-only Week-review decision and deferrals of past
+Habit completion corrections/shared day view across owning plans. Protocol
+wording was reviewed by the developer; a real 06:00 device-boundary check is not
+independently claimed. Branch `paing-branch`, HEAD `ccdbe77`; previous work
+preserved. No staging, commit, database change, import or deployment.
+
+Next: review the account-writing server schema/access policies and authenticated
+transport, including initial inventory, conflict receipts and deletion handling.
+These are not implemented or approved by the local-queue slice. Cloud sync,
+real two-device recovery, backup/retention and broader beta gates remain open.
+
+## Protocol prospective wording - 2026-11-05
+
+Approved slice implemented and locally verified. Term edits, additions and
+removals start next Circle day at local 06:00. Today retains its terms and ticks;
+the editor shows pending words. Past phases shows wording intervals with their
+own counts. Existing seals/IDs remain intact; missing legacy originals stay
+explicitly unavailable. Historical phase-name/goal versioning remains separate.
+
+96/96 focused model checks, 8/8 actual-component mobile checks, targeted lint
+and Next production build including types passed. Four resting frames remain
+346px with 48px header gaps; bounded history/44px Remove targets remain. See
+[evidence and limits](USER_JOURNEY_TESTING.md#protocol-prospective-wording-2026-11-05).
+
+Branch `paing-branch`, HEAD `ccdbe77`; prior work preserved. Nothing staged,
+committed, deployed, imported or changed remotely. Next: developer phone review
+of editing a phase today and reading its terms tomorrow. Physical-device,
+hosted, real-sync/concurrent-edit and broader beta gaps remain open. Earlier
+records listing all Protocol wording history as pending are superseded only
+for this bounded slice.
+
+## Contextual chapter review cleanup - 2026-11-05
+
+Approved cleanup implemented and locally verified. Removed the standalone
+Chapter History control and visible version labels. Finished steps and completed
+Quests' View history retain saved-answer review. The counter, internal versions,
+original questions/answers, setup status and replay guards remain unchanged.
+A broader all-chapter archive is deferred.
+
+12/12 focused model cases, 6/6 actual-component mobile cases, targeted lint and
+Next production build including types passed. Four resting frames remain 346px
+with 48px header gaps. See
+[evidence and limits](USER_JOURNEY_TESTING.md#contextual-chapter-review-cleanup-2026-11-05).
+
+Branch `paing-branch`, HEAD `ccdbe77`; existing work preserved. Nothing staged,
+committed, deployed, imported or changed remotely. Next: developer phone review
+of the cleaner Quest header and contextual reader. Earlier global-entry/version
+display instructions below are superseded. Existing ResizeObserver, Week source
+test and physical-device/hosted/sync gaps remain; no beta certification.
+
+## Chapter History and Quest setup review - 2026-11-05
+
+Approved History slice and separately approved Quest fixes implemented and
+locally verified. Chapter History opens beside the Quest counter; completed
+answer-bearing runs keep their original questions, answers, version and date.
+Missing originals stay honest. Shared Back returns to the same Quest.
+
+View/Hide works repeatedly. Existing Habit/Log setup and matching saved
+declarations/replacement first-use evidence count as Already set up without
+inventing answers or a completed run. Finished steps open readers; completed
+Quests offer View history. Habit/Log surfaces share readiness and stale Quest
+pins cannot reopen completed setup. Other reflection/Week steps require actual
+completion; access gates remain unchanged.
+
+51/51 focused model checks, final 6/6 affected mobile cases and 4/4 header/frame
+checks passed (overlapping selections). Targeted lint and final production build
+including types pass. Four resting frames remain
+346px with 48px header gaps. See
+[evidence and limits](USER_JOURNEY_TESTING.md#chapter-history-and-quest-setup-review-2026-11-05).
+
+Branch `paing-branch`, starting HEAD `ccdbe77`; prior changes preserved. Nothing
+staged, committed, deployed, imported or changed remotely. The developer's
+Athena Reading History phone acceptance supersedes its reminder below.
+Next: developer phone review of Chapter History, View/Hide and finished/setup
+Quest steps. Historical wording, weekly corrections, shared day review and safe
+sync remain separately reviewed work. ResizeObserver, prior Week source-test
+failures and hosted/device/sync gaps remain; no beta certification.
+
+## Read-only Athena Reading History - 2026-11-05
+
+Approved slice implemented and locally verified. Tap Athena's Reading on its
+cover to open locally saved editions newest first, then read an edition's own
+cover, three prose parts and publication date. Missing parts/unknown dates stay
+honest. Shared Back returns to History then current cover; the four swipe Pages
+and current reply flow remain. Browsing changes no records and requests no AI.
+The existing 60-edition bound is unchanged; full server paging remains separate.
+
+39/39 focused Athena model checks, 7/7 actual-component mobile browser cases,
+targeted lint and Next production build including types passed. Four resting
+frames remain 346px with 48px header gaps. See
+[evidence and limits](USER_JOURNEY_TESTING.md#read-only-athena-reading-history-2026-11-05).
+
+Branch `paing-branch`, starting HEAD `ccdbe77`; pre-existing work preserved.
+Nothing staged, committed, deployed, imported or changed remotely. The developer
+confirmed Week History on their phone, superseding its reminder below.
+Next: developer phone review of Athena Reading History. Chapter-answer review,
+historical Habit/Protocol wording, weekly corrections, shared day view and safe
+sync remain separately reviewed work. ResizeObserver, prior Week source-test
+failures and hosted/device/sync gaps remain; beta readiness is not certified.
+
+## Read-only Week History - 2026-11-05
+
+Approved slice implemented and locally verified. Tap Week to open past saved
+calendar weeks newest first; open a week to read goals/status, linked steps and
+dates, and saved review answers/recording time. Shared Back returns to History
+then current Week. Missing records stay unavailable, archived steps remain
+readable, and browsing never writes or replays chapter outcomes. Current saved
+goal/task words are shown; historical wording is not reconstructed.
+
+22/22 focused model checks, 7/7 actual-component mobile browser cases, targeted
+lint and Next production build including types passed. Four resting frames
+remain 346px with 48px header gaps. See
+[checks, attempts and limits](USER_JOURNEY_TESTING.md#read-only-week-history-2026-11-05).
+
+Branch `paing-branch`, starting HEAD `ccdbe77`; all pre-existing changes
+preserved. Nothing staged, committed, deployed, imported or changed remotely.
+The developer confirmed the preceding past Log editor and caret-only focus on
+their phone; its earlier confirmation reminders below are superseded.
+Next: developer phone review of Week History. Weekly corrections/versioning,
+historical wording, remaining histories/shared day view and safe sync remain
+separate reviewed slices. Existing ResizeObserver, two wider Week source-test
+failures and other hosted/device/sync gaps remain; no beta certification.
+
+## Past Log text corrections - 2026-11-05
+
+Approved follow-up: removed the orange focus outline only from past-Log
+writing fields, keeping the caret and button keyboard focus. Both affected
+mobile browser journeys and targeted test lint pass. No sizing/record changes
+or new build/geometry claims. See
+[focus checks](USER_JOURNEY_TESTING.md#past-log-caret-only-focus-2026-11-05).
+Next: device confirmation of the cursor without the orange box.
+
+Approved slice implemented and locally verified. Tap a saved activity/moment
+in Log History to edit its words, then Save changes or Cancel. Dates, ranges,
+IDs and first-recorded times stay fixed. Actual correction time and exact
+before/after words are retained internally. Clearing stores a dated empty
+receipt, removes active evidence and resists stale restoration. Stale editors
+cannot overwrite newer changes; unchanged saves write nothing.
+
+78/78 focused model/structure checks passed. The broader ten-case browser
+selection passed after the clearing fix; the final 6/6 affected cases passed
+after the legacy no-op fix. Targeted lint and Next production build pass.
+Four resting frames remain 346px with 48px header gaps. See
+[evidence, attempts and limits](USER_JOURNEY_TESTING.md#past-log-text-corrections-2026-11-05).
+
+Branch `paing-branch`, HEAD `ccdbe77`; all 22 pre-existing changed tracked and
+three untracked paths preserved/refined within scope. No staging, commit,
+deployment, personal import or remote changes. The developer confirmed the
+preceding Log History on their device. Next: device review of this editor.
+Adding missed entries, changing dates/times, safe sync/recovery and broader
+history remain separately reviewed work. Physical-device/hosted/sync gaps,
+ResizeObserver, grey-input-box confirmation and prior unrelated gaps remain.
+
+## Read-only Log history - 2026-11-05
+
+Approved slice implemented and locally verified. The Log label opens all saved
+past days, newest first; opening one reads saved activities/moments and its
+assigned date. Shared App-back returns to History then today. Empty generated
+days/future plans are excluded; legacy moments remain visible, without routine
+suggestions or past-day editors. History reads existing account records and
+grows downward. Week remains available from today.
+
+7/7 focused model/structure checks and the final 6/6 actual-component mobile
+browser cases passed. Targeted lint and the Next production build are clean.
+Four resting frames remain 346px with 48px header gaps; History retains the
+48px anchor and 44px controls. See
+[checks, attempts and limits](USER_JOURNEY_TESTING.md#read-only-log-history-2026-11-05).
+
+Branch `paing-branch`, starting HEAD `ccdbe77`; all 15 pre-existing changed
+paths preserved. No staging, commit, deployment, import or cloud changes.
+Next: developer device review of Log History. Past-day editing/correction
+times need a separate proposal. Physical-device/hosted/sync checks,
+ResizeObserver notifications, grey-input-box confirmation and other prior gaps
+remain. The developer confirmed Past phases looks good and reports placeholder,
+Continue, Routine idle reset and Reflect swipe concerns resolved in use; this
+selection does not independently re-test those reports.
+
 ## Tighter past-phase spacing - 2026-11-03
 
 Approved CSS refinement implemented and locally verified. Read-only term rows

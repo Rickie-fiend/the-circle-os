@@ -116,6 +116,11 @@ import {
 } from "./app-session";
 import { sizeTextAreaToContent } from "./text-area-size";
 import { useAppBack } from "./app-back";
+import { correctLogEntry, logHistoryDays, type LogCorrection } from "./log-history.js";
+import { LogHistoryPage } from "./log-history-page";
+import { weekHistory } from "./week-history.js";
+import { WeekHistoryPage } from "./week-history-page";
+import { questStepStatus } from "./quests.js";
 import {
   DreamlineIdlePage,
   DreamlineSheetPage,
@@ -145,7 +150,6 @@ import {
 import { selectThoughtPrompt } from "./thought-prompt-model.js";
 import { firstUsePlaceholder } from "./first-use.js";
 import {
-  WEEK_ROLLOVER_HOUR,
   planningWeekStartKey,
   recordWeekReview,
   weekBarDays,
@@ -185,7 +189,7 @@ function weekStepEditorId(taskId: string) {
 }
 import { ChapterPlayer } from "./chapters/chapter-player";
 import { applyHabitBuildingCompletion } from "./habit-building-model.js";
-import { selectDayOneChapter, dayOneKeptBefore, saveDayOneProgress } from "./day-one-model.js";
+import { selectDayOneChapter, saveDayOneProgress } from "./day-one-model.js";
 import {
   ProtocolKeptPage,
   ProtocolPage,
@@ -196,7 +200,6 @@ import { appIsOpen, lockedUntil } from "./phases.js";
 import {
   dayDoor,
   dayOpenRunId,
-  dayWasOpened,
   clearPinnedDoor,
   pinnedChapterId,
   readPinnedDoor,
@@ -207,7 +210,6 @@ import {
   chapterRunId,
   chapterAnswerText,
   createChapterRun,
-  renderChapterTemplate,
   storeChapterRun,
 } from "./chapters/chapter-model.js";
 import {
@@ -826,6 +828,7 @@ type CircleDay = {
   mission: Mission;
   missions?: ExtraMission[];
   timeBlocks: TimeBlock[];
+  logCorrections?: Record<string, LogCorrection>;
   logRange?: {
     startHour: number;
     endHour: number;
@@ -1793,7 +1796,6 @@ export function TodayExperience() {
   const surveyAnswers = state.profile.profileCase.survey.answers;
   const wakeTime = surveyAnswer(surveyAnswers, "routine-wake");
   const sleepTime = surveyAnswer(surveyAnswers, "routine-sleep");
-  const routineTimesKnown = Boolean(wakeTime && sleepTime);
   const wakeHour = hourFromTime(wakeTime, 7);
   const sleepClockHour = hourFromTime(sleepTime, 0);
   const sleepHour =
@@ -1968,6 +1970,12 @@ export function TodayExperience() {
     Record<string, { fade: number; remove: number }>
   >({});
   const [isLogOpen, setLogOpen] = useState(false);
+  const logBack = useAppBack<"today" | "history" | "day">("today");
+  const [logHistoryDay, setLogHistoryDay] = useState<string | null>(null);
+  const recordedLogDays = logHistoryDays(state, dateKey);
+  const weekBack = useAppBack<"current" | "history" | "week">("current");
+  const [historyWeek, setHistoryWeek] = useState<string | null>(null);
+  const recordedWeeks = weekHistory(state, dateKey);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
   const initialRange = useMemo(() => freshTimeRange(), []);
@@ -2131,27 +2139,29 @@ export function TodayExperience() {
   );
   // The bundled Habit lesson stays optional after shorter onboarding. Authored
   // deliveries and explicit first-use publications retain their existing paths.
-  const habitPublication = state.chapters.runs["day-one@3"]?.status === "completed" &&
-    pendingHabitPublication?.chapter.id === "habit-building" &&
-    pendingHabitPublication.publishedAt === BUILT_IN_PUBLISHED_AT
+  const habitPublication = pendingHabitPublication?.chapter.id === "habit-building" &&
+    (questStepStatus("habit-building", state.chapters.runs, { state, publications }).done ||
+      (state.chapters.runs["day-one@3"]?.status === "completed" && pendingHabitPublication.publishedAt === BUILT_IN_PUBLISHED_AT))
       ? null : pendingHabitPublication;
-  const logPublication = selectPendingAppPublication(
+  const pendingLogPublication = selectPendingAppPublication(
     publications,
     "log",
     publicationProfileId,
     state.chapters.runs,
   );
+  const logPublication = pendingLogPublication?.chapter.id === "log-setup" &&
+    questStepStatus("log-setup", state.chapters.runs, { state, publications }).done ? null : pendingLogPublication;
   // A first-use chapter published from Admin stands in place of the compiled
   // setup chapter for its App. Sai authors these; the App must open on what he
   // wrote rather than on what shipped in the bundle.
   const habitSetupPublication = selectFirstUsePublication(
-    publications,
+    questStepStatus("habit-building", state.chapters.runs, { state, publications }).done ? [] : publications,
     "habit",
     publicationProfileId,
     state.chapters.runs,
   );
   const logSetupPublication = selectFirstUsePublication(
-    publications,
+    questStepStatus("log-setup", state.chapters.runs, { state, publications }).done ? [] : publications,
     "log",
     publicationProfileId,
     state.chapters.runs,
@@ -2185,11 +2195,6 @@ export function TodayExperience() {
           ),
         )[0] || null,
     [publications, state.chapters.runs],
-  );
-  const logSetupSealed = firstUsePublicationDone(
-    publications,
-    "log",
-    state.chapters.runs,
   );
   const defaultLogStartHour = Math.max(CIRCLE_DAY_START_HOUR, wakeHour);
   const defaultLogEndHour = Math.min(
@@ -2313,14 +2318,14 @@ export function TodayExperience() {
     );
   }
 
-  // New Day One versions may be offered to the current sole user. Keep a
-  // started older journey on its own pages, and return to the app on completion.
+  // Keep older journeys on their own pages. Once any Day One is complete,
+  // newer versions remain available by choice rather than interrupting entry.
   const [finishedDayOneVersion, setFinishedDayOneVersion] = useState<number>();
   const dayOneChapter = finishedDayOneVersion
     ? getPublishedChapter("day-one", finishedDayOneVersion)
     : selectDayOneChapter(publishedChapters, state.chapters.runs);
   const dayOneDone =
-    !dayOneChapter || state.chapters.runs[chapterRunId(dayOneChapter)]?.status === "completed";
+    !dayOneChapter || chapterEverCompleted(state.chapters.runs, "day-one");
   const dayOneRun = useMemo(() => {
     if (!dayOneChapter) return null;
     return (
@@ -2328,13 +2333,7 @@ export function TodayExperience() {
       createChapterRun(dayOneChapter)
     );
   }, [dayOneChapter, state.chapters.runs]);
-  /**
-   * The week, offered the day after the first one is kept.
-   *
-   * Not on the calendar's second day: someone who comes back on Friday gets it
-   * on Friday. What it waits for is a Circle day turning over with day one
-   * behind him — one day lived is the whole argument for committing to seven.
-   */
+  // Week setup remains available through explicit chapter entry.
   const weekSetupChapter = getPublishedChapter("week-setup");
   /**
    * Which Apps have opened.
@@ -2345,10 +2344,6 @@ export function TodayExperience() {
   const protocolIsOpen = appIsOpen("protocol", state.chapters.runs);
   const weekIsOpen = appIsOpen("week", state.chapters.runs);
 
-  const dayOneKeptADay = dayOneKeptBefore(state.chapters.runs, dateKey);
-  const weekSetupDone =
-    !weekSetupChapter ||
-    chapterEverCompleted(state.chapters.runs, weekSetupChapter.id);
   const weekSetupRun = useMemo(() => {
     if (!weekSetupChapter) return null;
     const stored = state.chapters.runs[chapterRunId(weekSetupChapter)];
@@ -2416,26 +2411,13 @@ export function TodayExperience() {
    * their own sheet. A stored sheet for this week is picked up where he left
    * it; a week with none starts fresh.
    */
-  /**
-   * The week being read, whichever way the review arrived.
-   *
-   * By hand from the Week Page, or standing in Sunday's door once the week has
-   * turned. Both are the same review of the same week — Sai: "so when its time
-   * to review for the week, ss will inform that, and to continue the process."
-   * — so both resolve to one run and one sheet.
-   */
-  const sundayEvening =
-    new Date(`${dateKey}T12:00:00`).getDay() === 0 &&
-    liveClockHour >= WEEK_ROLLOVER_HOUR;
+  // A review opens only by choice from the Week Page or Workshop.
   const weekJustEnded = weekStartKey(dateKey);
-  const reviewIsDue = Boolean(
-    sundayEvening && !weekWasReviewed(state, weekJustEnded),
-  );
   /* Pinned from the Workshop counts as a third way in, or the sheet would have
      nothing to read on any day that is not a Sunday evening. */
   const weekBeingReviewed =
     reviewingWeekOf ||
-    (reviewIsDue || pinned === "week-review" ? weekJustEnded : "");
+    (pinned === "week-review" || pinnedChapterId(pinned) === "week-review" ? weekJustEnded : "");
   const weekReviewRunId = weekReviewChapter && weekBeingReviewed
     ? `${chapterRunId(weekReviewChapter)}:${weekBeingReviewed}`
     : "";
@@ -2516,12 +2498,13 @@ export function TodayExperience() {
     // already answered, seals it the same way: setting up happens once.
     const sealed =
       habitSetupSealed ||
+      questStepStatus("habit-building", state.chapters.runs, { state, publications }).done ||
       chapterEverCompleted(state.chapters.runs, habitBuildingChapter.id);
     if (sealed && stored.status !== "completed") {
       return { ...stored, status: "completed" as const };
     }
     return stored;
-  }, [habitBuildingChapter, habitSetupSealed, state.chapters.runs]);
+  }, [habitBuildingChapter, habitSetupSealed, state, publications]);
   const activeHabitChapter = useMemo(() => {
     if (!habitBuildingChapter) return null;
     return {
@@ -2665,15 +2648,6 @@ export function TodayExperience() {
     });
     return createChapterRun(logSetupChapter, seedAnswers);
   }, [logSetupChapter, state.chapters.runs, surveyAnswers]);
-  const logSetupDone =
-    logSetupSealed ||
-    // Any version of it, answered once. Editing the setup and publishing a new
-    // version used to ask again from the top, which is how the same two
-    // questions arrived three times.
-    (logSetupChapter
-      ? chapterEverCompleted(state.chapters.runs, logSetupChapter.id)
-      : false) ||
-    (logSetupRun ? logSetupRun.status === "completed" : routineTimesKnown);
   const activeDreamline = currentDreamline(state, liveNow) as DreamlineRecord | null;
   const pastDreamlines = dreamlineRecords(state, liveNow).filter(
     (record) => record.status === "concluded",
@@ -2731,54 +2705,16 @@ export function TodayExperience() {
    * through the render — see that file for the order and why it is that order.
    * The App's job here is only to say which doors are ready.
    */
-  const dayOpenOffered = Boolean(
-    dayOneDone &&
-      weekSetupDone &&
-      dayOpenChapter &&
-      dayOpenRun &&
-      !dayWasOpened(state.chapters.runs[dayOpenRunKey]),
-  );
-  const logSetupSplashRun = logSetupPublication
-    ? state.chapters.runs[chapterRunId(logSetupPublication.chapter)]
-    : logSetupRun;
   const dayOneDelivered = [thoughtsPublication, habitPublication, logPublication,
     habitSetupPublication, logSetupPublication].some(publication => publication?.chapter.id === "day-one");
-  // Completing Day One returns to the app for this visit, without chaining setup.
+  // Day One is the only automatic entry sheet. All later chapters are chosen.
   const doorOffers = finishedDayOneVersion ? {} : {
     "day-one": {
       offered: Boolean(!dayOneDone && !dayOneDelivered && dayOneChapter && dayOneRun),
       dismissedKey: dismissedDay(dayOneRun),
     },
-    "week-setup": {
-      offered: Boolean(dayOneKeptADay && !weekSetupDone && weekSetupChapter && weekSetupRun),
-      dismissedKey: dismissedDay(weekSetupRun),
-    },
-    "log-setup": {
-      offered: Boolean(
-        dayOneDone &&
-          weekSetupDone &&
-          (logSetupPublication || (!logSetupDone && logSetupChapter && logSetupRun)),
-      ),
-      dismissedKey: dismissedDay(logSetupSplashRun),
-    },
-    /* Sunday's review stands in the door, not only behind a key.
-     *
-     * A week ends whether or not he looks at it, and the one evening it can be
-     * read honestly is the one it ended on. Sai: "so when its time to review
-     * for the week, ss will inform that, and to continue the process." The key
-     * on the Week Page stays for after he has put this down. */
-    "week-review": {
-      offered: Boolean(dayOneDone && weekSetupDone && weekReviewChapter && reviewIsDue),
-      dismissedKey: dismissedDay(state.chapters.runs[weekReviewRunId]),
-    },
-    "day-open": {
-      offered: dayOpenOffered,
-      dismissedKey: dismissedDay(dayOpenRun),
-    },
   };
-  /* Opened by hand from the Week Page, standing in the door on a Sunday, or
-     pinned open from the Workshop so a sheet can be looked at without waiting
-     for the day that would show it. */
+  // Explicit Week/Quest/Workshop entry still uses the same saved chapter player.
   /**
    * A chapter opened by name, from a Quest step.
    *
@@ -2790,7 +2726,18 @@ export function TodayExperience() {
    * Its run is the chapter's own, so a step answered here counts everywhere:
    * in the Quest's progress, in the setup gates, in the record.
    */
-  const pinnedChapter = getPublishedChapter(pinnedChapterId(pinned) || "");
+  const pinnedCandidate = getPublishedChapter(pinnedChapterId(pinned) || "");
+  const pinnedStepDone = Boolean(pinnedCandidate && questStepStatus(pinnedCandidate.id, state.chapters.runs, { state, publications }).done);
+  const pinnedChapter = pinnedStepDone ? null : pinnedCandidate;
+  // Chosen setup/review chapters use their existing seeded runs and domain
+  // handlers, just as explicit Workshop doors do.
+  const pinnedSetupDoor = pinnedChapter &&
+    ["week-setup", "log-setup", "week-review", "day-open"].includes(pinnedChapter.id)
+      ? pinnedChapter.id : null;
+  useEffect(() => {
+    if (!ready || !pinnedStepDone) return;
+    clearPinnedDoor();
+  }, [ready, pinnedStepDone]);
   const pinnedChapterRun = useMemo(() => {
     if (!pinnedChapter) return null;
     return (
@@ -2800,7 +2747,7 @@ export function TodayExperience() {
   }, [pinnedChapter, state.chapters.runs]);
 
   const doorKind =
-    (pinnedChapter ? "chapter" : pinned) ||
+    (pinnedChapter ? pinnedSetupDoor || "chapter" : pinnedStepDone ? null : pinned) ||
     (reviewingWeekOf ? "week-review" : dayDoor(doorOffers, dateKey));
 
   /** A pinned door is let go the moment its sheet is answered or put down. */
@@ -4902,16 +4849,27 @@ export function TodayExperience() {
         <section className="os-log-section" aria-labelledby="day-heading">
           <SwipeSession
             attentionKey={`today-log:${logAppVersion}`}
-            availableIndices={Array.from(
-              { length: logAppMaxIndex + 1 },
+            availableIndices={weekBack.side !== "current" ? [1] : Array.from(
+              { length: logBack.side === "today" ? logAppMaxIndex + 1 : 1 },
               (_, index) => index,
             )}
-            className="os-log-session"
+            className={`os-log-session ${logBack.className} ${weekBack.className}`}
             index={logAppIndex}
             label="Log apps"
             maxIndex={logAppMaxIndex}
             onIndexChange={saveLogAppIndex}
           >
+            {logBack.side !== "today" ? (
+              <LogHistoryPage
+                days={recordedLogDays}
+                sourceDay={logHistoryDay ? state.days[logHistoryDay] : undefined}
+                todayKey={dateKey}
+                onSave={(request) => updateState((current) => correctLogEntry(current, request, dateKey).state)}
+                selectedDay={logBack.side === "day" ? logHistoryDay : null}
+                onBack={(event) => logBack.flip(logBack.side === "day" ? "history" : "today", undefined, event.currentTarget)}
+                onSelect={(key, source) => logBack.flip("day", () => setLogHistoryDay(key), source)}
+              />
+            ) : (
             <PageLayout
               className="os-log-page"
               /* Now sits in the header, where every App puts its one action.
@@ -4936,7 +4894,8 @@ export function TodayExperience() {
                   value={today.title || ""}
                 />
               }
-              headerLeft={<p className="os-card-label">Log</p>}
+              headerLeft={<button className="os-card-label os-log-history-label" type="button"
+                onClick={(event) => logBack.flip("history", undefined, event.currentTarget)}>Log</button>}
               placement="content-flow"
               theme="dark"
             >
@@ -5120,6 +5079,7 @@ export function TodayExperience() {
             ) : null}
               </div>
             </PageLayout>
+            )}
 
             {/* The Week Page waits for a week.
               *
@@ -5139,6 +5099,12 @@ export function TodayExperience() {
             )}
 
             {weekIsOpen ? (
+            weekBack.side !== "current" ? <WeekHistoryPage
+              weeks={recordedWeeks}
+              selectedWeek={weekBack.side === "week" ? historyWeek : null}
+              onBack={event => weekBack.flip(weekBack.side === "week" ? "history" : "current", undefined, event.currentTarget)}
+              onSelect={(key, source) => weekBack.flip("week", () => setHistoryWeek(key), source)}
+            /> :
             <PageLayout
               className="os-log-page os-log-week"
               /* Reading the week is the one act on this Page that is not
@@ -5174,7 +5140,8 @@ export function TodayExperience() {
                   </CreativeButton>
                 ) : undefined
               }
-              headerLeft={<p className="os-card-label">Week</p>}
+              headerLeft={<button className="os-card-label os-log-history-label" type="button"
+                onClick={event => weekBack.flip("history", undefined, event.currentTarget)}>Week</button>}
               /* Opening a goal sits where Routine puts New habit: top right,
                  opposite the App Label. Sai: "Add week goal button on top
                  right." */

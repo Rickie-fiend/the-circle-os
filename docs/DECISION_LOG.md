@@ -1,5 +1,215 @@
 # Circle OS decision log
 
+## 2026-11-06 - Direct entry after Day One
+
+The developer reported an unwanted Week review/setup prompt at sign-in before
+the week was finished and approved removing automatic entry prompts after Day
+One. Once any version of Day One is complete, enter directly into the app.
+Week setup, Log setup, Week review and daily greetings remain available through
+existing explicit chapter/review entry. New Day One versions do not interrupt
+people who already completed an older version. Unfinished first onboarding
+remains resumable; saved answers, versions, outcomes and access gates stay intact.
+
+This supersedes earlier daily-greeting, next-day Week setup, automatic Sunday
+review and automatic newer-Day-One entry requirements. The reason is to let a
+returning person use the app without being asked to complete another session.
+The exact cause of the reported midweek prompt has not been reproduced; the
+automatic offers are removed as a product decision rather than a claimed date fix.
+
+The developer also reported that a Habit saved in a normal browser was absent
+after signing into the same account in a private window. This is consistent
+with current account-local Habit storage, not evidence of completed cloud sync.
+Writing SQL/transport remains a separate off-by-default slice; it does not sync
+Habits or setup progress. Hosted migration/access, conflict UI and backup
+verification remain pending.
+
+## 2026-11-05 - Account writing SQL and authenticated transport
+
+The developer approved the concrete repository implementation scope after
+review: private writing/revisions, owner policies, atomic retry receipts,
+authenticated transport, initial saved-writing inventory, preserved competing
+edits, deletion suppression, tests and owning records. Hosted SQL application,
+personal migration and deployment remain separate steps.
+
+The delivered protocol uses server versions rather than device clocks. It
+recovers exact receipts before a changed retry and preserves both saved copies
+when bases compete, pausing that entry until a later reviewed resolver. Explicit
+permanent deletion is terminal: it scrubs current server/conflict bodies and
+local conflict copies and suppresses stale pending edits. A stale active copy
+cannot restore a deleted entry. Minimal question/use metadata remains under the
+existing writing deletion contract. Drafts stay local; Trash has no expiry.
+
+The app connection defaults to off pending hosted migration/access checks.
+No retention expiry, conflict/status UI, protected admin reader, backup deletion
+certification or ownership claim over legacy writing is implied. See
+[the technical contract](ACCOUNT_WRITING_SYNC.md) and
+[dated verification](USER_JOURNEY_TESTING.md#account-writing-storage-and-transport-2026-11-05).
+
+## 2026-11-05 - Reduce history scope and begin local sync foundation
+
+After reviewing Protocol wording, the developer chose to keep completed Week
+reviews read only instead of adding corrections, then skipped past Habit
+completion corrections and deferred the shared day view. These supersede the
+earlier requirement that all three precede safe sync. Existing App histories,
+supported writing/Log corrections and prospective wording remain in scope.
+The reason given for Week reviews was that people can edit in the owning tools.
+No new editing capability is implied by that reason.
+
+The developer approved the first concrete sync slice: account writing saves
+and durable pending-change references in one local transaction; stable retry
+identities, exact acknowledgement guards, retained newer edits and rejected
+old-account callbacks. Drafts stay device-local. Clearing, Trash, restore and
+deletion retain distinct markers. The queue contains references/hashes rather
+than copied writing. No transport or UI sync claim is enabled; server ownership,
+SQL, authenticated receipts, conflicts, prior-record inventory, migration and
+operational backup/recovery follow separately reviewed slices. Technical queue
+receipts do not expire automatically in this slice; this is not a server or
+backup retention policy. See
+[local evidence](USER_JOURNEY_TESTING.md#durable-local-writing-sync-queue-2026-11-05).
+
+## 2026-11-05 — Protocol terms change next Circle day
+
+The developer approved dated Protocol term history, with active term changes
+taking effect at the next local Circle day, 06:00. Today and earlier days keep
+their agreement. The editor shows pending words; the daily front shows today's
+words. Preserve term IDs, checkmarks, seals and read-only past phases. History
+shows wording intervals and their own counts. Legacy missing originals stay
+explicitly unavailable; no invented reconstruction or personal-data migration.
+
+Reason: editing a current commitment must not change what an earlier day meant.
+This covers term wording/additions/removals, not historical phase names, goal
+wording, past-day correction controls, concurrent editing or safe cloud sync.
+See [evidence](USER_JOURNEY_TESTING.md#protocol-prospective-wording-2026-11-05).
+
+## 2026-11-05 - Contextual chapter review without version labels
+
+The developer questioned the separate Chapter History control because completed
+steps/Quests already open their records. They approved removing that header
+control, its scoped styling and visible version labels, with affected checks
+and continuity records. The shared reader remains behind finished steps and a
+completed Quest's View history. The existing catalogue counter stays in place.
+
+Reason: keep review close to the chapter/Quest and keep technical version labels
+out of the person's reading. Original run IDs, chapter versions, saved answers,
+question snapshots and exact-version lookup remain unchanged internally. This
+is UI cleanup, not deletion or migration. A broader all-chapter archive is
+deferred. This supersedes the standalone-entry/version-display portions of the
+preceding decision, preserving its setup status, reusable buttons and replay
+protections.
+See [verification](USER_JOURNEY_TESTING.md#contextual-chapter-review-cleanup-2026-11-05).
+
+## 2026-11-05 - Chapter History and Quest setup/review fixes
+
+The developer approved the concrete read-only Chapter History proposal, then
+reported Hide steps failing and setup tasks remaining available after their
+App was already set up. They separately approved the added fix scope: reusable
+View/Hide, shared setup status, finished-step answer reading, complete-Quest
+View history, affected setup/pinning guards, tests and owning records.
+
+Global History lists completed runs with saved answers, newest first. Preserve
+distinct versions/repeated runs, question/display snapshots and completion dates.
+Use only the original chapter version to fill missing prompts; unavailable or
+conflicting definitions stay honest. The reader does not run the chapter player
+or any completion action. Shared App-back returns to the same Quest Page.
+
+Unfinished Quests keep View steps / Hide steps. Finished steps read their saved
+answers. A complete Quest offers View history, rather than offering setup again.
+Setup performed elsewhere may show Already set up using explicit Habit/Log,
+matching first-use publication or corresponding declaration evidence; no chapter
+answers, completion time or run are invented. Without saved chapter answers,
+the reader states that gap. Other reflections/Week steps are not completed just
+because an App is usable. Setup readiness is shared with Habit/Log surfaces and
+stale Quest pin guards; existing access gates and named Workshop paths remain.
+
+Reason: progress should reflect what the person already set up, and reviewing
+finished work must not repeat side effects. This supersedes the previous Quest
+behavior/comment that finished steps reopen the player to supersede answers.
+Chapter correction/outcome semantics, publishing, real data migration and safe
+sync are outside this slice. The developer also confirmed Athena Reading History
+looks good on their phone, closing its earlier device-review reminder.
+See [verification and limits](USER_JOURNEY_TESTING.md#chapter-history-and-quest-setup-review-2026-11-05).
+
+## 2026-11-05 - Read-only Athena Reading History
+
+The developer confirmed Week History looks good on their phone, then approved
+the next concrete slice: Athena Reading History in the cover's existing App Box
+slot, scoped CSS, focused tests and owning/design/continuity records. The cover
+label opens saved editions newest first. Opening an edition reads its original
+prose/publication time; missing sections and unknown dates remain honest.
+Shared Back returns to History then the current reading. This is read-only:
+there are no historical reply controls, new AI requests or record writes.
+
+Reason: already-received readings should remain reachable without mixing an old
+edition with today's observations or changing its words. The existing four
+swipe Pages remain; History uses shared App-back rather than a fifth Page.
+Existing retention of up to 60 local editions remains unchanged. Full server
+archive paging, source-correction qualifications, live AI and safe sync remain
+separate work. See
+[checks and limits](USER_JOURNEY_TESTING.md#read-only-athena-reading-history-2026-11-05).
+
+## 2026-11-05 - Read-only Week History
+
+After confirming the past Log editor on their phone, including caret-only
+focus, the developer approved the concrete Week History proposal: new selector
+and Page, shell wiring, scoped CSS, focused tests and owning/continuity records.
+The Week label opens past saved calendar weeks newest first. Each reads saved
+weekly goals/status, linked steps/dates/status and review answers/recording time.
+Back returns to History then current Week. Missing records stay honest; no
+historical wording is reconstructed. Existing task ownership remains shared.
+
+Reason: weekly evidence should stay reachable beyond the limited live strip,
+without running a completed review again and replaying its next-week setup or
+Protocol changes. This slice introduces no correction/deletion controls,
+historical wording versions, personal import, cloud sync or deployment.
+The broader weekly-review correction requirement remains planned; the current
+first-review-wins writer/merge is unchanged. See
+[verification and limits](USER_JOURNEY_TESTING.md#read-only-week-history-2026-11-05).
+
+## 2026-11-05 - Text corrections in past Log entries
+
+The developer approved the bounded proposal to edit activity/moment words in
+an existing past Log entry. Tap the saved content to enter the editor; accept
+with Save changes or return with Cancel. Keep the original assigned day, time
+range, entry ID and first-recorded time. Retain exact before/after words and
+the actual correction time internally. Reject a stale editor rather than
+overwriting a newer entry. No-change/replayed saves write nothing.
+
+Clearing retains a dated empty value in the correction receipt while removing
+the block from active day evidence. Normalization/merge must prevent an older
+copy from restoring it, and derived summaries must not count cleared time.
+Reason: past evidence should be correctable without pretending the correction
+was recorded at the time of the activity or losing the earlier words.
+
+This scope includes domain/merge rules, shell types/wiring, the history editor,
+scoped styling, tests and owning records. It does not add time/date changes,
+missed past entries, a Versions Page, cloud sync or deployment. The developer
+confirmed the preceding browsing-only History on their device. Its earlier
+read-only boundary below is superseded only for this text-correction slice.
+See [verification and limits](USER_JOURNEY_TESTING.md#past-log-text-corrections-2026-11-05).
+
+## 2026-11-05 - Read-only Log history
+
+The developer approved a bounded Log history slice after the source audit:
+the Log label opens a newest-first list of saved past days; opening a day
+reads its original activities and moments. The shared App-back engine returns
+to History, then today. Read existing account-scoped records rather than
+creating another store or replaying completion handlers. A saved day title
+counts as recorded content; empty generated days, range-only days, today and
+future plans do not appear in this past-day list.
+
+Preserve assigned date keys, exact saved times, legacy moments and the 06:00
+Circle ordering. Do not fill historical gaps with today's wake/sleep suggestions.
+Past-day editing and its correction-time contract remain separately reviewed.
+
+Reason: saved Log evidence should remain reachable beyond the Week strip,
+without adding write or correction risks to the first history slice.
+Preserve existing downward growth and natural page scrolling. The developer
+also approved correcting the Page standard's stale internal-scroller sentence
+to match current CSS/tests; no shared geometry or scroll engine is changed.
+
+Implementation and checks are recorded in
+[the journey evidence](USER_JOURNEY_TESTING.md#read-only-log-history-2026-11-05).
+
 ## 2026-11-03 - Tighter spacing in past-phase records
 
 The developer approved reducing the gaps between past Protocol terms and

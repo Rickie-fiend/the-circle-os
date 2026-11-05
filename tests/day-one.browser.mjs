@@ -148,18 +148,20 @@ test("completed older user sees v3; Quest entry saves the same answers", { timeo
   }, "chapter:day-one");
 });
 
-test("an older completion still allows the new automatic Day One cover", { timeout: 60_000 }, async () => {
+test("an older completion enters the app without a new automatic Day One cover", { timeout: 60_000 }, async () => {
   const state = fixture();
   const run = { ...createChapterRun(old), status: "completed", completedAt: new Date().toISOString() };
   state.chapters.runs[run.runId] = run;
   await withPage(390, state, async page => {
-    await expect(page.getByRole("dialog", { name: "Day one", exact: true })).toBeVisible();
-    await expect(page.locator(".os-day-one-session").getByRole("heading", { name: "Start with what matters." })).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator(".os-route-stage")).toHaveAttribute("aria-busy", "false");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
     assert.deepEqual((await saved(page)).chapters.runs[run.runId], run);
   });
 });
 
-test("Week Setup works after short Day One without legacy identity or commitments", { timeout: 120_000 }, async () => {
+test("chosen Week Setup works after short Day One without legacy identity or commitments", { timeout: 120_000 }, async () => {
   const state = fixture();
   const yesterday = new Date(Date.now() - 86400000).toISOString();
   state.chapters.runs["day-one@3"] = { ...createChapterRun(latest), status: "completed",
@@ -187,7 +189,7 @@ test("Week Setup works after short Day One without legacy identity or commitment
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".os-route-stage")).toHaveAttribute("aria-busy", "false");
     assert.equal((await saved(page)).chapters.runs[chapterRunId(week)].status, "completed");
-  });
+  }, "week-setup");
 });
 
 test("older unfinished Day One resumes its own question after reload", { timeout: 90_000 }, async () => {

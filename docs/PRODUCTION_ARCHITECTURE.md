@@ -1,10 +1,242 @@
 # Circle OS architecture
 
-Updated: 2026-11-03. Read [product](PRODUCT.md), [roadmap](ROADMAP.md), and
+Updated: 2026-11-05. Read [product](PRODUCT.md), [roadmap](ROADMAP.md), and
 [decisions](DECISION_LOG.md) alongside this document. Target designs below need
 reviewed implementation and verification under the current web beta sequence.
 
 ## Current prototype
+
+### Direct entry after Day One - 2026-11-06
+
+`day-door.js` now selects only unfinished Day One for automatic entry. The full
+door identifier list remains for explicit Quest/Workshop entry. The shell
+recognizes any completed Day One version and removes automatic Week/Log setup,
+weekly review and daily-greeting offers. Week review resolves its saved week
+only from a manual selection or explicit Workshop pin. Quest pins for setup and
+review use those same seeded players and domain save handlers, so chosen Week
+setup still creates its goal/step/phase instead of only saving answers.
+Chapter content, access
+gates, saved answers and domain outcomes are unchanged. The exact reported
+midweek prompt has not been reproduced; this is the approved entry-policy change.
+
+Account Habit/setup state is still browser-local. A private window starts with
+separate local storage; signing in does not yet restore these domains. The
+writing migration below covers writing only and remains off by default.
+
+### Account writing storage and authenticated transport - 2026-11-05
+
+The approved repository slice adds a migration for private writing heads with
+saved versions/tombstones, body-free receipts and saved conflict candidates.
+Owner SELECT policies and denied direct mutations accompany narrowly granted
+public RPCs. Functions derive a confirmed account from authenticated claims,
+pin search paths, serialize same-account writes, check base server versions and
+commit exact receipts with the head. Anonymous/service-role transport calls
+are denied. Saved versions/source identity cannot be rewritten. Permanent
+deletion scrubs head/conflict text and blocks stale resurrection.
+
+`writing-cloud-model.js`, `writing-cloud-sync.js` and `writing-transport.ts`
+extend the existing account store/provider. `cloud-v1` stores body-free
+version/lifecycle baselines, remote conflict copies and deletion suppression.
+Receipt recovery precedes remote inventory and prior saved-writing inventory.
+Uploads contain saved snapshots and ordered operation references, never drafts.
+Conflicts preserve both saved copies and pause that entry; deletion remains
+terminal. Local deletion scrubs its stored remote conflict in the same save
+transaction. Exact upload acknowledgement preserves newer local work.
+
+Transport verifies the captured token's confirmed user against the local scope,
+then sends that same token to Supabase RPC. Scope aborts and checks protect every
+asynchronous boundary. `SupabaseConnection` supplies the existing client;
+`WritingCloudRunner` is mounted inside the account writing provider. The runner
+defaults to off unless `NEXT_PUBLIC_CIRCLE_WRITING_SYNC=enabled` is explicitly
+configured in a separately reviewed build. No hosted SQL/configuration changed.
+
+SQL access tests run in PGlite PostgreSQL; browser tests use real IndexedDB and
+HTTP with synthetic Auth. This is locally verified repository implementation,
+not hosted JWT validation, physical-device recovery, multi-connection contention
+or complete backup/deletion proof. No conflict resolver/status UI, privileged
+admin reader, other-domain sync or personal import was added. See
+[the contract, limits and activation steps](ACCOUNT_WRITING_SYNC.md) and
+[verification](USER_JOURNEY_TESTING.md#account-writing-storage-and-transport-2026-11-05).
+The earlier local-only snapshot below remains historical for its first slice.
+
+### Durable local writing sync queue - 2026-11-05
+
+The approved first sync slice adds `writing-sync-model.js`/types and the
+`sync-v1` key in the existing account-scoped writing IndexedDB store. The
+writing ledger and queue are committed by the same readwrite transaction.
+Legacy commits keep their prior path. A corrupt or wrong-owner queue fails
+closed; it is never silently reset to permit a save.
+
+Only new accepted saved/lifecycle changes enqueue. Draft writes/discards,
+conflicts, no-op saves, redundant lifecycle actions and local receipt retries
+do not enqueue. Each record retains operation ID, command fingerprint, entry,
+generation, saved-version reference, lifecycle kind, local sequence, predecessor
+and recording time. No writing/draft body is copied into the queue. Permanent
+deletion removes saved text in the existing ledger while leaving minimal
+pending references and an explicit deletion marker. A later transport must
+honor the tombstone rather than attempting to recover/upload removed content.
+
+Acknowledgements name exact owner, operation/hash, entry/generation, server
+receipt and server version. They are validated and stored atomically with
+retirement of only those named operations. Retries must match the first receipt;
+unknown/mismatched receipts, reused receipt IDs and inconsistent per-entry server
+version ordering fail. Newer queued changes and the writing ledger are untouched
+by an older acknowledgement. Scope guards reject in-flight or late callbacks
+after account switching/logout. Same-account tabs share IndexedDB serialization.
+
+These local acknowledgement APIs make no requests and do not authenticate a
+remote receipt. Browser checks inject synthetic receipts only. No Supabase
+schema, transport, session-token integration, conflict UI, automatic initial
+inventory, personal migration or operational backup is added. Prior locally
+saved entries are not retroactively queued by replaying their receipts; review
+initial inventory before enabling uploads. Drafts remain device-local. Technical
+queue receipts have no automatic expiry; server/deletion/backup retention needs
+its own reviewed design. See [checks and limits](USER_JOURNEY_TESTING.md#durable-local-writing-sync-queue-2026-11-05).
+
+The developer removed Week-review corrections from current scope (completed
+reviews stay read only), deferred past Habit completion corrections and deferred
+the shared day view. Those earlier requirements no longer block this sync slice;
+existing App histories and prospective wording remain.
+
+### Chapter History and Quest setup status - 2026-11-05
+
+`chapter-history.js` is a pure read model over `chapters.runs` and authorized
+local chapter publications (including bundled supply). The selector retains
+completed answer-bearing runs with distinct run IDs and chapter versions.
+Question snapshots take precedence; fallback resolves only the same chapter ID
+and version. Conflicting definitions supply no guessed wording. Display snapshots
+remain preferred over stored values; blank, false and zero remain meaningful.
+No player, completion handler, normalization or new record store is involved.
+
+Reflect hosts `ChapterHistoryPage` in the existing Quest slot using shared
+App-back. Only finished steps and completed Quests' View history open the reader;
+the standalone header control is removed. Visible version labels are removed;
+original run/version references remain internal for exact definition resolution.
+A broader all-chapter archive is deferred. Completed steps resolve their actual
+completed run where
+available. Existing setup without chapter answers is a UI status/message,
+without a fabricated run, version, completion date or answers. History locks
+outer swiping, grows downward and returns to the same catalogue position.
+
+`questStepStatus` in `quests.js` reads actual completed runs plus explicit setup
+evidence. A named active Habit or both saved routine-wake/routine-sleep values
+can satisfy Habit/Log setup; a nonempty matching declaration satisfies only its
+own declaration step. Replacement first-use completion must match the original
+publication version and target App, with audience checks. Draft/empty Habits,
+partial Log answers and an unlocked App are insufficient. Other reflection,
+Day One and Week steps still need their own completed runs. No data is backfilled.
+
+The same status check guards Habit/Log first-use and ordinary setup deliveries,
+the compiled Habit/Log surface and stale Quest pins in Today. It preserves
+existing access gates, legitimate unfinished chapters and non-Quest named doors.
+View/Hide uses CreativeButton's existing keepMountedOnSuccess setting rather
+than changing the shared engine. Complete Quests offer View history; finished
+steps no longer reopen a player. Historical corrections and outcome replay
+remain separate reviewed work. See
+[checks and limits](USER_JOURNEY_TESTING.md#chapter-history-and-quest-setup-review-2026-11-05).
+
+### Read-only Athena Reading History - 2026-11-05
+
+Reflect's Athena cover opens `AthenaHistoryPage` through the shared App-back
+controller in its existing cover slot. Its source is `buildAthenaReading(...).
+editions` from the same account-bound writing-consumer memory used by the live
+reading (or existing Circle memory in legacy mode). The list/detail creates no
+new store or normalizer. The current four swipe Pages remain; History locks
+outer travel to the cover and returns through the list to the current cover.
+Account remount closes selected history.
+
+The archive renders only each edition's own cover, dated publication instant
+and days/alive/shape sections. It never calls the live-profile/derived fallback,
+reply editor, chapter handlers or a provider. Empty sections and unknown dates
+are stated honestly. Dates display locally while retaining their exact time
+attribute. The existing content-derived IDs, immutability, merge and 60-edition
+bound are unchanged. This exposes locally retained prepared content, not a
+new requested AI service or full server archive. Older-edition paging,
+source-correction qualifications and safe sync remain separately reviewed.
+See [verification](USER_JOURNEY_TESTING.md#read-only-athena-reading-history-2026-11-05).
+
+### Read-only Week History - 2026-11-05
+
+`week-history.js` selects earlier Monday-based calendar weeks from existing
+`state.weeks` and weekly `state.goals.items`. Blank goals without steps, invalid
+week keys, the current calendar week and future weeks do not create entries.
+Goals-only and review-only weeks remain readable. This uses assigned dates,
+not a new attribution calculation from timestamps.
+
+Each view reads goal state and goal-step links directly, resolving words/status
+from `tasks.items`, including archived tasks. Missing tasks remain unavailable;
+their recorded step/date link stays visible. These are current saved goal/task
+words, not historical wording snapshots. Review values come directly from the
+saved weekly record; its actual recording instant displays as local date/time.
+No new store, migration, normalization, outbox operation or correction writer
+is introduced. The existing first-review-wins writer/merge remains unchanged.
+
+`WeekHistoryPage` uses PageLayout and the shell's separate shared App-back
+controller. History occupies Week's existing SwipeSession slot, disables outer
+travel while open, grows downward and returns through History to current Week.
+Account remounts close it. Reading never invokes chapter completion handlers,
+so it cannot create goals/tasks or alter Protocol runs. Original chapter answer
+review, historical wording versions, weekly corrections, shared day review and
+safe account sync remain separate work. See
+[verification](USER_JOURNEY_TESTING.md#read-only-week-history-2026-11-05).
+
+### Log history and text corrections - 2026-11-05
+
+The Log label opens past recorded days using the shared App-back engine and
+existing daily SwipeSession slot. History reads `state.days`; it owns no second
+record store. It preserves assigned date keys and saved time ranges, including
+legacy activities/notes, without applying today's wake/sleep suggestions.
+History list/day/editor content grows downward through the existing frame.
+
+Text-only corrections target one existing past `timeBlocks` ID. The editor
+captures a signature of the entire saved block, retains the draft locally in
+memory and requires Save changes. Cancel writes nothing. Reload or an account
+epoch change closes the editor; this is not a new durable draft engine.
+The domain action rechecks the signature inside the scoped state update,
+rejects missing/current/future/stale targets and non-increasing correction
+timestamps, and preserves date, range, ID, createdAt and unknown metadata.
+Unknown legacy first-recorded times stay unknown. No-change/replayed saves do
+not create another evidence revision.
+
+Each accepted change adds `days[dateKey].logCorrections[id]`: immutable receipt
+ID, dateKey, blockId, correctedAt and exact before/after block snapshots.
+The updated block retains its ID and uses actual correction time as updatedAt.
+Receipts accumulate by ID during the existing merge, independently of the
+current block winner. This is internal correction evidence, not a new Versions
+Page or authorization for a paid model call.
+
+A clearing receipt retains the dated empty `after` block, while active
+`timeBlocks` excludes that block. Normalization and merge suppress a matching
+older block using the empty receipt's revision; a genuinely newer edit is not
+suppressed. Thus existing Week/Reflect readers do not count cleared time, and
+an older copy cannot restore cleared words. Corrections use the existing
+account-separated local store and day-log queue. Safe Supabase operations,
+cross-device conflict resolution, real acknowledgements and recovery remain
+planned; local merge checks do not certify them.
+
+Time/date correction, adding missed past entries, day-title corrections and a
+general Log delete/restore interface remain separately reviewed scopes. Checks
+and limitations are in
+[the journey evidence](USER_JOURNEY_TESTING.md#past-log-text-corrections-2026-11-05).
+
+### Protocol prospective wording - 2026-11-05
+
+`protocol.termVersions` stores independent immutable full-term snapshots keyed
+by unique IDs. Each records run, effective Circle day, actual recording time and
+local order. Beginning a phase captures its initial terms. Active term edits
+capture the next day's terms; daily readers and tick/seal actions resolve the
+agreement applicable to their assigned day. The editor reads the editable run.
+IDs, completions, seals and retired correction receipts remain intact.
+Normalization preserves snapshots and the existing merge unions their records
+independently of the editable run. This is local/legacy-merge behavior, not the
+planned Supabase synchronization protocol or concurrent-editor resolution.
+
+Legacy runs acquire an observed baseline only on their first term edit; it is
+not backdated. Earlier seals and completion-word snapshots supply known words;
+otherwise current wording is explicitly marked as lacking its original.
+Past phases computes term intervals/counts and day outcomes from applicable
+agreements, retaining the bounded read-only presentation. See
+[verification](USER_JOURNEY_TESTING.md#protocol-prospective-wording-2026-11-05).
 
 ### Protocol history is read only - 2026-11-03
 
@@ -18,8 +250,8 @@ archiving retain their existing behavior.
 The account-separated state still accepts and merges `protocol.corrections`
 for compatibility with already-saved immutable receipts. There is no current
 writer for that map. Removing the feature does not discard earlier evidence,
-rewrite completion/seal records or migrate personal data. Full prospective
-historical term versions remain separate work.
+rewrite completion/seal records or migrate personal data. Prospective term
+versions are implemented by the later 2026-11-05 slice above.
 
 Protocol term inputs hide native scrollbar chrome in their scoped CSS while
 retaining content sizing and multiline growth. The reported grey box was not

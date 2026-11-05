@@ -30,7 +30,6 @@ export function unaskedDeepThoughts(
 ): Readonly<DeepThoughtQuestion>[];
 export function countDeepThoughtWords(value?: string): number;
 export function isDeepThoughtRewardEligible(options?: { text?: string; activeMs?: number }): boolean;
-export function isSentenceWorthBreakingFor(text?: string): boolean;
 export function createLocalDeepThoughtPrompt(state: unknown, dateKey: string, offset?: number, writing?: DeepThoughtWritingContext): DeepThoughtPrompt;
 export function selectDeepThoughtPrompt(state: unknown, dateKey: string, visit?: number): DeepThoughtPrompt;
 export function selectDeepThoughtPrompt(state: unknown, dateKey: string, visit: number, writing: DeepThoughtWritingContext | undefined): DeepThoughtPrompt | null;

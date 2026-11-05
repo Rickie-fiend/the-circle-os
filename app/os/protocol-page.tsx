@@ -22,15 +22,8 @@ export type ProtocolView = {
   sealed: boolean;
   nonNegotiable: ProtocolItemView[];
   negotiable: ProtocolItemView[];
-} | null;
-
-export type CompletedProtocolView = {
-  run: { id: string; name: string; days: number; status: string };
-  day: number;
-  dateKey: string;
-  sealed: boolean;
-  nonNegotiable: ProtocolItemView[];
-  negotiable: ProtocolItemView[];
+  editorNonNegotiable?: ProtocolItemView[];
+  editorNegotiable?: ProtocolItemView[];
 } | null;
 
 export type ProtocolSealView = {
@@ -56,6 +49,10 @@ export type ProtocolPhaseRecord = {
     text: string;
     kind: "non-negotiable" | "negotiable";
     keptDays: number;
+    fromDateKey?: string;
+    toDateKey?: string;
+    wordingSource?: string;
+    applicableDays?: number;
   }>;
 };
 
@@ -280,7 +277,9 @@ function ProtocolHome({
                     const contents = (
                       <>
                         <span>{term.text}</span>
-                        <small>{term.keptDays}/{record.days}</small>
+                        <small>{term.keptDays}/{term.applicableDays ?? record.days}</small>
+                        <small>{term.wordingSource === "current" ? "Earlier wording unavailable" : term.fromDateKey
+                          ? `${term.fromDateKey} — ${term.toDateKey}` : null}</small>
                       </>
                     );
                     return (
@@ -620,12 +619,13 @@ export function ProtocolPage({
               hard is not a protocol. */}
           <p className="os-protocol-invite os-protocol-length-note">
             {run.days} days, agreed on day one.
+            {" "}Term changes start next Circle day at 06:00.
           </p>
         </div>
 
         <div className="os-page-sub os-app-page-stacks os-protocol-terms">
           <ProtocolDraftGroup
-            items={nonNegotiable}
+            items={protocol.editorNonNegotiable ?? nonNegotiable}
             editingItemId={editingItemId}
             kind="non-negotiable"
             label="Non-negotiable"
@@ -634,7 +634,7 @@ export function ProtocolPage({
             onFinishItemEdit={onFinishItemEdit}
           />
           <ProtocolDraftGroup
-            items={negotiable}
+            items={protocol.editorNegotiable ?? negotiable}
             editingItemId={editingItemId}
             kind="negotiable"
             label="Negotiable"

@@ -1599,6 +1599,6 @@ test("clearing a protocol term survives the server merge", () => {
 
 test("an older saved state receives a protocol slice", () => {
   const migrated = normalizeState({ version: 4, profile: {}, days: {} });
-  assert.deepEqual(migrated.protocol, { runs: {}, completions: {}, seals: {}, corrections: {} });
+  assert.deepEqual(migrated.protocol, { runs: {}, completions: {}, seals: {}, corrections: {}, termVersions: {} });
   assert.equal(activeProtocolRun(migrated), null);
 });

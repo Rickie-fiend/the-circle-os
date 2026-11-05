@@ -243,6 +243,41 @@ Used for charts, weekly views, and other things worth reading again.
 - Facts and jokes keep their reveal shape. Jokes are exactly setup and
   punchline; a Line with a third clause is removed rather than padded out.
 
+## Chapter History and Quest completion
+
+- Finished steps and a completed Quest's View history open the shared reader
+  through App-back. There is no separate Chapter History control beside the
+  catalogue counter. Version labels stay out of the reader; original version
+  references remain internal so saved questions/answers stay correct. Back
+  returns through History to the same Quest. Content grows downward without
+  an inner scroller. A broader all-chapter archive is deferred.
+- Read saved question/display snapshots first. Missing question snapshots may
+  use only the exact original chapter version. Missing/conflicting definitions
+  never borrow newer wording. Keep the answer visible with an unavailable
+  question/title marker when necessary; unknown dates remain unknown.
+- An unfinished Quest keeps View steps / Hide steps using the shared reusable
+  button setting. Finished steps open read-only answers, never the player.
+  A complete Quest offers View history, listing each completed/setup step.
+- A named active Habit, both saved Log wake/sleep answers, a matching completed
+  first-use publication, or the corresponding saved declaration may satisfy
+  its own setup step. Show Already set up when no run of that chapter was
+  completed. This is derived UI status, not permission to manufacture answers,
+  completion times or completed runs. App access alone satisfies nothing;
+  ordinary reflections and Week setup/reviews still require their own runs.
+- The Habit/Log setup surfaces use this same evidence and suppress duplicate
+  setup deliveries. Stale Quest pins to completed/satisfied steps are cleared
+  without replay. A genuine unfinished step still opens its chapter. Workshop
+  reruns and named weekly review entry remain separate existing paths.
+- Entry after any completed Day One goes directly into the app (2026-11-06).
+  Week/Log setup, weekly review and daily greetings never open automatically.
+  Keep explicit Quest, Week and Workshop entry and the same saved players/runs.
+  An unfinished Day One may still open on entry; a newer version does not
+  interrupt someone who completed an older version. No saved completion or
+  access gate is rewritten by this entry rule.
+- Browsing never applies outcomes or requests AI. The chapter reader has no
+  correction/submit controls. A step with setup evidence but no saved answers
+  says so without inventing a chapter record.
+
 ## Editions
 
 - Athena's reading is published as **editions**: dated, immutable, and
@@ -264,6 +299,16 @@ Used for charts, weekly views, and other things worth reading again.
 - Editions merge as a union. A phone syncing from a copy that predates an
   edition never loses it.
 - The phone carries a bounded archive; the vault keeps the full history.
+- The Athena's Reading cover label opens read-only History using shared
+  App-back inside the cover slot. It lists locally retained editions newest
+  first with their publication dates, or Date not recorded. Opening an edition
+  reads its cover and all three parts using only that edition's prose. Missing
+  parts say No saved words for this part. Back returns to History then the
+  current cover; History does not add a fifth swipe Page. Outer swipes stay
+  locked to the cover while History is open. Long history/detail grows downward
+  without an inner scroll panel. No reply editor or publication handler runs in
+  the archive. Current reading/reply behavior and the 60-edition retention bound
+  remain unchanged; older server paging is separate work.
 
 ## Note
 
@@ -315,6 +360,11 @@ the earlier explicit-Save/draft controls for Note only. See the
   rewrite one.
 - An edited term keeps its id, so the days already marked against it stay
   attached. A term taken out is archived, never deleted.
+- Term edits, additions and removals apply from the next local Circle day at
+  06:00. The editor shows the pending words; the daily front keeps today's
+  agreement. Editing never reticks a day or rewrites a seal. Past phases groups
+  wording by applicable date interval, with counts over that interval. Missing
+  original legacy wording is labelled Earlier wording unavailable.
 - Length is the one thing a running protocol cannot change. The day counter and
   the ending are arithmetic on it, and a run that can be shortened when it gets
   hard is not a protocol.
@@ -613,10 +663,20 @@ saving an answer requests no AI reply. Exact new controls remain under review.
 
 ## Fixed evidence Apps
 
+- The Week label opens read-only History through shared App-back, inside the
+  Week slot. Past calendar weeks with saved weekly goals or a review appear
+  newest first. Opening one reads saved goal status, linked task words/status,
+  assigned step dates and review answers/recording time. Missing links stay
+  visibly unavailable; no old wording is invented. Back returns to History,
+  then the current Week. History locks outer swiping to its own slot and grows
+  downward without an inner scroller. Browsing never writes or replays a review,
+  creates next-week goals/tasks, or ends/starts a Protocol phase. Weekly review
+  corrections/versioning remain separate work.
 - Log uses the shared Page and frame rather than a route-level heading above a
   free-standing timeline. Its evidence surface remains dark.
-- A long timeline uses `minmax(0, 1fr)` for Body and scrolls within that Body.
-  The route and swipe page remain still.
+- A long Log timeline grows the App Box downward, using the natural page
+  scroll. It does not create an inner Body scroller. This corrects the older
+  fixed-scroller description to match existing CSS and verification.
 - The App Box owns background, border, radius, clipping and shadow. Until its
   second App exists, Log shows no back control.
 - Log owns one persisted outer `SwipeSession` and never rotates itself. Its
@@ -624,6 +684,24 @@ saving an answer requests no AI reply. Exact new controls remain under review.
   `SHOW_DREAMLINE`; current source conditionally attaches its idle/sheet Pages
   to Routine, not to Log. Older multi-Page Dreamline layouts are historical.
   Preserve hidden records and keep the flag off; future placement needs review.
+- The Log label opens History through the shared App-back engine.
+  History lists every past day with a saved title, activity or moment, newest
+  first. Empty automatically created days and future plans are not Log history.
+  Opening a day reads its assigned date, saved title and original time blocks,
+  including legacy moments; today's routine suggestions never fill old days.
+  Back returns to History, then today's Log. History/day reading stays inside
+  the daily slot, without swiping into Week; Week remains available from today.
+  Browsing does not write records, queue evidence or trigger chapter outcomes.
+  Both the list and day grow downward.
+- Tap a saved past activity/moment to open its text editor through shared
+  App-back. Save changes accepts the activity and moments; Cancel returns to
+  the day without saving. The original date, time range, ID and first-recorded
+  time stay fixed. Stale entries cannot be saved over a newer change.
+  A changed save retains immutable before/after words with actual correction
+  time. An unchanged save writes nothing. Clearing keeps a dated empty value
+  in that receipt and removes the block from active day evidence; older copies
+  cannot restore it on merge. Time/date changes and new past entries remain
+  separate work. Reload/account changes close unsaved Log editors.
 - A Dreamline is separate from Vision declarations. It is dated, costed and
   finite; a concluded record remains immutable and readable while a new
   Dreamline begins with a new id.
@@ -635,7 +713,7 @@ saving an answer requests no AI reply. Exact new controls remain under review.
 - Home reads completed and early-ended runs from existing local records. It
   stores no aggregate and presents only within-phase counts, dates and terms.
 - Past terms cannot be ticked while browsing. There is no past-day correction
-  control. Full prospective term history remains separate work. Protocol term
+  control. Dated term snapshots preserve prospective changes. Protocol term
   inputs hide native scrollbar chrome while wrapped text grows downward.
 - Opening Past phases allows the frame to grow to Note's 480px/60dvh ceiling,
   never below the shared minimum. Beyond that only Body scrolls; Header and

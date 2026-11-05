@@ -164,8 +164,12 @@ Tuesday. Adding Character and Six months to that surface requires a separate
 review of their Pages; the data authority decision does not invent that UI.
 
 Her reading is published as dated editions that accumulate in state. Reflect
-shows only the current four-Page reading; its archive is not another Page in
-the session. A morning that says the same thing publishes nothing.
+keeps the current four-Page reading. The cover's Athena's Reading label opens
+read-only History through shared App-back in the cover slot, rather than
+adding another swipe Page. A dated list opens each edition's saved prose;
+missing parts stay empty rather than borrowing today's observations. Back
+returns to History then the current cover. History grows downward within the
+existing frame. A morning that says the same thing publishes nothing.
 
 The latest authored Reading may end with a real question and accept one reply
 as evidence. Week Review is local arithmetic: its seven Pages hold a cover, a

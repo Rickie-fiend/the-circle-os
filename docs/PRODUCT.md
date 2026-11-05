@@ -4,6 +4,20 @@ Updated: 2026-11-03. This document records the developer's product direction.
 Use [the decision log](DECISION_LOG.md) to distinguish confirmed decisions from
 preferences and unresolved choices.
 
+2026-11-06 entry decision: after any completed Day One, enter directly into the
+app. Week setup, Log setup, Week review and the daily greeting do not open
+automatically. Existing manual chapter/review controls and saved progress remain.
+An unfinished Day One can still appear on entry. This supersedes older automatic
+greeting, next-day Week setup and Sunday-review entry requirements.
+
+2026-11-05 implementation update: account-writing SQL/access policies,
+authenticated transport, initial saved-writing inventory and conflict/deletion
+safety are implemented and locally verified. Activation defaults to off; no
+hosted migration or environment change has occurred. Existing local-save UI
+makes no cloud-success claim. Hosted/device recovery, conflict/status UI,
+other-domain sync and backup/deletion gates remain open. See
+[the account-writing contract](ACCOUNT_WRITING_SYNC.md).
+
 ## Purpose and destination
 
 Approved spacing refinement (2026-11-03): Pages use a 48px shared label gap and
@@ -114,7 +128,8 @@ dated source records, not automatic goals, Protocol terms, identity, Vision,
 Mission or Character declarations. Completion makes no Athena request.
 Existing completions, commitments and access remain; new setup is optional for
 completed users, while unfinished older runs retain their versions and behavior.
-Protocol/Week gates and next-Circle-day Week Setup timing stay unchanged.
+Protocol/Week access gates stay unchanged. Week setup is chosen manually under
+the 2026-11-06 entry decision; it no longer interrupts next-day entry.
 
 Implement this addition after personal-record/history and safe-sync work and
 before beta readiness. V3 remains unchanged until a new immutable version is
@@ -140,8 +155,11 @@ it. These are target requirements, not claims of implemented history or sync.
   a historical record kind; new free writing belongs in Note.
   Recovery buffers stay outside saved evidence until committed. This Note-only
   refinement was explicitly approved on 2026-11-03.
-- Each App has history, with a shared day view reading the same records.
-  Past writing and completed weekly reviews can be corrected. Note removes
+- Each App has history. The shared day view is deferred under the developer's
+  2026-11-05 scope update. Past writing can be corrected; completed Week reviews
+  stay read only and Week-review corrections are removed from current scope.
+  Past Habit completion corrections are also deferred. These three items no
+  longer block the next safe-sync slice. Note removes
   user-facing version review while retaining internal saved revisions; other
   domains keep their existing or planned version review.
 - Habit and active Protocol changes apply going forward. Earlier records keep
@@ -169,7 +187,7 @@ it. These are target requirements, not claims of implemented history or sync.
   Athena, not on every save or through background profiling. Saved lifestyle
   evidence may inform Athena, with draft/Trash and login/payment exclusions.
 
-Essential history/corrections across existing tools, safe sync and basic Athena
+Essential history/corrections across existing tools within the scope above, safe sync and basic Athena
 memory controls are beta requirements. Advanced search/filtering follows later.
 Exact UI/visual design, schemas, migration and implementation slices need review.
 This supersedes the single ongoing Note assumption in the earlier storage plan.
@@ -369,8 +387,9 @@ These are source counts, not verification of chapter behavior or external source
 
 The prototype uses browser storage. Legacy mode connects to the file-based
 profile server; Supabase accounts use separate local stores and reject that
-transport. Supabase lifestyle sync/access policies, membership, live Athena,
-and native mobile apps remain planned work.
+transport. Account-writing SQL/access/transport exists behind an off-by-default
+activation flag with local evidence; hosted sync and other lifestyle domains,
+membership, live Athena and native mobile apps remain planned/unverified work.
 
 ## Boundaries
 

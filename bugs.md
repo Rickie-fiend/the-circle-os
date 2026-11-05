@@ -1,5 +1,47 @@
 # Onboarding bugs
 
+## Automatic entry prompts after Day One - 2026-11-06
+
+Developer reported Week review/setup appearing at sign-in before the week was
+finished and approved direct entry after setup. Locally implemented: only
+unfinished Day One may open automatically; any completed Day One version
+enters the app. Later setup/review/greeting sessions remain available by choice.
+Chosen Week setup uses its existing outcome handler and retains records through
+reload. See [checks and limits](docs/USER_JOURNEY_TESTING.md#direct-entry-after-day-one-2026-11-06).
+The exact original midweek trigger is not reproduced or marked fixed as a date
+bug. Phone/Opera acceptance remains pending. The reported missing Habit in a
+private window is consistent with browser-local account storage: Habit/setup
+cloud sync is not implemented by the pending writing migration.
+
+## Protocol historical terms follow-up - 2026-11-05
+
+**Locally implemented and verified; phone review pending.** Active term changes
+start next Circle day at 06:00. Earlier agreements, ticks and seals remain;
+Past phases separates wording intervals/counts. Missing legacy originals remain
+explicitly unavailable. 96 model and eight mobile component cases, targeted lint
+and Next build pass. See [evidence and limits](docs/USER_JOURNEY_TESTING.md#protocol-prospective-wording-2026-11-05).
+This resolves the prospective term-wording gap for this slice, without closing
+unrelated Protocol bugs, past-correction or real-sync verification gaps.
+
+## Quest toggle and completed setup review - 2026-11-05
+
+Developer reports: Hide steps stopped responding, already-configured setup
+remained available from Quests, and completed Quests still offered setup.
+**Locally fixed and verified; phone review pending.** View/Hide now uses the
+existing reusable button setting. Quest status shares explicit Habit/Log setup,
+matching declaration and replacement first-use evidence without fabricating a
+chapter completion. Finished steps open saved-answer readers; complete Quests
+offer View history. Habit/Log surfaces suppress duplicate setup and stale Quest
+pins cannot reopen it. Other reflections/Week setup still require their runs;
+ordinary App access is not completion evidence.
+
+51 focused model cases, six affected mobile cases and four overlapping final
+header/frame cases passed, including repeated toggles, setup with no chapter
+answers, stale pins, genuine unfinished launch and unchanged domain records.
+Details, attempts and limits are in
+[the journey record](docs/USER_JOURNEY_TESTING.md#chapter-history-and-quest-setup-review-2026-11-05).
+No wider bug closure, physical-phone/hosted or cloud-sync certification follows.
+
 ## Past-phase presentation follow-up - 2026-11-03
 
 The approved cleanup bounds expanded Past phases at Note's 480px/60dvh ceiling,

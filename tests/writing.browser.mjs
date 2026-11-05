@@ -17,12 +17,13 @@ import {ChapterEditor} from "/app/os/admin/chapter-editor.tsx";
 import {ChapterPlayer} from "/app/os/chapters/chapter-player.tsx";
 import * as scopes from "/app/os/account-scope.js";
 import * as circle from "/app/os/circle-os-model.js";
+import * as logHistory from "/app/os/log-history.js";
 import * as circleStore from "/app/os/circle-os-store.ts";
 import * as writingStore from "/app/os/writing-store.ts";
 import * as writingModel from "/app/os/writing-model.js";
 import {useWriting} from "/app/os/writing-provider.tsx";
 import {createChapterRun,chapterRunId} from "/app/os/chapters/chapter-model.js";
-import {dayOpenRunId} from "/app/os/day-door.js";
+import {dayOpenRunId,writePinnedChapter,readPinnedDoor} from "/app/os/day-door.js";
 import {publishedChapters} from "/app/os/chapters/registry.ts";
 import "/app/globals.css";
 import "/app/os/os-app.css";
@@ -43,7 +44,7 @@ function Root(){const [path,setPath]=useState("/os");window.goto=setPath;const r
  return React.createElement(AppRouterContext.Provider,{value:router},React.createElement(PathnameContext.Provider,{value:path},
  React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(OSFrame,null,path==="/os/type-chapter"?React.createElement(TypeChapterFixture):path==="/os/mirror"?React.createElement(Mirror):path==="/os/admin"?React.createElement(ChapterEditor):React.createElement(TodayExperience)))));}
 const root=createRoot(document.getElementById("root"));
-window.api={...scopes,...circle,...circleStore,...writingStore,...writingModel,fixture,
+window.api={...scopes,...circle,...logHistory,...circleStore,...writingStore,...writingModel,publishedChapters,fixture,writePinnedChapter,readPinnedDoor,
  async init(account=true){if(account)scopes.activateAccountScope("synthetic-writer-a");await circleStore.saveCircleState(scopes.getAccountScope(),fixture());sessionStorage.setItem("writing-fixture-ready","yes");root.render(React.createElement(Root));},
  mount(){root.render(React.createElement(Root));},
  load(){return writingStore.loadWritingState(scopes.getAccountScope());}
@@ -73,6 +74,399 @@ async function isolated(width,work,{account=true,reducedMotion="reduce",height=8
   try{const page=await context.newPage();page.setDefaultTimeout(30_000);await open(page);await page.evaluate(account=>window.api.init(account),account);await ready(page);await work(page,context);assert.deepEqual(errors,[],"no uncaught errors");assert.deepEqual(external,[],"no external backend/model traffic");if(account)assert.deepEqual(await page.evaluate(()=>window.backendCalls),[],"account writing never calls the legacy transport");}
   finally{await context.close();}
 }
+
+async function entryFixture(page, { version = 3, fresh = false, week = false } = {}) {
+  await page.evaluate(options => window.circle.updateState(s => {
+    const keep = Object.entries(s.chapters.runs).filter(([id]) =>
+      (!options.fresh && id === `day-one@${options.version}`) ||
+      (options.week && (id.startsWith("week-setup@") || id.startsWith("log-setup@"))));
+    return { ...s, chapters: { ...s.chapters, runs: Object.fromEntries(keep) } };
+  }), { version, fresh, week });
+  await expect.poll(() => page.evaluate(() => Object.keys(window.circle.state.chapters.runs).length)).toBe(fresh ? 0 : week ? 5 : 1);
+}
+
+for (const width of [360, 390]) {
+  test(`Entry after Day One stays quiet midweek, on Sunday and after reload at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
+    await entryFixture(page);
+    const before = await page.evaluate(() => JSON.stringify(window.circle.state.chapters.runs));
+    for (const time of ["2026-11-06T05:00:00Z", "2026-11-08T14:00:00Z", "2026-11-09T05:00:00Z"]) {
+      await page.clock.setFixedTime(new Date(time));
+      await page.reload(); await ready(page);
+      await expect(page.locator(".os-splash")).toHaveCount(0);
+      assert.equal(await page.evaluate(() => JSON.stringify(window.circle.state.chapters.runs)), before);
+    }
+    await page.evaluate(() => window.api.activateAccountScope(null));
+    assert.equal(await page.evaluate(() => window.api.getAccountScope().kind), "signed-out");
+    await page.evaluate(() => window.api.activateAccountScope("synthetic-writer-a"));
+    await ready(page); await expect(page.locator(".os-splash")).toHaveCount(0);
+    assert.equal(await page.evaluate(() => JSON.stringify(window.circle.state.chapters.runs)), before);
+    await page.screenshot({ path: `outputs/quiet-entry-${width}.png`, fullPage: true });
+  }));
+
+  test(`Entry keeps older Day One complete and chosen Week setup accessible at ${width}px`, { timeout: 180_000 }, async () => isolated(width, async page => {
+    await entryFixture(page, { version: 2 });
+    await page.reload(); await ready(page);
+    await expect(page.locator(".os-splash")).toHaveCount(0);
+    await page.evaluate(() => window.goto("/os/mirror")); await ready(page);
+    const box = page.locator(".quest-catalogue-apps"); await box.scrollIntoViewIfNeeded(); await logSettled(box);
+    await box.getByRole("button", { name: "View steps", exact: true }).click(); await logSettled(box);
+    await box.locator(".quest-step").filter({ hasText: "Now set the week." }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.locator(".os-week-setup-session")).toContainText("Now set the week.");
+    assert.equal(await page.evaluate(() => window.circle.state.chapters.runs["day-one@2"].status), "completed");
+    assert.equal(await page.evaluate(() => window.circle.state.chapters.runs["day-one@3"]), undefined);
+    if (width === 360) {
+      const session = page.locator(".os-week-setup-session");
+      const chapter = await page.evaluate(() => window.api.publishedChapters.find(c => c.id === "week-setup"));
+      await session.getByRole("button", { name: /^Begin / }).click();
+      const swipe = async () => {
+        await logSettled(session); const box = await session.boundingBox();
+        const y = box.y + Math.min(150, box.height / 2);
+        await page.mouse.move(box.x + box.width * .8, y); await page.mouse.down();
+        await page.mouse.move(box.x + box.width * .2, y, { steps: 14 }); await page.mouse.up();
+      };
+      for (const item of chapter.pages.slice(1, -1)) {
+        await logSettled(session);
+        if (item.type === "info") {
+          await expect(session.getByRole("heading", { name: item.title, exact: true })).toBeVisible();
+          await swipe();
+        } else {
+          await session.getByRole("textbox", { name: item.question, exact: true }).fill(`Synthetic ${item.answerKey}`);
+          await session.getByRole("button", { name: "Continue", exact: true }).click();
+        }
+      }
+      await expect(session.getByText("Swipe when ready", { exact: true })).toBeVisible(); await swipe();
+      await expect(page.locator(".os-splash")).toHaveCount(0);
+      await expect.poll(() => page.evaluate(() => window.circle.state.chapters.runs["week-setup@1"]?.status)).toBe("completed");
+      const records = await page.evaluate(() => ({ goals: window.circle.state.goals, tasks: window.circle.state.tasks, protocol: window.circle.state.protocol }));
+      assert.equal(Object.keys(records.goals.items).length, 1);
+      assert.equal(Object.keys(records.tasks.items).length, 1);
+      assert.equal(Object.keys(records.protocol.runs).length, 1);
+      await page.reload(); await ready(page); await expect(page.locator(".os-splash")).toHaveCount(0);
+      assert.deepEqual(await page.evaluate(() => ({ goals: window.circle.state.goals, tasks: window.circle.state.tasks, protocol: window.circle.state.protocol })), records);
+    }
+  }));
+
+  test(`Entry still offers unfinished Day One at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
+    await entryFixture(page, { fresh: true });
+    await expect(page.getByRole("dialog", { name: "Day one", exact: true })).toBeVisible();
+    await page.reload(); await ready(page);
+    await expect(page.getByRole("dialog", { name: "Day one", exact: true })).toBeVisible();
+  }));
+
+  test(`Entry leaves Sunday review available only when chosen at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
+    await entryFixture(page, { week: true });
+    await page.clock.setFixedTime(new Date("2026-11-08T14:00:00Z"));
+    await page.reload(); await ready(page);
+    await expect(page.locator(".os-splash")).toHaveCount(0);
+    const box = page.locator(".os-log-session"); await box.scrollIntoViewIfNeeded();
+    await box.evaluate(el => el.dispatchEvent(new WheelEvent("wheel", { deltaX: 500, deltaY: 0, bubbles: true, cancelable: true })));
+    await logSettled(box);
+    await box.getByRole("button", { name: "Sunday", exact: true }).first().click();
+    await box.getByRole("button", { name: "Review this week now", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: "Week review", exact: true })).toBeVisible();
+    assert.equal(await page.evaluate(() => Object.keys(window.circle.state.weeks).length), 0);
+  }));
+}
+
+async function installSyncFixture(page) {
+  await page.evaluate(()=>{
+    window.syncSave=async(body,entryId=null)=>{
+      const a=window.api,scope=a.getAccountScope(),state=await a.loadWritingState(scope),entry=state.entries[entryId],at=new Date().toISOString();
+      const draft={id:crypto.randomUUID(),entryId:entry?.id||crypto.randomUUID(),kind:"note",source:null,
+        startedAt:entry?.startedAt||at,attribution:a.writingAttribution(at,"Asia/Bangkok"),
+        baseVersionId:entry?.currentVersionId||null,baseGeneration:entry?.generation||0,content:{title:"",body,tags:[]}};
+      await a.commitWritingOperation(scope,{owner:state.owner,at,operationId:crypto.randomUUID(),type:"write-draft",draft,expectedDraftVersion:0});
+      const command={owner:state.owner,at,operationId:crypto.randomUUID(),type:"save",draft:{...draft,version:1}};
+      window.lastSyncCommand=command;
+      return a.commitWritingOperation(scope,command);
+    };
+    // Synthetic receipt only. No authenticated transport is enabled by this test.
+    window.syncReceipt=change=>({owner:change.owner,operationId:change.operationId,entryId:change.entryId,
+      fingerprint:change.fingerprint,generation:change.generation,receiptId:crypto.randomUUID(),serverVersion:change.sequence});
+  });
+}
+
+for(const width of [360,390])test(`durable writing sync queue survives offline edits, old acknowledgements and reload at ${width}px`,{timeout:90_000},async()=>isolated(width,async(page,context)=>{
+  await installSyncFixture(page);await context.setOffline(true);
+  const saved=await page.evaluate(()=>window.syncSave("First synthetic saved words"));
+  const first=await page.evaluate(async()=>Object.values((await window.api.loadWritingSyncState(window.api.getAccountScope())).pending)[0]);
+  await page.evaluate(entryId=>window.syncSave("Newer synthetic saved words",entryId),saved.receipt.entryId);
+  const snapshot=await page.evaluate(async()=>JSON.stringify(await window.api.loadWritingState(window.api.getAccountScope())));
+  await page.evaluate(async change=>{
+    const a=window.api,scope=a.getAccountScope(),receipt=window.syncReceipt(change);
+    window.lastSyncAck=receipt;
+    const before=await a.loadWritingSyncState(scope);
+    await a.acknowledgeWritingSync(scope,[receipt]);
+    await a.acknowledgeWritingSync(scope,[receipt]);
+    const after=await a.loadWritingSyncState(scope);
+    if(Object.keys(before.pending).length!==2||Object.keys(after.pending).length!==1)throw Error("An older ack retired the newer save");
+  },first);
+  assert.equal(await page.evaluate(async()=>JSON.stringify(await window.api.loadWritingState(window.api.getAccountScope()))),snapshot);
+  await context.setOffline(false);await page.reload();await ready(page);
+  const stored=await page.evaluate(async()=>({writing:await window.api.loadWritingState(window.api.getAccountScope()),sync:await window.api.loadWritingSyncState(window.api.getAccountScope())}));
+  assert.equal(Object.keys(stored.sync.pending).length,1);assert.equal(Object.keys(stored.sync.acknowledgements).length,1);
+  assert.equal(stored.writing.entries[saved.receipt.entryId].versions.at(-1).content.body,"Newer synthetic saved words");
+  assert.equal(JSON.stringify(stored.sync).includes("synthetic saved words"),false);
+  await context.setOffline(true);
+  await page.getByRole("button",{name:"History",exact:true}).first().click();
+  await logSettled(page.locator(".os-note-page"));
+  await page.locator(".os-note-page").getByRole("button",{name:/^Untitled/}).click();
+  await logSettled(page.locator(".os-note-page"));
+  await expect(page.locator(".os-note-page").getByRole("textbox",{name:"Write a note",exact:true})).toHaveValue("Newer synthetic saved words");
+  await context.setOffline(false);
+},{height:width===360?667:844,reducedMotion:width===390?"no-preference":"reduce"}));
+
+test("durable writing sync transaction failures retain the draft and retry atomically",{timeout:90_000},async()=>isolated(390,async page=>{
+  await installSyncFixture(page);
+  const result=await page.evaluate(async()=>{
+    const a=window.api,scope=a.getAccountScope(),nativePut=IDBObjectStore.prototype.put;
+    let failure="sync-v1";
+    IDBObjectStore.prototype.put=function(value,key){if(key===failure&&Object.keys(value.pending||{}).length)throw new DOMException("Synthetic quota failure","QuotaExceededError");return nativePut.call(this,value,key);};
+    try { await window.syncSave("Recover this synthetic draft");throw Error("Expected failure"); }
+    catch(error){if(!error.message.includes("Synthetic quota failure"))throw error;}
+    finally{IDBObjectStore.prototype.put=nativePut;}
+    const before=await a.loadWritingState(scope),queue=await a.loadWritingSyncState(scope);
+    const draft=Object.values(before.drafts)[0];
+    if(Object.keys(before.entries).length||Object.keys(queue.pending).length||draft.status!=="active")throw Error("Partial transaction survived");
+    const command=window.lastSyncCommand;
+    // Failure of the other write must leave the same recovered draft too.
+    failure="records";IDBObjectStore.prototype.put=function(value,key){if(key===failure)throw new DOMException("Synthetic quota failure","QuotaExceededError");return nativePut.call(this,value,key);};
+    try {await a.commitWritingOperation(scope,command);throw Error("Expected failure");}
+    catch(error){if(!error.message.includes("Synthetic quota failure"))throw error;}
+    finally{IDBObjectStore.prototype.put=nativePut;}
+    const afterFailure=await a.loadWritingState(scope);
+    if(JSON.stringify(before)!==JSON.stringify(afterFailure))throw Error("Failed save changed writing");
+    // Both put requests may succeed before the transaction itself is aborted.
+    IDBObjectStore.prototype.put=function(value,key){const request=nativePut.call(this,value,key);if(key==="sync-v1")request.addEventListener("success",()=>this.transaction.abort(),{once:true});return request;};
+    let aborted=false;
+    try {await a.commitWritingOperation(scope,command);}
+    catch{aborted=true;}
+    finally{IDBObjectStore.prototype.put=nativePut;}
+    if(!aborted||JSON.stringify(before)!==JSON.stringify(await a.loadWritingState(scope))||Object.keys((await a.loadWritingSyncState(scope)).pending).length)throw Error("Request success was mistaken for transaction commit");
+    await a.commitWritingOperation(scope,command);await a.commitWritingOperation(scope,command);
+    const accepted=await a.loadWritingSyncState(scope),change=Object.values(accepted.pending)[0],receipt=window.syncReceipt(change);
+    failure="sync-v1";IDBObjectStore.prototype.put=function(value,key){if(key===failure)throw new DOMException("Synthetic quota failure","QuotaExceededError");return nativePut.call(this,value,key);};
+    try {await a.acknowledgeWritingSync(scope,[receipt]);throw Error("Expected failure");}
+    catch(error){if(!error.message.includes("Synthetic quota failure"))throw error;}
+    finally{IDBObjectStore.prototype.put=nativePut;}
+    const failedAck=await a.loadWritingSyncState(scope);
+    if(JSON.stringify(accepted)!==JSON.stringify(failedAck))throw Error("Failed ack retired pending work");
+    await a.acknowledgeWritingSync(scope,[receipt]);
+    return {before,accepted,final:await a.loadWritingSyncState(scope),writing:await a.loadWritingState(scope)};
+  });
+  assert.equal(Object.keys(result.accepted.pending).length,1);
+  assert.equal(Object.keys(result.final.pending).length,0);
+  assert.equal(Object.keys(result.final.acknowledgements).length,1);
+  assert.equal(Object.values(result.writing.entries)[0].versions.length,1);
+}));
+
+test("durable writing sync rejects account-switched and logged-out acknowledgements",{timeout:90_000},async()=>isolated(390,async page=>{
+  await installSyncFixture(page);await page.evaluate(()=>window.syncSave("Account A words"));
+  const result=await page.evaluate(async()=>{
+    const a=window.api,scope=a.getAccountScope(),queue=await a.loadWritingSyncState(scope),receipt=window.syncReceipt(Object.values(queue.pending)[0]);
+    let rejected=0;
+    for(const target of ["synthetic-sync-b",null]){
+      const current=a.getAccountScope(),nativeGet=IDBObjectStore.prototype.get;
+      IDBObjectStore.prototype.get=function(key){const request=nativeGet.call(this,key);if(key==="sync-v1")request.addEventListener("success",()=>a.activateAccountScope(target),{once:true});return request;};
+      try {await a.acknowledgeWritingSync(current,[receipt]);}
+      catch{rejected++;}
+      finally{IDBObjectStore.prototype.get=nativeGet;}
+      if(target){const other=await a.loadWritingSyncState(a.getAccountScope());if(Object.keys(other.pending).length||Object.keys(other.acknowledgements).length)throw Error("Cross-account sync data");}
+      a.activateAccountScope("synthetic-writer-a");
+    }
+    const active=a.getAccountScope();
+    try{await a.acknowledgeWritingSync(scope,[receipt]);}catch{rejected++;}
+    const before=JSON.stringify(await a.loadWritingSyncState(active));
+    try{await a.acknowledgeWritingSync(active,[{...receipt,owner:"account:synthetic-sync-b"}]);}catch{rejected++;}
+    const after=await a.loadWritingSyncState(active);
+    if(before!==JSON.stringify(after))throw Error("Rejected acknowledgement changed queue");
+    return {rejected,after};
+  });
+  assert.equal(result.rejected,4);assert.equal(Object.keys(result.after.pending).length,1);assert.equal(Object.keys(result.after.acknowledgements).length,0);
+}));
+
+test("durable writing sync serializes competing same-account tabs",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
+  await installSyncFixture(page);
+  const other=await context.newPage();await open(other);await other.evaluate(()=>window.api.mount());await ready(other);await installSyncFixture(other);
+  await Promise.all([page.evaluate(()=>window.syncSave("First tab words")),other.evaluate(()=>window.syncSave("Second tab words"))]);
+  const before=await page.evaluate(async()=>window.api.loadWritingSyncState(window.api.getAccountScope()));
+  const changes=Object.values(before.pending).sort((a,b)=>a.sequence-b.sequence);
+  assert.equal(changes.length,2);assert.deepEqual(changes.map(c=>c.sequence),[1,2]);
+  await Promise.all([page.evaluate(change=>window.api.acknowledgeWritingSync(window.api.getAccountScope(),[window.syncReceipt(change)]),changes[0]),other.evaluate(()=>window.syncSave("Third tab change"))]);
+  const stored=await other.evaluate(async()=>({writing:await window.api.loadWritingState(window.api.getAccountScope()),sync:await window.api.loadWritingSyncState(window.api.getAccountScope())}));
+  assert.equal(Object.keys(stored.writing.entries).length,3);assert.equal(Object.keys(stored.sync.pending).length,2);assert.equal(Object.keys(stored.sync.acknowledgements).length,1);
+  await other.close();
+}));
+
+async function seedLogHistory(page) {
+  await page.evaluate(()=>window.circle.updateState(s=>{
+    const a=window.api,at="2020-01-02T10:00:00Z";
+    for(const key of ["2020-01-01","2026-01-01"]){s=a.ensureDay(s,key);s.days[key]={...s.days[key],title:key==="2020-01-01"?"Old market day":"",timeBlocks:[
+      {id:key+"-late",start:"05:30",end:"06:00",activity:"",note:"Legacy midnight moment",createdAt:at},
+      {id:key+"-early",start:"08:15",end:"09:00",activity:"Saved walk",title:"Saved walk",moments:["A small saved moment"],note:"",createdAt:at},
+    ]};}
+    s=a.ensureDay(s,"2021-01-01");
+    for(let n=1;n<=18;n++){const key=`2025-01-${String(n).padStart(2,"0")}`;s=a.ensureDay(s,key);s.days[key].title="Synthetic recorded day "+n;}
+    return s;
+  }));
+  await expect.poll(()=>page.evaluate(()=>window.circle.state.days["2020-01-01"]?.timeBlocks.length)).toBe(2);
+  await expect.poll(()=>page.evaluate(async()=>Boolean((await window.api.loadCircleState(window.api.getAccountScope()))?.days?.["2020-01-01"]))).toBe(true);
+}
+async function logSettled(box) {
+  await expect(box).not.toHaveClass(/os-app-flip/);
+  await box.evaluate(async el=>{for(let i=0;i<3;i++){await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));await Promise.all(el.getAnimations({subtree:true}).map(animation=>animation.finished.catch(()=>{})));}});
+}
+for(const [width,height]of[[360,667],[390,844]])test(`Log history reads all recorded days without writing at ${width}px`,{timeout:90_000},async()=>isolated(width,async(page)=>{
+  await seedLogHistory(page);const box=page.locator(".os-log-session");await box.scrollIntoViewIfNeeded();
+  const before=await page.evaluate(()=>JSON.stringify({days:window.circle.state.days,queue:window.circle.state.outbox,evidence:window.circle.state.evidence}));
+  const todayTitle=box.getByRole("textbox",{name:"What this day is called",exact:true});
+  await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);
+  const list=box.getByLabel("Recorded Log days");await expect(list.locator("button")).toHaveCount(20);
+  await expect.poll(()=>box.evaluate(el=>{const page=el.querySelector(".os-page-layout"),header=page.querySelector(".os-page-header-left"),heading=page.querySelector(".os-page-heading");return heading.getBoundingClientRect().top-header.getBoundingClientRect().bottom;})).toBe(48);
+  await expect(list.locator("button").first()).toContainText("2026-01-01");await expect(list).not.toContainText("2021-01-01");
+  const old=list.getByRole("button",{name:"Old market day 2020-01-01",exact:true});await old.scrollIntoViewIfNeeded();
+  const touch=await old.boundingBox();assert.ok(touch.width>=44&&touch.height>=44);
+  await old.click();await logSettled(box);await expect(box.getByRole("heading",{name:"Old market day",exact:true})).toBeVisible();
+  const timeline=box.getByLabel("Log for 2020-01-01");await expect(timeline.locator("article")).toHaveCount(2);
+  await expect(timeline.locator("article").first()).toContainText("08:15");await expect(timeline).toContainText("05:30");await expect(timeline).toContainText("Legacy midnight moment");await expect(timeline).toContainText("A small saved moment");
+  await expect(box.locator("input,textarea,form")).toHaveCount(0);await expect(box.getByRole("button",{name:"Now",exact:true})).toHaveCount(0);await expect(timeline).not.toContainText("Wake up");
+  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await expect(timeline).toBeVisible();
+  const metrics=await box.evaluate(el=>({width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,scrollers:[...el.querySelectorAll("*")].filter(node=>["auto","scroll"].includes(getComputedStyle(node).overflowY)&&node.scrollHeight>node.clientHeight+1).length}));assert.ok(metrics.scrollWidth<=metrics.width+1);assert.equal(metrics.scrollers,0);
+  await box.screenshot({path:`outputs/log-history-day-${width}.png`});
+  await box.getByRole("button",{name:"History",exact:true}).click();await logSettled(box);await expect(list.locator("button")).toHaveCount(20);
+  await list.getByRole("button",{name:"Synthetic recorded day 18 2025-01-18",exact:true}).click();await logSettled(box);await expect(box).toContainText("No activities recorded.");
+  await box.getByRole("button",{name:"History",exact:true}).click();await logSettled(box);
+  assert.equal(await page.evaluate(()=>JSON.stringify({days:window.circle.state.days,queue:window.circle.state.outbox,evidence:window.circle.state.evidence})),before,"browsing changes no records or queue");
+  await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);await expect(todayTitle).toBeVisible();await expect(box.getByRole("button",{name:"Now",exact:true})).toBeVisible();
+  await page.reload();await ready(page);await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);await expect(list.locator("button")).toHaveCount(20);
+  await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);await box.getByRole("button",{name:"Now",exact:true}).click();await expect(box.getByRole("textbox",{name:/Main activity at/})).toBeVisible();
+},{height,reducedMotion:width===390?"no-preference":"reduce"}));
+
+test("Log history is empty for another account and reads offline after reload",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
+  await seedLogHistory(page);const box=page.locator(".os-log-session");await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);
+  await box.getByLabel("Recorded Log days").getByRole("button",{name:"Old market day 2020-01-01",exact:true}).click();await expect(box).toContainText("Legacy midnight moment");
+  await page.evaluate(async()=>{const scope=window.api.activateAccountScope("synthetic-log-b");await window.api.saveCircleState(scope,window.api.fixture());});await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-log-b");
+  await expect(box).not.toContainText("Old market day");await box.getByRole("button",{name:"Log",exact:true}).click();await expect(box).toContainText("No past days recorded yet.");
+  await expect(box.getByLabel("Recorded Log days").locator("button")).toHaveCount(0);
+  await page.evaluate(()=>window.api.activateAccountScope("synthetic-writer-a"));await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-writer-a");
+  // Reload through the local harness, then take the browser offline to read.
+  await page.reload();await ready(page);await context.setOffline(true);
+  await box.getByRole("button",{name:"Log",exact:true}).click();await expect(box.getByLabel("Recorded Log days").locator("button")).toHaveCount(20);
+  await box.getByLabel("Recorded Log days").getByRole("button",{name:"Old market day 2020-01-01",exact:true}).click();await expect(box).toContainText("Saved walk");
+  await context.setOffline(false);
+}));
+
+test("Log history grows for long days, resizes and returns to the existing Week Page",{timeout:90_000},async()=>isolated(360,async page=>{
+  await seedLogHistory(page);
+  await page.evaluate(()=>window.circle.updateState(s=>({...s,days:{...s.days,"2026-01-01":{...s.days["2026-01-01"],timeBlocks:Array.from({length:24},(_,index)=>({id:"long-"+index,start:String((index+6)%24).padStart(2,"0")+":00",end:String((index+7)%24).padStart(2,"0")+":00",activity:"A saved activity with enough words to wrap comfortably on a phone "+index,note:"",moments:["A saved moment "+index],createdAt:"2026-01-02T10:00:00Z"}))}}})));
+  const box=page.locator(".os-log-session");await box.getByRole("button",{name:"Log",exact:true}).focus();await page.keyboard.press("Enter");await logSettled(box);
+  await box.getByLabel("Recorded Log days").getByRole("button",{name:"Thursday 2026-01-01",exact:true}).tap();await logSettled(box);
+  const timeline=box.getByLabel("Log for 2026-01-01");await expect(timeline.locator("article")).toHaveCount(24);await timeline.locator("article").last().scrollIntoViewIfNeeded();await expect(timeline.locator("article").last()).toContainText("A saved moment 23");
+  for(const width of [360,390]){await page.setViewportSize({width,height:667});await logSettled(box);const metrics=await box.evaluate(el=>({height:el.getBoundingClientRect().height,width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,scrollers:[...el.querySelectorAll("*")].filter(node=>["auto","scroll"].includes(getComputedStyle(node).overflowY)&&node.scrollHeight>node.clientHeight+1).length}));assert.ok(metrics.height>480);assert.equal(metrics.scrollers,0);assert.ok(metrics.scrollWidth<=metrics.width+1);console.log("Log long day",width,JSON.stringify(metrics));}
+  await box.getByRole("button",{name:"History",exact:true}).click();await logSettled(box);await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);
+  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await expect(box.locator(".os-log-week")).toBeVisible();
+}));
+
+async function openPastLog(page) {
+  await seedLogHistory(page);const box=page.locator(".os-log-session");await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);
+  await box.getByLabel("Recorded Log days").getByRole("button",{name:"Old market day 2020-01-01",exact:true}).click();await logSettled(box);return box;
+}
+
+async function openWeekHistory(page) {
+  await page.evaluate(()=>window.circle.updateState(s=>({...s,
+    weeks:{...s.weeks,"2020-01-06":{weekKey:"2020-01-06",kept:false,fed:"mind",moved:"A saved small start",blocked:"Late nights",keep:"The morning walk",reviewedAt:"2020-01-12T14:00:00Z"}},
+    goals:{items:{...s.goals.items,old:{id:"old",scope:"week",dateKey:"2020-01-06",text:"An old weekly goal",status:"done",createdAt:"2020-01-06T01:00:00Z"},unreviewed:{id:"unreviewed",scope:"week",dateKey:"2020-01-13",text:"An unreviewed goal",status:"open",createdAt:"2020-01-13T01:00:00Z"}},steps:{...s.goals.steps,oldstep:{id:"oldstep",goalId:"old",taskId:"oldtask",dateKey:"2020-01-07",createdAt:"2020-01-06T01:00:00Z"}}},
+    tasks:{...s.tasks,items:{...s.tasks.items,oldtask:{id:"oldtask",text:"A saved linked step",status:"archived",createdAt:"2020-01-06T01:00:00Z",updatedAt:"2020-01-08T01:00:00Z"}}}
+  })));
+  const box=page.locator(".os-log-session");await box.scrollIntoViewIfNeeded();
+  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
+  await expect(box.getByRole("button",{name:"Week",exact:true})).toBeVisible();await logSettled(box);
+  await box.getByRole("button",{name:"Week",exact:true}).click();await logSettled(box);
+  return box;
+}
+for(const [width,height] of [[360,667],[390,844]])test(`Week history reads saved goals and reviews without writes at ${width}px`,{timeout:90_000},async()=>isolated(width,async(page)=>{
+  const box=await openWeekHistory(page),list=box.getByLabel("Recorded weeks");
+  await expect(list.locator("button")).toHaveCount(2);await expect(list.locator("button").first()).toHaveText("Week of 2020-01-13");
+  const before=await page.evaluate(()=>JSON.stringify({goals:window.circle.state.goals,tasks:window.circle.state.tasks,weeks:window.circle.state.weeks,chapters:window.circle.state.chapters,protocol:window.circle.state.protocol,outbox:window.circle.state.outbox,evidence:window.circle.state.evidence}));
+  const older=list.getByRole("button",{name:"Week of 2020-01-06",exact:true});const hit=await older.boundingBox();assert.ok(hit.width>=44&&hit.height>=44);
+  await older.focus();await page.keyboard.press("Enter");await logSettled(box);
+  const detail=box.getByLabel("Saved week 2020-01-06");await expect(detail).toContainText("An old weekly goal");await expect(detail).toContainText("A saved linked step");await expect(detail).toContainText("Archived");await expect(detail).toContainText("2020-01-07");await expect(detail).toContainText("A saved small start");await expect(detail.locator("time")).toHaveAttribute("datetime","2020-01-12T14:00:00Z");await expect(detail.locator("time")).toContainText("Jan 12, 2020");
+  await expect(box.locator("input,textarea,form")).toHaveCount(0);
+  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await expect(detail).toBeVisible();
+  await box.screenshot({path:`outputs/week-history-${width}.png`});
+  const metrics=await box.evaluate(el=>{const p=el.querySelector(".os-page-layout"),header=p.querySelector(".os-page-header-left"),heading=p.querySelector(".os-page-heading");return {gap:heading.getBoundingClientRect().top-header.getBoundingClientRect().bottom,width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,scrollers:[...el.querySelectorAll("*")].filter(n=>["auto","scroll"].includes(getComputedStyle(n).overflowY)&&n.scrollHeight>n.clientHeight+1).length};});assert.equal(metrics.gap,48);assert.ok(metrics.scrollWidth<=metrics.width+1);assert.equal(metrics.scrollers,0);console.log("Week history metrics",width,metrics);
+  await box.getByRole("button",{name:"History",exact:true}).tap();await logSettled(box);await list.getByRole("button",{name:"Week of 2020-01-13",exact:true}).tap();await logSettled(box);await expect(box).toContainText("No review saved.");
+  await box.getByRole("button",{name:"History",exact:true}).click();await logSettled(box);await box.getByRole("button",{name:"Week",exact:true}).click();await logSettled(box);await expect(box.getByRole("button",{name:"Add goal",exact:true})).toBeVisible();
+  assert.equal(await page.evaluate(()=>JSON.stringify({goals:window.circle.state.goals,tasks:window.circle.state.tasks,weeks:window.circle.state.weeks,chapters:window.circle.state.chapters,protocol:window.circle.state.protocol,outbox:window.circle.state.outbox,evidence:window.circle.state.evidence})),before);
+  await page.reload();await ready(page);await expect(box.getByRole("button",{name:"Week",exact:true})).toBeVisible();await box.getByRole("button",{name:"Week",exact:true}).click();await logSettled(box);await expect(list.locator("button")).toHaveCount(2);
+},{height,reducedMotion:width===390?"no-preference":"reduce"}));
+
+test("Week history closes on account switch and reads offline",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
+  const box=await openWeekHistory(page);await context.setOffline(true);await box.getByRole("button",{name:"Week of 2020-01-06",exact:true}).click();await expect(box).toContainText("A saved small start");await context.setOffline(false);
+  await page.evaluate(async()=>{const scope=window.api.activateAccountScope("synthetic-week-b");await window.api.saveCircleState(scope,window.api.fixture());});await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-week-b");
+  await expect(box).not.toContainText("An old weekly goal");await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await expect(box.getByRole("button",{name:"Week",exact:true})).toBeVisible();await logSettled(box);await box.getByRole("button",{name:"Week",exact:true}).click();await logSettled(box);await expect(box).toContainText("No past weeks recorded yet.");
+}));
+
+test("Week history reaches long and incomplete records across resize",{timeout:90_000},async()=>isolated(360,async page=>{
+  const box=await openWeekHistory(page);
+  await page.evaluate(()=>window.circle.updateState(s=>{
+    const goals={...s.goals,items:{...s.goals.items},steps:{...s.goals.steps}},weeks={...s.weeks};
+    for(let i=1;i<=24;i++){const d=new Date(Date.UTC(2021,0,4+(i-1)*7)),key=d.toISOString().slice(0,10);weeks[key]={...weeks["2020-01-06"],weekKey:key};}
+    for(let i=0;i<25;i++)goals.steps["missing-"+i]={id:"missing-"+i,goalId:"old",taskId:"unavailable-"+i,dateKey:"2020-01-08",createdAt:"2020-01-07T01:00:00Z"};
+    return {...s,goals,weeks};
+  }));
+  const list=box.getByLabel("Recorded weeks");await expect(list.locator("button")).toHaveCount(26);await list.locator("button").last().scrollIntoViewIfNeeded();await list.locator("button").last().tap();await logSettled(box);
+  await expect(box.getByText("Step unavailable",{exact:true})).toHaveCount(25);
+  for(const width of [360,390]){await page.setViewportSize({width,height:667});await logSettled(box);await box.getByLabel("Saved review").scrollIntoViewIfNeeded();const m=await box.evaluate(el=>({height:el.getBoundingClientRect().height,width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,scrollers:[...el.querySelectorAll("*")].filter(n=>["auto","scroll"].includes(getComputedStyle(n).overflowY)&&n.scrollHeight>n.clientHeight+1).length}));assert.ok(m.height>480);assert.ok(m.scrollWidth<=m.width+1);assert.equal(m.scrollers,0);console.log("Long Week history",width,m);}
+}));
+for(const [width,height]of[[360,667],[390,844]])test(`Log corrections save, cancel and reload at ${width}px`,{timeout:90_000},async()=>isolated(width,async(page,context)=>{
+  const box=await openPastLog(page),before=await page.evaluate(()=>JSON.stringify(window.circle.state.days));
+  const entry=box.getByRole("button",{name:"Edit entry at 08:15",exact:true});await entry.click();await logSettled(box);
+  await box.getByRole("textbox",{name:"Past activity",exact:true}).fill("Unaccepted words");await box.getByRole("button",{name:"Cancel",exact:true}).click();await logSettled(box);assert.equal(await page.evaluate(()=>JSON.stringify(window.circle.state.days)),before);
+  await entry.click();await logSettled(box);await box.getByRole("textbox",{name:"Past activity",exact:true}).fill("A corrected saved walk");await box.getByRole("textbox",{name:"Past moments",exact:true}).fill("A corrected moment\nAnother moment");
+  for(const name of ["Past activity","Past moments"]){const input=box.getByRole("textbox",{name,exact:true});await input.focus();await expect(input).toBeFocused();await expect(input).toHaveCSS("outline-style","none");const caret=await input.evaluate(el=>({color:getComputedStyle(el).caretColor,visibility:getComputedStyle(el).visibility}));assert.notEqual(caret.color,"transparent");assert.notEqual(caret.color,"rgba(0, 0, 0, 0)");assert.equal(caret.visibility,"visible");}
+  await box.getByRole("button",{name:"Cancel",exact:true}).focus();await page.keyboard.press("Tab");await page.keyboard.press("Shift+Tab");await expect(box.getByRole("button",{name:"Cancel",exact:true})).toBeFocused();await expect(box.getByRole("button",{name:"Cancel",exact:true})).toHaveCSS("outline-style","solid");await box.getByRole("textbox",{name:"Past moments",exact:true}).focus();
+  await box.screenshot({path:`outputs/log-correction-editor-${width}.png`});
+  const earliest=Date.now();if(width===360)await context.setOffline(true);
+  await box.getByRole("button",{name:"Save changes",exact:true}).click();await expect(box.locator("form")).toHaveCount(0);await logSettled(box);await expect(entry).toContainText("A corrected saved walk");await expect(entry).toContainText("Another moment");
+  const saved=await page.evaluate(()=>window.circle.state.days["2020-01-01"]),receipt=Object.values(saved.logCorrections)[0];
+  assert.equal(Object.keys(saved.logCorrections).length,1);assert.ok(Date.parse(receipt.correctedAt)>=earliest);assert.equal(receipt.before.activity,"Saved walk");assert.equal(receipt.after.activity,"A corrected saved walk");
+  assert.equal(receipt.after.start,"08:15");assert.equal(receipt.after.end,"09:00");assert.equal(receipt.after.createdAt,"2020-01-02T10:00:00Z");
+  const original=JSON.parse(before)["2020-01-01"];assert.deepEqual(saved.timeBlocks.find(b=>b.start==="05:30"),original.timeBlocks.find(b=>b.start==="05:30"));
+  await expect.poll(()=>page.evaluate(async()=>Object.keys((await window.api.loadCircleState(window.api.getAccountScope())).days["2020-01-01"].logCorrections||{}).length)).toBe(1);
+  if(width===360)await context.setOffline(false);await page.reload();await ready(page);
+  await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);await box.getByLabel("Recorded Log days").getByRole("button",{name:"Old market day 2020-01-01",exact:true}).click();await logSettled(box);await expect(entry).toContainText("A corrected saved walk");
+  const unchanged=await page.evaluate(()=>JSON.stringify({day:window.circle.state.days["2020-01-01"],evidence:window.circle.state.evidence,outbox:window.circle.state.outbox}));
+  await entry.click();await logSettled(box);await box.getByRole("button",{name:"Save changes",exact:true}).click();await expect(box.locator("form")).toHaveCount(0);await logSettled(box);
+  assert.equal(await page.evaluate(()=>JSON.stringify({day:window.circle.state.days["2020-01-01"],evidence:window.circle.state.evidence,outbox:window.circle.state.outbox})),unchanged,"unchanged save is a no-op");
+  await page.evaluate(()=>window.circle.updateState(s=>({...s,days:{...s.days,"2020-01-01":{...s.days["2020-01-01"],timeBlocks:s.days["2020-01-01"].timeBlocks.map(b=>b.start==="05:30"?{...b,note:"First legacy line\nSecond legacy line"}:b)}}})));
+  const legacyBefore=await page.evaluate(()=>JSON.stringify(window.circle.state.days["2020-01-01"]));
+  await box.getByRole("button",{name:"Edit entry at 05:30",exact:true}).click();await logSettled(box);await expect(box.getByRole("textbox",{name:"Past moments",exact:true})).toHaveValue("First legacy line\nSecond legacy line");
+  await box.getByRole("button",{name:"Save changes",exact:true}).click();await expect(box.locator("form")).toHaveCount(0);await logSettled(box);assert.equal(await page.evaluate(()=>JSON.stringify(window.circle.state.days["2020-01-01"])),legacyBefore,"unchanged multiline legacy note retains its representation");
+},{height,reducedMotion:width===390?"no-preference":"reduce"}));
+
+test("Log corrections reject stale drafts and close on account changes",{timeout:90_000},async()=>isolated(390,async page=>{
+  const box=await openPastLog(page),entry=box.getByRole("button",{name:"Edit entry at 08:15",exact:true});await entry.click();await logSettled(box);await box.getByRole("textbox",{name:"Past activity",exact:true}).fill("Stale local draft");
+  await page.evaluate(()=>window.circle.updateState(s=>({...s,days:{...s.days,"2020-01-01":{...s.days["2020-01-01"],timeBlocks:s.days["2020-01-01"].timeBlocks.map(b=>b.start==="08:15"?{...b,activity:"A newer saved change",title:"A newer saved change",updatedAt:new Date().toISOString()}:b)}}})));
+  await expect(box.getByRole("alert")).toContainText("This entry changed");await expect(box.getByRole("button",{name:"Save changes",exact:true})).toBeDisabled();
+  await box.getByRole("button",{name:"Cancel",exact:true}).click();await logSettled(box);await expect(entry).toContainText("A newer saved change");assert.equal(await page.evaluate(()=>Object.keys(window.circle.state.days["2020-01-01"].logCorrections||{}).length),0);
+  await entry.click();await logSettled(box);await box.getByRole("textbox",{name:"Past moments",exact:true}).fill("Only account A's unsaved draft");
+  await page.evaluate(async()=>{const scope=window.api.activateAccountScope("synthetic-correction-b");await window.api.saveCircleState(scope,window.api.fixture());});await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-correction-b");
+  await expect(box.getByRole("textbox",{name:"Past moments",exact:true})).toHaveCount(0);await expect(box).not.toContainText("A newer saved change");
+  await page.evaluate(()=>window.api.activateAccountScope("synthetic-writer-a"));await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-writer-a");
+  await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);await box.getByLabel("Recorded Log days").getByRole("button",{name:"Old market day 2020-01-01",exact:true}).click();await logSettled(box);await expect(entry).toContainText("A newer saved change");await expect(box).not.toContainText("Only account A's unsaved draft");
+}));
+
+test("Log corrections keep clearing evidence through stale merge and reload",{timeout:90_000},async()=>isolated(360,async(page,context)=>{
+  const box=await openPastLog(page),stale=await page.evaluate(()=>structuredClone(window.circle.state));await context.setOffline(true);
+  for(const start of ["08:15","05:30"]){await box.getByRole("button",{name:`Edit entry at ${start}`,exact:true}).click();await logSettled(box);await box.getByRole("textbox",{name:"Past activity",exact:true}).fill("");await box.getByRole("textbox",{name:"Past moments",exact:true}).fill("");await box.getByRole("button",{name:"Save changes",exact:true}).click();await expect(box.locator("form")).toHaveCount(0);await logSettled(box);}
+  await expect(box).toContainText("No activities recorded.");await expect(box.getByRole("button",{name:/Edit entry at/})).toHaveCount(0);
+  await page.evaluate(stale=>window.circle.updateState(s=>window.api.mergeServerState(s,stale)),stale);await expect(box).toContainText("No activities recorded.");
+  const cleared=await page.evaluate(()=>window.circle.state.days["2020-01-01"]);assert.equal(cleared.timeBlocks.length,0);assert.equal(Object.keys(cleared.logCorrections).length,2);assert.ok(Object.values(cleared.logCorrections).every(r=>r.after.updatedAt&&!r.after.activity&&!r.after.note&&r.after.moments.length===0));
+  await expect.poll(()=>page.evaluate(async()=>Object.keys((await window.api.loadCircleState(window.api.getAccountScope())).days["2020-01-01"].logCorrections||{}).length)).toBe(2);
+  await context.setOffline(false);await page.reload();await ready(page);await box.getByRole("button",{name:"Log",exact:true}).click();await logSettled(box);await box.getByLabel("Recorded Log days").getByRole("button",{name:"Old market day 2020-01-01",exact:true}).click();await logSettled(box);await expect(box).toContainText("No activities recorded.");
+}));
 
 test("baseline legacy placeholder report is reproducible without touching owner data",{timeout:90_000},async()=>isolated(390,async page=>{
   const title=page.getByRole("textbox",{name:"Edit idle title",exact:true});await expect(title).toBeVisible();
@@ -189,7 +583,7 @@ test("older untitled Thoughts remain correctable without inventing a question",{
 test("Deep Thought save failures and in-flight typing keep recoverable writing",{timeout:90_000},async()=>isolated(390,async page=>{
   const box=await thoughts(page),input=box.getByRole("textbox",{name:"Answer the deep thought",exact:true});await input.fill("Initial synthetic answer.");
   await expect.poll(()=>page.evaluate(()=>window.writing.status)).toBe("ready");
-  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&Object.keys(value.entries).length){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
+  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&value.entries&&Object.keys(value.entries).length){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
   await box.getByRole("button",{name:"Send",exact:true}).click();await expect(box.getByRole("alert")).toBeVisible();await expect(input).toHaveValue("Initial synthetic answer.");await expect(box.getByRole("button",{name:"Next question",exact:true})).toHaveCount(0);
   await page.reload();await ready(page);await thoughts(page);await expect(input).toHaveValue("Initial synthetic answer.");
   await page.evaluate(()=>{const digest=crypto.subtle.digest.bind(crypto.subtle);crypto.subtle.digest=async(...args)=>{if(new TextDecoder().decode(args[1]).includes('"type":"save"')){crypto.subtle.digest=digest;await new Promise(resolve=>window.releaseSend=resolve);}return digest(...args);};});
@@ -274,7 +668,7 @@ test("Deep Thoughts quietly recovers drafts and clearing an answer survives relo
 
 test("failed local commit keeps open text and retry saves once",{timeout:90_000},async()=>isolated(390,async page=>{
   const box=notePage(page);
-  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&Object.keys(value.entries).length){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
+  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&value.entries&&Object.keys(value.entries).length){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
   await box.getByRole("textbox",{name:"Note title",exact:true}).fill("Synthetic retry");await expect(box.getByRole("alert")).toContainText("Your open text is still here");await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toHaveValue("Synthetic retry");
   assert.equal(Object.keys((await page.evaluate(()=>window.api.load())).entries).length,0);
   await box.getByRole("button",{name:"Try again",exact:true}).click();await saved(page);
@@ -291,6 +685,128 @@ test("another tab's correction requires review before Note autosave",{timeout:90
   await expect(box.getByText("My unsaved words.",{exact:true})).toBeVisible();await expect(box.getByText("Other saved words.",{exact:true})).toBeVisible();
   await expect(box).not.toContainText(/draft|discard/i);await box.getByRole("button",{name:"Keep my text",exact:true}).click();await expect(box.getByRole("textbox",{name:"Write a note",exact:true})).toHaveValue("My unsaved words.");
   await accepted(page,"My unsaved words.");await expect.poll(()=>page.evaluate(async()=>Object.values((await window.api.load()).entries)[0].versions.length)).toBe(3);
+}));
+
+async function questSetupFixture(page) {
+  await page.evaluate(()=>window.circle.updateState(s=>{
+    const a=window.api,added=a.addHabitDefinition(s,"quest-existing-habit");s=a.updateHabitDefinitionParts(added.state,added.id,{action:"A habit already set",cue:"After breakfast",identity:"Someone who walks"});
+    const runs=Object.fromEntries(Object.entries(s.chapters.runs).filter(([id])=>!id.startsWith("habit-building@")&&!id.startsWith("log-setup@")&&!id.startsWith("week-review@")));
+    const at="2020-01-01T01:00:00.000Z",answers=[...s.profile.profileCase.survey.answers.filter(a=>!["routine-wake","routine-sleep"].includes(a.questionId)),...[["routine-wake","07:00"],["routine-sleep","23:00"]].map(([questionId,answer])=>({questionId,answer,answeredAt:at,updatedAt:at}))];
+    return {...s,chapters:{...s.chapters,runs},profile:{...s.profile,profileCase:{...s.profile.profileCase,survey:{...s.profile.profileCase.survey,answers}}}};
+  }));
+  await page.evaluate(()=>window.goto("/os/mirror"));await ready(page);const box=page.locator(".quest-catalogue-apps");await box.scrollIntoViewIfNeeded();await logSettled(box);return box;
+}
+
+for(const [width,height]of[[360,667],[390,844]])test(`Quest setup status and reusable View Hide steps at ${width}px`,{timeout:90_000},async()=>isolated(width,async(page)=>{
+  const box=await questSetupFixture(page);await expect(box.locator(".quest-count")).toContainText("4 of 5 steps");
+  const before=await page.evaluate(()=>JSON.stringify({habits:window.circle.state.habits,days:window.circle.state.days,profile:window.circle.state.profile,chapters:window.circle.state.chapters,goals:window.circle.state.goals,protocol:window.circle.state.protocol,evidence:window.circle.state.evidence,outbox:window.circle.state.outbox}));
+  for(let i=0;i<3;i++){
+    await box.getByRole("button",{name:"View steps",exact:true}).tap();await expect(box.locator(".quest-steps")).toBeVisible();await logSettled(box);
+    await box.getByRole("button",{name:"Hide steps",exact:true}).tap();await expect(box.locator(".quest-steps")).toHaveCount(0);await logSettled(box);
+  }
+  await box.getByRole("button",{name:"View steps",exact:true}).click();await logSettled(box);await box.screenshot({path:`outputs/quest-setup-${width}.png`});const setup=box.locator(".quest-step").filter({hasText:"Habit"});await expect(setup).toContainText("Already set up");
+  await setup.click();await logSettled(box);await expect(box).toContainText("Already set up. No chapter answers were saved.");await expect(box.locator("form,input,textarea")).toHaveCount(0);
+  await box.getByRole("button",{name:"History",exact:true}).click();await logSettled(box);await expect(box.getByLabel("Completed chapters").locator("button")).toHaveCount(4);
+  await box.getByRole("button",{name:"Quests",exact:true}).click();await logSettled(box);await expect(box.locator(".quest-steps")).toBeVisible();
+  const logStep=box.locator(".quest-step").nth(2);await expect(logStep).toContainText("Already set up");await logStep.click();await logSettled(box);await expect(box).toContainText("Already set up. No chapter answers were saved.");
+  assert.equal(await page.evaluate(()=>JSON.stringify({habits:window.circle.state.habits,days:window.circle.state.days,profile:window.circle.state.profile,chapters:window.circle.state.chapters,goals:window.circle.state.goals,protocol:window.circle.state.protocol,evidence:window.circle.state.evidence,outbox:window.circle.state.outbox})),before);
+  await page.evaluate(()=>{window.api.writePinnedChapter("habit-building");window.goto("/os");});await ready(page);await expect.poll(()=>page.evaluate(()=>window.api.readPinnedDoor())).toBe(null);await expect(page.locator(".os-habit-session")).toContainText("A habit already set");
+  await page.evaluate(()=>window.goto("/os/mirror"));await ready(page);await page.evaluate(()=>{window.api.writePinnedChapter("log-setup");window.goto("/os");});await ready(page);await expect.poll(()=>page.evaluate(()=>window.api.readPinnedDoor())).toBe(null);await expect(page.locator(".os-log-session").getByRole("button",{name:"Now",exact:true})).toBeVisible();
+},{height,reducedMotion:width===390?"no-preference":"reduce"}));
+
+test("Completed Quests open history and unfinished steps still launch",{timeout:90_000},async()=>isolated(390,async page=>{
+  await page.evaluate(()=>window.goto("/os/mirror"));await ready(page);const box=page.locator(".quest-catalogue-apps");await logSettled(box);await expect(box.getByRole("button",{name:"View history",exact:true})).toBeVisible();
+  await box.getByRole("button",{name:"View history",exact:true}).click();await logSettled(box);await expect(box.getByLabel("Completed chapters").locator("button")).toHaveCount(5);await box.screenshot({path:"outputs/completed-quest-history-390.png"});await box.getByLabel("Completed chapters").locator("button").first().click();await logSettled(box);await expect(box).toContainText("No chapter answers were saved.");
+  await page.evaluate(()=>window.goto("/os"));await ready(page);await page.evaluate(()=>window.circle.updateState(s=>({...s,chapters:{...s.chapters,runs:Object.fromEntries(Object.entries(s.chapters.runs).filter(([id])=>!id.startsWith("profile-spark-01@")))}})));await page.evaluate(()=>window.goto("/os/mirror"));await ready(page);
+  for(let i=0;i<2;i++){await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await logSettled(box);}
+  await expect(box.getByRole("button",{name:"View steps",exact:true})).toBeVisible();await box.getByRole("button",{name:"View steps",exact:true}).click();await logSettled(box);const first=box.locator(".quest-step").first();await expect(first).not.toContainText("Done");await first.click();await expect.poll(()=>page.evaluate(()=>window.api.readPinnedDoor())).toBe("chapter:profile-spark-01");await expect(page.locator(".quest-catalogue-apps")).toHaveCount(0);
+}));
+
+async function chapterArchive(page,{empty=false,long=false}={}) {
+  await page.evaluate(({empty,long})=>window.circle.updateState(s=>{
+    const runs={...s.chapters.runs},base=runs["day-one@3"],at="2020-01-02T04:00:00.000Z";
+    for(const [id,run] of Object.entries(runs))if(id.startsWith("day-one@")||id.startsWith("week-review@"))runs[id]={...run,completedAt:"2019-01-01T04:00:00.000Z"};
+    if(!empty){
+      for(const [id,date] of [["day-one@3:history-one",at],["day-one@3:history-two","2020-02-02T04:00:00.000Z"]])runs[id]={...base,runId:id,status:"completed",completedAt:date,answers:Array.from({length:long?26:1},(_,i)=>({pageId:"old-question-"+i,answerKey:"old-key-"+i,questionSnapshot:"An original saved question "+i+"?",value:"Saved raw value",displaySnapshot:"An original saved answer "+i,answeredAt:date,changedAt:date}))};
+      runs["week-review@999:missing"]={...base,runId:"week-review@999:missing",chapterId:"week-review",chapterVersion:999,status:"completed",completedAt:null,updatedAt:"2020-03-01T04:00:00.000Z",answers:[{pageId:"old",answerKey:"old",value:0,displaySnapshot:"",answeredAt:at,changedAt:at}]};
+    }
+    return {...s,chapters:{...s.chapters,runs}};
+  }),{empty,long});
+  await page.evaluate(()=>window.goto("/os/mirror"));await ready(page);
+  const box=page.locator(".quest-catalogue-apps");await box.scrollIntoViewIfNeeded();await logSettled(box);
+  await expect(box.getByRole("button",{name:"Chapter History",exact:true})).toHaveCount(0);
+  const entry=box.getByRole("button",{name:"View history",exact:true}),target=await entry.boundingBox();assert.ok(target.width>=44&&target.height>=44);
+  await entry.click();await expect(box.getByLabel("Completed chapters")).toBeVisible();await logSettled(box);return box;
+}
+
+for(const [width,height]of[[360,667],[390,844]])test(`Chapter history preserves answered runs without replay at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  const box=await chapterArchive(page),list=box.getByLabel("Completed chapters");await expect(list.locator("button")).toHaveCount(5);await expect(box).not.toContainText(/Version \d/);
+  const snapshot=()=>page.evaluate(async()=>JSON.stringify({profile:window.circle.state.profile,habits:window.circle.state.habits,tasks:window.circle.state.tasks,days:window.circle.state.days,goals:window.circle.state.goals,protocol:window.circle.state.protocol,chapters:window.circle.state.chapters,evidence:window.circle.state.evidence,outbox:window.circle.state.outbox,writing:await window.api.load()}));
+  const before=await snapshot();const first=list.locator("button").first(),hit=await first.boundingBox();assert.ok(hit.width>=44&&hit.height>=44);await first.focus();await page.keyboard.press("Enter");await logSettled(box);
+  const detail=box.getByLabel("Saved chapter answers");await expect(detail).not.toContainText(/Version \d/);await expect(detail.locator("time")).toHaveAttribute("datetime","2020-02-02T04:00:00.000Z");await expect(detail).toContainText("An original saved question 0?");await expect(detail).toContainText("An original saved answer 0");await expect(box.locator("form,input,textarea")).toHaveCount(0);
+  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await expect(detail).toBeVisible();
+  await box.screenshot({path:`outputs/chapter-history-${width}.png`});
+  const m=await box.evaluate(el=>{const p=el.querySelector(".os-chapter-history-page");return {gap:p.querySelector(".os-page-heading").getBoundingClientRect().top-p.querySelector(".os-page-header-left").getBoundingClientRect().bottom,width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth};});assert.equal(m.gap,48);assert.ok(m.scrollWidth<=m.width+1);console.log("Chapter history",width,m);
+  await box.getByRole("button",{name:"History",exact:true}).tap();await logSettled(box);await list.locator("button").last().tap();await logSettled(box);await expect(box).toContainText("Chapter title unavailable");await expect(detail).toContainText("Original question unavailable");await expect(detail).toContainText("Completion date not recorded");await expect(detail.getByText("0",{exact:true})).toBeVisible();
+  await box.getByRole("button",{name:"History",exact:true}).click();await logSettled(box);await box.getByRole("button",{name:"Quests",exact:true}).click();await logSettled(box);await expect(box.getByRole("button",{name:"View history",exact:true})).toBeVisible();await expect(box.getByRole("button",{name:"Chapter History",exact:true})).toHaveCount(0);assert.equal(await snapshot(),before);
+  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await logSettled(box);
+  const chosenTitle=await box.locator(".quest-page .os-page-main h2").textContent();await box.getByRole("button",{name:"View history",exact:true}).click();await logSettled(box);await box.getByRole("button",{name:"Quests",exact:true}).click();await logSettled(box);await expect(box.locator(".quest-page .os-page-main h2")).toHaveText(chosenTitle);
+  await page.reload({waitUntil:"domcontentloaded",timeout:60_000});await ready(page);await page.evaluate(()=>window.goto("/os/mirror"));await ready(page);await expect(box.locator(".quest-page .os-page-main h2")).toHaveText(chosenTitle);await box.getByRole("button",{name:"View history",exact:true}).click();await logSettled(box);await expect(list.locator("button")).toHaveCount(4);
+},{height,reducedMotion:width===390?"no-preference":"reduce"}));
+
+test("Chapter history is isolated, reads offline and handles empty/long records",{timeout:90_000},async()=>isolated(360,async(page,context)=>{
+  let box=await chapterArchive(page,{long:true});await context.setOffline(true);await box.getByLabel("Completed chapters").locator("button").first().click();await logSettled(box);await expect(box).toContainText("An original saved answer 25");
+  for(const width of [360,390]){await page.setViewportSize({width,height:667});await logSettled(box);const m=await box.evaluate(el=>({height:el.getBoundingClientRect().height,width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,scrollers:[...el.querySelectorAll("*")].filter(n=>["auto","scroll"].includes(getComputedStyle(n).overflowY)&&n.scrollHeight>n.clientHeight+1).length}));assert.ok(m.height>480);assert.ok(m.scrollWidth<=m.width+1);assert.equal(m.scrollers,0);console.log("Long chapter history",width,m);}
+  await context.setOffline(false);await page.evaluate(async()=>{const scope=window.api.activateAccountScope("synthetic-chapter-b");await window.api.saveCircleState(scope,window.api.fixture());});await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-chapter-b");await expect(box).not.toContainText("An original saved answer");
+  await box.getByRole("button",{name:"View history",exact:true}).click();await logSettled(box);await box.getByLabel("Completed chapters").locator("button").first().click();await logSettled(box);await expect(box).toContainText("No chapter answers were saved.");await expect(box).not.toContainText(/Version \d/);
+}));
+
+async function readingHistory(page,{empty=false,long=false}={}) {
+  await page.evaluate(({empty,long})=>window.circle.updateState(s=>({...s,athenaMemory:{...s.athenaMemory,
+    reading:empty?{cover:"",days:[],alive:[],shape:[]}:s.athenaMemory.reading,
+    rhythms:[{id:"today-only",statement:"Today-only derived rhythm",sourceRefs:[]}],
+    editions:empty?[]:[
+      {id:"old-reading",publishedAt:"2020-01-02T04:00:00.000Z",cover:"An older saved reading",days:[{heading:"An older day",paragraphs:long?Array.from({length:28},(_,i)=>"A saved paragraph that grows down the page "+i):["Exact old words.","A second saved paragraph."]}],alive:[],shape:[]},
+      {id:"undated-reading",publishedAt:null,cover:"An undated saved reading",shape:[{heading:"An earlier question",paragraphs:["An old saved question?"]}]},
+    ]}})),{empty,long});
+  await expect.poll(()=>page.evaluate(()=>window.writing?.memory?.editions?.some(e=>e.id==="old-reading")||false)).toBe(!empty);
+  await page.evaluate(()=>window.goto("/os/mirror"));await ready(page);
+  const box=page.locator(".athena-reader-session");await box.scrollIntoViewIfNeeded();await logSettled(box);
+  const opener=box.getByRole("button",{name:"Athena's Reading",exact:true});await expect(opener).toBeVisible();
+  await expect.poll(async()=>Math.round((await opener.boundingBox()).height)).toBe(44);
+  const hit=await opener.boundingBox();assert.ok(hit.width>=44&&hit.height>=43.99);
+  await opener.focus();await page.keyboard.press("Enter");await logSettled(box);return box;
+}
+
+for(const [width,height]of[[360,667],[390,844]])test(`Athena history reads immutable saved editions at ${width}px`,{timeout:90_000},async()=>isolated(width,async(page)=>{
+  const box=await readingHistory(page),list=box.getByLabel("Saved readings");await expect(list.locator("button")).toHaveCount(3);
+  await expect(list.locator("button").first()).toContainText("Synthetic reading.");await expect(list.locator("button").last()).toContainText("Date not recorded");
+  const snapshot=()=>page.evaluate(async()=>JSON.stringify({memory:window.circle.state.athenaMemory,chapters:window.circle.state.chapters,profile:window.circle.state.profile,outbox:window.circle.state.outbox,evidence:window.circle.state.evidence,writing:await window.api.load()}));
+  const before=await snapshot();const old=list.getByRole("button",{name:/An older saved reading/});const hit=await old.boundingBox();assert.ok(hit.width>=44&&hit.height>=44);await old.tap();await logSettled(box);
+  const detail=box.getByLabel("Saved reading",{exact:true});await expect(detail).toContainText("Exact old words.");await expect(detail).toContainText("A second saved paragraph.");await expect(detail.getByLabel("What feels alive",{exact:true})).toContainText("No saved words for this part.");await expect(detail.getByLabel("Your shape",{exact:true})).toContainText("No saved words for this part.");
+  await expect(detail).not.toContainText("Today-only");await expect(detail).not.toContainText("What would you like to notice today?");await expect(detail.locator("time")).toHaveAttribute("datetime","2020-01-02T04:00:00.000Z");await expect(box.locator("input,textarea,form")).toHaveCount(0);
+  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await expect(detail).toBeVisible();
+  const metrics=await box.evaluate(el=>{const p=el.querySelector(".athena-history-page"),header=p.querySelector(".os-page-header-left"),heading=p.querySelector(".os-page-heading");return {gap:heading.getBoundingClientRect().top-header.getBoundingClientRect().bottom,width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth};});assert.equal(metrics.gap,48);assert.ok(metrics.scrollWidth<=metrics.width+1);console.log("Athena history",width,metrics);
+  await box.screenshot({path:`outputs/athena-history-${width}.png`});
+  await box.getByRole("button",{name:"History",exact:true}).click();await logSettled(box);await list.getByRole("button",{name:/An undated saved reading/}).click();await logSettled(box);await expect(detail).toContainText("Date not recorded");await expect(detail).toContainText("An old saved question?");await expect(box.locator("input,textarea,form")).toHaveCount(0);
+  await box.getByRole("button",{name:"History",exact:true}).click();await logSettled(box);assert.equal(await snapshot(),before,"browsing changes no saved records or writing");
+  await box.getByRole("button",{name:"Athena’s Reading",exact:true}).click();await logSettled(box);await expect(box.locator(".gap-cover")).toBeVisible();
+  await page.reload();await ready(page);await page.evaluate(()=>window.goto("/os/mirror"));await ready(page);await box.getByRole("button",{name:"Athena's Reading",exact:true}).click();await logSettled(box);await expect(list.locator("button")).toHaveCount(3);
+},{height,reducedMotion:width===390?"no-preference":"reduce"}));
+
+test("Athena history reads offline and closes across account changes",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
+  const box=await readingHistory(page);await context.setOffline(true);await box.getByRole("button",{name:/An older saved reading/}).click();await expect(box).toContainText("Exact old words.");await context.setOffline(false);
+  await page.evaluate(async()=>{const scope=window.api.activateAccountScope("synthetic-reading-b");await window.api.saveCircleState(scope,window.api.fixture());});await expect.poll(()=>page.evaluate(()=>window.writing?.owner)).toBe("account:synthetic-reading-b");await expect(box).not.toContainText("Exact old words.");await expect(box.locator(".gap-cover")).toBeVisible();
+  await box.getByRole("button",{name:"Athena's Reading",exact:true}).click();await logSettled(box);await expect(box.getByLabel("Saved readings").locator("button")).toHaveCount(1);await expect(box).not.toContainText("An older saved reading");
+}));
+
+test("Athena history shows an empty archive and long editions grow through resize",{timeout:90_000},async()=>isolated(360,async page=>{
+  let box=await readingHistory(page,{empty:true});await expect(box).toContainText("No saved readings yet.");await box.getByRole("button",{name:"Athena’s Reading",exact:true}).click();await logSettled(box);
+  await page.evaluate(()=>window.goto("/os"));await ready(page);box=await readingHistory(page,{long:true});
+  await page.evaluate(()=>window.circle.updateState(s=>({...s,athenaMemory:{...s.athenaMemory,editions:[...s.athenaMemory.editions,...Array.from({length:58},(_,i)=>({id:"many-"+i,publishedAt:new Date(Date.UTC(2021,0,i+1)).toISOString(),cover:"Saved reading "+i,days:[{heading:"A saved day",paragraphs:["Saved words "+i]}]}))]}})));
+  await expect(box.getByLabel("Saved readings").locator("button")).toHaveCount(60);await box.getByLabel("Saved readings").locator("button").last().scrollIntoViewIfNeeded();await expect(box.getByLabel("Saved readings").locator("button").last()).toContainText("An undated saved reading");
+  await box.getByRole("button",{name:/An older saved reading/}).click();await logSettled(box);await expect(box).toContainText("A saved paragraph that grows down the page 27");
+  for(const width of [360,390]){await page.setViewportSize({width,height:667});await logSettled(box);const m=await box.evaluate(el=>({height:el.getBoundingClientRect().height,width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,scrollers:[...el.querySelectorAll("*")].filter(n=>["auto","scroll"].includes(getComputedStyle(n).overflowY)&&n.scrollHeight>n.clientHeight+1).length}));assert.ok(m.height>480);assert.ok(m.scrollWidth<=m.width+1);assert.equal(m.scrollers,0);console.log("Long Athena history",width,m);}
 }));
 
 test("real Reflect reading reply uses the shared ledger and edition source",{timeout:90_000},async()=>isolated(390,async page=>{
@@ -459,6 +975,46 @@ async function finishedProtocol(page, terms = 1) {
   },terms);
 }
 
+for (const width of [360,390]) test(`Protocol wording edits start tomorrow and retain dated history at ${width}px`, {timeout:90_000}, async()=>isolated(width, async(page,context)=>{
+  await page.evaluate(()=>window.circle.updateState(s=>{
+    const a=window.api, today=a.getDateKey();
+    s=a.startProtocolDraft(s,"wording-phase").state;
+    s=a.setProtocolDays(s,"wording-phase",3);
+    s=a.addProtocolItem(s,"wording-phase","non-negotiable","wording-walk").state;
+    s=a.updateProtocolItem(s,"wording-phase","wording-walk","Walk 10 minutes");
+    return a.beginProtocolRun(s,"wording-phase",a.previousDateKey(today));
+  }));
+  const routine=page.locator(".os-habit-session");
+  await routine.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
+  await expect(routine.getByRole("button",{name:"Keep: Walk 10 minutes",exact:true})).toBeVisible();
+  await routine.getByRole("button",{name:"Keep: Walk 10 minutes",exact:true}).click();
+  await expect(routine.getByRole("button",{name:"Undo: Walk 10 minutes",exact:true})).toBeVisible();
+  const evidence=await page.evaluate(()=>JSON.stringify({completions:window.circle.state.protocol.completions,seals:window.circle.state.protocol.seals}));
+  await context.setOffline(true);
+  await routine.getByRole("button",{name:"Edit",exact:true}).click();
+  await expect(routine).toContainText("Term changes start next Circle day at 06:00.");
+  await routine.locator(".os-protocol-block-edit").fill("Walk 30 minutes");
+  await routine.getByRole("button",{name:"Done",exact:true}).click();
+  await expect(routine.getByRole("button",{name:"Undo: Walk 10 minutes",exact:true})).toBeVisible();
+  assert.equal(await page.evaluate(()=>JSON.stringify({completions:window.circle.state.protocol.completions,seals:window.circle.state.protocol.seals})),evidence);
+  await expect.poll(()=>page.evaluate(async()=>Object.keys((await window.api.loadCircleState(window.api.getAccountScope())).protocol.termVersions).length)).toBeGreaterThan(1);
+  await context.setOffline(false);await page.reload();await ready(page);
+  await routine.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
+  await expect(routine.getByRole("button",{name:"Undo: Walk 10 minutes",exact:true})).toBeVisible();
+  await routine.getByRole("button",{name:"Edit",exact:true}).click();
+  await expect(routine.locator(".os-protocol-block-edit")).toHaveValue("Walk 30 minutes");
+  await routine.getByRole("button",{name:"Done",exact:true}).click();
+  await page.evaluate(()=>window.circle.updateState(s=>window.api.endProtocolRun(s,"wording-phase","completed")));
+  const home=routine.locator(".os-protocol-home");await home.locator(".os-protocol-past-head").click();
+  const rows=home.locator(".os-protocol-record-term");await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0)).toContainText("Walk 10 minutes");await expect(rows.nth(0)).toContainText("1/2");
+  await expect(rows.nth(1)).toContainText("Walk 30 minutes");await expect(rows.nth(1)).toContainText("0/1");
+  const saved=await page.evaluate(()=>JSON.stringify(window.circle.state.protocol));
+  await rows.nth(0).click();assert.equal(await page.evaluate(()=>JSON.stringify(window.circle.state.protocol)),saved);
+  await rows.nth(1).scrollIntoViewIfNeeded();
+  await routine.screenshot({path:`outputs/protocol-wording-${width}.png`});
+}, {height:width===360?667:844,reducedMotion:width===390?"no-preference":"reduce"}));
+
 async function protocolHistory(page) {
   const routine=page.locator(".os-habit-session");
   await routine.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
@@ -528,7 +1084,7 @@ for(const [width,height] of [[360,667],[390,844]])test(`Protocol past phases use
   if(width===390)await routine.screenshot({path:"outputs/protocol-history-bounded-top-390.png"});
   for(let i=0;i<12;i++){const record=home.locator(".os-protocol-record").filter({has:page.getByRole("heading",{name:"Synthetic phase "+i,exact:true})}),days=i%2?7:1;
     await expect(record.locator(".os-protocol-record-kept")).toHaveText(`1 of ${days} days kept`);
-    await expect(record.locator(".os-protocol-record-term small")).toHaveText([`1/${days}`,`0/${days}`]);
+    await expect(record.locator(".os-protocol-record-term small:first-of-type")).toHaveText([`1/${days}`,`0/${days}`]);
     for(const term of await record.locator(".os-protocol-record-term").all())await expect(term).toHaveCSS("border-bottom-width","0px");
     await expect(record.locator("button.os-protocol-record-term")).toHaveCount(0);
     const spacing=await record.evaluate(el=>{const rows=[...el.querySelectorAll(".os-protocol-record-term")],remove=el.querySelector(".os-protocol-record-remove"),text=document.createRange();text.selectNodeContents(remove);return {gap:rows[1].getBoundingClientRect().top-rows[0].getBoundingClientRect().bottom,removeGap:remove.getBoundingClientRect().top-rows.at(-1).getBoundingClientRect().bottom,removeHeight:remove.getBoundingClientRect().height,removeWidth:remove.getBoundingClientRect().width,labelInset:text.getBoundingClientRect().top-remove.getBoundingClientRect().top,rowHeights:rows.map(e=>e.getBoundingClientRect().height)};});
@@ -746,7 +1302,7 @@ test("History bins move only their own Note and restore is available only in Tra
 test("a recovered History row is saved before Trash and a failed save keeps all its text",{timeout:90_000},async()=>isolated(390,async page=>{
   await page.evaluate(async()=>{const scope=window.api.getAccountScope(),owner="account:"+scope.accountId;for(const title of ["Recovered target","Other recovery"]){const at=new Date().toISOString(),draft={id:crypto.randomUUID(),entryId:crypto.randomUUID(),kind:"note",baseVersionId:null,baseGeneration:0,startedAt:at,attribution:window.api.writingAttribution(at,"Asia/Bangkok"),content:{title,body:title+" text",tags:[]},source:null};await window.api.commitWritingOperation(scope,{owner,operationId:crypto.randomUUID(),at,type:"write-draft",draft,expectedDraftVersion:0});}});
   const box=notePage(page);await options(box,"History");
-  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&Object.keys(value.entries).length){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
+  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&value.entries&&Object.keys(value.entries).length){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
   await trashRow(box,"Recovered target").click();await expect(box.getByRole("alert")).toContainText("Your open text is still here");await expect(row(box,"Recovered target")).toBeVisible();let state=await page.evaluate(()=>window.api.load());assert.equal(Object.keys(state.entries).length,0);assert.equal(Object.values(state.drafts).filter(d=>d.status==="active").length,2);
   await trashRow(box,"Recovered target").click();await expect(row(box,"Recovered target")).toHaveCount(0);await expect(row(box,"Other recovery")).toBeVisible();await expect(box.getByRole("button",{name:"Undo",exact:true})).toHaveCount(0);
   await box.getByRole("button",{name:"Trash",exact:true}).click();await row(box,"Recovered target").click();await expect(box.getByText("Recovered target text",{exact:true})).toBeVisible();await box.getByRole("button",{name:"Restore",exact:true}).click();await expect(row(box,"Recovered target")).toBeVisible();await expect(row(box,"Other recovery")).toBeVisible();
@@ -773,7 +1329,7 @@ test("New Note flushes in-flight typing and keeps the current note if saving fai
   await expect(title).toHaveValue("");await expect(body).toHaveValue("");await accepted(page,"Typing while New Note waits.");await saved(page,1);
   await expect(fresh).toHaveAttribute("aria-busy","false");await body.dispatchEvent("compositionstart");await body.fill("Unfinished composition");await fresh.click();await expect(fresh).toHaveAttribute("aria-busy","false");await expect(body).toHaveValue("Unfinished composition");
   await body.dispatchEvent("compositionend");
-  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&Object.keys(value.entries).length>1){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
+  await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&value.entries&&Object.keys(value.entries).length>1){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
   await fresh.click();await expect(box.getByRole("alert")).toContainText("Your open text is still here");await expect(body).toHaveValue("Unfinished composition");await saved(page,1);await expect(fresh).toHaveAttribute("aria-busy","false");
   await fresh.click();await expect(title).toBeFocused();await expect(body).toHaveValue("");await accepted(page,"Unfinished composition");await saved(page,2);
   await options(box,"History");await expect(fresh).toHaveCount(0);await expect(row(box,"Save before the next note")).toBeVisible();

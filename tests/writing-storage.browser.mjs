@@ -160,7 +160,9 @@ test("a receipt resolves after actual transaction completion, not request succes
     try {await a.write(a.input());events.push("resolved");return events;}
     finally {IDBDatabase.prototype.transaction=transaction;IDBObjectStore.prototype.put=put;}
   });
-  assert.deepEqual(events, ["request-success", "committed", "resolved"]);
+  assert.ok(events.length >= 3);
+  assert.deepEqual(events.slice(-2), ["committed", "resolved"]);
+  assert.ok(events.slice(0, -2).every(event => event === "request-success"));
 }));
 
 test("aborting after request success rolls back the entire saved change and receipt", { timeout: 60_000 }, async () => isolated(390, async page => {

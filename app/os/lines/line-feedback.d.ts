@@ -5,7 +5,6 @@ export const LINE_REACTIONS: Readonly<Record<string, readonly string[]>>;
 export const LINE_REACTION_LABELS: Readonly<Record<string, string>>;
 export const LINE_REACTION_WORDS: Readonly<Record<string, string>>;
 export function lineReactions(kind: string): readonly string[];
-export function isLineReaction(kind: string, reaction: string): boolean;
 export function normalizeLineFeedback(value: unknown): LineFeedback;
 export function reactToLine(
   feedback: unknown,

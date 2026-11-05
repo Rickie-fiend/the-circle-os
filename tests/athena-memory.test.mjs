@@ -274,6 +274,27 @@ test("only authored prose is published, never the derived fallback", () => {
   assert.equal(reading.latestEditionId, null);
 });
 
+test("archive reads keep their own prose and unknown dates without changing saved memory", () => {
+  const memory = {
+    updatedAt: "2026-11-05T04:00:00.000Z",
+    reading: { shape: [{ heading: "Today", paragraphs: ["Today-only question?"] }] },
+    rhythms: [{ id: "today", statement: "Today-only rhythm" }],
+    editions: [
+      { id: "old", publishedAt: "2020-01-02T04:00:00.000Z", cover: "Old cover", days: [{ heading: "Old days", paragraphs: ["Old words."] }] },
+      { id: "undated", cover: "Undated words", shape: [{ heading: "Old question", paragraphs: ["An earlier question?"] }] },
+    ],
+  };
+  const before = structuredClone(memory);
+  const view = buildAthenaReading(memory), old = view.editions.find(edition => edition.id === "old");
+  assert.equal(old.pages.days[0].paragraphs[0], "Old words.");
+  assert.deepEqual(old.pages.alive, []); assert.deepEqual(old.pages.shape, []);
+  assert.equal(view.editions.find(edition => edition.id === "undated").publishedAt, null);
+  assert.ok(view.pages.days.length > 0, "live view still has its derived fallback");
+  assert.equal(JSON.stringify(old).includes("Today-only"), false);
+  assert.deepEqual(memory, before);
+  old.pages.days[0].paragraphs.push("View mutation"); assert.deepEqual(memory, before);
+});
+
 test("the phone carries a bounded archive, newest first", () => {
   const memory = {
     updatedAt: "2026-08-13T04:00:00.000Z",

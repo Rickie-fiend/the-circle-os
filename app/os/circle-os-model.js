@@ -242,6 +242,20 @@ function recordTimestamp(value) {
   );
 }
 
+// A clearing receipt retains the dated empty value after the active block is
+// removed. All existing day readers can keep reading timeBlocks; an older copy
+// cannot restore cleared time during normalization or merge.
+function withoutClearedLogBlocks(blocks = [], corrections = {}) {
+  return blocks.filter((block) => !Object.values(corrections || {}).some((receipt) => {
+    const cleared = receipt?.after;
+    return receipt?.blockId === block.id && cleared?.id === block.id
+      && cleared.updatedAt && cleared.updatedAt === receipt.correctedAt
+      && !(cleared.title || cleared.activity || cleared.note || "").trim()
+      && !(cleared.moments || []).some((text) => String(text).trim())
+      && String(cleared.updatedAt).localeCompare(String(recordTimestamp(block))) >= 0;
+  }));
+}
+
 function mergeRecordMaps(left = {}, right = {}) {
   const records = { ...left };
   for (const [id, candidate] of Object.entries(right || {})) {
@@ -759,6 +773,7 @@ export function createEmptyState() {
       completions: {},
       seals: {},
       corrections: {},
+      termVersions: {},
     },
     evidence: {
       localRevision: 0,
@@ -837,7 +852,7 @@ export function normalizeState(state) {
             )
           : [],
         checkIns: Array.isArray(day?.checkIns) ? day.checkIns : [],
-        timeBlocks: Array.isArray(day?.timeBlocks) ? day.timeBlocks : [],
+        timeBlocks: withoutClearedLogBlocks(Array.isArray(day?.timeBlocks) ? day.timeBlocks : [], day?.logCorrections),
       },
     ]),
   );
@@ -915,6 +930,7 @@ export function normalizeState(state) {
       completions: { ...(state.protocol?.completions || {}) },
       seals: { ...(state.protocol?.seals || {}) },
       corrections: { ...(state.protocol?.corrections || {}) },
+      termVersions: { ...(state.protocol?.termVersions || {}) },
     },
     habits: {
       identity: storedHabitIdentity,
@@ -1773,7 +1789,15 @@ export function mergeServerState(state, serverState) {
         localDay.checkIns,
         "period",
       ),
-      timeBlocks: mergeRecordArrays(remoteDay.timeBlocks, localDay.timeBlocks),
+      timeBlocks: withoutClearedLogBlocks(
+        mergeRecordArrays(remoteDay.timeBlocks, localDay.timeBlocks),
+        { ...remoteDay.logCorrections, ...localDay.logCorrections },
+      ),
+      // Correction IDs are immutable and unique. Preserve receipts from both
+      // copies, independently of which current block wins timestamp merging.
+      ...(remoteDay.logCorrections || localDay.logCorrections ? {
+        logCorrections: { ...remoteDay.logCorrections, ...localDay.logCorrections },
+      } : {}),
       title: localDay.title || remoteDay.title || "",
       logRange: localDay.logRange ?? remoteDay.logRange ?? null,
     };
@@ -1888,6 +1912,7 @@ export function mergeServerState(state, serverState) {
     },
     protocol: {
       runs: mergeUpdatedRecords(remote.protocol.runs, local.protocol.runs),
+      termVersions: mergeUpdatedRecords(remote.protocol.termVersions, local.protocol.termVersions),
       completions: mergeUpdatedRecords(
         remote.protocol.completions,
         local.protocol.completions,
@@ -3797,6 +3822,55 @@ function writeRun(state, run) {
   };
 }
 
+// Independent immutable snapshots survive a stale whole-run merge. Edits keep
+// their actual recording time separately from the Circle day they apply to.
+function snapshotProtocolTerms(state, run, effectiveDateKey, source = "snapshot", terms = protocolItems(run)) {
+  const id = freshRecordId("protocol-terms");
+  const versions = state.protocol.termVersions || {};
+  const order = Math.max(0, ...Object.values(versions).filter((v) => v.runId === run.id).map((v) => v.order || 0)) + 1;
+  const at = now();
+  return { ...state, protocol: { ...state.protocol, termVersions: {
+    ...versions, [id]: { id, runId: run.id, effectiveDateKey, source, order,
+      terms: terms.filter((item) => item.text.trim()).map(({ id, text, kind }) => ({ id, text, kind })),
+      recordedAt: at, updatedAt: at },
+  } } };
+}
+
+function protocolTermVersions(state, run) {
+  return Object.values(state.protocol.termVersions || {})
+    .filter((v) => v.runId === run.id && validProtocolDate(v.effectiveDateKey) && Array.isArray(v.terms))
+    .sort((a, b) => a.effectiveDateKey.localeCompare(b.effectiveDateKey)
+      || (a.order || 0) - (b.order || 0) || String(a.recordedAt).localeCompare(String(b.recordedAt)) || a.id.localeCompare(b.id));
+}
+
+export function protocolTermsForDate(state, run, dateKey) {
+  const seal = state.protocol.seals?.[protocolSealId(run.id, dateKey)];
+  const version = protocolTermVersions(state, run).filter((v) => v.effectiveDateKey <= dateKey).at(-1);
+  if (version) return version.terms.map((item) => ({ ...item, wordingSource: version.source }));
+  // Legacy seals contain completed terms only, not the whole agreement.
+  const saved = new Map((seal?.terms || []).map((item) => [item.id, item]));
+  for (const completion of Object.values(state.protocol.completions || {})) {
+    if (completion.runId === run.id && completion.dateKey === dateKey && completion.text && !saved.has(completion.itemId)) {
+      saved.set(completion.itemId, { id: completion.itemId, text: completion.text, kind: completion.kind });
+    }
+  }
+  const terms = protocolItems(run).filter((item) => item.text.trim()).map((item) => ({ ...item, wordingSource: "current" }));
+  return [...terms.filter((item) => !saved.has(item.id)), ...[...saved.values()].map((item) => ({ ...item, wordingSource: "snapshot" }))];
+}
+
+function writeProtocolTermEdit(state, before, after, dateKey = getDateKey()) {
+  if (before.status !== "active") return writeRun(state, after);
+  if (!validProtocolDate(dateKey)) return state;
+  // An old run has no original agreement to recover. Preserve only the words
+  // actually observed now; do not backdate them to the beginning of the phase.
+  let next = state;
+  if (!protocolTermVersions(state, before).length) {
+    next = snapshotProtocolTerms(next, before, dateKey, "observed", protocolTermsForDate(state, before, dateKey));
+  }
+  next = writeRun(next, after);
+  return snapshotProtocolTerms(next, after, addProtocolDays(dateKey, 1));
+}
+
 // The run being written or kept. A finished run is history and never active.
 export function activeProtocolRun(state) {
   return (
@@ -3935,19 +4009,21 @@ export function addProtocolItem(state, runId, kind, id = freshRecordId("pitem"))
   };
 }
 
-export function updateProtocolItem(state, runId, itemId, text) {
+export function updateProtocolItem(state, runId, itemId, text, dateKey = getDateKey()) {
   const run = state.protocol.runs[runId];
   const item = run?.items?.[itemId];
   if (!item || !protocolRunIsOpen(run)) return state;
+  const value = String(text || "").slice(0, 120);
+  if (item.text === value) return state;
   const timestamp = now();
-  return writeRun(state, {
+  return writeProtocolTermEdit(state, run, {
     ...run,
     items: {
       ...run.items,
-      [itemId]: { ...item, text: String(text || "").slice(0, 120), updatedAt: timestamp },
+      [itemId]: { ...item, text: value, updatedAt: timestamp },
     },
     updatedAt: timestamp,
-  });
+  }, dateKey);
 }
 
 // Archived rather than removed, for the same reason a habit is: a record the
@@ -3999,7 +4075,7 @@ export function beginProtocolRun(state, runId, dateKey) {
       item.text.trim() ? item : { ...item, status: "archived", updatedAt: timestamp },
     ]),
   );
-  return writeRun(state, {
+  return snapshotProtocolTerms(writeRun(state, {
     ...run,
     // A phase that was never named takes the default at the moment it begins,
     // so the name is settled once and the record is never blank.
@@ -4009,7 +4085,7 @@ export function beginProtocolRun(state, runId, dateKey) {
     startDateKey: dateKey,
     startedAt: timestamp,
     updatedAt: timestamp,
-  });
+  }), { ...run, items }, dateKey);
 }
 
 // Ending early is honest and is recorded. It is not a failure.
@@ -4090,7 +4166,7 @@ function protocolDateIsInRun(run, dateKey) {
 
 export function toggleProtocolRecordItem(state, runId, itemId, dateKey) {
   const run = state.protocol?.runs?.[runId];
-  const item = run?.items?.[itemId];
+  const item = run && protocolTermsForDate(state, run, dateKey).find((term) => term.id === itemId);
   if (
     !run ||
     !item ||
@@ -4098,7 +4174,7 @@ export function toggleProtocolRecordItem(state, runId, itemId, dateKey) {
     run.archivedAt ||
     !protocolDateIsInRun(run, dateKey) ||
     dateKey > getDateKey() ||
-    item.status !== "active"
+    !item.text.trim()
   ) {
     return state;
   }
@@ -4134,6 +4210,8 @@ export function toggleProtocolRecordItem(state, runId, itemId, dateKey) {
             itemId,
             runId: run.id,
             dateKey,
+            text: item.text,
+            kind: item.kind,
             completed: !current?.completed,
             completedAt: current?.completed ? null : timestamp,
             updatedAt: timestamp,
@@ -4222,8 +4300,9 @@ export function protocolToday(state, dateKey) {
       state.protocol.completions[protocolCompletionId(item.id, dateKey)]?.completed,
     ),
   });
-  const nonNegotiable = protocolItems(run, "non-negotiable").map(decorate);
-  const negotiable = protocolItems(run, "negotiable").map(decorate);
+  const terms = run.status === "draft" ? protocolItems(run) : protocolTermsForDate(state, run, dateKey);
+  const nonNegotiable = terms.filter((item) => item.kind === "non-negotiable").map(decorate);
+  const negotiable = terms.filter((item) => item.kind === "negotiable").map(decorate);
   const seal = state.protocol.seals?.[protocolSealId(run.id, dateKey)] || null;
   return {
     run,
@@ -4238,6 +4317,8 @@ export function protocolToday(state, dateKey) {
     seal,
     nonNegotiable,
     negotiable,
+    editorNonNegotiable: protocolItems(run, "non-negotiable").map(decorate),
+    editorNegotiable: protocolItems(run, "negotiable").map(decorate),
   };
 }
 
@@ -4269,8 +4350,8 @@ export function latestCompletedProtocol(state) {
     day: seal?.day || run.days,
     dateKey,
     sealed: Boolean(seal?.sealed),
-    nonNegotiable: protocolItems(run, "non-negotiable").map(decorate),
-    negotiable: protocolItems(run, "negotiable").map(decorate),
+    nonNegotiable: protocolTermsForDate(state, run, dateKey).filter((item) => item.kind === "non-negotiable").map(decorate),
+    negotiable: protocolTermsForDate(state, run, dateKey).filter((item) => item.kind === "negotiable").map(decorate),
   };
 }
 
@@ -4338,32 +4419,37 @@ export function protocolPhaseRecords(state) {
           .map((record) => record.dateKey)
           .filter(Boolean),
       )].sort();
-      const terms = protocolItems(run).map((item) => ({
-        id: item.id,
-        text: item.text,
-        kind: item.kind,
-        keptDays: new Set(
-          runCompletions
-            .filter(
-              (completion) =>
-                completion.itemId === item.id && completion.completed,
-            )
-            .map((completion) => completion.dateKey),
-        ).size,
-      }));
-      const required = terms.filter((item) => item.kind === "non-negotiable");
-      const keptDays = required.length
-        ? dateKeys.filter((dateKey) =>
-            required.every((item) =>
-              runCompletions.some(
-                (completion) =>
-                  completion.itemId === item.id &&
-                  completion.dateKey === dateKey &&
-                  completion.completed,
-              ),
-            ),
-          ).length
-        : 0;
+      const terms = [];
+      let keptDays = 0;
+      const ended = new Date(run.endedAt);
+      const lastDay = run.status === "ended" && Number.isFinite(ended.getTime()) ? getDateKey(ended) : null;
+      for (let index = 0; index < Math.min(21, run.days); index++) {
+        const dateKey = validProtocolDate(run.startDateKey) ? addProtocolDays(run.startDateKey, index) : null;
+        if (!dateKey || (lastDay && dateKey > lastDay)) break;
+        const applicable = protocolTermsForDate(state, run, dateKey);
+        const required = applicable.filter((item) => item.kind === "non-negotiable");
+        const done = (item) => runCompletions.some((c) => c.itemId === item.id && c.dateKey === dateKey && c.completed);
+        if (runSeals.some((seal) => seal.dateKey === dateKey && seal.sealed)
+          || (required.length && required.every(done))) keptDays++;
+        for (const item of applicable) {
+          // A changed wording receives its own interval/count, never the old
+          // wording's checkmarks. Unknown legacy wording stays explicitly unknown.
+          const previous = terms.findLast((term) => term.itemId === item.id);
+          const same = previous && previous.text === item.text && previous.kind === item.kind
+            && previous.wordingSource === item.wordingSource && addProtocolDays(previous.toDateKey, 1) === dateKey;
+          if (same) {
+            previous.toDateKey = dateKey;
+            previous.applicableDays++;
+            previous.keptDays += Number(done(item));
+          } else terms.push({ id: `${item.id}:${dateKey}`, itemId: item.id, text: item.text, kind: item.kind,
+            wordingSource: item.wordingSource, fromDateKey: dateKey, toDateKey: dateKey,
+            applicableDays: 1, keptDays: Number(done(item)) });
+        }
+      }
+      // Keep undated legacy phases readable without manufacturing dates.
+      if (!validProtocolDate(run.startDateKey)) {
+        for (const item of protocolItems(run)) terms.push({ ...item, wordingSource: "current", keptDays: 0, applicableDays: run.days });
+      }
       const scheduledEnd =
         run.status === "completed" && run.startDateKey
           ? addProtocolDays(run.startDateKey, Math.max(0, run.days - 1))

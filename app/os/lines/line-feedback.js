@@ -53,10 +53,6 @@ export function lineReactions(kind) {
   return LINE_REACTIONS[kind] || [];
 }
 
-export function isLineReaction(kind, reaction) {
-  return lineReactions(kind).includes(reaction);
-}
-
 function cleanId(value) {
   return typeof value === "string" ? value.trim().slice(0, 80) : "";
 }

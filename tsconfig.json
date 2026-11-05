@@ -32,6 +32,8 @@
   ],
   "exclude": [
     "node_modules",
+    "outputs/**/*",
+    "work/**/*",
     "build/**/*",
     "db/**/*",
     "worker/**/*",

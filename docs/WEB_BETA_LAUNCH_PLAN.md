@@ -1,5 +1,14 @@
 # Circle OS web beta launch plan
 
+2026-11-05 scope update: Week reviews remain read only; review corrections are
+removed from current scope. Past Habit completion corrections and the shared
+day view are deferred, superseding their earlier prerequisite statements below.
+The developer chose safe account sync next. The local queue and the later
+approved account-writing SQL/access/transport slice are implemented and locally
+verified. Hosted migration/activation and beta sync/recovery are not certified;
+remaining hosted-access, backup/deletion, operational UI and wider-domain gates
+still apply. See [the contract and activation steps](ACCOUNT_WRITING_SYNC.md).
+
 Date: 2026-10-31. Updated: 2026-11-03 (Note contract). Status: launch planning approved;
 account/local-isolation foundation exists; history/sync and live Athena remain
 planned work. This update is documentation only.
@@ -97,7 +106,7 @@ separate from the deletion and backup rules below.
 | --- | --- | --- |
 | 1. Launch contract | Confirm free/paid boundary, recovery, privacy, Athena behavior, budget, and beta support | Reviewed decisions and acceptance criteria |
 | 2. Accounts | Create/configure Supabase, verified email/password recovery, alias, persistent login/logout, account-separated local storage | Own-account access passes; other-account and signed-out access fail, including retained local data and shared-device switching |
-| 3. Records, history and sync | Reviewed local contracts; multiple Notes/Thoughts, drafts, saved versions, App histories/shared day view, dated corrections and writing Trash; ownership schema, exact sync and reviewed migration | Essential histories across existing tools; offline/retry/two-device/conflict/restore checks preserve records, attribution and links; free/expired core access passes |
+| 3. Records, history and sync | Reviewed local contracts; multiple Notes/Thoughts, drafts, saved versions, App histories, supported dated writing/Log corrections and writing Trash; ownership schema, exact sync and reviewed migration. Week reviews stay read only; past Habit corrections/shared day view deferred. | Essential histories within that scope; offline/retry/two-device/conflict/restore checks preserve records, attribution and links; free/expired core access passes |
 | 4. Membership admin | Protected admin roles, grants/expiry/audit history, per-user and global controls | Unauthorized changes fail; extension, revocation, expiry, and simultaneous requests behave correctly |
 | 5. Athena | Paid requested interpretation, relevant memory updates, constrained evidence, provider/model, validated readings/replies and sourced Wrong/Has changed/Forget controls | Grounded scenarios, source/version isolation, draft/Trash exclusion, correction propagation, enforced usage/cost and safe failure |
 | 6. Beta readiness | Verified Day One action setup after Stage 3; Home Screen installation, app updates, critical fixes, manual deletion, backups/restore, admin-only diagnostics, operating and recovery instructions | Day One confirm/skip/recovery and compatibility checks pass; agreed real-phone journeys and production-build checks pass; deletion and 30-day backup expiration are verified; no user export/download in beta |

@@ -50,7 +50,7 @@ for (const action of ["", "Walk outside"]) {
   });
 }
 
-test("latest version is offered even after an older completion", () => {
+test("latest version remains selectable by choice after an older completion", () => {
   const old = chapters.find(c => c.id === "day-one" && c.version === 2);
   const run = completed(old, {});
   assert.equal(selectDayOneChapter(chapters, { [run.runId]: run }).version, 3);

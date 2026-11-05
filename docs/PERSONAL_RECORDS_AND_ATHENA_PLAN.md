@@ -1,5 +1,16 @@
 # Personal records, history, and Athena plan
 
+Scope update approved 2026-11-05: completed Week reviews stay read only;
+Week-review corrections are removed from current scope. Past Habit completion
+corrections and the shared day view are deferred. These supersede their earlier
+requirements below and are not gates for moving to safe sync. App histories and
+prospective wording preservation remain. The account-bound local queue and the
+later approved account-writing SQL/access/transport slice are implemented and
+locally verified, including initial saved-writing inventory and conflict/deletion
+safety. Hosted application/activation, conflict/status UI, other domains,
+migration and operational recovery remain later work. See
+[the account-writing contract](ACCOUNT_WRITING_SYNC.md).
+
 Date: 2026-11-02, Asia/Bangkok.
 Latest approved flow: [Note, Deep Thoughts and managed quotes](#1412-note-deep-thoughts-and-quotes---2026-11-03)
 (2026-11-03). This supersedes ordinary Thoughts as a new-writing surface and
@@ -76,13 +87,13 @@ the later reviewed sync design. They are not an implemented backend.
 | D02 | Note receives new free writing; Deep Thoughts starts from a question | Retire ordinary Thoughts from the visible composer; preserve old entries and optional Note titles. |
 | D03 | Note autosaves after a short pause and when leaving; Deep Thoughts keeps Send | Deep answers retain question/source links and recovery without becoming evidence before Send. |
 | D04 | Recovery buffers stay outside saved evidence until committed | Older Note recovery text remains reachable in History without becoming evidence before a successful save. |
-| D05 | History inside each App plus a shared day view | Find a record by its purpose or by the day it belongs to. |
+| D05 | History inside each App; shared day view deferred 2026-11-05 | Read existing App histories without another combined day surface. |
 | D06 | Past writing is editable; Note and Deep Thoughts expose the current saved entry | Internal revisions preserve save safety; embedded reading answers retain their existing controls. |
 | D07 | Deleted Notes/Thoughts move to Trash; restore or permanently delete | Trash is a separate recoverable state, excluded from Athena. |
 | D08 | Trash has no automatic expiry | It remains until restoration or deliberate permanent deletion. |
 | D09 | Habit and active Protocol changes apply going forward | Earlier records keep the applicable wording and terms. |
-| D10 | Weekly reviews can be corrected with earlier saved versions available | Replace the current account of the week through a visible revision. |
-| D11 | Allow past-day Notes, Thoughts, Log entries, and habit-completion corrections | Retain both attributed time/day and actual recording/correction time. |
+| D10 | Completed Week reviews stay read only, updated 2026-11-05 | Correct the underlying records in their own tools where editing exists; no Week-review correction workflow. |
+| D11 | Past writing/Log corrections remain; Habit completion corrections deferred 2026-11-05 | Retain attributed day and actual correction time for supported corrections. |
 | D12 | Old records retain their assigned day/timezone; new records use current local time | Preserve the 06:00 Circle day without silently moving history during travel. |
 | D13 | Tags are optional; Athena can suggest correctable topics/feelings when used | Writing does not require a classification exercise. |
 | D14 | Show Athena observations with sources and Wrong / Has changed / Forget controls | The person can inspect and correct understanding. |
@@ -266,10 +277,10 @@ verification was performed in this documentation pass.
 | Record family | Essential review behavior | Correction boundary |
 | --- | --- | --- |
 | Notes/Thoughts/Deep Thoughts/reading answers | Dated list, entry detail, saved versions, source/question where relevant | Preserve current versus earlier wording; Trash applies to Notes/Thoughts. |
-| Habit definitions/completions | View dated action/cue/identity and completion state | Ordinary changes are prospective; explicit past corrections retain recording time. |
+| Habit definitions/completions | View dated action/cue/identity and completion state | Ordinary changes are prospective; past completion corrections deferred 2026-11-05. |
 | Tasks/goals/steps | Read open and completed records, dates and links | A shared task stays one record across Routine and Week; goal completion stays explicit. |
 | Daily Log | Open any recorded day and its activities/moments | Edit attributed records without pretending they were entered at the occurrence time. |
-| Week plans/reviews | Open prior goals, steps and reviews | Weekly-review corrections create saved versions. |
+| Week plans/reviews | Open prior goals, steps and reviews | Completed reviews stay read only; correction workflow removed from current scope 2026-11-05. |
 | Protocol | Read phases, applicable terms, completions/seals, outcome and dates | Preserve earlier terms; don't silently retick a day or rewrite a seal during an edit. |
 | Declarations | Read current and superseded statements with dates | Preserve existing version semantics and distinct horizons. |
 | Chapter answers | Read the answered questions and saved responses in context | Published `id@version` content remains immutable; correction/outcome application needs separate review. |

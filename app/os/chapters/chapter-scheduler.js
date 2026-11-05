@@ -146,14 +146,6 @@ export function hourKey(value = new Date()) {
   return `${getDateKey(date)}T${String(date.getHours()).padStart(2, "0")}`;
 }
 
-/** Milliseconds until the next hour opens, for telling someone when to return. */
-export function millisecondsUntilNextHour(now = new Date()) {
-  const next = new Date(now);
-  next.setMinutes(0, 0, 0);
-  next.setHours(next.getHours() + 1);
-  return next.getTime() - now.getTime();
-}
-
 function hoursBetween(fromValue, now) {
   const from = new Date(fromValue);
   if (Number.isNaN(from.getTime())) return Number.POSITIVE_INFINITY;

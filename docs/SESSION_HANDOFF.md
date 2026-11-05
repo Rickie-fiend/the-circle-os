@@ -1,5 +1,550 @@
 # Session handoff
 
+## 2026-11-06 - Direct entry after Day One
+
+**Approval and Git context.** Developer approved removing automatic prompts
+after Day One, retaining manual setup/review controls, focused tests and related
+records. Branch `paing-branch`, HEAD `ccdbe77`; substantial existing tracked and
+untracked work is preserved. Additional sync-check/hosted-harness paths were
+observed during this session and left untouched. Nothing staged, committed,
+applied remotely, imported or deployed by this slice.
+
+**Completed and verified.** Only unfinished Day One is offered automatically.
+Any completed version gives direct app entry; a new version does not interrupt
+returning people. Week/Log setup, weekly review and daily greeting no longer
+open automatically. Explicit Quest/Week/Workshop controls keep their players
+and saved progress. Chosen setup/review Quest pins now use the existing domain
+handlers rather than the generic chapter-only save. Mobile verification fully
+completed Week setup through Quests and retained its goal, task and phase after
+reload. Chapter content, versions and access gates remain intact.
+
+Final checks: 46/46 focused model/entry/account-boundary checks, 8/8 actual-
+component Chromium cases at 360x844/390x844, targeted lint and the final Next
+production build including TypeScript passed. Browser evidence covers Friday,
+Sunday evening, Monday, reload, simulated scope logout/re-entry, older Day One,
+unfinished first setup, manual Week setup and the Sunday review button. The
+360px quiet-entry screenshot was inspected. Exact commands and attempts are in
+[the journey evidence](USER_JOURNEY_TESTING.md#direct-entry-after-day-one-2026-11-06).
+Whitespace checks and 29 current-section local links/fragments passed.
+
+**Attempts and gaps.** Initial browser startup exceeded its deadline and was
+interrupted. A later selector expected the old generic Quest player after the
+manual route changed; corrected and rerun with all eight passing and exit 0.
+Three affected stale source assertions were updated. The unrelated Week setup
+model expectation still fails (`2027-05` versus `2027-03`), and the previously
+recorded ResizeObserver notification loop appeared during Sunday review.
+The original midweek trigger was not reproduced; this is the approved product
+change, not certification of a calendar-bug fix. Hosted sign-in, Opera/physical
+devices, the adapted production-server Day One browser suite and broad checks
+remain unverified. The developer's missing Habit in a private window matches
+current browser-local storage; this slice adds no Habit/setup sync.
+
+**Invariants and records.** No geometry/type/gap code changed or required new
+measurements. Kept saved answers, immutable versions, local-first/account
+boundaries and the 06:00 day. No measured issue justified optimization. Updated
+product, architecture, decisions, Page standard, bug evidence, journey, task and
+handoff. Prior snapshots below retain their unique evidence.
+
+**Next action.** Developer review of direct entry and chosen setup/review in the
+affected browser. Then resume the separately reviewed writing migration/hosted
+checks; activation, conflict UI, backup/retention and wider sync gates remain
+outside this slice. No remote-state claim is made about concurrent work.
+
+## 2026-11-06 - Hosted account writing checks; sync remains off
+
+**Approval and Git context.** Developer approved the exact writing migration's
+application, then the local development-only harness, synthetic two-account
+checks and guide/journey/current-task/handoff updates. Branch `paing-branch`,
+HEAD `ccdbe77`; substantial pre-existing changes preserved. Added the
+`app/os/sync-check/` route/client/helper/types/server denial probe and
+`tests/writing-hosted-harness.test.mjs`. Nothing staged, committed or deployed;
+no personal import or environment change.
+
+**Completed and verified.** Migration applied successfully through the existing
+Supabase SQL Editor to `gcqmblrkpfvjnewzdycj` after normalized-hash equality.
+Eight read-only catalog checks passed. SQL Editor did not record CLI migration
+history; do not blindly rerun the non-idempotent file. Two confirmed disposable
+accounts used the real authenticated transport and coordinator with isolated
+in-memory synthetic stores. Both passed own writes, exact retries/recovery,
+changed-retry denial, accepted response loss plus newer local edit, conflict
+preservation/pause, Trash/restore, terminal deletion and stale suppression.
+Anonymous/invalid-JWT calls to all three RPCs were denied. Account B could not
+see A's head/receipts, could independently use the same entry ID, and A's final
+recheck showed its tombstone/receipts unchanged. Codex observed normal-window
+results; the developer ran the private window and supplied its result lines.
+
+Final read-only audit confirmed two terminal heads, both saved conflict bodies
+scrubbed and 16 receipts. Minimal synthetic metadata and test accounts remain.
+11/11 focused harness/transport tests and targeted lint pass. Source-only
+Next-target TypeScript check passes, excluding generated `.next/` paths. Exact
+commands, evidence, prior migration state and limitations are in
+[the journey record](USER_JOURNEY_TESTING.md#hosted-account-writing-checks-2026-11-06)
+and [guide](ACCOUNT_WRITING_SYNC.md#hosted-verification---2026-11-06).
+
+**Attempts and gaps.** Both pages stop at the local server's service-role probe:
+its request/response handling fails (`networkError: true`); the exact cause
+is not independently established. Added safe diagnostics and meaningful
+gate/denial/network tests. A separately approved direct server-side probe using
+the configured key returned 403/42501 for all three RPCs; no credentials were
+printed or sent to the browser. The page STOP does not incorporate that terminal
+result. Fixed the initial harness's expected report count. Ordinary tsc failed
+on existing generated dev route syntax, and broad source config also encountered
+existing Cloudflare DB typing; the scoped source check is not a full build.
+No new full production build, expired/revoked valid-session test, unconfirmed
+hosted-account test, true lock-contention or physical-device recovery claim.
+
+**Invariants and next action.** No product geometry changes or new measurements.
+Local-first isolation, immutable versions and deletion markers remain; no
+optimization justified. Automatic writing sync stays off. Review this evidence,
+then agree the conflict/status UI slice before people-facing activation.
+Conflict/status UI, admin/logs, backup restore/deletion/retention, real-device
+recovery, other domains and broader beta gates remain pending. Activation needs
+separate approval. Earlier dated snapshots below remain historical; their
+statements that hosted SQL has not been applied are superseded here.
+
+## 2026-11-05 - Account writing storage and authenticated transport
+
+**Approval and Git context.** Developer approved the concrete repository
+SQL/access/transport scope, initial inventory, conflict/deletion handling, tests
+and related records. Branch `paing-branch`, HEAD `ccdbe77`; substantial existing
+tracked/untracked work, including the prior local queue, remains preserved.
+Nothing staged, committed, imported, applied remotely or deployed.
+
+**Completed and verified.** Added private writing heads with saved versions or
+terminal tombstones, exact body-free operation receipts and saved conflict
+candidates. Owner SELECT policies deny other accounts; direct client mutations
+are denied. Narrow public RPCs derive the confirmed authenticated owner, check
+retry identity and base server versions and commit receipts/head atomically.
+Anonymous/service-role transport calls are denied. Saved versions/source identity
+stay immutable. Permanent deletion scrubs head/conflict bodies and blocks stale
+resurrection; downloaded tombstones suppress pending stale edits explicitly.
+
+Added the shared cloud model/coordinator, captured-token transport, account
+IndexedDB baselines/conflicts, prior saved-writing inventory and an auth-client
+context/runner in the existing writing provider. Drafts remain local. Exact
+receipt recovery precedes newer uploads; competing saved copies are retained
+and that entry pauses. The runner defaults to off unless separately configured
+with `NEXT_PUBLIC_CIRCLE_WRITING_SYNC=enabled` after hosted access checks.
+
+89/89 focused database/model/transport checks and 43/43 Chromium checks passed;
+the latter includes eight cloud cases plus 35 storage/provider regressions.
+Targeted lint and the Next production build including types passed. Exact
+commands, failed attempts and limits are in
+[the journey record](USER_JOURNEY_TESTING.md#account-writing-storage-and-transport-2026-11-05).
+The enabled-runner case was reverified after the final source cleanup.
+Final `git diff --check` passed with existing LF/CRLF notices; 61 current local
+document links/fragments passed. New source/tests and the migration remain
+untracked, with the related tracked edits uncommitted and reviewable.
+
+**Attempts and gaps.** Fixed lost-response receipt recovery misclassifying a
+newer local edit, local deletion retaining a remote conflict copy, and deletion
+being paused by conflict handling. Updated a prior one-write test assumption
+to verify transaction completion; fixed browser abort/polling setup. SQL tests
+execute actual PostgreSQL via pinned dev-only PGlite `0.5.15`; Auth roles/claims
+are synthetic. Browser checks use real IndexedDB/HTTP with synthetic tokens.
+Hosted JWT/default-role behavior, true multi-connection contention, physical
+devices, hosted recovery, backup/retention and wider-domain sync remain open.
+There is no conflict/status UI or protected admin reader/log implementation.
+Full lint/broad suite, Vinext build and beta readiness are not certified.
+
+**Invariants and durable records.** Preserved account isolation, local-first
+evidence, exact receipt retirement, draft exclusion, assigned day/timezone/06:00
+behavior and immutable content. No visual/geometry changes or measurements.
+No measured issue justified optimization. Added
+[the technical/activation guide](ACCOUNT_WRITING_SYNC.md) and updated current
+task, architecture, decisions, product, roadmap and owning plans. Earlier
+snapshots below retain their unique historical evidence.
+
+**Next action.** Review the exact migration/limits, then separately approve its
+application to the selected Supabase environment and hosted synthetic two-user,
+anonymous, token and deletion checks. Keep activation off until those pass and
+operational UI limits are reviewed. Personal migration, real-device/backup
+recovery, other-domain sync and deployment retain separate approval boundaries.
+
+## 2026-11-05 - Durable local writing sync queue
+
+**Approval and Git context.** Developer approved the concrete local queue scope,
+its tests and owning records. They had reviewed Protocol wording, chose to keep
+Week reviews read only, skipped past Habit completion corrections and deferred
+shared day review. Branch `paing-branch`, HEAD `ccdbe77`; 32 tracked changes and
+11 untracked paths at startup are preserved. Three source/test paths added:
+`writing-sync-model.js`, its types and `writing-sync.test.mjs`. No staging,
+commit, push, database migration, personal import or deployment.
+
+**Completed and verified.** Account writing changes and queue references commit
+together in the existing IndexedDB store. Accepted saves/clearing, Trash,
+restore and deletion have stable ordered markers; drafts, no-ops, local
+conflicts and receipt retries enqueue nothing. The queue contains references
+and fingerprints rather than copied text. Exact acknowledgement validation and
+retirement happen together, preserving newer pending changes and existing
+writing. Scope guards reject stale-account/logout callbacks; same-account tabs
+serialize their latest ledger/queue updates. Legacy writing remains separate.
+
+75/75 focused model checks, nine queue/affected-writing browser cases and six
+additional existing-writing regressions passed; selections are disjoint (15
+browser cases total). Targeted lint and Next production build including types
+pass. Browser checks use real IndexedDB, isolated synthetic accounts, blocked
+external traffic and synthetic acknowledgements. Covers transaction failures
+of either write and acknowledgement persistence, recovered drafts/retry,
+offline saves/reload, two tabs, old-account callbacks and affected Note/Deep
+Thought/reading-answer/Trash workflows. Exact commands and attempts are in
+[the journey record](USER_JOURNEY_TESTING.md#durable-local-writing-sync-queue-2026-11-05).
+
+**Attempts and limits.** Initial tests exposed a callback trying to abort an
+already-aborted transaction during account switching; store callbacks now check
+the captured scope before continuing. Test failure injection was narrowed to
+the appropriate record shape/new queue key, and history navigation waits for
+the existing flip to settle. Final checks pass after these changes. No measured
+issue justified optimization. No UI/geometry tokens changed or new geometry
+measurement claimed. Local-first evidence, immutable writing versions, owner
+boundaries, 06:00 attribution and prior Protocol protections remain.
+
+**Durable records and next action.** Updated product, roadmap, work/beta/personal
+record plans, architecture, decisions, journey, task and handoff. Week corrections
+are removed from current scope; past Habit corrections/shared day review are
+deferred and do not block sync. No authenticated transport, SQL, remote receipt
+authentication, automatic prior-record inventory, conflict UI, personal migration
+or backup/restore is delivered. Local queue receipts do not expire automatically;
+server retention/deletion design remains open. Earlier hosted/device/Week/
+ResizeObserver/beta gaps remain. Next: review account-writing server ownership,
+access tests and authenticated transport, including inventory/conflict/deletion
+contracts. That next scope requires approval before editing or remote changes.
+
+## 2026-11-05 - Protocol prospective wording
+
+**Approval and Git context.** Developer approved next-Circle-day Protocol term
+changes, dated history, tests and owning records. Branch `paing-branch`, HEAD
+`ccdbe77`; 31 tracked changes and ten untracked paths existed at startup and
+remain preserved. One new focused model test. No staging, commit, deployment,
+personal import or remote changes. Prior evidence stays below.
+
+**Completed and verified.** Independent dated snapshots preserve the initial
+agreement and prospective edits. Term wording, additions and removals start
+next local Circle day at 06:00. Daily tick/seal actions read the applicable
+agreement; the editor shows pending words. Past phases groups wording intervals
+with their own counts and evaluates each day's required terms. IDs, checkmarks,
+seals and retired receipts remain intact. Legacy baselines start only when
+observed, without backdating; known seal/completion words are used and missing
+originals remain explicitly unavailable.
+
+96/96 model cases and 8/8 mobile component cases passed, plus targeted lint and
+Next production build including types. Covers repeated/same-day edits,
+additions/clearing, local 06:00/early ending, legacy/optional terms, preserved
+evidence, reload/offline saves, both stale-merge directions and read-only
+history. Four resting frames remain 346px with 48px header gaps. Expanded
+history retains 400.19px/480px ceilings at 360x667/390x844, one Body scroller,
+44px Remove targets and no horizontal overflow. Screenshots inspected. See
+[commands, attempts and limits](USER_JOURNEY_TESTING.md#protocol-prospective-wording-2026-11-05).
+
+**Attempts, invariants and limits.** Initial checks needed the new empty-map
+migration expectation, a wait for the tick's deferred commit and separate count
+versus date selectors. Final early-end cutoff, snapshot-order and legacy
+sealed-day baseline refinements were reverified. No measured issue justified
+optimization. Shared geometry,
+five durations, immutable seals and account-separated local-first storage
+remain. Historical names/goals, past-day editors, safe cloud sync and concurrent
+editable-run resolution remain separate. Physical phones, hosted use, real
+sync/recovery, other browsers, Vinext and broad checks remain unverified.
+Earlier ResizeObserver/Week/beta warnings remain open.
+
+**Records and next action.** Updated Page standard, architecture, decision log,
+journey, bug follow-up, task and handoff. Next: developer phone review of today's
+edit and tomorrow's wording. This supersedes earlier all-term-history-pending
+statements for this slice only; beta readiness is not certified.
+
+## 2026-11-05 - Contextual chapter review cleanup
+
+**Approval and state.** The developer approved the reviewed cleanup: remove the
+standalone Chapter History control, its CSS and visible version labels, preserving
+contextual review; update affected checks and continuity records. Branch
+`paing-branch`, HEAD `ccdbe77`; all 31 changed tracked and ten untracked paths at
+startup are preserved/refined in scope. No new source paths, staging, commit,
+push, deployment, personal import or remote changes. Prior evidence remains below.
+
+**Completed and verified.** The Quest counter stands alone again. Finished steps
+and a completed Quest's View history still open the shared saved-answer reader.
+Its metadata shows completion time without a version label. Internal run/version
+references and exact original question lookup remain; no stored evidence is
+deleted or migrated. The broader all-chapter archive is deferred, not replaced
+by another global control. Setup status and replay protections are unchanged.
+
+12/12 focused model checks, final 6/6 actual-component mobile cases, targeted lint
+and Next production build including types passed. Cases cover 360x667/390x844,
+reduced/normal motion, absence of the control/version labels, contextual reading,
+saved words/dates, no domain/evidence/outbox/writing mutations, original-version
+fallback, non-first Quest return/reload, offline/account isolation, long records
+and genuine unfinished launch. Four resting frames remain 346px with 48px header
+gaps; reader growth/anchor remain. Updated screenshot inspected. Exact commands,
+logs, attempts and limits are in
+[the journey record](USER_JOURNEY_TESTING.md#contextual-chapter-review-cleanup-2026-11-05).
+
+**Attempts and limits.** One initial normal-motion case selected a step before
+the deferred button/flip settled. The test now waits for the list then shared
+settling; final selection passed without a runtime fix. Existing ResizeObserver
+notifications remain. No shared tokens, engine, model/write/merge path, published
+words/versions, budgets or 06:00 rule changed. No measured performance issue
+justified optimization. Phone/hosted use, real sync/recovery, other browsers,
+Vinext and broad checks remain unverified; earlier independent warnings remain.
+
+**Records and next action.** Updated Page standard, architecture, decisions,
+journey, current task and this snapshot. Next: developer phone review of the
+cleaner Quest header and contextual reader. Previous standalone-entry/version
+display instructions are superseded; beta readiness is not certified.
+
+## 2026-11-05 - Chapter History and Quest setup review
+
+**Approval and Git context.** The developer approved Chapter History, then
+separately approved reusable View/Hide, shared setup status, finished-step
+reading, complete-Quest View history and affected setup/pinning guards. Athena
+Reading History was confirmed on their phone. Branch `paing-branch`, HEAD
+`ccdbe77`; all 27 changed tracked and seven untracked paths at implementation
+start are preserved/refined in scope. Three new source/test files are added.
+No staging, commit, push, deployment, import, personal-data or remote changes.
+Prior snapshots retain their unique evidence and superseded next actions.
+
+**Completed and verified.** Global Chapter History lists completed runs with
+saved answers, keeping repeated runs and versions separate. Snapshot questions/
+display values win; exact original definitions alone may fill missing prompts.
+Conflicting/missing definitions never borrow newer words. Shared App-back
+returns to the same Quest; account remount closes the reader. No player or
+outcome handler runs during browsing.
+
+Unfinished Quests keep repeatable View/Hide using CreativeButton's existing
+reusable setting. Complete Quests offer View history; finished steps open saved
+answers. A named active Habit, both Log routine values, corresponding saved
+declaration or original-version replacement first-use completion may satisfy
+its own setup step. Already set up is derived UI status, never a fabricated
+chapter run/date/answers. Incomplete/unrelated evidence and App access alone
+do not count. Habit/Log surfaces share readiness and stale Quest pins are
+cleared; other reflections/Week chapters and existing access gates remain.
+
+51/51 focused model cases, final 6/6 affected mobile cases and 4/4 final scoped
+header/frame cases passed. Selections overlap. Targeted lint and final production
+build including types pass. Four resting
+frames remain 346px with 48px header gaps; history uses the same anchor and grows
+downward without inner/horizontal scrolling. Screenshots inspected. Commands,
+logs, earlier selections and gaps are in
+[the journey record](USER_JOURNEY_TESTING.md#chapter-history-and-quest-setup-review-2026-11-05).
+
+**Attempts, invariants and gaps.** Initial stale source assertions and an
+incorrect Log title selector were corrected. A full-load reload timed out in
+one concurrent-build run; DOM readiness plus app readiness passed the final
+affected run. Lint caught unnecessary state in a pin-cleanup effect; it now
+clears only external navigation storage. Screenshot review aligned the new
+header label; affected cases/geometry passed again. Existing ResizeObserver
+notifications and previous Week source-test failures remain. No measured
+performance issue justified optimization. Published words/versions, budgets,
+06:00 attribution, personal evidence, sync/merge and shared geometry/type/gap
+tokens are unchanged. Phone/hosted use, real sync/recovery, offline network
+reload, Vinext and broad checks remain unverified.
+
+**Records and next action.** Updated Page standard, architecture, decisions,
+journey, bug record, current task and this snapshot. Next: developer phone review of Chapter
+History, View/Hide and completed/setup Quest steps. Historical wording, weekly
+correction versions, shared day view and safe account sync remain separately
+reviewed work; beta readiness is not certified.
+
+## 2026-11-05 - Read-only Athena Reading History
+
+**Approval and Git context.** The developer confirmed Week History on their
+phone, then approved the concrete Athena Reading History proposal: new component,
+Mirror wiring, scoped CSS, focused model/browser tests and owning/design/
+continuity records. Branch `paing-branch`, HEAD `ccdbe77`; all 24 changed tracked
+and six untracked paths at implementation start are preserved or refined in
+approved scope. No staging, commit, push, deployment, import or remote changes.
+Prior snapshots retain unique evidence and superseded next actions.
+
+**Completed and verified.** The Athena cover label opens saved editions newest
+first through shared App-back in the cover slot. Each detail reads only its own
+cover, publication date and three prose parts. Empty parts and unknown dates
+stay honest; no current profile or derived text fills an old edition. Shared
+Back returns through History to the current cover. Outer swipes stay in that
+slot while History is open; account remount closes it. There is no historical
+reply editor, generation call or record write. The four current reading Pages,
+current reply flow, edition identity/merge and 60-edition retention remain.
+
+39/39 focused model checks, 7/7 actual-component mobile browser cases, targeted
+lint and Next production build including types passed. Browser cases cover
+360x667/390x844, reduced/normal motion, keyboard/touch, 44px targets, exact old
+words, missing sections/unknown dates, unchanged saved records and writing
+ledger, return/reload, offline reading, account switch, empty/60-row archive,
+long prose/resize and the existing reply/source journey. Four resting frames
+remain 346px with 48px header gaps. History keeps the 48px anchor, no horizontal
+overflow and downward growth without inner scrolling. Screenshots inspected.
+Exact commands/logs are in
+[the journey record](USER_JOURNEY_TESTING.md#read-only-athena-reading-history-2026-11-05).
+
+**Attempts, invariants and gaps.** Two initial browser cases measured a cover
+touch target during entrance motion. Corrected test waits/subpixel tolerance;
+both affected cases and the final seven-case selection passed without a runtime
+fix. Existing ResizeObserver notifications remain visible. The installed Next
+CLI avoids the previously recorded npm-launcher trust problem without changing
+trust settings. No measured performance issue justified optimization. Shared
+geometry/type/gap tokens, budgets, authored words, 06:00 attribution and existing
+persistence/merge remain unchanged. Phone/hosted archive use, offline network
+reload, real sync/recovery, Vinext and broad checks remain unverified; prior
+Week source-test failures and other independent warnings remain.
+
+**Records and next action.** Updated DESIGN, Page standard, architecture,
+decisions, journey, current task and this snapshot. Week's earlier device-review
+reminder is closed by developer acceptance; no cloud certification follows.
+Next: developer phone review of Athena Reading History. Chapter-answer review,
+historical wording, weekly correction versions, shared day view, full server
+reading paging and safe account sync remain separately reviewed work. This
+exposes existing prepared editions, not a live requested-Athena service or beta
+readiness certification.
+
+## 2026-11-05 - Read-only Week History
+
+**Approval and Git context.** The developer confirmed past Log editing and
+caret-only focus on their phone, then approved the concrete read-only Week
+History proposal: selector/Page, shell wiring, scoped CSS, focused tests and
+owning/continuity records. Branch `paing-branch`, HEAD `ccdbe77`; all 24 changed
+tracked and three untracked paths present at implementation start are preserved
+or refined within approved scope. Three new Week-history source/test files are
+added. No staging, commit, push, deployment, personal import or remote changes.
+Earlier snapshots retain their unique evidence and superseded next actions.
+
+**Completed and verified.** Week opens History inside its existing slot, listing
+past saved calendar weeks newest first. Details read existing weekly goals,
+linked task words/status and assigned dates, plus review answers and actual
+recording time. Goal-only and review-only weeks remain readable. Missing task
+links stay unavailable and archived links remain visible. These are current
+saved words, not fabricated historical versions. Shared App-back returns to
+History then current Week; outer swipes cannot leave history and account remount
+closes it. No review completion handler runs, so reading creates no goals/tasks
+and cannot alter a Protocol phase. Weekly correction/versioning remains planned.
+
+Final checks: 22/22 focused model cases, 7/7 actual-component mobile browser cases,
+targeted lint and Next production build including types passed. Browser checks
+cover 360x667/390x844, reduced/normal motion, keyboard/touch, 44px targets,
+unchanged records/outbox/evidence, reload, offline reading, account switching,
+long/incomplete history, resize and existing Log return to Week. Four resting
+frames remain 346px with 48px header gaps; Week detail keeps the 48px anchor,
+no horizontal overflow and downward growth without an inner scroll panel.
+Screenshots inspected; commands/logs are in
+[the journey record](USER_JOURNEY_TESTING.md#read-only-week-history-2026-11-05).
+
+**Attempts, invariants and gaps.** The first build exposed a missing-task type
+fallback problem; corrected before the final passing build/checks. NVM blocked
+the npm launcher, so the installed Next CLI ran the build directly without
+changing trust. Initial wider Week tests passed 39/41; the two previously
+recorded source-assertion failures remain. Existing ResizeObserver notifications
+remain visible. No shared tokens, chapter/reading versions, 06:00 attribution,
+review write/merge or persistence protocol changed. No measured performance
+problem justified optimization. Physical-phone/hosted Week History, real sync,
+recovery, offline network reload, Vinext and broad checks remain unverified.
+
+**Records and next action.** Updated Page standard, architecture, decisions,
+journey, current task and this snapshot. The developer's Log confirmation closes
+its earlier device-review reminder; it does not certify hosted/cloud behavior.
+Next: developer phone review of Week History. Historical wording, weekly
+corrections, other-tool history/shared day view and safe account sync remain
+separate reviewed work; beta readiness is not certified.
+
+## 2026-11-05 - Past Log text corrections
+
+**Latest approved follow-up.** The developer requested keeping the cursor and
+removing the orange writing-field box, then approved the scoped fix and checks.
+Past-Log textareas now suppress only their focus outline. Final 2/2 affected
+mobile journeys and targeted test lint pass; real Tab navigation retains the
+Cancel button's focus ring. The initial programmatic-focus assertion was
+corrected in the test, without another runtime change. Updated screenshot
+inspected; no geometry/type/gap/record changes or new model/build claims.
+See [focus evidence](USER_JOURNEY_TESTING.md#past-log-caret-only-focus-2026-11-05).
+Nothing staged, committed or deployed; existing changes/warnings remain.
+Next: developer device confirmation of the cursor without the orange box.
+
+**Approval and Git context.** The developer confirmed Log History looks good,
+then approved editing existing past-entry words with explicit Save/Cancel,
+retained correction time, clearing protection and stale guards. Approved scope
+includes domain/merge rules, shell types/wiring, history editor, scoped CSS,
+tests and owning records. Branch `paing-branch`, HEAD `ccdbe77`; all 22
+pre-existing changed tracked paths and three untracked paths remain preserved
+or refined within scope. Nothing staged, committed, deployed, imported or
+changed remotely. Earlier snapshots retain their unique evidence.
+
+**Completed and verified.** Saved activity/moment text opens one editor through
+the shared App-back engine. Save changes writes accepted words; Cancel writes
+nothing. Day, time range, ID, first-recorded time and unknown metadata stay
+fixed. Actual correction time and immutable before/after snapshots accumulate
+in per-day logCorrections. Clearing retains a dated empty snapshot there and
+removes the active block; normalization/merge suppress stale restoration and
+summaries do not count cleared time. No-op/replayed saves create no revision.
+Stale editors cannot overwrite newer changes, and account epochs close drafts.
+
+Final checks passed: 78/78 focused model/structure cases, 6/6 affected mobile
+browser cases, targeted lint and Next production build including types. A
+broader ten-case browser selection passed before the final legacy comparison
+fix; coverage overlaps. The final selection covers Save/Cancel, reload, offline
+save/clear, stale merge, stale editors, account switching and multiline legacy
+no-ops. Commands, logs and limits are in
+[the journey record](USER_JOURNEY_TESTING.md#past-log-text-corrections-2026-11-05).
+
+**Attempts, invariants and gaps.** Initial passing checks missed cleared blocks
+still counting in summaries; empty values now remain in receipts outside active
+timeBlocks, with regression checks. A targeted legacy multiline no-op test
+then exposed unnecessary rewriting; shared word comparison fixed it and the
+affected checks passed again. Four resting frames remain 346px with 48px header
+gaps. No shared tokens, chapter/reading versions, 06:00 rule or original date/time
+attribution changed. No performance optimization was justified. Existing
+ResizeObserver notifications remain visible. Physical-device correction use,
+hosted/real sync, recovery, offline network reload and wider timezone migration
+remain unverified; Vinext and broad checks were not repeated.
+
+**Records and next action.** Updated Page standard, architecture, decisions,
+journey, current task and this snapshot. Previous developer-reported core fixes
+remain recorded without new certification; grey-input-box confirmation and
+other independent gaps remain. Next is developer device review of the editor.
+Missed entries, date/time changes, safe sync, migration and deployment require
+their separate reviewed scopes.
+
+## 2026-11-05 - Read-only Log history
+
+**Approval and Git context.** The developer approved the audited read-only Log
+history proposal: source, scoped CSS, tests, Page standard correction and
+decision/evidence/continuity records. Branch `paing-branch`, starting HEAD
+`ccdbe77`. Fifteen already-changed tracked paths, including code/CSS/asset
+removals, remain preserved. Nothing staged, committed, deployed, imported or
+changed remotely. Earlier snapshots retain their unique historical evidence.
+
+**Completed and verified.** The Log label opens History through the shared
+App-back engine, using the existing daily slot and account records. Saved past
+days appear newest first; each shows its assigned date, saved title, exact
+block times, activities and moments, including legacy notes. Empty generated
+days and future plans are excluded. Title-only days remain reachable.
+Historical gaps do not receive today's routine suggestions. Back returns to
+History then today; Week remains available from today. Lists/timelines grow
+downward. The Page standard's stale internal-scroller sentence now matches
+existing CSS/tests. Past-day editing remains separate work.
+
+Final checks passed: 7/7 focused model/structure cases, 6/6 actual-component
+mobile browser cases, targeted lint and Next production build including types.
+Browser verification covers 20 days reaching back to 2020, reload, legacy
+moments, unchanged days/outbox/evidence revisions, account switching, empty
+history, offline reading after online reload, keyboard/touch, long-day growth,
+resize and return to Week/Now. Exact commands/logs and limits are in
+[the journey record](USER_JOURNEY_TESTING.md#read-only-log-history-2026-11-05).
+
+**Attempts, invariants and gaps.** Screenshot review corrected the new label's
+header space while retaining its 44px target. A later 360px check sampled shared
+growth before settling; corrected waits passed the affected rerun and final
+six-case run. Four resting frames remain 346px with 48px header gaps; History
+uses the same 48px anchor. No shared tokens, chapter/reading versions, saved
+evidence, 06:00 boundary or persistence protocol changed. Previously recorded
+ResizeObserver notifications remain visible. Physical-device/hosted use, real
+sync/recovery, offline network reload and wider timezone migration are
+unverified; Vinext/broad checks were not repeated. No measured performance
+issue justified further optimization.
+
+**Records and next action.** Updated Page standard, decisions, journey, current
+task and this snapshot. The developer confirmed Past phases looks good and
+reports placeholder, Continue, Routine idle and Reflect swipe concerns resolved
+in use; no new regression certification is claimed for them. Grey-input-box
+confirmation and other independent gaps remain. Next is device review of Log
+History. Further editing, safe sync, migration and deployment need separate
+reviewed scopes.
+
 ## 2026-11-03 - Tighter past-phase spacing
 
 **Approval and state.** The developer approved using the existing roughly 10px

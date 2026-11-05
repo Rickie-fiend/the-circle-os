@@ -36,6 +36,9 @@ import {
 } from "../app-session";
 import { sizeTextAreaToContent } from "../text-area-size";
 import { useAppBack } from "../app-back";
+import { AthenaHistoryPage } from "../athena-history-page";
+import { chapterHistory } from "../chapter-history.js";
+import { ChapterHistoryPage } from "../chapter-history-page";
 import { getAccountScope } from "../account-scope";
 import { useWriting } from "../writing-provider";
 import { WritingReadingAnswer } from "../writing-pages";
@@ -50,7 +53,7 @@ import { getPublishedChapter } from "../chapters/registry";
 import { CreativeButton } from "../button-engine";
 import { writePinnedChapter } from "../day-door.js";
 import { QUESTS } from "../chapters/quest-registry";
-import { questCatalogue } from "../quests.js";
+import { questCatalogue, questStepStatus } from "../quests.js";
 import type { ChapterRun } from "../chapters/chapter-types";
 import { useChapterPublications } from "../chapters/use-chapter-publications";
 import {
@@ -526,6 +529,8 @@ export default function CircleOSMirror() {
     age: "",
   });
   const lifeBack = useAppBack<"current" | "history">("current");
+  const readingBack = useAppBack<"current" | "history" | "edition">("current");
+  const [historyEditionId, setHistoryEditionId] = useState<string | null>(null);
   useStableRouteAnchor(visionSessionRef, athenaSessionRef);
   const [declarationHistoryIndex, setDeclarationHistoryIndex] = useState(0);
   const summary = summarizeWeek(state);
@@ -628,8 +633,8 @@ export default function CircleOSMirror() {
    * done.
    */
   const quests = useMemo(
-    () => questCatalogue(QUESTS, state.chapters.runs, getPublishedChapter),
-    [state.chapters.runs],
+    () => questCatalogue(QUESTS, state.chapters.runs, getPublishedChapter, { state, publications }),
+    [state, publications],
   );
   const questCatalogueVersion = `quests-v1:${quests.length}`;
   const visibleQuest = appSessionIndex(
@@ -639,6 +644,12 @@ export default function CircleOSMirror() {
     0,
   );
   const [openQuest, setOpenQuest] = useState<string | null>(null);
+  const chapterBack = useAppBack<"quests" | "history" | "chapter">("quests");
+  const [historyChapterId, setHistoryChapterId] = useState<string | null>(null);
+  const [historyQuestId, setHistoryQuestId] = useState<string | null>(null);
+  const savedChapterHistory = chapterHistory(state.chapters.runs, publications.map(normalizeChapterPublication)
+    .filter(item => item.visibility === "public" || item.audienceProfileId === publicationProfileId || item.audienceProfileId === "local")
+    .map(item => item.chapter));
 
   /**
    * Start a step, which means: put its chapter in the door and go there.
@@ -649,10 +660,10 @@ export default function CircleOSMirror() {
    * same chapter, in the same full-screen sheet every other chapter arrives
    * in, so there is one way to read a chapter in this App and not two.
    *
-   * A finished step can be opened again. Answers supersede rather than lock:
-   * the last thing he said is what the record holds.
+   * Finished steps read their saved answers; they never replay setup.
    */
   function startQuestStep(chapterId: string) {
+    if (questStepStatus(chapterId, state.chapters.runs, { state, publications }).done) return;
     writePinnedChapter(chapterId);
     router.push("/os");
   }
@@ -1140,9 +1151,9 @@ export default function CircleOSMirror() {
           <SwipeSession
             attentionKey={`between:${athenaReading.latestEditionId || betweenJourneyVersion}`}
             availableIndices={
-              Array.from({ length: betweenPageCount }, (_, index) => index)
+              readingBack.side === "current" ? Array.from({ length: betweenPageCount }, (_, index) => index) : [0]
             }
-            className="vision-between-apps athena-reader-session"
+            className={`vision-between-apps athena-reader-session ${readingBack.className}`}
             index={visibleBetweenApp}
             label="Athena's Reading apps"
             maxIndex={betweenPageCount - 1}
@@ -1157,8 +1168,14 @@ export default function CircleOSMirror() {
               )
             }
           >
-            <div className="gap-cover">
-              <p className="os-card-label">Athena&apos;s Reading</p>
+            {readingBack.side !== "current" ? <AthenaHistoryPage
+              editions={athenaReading.editions as AthenaEdition[]}
+              selectedId={readingBack.side === "edition" ? historyEditionId : null}
+              onBack={event => readingBack.flip(readingBack.side === "edition" ? "history" : "current", undefined, event.currentTarget)}
+              onSelect={(id, source) => readingBack.flip("edition", () => setHistoryEditionId(id), source)}
+            /> : <div className="gap-cover">
+              <div className="os-card-label athena-history-entry"><button className="os-card-label athena-history-open" type="button"
+                onClick={event => readingBack.flip("history", undefined, event.currentTarget)}>Athena&apos;s Reading</button></div>
               <h2>{profileReady ? readingCoverLine : "Athena is still learning."}</h2>
               {/* When this reading was written, said once. Athena writes on her
                   own schedule, so the reading has to say how old it is — but on
@@ -1169,7 +1186,7 @@ export default function CircleOSMirror() {
                 <p className="athena-reader-updated">{updateLabel}</p>
                 <span>{profileReady ? "Swipe to see" : "Still learning"}</span>
               </div>
-            </div>
+            </div>}
 
             {athenaReaderApp(
               "days",
@@ -1214,8 +1231,8 @@ export default function CircleOSMirror() {
         <section className="quest-catalogue-session" aria-label="Quests">
           <SwipeSession
             attentionKey={`quests:${questCatalogueVersion}`}
-            availableIndices={quests.map((_, index) => index)}
-            className="quest-catalogue-apps"
+            availableIndices={chapterBack.side === "quests" ? quests.map((_, index) => index) : [visibleQuest]}
+            className={`quest-catalogue-apps ${chapterBack.className}`}
             index={visibleQuest}
             label="Quests"
             maxIndex={Math.max(0, quests.length - 1)}
@@ -1232,6 +1249,13 @@ export default function CircleOSMirror() {
           >
             {quests.map((quest, index) => {
               const open = openQuest === quest.id;
+              if (chapterBack.side !== "quests") return <ChapterHistoryPage key={quest.id}
+                records={savedChapterHistory}
+                quest={quests.find(item => item.id === historyQuestId)}
+                selectedId={chapterBack.side === "chapter" ? historyChapterId : null}
+                onBack={event => chapterBack.flip(chapterBack.side === "chapter" ? "history" : "quests", undefined, event.currentTarget)}
+                onSelect={(id, source) => chapterBack.flip("chapter", () => setHistoryChapterId(id), source)}
+              />;
               return (
                 <PageLayout
                   className="quest-page"
@@ -1239,13 +1263,16 @@ export default function CircleOSMirror() {
                     <CreativeButton
                       aria-expanded={open}
                       className="quest-view"
-                      onClick={() => setOpenQuest(open ? null : quest.id)}
+                      keepMountedOnSuccess
+                      onClick={event => quest.complete
+                        ? chapterBack.flip("history", () => { setHistoryQuestId(quest.id); setHistoryChapterId(null); }, event.currentTarget)
+                        : setOpenQuest(open ? null : quest.id)}
                       release="latch"
                       sizing="content"
                       styleId="default"
                       type="button"
                     >
-                      {open ? "Hide steps" : "View steps"}
+                      {quest.complete ? "View history" : open ? "Hide steps" : "View steps"}
                     </CreativeButton>
                   }
                   headerLeft={<p className="os-card-label">{quest.topic}</p>}
@@ -1296,13 +1323,15 @@ export default function CircleOSMirror() {
                                 of blocks rather then lines." */}
                             <button
                               className="quest-step"
-                              onClick={() => startQuestStep(step.chapterId)}
+                              onClick={event => step.done
+                                ? chapterBack.flip("chapter", () => { setHistoryQuestId(quest.id); setHistoryChapterId(`step:${step.chapterId}`); }, event.currentTarget)
+                                : startQuestStep(step.chapterId)}
                               type="button"
                             >
                               <span className="quest-step-meta">
                                 Step {stepIndex + 1}
                                 <i aria-hidden="true">·</i>
-                                {step.done ? "Done" : `${step.minutes} min`}
+                                {step.alreadySetUp ? "Already set up" : step.done ? "Done" : `${step.minutes} min`}
                               </span>
                               <span className="quest-step-title">
                                 {step.title}

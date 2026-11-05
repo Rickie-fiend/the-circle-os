@@ -13,6 +13,7 @@ import {
   writingDrafts, writingHistory, writingVersions, WritingError,
   type WritingCommand, type WritingReceipt, type WritingState,
 } from "./writing-model.js";
+import { WritingCloudRunner } from "./writing-cloud-runner";
 
 type Props = {
   scope: AccountScope;
@@ -181,7 +182,7 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
     commit,
     refresh: () => refresh(),
   };
-  return <WritingContext.Provider value={value}>{children}</WritingContext.Provider>;
+  return <WritingContext.Provider value={value}><WritingCloudRunner scope={scope} enabled={enabled} />{children}</WritingContext.Provider>;
 }
 
 export function useWriting() {

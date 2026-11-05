@@ -15,8 +15,10 @@ export type DayDoorOffer = {
   dismissedKey?: string | null;
 };
 
+/** Supported explicit doors; automatic entry offers only unfinished Day One. */
 export const DAY_DOOR_ORDER: DayDoorKind[];
 
+/** Returns Day One when offered and not dismissed today; otherwise enters the app. */
 export function dayDoor(
   offers: Partial<Record<DayDoorKind, DayDoorOffer>>,
   todayKey: string,
