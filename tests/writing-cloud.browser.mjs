@@ -94,17 +94,17 @@ async function conflictDevices(width) {
 async function openSync(page,connected=true) {
   await page.evaluate(connected=>window.api.ui(connected),connected);
   await page.getByRole("button",{name:"History",exact:true}).click();
-  await page.getByRole("button",{name:"Writing sync",exact:true}).click();
-  await expect(page.getByRole("heading",{name:"Writing sync",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Sync",exact:true}).click();
+  await expect(page.locator(".os-writing-sync")).toBeVisible();
 }
 for(const width of [360,390]) {
   test(`writing sync view stays separate from silent Note at ${width}px`,{timeout:90000},async()=>{
     await reset();const one=await device(width);
     try {
-      await one.page.evaluate(()=>window.api.save());await openSync(one.page,false);
-      await expect(one.page.getByText("Cloud sync is off.",{exact:false})).toBeVisible();
-      await expect(one.page.getByText("Synced",{exact:true})).toHaveCount(0);
+      await one.page.evaluate(()=>window.api.save());await one.page.evaluate(()=>window.api.ui(false));
       await one.page.getByRole("button",{name:"History",exact:true}).click();
+      await expect(one.page.getByRole("button",{name:"Sync",exact:true})).toHaveCount(0);
+      await expect(one.page.getByRole("button",{name:"Try again",exact:true})).toHaveCount(0);
       await one.page.getByRole("button",{name:"Note",exact:true}).click();
       await expect(one.page.locator(".os-note-page")).not.toContainText(/Saved on this device|Synced|Waiting to sync/);
     } finally {await one.context.close();}
@@ -113,22 +113,45 @@ for(const width of [360,390]) {
     await reset();const {one,two}=await conflictDevices(width);const errors=[];two.page.on("pageerror",e=>errors.push(e.message));
     try {
       await openSync(two.page);await two.page.getByRole("button",{name:"Device branch Review copies"}).click();
-      await expect(two.page.getByRole("heading",{name:"This device",exact:true})).toBeVisible();
-      await expect(two.page.getByRole("heading",{name:"Cloud copy",exact:true})).toBeVisible();
+      await expect(two.page.getByRole("button",{name:"Try again",exact:true})).toHaveCount(0);
+      await expect(two.page.getByRole("button",{name:"Open Device history",exact:true})).toBeVisible();
+      await expect(two.page.getByRole("button",{name:"Open Cloud history",exact:true})).toBeVisible();
+      await expect(two.page.getByText("Saved history",{exact:true})).toHaveCount(0);
+      await two.page.getByRole("button",{name:"Open Cloud history",exact:true}).click();
+      await expect(two.page.locator(".os-sync-version")).toHaveCount(2);
+      await two.page.getByRole("button",{name:"Copies",exact:true}).click();
+      const cloudBox=await two.page.getByRole("button",{name:"Use Cloud",exact:true}).boundingBox();
+      const deviceBox=await two.page.getByRole("button",{name:"Use Device",exact:true}).boundingBox();
+      assert.ok(cloudBox.y+cloudBox.height<=deviceBox.y,"choice buttons stack Cloud above Device");
+      assert.equal(await two.page.locator(".os-writing-sync > .os-page-body").evaluate(el=>getComputedStyle(el).scrollbarWidth),"none");
       const buttons=two.page.getByRole("button",{name:/^Use /});
       for(const button of await buttons.all())assert.ok((await button.boundingBox()).height>=44);
       await two.page.screenshot({path:`outputs/writing-conflict-${width}.png`});
       assert.equal(await two.page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-      await two.page.getByRole("button",{name:width===360?"Use this device’s copy":"Use cloud copy",exact:true}).click();
-      await expect(two.page.getByText("Your choice is saved. Both histories are kept below.",{exact:true})).toBeVisible({timeout:20000});
+      await two.page.getByRole("button",{name:width===360?"Use Device":"Use Cloud",exact:true}).click();
+      await expect(two.page.getByRole("button",{name:/branch Synced/})).toBeVisible({timeout:20000});
+      await expect(two.page.getByText(/Your choice is saved/)).toHaveCount(0);
       const data=await read(two.page);assert.equal(Object.keys(data.queue.pending).length,0);assert.equal(Object.keys(data.cloud.resolved).length,1);
-      await two.page.getByRole("button",{name:"Writing sync",exact:true}).click();
-      await two.page.getByRole("button",{name:/Kept histories/}).click();
-      await expect(two.page.getByRole("heading",{name:"Kept histories",exact:true})).toBeVisible();
-      await two.page.getByRole("button",{name:"Writing sync",exact:true}).click();
+      await two.page.getByRole("button",{name:/branch Synced/}).click();
+      await expect(two.page.getByRole("button",{name:"Open Cloud history",exact:true})).toBeVisible();
+      await two.page.getByRole("button",{name:"Sync",exact:true}).click();
+      await two.page.getByRole("button",{name:"History",exact:true}).click();
+      await expect(two.page.getByRole("button",{name:"Sync",exact:true})).toHaveCount(0);
+      await two.page.evaluate(()=>window.api.save("Newest saved words after resolving"));
+      await expect.poll(async()=>Object.keys((await read(two.page)).queue.pending).length).toBe(0);
+      await two.page.reload();await two.page.waitForFunction(()=>window.api);await two.page.evaluate(()=>window.api.ui());
+      await two.page.getByRole("button",{name:"History",exact:true}).click();
+      await two.page.getByRole("button",{name:"Saved copies",exact:true}).click();
+      await expect(two.page.getByRole("button",{name:"Open This note history",exact:true})).toContainText("Newest saved words after resolving");
+      await two.page.getByRole("button",{name:"Open This note history",exact:true}).click();
+      await expect(two.page.locator(".os-sync-version").first()).toContainText("Newest saved words after resolving");
+      await two.page.getByRole("button",{name:"Copies",exact:true}).click();
+      await two.page.getByRole("button",{name:"Open Cloud history",exact:true}).click();
+      await expect(two.page.locator(".os-sync-version")).toHaveCount(2);
+      await two.page.getByRole("button",{name:"Copies",exact:true}).click();
       await two.page.getByRole("button",{name:"History",exact:true}).click();
       await two.page.getByRole("button",{name:"Note",exact:true}).click();
-      await expect(two.page.getByRole("textbox",{name:"Write a note",exact:true})).toHaveValue(width===360?"Device branch":"Cloud branch");
+      await expect(two.page.getByRole("textbox",{name:"Write a note",exact:true})).toHaveValue("Newest saved words after resolving");
       assert.deepEqual(errors,[]);
     } finally {await one.context.close();await two.context.close();}
   });
@@ -140,18 +163,59 @@ test("review detects local changes and disables offline choices; lost reply surv
     await two.page.evaluate(()=>window.api.save("New local branch"));
     await expect(two.page.getByRole("button",{name:"Review updated copies"})).toBeVisible();
     await two.page.getByRole("button",{name:"Review updated copies"}).click();
-    await two.context.setOffline(true);await expect(two.page.getByRole("button",{name:"Use cloud copy"})).toBeDisabled();
+    await two.context.setOffline(true);await expect(two.page.getByRole("button",{name:"Use Cloud",exact:true})).toBeDisabled();
     await two.context.setOffline(false);
     await two.page.route("**/rpc/circle_writing_resolve",async route=>{await route.fetch();await route.abort();});
-    await two.page.getByRole("button",{name:"Use cloud copy"}).click();
-    await expect(two.page.getByText("Could not sync your choice.",{exact:true})).toBeVisible({timeout:20000});
+    await two.page.getByRole("button",{name:"Use Cloud",exact:true}).click();
+    await expect(two.page.getByText("Could not sync.",{exact:true})).toBeVisible({timeout:20000});
     assert.equal(Object.keys((await read(two.page)).cloud.choices).length,1);
     await two.page.unroute("**/rpc/circle_writing_resolve");
-    await two.page.reload();await two.page.waitForFunction(()=>window.api);await openSync(two.page);
+    await two.page.getByRole("button",{name:"Try again",exact:true}).click();
+    await expect(two.page.getByRole("button",{name:"Try again",exact:true})).toHaveCount(0);
+    await two.page.reload();await two.page.waitForFunction(()=>window.api);await two.page.evaluate(()=>window.api.ui());
     await expect.poll(async()=>Object.keys((await read(two.page)).cloud.choices).length).toBe(0);
     assert.equal(Object.keys((await read(two.page)).cloud.resolved).length,1);
     const rows=await db.query("select count(*)::int as count from circle_private.writing_resolutions");assert.equal(rows.rows[0].count,1);
   } finally {await one.context.close();await two.context.close();}
+});
+
+test("long comparison scrolls without a scrollbar and deleted history stops rendering",{timeout:90000},async()=>{
+  await reset();const {one,two}=await conflictDevices(360);
+  try {
+    await two.page.evaluate(()=>window.api.save("Long device copy. ".repeat(150)));
+    await openSync(two.page);await two.page.getByRole("button",{name:/Review copies/}).click();
+    const body=two.page.locator(".os-writing-sync > .os-page-body");
+    assert.equal(await body.evaluate(el=>{el.scrollTop=120;return el.scrollTop>0&&el.scrollHeight>el.clientHeight;}),true);
+    await two.page.getByRole("button",{name:"Open Device history",exact:true}).click();
+    await expect(two.page.locator(".os-sync-version")).toHaveCount(3);
+    await two.page.evaluate(()=>window.api.lifecycle("trash"));await two.page.evaluate(()=>window.api.lifecycle("delete"));
+    await expect(two.page.getByText("Deleted forever.",{exact:true})).toBeVisible();
+    await expect(two.page.locator(".os-sync-version")).toHaveCount(0);
+  } finally {await one.context.close();await two.context.close();}
+});
+
+test("Sync is absent for empty and draft-only stores, appears for pending saved work and clears after sync",{timeout:90000},async()=>{
+  await reset();const one=await device();
+  try {
+    await one.page.evaluate(()=>window.api.ui());
+    await one.page.getByRole("button",{name:"History",exact:true}).click();
+    await expect(one.page.getByRole("button",{name:"Sync",exact:true})).toHaveCount(0);
+    await one.page.evaluate(async()=>{
+      const store=await import('/app/os/writing-store.ts'),scopes=await import('/app/os/account-scope.js'),model=await import('/app/os/writing-model.js');
+      const scope=scopes.getAccountScope(),state=await store.loadWritingState(scope),at=new Date().toISOString();
+      await store.commitWritingOperation(scope,{owner:state.owner,operationId:crypto.randomUUID(),type:'write-draft',at,expectedDraftVersion:0,
+        draft:{id:crypto.randomUUID(),entryId:'unsent',kind:'thought',source:null,startedAt:at,baseGeneration:0,baseVersionId:null,
+          attribution:model.writingAttribution(at,'Asia/Bangkok'),content:{title:'',body:'Unsent words',tags:[]}}});
+    });
+    await expect(one.page.getByRole("button",{name:"Sync",exact:true})).toHaveCount(0);
+    await one.context.setOffline(true);await one.page.evaluate(()=>window.api.save('Pending saved words'));
+    await expect(one.page.getByRole("button",{name:"Sync",exact:true})).toBeVisible();
+    await one.page.getByRole("button",{name:"Sync",exact:true}).click();
+    await expect(one.page.getByRole("button",{name:"Try again",exact:true})).toHaveCount(0);
+    await one.context.setOffline(false);await expect.poll(async()=>Object.keys((await read(one.page)).queue.pending).length).toBe(0);
+    await one.page.getByRole("button",{name:"History",exact:true}).click();
+    await expect(one.page.getByRole("button",{name:"Sync",exact:true})).toHaveCount(0);
+  }finally{await one.context.close();}
 });
 
 test("real IndexedDB offline save/reload uploads and restores in a separate browser device",async()=>{

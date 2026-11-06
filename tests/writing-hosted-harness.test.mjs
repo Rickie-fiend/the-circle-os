@@ -11,11 +11,20 @@ test("hosted harness exercises real SQL and coordinator with isolated same-ID ac
     const a = await runHostedChecks({ owner: `account:${A}`, remote: remote(db, A), report: line => results.push(line) });
     const b = await runHostedChecks({ owner: `account:${B}`, remote: remote(db, B), witness: a, report: line => results.push(line) });
     assert.equal(a.entryId, b.entryId);
-    assert.equal(results.length, 11);
-    await verifyOwnWitness(remote(db, A), a, `account:${A}`);
+    assert.ok(results.some(line => line.includes("live resolution history are hidden")));
+    assert.equal((await remote(db, A).resolutions("")).length, 1, "A still has a live archive while B runs");
+    assert.equal((await remote(db, B).resolutions("")).length, 1, "B sees only its live archive");
+    await verifyOwnWitness(remote(db, A), a, `account:${A}`, b);
+    await verifyOwnWitness(remote(db, B), b, `account:${B}`, a);
+    await verifyOwnWitness(remote(db, A), a, `account:${A}`); // cleanup recheck is repeatable
     const conflicts = await db.query("select candidate from circle_private.writing_conflicts");
     assert.equal(conflicts.rows.length, 2);
     assert.ok(conflicts.rows.every(row => row.candidate === null));
+    const archives = await db.query("select request_body,result_head from circle_private.writing_resolutions");
+    assert.equal(archives.rows.length, 6);
+    assert.ok(archives.rows.every(row => row.request_body === null && row.result_head === null));
+    assert.deepEqual(await remote(db, A).resolutions(""), []);
+    assert.deepEqual(await remote(db, B).resolutions(""), []);
     await assert.rejects(runHostedChecks({ owner: `account:${A}`, remote: remote(db, A), witness: a }), /already has/);
     await assert.rejects(verifyOwnWitness(remote(db, B), a, `account:${B}`), /original account/);
   } finally { await db.close(); }
@@ -45,7 +54,7 @@ test("service-role probe is local development only and distinguishes denial from
     };
     const response = await POST(request());
     assert.deepEqual(await response.json(), { passed: true });
-    assert.equal(calls.length, 3);
+    assert.equal(calls.length, 5);
     assert.ok(calls.every(call => call.url.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL)
       && call.options.headers.apikey === "synthetic-server-only-key"));
     globalThis.fetch = async () => Response.json({ code: "INVALID_KEY" }, { status: 401 });

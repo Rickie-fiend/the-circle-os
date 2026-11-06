@@ -2,10 +2,30 @@
 
 Repository implementation: 2026-11-05. Hosted migration applied and bounded
 two-account RPC checks verified on 2026-11-06. Activation remains off.
+Separate account-scoped IndexedDB reload checks also passed against the hosted
+service on 2026-11-06; see the bounded recovery evidence below.
 This covers the account writing ledger, not every Circle OS domain or legacy
 profile-server data. No personal migration is authorized by this implementation.
 
 ## Writing status and conflict resolution - 2026-11-06
+
+Saved copies now includes the latest saved Note above retained original snapshots;
+its current-note history follows ledger updates. Archived Cloud/Device histories
+stay unchanged. New notes remain in normal History. Hidden scrollbar chrome now
+applies to all bounded writing Pages, not just Sync. This is shared app source,
+not a demo-only override. No sync protocol, SQL or activation change.
+
+Latest approved controls: History calls the action Sync and hides it when no
+saved work, conflict or recoverable error needs attention. Draft-only/completed
+states do not show it. Try again is error-only, hidden while retrying and after
+success. Retained archives remain accessible via Saved copies on the owning
+Note History row; normal row opening still edits. No SQL/activation change.
+
+Later approved presentation refinement: Cloud/Device plus writing only; tap a
+copy for its dated read-only history. Note-style Use Cloud / Use Device buttons
+stack vertically. Confirmed success returns silently to the sync list. The
+scrollbar chrome is hidden while Body remains scrollable. Failure/retry and
+stale-review protection remain. No SQL or activation change follows this UI work.
 
 Repository implementation now includes History → Writing sync. Note keeps silent
 autosave and the global header has no save/sync label. The separate view shows
@@ -16,7 +36,8 @@ Changes during review require reviewing updated copies. Clean Note buffers adopt
 the chosen current copy when leaving this view; unfinished writing is preserved.
 
 The new [follow-up migration](../supabase/migrations/202611060001_writing_resolution.sql)
-is **not applied to the hosted project**. It adds private owner-readable
+was **applied to the hosted project on 2026-11-06**, after developer approval.
+It adds private owner-readable
 `writing_resolutions`, the confirmed-account `circle_writing_resolve` action,
 paged `circle_writing_resolution_history`, and a permanent-deletion scrub trigger.
 The original applied migration is unchanged. SHA-256 of the follow-up file:
@@ -38,15 +59,89 @@ Newer local edits stay pending and require another review. Both local deletion
 and downloaded deletion remove choice/archive bodies. The coordinator recovers
 pending choices before normal receipt recovery, inventory and uploads.
 
-These changes supersede the older "no resolver/status UI" descriptions below
-for repository capability only. Automatic sync activation remains separately
-reviewed. Before enabling it, review/apply this follow-up migration and verify
-both new RPCs against the hosted service: allowed owner access, denied other-
-account/anonymous/service-role/unconfirmed access, stale choices, retry/lost
-responses, deletion and retained-history recovery. Do not reapply the original
-non-idempotent migration. Hosted recovery, actual devices, backups, retention and
-other-domain sync remain open. Local proof is in the
+These changes supersede the older "no resolver/status UI" descriptions below.
+The bounded hosted checks below now verify the resolution protocol. Automatic
+sync activation remains separately reviewed and disabled. Unconfirmed-session
+hosted access, production-store/physical-device recovery, backups, retention and other-domain
+sync remain open. Do not reapply either non-idempotent migration. Local proof is in the
 [journey evidence](USER_JOURNEY_TESTING.md#writing-sync-status-and-conflict-resolution-2026-11-06).
+
+## Durable hosted reload recovery - 2026-11-06
+
+Developer approved `durable-checks.ts`, the existing development check page,
+`writing-hosted-recovery.browser.mjs` and the four evidence records. The page now
+offers explicit start/continue/reload controls. Synthetic runs live in the separate
+`circle-os-writing-hosted-recovery-v1:account:<id>` IndexedDB database through
+the existing account transaction engine. It never opens the product writing
+database. The existing writing/queue/conflict models, coordinator and confirmed-
+session transport are reused. Stored entry targets are restricted to that run.
+Checkpoints record the document time origin and require an actual full reload;
+hot reload alone cannot satisfy the check. Multi-request steps retain progress
+for retry. Nothing runs automatically against the hosted service on page load.
+
+Both existing confirmed hosted accounts passed the five reload transitions and
+a final completion reload: pending save, accepted upload with reply deliberately
+dropped, queued conflict choice, accepted choice with reply dropped, and queued
+permanent deletion. Exact recovery retained newer local writing and original
+histories. A fresh durable synthetic device recovered the archives. Final replay
+checks preserved the terminal head; all three stored device fixtures and replay
+snapshots were scrubbed. Completion survives another reload with no writing.
+The final read-only hosted audit passed: two heads at server version 7 across two
+owners, four archives with null request/result bodies, ten body-free receipts,
+and no retained conflict bodies. Auth accounts and minimal server/local metadata
+remain; synthetic writing bodies are deleted.
+
+An already accepted upload replay returns its original body-free receipts even
+after deletion; the unchanged terminal head proves no resurrection. A prior
+resolution replay returns `deleted`. The new harness checks both behaviors.
+No SQL, transport protocol, product store, environment, activation or deployment
+changed in this slice. Four isolated Chromium cases at 360/390px, final targeted
+lint and production Next/TypeScript build passed. Local browser cases also cover
+real offline saving, aborted HTTP replies after SQL acceptance, account-separated
+checkpoints and late-response scope cancellation; their JWTs are fixtures.
+
+This closes the **separate test-store/page-reload** gap, not the production writing
+adapter, cold browser restart, offline page load, physical phone, or operating-
+system eviction/recovery path. Hosted lost replies are deliberately omitted from
+local acknowledgement; local fixture cases additionally abort the HTTP response.
+Hosted unconfirmed/expired/revoked valid sessions, true lock contention and
+backup/retention remain open. Real sync stays disabled. See
+[exact evidence and limits](USER_JOURNEY_TESTING.md#durable-hosted-reload-recovery-2026-11-06).
+
+## Follow-up migration and hosted resolution checks - 2026-11-06
+
+The developer approved the exact follow-up SQL, development harness extension,
+synthetic two-account checks and these evidence records. Applied only
+`202611060001_writing_resolution.sql` to `gcqmblrkpfvjnewzdycj` through SQL Editor;
+the original migration and configuration are unchanged. The preflight found
+none of the four follow-up objects. Supabase then reported success. Seven catalog
+checks passed, including exact normalized hashes of all three installed function
+bodies, owner-only RLS/select, denied direct writes, authenticated-only RPC grants,
+fixed definer paths, inaccessible helper, deletion trigger and initially empty
+archive. No CLI migration-history registration was performed; do not blindly
+apply the file again.
+
+Both confirmed hosted test accounts passed local/cloud choices, stale-review
+rejection, exact/changed retries, accepted resolution response-loss recovery with
+a newer local edit, fresh in-memory device archive recovery, Trash/restore,
+permanent deletion and blocked stale upload/choice replay. All five RPCs denied
+anonymous, invalid-JWT and direct server service-role requests. The current
+service-role route passed; its earlier network-error result below is historical.
+
+The second account could not read the first account's head, exact receipts or
+still-live archive. It independently used the same entry IDs and rejected a
+foreign-owner choice. Reciprocal rechecks verified hidden peer receipts/archives,
+unchanged own heads/history and cleanup of both live synthetic archives.
+The final read-only audit passed: four terminal heads across two owners, six
+archives with null request/result bodies, two scrubbed conflict candidates and
+26 body-free receipts. Test accounts remain; synthetic bodies are deleted.
+
+The harness uses existing confirmed sessions and memory-only synthetic bundles,
+never personal IndexedDB writing. This does not certify physical devices, durable
+hosted IndexedDB reload, true multi-connection lock contention, expired/revoked
+valid sessions, hosted unconfirmed-session access or backup/retention coverage.
+`NEXT_PUBLIC_CIRCLE_WRITING_SYNC=disabled` remains unchanged. No personal import,
+activation or deployment. See [exact checks, attempts and limits](USER_JOURNEY_TESTING.md#follow-up-migration-and-hosted-resolution-checks-2026-11-06).
 
 ## Hosted verification - 2026-11-06
 

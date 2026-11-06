@@ -8,6 +8,24 @@ reviewed implementation and verification under the current web beta sequence.
 
 ### Writing sync status and conflict resolution - 2026-11-06
 
+Saved-copy presentation now derives Current note and its history from the live
+writing ledger, separately from immutable `cloud.resolved` snapshots. The bounded
+writing Body selector hides scrollbar chrome for Note/History/Trash/Sync without
+changing overflow or frame rules. No persistence/model/RPC/schema change.
+
+Latest UI-only refinement exposes `WritingSyncProvider.hasWork` from pending
+saved references, choices/conflicts, initial saved-record inventory and recoverable
+errors, with activation guarding upload work. History conditionally renders Sync.
+Retry clears the error presentation while scheduling recovery. Saved copies on
+the owning History row opens the retained archive without requiring Sync to be
+visible. Persistent ledger/queue/cloud schemas and SQL remain unchanged.
+
+Later presentation refinement reuses the default Note CreativeButton and shared
+App-back for list/comparison/history. Histories are read-only, dates appear only
+inside them, and a confirmed choice returns silently to the list. A deletion
+received while viewing history hides the captured text. No persistence, RPC,
+SQL or activation contract changes.
+
 `WritingSyncProvider` observes account-scoped cloud transactions and runner state.
 History opens `WritingSyncPage`; the Note editor and global header retain silent
 save behavior. `writing-conflict-model` captures reviewed saved snapshots and

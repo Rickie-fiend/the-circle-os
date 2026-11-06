@@ -10045,6 +10045,13 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
 .circle-os .os-writing-sync h3 { font: inherit; font-weight: 650; }
 .circle-os .os-writing-sync summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: #E36B37; }
 .circle-os .os-writing-sync time { font-size: 0.875rem; }
+.circle-os .os-writing-bounded.os-writing-page > .os-page-body { scrollbar-width: none; }
+.circle-os .os-writing-bounded.os-writing-page > .os-page-body::-webkit-scrollbar { display: none; }
+.circle-os .os-writing-sync .os-sync-copy { display: block; width: 100%; min-height: 44px; padding: 0; margin: 0 0 25px; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.circle-os .os-writing-sync .os-sync-source { display: block; margin-bottom: 12px; font-size: 0.875rem; font-weight: 650; }
+.circle-os .os-writing-sync .os-sync-copy h2 { margin: 0; }
+.circle-os .os-writing-sync .os-sync-copy p { margin: 12px 0 0; }
+.circle-os .os-writing-sync .os-sync-version { margin-bottom: 25px; }
 .circle-os .os-writing-embedded-header { display: flex; justify-content: space-between; }
 .circle-os .os-writing-embedded { width: 100%; }
 

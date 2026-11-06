@@ -312,6 +312,26 @@ Used for charts, weekly views, and other things worth reading again.
 
 ## Note
 
+2026-11-06 current-copy refinement: Saved copies shows the current saved Note
+first, then retained Cloud/Device histories unchanged. Current-note history reads
+the live ledger. New entries belong to normal History. All bounded writing Body
+scroll areas hide scrollbar chrome, retaining wheel/touch/keyboard scrolling.
+
+2026-11-06 conditional Sync controls: History shows Sync only for saved work
+awaiting sync, conflicts or recoverable errors. Empty/draft-only/completed states
+have no Sync action. Try again appears only after an error, not while retrying
+or after success. Retained histories open through Saved copies on the owning
+Note History row. The normal row continues to open the editor.
+
+2026-11-06 sync refinement: Cloud and Device show only their authored content
+and any necessary Trash marker. Tap either copy for dated read-only history;
+Back returns to comparison. Use the Note default CreativeButton, stacked Use
+Cloud then Use Device. Hide scrollbar chrome while retaining bounded Body
+scrolling. Confirmed choice returns silently to the list; pending/error/retry
+remain visible only when relevant. No persistent success message or history
+expander. Normal Note History still opens its editor. This supersedes the
+initial sync presentation below.
+
 2026-11-06 writing-sync addition: History opens a separate Writing sync Page.
 Status and conflict controls live there, not in the silent Note editor or global
 header. Review vertically stacked This device and Cloud copy with dates/Trash

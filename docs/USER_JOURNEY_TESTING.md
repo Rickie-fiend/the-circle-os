@@ -1,5 +1,383 @@
 # Circle OS user-journey test record
 
+## Durable hosted reload recovery (2026-11-06)
+
+**Approval and setup.** Developer approved the proposed recovery scope before
+edits: new `app/os/sync-check/durable-checks.ts`, the existing check client, new
+`tests/writing-hosted-recovery.browser.mjs`, and the four evidence documents.
+Started on `paing-branch`, HEAD `d841643`, with 20 modified tracked paths and
+untracked `debug.log`; preserved all prior work. No stage, commit, push or deploy.
+The migration files, product writing store and `.env.local` are unchanged;
+`NEXT_PUBLIC_CIRCLE_WRITING_SYNC=disabled` remains explicit.
+
+The development-only page adds start/continue/reload controls below the existing
+hosted checks. It stores one synthetic run in the separate account-scoped
+`circle-os-writing-hosted-recovery-v1` IndexedDB database via `scopedTransaction`.
+Three stored device bundles reuse writing/queue/conflict models and the actual
+coordinator/transport. No product writing database is opened. The entry namespace
+is `recovery_<24 hex characters>`; checkpoint validation restricts stored upload,
+choice, writing, draft and pending-change targets to that entry. Each completed
+phase stores `performance.timeOrigin`; continuation requires a different page
+time origin, so development hot reload does not count as a full reload. Internal
+multi-request steps are journaled for retry; checkpoint and bundle writes commit
+through account scope guards. Start makes no network request. Completed reload
+inspection makes no request either. The normal sync runner remains disabled.
+
+**Final local commands.** `node` means the installed executable at
+`C:/Users/wickie''/AppData/Local/Author Software/nvm/installs/v24.22.1/node.exe`.
+Browser commands set `PLAYWRIGHT_BROWSERS_PATH` to
+`C:/Users/wickie''/AppData/Local/ms-playwright`; builds prepend the Node directory
+to `PATH`. Tests/build ran outside the sandbox after the recorded network failure.
+
+```text
+node --test tests/writing-hosted-recovery.browser.mjs
+Final 4/4 passed; exit 0 (62.254 seconds while the final build ran concurrently).
+
+node node_modules/eslint/bin/eslint.js app/os/sync-check/durable-checks.ts app/os/sync-check/sync-check-client.tsx tests/writing-hosted-recovery.browser.mjs
+Final targeted lint passed; exit 0.
+
+node node_modules/next/dist/bin/next build
+Final production build, TypeScript and all 14 static pages passed; exit 0.
+```
+
+The isolated browser page renders the actual `SyncCheckClient` with a synthetic
+Auth client and intercepts every Supabase RPC into the actual migrated PGlite SQL;
+no request reaches hosted Supabase. Other external requests are blocked. Cases:
+
+- At 360px and 390px, start while genuinely browser-offline; save to IndexedDB
+  with zero RPCs. Same-document continuation is rejected. Reconnect, fully reload
+  at all five checkpoints, recover exact uploads/choices, preserve newer edits,
+  recover histories into a fresh durable device, and finish deletion. Complete
+  records survive a further reload. A synthetic sentinel in the product-named
+  writing database remains unchanged. Server assertions verify one terminal head
+  at version 7, two scrubbed resolution rows and five receipts per run. All three
+  test bundles and stored replay snapshots contain no synthetic writing afterward.
+- Abort an actual HTTP response after SQL accepts an upload, before a checkpoint
+  advances. Reload/retry preserves its request ID and server version. Repeat for
+  a resolution and verify exactly one archived resolution before continuing.
+- Switch accounts while an accepted upload reply is held. The old account cannot
+  checkpoint after the scope changes; the new account sees no old run. Each
+  account restores its own entry/request on return. A queued IndexedDB read is
+  aborted on scope change. All final cases have no page errors.
+
+**Hosted execution.** Used the existing development server at
+`http://localhost:3000/os/sync-check` and the two existing confirmed hosted accounts
+in normal/private Opera windows. Windows Computer Use performed the page actions;
+credentials stayed in their existing sessions. One app/window listing timed out;
+a fresh listing succeeded. No password, token or server secret was transferred.
+The private-window entry was `recovery_0cec3a3f24e4484aa9d4fe6e`; the normal-window
+entry was `recovery_30ecc1ed34f74c5c8ea12944`. Each account used its own entry.
+
+For **each** account, observed the six stored PASS lines and full page reloads:
+
+1. Synthetic writing and one pending upload committed locally without a request.
+2. Reload retained that upload. Hosted acceptance was received, deliberately
+   omitted from local acknowledgement, and `upload-reply-lost` was committed.
+3. Reload retained the request. A newer local save survived exact receipt recovery
+   without a duplicate. Competing device/cloud copies and a choice were persisted.
+4. Reload retained the identical choice. The hosted resolution was accepted and
+   its reply deliberately omitted locally; `choice-reply-lost` was persisted.
+5. Reload retained the choice for exact retry. A newer local edit stayed pending
+   as a conflict; original histories remained unchanged. A fresh durable fixture
+   recovered histories. The cloud copy was chosen, then permanent deletion queued.
+6. Reload retained the deletion. Hosted deletion completed; old upload/choice
+   replays could not change the terminal head. All three stored test devices and
+   replay request bodies were scrubbed. `complete` survived another full reload;
+   Check saved completion returned without an error in both windows.
+
+The hosted loss simulation deliberately drops acknowledgement **after** a real
+HTTP result returns; the separate local cases above also abort the HTTP response.
+Hosted offline page loading and physical-device restart were not tested.
+
+A final **read-only** SQL audit on the approved project returned four true rows:
+two terminal heads across two owners at server version 7, four resolution rows
+with null request/result bodies, ten body-free receipts across those owners, and
+no non-null conflict candidate for the two recovery IDs. Synthetic text is deleted;
+Auth accounts, tombstones/receipts and body-free local completion metadata remain.
+No schema/configuration or personal record changes were needed.
+
+**Attempts and correction.** The sandboxed browser suite failed all four cases
+at loopback navigation with `ERR_NETWORK_ACCESS_DENIED`; the approved outside-
+sandbox run reached the fixture. Its first three deletion assertions then failed
+because the new harness incorrectly required an already-accepted upload replay to
+return `deleted`. Inspection of the unchanged SQL showed exact accepted uploads
+return their immutable body-free receipts before the tombstone branch. Corrected
+the harness to accept exact receipt replay only when the terminal head remains
+identical; old resolution replay must still return `deleted`. This was a harness
+expectation error, not evidence of resurrection or a product/SQL fix. The corrected
+four-case run passed, then passed again after adding stored-target validation.
+Final lint/build and both hosted runs use that final code. No measured performance
+problem justified optimization. Repeat runs overlap; do not add their counts.
+
+**Limits and next gate.** This proves the shared transaction/models/coordinator
+with a **separate synthetic IndexedDB adapter** and actual hosted page reloads.
+It does not certify the product writing-store adapter, physical phone, cold browser
+restart, private-window closure, eviction recovery or offline page load. Account
+switching/late response here is local fixture proof; the preceding hosted slice
+retains its real reciprocal-account access evidence. Hosted unconfirmed/expired/
+revoked valid sessions, true multi-connection lock contention, backup/restore and
+maximum deleted-backup retention remain open. No geometry/type/gap or Circle-day
+rule changed or needed new measurement; prior date/ResizeObserver and broader
+beta gaps remain. Next: separately review the hosted-session test scope. Real sync
+stays disabled; activation and deployment remain separate.
+
+## Follow-up migration and hosted resolution checks (2026-11-06)
+
+**Scope and setup.** Developer explicitly approved applying the reviewed follow-up,
+extending `app/os/sync-check/` and `tests/writing-hosted-harness.test.mjs`, and
+updating the writing contract, current task, handoff and this record. Branch
+`paing-branch`, HEAD `d841643`; all 15 pre-existing modified tracked paths and
+untracked `debug.log` preserved. No stage, commit, push or public deployment.
+The original migration and `.env.local` are unchanged; the latter still has
+`NEXT_PUBLIC_CIRCLE_WRITING_SYNC=disabled`.
+
+**Hosted migration.** Used the existing authenticated Opera Supabase SQL Editor
+for `gcqmblrkpfvjnewzdycj`. A read-only preflight returned false for the resolution
+table, both RPCs and deletion trigger. Applied only
+`supabase/migrations/202611060001_writing_resolution.sql`, SHA-256
+`60b823dcc45f8ca5ff3623913272501e8dba6886178111600e4c410ec6e929e2`.
+Supabase reported `Success. No rows returned`. Seven subsequent catalog checks
+all returned true: all three function bodies match the file after CR normalization;
+table RLS and select-only authenticated access; owner-select policy; authenticated-
+only RPC grants/fixed definer search paths; deletion trigger; inaccessible scrub
+helper; initially empty resolution archive. Application used SQL Editor; no CLI
+migration-history registration was performed. Neither migration should be reapplied.
+
+**Hosted account execution.** Served the local development harness at
+`http://localhost:3000/os/sync-check` using the ignored existing Supabase settings
+and two existing confirmed hosted accounts, normal and private Opera windows.
+Credentials stayed in their existing sessions; no token/password/secret was
+copied into the chat, fixtures, browser fields or repository. The server-only
+service-role probe uses its existing environment secret and returns sanitized
+status only. Synthetic bundles and simulated devices stay in memory, outside the
+person's IndexedDB ledger. Cross-window witnesses contain IDs and versions only.
+
+Both accounts completed their runs, with the second using the first account's
+witness and the same synthetic IDs. Observed passes:
+
+- Own writing/inventory and exact receipt retry/recovery; changed operation reuse
+  rejected; accepted upload response loss recovers before a newer local save.
+- Competing saved copies remain intact and pause that entry. A cloud edit after
+  review makes the old choice return `changed` and requires a fresh review.
+- Local choice retains both original histories. Its accepted response is deliberately
+  lost; a cloned bundle simulates reload, then a newer edit is saved. Recovery
+  retains the newer edit and pending conflict. Exact resolution retry returns the
+  same result; changed reuse of that request ID is rejected.
+- Cloud choice settles the reviewed copy. A fresh in-memory device recovers the
+  retained original histories through the real hosted history RPC.
+- Trash/restore and permanent deletion work; stale uploads and old resolution
+  requests return the deleted result, never restore text. Deleted archives disappear
+  from owner history; the competing local fixture is scrubbed.
+- Anonymous and invalid-JWT requests are rejected by all five RPCs. Both server
+  service-role probes pass with actual HTTP permission denial; unlike the older
+  run, the local server probe did not encounter a network failure.
+- Account B cannot see A's head, exact receipts or still-live synthetic archive.
+  B uses the same entry IDs independently and cannot resolve a foreign-owner choice.
+  B's IDs-only witness is copied back to A; reciprocal rechecks reject peer access,
+  verify each original tombstone/receipts/live archive remains unchanged, then
+  delete each remaining archive and verify old-choice replay stays deleted.
+
+Both final rechecks showed their two PASS lines. A final read-only SQL audit for
+`hosted_c228416e8af14e08822dacd5` and its `_archive` entry returned four true rows:
+four isolated terminal heads across two owners (main server version 11, archive
+version 5); six resolution rows with null request/result bodies; two conflict
+candidates with null bodies; 26 body-free receipts. Synthetic bodies are deleted.
+Those minimal records and the two Auth accounts remain. No owner writing or
+legacy profile-server records were read, edited, imported or cleared by the harness.
+
+**Local verification.** `node` below is the installed executable at
+`C:/Users/wickie''/AppData/Local/Author Software/nvm/installs/v24.22.1/node.exe`.
+Build/dev commands prepend that directory to `PATH` for child CSS workers.
+
+```text
+node --test tests/writing-resolution.test.mjs tests/writing-cloud-database.test.mjs tests/writing-transport.test.mjs tests/writing-hosted-harness.test.mjs
+36/36 passed; exit 0.
+
+node --test tests/writing-hosted-harness.test.mjs
+Final reciprocal-isolation refinement: 3/3 passed; exit 0.
+
+node node_modules/eslint/bin/eslint.js app/os/sync-check/hosted-checks.js app/os/sync-check/sync-check-client.tsx app/os/sync-check/service-role/route.ts tests/writing-hosted-harness.test.mjs
+Final targeted lint passed; exit 0.
+
+node node_modules/next/dist/bin/next build
+Final production build, TypeScript and all 14 static pages passed; exit 0.
+```
+
+These selections overlap; their counts must not be added as unique tests.
+The SQL-backed harness regression checks both same-ID accounts while live archives
+exist, reciprocal rechecks, repeatable cleanup, six scrubbed resolution rows and
+no readable histories afterward. Hosted runs exercised the final recheck logic
+after development hot reload, retaining both in-memory witnesses.
+
+**Attempts and limits.** Opera connector was unavailable; Windows Computer Use
+was used. Earlier turns stopped when the tool could not establish the browser
+URL; no migration occurred then. Browser input interruptions required fresh
+observations. The first SQL application failed with `25006`: the editor value
+setter inserted the migration into the read-only audit buffer rather than replacing
+the whole buffer. No schema change occurred in that failed transaction. Explicit
+editor Select All/replacement removed the audit text; standalone migration then
+succeeded and installed-function hashes matched. An initial harness-test assertion
+expected four conflict rows; only two are persisted (the archive-device conflicts
+are detected during inventory before upload). Corrected the test expectation and
+reran successfully; no application or SQL fix was needed. Sandboxed dev bind failed
+with `EACCES`; sandboxed build CSS-worker connection failed. Approved outside-
+sandbox dev/build runs succeeded. The dev server remains running on port 3000.
+
+No product geometry/type/gap, persistence protocol, chapter content or AI behavior
+changed. Local-first/newer-edit preservation, account boundaries, immutable
+histories, terminal deletion and original Circle attribution use the existing
+engines; no new geometry measurement or performance optimization was warranted.
+Hosted unconfirmed/expired/revoked valid sessions, actual-device/IndexedDB reload,
+true multi-connection lock contention, backups/retention and wider beta readiness
+remain unverified. The hosted reload/new-device checks above are memory fixtures,
+not durable device-store evidence. Earlier Week-date/ResizeObserver, physical-phone,
+other-browser and broader checks remain open. Real sync stays disabled; activation
+requires a separate review after outstanding gates. Earlier product/architecture/
+roadmap statements that this follow-up was unapplied predate this evidence; the
+current writing contract and task record this bounded result without changing
+their wider requirements.
+
+## This note label clarification (2026-11-06)
+
+Developer clarified the reported unchanged note involved New Note, a separate
+entry. Live synthetic-demo reproduction through the actual editor on the same
+note updated Saved copies and ledger text correctly, with no page errors.
+Approved label rename: Current note → This note, including its history lookup.
+
+`node --test --test-name-pattern="mobile conflict" tests/writing-cloud.browser.mjs`
+passed 2/2 at 360/390px using the installed Node/Playwright setup below. These
+cases open This note history after later saves/reload and retain archived words.
+`node node_modules/next/dist/bin/next build` passed including TypeScript and
+14 static pages. Local review server rebuilt/restarted; no public deployment,
+hosted SQL/configuration, activation, data or geometry changes. Prior gaps remain.
+
+## Latest saved Note and shared scrollbar hiding (2026-11-06)
+
+Approved UI scope: current saved Note first in Saved copies, unchanged retained
+snapshots, hidden scrollbar chrome in Note/History/Trash, and normal review-server
+rebuild/restart. Existing installed Node/Playwright paths and isolated fixtures
+remain those recorded below. Exact commands from the repository root:
+
+```text
+node --test tests/writing-cloud.browser.mjs
+15/15 passed.
+node --test --test-name-pattern="Note, History and Trash stay bounded|shared App Box geometry|History bins move only" tests/writing.browser.mjs
+5/5 passed; run after the cloud suite to avoid overlapping Vite fixtures.
+node node_modules/eslint/bin/eslint.js app/os/writing-sync-page.tsx tests/writing-cloud.browser.mjs tests/writing.browser.mjs
+Passed without warnings.
+node node_modules/next/dist/bin/next build
+Passed including TypeScript and 14 static pages.
+```
+
+Cloud cases now resolve a conflict, save newer words, reload, open Saved copies,
+verify Current note and its latest historical version show those words, and
+verify the original cloud history still contains its original two versions.
+Normal Note return shows the latest words. Other account/conflict/deletion/retry
+checks remain passing. No schema or upload behavior changed.
+
+Full-component tests at 390x844 and 360x667 inspect `scrollbar-width: none` in
+Note/History/Trash, while verifying actual long-content scrolling, touch/wheel,
+keyboard caret, single Body scrolling, visible Footer, resize and restore/delete.
+History creates two distinct notes, retains the newer entry through reload and
+restores only the selected trashed note. Four resting frames remain 346px,
+Page heights 344px and header gaps 48px at 360/390px. Long writing/Trash reaches
+480px at 390x844 and 400.1875px at 360x667 without adding inner scroll panels.
+Inspected `outputs/note-bounded-history-390.png`; writing/Trash captures generated.
+
+The identified previous Next review process (PID 12720) was stopped, and the
+verified production build restarted on port 3000. Read-only GET `/os` returned
+200 with 12498 response bytes. This is local preview, not public deployment,
+hosted login or physical-device verification. Browser/build/server commands used
+approved outside-sandbox local networking. No remote SQL/configuration, sync
+activation or personal import occurred. Previous beta/backup/device gaps remain.
+
+## Conditional Sync controls (2026-11-06)
+
+Approved UI-only scope: rename Writing sync to Sync, hide it without pending
+saved work/conflicts/recoverable error, and show Try again only after an error.
+Hide retry while recovering. Retained archives move to Saved copies on the
+owning Note History row, independently of Sync visibility; row opening still
+edits. Existing uncommitted comparison changes remain intact.
+
+Commands use installed Node v24.22.1 and the installed Playwright cache, with
+the same isolated local PostgreSQL/Auth/HTTP/IndexedDB fixtures as below:
+
+```text
+node --test tests/writing-cloud.browser.mjs
+14/14 passed.
+node --test --test-name-pattern="Sync is absent" tests/writing-cloud.browser.mjs
+The additional visibility case passed (1/1).
+node node_modules/eslint/bin/eslint.js app/os/writing-pages.tsx app/os/writing-sync-page.tsx app/os/writing-sync-provider.tsx tests/writing-cloud.browser.mjs
+Passed.
+node node_modules/next/dist/bin/next build
+Passed including TypeScript and all 14 static pages.
+```
+
+At 360/390px, conflict review has no idle retry button; both choices still work.
+After completion, Sync disappears from Note History. Saved copies still opens
+the retained copies and their dated histories, and normal Note return shows the
+selected text. A failed choice exposes Try again, clicking it removes the retry
+presentation and persisted work recovers across reload. Separate real-store
+checks prove empty and unsent-draft-only states do not expose Sync; a saved
+change while offline exposes it; reconnect drains the queue and hides it again.
+Cloud-off has no Sync/retry action. Existing transport/lifecycle/long-scroll/
+deletion checks also passed in the full selection.
+
+No geometry/type/gap tokens changed; no new measurements claimed. No new SQL,
+environment configuration, activation, import or deployment. Browser/build
+commands ran outside the sandbox for local networking. Hosted/device/backup and
+broader beta gaps remain open. No measured issue justified optimization.
+
+## Minimal writing comparison (2026-11-06)
+
+Approved UI-only refinement: Note typography and default CreativeButton design;
+Cloud above Device; Use Cloud above Use Device; no large comparison heading,
+instruction paragraph, dates, inline Saved history or persistent success message.
+Copy-tap opens dated read-only history; confirmed choice returns silently to the
+list. Pending/error/retry and stale-review checks remain. Deletion while history
+is open hides captured versions. No sync protocol, SQL or activation changes.
+
+Using installed Node v24.22.1 and the installed Playwright cache (paths/fixture
+isolation detailed in the preceding writing-sync entry), final checks were:
+
+```text
+node --test tests/writing-cloud.browser.mjs
+13/13 passed before the final deletion-history guard.
+node --test --test-name-pattern="mobile conflict|review detects|long comparison" tests/writing-cloud.browser.mjs
+4/4 final affected cases passed; includes the new long-scrolling/deletion case.
+node --test --test-name-pattern="shared App Box geometry" tests/writing.browser.mjs
+2/2 passed on isolated rerun.
+node node_modules/eslint/bin/eslint.js app/os/writing-sync-page.tsx tests/writing-cloud.browser.mjs
+Passed without warnings.
+node node_modules/next/dist/bin/next build
+Final build including TypeScript and all 14 static pages passed.
+```
+
+Actual component tests at 360/390px verify both choices, copy/history/Back, silent
+return, reopening retained histories, selected Note text on return, 44px choice
+targets, vertical Cloud/Device button order, no horizontal overflow, and hidden
+scrollbar style with actual long-content scrollTop movement. Offline choices stay
+disabled; failed responses remain recoverable across reload. A deleted history
+stops rendering its versions. Default Note remains silent and separate.
+
+All four resting frames remain 346px, Page heights 344px, header gaps 48px;
+visible gaps are 52px for Note/Thoughts and 51.09375px for Habit/Protocol. Long
+Note retains its existing bounded Body behavior. Inspected
+`outputs/writing-conflict-360.png`; 390px capture also generated.
+
+Initial test syntax and ref-lint errors were fixed. The first concurrent geometry
+run timed out waiting for fixture initialization at both widths; overlapping
+Vite/HMR activity was observed. It measured no geometry and its exact cause was
+not isolated. The unchanged run alone passed both widths. Browser and build
+commands ran outside the sandbox for local networking as in previous slices.
+No performance issue justified optimization. No hosted migration/activation,
+physical-device or backup/retention verification is claimed; earlier gates stay.
+
+Live isolated demo smoke at 390px with normal animations also passed: comparison,
+Use Cloud and silent return to the synced list, with no page errors. An initial
+smoke timed out after Reset sample navigation; a fresh-page run with settled
+navigation passed. This demo uses synthetic local data, not hosted Supabase.
+
 ## Writing sync status and conflict resolution (2026-11-06)
 
 **Scope and setup.** Approved repository implementation only. Used the installed

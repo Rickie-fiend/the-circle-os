@@ -1,5 +1,218 @@
 # Session handoff
 
+## 2026-11-06 - Durable hosted reload recovery
+
+**Approval and Git context.** Developer approved the concrete recovery scope:
+new `durable-checks.ts`, existing check client, new browser test, and these four
+evidence records. `paing-branch`, HEAD `d841643`; all 20 pre-existing modified
+tracked paths and untracked `debug.log` preserved. Two new source/test files are
+untracked. No staging, commit, push or deployment.
+
+**Completed and verified.** Added a development-only reload flow backed by the
+separate account-scoped `circle-os-writing-hosted-recovery-v1` IndexedDB database.
+It reuses shared transactions, writing/queue/conflict models, coordinator and real
+confirmed-session transport. It never opens personal writing storage. Persisted
+phases require a changed document time origin; HMR alone cannot satisfy a reload.
+Internal steps preserve retry progress and stored targets are restricted to the
+synthetic entry. Hosted actions run only when explicitly continued.
+
+Both confirmed hosted accounts passed five real reload transitions plus a final
+completion reload: pending save, accepted upload/reply loss, queued choice,
+accepted resolution/reply loss, newer-edit/history recovery and queued permanent
+deletion. The final durable fixtures and replay snapshots contain no deleted
+writing. Read-only SQL audit passed: two terminal version-7 heads, four scrubbed
+archives, ten body-free receipts and no retained conflict bodies. Auth accounts
+and minimal server/local metadata remain. An exact previously accepted upload
+replays body-free receipts after deletion; the terminal head stays unchanged.
+An old resolution returns `deleted`.
+
+Final Chromium recovery suite passed 4/4 (360/390px, offline saving, aborted HTTP
+replies after SQL acceptance, account-separated checkpoints and late scope
+cancellation). Targeted lint and final Next build including TypeScript passed.
+[Exact commands, attempts and hosted evidence](USER_JOURNEY_TESTING.md#durable-hosted-reload-recovery-2026-11-06)
+and [the updated contract](ACCOUNT_WRITING_SYNC.md#durable-hosted-reload-recovery---2026-11-06)
+record the scope. Earlier unique evidence is retained below.
+
+**Attempts and limits.** Sandboxed Chromium could not reach loopback; approved
+outside-sandbox checks passed. Initial deletion assertions incorrectly demanded
+`deleted` for already-accepted upload receipt replay; corrected the harness
+expectation and verified unchanged terminal heads. Product SQL/protocol needed
+no change. A computer-use window listing timed out and succeeded on refresh.
+Hosted loss is deliberately dropped local acknowledgement; local tests additionally
+abort actual HTTP responses. The dedicated test adapter is durable, but the
+production writing-store adapter, cold browser restart/eviction, private-window
+closure, offline page load and physical phones remain unverified. Hosted
+unconfirmed/expired/revoked valid sessions, lock contention and backup/retention
+also remain open, along with earlier beta/date/ResizeObserver gaps.
+
+**Invariants and next action.** Account scope, newer-local-work preservation,
+immutable histories and terminal deletion were exercised through existing
+engines. No geometry, chapter, AI or Circle-day rules changed; no new measurements
+or performance optimization were warranted. No SQL/environment change or personal
+import. Real sync remains disabled. Review a bounded hosted-session test scope
+next; activation stays separately reviewed after remaining gates.
+
+## 2026-11-06 - Follow-up migration and hosted resolution checks
+
+**Approval and Git context.** Developer approved the exact resolution migration,
+development harness extension, synthetic two-account checks and four evidence
+documents. `paing-branch`, HEAD `d841643`; preserved all 15 pre-existing modified
+tracked paths and untracked `debug.log`. No staging, commit, push or deployment.
+
+**Completed and verified.** Applied only `202611060001_writing_resolution.sql`
+to `gcqmblrkpfvjnewzdycj` through the existing Supabase SQL Editor. The preflight
+found no follow-up objects. Application succeeded; seven catalog checks passed,
+including exact CR-normalized hashes of installed function bodies, owner RLS,
+grants, fixed definer paths and deletion trigger. Original migration unchanged;
+neither non-idempotent file should be reapplied. No CLI history registration made.
+
+Both confirmed hosted accounts passed the extended `/os/sync-check`: both choices,
+stale reviews, retry identity, response-loss recovery with newer writing, retained
+history recovery, same-ID account isolation, Trash/restore and terminal deletion.
+All five RPCs denied anonymous, invalid-JWT and server service-role access. The
+current local server service-role probe passed; the older connection failure is
+historical. Reciprocal rechecks verified hidden peer receipts/archives and
+unchanged originals, then deleted both remaining synthetic archives and blocked
+replay. Final SQL audit: four terminal heads, six scrubbed resolution rows, two
+scrubbed conflict candidates and 26 body-free receipts, all expected. Auth accounts
+and minimal body-free records remain; synthetic writing bodies are deleted.
+
+Local 36/36 focused tests passed; final reciprocal-check refinement passed 3/3
+affected harness tests, targeted lint and Next production build including types.
+Counts overlap. [Exact commands, hosted results and attempts](USER_JOURNEY_TESTING.md#follow-up-migration-and-hosted-resolution-checks-2026-11-06)
+are in the journey record; the [writing contract](ACCOUNT_WRITING_SYNC.md#follow-up-migration-and-hosted-resolution-checks---2026-11-06)
+and current task are updated. Prior unique handoff evidence remains below.
+
+**Attempts and gaps.** The first SQL attempt retained read-only audit text in the
+editor and failed without schema changes; full-buffer replacement succeeded and
+function hashes matched. Browser focus/input interruptions needed refreshed state.
+Sandboxed dev bind/CSS-worker build failed; approved outside-sandbox runs passed.
+Local development server remains on port 3000. Hosted recovery fixtures are in
+memory, outside personal IndexedDB. Unconfirmed/expired/revoked valid sessions,
+actual device-store reload, lock contention, backup/retention, physical phones,
+other browsers and wider beta gaps remain. Older architecture/product/roadmap
+unapplied statements predate the current hosted result; their wider gates stand.
+
+**Invariants and next action.** No app geometry, protocol, chapter or AI behavior
+changed. Verified account separation, immutable archives, newer-local-work safety
+and terminal deletion through existing engines. Real sync remains explicitly
+disabled; no environment change or personal import. Review remaining operational
+and device/session gates before a separately approved activation. Passing this
+bounded hosted slice does not enable sync or certify beta readiness.
+
+## 2026-11-06 - This note label clarification
+
+Developer approved renaming Current note to This note after clarifying that
+New Note creates a separate entry. A live sample reproduction using the actual
+editor on the original note updated Saved copies correctly. Updated the label,
+its history lookup, accessibility/browser checks and related owning records.
+Both affected browser cases at 360/390px and the Next production build including
+types passed. No geometry/type/gap, model, SQL, activation or deployment change.
+Prior uncommitted work and `debug.log` preserved at `d841643`. Local review
+server rebuilt/restarted to serve the rename. Next: separately review/apply the
+follow-up Supabase resolution migration and run hosted two-account/denial/retry/
+deletion checks before activation. Previous runtime/beta gaps remain.
+
+## 2026-11-06 - Latest saved note and writing scrollbars
+
+Developer approved current-note-first Saved copies, preserving archived words,
+hidden scrollbar chrome across Note/History/Trash, tests and normal review-server
+rebuild/restart. On `paing-branch` at `d841643`, preceding uncommitted UI work and
+untracked `debug.log` remain preserved. No staging, commit, push or deployment.
+
+Changed the copy reader to render the live current ledger entry above archived
+Cloud/Device snapshots after resolution. Its current-note history reads newer
+saved versions even after reload; archived histories remain unchanged. New notes
+still belong to ordinary History. The scrollbar-hiding CSS now targets the shared
+bounded writing Body rather than only Sync. Scrolling, cap, Header/Footer and
+keyboard/caret behavior remain; no model/schema/RPC or SQL changes.
+
+15/15 isolated writing-sync browser checks passed, including later save/reload,
+latest text in Saved copies and selected Note return, and unchanged old history.
+Five focused full-component checks passed: standard geometry at both widths,
+two-note History/Trash/reload behavior, and bounded Note/History/Trash at 390x844
+and 360x667 (including wheel, touch, caret, resizing and hidden scrollbar style).
+Targeted lint and Next production build including TypeScript passed. Four resting
+frames stay 346px with 48px header gaps; long frames reach 480px and 400.1875px
+respectively with one scrollable Body. Inspected the 390px History screenshot.
+
+Stopped only the identified previous Next review-server process, restarted the
+normal server on port 3000 using the verified build, and verified `/os` HTTP 200.
+This updates the local production preview; it is not a public deployment or new
+hosted sign-in check. The source changes also apply in the Vite demo on port 3001.
+No performance issue justified optimization. Local-first evidence, immutable
+archives, account scope, terminal deletion and 06:00 attribution stay intact.
+Next: developer refresh/review, then separately reviewed hosted migration/checks.
+Normal-app sync remains off; physical-device, backup/retention and beta gaps remain.
+
+## 2026-11-06 - Conditional Sync controls
+
+Developer approved error-only retry, conditional Sync visibility, the shorter
+Sync label and retained-copy access through the owning note's History. Changed
+`writing-pages.tsx`, `writing-sync-page.tsx`, `writing-sync-provider.tsx`, browser
+checks and related design/product/architecture/continuity records. Existing
+uncommitted minimal-comparison work and untracked `debug.log` remain preserved.
+Branch `paing-branch`, HEAD `d841643`; no staging, commit, push or deployment.
+
+History now shows Sync only for pending saved records, unresolved choices/copies
+or recoverable errors. Cloud-off without error, empty, draft-only and completed
+states hide it. Try again appears only after an error and hides during retry and
+after recovery. Retry presentation clears immediately while the existing runner
+handles the queued request. Saved copies on the owning History row opens archived
+Cloud/Device copies independently of Sync; normal Note opening still edits.
+
+14/14 isolated browser cases passed, followed by the added visibility case for
+empty/draft-only/pending/completed states. Tests cover no idle retry, error/retry
+recovery, Sync disappearing after completion, and reopening both retained
+histories through the owning note. Targeted lint and final Next production build
+including TypeScript passed. Exact commands/evidence are in the latest journey
+entry. No geometry/type/gap token changed and no new geometry measurement is
+claimed. Existing earlier geometry evidence remains dated to that scope.
+
+No model/schema/RPC or SQL change; source histories, account boundaries, terminal
+deletion and the 06:00 day are unchanged. No measured performance problem required
+optimization. The new migration remains unapplied and normal-app sync remains
+off. Hosted recovery, physical devices, backups/retention and broader beta gates
+remain open. Next: developer review of the refreshed local demo, then separately
+review the hosted migration/checks. Previous entries retain their dated evidence;
+their always-visible Writing sync/retry presentation is superseded here.
+
+## 2026-11-06 - Minimal writing comparison
+
+Developer approved Note styling, hidden scrollbar chrome, Cloud/Device content,
+copy-tap history and silent success; explicitly requested Note's button design
+stacked Use Cloud above Use Device. Updated `writing-sync-page.tsx` and scoped
+CSS, browser checks and related contract/design/continuity records. No model,
+transport, SQL, retention or activation change. Branch `paing-branch`, HEAD
+`d841643`; modifications uncommitted. Existing `debug.log` preserved. Nothing
+staged, committed, pushed, applied remotely or deployed by this refinement.
+
+Comparison removes the large heading, explanation, dates, inline expanders and
+persistent success messages. Cloud precedes Device. Each copy opens its dated
+read-only history through shared App-back; normal Note History still edits.
+Both source-choice actions use the same default CreativeButton as New Note and
+remain vertically stacked. Confirmed resolution silently returns to the sync
+list; pending/error/retry and changed-copy protection remain. Body scrolls with
+hidden scrollbar chrome. A deletion arriving during history hides captured text.
+
+13/13 isolated mobile Chromium checks passed; final 4/4 affected checks also
+passed after the deletion guard, including long scrolling/history deletion.
+Final targeted lint and Next production build including TypeScript passed.
+Geometry rerun alone passed 2/2: Note/Thoughts/Habit/Protocol outer frames 346px,
+Page heights 344px and header gaps 48px at both 360/390px. Inspected the updated
+360px screenshot: clean source labels/content and stacked Note buttons.
+Initial test syntax and React ref-lint issues were corrected. The overlapping
+geometry run timed out waiting for fixture initialization while other Vite
+servers/builds and HMR were running; the isolated unchanged rerun passed.
+
+No measured performance problem justified optimization. Local-first persistence,
+immutable copies, account scope, terminal deletion and the 06:00 day remain.
+The preceding model/hosted evidence keeps its original scope; this UI slice does
+not certify hosted resolution, physical devices, backups or beta readiness.
+Next: review the refreshed local demo, then separately review the follow-up SQL
+and hosted checks. Cloud sync remains off in the normal app. Earlier snapshots
+below retain their dated evidence; their presentation descriptions are superseded.
+
 ## 2026-11-06 - Writing sync status and conflict resolution
 
 **Approval and Git context.** Developer confirmed direct-entry review and

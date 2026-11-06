@@ -8,12 +8,13 @@ import { isDeepThoughtRewardEligible } from "./deep-thought-model.js";
 import { sizeTextAreaToContent } from "./text-area-size";
 import { useWriting, type WritingContextValue } from "./writing-provider";
 import { WritingSyncPage } from "./writing-sync-page";
+import { useWritingSync } from "./writing-sync-provider";
 import { QuotePage, type QuoteNavigation } from "./quotes/quote-page";
 import type { Quote } from "./quotes/quote-model.js";
 import { writingAttribution, type WritingCommand, type WritingContent, type WritingDraft, type WritingDraftInput, type WritingHistoryEntry, type WritingKind, type WritingSource, type WritingVersion } from "./writing-model.js";
 
 type Session = { draft: WritingDraftInput; version: number; revision: number; savedRevision: number; conflict: boolean };
-type Page = "editor" | "history" | "sync" | "detail" | "versions" | "version" | "trash" | "trash-detail" | "delete" | "drafts" | "conflict" | "quote";
+type Page = "editor" | "history" | "sync" | "copies" | "detail" | "versions" | "version" | "trash" | "trash-detail" | "delete" | "drafts" | "conflict" | "quote";
 type Props = {
   kind: WritingKind;
   source?: WritingSource;
@@ -48,6 +49,7 @@ function TrashIcon() {
  * editor; only this editor's accepted Save may advance its optimistic base. */
 function WritingPage({ writing, kind, source = null, placeholder = "Write what comes up...", onLabel, onBusyChange, onSent, onAdmin, onClear, embedded = false, onNextQuestion, nextQuote, onQuoteNavigation, onQuoteReaction }: Props & { writing: WritingContextValue }) {
   const back = useAppBack<Page>("editor");
+  const sync = useWritingSync();
   const noteNavigation = isNote(kind) || (kind === "deep-thought" && !embedded);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [quoteFeedback, setQuoteFeedback] = useState(false);
@@ -387,7 +389,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   let body: ReactNode;
   let footer: ReactNode;
   let heading = "";
-  if (back.side === "sync") return <WritingSyncPage notes={isNote(kind)} className={`${isNote(kind) ? "os-note-page" : "os-thoughts-page"} ${back.className}`} onBack={() => {
+  if (back.side === "sync" || back.side === "copies") return <WritingSyncPage initialEntryId={back.side === "copies" ? selected || undefined : undefined} notes={isNote(kind)} className={`${isNote(kind) ? "os-note-page" : "os-thoughts-page"} ${back.className}`} onBack={() => {
     const target = live.current;
     const latest = [...writing.history, ...writing.trash].find(entry => entry.id === target?.draft.entryId);
     // A reviewed cloud choice may replace this editor's already-saved copy.
@@ -428,12 +430,13 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     const today = writingAttribution(now(), Intl.DateTimeFormat().resolvedOptions().timeZone).day;
     const previousDay = new Date(`${today}T12:00:00Z`); previousDay.setUTCDate(previousDay.getUTCDate() - 1);
     const dayLabel = (value: string) => value === today ? "Today" : value === previousDay.toISOString().slice(0, 10) ? "Yesterday" : new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
-    body = <div className="os-writing-list os-info-page-main">{back.side === "history" ? <Action text="Writing sync" click={() => go("sync")} disabled={disabled} /> : null}{rows.length ? rows.map(row => {
+    body = <div className="os-writing-list os-info-page-main">{back.side === "history" && sync?.hasWork ? <Action text="Sync" click={() => go("sync")} disabled={disabled} /> : null}{rows.length ? rows.map(row => {
       const showDay = day !== row.day; day = row.day;
       const entry = [...entries, ...trashed].find(item => item.id === row.key);
       const title = row.kind === "note" ? row.content.title || "Untitled" : entry?.source?.question || row.content.body.slice(0, 100) || "Untitled";
       const open = <button className="os-writing-entry" type="button" onClick={event => row.open(event.currentTarget)}><strong>{title}</strong><span>{noteNavigation ? <><time dateTime={row.at}>{new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(row.at))}</time>{!isNote(kind) && !entry ? " · Unsent" : null}</> : labelFor(row.kind)}</span></button>;
-      return <div key={row.key}>{showDay ? <p className="os-writing-day">{noteNavigation ? dayLabel(day) : day}</p> : null}{row.trash ? <div className="os-writing-history-row">{open}<button className="os-writing-trash-button" type="button" aria-label={`Move ${title} to Trash`} disabled={disabled} onClick={row.trash}><TrashIcon /></button></div> : open}</div>;
+      const copies = Object.values(sync?.bundle?.cloud.resolved || {}).some(item => item.request.entryId === row.key);
+      return <div key={row.key}>{showDay ? <p className="os-writing-day">{noteNavigation ? dayLabel(day) : day}</p> : null}{row.trash ? <div className="os-writing-history-row">{open}<button className="os-writing-trash-button" type="button" aria-label={`Move ${title} to Trash`} disabled={disabled} onClick={row.trash}><TrashIcon /></button></div> : open}{copies ? <Action text="Saved copies" click={() => { setSelected(row.key); go("copies"); }} disabled={disabled} /> : null}</div>;
     }) : <p>{back.side === "trash" ? "Trash is empty." : "No saved writing yet."}</p>}
       {back.side === "history" ? read.view?.sources.filter(item => item.sourceSystem === "existing" && belongs(item)).map(item => <details key={item.id}><summary>{item.content.title || item.content.body.slice(0, 80) || "Untitled"}</summary><p>{item.content.body}</p><small>{item.attribution.day || "Date unknown"} · Older writing · Read only</small></details>) : null}
     </div>;

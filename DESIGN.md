@@ -59,6 +59,29 @@ geometry and hierarchy.
 
 ## Layout
 
+- Saved copies/current Note refinement (2026-11-06): after resolution, show the
+  live current note above immutable retained Cloud/Device snapshots. Its history
+  reads the current ledger; archived histories keep their original words. New
+  notes remain in normal History. Hide scrollbar chrome across all bounded
+  writing Pages (Note, History, Trash, detail and Sync), retaining Body scrolling,
+  visible Header/Footer and the existing cap.
+
+- Sync controls (2026-11-06): label the History action Sync, and show it only
+  for pending saved work, unresolved copies or recoverable errors. Drafts and
+  completed syncs alone do not keep it visible. Try again appears only after
+  an error and disappears while retrying or after recovery. Retained Cloud/
+  Device histories remain reachable through Saved copies on their Note History
+  row, independent of Sync visibility. Opening the Note itself still edits it.
+
+- Writing sync refinement (2026-11-06): match Note typography and borderless
+  content. Compare Cloud then Device with no explanatory heading, dates or
+  history buttons. Tapping a copy opens its dated read-only history through
+  shared App-back. Stack Note's default CreativeButton actions: Use Cloud above
+  Use Device. Hide only the scrollbar chrome; Body still scrolls and Footer
+  stays visible. Return silently to the list after confirmed success. Show
+  only brief pending/error text when action is needed. This supersedes the
+  earlier comparison presentation below; retained histories remain intact.
+
 - Writing sync (2026-11-06): open a separate Writing sync Page from writing
   History. Keep normal Note autosave silent and keep save/sync labels out of
   the global header. Compare This device and Cloud copy vertically, show dates

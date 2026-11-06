@@ -4,6 +4,28 @@ Updated: 2026-11-03. This document records the developer's product direction.
 Use [the decision log](DECISION_LOG.md) to distinguish confirmed decisions from
 preferences and unresolved choices.
 
+2026-11-06 label clarification: Saved copies calls its latest saved entry This
+note. It belongs to the owning History row. New Note creates a separate entry
+and does not replace that note's latest text or retained snapshots.
+
+2026-11-06 Saved copies refinement: show the latest saved Note above its retained
+Cloud/Device copies; current-note history follows later saves while older copies
+stay unchanged. New notes continue to appear in normal History. Note, History
+and Trash hide scrollbar chrome while preserving scrolling and the visible Footer.
+
+2026-11-06 Sync visibility: the History action is labelled Sync and appears only
+for pending saved work, unresolved copies or recoverable errors. Drafts and
+completed syncs alone do not show it. Try again is error-only and hides while
+retrying or after recovery. Saved copies on the owning Note History row keeps
+retained histories accessible independently; normal Note opening still edits.
+
+2026-11-06 conflict presentation refinement: comparison shows Cloud and Device
+with authored content; tap a copy for dated read-only history. Stack Note-style
+Use Cloud and Use Device buttons. Confirmed choice returns silently to the list.
+No persistent success message, inline history expander or explanatory comparison
+copy. Hide scrollbar chrome while preserving scrolling and relevant error/retry
+states. Saved histories and normal Note History editing remain intact.
+
 2026-11-06 writing-sync decision: History has a separate Writing sync view;
 Note keeps silent autosave and the global header stays free of save/sync labels.
 Show where saved writing stands and let the person compare This device with

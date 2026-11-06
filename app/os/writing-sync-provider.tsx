@@ -6,7 +6,7 @@ import { chooseWritingCopy, subscribeWritingChanges, writingCloudTransaction } f
 import type { WritingCloudBundle } from "./writing-cloud-model.js";
 import { WritingCloudRunner, requestWritingSync } from "./writing-cloud-runner";
 
-type SyncView = { bundle: WritingCloudBundle | null; enabled: boolean; online: boolean; error: boolean; running: boolean; checked: boolean;
+type SyncView = { bundle: WritingCloudBundle | null; hasWork: boolean; enabled: boolean; online: boolean; error: boolean; running: boolean; checked: boolean;
   choose: (entryId: string, choice: "local" | "cloud", reviewed: WritingCloudBundle) => Promise<void>; retry: () => void };
 const SyncContext = createContext<SyncView | null>(null);
 export const useWritingSync = () => useContext(SyncContext);
@@ -21,6 +21,7 @@ export function WritingSyncProvider({ scope, enabled, children }: { scope: Accou
   const live = useRef(false);
   const refresh = useCallback(async () => {
     const request = ++sequence.current;
+    setReadError(false);
     try {
       const next = await writingCloudTransaction(scope);
       if (live.current && isAccountScopeCurrent(scope) && sequence.current === request) { setBundle(next); setReadError(false); }
@@ -38,13 +39,16 @@ export function WritingSyncProvider({ scope, enabled, children }: { scope: Accou
     return () => { mounted = false; live.current = false; unsubscribe(); window.removeEventListener("online", connectionChanged); window.removeEventListener("offline", connectionChanged); };
   }, [scope, enabled, refresh]);
   const current = isAccountScopeCurrent(scope) && bundle?.state.owner === `account:${scope.accountId}` ? bundle : null;
-  const value: SyncView = { bundle: current, enabled: active, online, ...runtime, error: readError || runtime.error,
+  const hasWork = readError || runtime.error || Boolean(active && current && (
+    Object.keys(current.queue.pending).length || Object.keys(current.cloud.conflicts).length || Object.keys(current.cloud.choices || {}).length
+    || [...Object.keys(current.state.entries), ...Object.keys(current.state.tombstones)].some(id => !current.cloud.heads[id])));
+  const value: SyncView = { bundle: current, hasWork, enabled: active, online, ...runtime, error: readError || runtime.error,
     async choose(entryId, choice, reviewed) {
       if (!active || !navigator.onLine || !isAccountScopeCurrent(scope)) throw new Error("Connect before choosing a copy. Both copies are kept.");
       await chooseWritingCopy(scope, entryId, choice, reviewed);
       requestWritingSync(scope);
     },
-    retry() { void refresh(); if (active) requestWritingSync(scope); },
+    retry() { void refresh(); if (active && navigator.onLine) { setRuntime(previous => ({ ...previous, error: false, running: true })); requestWritingSync(scope); } },
   };
   return <SyncContext.Provider value={value}><WritingCloudRunner scope={scope} enabled={enabled} onState={setRuntime} />{children}</SyncContext.Provider>;
 }

@@ -1,5 +1,44 @@
 # Circle OS decision log
 
+## 2026-11-06 - This note label
+
+Developer clarified the reported stale-copy case used New Note, which creates a
+separate entry. Actual-editor reproduction on the original note updated Saved
+copies correctly. They approved renaming Current note to This note so it clearly
+means the note owning those copies. Preserve per-note ownership: a new note must
+not replace another note's current saved version or archived copies.
+
+## 2026-11-06 - Current note in Saved copies and shared hidden scrollbars
+
+Developer approved showing the current Note above retained conflict snapshots,
+leaving those originals unchanged, and hiding scrollbar chrome in Note/History/
+Trash with real scrolling preserved. Current-note history follows the live
+ledger; archived Cloud/Device snapshots remain immutable. Brand-new notes still
+appear in ordinary History rather than becoming conflict archives. Scope includes
+browser checks and rebuilding/restarting the normal review server, not hosted
+SQL, sync activation or deployment.
+
+## 2026-11-06 - Conditional Sync and retry controls
+
+Developer approved renaming Writing sync to Sync and hiding the History action
+when there is no pending saved work, unresolved conflict or recoverable error.
+Drafts and completed syncs do not justify the action. Try again appears only
+after failure, hides during retry and disappears after recovery. To preserve
+access when Sync is hidden, retained histories open via Saved copies on the
+owning Note History row; opening that row itself retains normal editing.
+No protocol, SQL, activation or retention change is part of this UI scope.
+
+## 2026-11-06 - Minimal writing conflict presentation
+
+Developer approved simplifying the comparison to Cloud/Device and the writing,
+matching Note styling, hiding scrollbar chrome, moving dated history behind
+each copy, and removing persistent success text. They explicitly requested
+Note's button design stacked Use Cloud above Use Device. The explicit buttons
+choose; tapping content only opens history. After confirmed resolution, return
+silently to the sync list. Keep concise pending/error/retry states and renewed
+review when copies change. Normal Note History retains editing behavior.
+No sync protocol, archive retention, SQL, activation or deployment change.
+
 ## 2026-11-06 - Writing sync status and person-chosen conflicts
 
 The developer reviewed direct entry, then approved the concrete repository scope

@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   const key = process.env.SUPABASE_SECRET_KEY || "";
   if (process.env.NEXT_PUBLIC_SUPABASE_URL !== target || !key) return Response.json({ passed: false }, { status: 503 });
   try {
-    for (const [name, body] of [["inventory", { after_id: "", page_size: 1 }], ["receipts", { operation_ids: [] }], ["apply", { request: {} }]] as const) {
+    for (const [name, body] of [["inventory", { after_id: "", page_size: 1 }], ["receipts", { operation_ids: [] }], ["apply", { request: {} }], ["resolve", { request: {} }], ["resolution_history", { after_id: "", page_size: 1 }]] as const) {
       const response = await fetch(`${target}/rest/v1/rpc/circle_writing_${name}`, {
         method: "POST", headers: { apikey: key, "Content-Type": "application/json", ...(key.startsWith("eyJ") ? { Authorization: `Bearer ${key}` } : {}) },
         body: JSON.stringify(body), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000),

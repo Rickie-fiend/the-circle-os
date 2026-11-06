@@ -1,5 +1,115 @@
 # Current task
 
+## Durable hosted reload recovery - 2026-11-06
+
+Approved recovery harness implemented with a separate account-scoped IndexedDB
+test database, explicit start/continue/reload checkpoints and the existing models,
+transaction engine, coordinator and authenticated transport. Personal writing
+storage, SQL and real-sync configuration remain unchanged.
+
+Both confirmed hosted accounts passed five full-reload transitions plus a final
+completion reload: pending save, upload reply loss, queued choice, choice reply
+loss, newer-edit/history recovery and queued permanent deletion. All three durable
+synthetic devices and replay snapshots were scrubbed. Read-only hosted audit:
+two terminal version-7 heads, four scrubbed archives, ten body-free receipts and
+no retained conflict bodies. Four final isolated Chromium cases (360/390px,
+offline save, HTTP loss, account separation/late reply), targeted lint and the
+production Next build including TypeScript passed. See
+[full evidence](USER_JOURNEY_TESTING.md#durable-hosted-reload-recovery-2026-11-06)
+and [contract/limits](ACCOUNT_WRITING_SYNC.md#durable-hosted-reload-recovery---2026-11-06).
+
+Real sync stays disabled. No migration, environment change, import, stage, commit
+or deployment. Prior 20 modified tracked paths and untracked `debug.log` preserved
+on `paing-branch` at `d841643`; the two new harness/test files are untracked.
+This proves durable separate-test-store recovery, not production-store/phone,
+cold browser restart, offline page load or eviction recovery. Hosted unconfirmed/
+expired/revoked valid sessions, true lock contention and backup/retention remain
+open. Next: review a bounded hosted-session test scope; activation stays separate.
+
+## Follow-up migration and hosted resolution checks - 2026-11-06
+
+Approved follow-up applied to `gcqmblrkpfvjnewzdycj`; seven catalog checks passed,
+including exact function-body hashes, RLS/grants and deletion trigger. Extended
+the development-only harness and verified both confirmed hosted accounts:
+local/cloud conflicts, stale reviews, exact/changed retries, response-loss recovery
+with newer work, retained histories, reciprocal account isolation and terminal
+deletion/replay suppression. Both cleanup rechecks passed. Final hosted audit:
+four terminal heads, six scrubbed archives, two scrubbed conflict candidates and
+26 body-free receipts. Synthetic bodies are deleted; test accounts remain.
+
+36/36 focused local tests passed; the final reciprocal recheck refinement passed
+3/3 affected harness tests, targeted lint and the production Next build including
+TypeScript. See [full evidence and limits](USER_JOURNEY_TESTING.md#follow-up-migration-and-hosted-resolution-checks-2026-11-06)
+and [current writing contract](ACCOUNT_WRITING_SYNC.md#follow-up-migration-and-hosted-resolution-checks---2026-11-06).
+
+Real sync remains explicitly disabled. No original-migration/environment change,
+personal import, staging, commit or deployment. Prior uncommitted UI/docs/tests
+and `debug.log` preserved on `paing-branch` at `d841643`. Older statements that
+the follow-up is unapplied predate this evidence; they do not authorize activation.
+Hosted unconfirmed/expired/revoked sessions, actual-device/IndexedDB recovery,
+lock contention, backup/retention and broader beta gaps remain unverified.
+Next: review those remaining gates before separately reviewing activation.
+
+## This note label clarification - 2026-11-06
+
+Developer clarified the stale-copy report involved New Note, a separate entry.
+Actual-editor reproduction on the original note worked. Approved rename:
+Current note → This note in Saved copies and its history control. Both 360/390px
+affected browser cases and the production Next build including types passed.
+Prior UI changes remain uncommitted at `d841643`; no geometry or data rules
+changed. Next: review/apply the follow-up resolution SQL and verify its two new
+RPCs against hosted test accounts before separately reviewing activation.
+
+## Latest saved note and writing scrollbars - 2026-11-06
+
+Approved fix implemented: Saved copies includes the current Note above retained
+Cloud/Device snapshots. Current-note history follows later ledger saves; old
+snapshots stay unchanged. New notes remain visible in ordinary History. All
+bounded writing Pages hide scrollbar chrome while retaining actual scrolling.
+
+15/15 writing-sync browser cases, five focused Note/History/Trash/geometry cases,
+targeted lint and production Next build including types passed. Normal review
+server restarted with that build at port 3000; `/os` returned HTTP 200. Inspected
+390px History capture. Four resting frames remain 346px with 48px header gaps.
+No schema, hosted SQL/configuration, activation, import or deployment change.
+Work remains uncommitted at `d841643`; preceding UI edits and `debug.log` preserved.
+Next: developer review on the refreshed normal app/demo, then separately review
+the hosted migration and remaining sync/beta gates.
+
+## Conditional Sync controls - 2026-11-06
+
+Approved UI scope implemented: History shows Sync only for pending saved work,
+unresolved copies or recoverable errors. Draft-only, cloud-off without errors,
+empty and completed states hide it. Try again is error-only and hides during
+retry/recovery. Saved copies on each owning Note History row keeps retained
+histories readable when Sync is absent; normal row opening still edits.
+
+14/14 browser checks and the additional empty/draft-only/pending/completed-state
+case passed. Final targeted lint and Next production build including types
+passed. No geometry/type/gap tokens changed; no new measurements claimed.
+Prior uncommitted comparison changes and `debug.log` preserved on `paing-branch`
+at `d841643`. No staging, commit, push, remote SQL/configuration, activation or
+deployment. Next: developer review in the refreshed demo, then separately
+review the follow-up hosted migration/checks. Broader beta gaps remain open.
+
+## Minimal writing comparison - 2026-11-06
+
+Approved refinement implemented: Cloud/Device plus writing only, hidden scrollbar
+chrome with working Body scrolling, copy-tap dated history, and Note's default
+CreativeButtons stacked Use Cloud above Use Device. Confirmed success returns
+silently to the list; pending/error/retry and changed-copy review remain.
+Normal Note History editing and the sync protocol are unchanged.
+
+13/13 browser cases passed, followed by 4/4 final affected cases including long
+scrolling and deletion while history is open. Final lint and Next production
+build including types passed. Geometry rerun alone passed 2/2: all four frames
+346px and header gaps 48px at 360/390px. The initial overlapping geometry run
+timed out before fixture initialization; it is not recorded as a geometry defect.
+See the latest journey entry. Changes are uncommitted on `paing-branch` at
+`d841643`; unrelated `debug.log` retained. No remote SQL/configuration, activation,
+commit or deployment. Next: developer review of the updated demo; hosted gates
+from the preceding slice remain open.
+
 ## Writing sync status and conflict resolution - 2026-11-06
 
 Developer reviewed direct entry and approved this bounded repository slice.
