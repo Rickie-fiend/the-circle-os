@@ -19,6 +19,20 @@ function fixture() {
 }
 const pending = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 
+test("sign-out locks immediately and waits for durable invalidation before network logout", async()=>{
+  const f=fixture(), durable=pending(); let network=false;
+  f.adapter.forget=()=>durable.promise;f.adapter.signOut=async()=>{network=true;};
+  const c=createAuthController(f.adapter);await c.restore();const result=c.signOut();
+  assert.equal(f.owner(),null);assert.equal(network,false);
+  durable.resolve();await result;assert.equal(network,true);
+});
+
+test("rejected durable invalidation keeps access locked and reports incomplete sign-out",async()=>{
+  const f=fixture();f.adapter.forget=async()=>{throw Error("transaction aborted");};
+  const c=createAuthController(f.adapter);await c.restore();await c.signOut();
+  assert.equal(f.owner(),null);assert.match(c.getSnapshot().message,/could not finish/);
+});
+
 test("verified restore selects the owner; a marker is never an input to authentication", async () => {
   const f = fixture(); const controller = createAuthController(f.adapter);
   assert.equal(controller.getSnapshot().phase, "checking");

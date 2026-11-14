@@ -8,6 +8,7 @@ import {
 import { mergeSeenLines, rememberLine } from "./lines/line-pool.js";
 import { mergeGoals, normalizeGoals } from "./goal-model.js";
 import { normalizeWeekRecords } from "./week-app-model.js";
+import { makeSchedule, scheduleActive } from "./routine-schedule.js";
 import {
   mergeLineFeedback,
   normalizeLineFeedback,
@@ -751,6 +752,7 @@ export function createEmptyState() {
       sessions: {},
     },
     appSessions: {},
+    templateAdoptions: {},
     habits: {
       identity: {
         text: "",
@@ -925,6 +927,7 @@ export function normalizeState(state) {
       state.appSessions && typeof state.appSessions === "object"
         ? state.appSessions
         : {},
+    templateAdoptions: state.templateAdoptions && typeof state.templateAdoptions === 'object' ? state.templateAdoptions : {},
     protocol: {
       runs: { ...(state.protocol?.runs || {}) },
       completions: { ...(state.protocol?.completions || {}) },
@@ -947,6 +950,7 @@ export function normalizeState(state) {
     },
     tasks: {
       items: mergeRecordMaps(migratedPractice.tasks, storedTasks),
+      completions: state.tasks?.completions || {},
     },
     declarations: normalizeDeclarations(state.declarations),
     dreamlines: normalizeDreamlines(state.dreamlines),
@@ -1879,6 +1883,7 @@ export function mergeServerState(state, serverState) {
       ...remote.appSessions,
       ...mergeUpdatedRecords(remote.appSessions, local.appSessions),
     },
+    templateAdoptions: mergeUpdatedRecords(remote.templateAdoptions, local.templateAdoptions),
     habits: {
       identity:
         String(local.habits.identity.updatedAt || "").localeCompare(
@@ -1897,6 +1902,7 @@ export function mergeServerState(state, serverState) {
     },
     tasks: {
       items: mergeUpdatedRecords(remote.tasks.items, local.tasks.items),
+      completions: mergeUpdatedRecords(remote.tasks.completions, local.tasks.completions),
     },
     declarations: {
       records: mergeRecordMaps(
@@ -2189,7 +2195,7 @@ export function discardEmptyHabit(state, id) {
 
 export function toggleHabitForDay(state, id, dateKey) {
   const habit = state.habits.definitions[id];
-  if (!habit || habit.status === "draft") return state;
+  if (!habit || habit.status !== "active" || !routineHabitVisible(state, habit, dateKey)) return state;
   const key = habitCompletionId(id, dateKey);
   const current = state.habits.completions[key];
   const timestamp = new Date().toISOString();
@@ -2225,6 +2231,39 @@ export function toggleHabitForDay(state, id, dateKey) {
     },
     "habit",
   );
+}
+
+export function routineHabitVisible(state, habit, day) {
+  if (!scheduleActive(habit.schedule, day)) return false;
+  return habit.schedule?.mode !== 'once' || !Object.values(state.habits.completions).some(record => record.habitId === habit.id && record.completed && record.dateKey >= habit.schedule.start && record.dateKey < day);
+}
+
+export function setRoutineSchedule(state, kind, id, mode, days = 21, day = getDateKey()) {
+  const habit = kind === 'habit';
+  if (!habit && kind !== 'task') return state;
+  if (!habit && Object.values(state.goals?.steps || {}).some(step => step.taskId === id)) return state;
+  const records = habit ? state.habits.definitions : state.tasks.items;
+  const record = records[id];
+  if (!record || ['archived', 'completed'].includes(record.status)) return state;
+  const schedule = makeSchedule(mode, day, days);
+  if (record.schedule?.mode === mode && (mode !== 'daily' || record.schedule.days === days)) return state;
+  const updated = { ...record, schedule, updatedAt: new Date().toISOString() };
+  return queueProfileUpdate(habit
+    ? { ...state, habits: { ...state.habits, definitions: { ...records, [id]: updated } } }
+    : { ...state, tasks: { ...state.tasks, items: { ...records, [id]: updated } } }, kind);
+}
+
+function setScheduledTaskCompletion(state, id, day, completed) {
+  const task = state.tasks.items[id];
+  const key = `${day}:${id}`;
+  const previous = state.tasks.completions?.[key];
+  if (!task || (completed && (task.status !== 'open' || !scheduleActive(task.schedule, day))) || (!completed && !previous?.completed) || previous?.completed === completed) return state;
+  const timestamp = new Date().toISOString();
+  return queueProfileUpdate({ ...state, tasks: { ...state.tasks, completions: {
+    ...state.tasks.completions,
+    [key]: { ...previous, id: key, taskId: id, dateKey: day, completed, updatedAt: timestamp,
+      completedAt: completed ? timestamp : null, text: completed ? task.text : previous.text },
+  } } }, 'task');
 }
 
 export function addTask(state, id = freshRecordId("task")) {
@@ -2311,8 +2350,9 @@ export function discardEmptyTask(state, id) {
 // A task that was finished by accident has to be recoverable. Completing one
 // starts it leaving the Page, and until it has gone the same control puts it
 // back. Nothing is deleted either way.
-export function reopenTask(state, id) {
+export function reopenTask(state, id, dateKey = getDateKey()) {
   const current = state.tasks.items[id];
+  if (current?.schedule?.mode && current.schedule.mode !== 'once') return setScheduledTaskCompletion(state, id, dateKey, false);
   if (!current || current.status !== "completed") return state;
   const timestamp = new Date().toISOString();
   return queueProfileUpdate(
@@ -2335,8 +2375,10 @@ export function reopenTask(state, id) {
   );
 }
 
-export function completeTask(state, id) {
+export function completeTask(state, id, dateKey = getDateKey()) {
   const current = state.tasks.items[id];
+  if (current?.schedule?.mode && current.schedule.mode !== 'once') return setScheduledTaskCompletion(state, id, dateKey, true);
+  if (current?.schedule && !scheduleActive(current.schedule, dateKey)) return state;
   if (!current || current.status === "completed") return state;
   const timestamp = new Date().toISOString();
   return queueProfileUpdate(
@@ -3761,6 +3803,9 @@ export function dayRecord(state, dateKey) {
     )
     .map((task) => ({ id: task.id, text: task.text }));
 
+  for (const record of Object.values(state.tasks.completions || {})) {
+    if (record.dateKey === dateKey && record.completed && !tasks.some(task => task.id === record.taskId)) tasks.push({ id: record.taskId, text: record.text });
+  }
   return { dateKey, habits, tasks, total: habits.length + tasks.length };
 }
 
@@ -3801,6 +3846,7 @@ export function habitHistoryRecord(state, dateKey) {
 
 export function habitHistoryDates(state, todayKey = getDateKey()) {
   const days = Object.values(state.habits?.completions || {}).map((record) => record.dateKey);
+  days.push(...Object.values(state.tasks?.completions || {}).map(record => record.dateKey));
   for (const task of Object.values(state.tasks?.items || {})) {
     if (task.status === "completed" && task.completedAt) {
       const at = new Date(task.completedAt);
@@ -4022,7 +4068,7 @@ export function setProtocolDays(state, runId, days) {
 
 export function addProtocolItem(state, runId, kind, id = freshRecordId("pitem")) {
   const run = state.protocol.runs[runId];
-  if (!protocolRunIsOpen(run) || !PROTOCOL_KINDS.has(kind)) {
+  if (!protocolRunIsOpen(run) || (run.status === "active" && run.sourceTemplate) || !PROTOCOL_KINDS.has(kind)) {
     return { state, id: null };
   }
   const timestamp = now();
@@ -4049,7 +4095,7 @@ export function addProtocolItem(state, runId, kind, id = freshRecordId("pitem"))
 export function updateProtocolItem(state, runId, itemId, text, dateKey = getDateKey()) {
   const run = state.protocol.runs[runId];
   const item = run?.items?.[itemId];
-  if (!item || !protocolRunIsOpen(run)) return state;
+  if (!item || !protocolRunIsOpen(run) || (run.status === "active" && run.sourceTemplate)) return state;
   const value = String(text || "").slice(0, 120);
   if (item.text === value) return state;
   const timestamp = now();

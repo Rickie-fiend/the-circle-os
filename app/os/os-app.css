@@ -1,5 +1,13 @@
 @import "../tokens.css";
 
+.circle-os .os-routine-schedule { grid-column: 2; color: var(--c-bone); font-size: var(--os-type-secondary); }
+.circle-os .os-routine-open .os-extra-mission > .os-row-tick { grid-column: 3; grid-row: 1; }
+.circle-os .os-routine-open .os-extra-mission > .os-routine-clear { grid-column: 1; grid-row: 1; }
+.circle-os .os-routine-open .os-extra-mission > .os-routine-schedule { grid-row: 2; }
+.circle-os .os-routine-schedule summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.circle-os .os-routine-schedule label { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.circle-os .os-routine-schedule :is(select, input) { min-height: 44px; max-width: 100%; color: var(--c-bone); background: var(--c-ink); border: 1px solid var(--c-charcoal, #403E35); border-radius: 8px; padding: 8px; }
+
 /* Checkbox visuals share the text departure beat, including legacy contexts. */
 .circle-os { --os-checkbox-response: 300ms; }
 
@@ -547,34 +555,9 @@
 
 .circle-os .os-context-row > div { min-width: 0; }
 
-.circle-os .os-save-state {
-  color: var(--c-neutral-500);
-  font-size: var(--text-2xs);
-  letter-spacing: 0.03em;
-  line-height: 1.3;
-  margin-bottom: var(--space-1);
-  max-width: 92px;
-  text-align: right;
-}
 
-.os-checkin-card {
-  background: var(--c-bone);
-  border-radius: var(--r-box);
-  color: var(--c-ink);
-  padding: var(--space-5) var(--space-4) var(--space-4);
-}
 
-.circle-os .os-checkin-card .os-card-label {
-  color: var(--c-orange-800);
-}
 
-.os-checkin-card h2 {
-  font-size: var(--text-xl);
-  font-weight: var(--os-weight-bold);
-  letter-spacing: -0.025em;
-  line-height: 1.1;
-  margin: var(--space-2) 0 var(--space-4);
-}
 
 .circle-os .os-survey-card {
   background: var(--c-bone);
@@ -819,15 +802,6 @@
 /* A Line is Note's back. It carries no edge: the word at the top left says
    which kind it is, and an inset border read as a second card. */
 
-.circle-os .os-note-mode-toggle {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  color: var(--c-orange);
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-}
 
 .circle-os .os-line-kind {
   color: var(--c-neutral-600);
@@ -912,21 +886,7 @@
   opacity: 0.38;
 }
 
-.circle-os .os-line-cue {
-  color: var(--c-neutral-600);
-  font-size: var(--text-xs);
-  margin-left: auto;
-}
 
-/* The Note Page's Footer is an empty spacer at rest, so a quiet status can sit
-   there without moving a word of what is written above it. */
-.circle-os .os-note-deck-note {
-  color: var(--c-neutral-600);
-  font-size: var(--text-sm);
-  font-weight: var(--os-weight-bold);
-  margin: 0;
-  align-self: end;
-}
 
 .circle-os .os-note-clear {
   appearance: none;
@@ -1169,8 +1129,7 @@
   }
 }
 
-.circle-os .os-habit .os-chapter-idle-action,
-.circle-os .os-extra-mission-done {
+.circle-os .os-habit .os-chapter-idle-action {
   align-self: stretch;
   background: var(--c-ink);
   border: 0;
@@ -1198,7 +1157,6 @@
   text-transform: uppercase;
 }
 
-.circle-os .os-chapter-idle .os-primary-mission-copy,
 .circle-os .os-chapter-idle .os-extra-mission-copy {
   appearance: none;
   background: transparent;
@@ -1233,9 +1191,6 @@
   outline: 0;
 }
 
-.circle-os .os-primary-mission-copy {
-  margin: var(--space-4) 0 0;
-}
 
 .circle-os .os-one-time-tasks {
   display: grid;
@@ -1676,32 +1631,8 @@
   color: rgb(255 248 241 / 0.56);
 }
 
-.circle-os .os-extra-mission-done {
-  margin-top: 0;
-}
 
-.circle-os .os-add-habit-row {
-  align-items: center;
-  background: rgb(223 100 45 / 0.08);
-  border: 2px dotted var(--c-orange-600);
-  border-radius: var(--r-lg);
-  color: var(--c-orange);
-  display: flex;
-  font-size: var(--text-sm);
-  font-weight: var(--os-weight-bold);
-  gap: var(--space-2);
-  justify-content: center;
-  margin-top: var(--space-3);
-  min-height: 44px;
-  width: 100%;
-}
 
-.circle-os .os-add-habit-row span {
-  color: var(--c-orange);
-  font-size: var(--text-xl);
-  font-weight: var(--os-weight-normal);
-  line-height: 1;
-}
 
 /* On a dark Page the header action takes the Page's own ink. It is written for
  * Routine's orange card, where Ink reads at 5.08:1; on a dark box the same
@@ -1840,8 +1771,7 @@
     cubic-bezier(0.22, 0.72, 0.22, 1) both;
 }
 
-.circle-os .os-habit .os-chapter-idle-action[aria-pressed="true"],
-.circle-os .os-extra-mission-done[aria-pressed="true"] {
+.circle-os .os-habit .os-chapter-idle-action[aria-pressed="true"] {
   background: var(--c-warm-50);
   color: var(--c-ink);
 }
@@ -1854,7 +1784,6 @@
 }
 
 @media (max-width: 430px) {
-  .circle-os .os-chapter-idle .os-primary-mission-copy,
   .circle-os .os-chapter-idle .os-extra-mission-copy {
     font-size: var(--os-type-heading) !important;
   }
@@ -2513,10 +2442,7 @@
  * the lift, the registration and the disabled state. All that is left here is
  * what the key is made of: how far it stands off the surface, what its leg is,
  * and whether a light on its top edge could be seen at all.
- *
- * `.os-add-habit-row` is deliberately absent. A dotted "Add task" is an
- * invitation, not a commitment, and a ghost control that presses like a solid
- * one claims more than it does. */
+ */
 .circle-os .os-page-primary-action,
 .circle-os .os-chapter-continue,
 .circle-os .os-protocol-begin,
@@ -3275,109 +3201,8 @@
   padding: 0;
 }
 
-.circle-os .os-log-gate {
-  position: relative;
-}
-
-.circle-os .os-log-gate .os-survey-card {
-  background: var(--c-neutral-950);
-  border: 0;
-  border-radius: var(--r-box);
-  box-shadow: none;
-  color: var(--c-bone);
-  min-height: 250px;
-  padding: var(--space-6) var(--space-5);
-}
-
-.circle-os .os-log-gate .os-session-intro {
-  border: 0;
-  border-radius: var(--r-box);
-  box-shadow: none;
-  min-height: 250px;
-  padding: var(--space-6) var(--space-5);
-}
-
-.circle-os .os-log-gate .os-card-label {
-  color: var(--c-orange);
-}
-
-.circle-os .os-log-gate .os-survey-head > span {
-  color: rgb(241 239 232 / 0.48);
-}
-
-.circle-os .os-log-gate .os-survey-time input {
-  background: rgb(241 239 232 / 0.06);
-  border-color: rgb(241 239 232 / 0.16);
-  color: var(--c-bone);
-  color-scheme: dark;
-}
-
-.circle-os .os-log-gate .os-survey-time button {
-  background: var(--c-orange);
-  border-color: var(--c-orange);
-}
-
-.circle-os .os-section-heading {
-  align-items: center;
-}
-
-.circle-os .os-section-heading h2 {
-  font-family: var(--font-sans), Arial, sans-serif;
-  font-size: var(--text-lg);
-  font-weight: var(--os-weight-bold);
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  margin: var(--space-2) 0 0;
-}
-
-.circle-os .os-day-hint {
-  color: rgb(241 239 232 / 0.48);
-  display: block;
-  font-size: var(--text-2xs);
-  margin-top: var(--space-2);
-}
-
-.circle-os .os-close-log {
-  background: transparent;
-  border: 1px solid rgb(241 239 232 / 0.16);
-  border-radius: var(--r-full);
-  color: var(--c-bone);
-  min-height: 36px;
-  padding: var(--space-2) var(--space-3);
-}
-
-.circle-os .os-add-time {
-  font-size: var(--text-2xs);
-  gap: var(--space-2);
-}
-
-.circle-os .os-add-time span {
-  background: var(--c-bone);
-  border: 0;
-  color: var(--c-ink);
-  height: 34px;
-  width: 34px;
-}
-
-.circle-os .os-hour-being-edited,
-.circle-os .os-main-activity-field,
-.circle-os .os-note-field,
-.circle-os .os-save-log,
 .circle-os .os-form-error {
   grid-column: 1 / -1;
-}
-
-.circle-os .os-hour-being-edited {
-  color: var(--c-orange);
-  font-size: var(--text-xs);
-  font-weight: var(--os-weight-bold);
-  letter-spacing: 0.08em;
-  margin: 0;
-}
-
-.circle-os .os-save-log {
-  background: var(--c-orange);
-  border-radius: var(--r-md);
 }
 
 .circle-os .os-timeline {
@@ -6498,15 +6323,7 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
     font-size: var(--os-type-heading);
   }
 
-  .circle-os .os-checkin-card {
-    min-height: 510px;
-    padding: var(--space-6);
-  }
 
-  .circle-os .os-checkin-card h2 {
-    font-size: var(--os-type-heading);
-    margin: var(--space-3) 0 var(--space-8);
-  }
 
   .circle-os .os-energy-scale {
     gap: var(--space-3);
@@ -6548,8 +6365,7 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
     padding: var(--space-5);
   }
 
-  .circle-os .os-mission h2,
-  .circle-os .os-section-heading h2 {
+  .circle-os .os-mission h2 {
     font-size: var(--text-xl);
   }
 
@@ -6761,10 +6577,6 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
     text-align: left;
   }
 
-  .circle-os .os-save-state {
-    max-width: 72px;
-    text-align: right;
-  }
 
   .circle-os .os-context-row h1,
   .circle-os .vision-intro h1,
@@ -6773,10 +6585,6 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
     line-height: 1;
   }
 
-  .circle-os .os-checkin-card {
-    border-radius: var(--r-box);
-    padding: var(--space-5) var(--space-4) var(--space-4);
-  }
 
   .circle-os .os-mood-row {
     align-items: start;
@@ -6827,13 +6635,6 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
   .circle-os .os-mission > button {
     justify-content: center;
     min-height: 56px;
-    width: 100%;
-  }
-
-  .circle-os .os-section-heading,
-  .circle-os .os-section-heading > div {
-    align-items: flex-start;
-    text-align: left;
     width: 100%;
   }
 
@@ -7243,8 +7044,7 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
   margin: 0 0 var(--space-3);
 }
 
-.circle-os .os-page-primary-action,
-.circle-os .os-page-footer > .os-add-habit-row {
+.circle-os .os-page-primary-action {
   align-items: center;
   align-self: stretch;
   border-radius: var(--r-lg);
@@ -8700,9 +8500,6 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
   justify-content: flex-start;
 }
 
-.circle-os .os-habit .os-chapter-idle .os-primary-mission-copy {
-  margin-top: 0;
-}
 
 /* The empty Habit app keeps the shared default. Real habits and tasks grow the
    App Box itself; the Sub Body never becomes a smaller scrolling panel. */
@@ -8735,11 +8532,6 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
   display: none;
 }
 
-.circle-os .os-habit .os-chapter-idle .os-add-habit-row {
-  background: transparent;
-  border-color: rgb(25 24 19 / 0.7);
-  color: var(--c-ink);
-}
 
 .circle-os .os-habit .os-chapter-idle .os-new-habit {
   color: var(--c-ink);
@@ -8777,7 +8569,6 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
  * separating — a line as well was saying it twice, and a margin as well made
  * the gap 41px while claiming to be 25. */
 
-.circle-os .os-habit-session-label,
 .circle-os .os-task-session-label {
   color: var(--c-ink);
   font-size: var(--text-2xs);
@@ -8852,21 +8643,8 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
     0 4px 8px rgb(25 24 19 / 0.2);
 }
 
-.circle-os .os-task-done {
-  background: transparent;
-  border: 1px solid rgb(25 24 19 / 0.62);
-  color: var(--c-ink);
-  font-weight: var(--os-weight-bold);
-  min-height: 44px;
-}
 
-.circle-os .os-task-done:disabled {
-  opacity: 0.55;
-}
 
-.circle-os .os-habit .os-chapter-idle .os-add-habit-row span {
-  color: var(--c-ink);
-}
 
 /* Deep Thoughts separates the question to read from the answer to write. The
    question keeps the strong Page voice; the answer remains borderless and may
@@ -10395,10 +10173,6 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
   line-height: inherit;
   opacity: 1;
 }
-.circle-os .os-routine-open .os-habit-session:is(:has(.os-routine-body), .is-history) .os-yesterday-undo {
-  font-size: var(--text-base);
-  font-weight: var(--os-weight-normal);
-}
 .circle-os .os-routine-open .os-habit-session.is-history .os-record-label {
   font-size: var(--os-type-heading);
   font-weight: var(--os-weight-bold);
@@ -10748,7 +10522,7 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
 .circle-os .os-page-footer-navigation { display: grid; gap: var(--os-tool-section-gap); width: 100%; }
 .circle-os .os-routine-swipe-cue { display: flex; justify-content: flex-end; width: 100%; }
 .circle-os .os-routine-swipe-cue.is-back { justify-content: flex-start; }
-.circle-os :is(.os-routine-open, .os-note-open, .os-log-open) .os-page-layout .os-routine-swipe-cue button {
+.circle-os :is(.os-routine-open, .os-note-open, .os-log-open, .os-template-session) .os-page-layout .os-routine-swipe-cue button {
   display: inline-flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -10844,12 +10618,12 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
 .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page:not(.os-log-week)) .os-writing-list span { font-size: var(--os-type-meta); opacity: 0.8; }
 .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page:not(.os-log-week)) .os-writing-list small { opacity: 0.8; }
 .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page:not(.os-log-week)) .os-writing-sync-copy { border-color: rgb(241 239 232 / 0.2); }
-.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-shell:not(.role-habit) {
+.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-shell:not(.role-habit) {
   width: 100%;
   height: var(--os-glass-action-height);
   min-height: var(--os-glass-action-height);
 }
-.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-shell:not(.role-habit) .os-creative-button {
+.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-shell:not(.role-habit) .os-creative-button {
   background: var(--os-glass-action-background);
   border: 1px solid var(--os-glass-action-border);
   border-radius: var(--os-glass-action-radius);
@@ -10863,14 +10637,14 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
   backdrop-filter: blur(var(--os-glass-control-blur)) saturate(1.2);
   transition: transform 400ms var(--ease-out), box-shadow 400ms var(--ease-out);
 }
-.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-label { font-size: inherit; }
-.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-shell:not(.role-habit) .os-creative-button:active,
-.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-shell:not(.role-habit).phase-pressed .os-creative-button {
+.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-label { font-size: inherit; }
+.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-shell:not(.role-habit) .os-creative-button:active,
+.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-shell:not(.role-habit).phase-pressed .os-creative-button {
   box-shadow: var(--os-glass-action-pressed-shadow);
   transform: translateY(2px) scale(0.985);
   transition-duration: 150ms;
 }
-.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-shell:not(.role-habit) .os-creative-button:disabled {
+.circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-shell:not(.role-habit) .os-creative-button:disabled {
   box-shadow: none;
   opacity: 0.5;
   transform: none;
@@ -10879,11 +10653,11 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
 @media (prefers-reduced-transparency: reduce) {
   .circle-os .os-note-glass-session { background: var(--c-ink); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .circle-os .os-note-glass-session > .os-app-window { background: transparent; }
-  .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-shell:not(.role-habit) .os-creative-button { background: var(--c-charcoal); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-shell:not(.role-habit) .os-creative-button { background: var(--c-charcoal); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .circle-os:has(.os-note-glass-session) > .os-routine-threads { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-shell:not(.role-habit) .os-creative-button { transform: none !important; transition: none !important; }
+  .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-shell:not(.role-habit) .os-creative-button { transform: none !important; transition: none !important; }
 }
 @media (forced-colors: active) {
   .circle-os:has(.os-note-glass-session) > .os-routine-threads { display: none; }
@@ -10891,7 +10665,7 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
   .circle-os .os-note-glass-session > .os-app-window { background: transparent; }
   .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page:not(.os-log-week)),
   .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page:not(.os-log-week)) .os-writing-editor textarea { color: CanvasText; }
-  .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol) .os-creative-button-shell:not(.role-habit) .os-creative-button { background: ButtonFace; color: ButtonText; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .circle-os :is(.os-note-page, .os-deep-thoughts-page, .os-log-page, .os-protocol, .os-template-start) .os-creative-button-shell:not(.role-habit) .os-creative-button { background: ButtonFace; color: ButtonText; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 /* Log and Week share Routine's four type roles and two weights. */

@@ -1,5 +1,790 @@
 # Circle OS user-journey test record
 
+## Durable offline entry and crash recovery — 2026-11-14
+
+Developer approved the implementation proposal. main/6a09b62; previous work
+preserved, no stage/commit/deployment/hosted change or sync activation.
+New offline-auth-store.ts stores proof or closed state in one IndexedDB row with
+strict transaction durability and expected epochs. Adapter/controller/types await
+local acceptance before opening/signing out. Offline entry rechecks its epoch
+after signature validation. Legacy proof imports only into an absent row after
+validation; durable closed state wins. Corrupt restore is denied; fresh sign-in
+can first write a closed row. Signature validation and backend authorization are
+unchanged; refresh tokens are not added to the new store.
+
+Final production-route recovery selection **18/18**, 72938ms. Both 360/390px
+crash journeys finish: saved entries/revisions and unsent drafts match; offline
+edits survive; clearing remains empty; untouched empty composer creates no saved
+entry; completed offline logout remains locked after crash; B is empty and
+returning A has exact writing without duplicate revisions. Service worker serves
+offline navigation. localStorage proof may still disappear, while the durable
+record successfully restores local entry. That qualifies the earlier blocker.
+
+New browser checks cover valid legacy upgrade, closed-state precedence, stale
+epoch publication rejection, corrupt state and refused IndexedDB. Forged-proof
+and expired-proof fixtures now modify the authoritative durable record. Existing
+password recovery, rejection, late restore, alias and cross-tab cases pass.
+Controller/proof tests **12/12**, including waiting for durable invalidation before
+network logout and handling its rejection while keeping the screen locked.
+Final isolated production webpack build/TypeScript, focused lint and diff checks
+pass. No new geometry measurement or optimization justified.
+
+Commands used installed Node v24.22.1 on PATH and the installed Playwright cache:
+
+~~~powershell
+node scripts/check-writing-offline.mjs
+node --test tests/supabase-auth.test.mjs
+node node_modules/eslint/bin/eslint.js app/os/auth/offline-auth-store.ts app/os/auth/supabase-client.ts app/os/auth/auth-controller.js tests/supabase-auth.test.mjs tests/supabase-auth.browser.mjs
+git diff --check
+~~~
+
+Runner outside-sandbox access was approved. Initial run found the forged fixture
+still targeting localStorage and a fresh B database without its writing store;
+fixtures were corrected, preserving assertions of identity and empty state.
+Logout helper now waits for completed sign-out rather than only the immediately
+locked screen. Intermediate selection passed 18/18; final code was rerun after
+the epoch recheck and expired durable-proof fixture updates. Existing Next/Vite
+lockfile, asset and chunk warnings remain. Two old menu typography cases remain
+outside the runner's printed behavior selection, not counted as passing here.
+Supabase changelog and official onAuthStateChange reference were consulted; no
+SDK dependency or hosted configuration changed.
+
+Limits: synthetic local Auth and desktop Chromium; actual phones remain deferred.
+Hosted renewal/revocation evidence predates this runtime change, so new hosted
+acceptance is not claimed. OS/storage eviction, backup/restore, wider operations
+and activation readiness remain open. No personal records, shared geometry,
+Circle-day or immutable-content changes. Next review locally, then choose a
+separately reviewed operating-recovery slice. Previous failure history follows.
+
+## Forced browser crash writing recovery — 2026-11-14
+
+### Approved diagnostic follow-up
+
+Developer approved investigation, test corrections and the same six records.
+Only tests/supabase-auth.browser.mjs changed further. The helper now passes
+offline mode to launchPersistentContext before browser startup, and logs startup
+tab paths. The test compares entries and drafts before requiring unlocked UI and
+reports only proof-presence/shape/owner-match booleans, logout/password-flow markers
+and navigator.onLine. No tokens, keys or credentials are logged.
+
+Final runner result remains **15/17** (57908ms). Both crash cases report one blank
+startup tab, offline=true, proof present/parsed/confirmed/owner-matching with token
+and keys before crashing, and proof absent afterward. Closed marker is null and
+password-flow marker false both times. Exact saved entries (including revisions)
+and drafts compare equal at both widths before the restored-answer UI assertion
+fails on Welcome back. This establishes writing retention and missing local proof
+in this bounded journey. Startup-gap correction does not resolve it. The exact
+proof-loss mechanism is still unknown; this does not certify hosted/phone behavior.
+Later crash scenarios remain unreached. Earlier uncertainty below is qualified
+by this follow-up rather than treated as current evidence.
+
+Same documented runner/lint/diff commands: final isolated production build and
+TypeScript pass, focused lint and scoped diff checks pass. Outside-sandbox runner
+execution was approved for the dependency junction and local browser. All test
+profiles are cleaned. No runner or runtime change was needed in this follow-up;
+no measured optimization justified. Next review a concrete product proposal for
+durable offline proof with safe logout invalidation, then repeat full crash
+acceptance. Product sync stays off, phones remain deferred, prior work preserved;
+no staging, commit, deployment, migration or hosted modification.
+
+**Approval/Git.** Developer approved the test-and-six-records proposal. main/6a09b62;
+pre-existing modified/untracked work preserved. Only tests/supabase-auth.browser.mjs,
+scripts/check-writing-offline.mjs and the six named verification/continuity records
+changed. No product runtime, hosted data, migration, deployment or sync activation.
+
+**Implementation.** Existing persistent-profile helper now optionally crashes the
+Chromium main process through CDP Browser.crash. Before the command it checks that
+the browser command line names exactly its disposable profile under outputs.
+Disconnection, rather than a normal close or a crash-command reply, proves exit.
+The runner explicitly disables writing sync in its disposable production build.
+Synthetic Auth and isolated setup gates remain; this does not verify onboarding.
+New 360/390px journeys retain existing normal-restart coverage and add planned
+crash/offline edits, clearing, empty composer, logout and account-return checks.
+Exact entries/drafts are compared; expected downstream cases remain unreached.
+
+**Final observed result: 15/17 pass, 2 fail.** Production webpack build/TypeScript
+and focused lint pass. Both normal-restart writing cases and the existing Auth
+selection pass. At both widths a saved Note and unfinished Deep Thought reach
+IndexedDB before the crash. Offline navigation after actual browser disconnection
+is served by the service worker, but the app shows Welcome back rather than the
+writing tools. The first restored-answer assertion fails (textbox absent).
+This is a reproducible offline-entry blocker in the synthetic Chromium crash
+journey, not proof of writing deletion or of a hosted/phone defect. Stored writing
+after the crash and the exact Auth cause have not been established. Subsequent
+offline-edit/clearing/empty/logout/account-return crash assertions are unverified.
+Failing tests remain enabled; no product correction was authorized in this slice.
+
+Commands used installed Node v24.22.1 on PATH and PLAYWRIGHT_BROWSERS_PATH set to
+the installed local ms-playwright cache:
+
+~~~powershell
+node scripts/check-writing-offline.mjs
+node node_modules/eslint/bin/eslint.js tests/supabase-auth.browser.mjs scripts/check-writing-offline.mjs
+git diff --check -- tests/supabase-auth.browser.mjs scripts/check-writing-offline.mjs bugs.md docs/USER_JOURNEY_TESTING.md docs/ACCOUNT_WRITING_SYNC.md docs/PRODUCTION_ARCHITECTURE.md docs/CURRENT_TASK.md docs/SESSION_HANDOFF.md
+~~~
+
+**Attempts.** Default Node shim could not find Node; used installed v24.22.1.
+Sandbox dependency junction failed; approved outside-sandbox execution followed.
+First run stopped at ownership inspection because --enable-automation was absent;
+the helper now supplies it. Next run crashed the browser but awaited a command
+reply that never arrived. The isolated test worker was stopped after checking its
+command line; its residual synthetic profile was removed after checking its exact
+resolved path remains under outputs. Waiting for disconnection fixes the harness.
+Final run reaches the offline-entry failure at both widths. Existing Next
+multiple-lockfile and Vite asset/chunk warnings remain. No optimization justified.
+
+**Next/limits.** Review a focused Auth/offline-proof crash investigation and any
+concrete product fix separately, then rerun the entire crash journey. Phone testing
+stays deferred. OS eviction, cleared storage, backup/restore and hosted crash
+acceptance remain open. Shared geometry/type/motion, Circle day and immutable
+content are untouched; no new geometry measurement. Sync remains off.
+
+## Natural session expiry and writing recovery — 2026-11-14
+
+Developer approved the natural-expiry follow-up and explicitly deferred the phone
+checklist. main/6a09b62; all pre-existing changes preserved. Extended only the
+existing hosted verification runner/test and these six records. No product
+runtime, hosted setting, migration, deployment or writing-sync activation change.
+
+`--natural-expiry` selects a bounded 390px journey. The isolated Next production
+build uses real public Supabase configuration with writing sync disabled; the
+secret stays in the Node test process. Two disposable confirmed accounts are
+created. Unrelated synthetic setup gates remain seeded, not onboarding proof.
+
+Final production webpack build/TypeScript and focused lint pass. Final hosted
+test **1/1 passes**, taking **3628 seconds** after build. The browser remained
+offline for the real server-issued token lifetime (initial wait 3600 seconds),
+using the signed JWT exp plus five seconds. No clock, token or SDK expiry metadata
+was altered for this natural-expiry phase. After the wait the test verified the
+issued token was unchanged and actually expired, closed the app tab and reopened
+the real /os route in a new tab of the same browser context. Navigation came from
+the service worker. The unfinished Deep Thought and saved Note returned exactly.
+On reconnect/reload a different, unexpired signed token was issued. Saved entries,
+versions and unfinished drafts matched the before-wait snapshots exactly.
+
+The existing early-renewal/revocation/account-switch checks also passed at 390px:
+refresh token rotation, rejected revoked refresh, app lock, empty B entry and
+returning A. After revocation /user returned 403 with 3598 seconds remaining on
+the issued token. Both exact synthetic accounts were deleted and GET absence
+checks returned 404. Disposable build cleanup completed; process exit was zero.
+
+Commands with installed Node v24.22.1 and installed Playwright cache:
+
+~~~powershell
+node --env-file=.env.local scripts/check-auth-recovery-live.mjs --write --natural-expiry
+node node_modules/eslint/bin/eslint.js scripts/check-auth-recovery-live.mjs tests/auth-recovery-live.browser.mjs
+git diff --check
+~~~
+
+The approved outside-sandbox command was needed for build junction, loopback and
+hosted access. Existing Next multiple-lockfile warning remains. No product defect
+was found and no optimization justified. Geometry/type/motion, Circle day and
+personal evidence were untouched; no new geometry measurement claimed.
+
+This closes the bounded natural-token-expiry gap left by the earlier early-refresh
+run. It verifies tab reopening in desktop Chromium at 390px, not a physical phone,
+new browser-process restart after expiry, crash or OS eviction. Phone acceptance
+is deferred at the developer's request. Lost devices, unconfirmed hosted denial,
+true contention, backup/deletion and other activation gates remain open.
+
+
+## Hosted account-session recovery — 2026-11-14
+
+Developer approved the verification-only runner/browser/records slice, including
+two disposable hosted accounts. main/6a09b62; prior modified/untracked work
+preserved. No product runtime, hosted configuration, migration, deployment,
+personal evidence or writing-sync activation changes.
+
+New `scripts/check-auth-recovery-live.mjs` copies the allowlisted production
+sources into a disposable build without .env files, sets writing sync disabled,
+and starts a separate loopback app. Only the public Auth configuration reaches
+the app. The secret remains in the Node verification process. The browser allows
+only that app and the configured Supabase origin. Two confirmed synthetic accounts
+are created with harmless credentials/writing; exact account deletion and 404
+absence checks run in finally, including after failed assertions.
+
+Final production webpack build/TypeScript and focused lint pass. Browser test
+passes **1/1**, containing sequential actual-app journeys at **360/390px**:
+real sign-in; Note autosave; unfinished Deep Thought; offline reload/return;
+real refresh-token rotation; global revocation; rejected refresh; app lock after
+rejected renewal; fresh B onboarding without writing controls; logout and restored
+A. Saved entry/revision and unfinished-draft snapshots match exactly after
+revocation and return, without duplicate saved revisions. Unrelated setup/delivery
+gates are seeded in synthetic A; onboarding is not certified.
+
+The test deliberately sets only persisted SDK expires_at scheduling metadata to
+request renewal early. Signed tokens are not forged or changed. **Natural JWT
+expiry is not verified.** Direct hosted /user requests after global revocation
+returned **403** at both widths with **3596 seconds** remaining on the issued
+token. Revoked refresh requests were rejected. This measures the configured
+service's immediate response in this run, not a universal revocation-time promise.
+
+Commands (installed Node v24.22.1 and existing Playwright cache):
+
+~~~powershell
+node --env-file=.env.local scripts/check-auth-recovery-live.mjs --write
+node node_modules/eslint/bin/eslint.js scripts/check-auth-recovery-live.mjs tests/auth-recovery-live.browser.mjs
+git diff --check
+~~~
+
+Initial sandbox dependency-junction creation failed EPERM before hosted accounts
+were created; approved outside-sandbox rerun was required. First hosted attempt
+hit the default five-second sign-in wait and confirmed cleanup of both accounts.
+With a 30-second browser assertion allowance the final run passed in 29 seconds
+after build. Existing Next multiple-lockfile warning remains. Diff check passes
+with an existing debug.log line-ending warning. No optimization justified.
+
+Remaining: natural token expiry, physical phones/PWA, crash/OS eviction,
+unconfirmed-user hosted denial, lost devices, true contention, backup/deletion
+and activation readiness. This does not certify all writing-sync gates. The
+previous phone checklist remains the immediate device acceptance action.
+
+
+## Real-app offline writing recovery — 2026-11-14
+
+**Scope/Git.** Developer approved the production-route offline verification proposal,
+runner, existing Auth suite extension and six owning/continuity records.
+main/6a09b62; prior modified/untracked work preserved. No product runtime code,
+shared geometry, migration, hosted account/database, environment, staging, commit
+or deployment changes. Product writing sync stays off.
+
+**Implementation.** scripts/check-writing-offline.mjs copies an allowlist of app,
+public and build configuration into a disposable workspace build, links installed
+dependencies and builds Next with synthetic Auth configuration. It does not copy
+.env files. A separate loopback server leaves the original review build intact.
+Existing ES256/Auth fixtures are reused. Unrelated setup/delivery completions are
+seeded only in isolated account A; this is not onboarding/delivery certification.
+Notes and Deep Thoughts themselves are authored through the actual production UI.
+
+At 360/390px, persistent Chromium profiles close completely and reopen with
+offline mode set before navigation. Both offline navigation responses explicitly
+come from the actual service worker. Saved Note and unfinished Deep Thought return;
+offline Note edits and draft edits survive a second offline process restart.
+The Deep Thought stays unsent, with no saved answer. Offline logout stays locked
+through reload. Reconnecting and switching to fresh B gives an empty writing ledger;
+returning to A retains its exact saved entries, with no duplicate revisions.
+HTTP/Auth requests outside the approved local/synthetic fixtures are blocked;
+synthetic Auth also refuses requests during the offline phases. Profiles/builds
+are cleaned after checking resolved paths remain under workspace outputs.
+
+**Checks.** Installed Node v24.22.1 on PATH and installed Playwright cache:
+
+~~~powershell
+node scripts/check-writing-offline.mjs
+node node_modules/eslint/bin/eslint.js scripts/check-writing-offline.mjs tests/supabase-auth.browser.mjs
+~~~
+
+Final isolated production webpack build/TypeScript passes. Final focused Auth/
+recovery browser selection passes **15/15**, including the two new real-app cases.
+Focused lint and scoped diff checks pass. Earlier full Auth selection was 15/17:
+two unchanged menu tests expect 650 weight, while current shared design renders
+700. git show HEAD confirms the old assertion. They remain unchanged and are
+explicitly outside the runner's printed authentication/recovery selection. No
+blanket full-suite pass or product defect is inferred.
+
+Earlier fixture attempts found absent fresh-account main-state bytes, then
+body-free retired draft markers, then an empty B ledger that has never been
+written. The fixtures now seed unrelated setup explicitly, wait for actual
+accepted records/draft bodies, and accept an absent ledger only for the empty
+account. No product correction was needed. Existing Vite asset/chunk-size and
+Next multiple-lockfile warnings remain. No optimization was justified.
+
+**Limits/next.** This establishes normal Chromium process restart of the real
+production route using local signed Auth fixtures. Real phone browsers/installed
+PWA, live hosted expiry/revocation, crash/OS eviction, cleared-site storage,
+backup/deletion and other-domain sync remain open. Geometry/motion were untouched;
+no fresh geometry measurement is claimed. Next run the phone checklist below,
+then prepare separately reviewed hosted-session/operating recovery work.
+
+### Phone acceptance checklist
+
+Use the current reviewed build on your primary phone; record phone model, OS,
+browser/version and whether opened from a browser or Home Screen. Use harmless
+test text and an account that already has access to the writing tools.
+
+1. While online, open Note and Deep Thoughts once. Save a short test Note and
+   leave a different answer unfinished. Wait for the Note's normal autosave.
+2. Turn on airplane mode and ensure Wi-Fi is off. Fully close the app/browser,
+   then reopen Circle OS. Check both texts return with the same question.
+3. Edit the Note and unfinished answer offline. Pause, fully close and reopen
+   again while still offline. Check both exact texts return.
+4. Reconnect. Check the Note appears once in History, with its latest wording;
+   the unfinished answer remains unfinished.
+5. If testing logout, sign out offline and reopen: local writing must stay hidden.
+   Reconnect and sign into the same account to confirm the retained writing returns.
+   Do not clear site data or remove the installation as part of this check.
+
+Report the first failing step, or all passed, with the device details.
+Device acceptance remains pending until actually run.
+
+## Writing browser-restart recovery — 2026-11-14
+
+**Approval and scope.** Developer approved the concrete test/documentation proposal.
+main/6a09b62; prior modified/untracked work preserved. Only the two existing writing
+browser suites and the five approved records changed. No product code, hosted
+database, environment, migration, staging, commit or deployment changed.
+
+**Developer reports.** Explore reviewed; Protocol and Article publishing tested.
+The developer also reports the Note caret issue fixed. Device/browser and detailed
+steps were not supplied; this is reported acceptance, not a new measured phone test.
+
+**Implementation and evidence.** Persistent synthetic Chromium profiles retain
+the actual writing-store IndexedDB across a full normal browser-process close
+and relaunch on the same origin. Storage equality verifies saved history and
+unfinished drafts; account B starts empty and returning to A retains its state.
+The local PostgreSQL fixture remains alive independently of the browser. A denied
+upload and a server-accepted upload with its reply lost both retain the exact
+pending operation across restart. Recovery drains that operation; repeating sync
+creates one saved version, and the lost-reply case leaves the accepted head exactly
+unchanged. External requests are blocked. Profiles are removed only after checking
+their resolved paths stay under the workspace outputs directory.
+
+Final command with installed Node v24.22.1 on PATH and
+PLAYWRIGHT_BROWSERS_PATH pointing to the installed ms-playwright cache:
+
+~~~powershell
+node --test --test-reporter=tap tests/writing-storage.browser.mjs tests/writing-cloud.browser.mjs
+~~~
+
+**37/37 pass**, including three new restart cases. Focused ESLint passes for both
+files. Initial restart assertions passed, but Vite watchers emitted EBUSY on locked
+Chromium Cookies files. Both test servers now ignore outputs; the final complete
+run has no such failure. Earlier Note diagnostic browser checks hit sandbox
+ERR_NETWORK_ACCESS_DENIED before reaching the app. The writing suites ran with
+approved outside-sandbox loopback access.
+
+**Boundaries.** This is normal desktop Chromium process restart using the actual
+product adapter with synthetic local HTTP/Auth/PostgreSQL fixtures, not a crash,
+hosted Auth/session test, real-phone test, offline page startup or OS eviction.
+Existing offline writes, rollback, quota, corruption, conflicts and account guards
+also pass in the final suites. No geometry/type/motion changes; previous measured
+tool dimensions are unchanged by this test-only work, not remeasured here.
+No measured optimization justified. Product writing sync remains off.
+Next prepare a separately reviewed production-route offline-startup and target
+device recovery slice; hosted expiry/revocation and operating recovery remain open.
+
+## Approved hosted template acceptance — 2026-11-14
+
+Developer explicitly approved the prepared migration/test/cleanup and requested
+continuation. Preflight confirmed template helper absent and existing publisher
+present. Applied migration 004 once successfully through Supabase; subsequent
+query confirmed helper present, anonymous publisher execution false and ordinary
+delegate execution false. Do not reapply 001–004.
+
+Final command (installed Node v24.22.1/Playwright cache, approved outside sandbox):
+`node --env-file=.env.local scripts/check-content-admin-live.mjs --write --app --catalog --templates`.
+Final exit 0: **88 functional checks**, the real browser Explore → setup →
+Routine Add/Protocol Start → checkbox completion → reload, followed by both
+template types' withdrawal/restore and **Synthetic cleanup confirmed**. Both
+accounts, temporary grant, four draft/catalog identities, immutable versions,
+asset references/image and operation receipts were removed by exact registered
+identities, with absence checks. All earlier attempts also confirmed cleanup.
+
+Attempts identified old signed-out expectation (403 versus current 401), changed
+image expectation (400 versus current 503), a real destination bug and a browser
+fixture SecurityError. Changed-image rejection now independently checks original
+stored bytes; the 503 classification remains unresolved. The actual product fix
+stores the intended shared Routine/Protocol page index atomically with adoption,
+using the unchanged shared version identifier. Final webpack build/TypeScript and
+focused lint pass; updated production-CSS local Add/Start checks pass 3/3,
+including persisted Protocol index 1. Hosted browser then passed both tools and
+reload. Fixture initialization now skips opaque/foreign origins; errors are
+audited with URL/token redaction. No unexpected product error remained.
+
+Preflight advisors reported pre-existing RLS-without-policy informational entries,
+definer execution warnings (including rls_auto_enable), and disabled leaked-password
+protection. No unrelated policy/auth setting was altered or declared resolved.
+No real authored publication, deployment, sync activation, staging or commit.
+Physical phones, true contention, backup/restore, ResizeObserver, original Effort
+draft diagnosis and earlier stale source assertion remain outside certification.
+
+## Explore and local template completion — 2026-11-14
+
+Developer approved local completion, then specified Explore's three glass rows,
+retained header/navigation, optional saved fields, vertical scrolling, outside
+titles, bounded carousels, two blank panels when empty, a blank neighbour for one
+item and exact-version opening. They chose to reopen any active Habit group and
+allow a fresh group after all items stop/expire. Work began on main/6a09b62 with
+substantial modified/untracked work; it is preserved. No stage, commit, remote
+write, authored publication, deployment or sync activation.
+
+**Implemented.** Native scroll-snap rows use shared glass/type/spacing and Today's
+compact minimum, with raised selections/Orange shadow. Explore excludes withdrawn
+items for every role; migration 004 adds saved metadata in one listing. Routine
+adoption reuses domain/schedule actions, one immutable group/source/answer record
+and definition references. Add/Start share the account lock and await local save.
+Epoch checks reject stale operations. Source disclosures save no evidence and
+template tasks retain supporting wording. Protocol's fixed terms, protection and
+Day One gate remain. Admin Add/Start are disabled.
+
+**Verification.** Installed Node v24.22.1 and existing Playwright cache. Final
+browser commands use `$env:CIRCLE_PRODUCTION_CSS='1'`.
+
+- `node node_modules/next/dist/bin/next build --webpack`: final pass including
+  TypeScript and the adoption account-epoch safeguard. Focused ESLint across
+  changed app/model/route/source/runner/test files passes. Both runner files pass
+  `node --check`. `node scripts/chapter-compiler.mjs --check`: 33 sources/0 quests.
+- `node --test tests/routine-template-adoption.test.mjs tests/protocol-template-adoption.test.mjs tests/template-model.test.mjs tests/template-routes.test.mjs tests/template-publication.test.mjs tests/catalog-routes.test.mjs tests/content-template-live-gate.test.mjs tests/routine-schedule.test.mjs`: 30/30 pass. Covers source/choice-label snapshots, preserved items/identity, inclusive dates/ongoing, individual stopping, retry, active groups across editions, later re-adoption, history/merge, invalid answers/bounds/collisions, publication access/metadata and hosted-runner gates.
+- `node --test --test-reporter=tap --test-name-pattern='template|Admin Protocol preview' tests/content-admin.browser.mjs`: 13/13 pass. Add/Start recover from both local-store failures, retain answers and save one copy. Cover/time/Effort/editor/image/Protocol-duration paths remain passing.
+- `node --test --test-reporter=tap --test-name-pattern='adopted Routine template|adopted Protocol template|bottom navigation routes|tool consistency across six|shared App Box geometry' tests/writing.browser.mjs`: 10/10 pass. Real rows, first-row checkbox alignment, supporting wording, source reading without evidence mutation, completion/reload and fixed terms pass. Matrix covers 360/390/416; settled Note/Thoughts/Habit/Protocol references at 360/390 stay 648px/24px without nested scrolling.
+- Final post-safeguard/Admin-denial recheck: `node --test --test-concurrency=1 --test-reporter=tap --test-name-pattern='Explore|Routine template Add|Protocol template Start|template Start cannot|Admin templates build' tests/content-admin.browser.mjs tests/explore.browser.mjs`: 12/12 pass, comprising 5 overlapping template checks and 7 Explore checks. Explore covers 360/390/416/1100, native touch, both neighbour edges, ends/Home/End, roles/24px anchors, no outer frame, blank/single-item rows, optional fields, exact opening, retry, normal depth motion, reduced motion/transparency, forced colors, account changes and late-response exclusion. Initial metadata request count is one.
+
+**Expanded selection/baseline.** Adding circle-os-model, habit-identity,
+protocol-home and protocol-wording produces 135/136 pass. The unchanged Protocol
+Footer source assertion searches for absent exact comment `/** The block` and
+slices an empty string. Reconstructing the file in memory without this task's
+Protocol import/render additions also gives marker/start -1 and an empty slice.
+Leave this fixture unchanged; no runtime defect or broad-suite pass is inferred.
+Actual Protocol runtime checks above pass.
+
+**Attempts/QA.** The Node shim was unavailable; installed Node worked. Sandbox
+EPERM for generated output and loopback denial required approved outside-sandbox
+execution. Initial virtual-fixture JSX/duplicate region labels were corrected.
+Desktop scaling initially hid a neighbour; its scoped scale is corrected. Glass
+initially borrowed the 648px focused floor; Explore now captures the existing
+344px mobile/420px wider compact floor. The Add rim initially measured 28px from
+the outer bottom due to a legacy 3px key lift; shared glass action rules restore
+25px outside/24px inside. Visual QA corrected source opacity/roles and kept
+adopted checkboxes on row one. Inspected outputs/explore-middle-390.png,
+outputs/explore-empty-390.png and outputs/routine-template-adopted-390.png; other
+widths are captured too. Expected synthetic disk-error logs and existing
+ResizeObserver notices remain. No broad optimization justified; one listing and
+shared targeted image reads avoid per-edition metadata requests.
+
+**Hosted boundary/next.** Read-only discovery/query confirmed the configured
+CircleOS Server project and absent template migration marker. Public config
+matches the project and uses Supabase account mode. No hosted rows changed.
+The write-gated runner prepares real synthetic publication plus an isolated
+production-browser flow and exact cleanup; runtime remains unverified pending
+separate approval. See [procedure](CONTENT_ADMIN_SETUP.md#prepared-hosted-template-acceptance).
+Physical phones, true cross-tab contention, backup/restore, original Effort-draft
+diagnosis and ResizeObserver remain open. debug.log has three added lines and is
+preserved. The built local review server is ready at port 3012.
+
+## Retire outdated button source checks — 2026-11-14
+
+Developer approved removing nine outdated button test blocks/comments, retaining
+the other 14 and adding no tests. Removed Protocol top-edge key lighting, universal
+Page-action recipe, 18px App Box gap, universal action height, choice JSX/key
+form, no release animation, tick active/sunk face, old Send persistence/departure
+function and old Thoughts departure selector checks. These are the nine failures
+recorded in the preceding Routine CSS cleanup; passing retained checks are intact.
+Redundant blank lines tidied. No app code/style/data change or runtime bug fix.
+
+Installed Node v24.22.1:
+
+- `node --check tests/button-standard.test.mjs`: pass.
+- `node --test tests/button-standard.test.mjs`: 14/14 pass after final cleanup. Log: `outputs/button-source-cleanup.log`.
+- `node node_modules/eslint/bin/eslint.js tests/button-standard.test.mjs`: pass.
+- Final diff review and `git diff --check`: pass.
+
+No new tests or behavioral coverage. Browser/build were not repeated for this
+test-only removal; earlier runtime evidence remains dated evidence. main/6a09b62;
+prior modified/untracked work preserved. No stage, commit, migration, publication,
+deployment or sync activation. Existing device/ResizeObserver/Effort-draft/hosted
+gaps remain open. No broad-suite certification.
+
+## Unused Routine/task CSS cleanup — 2026-11-14
+
+Developer approved six unused CSS families and corresponding existing assertion
+selector updates. Removed os-extra-mission-done, os-primary-mission-copy,
+os-add-habit-row, os-task-done, os-habit-session-label and os-yesterday-undo.
+Ten whole rules removed and six mixed rules trimmed; read-only PostCSS comparison
+confirms every retained selector group's declarations match its pre-edit snapshot.
+CSS parses and no retired selectors remain. Retired dotted-control comment was
+removed. Two selector lists in button-standard now refer to retained controls.
+No new tests or app/record/content/token/motion changes.
+
+- Installed Node v24.22.1: `node --test tests/button-standard.test.mjs`: 14/23 pass. Nine source assertions fail on unchanged key-light, action-lift, 18px gap, survey-choice height, JSX formatting, sunk-key and Thoughts departure expectations. They are not repaired or removed within this scope. Log: `outputs/routine-css-cleanup-controls.log`.
+- `node node_modules/eslint/bin/eslint.js tests/button-standard.test.mjs`: pass.
+- `node node_modules/next/dist/bin/next build --webpack`: final production build/TypeScript pass. Sandbox generated-output mkdir hit EPERM; approved outside-sandbox rerun passes. Log: `outputs/routine-css-cleanup-build.log`.
+- `CIRCLE_PRODUCTION_CSS=1 node --test --test-reporter=tap --test-name-pattern="Routine schedules repeat tasks|Habit result fades|Record matches Habits|tool consistency across six|shared App Box geometry" tests/writing.browser.mjs`: 9/9 pass with installed Node directory on PATH, installed Playwright cache and approved outside-sandbox execution. Log: `outputs/routine-css-cleanup-browser.log`.
+- Final diff review and `git diff --check`: pass.
+
+Isolated synthetic browsers block external backend/model requests. Repeat task
+completion, Record Undo/reload, saved historical wording and restored Habit Undo
+remain intact. Record styling passes at 360/390px, shared matrix at 360/390/416px.
+Reference Note/Thoughts/Habit/Protocol frames remain 648px with 24px foreheads at
+360/390px and no nested scrolling. `outputs/record-shared-style-390.png` inspected.
+Existing ResizeObserver, physical-device, Effort-draft and hosted gaps remain
+open. No full-suite or performance claim. main/6a09b62; prior modified/untracked
+work preserved; no commit, deployment, migration, publication or sync activation.
+
+## Unused Note/check-in CSS cleanup — 2026-11-14
+
+Developer approved removing five unused Note/check-in style families and their
+responsive variants. Removed 11 rules for os-save-state, os-checkin-card,
+os-note-mode-toggle, os-line-cue and os-note-deck-note, plus the obsolete footer
+status comment. No runtime app/public references to these classes were found.
+Current writing tools, retained Line content, historical Chapters, records,
+shared tokens and motion remain untouched. No new tests added.
+
+- PostCSS parsing and retired-selector absence check pass. The first scan had a regex escaping error; corrected scanning identified all 11 rules. Patch hunk ordering was corrected before applying the source change.
+- Installed Node v24.22.1: `node node_modules/next/dist/bin/next build --webpack` passes including TypeScript. Sandbox generated-directory EPERM required approved outside-sandbox execution. Log: `outputs/note-css-cleanup-build.log`.
+- `CIRCLE_PRODUCTION_CSS=1 node --test --test-reporter=tap --test-name-pattern="writing pair shares glass|Deep Thoughts opens directly|tool consistency across six|shared App Box geometry" tests/writing.browser.mjs`: 9/9 pass with installed Node directory on PATH, installed Playwright cache and approved outside-sandbox execution. Log: `outputs/note-css-cleanup-browser.log`.
+- Final diff review and `git diff --check` pass.
+
+Synthetic isolated browser checks block external backend/model traffic. Writing
+pair behavior and shared matrix pass at 360/390/416px; saved Deep Thoughts persist
+and advance only on Next question. Reference Note/Thoughts/Habit/Protocol frames
+remain 648px tall with 24px foreheads at 360/390px and no nested scroller.
+`outputs/writing-pair-note-390.png` was inspected. No performance improvement,
+broad-suite, physical-device or hosted acceptance claim. Existing ResizeObserver
+and other recorded gaps remain open. main/6a09b62, prior modified/untracked work
+preserved; no stage, commit, deployment, migration, publication or sync activation.
+
+## Retired Log CSS cleanup — 2026-11-14
+
+Developer approved removing unused old Log CSS and responsive variants. Removed
+the os-log-gate, os-section-heading, os-day-hint, os-close-log, os-add-time,
+os-hour-being-edited, os-main-activity-field, os-note-field and os-save-log rules.
+No app source references remain; dynamic Log class construction was inspected.
+Shared os-form-error grid placement and the responsive os-mission h2 rule remain.
+Prior modified/untracked work preserved on main/6a09b62; no commit or deployment.
+
+- Existing PostCSS parser successfully parses the stylesheet. A read-only selector scan finds none of the retired families and confirms `.circle-os .os-form-error { grid-column: 1 / -1; }` remains.
+- Installed Node v24.22.1: `node node_modules/next/dist/bin/next build --webpack` passes, including TypeScript. Initial sandbox execution hit generated-directory EPERM; approved outside-sandbox rerun passes. Log: `outputs/log-css-cleanup-build.log`.
+- `CIRCLE_PRODUCTION_CSS=1 node --test --test-reporter=tap --test-name-pattern="full-page Log adoption|Log corrections save, cancel and reload|tool consistency across six|shared App Box geometry" tests/writing.browser.mjs`: 10/10 pass with installed Node directory on PATH, installed Playwright cache and approved outside-sandbox execution. Log: `outputs/log-css-cleanup-browser.log`.
+- Final diff review and `git diff --check` pass. No new tests added.
+
+Synthetic isolated browser checks block external backend/model requests. Entry,
+editing, save/reload and corrections remain functional. Shared matrix covers
+360/390/416px; Note/Thoughts/Habit/Protocol reference frames remain 648px tall
+with 24px foreheads at 360/390px and no nested scroller. The current Log screenshot
+`outputs/log-adoption-390.png` was inspected. No app logic, record, published
+Chapter, shared token or motion change. No measured performance improvement or
+broad-suite/device/hosted acceptance is claimed. Existing ResizeObserver notices
+and other recorded gaps remain open. No migration, publication or sync activation.
+
+## Remove stale first-use tests — 2026-11-14
+
+The developer explicitly requested deleting the three obsolete first-use tests,
+with no replacement tests. Removed the published-setup precedence, setup-sealing
+and cross-version setup source-assertion blocks/comments from
+`tests/first-use-setup.test.mjs` (67 lines). Read-only baseline was 5/8: these
+three failed on retired shell identifiers. The remaining five blocks are intact.
+
+Installed Node v24.22.1: `node --check tests/first-use-setup.test.mjs` and
+`node node_modules/eslint/bin/eslint.js tests/first-use-setup.test.mjs` pass.
+Final diff review and `git diff --check` pass. No tests were added; no test
+suite, browser or build was run for the removal. No new behavioral verification
+is claimed. App code, personal records, published content and design are unchanged.
+main/6a09b62, prior modified/untracked work preserved; no staging, commit,
+migration, publication or deployment. Existing verification gaps remain open.
+
+## Week setup test timestamps — 2026-11-14
+
+Developer approved the test-only fixed-timestamp correction and bug/continuity
+records. main/6a09b62; previous modified/untracked work preserved. No staging,
+commit, runtime code change, migration, publication or deployment.
+
+`tests/week-setup.test.mjs` now passes explicit `declaredAt` options to the
+existing declaration API: September 7, 2026 at 08:00, 09:00 and 09:01 UTC. The
+fixture already plans September 7 and expects a March 2027 six-month target.
+Distinct Character timestamps keep the starter and later four-trait versions
+separate. Existing assertions still verify both versions, retained earlier
+wording, six-month target, Week goal/step and Protocol terms/link/slip line.
+The prior failure expected 2027-03 but received 2027-05 using today's clock.
+
+With installed Node v24.22.1:
+
+- `node --test tests/phases.test.mjs tests/day-door.test.mjs tests/week-setup.test.mjs tests/chapter-history.test.mjs`: 24/24 pass. Log: `outputs/week-test-clock-model.log`.
+- `node --test tests/character.test.mjs tests/vision-declaration.test.mjs tests/the-four.test.mjs`: 21/21 pass. Log: `outputs/week-test-clock-declarations.log`.
+- `node node_modules/eslint/bin/eslint.js tests/week-setup.test.mjs`: pass.
+- Final diff review and `git diff --check`: pass.
+
+No new browser/build run was needed: app code, styles, stored data, content,
+Circle-day boundaries and runtime date rules were untouched. Earlier browser
+evidence remains dated evidence, not a new run. No broad-suite or physical-phone
+acceptance is claimed. The date-dependent test gap is closed within this scope;
+other previously recorded gaps remain open. No optimization was justified.
+
+## Week lock cleanup — 2026-11-14
+
+Developer approved removing the unreachable Week lock branch, redundant access
+lookup, obsolete comments and matching test expectations. main/6a09b62; previous
+modified/untracked work preserved. No staging, commit, migration or deployment.
+Week now renders its current/history Page directly; its runtime access policy
+was already open. Protocol's Day One gate, historical setup handlers, saved
+records, phase helpers and shared CSS/tokens are unchanged.
+
+- Installed Node v24.22.1: `node --test tests/phases.test.mjs tests/day-door.test.mjs tests/week-setup.test.mjs tests/chapter-history.test.mjs`: 23/24. Phase access checks pass, including unfinished Day One denial, completed old-version Day One access and unchanged Week setup records. The unmodified Week setup integration test fails at its hard-coded six-month target: expected 2027-03, actual 2027-05. Its declaration uses the current clock; the affected model code was not edited. This separate fixture issue remains open. Log: `outputs/week-lock-cleanup-model.log`.
+- `node node_modules/eslint/bin/eslint.js app/os/circle-os-shell.tsx app/os/phases.js tests/phases.test.mjs`: pass.
+- `node node_modules/next/dist/bin/next build --webpack`: final production build/TypeScript pass. Sandbox compilation/type checking passed but generated prerender directory creation hit EPERM; approved outside-sandbox execution completed. Log: `outputs/week-lock-cleanup-build.log`.
+- `CIRCLE_PRODUCTION_CSS=1 node --test --test-reporter=tap --test-name-pattern="Routine and Week open without legacy|tool consistency across six|shared App Box geometry|Protocol interaction audit" tests/writing.browser.mjs`: 7/7 pass with installed Playwright cache, Node directory on PATH and approved outside-sandbox local browser execution. Log: `outputs/week-lock-cleanup-browser.log`.
+
+The browser uses isolated synthetic accounts and blocks external backend/model
+traffic. Saved unfinished Habit/Week runs survive entry and reload; no Routine
+presentation run is saved. Live Protocol toggle/reload passes. The six-tool and
+supporting-view matrix passes at 360/390/416px. Note/Thoughts/Habit/Protocol
+reference frames remain 648px tall with 24px foreheads at 360/390px and no nested
+scrolling. No visual or performance change is claimed. Existing ResizeObserver
+notices and physical-device/hosted acceptance gaps remain. The date-dependent
+test was not changed outside this scope; no broad-suite pass is claimed.
+Final diff review and `git diff --check` pass.
+
+## Routine presentation cleanup — 2026-11-14
+
+Developer approved the bounded Routine frame/condition/comment cleanup, stale
+Habit test replacement and continuity records. main/6a09b62; prior modified and
+untracked work preserved. No commit, hosted write, migration or deployment.
+
+**Change and baseline.** The shared Routine definition/run is created together
+once. Always-completed presentation checks are removed; historical Chapter
+definitions/runs, projection handlers, styling, gestures and local persistence
+are unchanged. Two selected Habit source tests failed before editing because
+they required removed `habitSetupPublication` wiring and old identity-timer
+expressions. They are replaced by behavioral checks of saved setup answers,
+one-time completion projection/reload and visible result restoration.
+
+**Commands and results.** Use installed Node
+`C:/Users/wickie''/AppData/Local/Author Software/nvm/installs/v24.22.1/node.exe`,
+its directory first on PATH, and
+`PLAYWRIGHT_BROWSERS_PATH=C:/Users/wickie''/AppData/Local/ms-playwright`.
+
+- `node --test tests/habit-identity.test.mjs tests/habit-spacing.test.mjs tests/routine-schedule.test.mjs tests/chapter-engine.test.mjs tests/chapter-history.test.mjs`: 42/42 pass. Covers legacy answer/version preservation, unfinished setup, starter/fallback projection, idempotence, historical words and schedule/Undo/merge behavior. Log: `outputs/routine-cleanup-model.log`.
+- `node node_modules/next/dist/bin/next build --webpack`: final production build and TypeScript pass. Initial sandbox build compiled and type-checked, then hit EPERM creating a generated prerender directory; approved outside-sandbox execution passes. Log: `outputs/routine-cleanup-build.log`.
+- `node node_modules/eslint/bin/eslint.js app/os/circle-os-shell.tsx app/os/routine-presentation.tsx tests/habit-identity.test.mjs tests/writing.browser.mjs`: passes after final test corrections.
+- `CIRCLE_PRODUCTION_CSS=1 node --test --test-reporter=tap --test-name-pattern="Routine and Week open without legacy|completed Habit restores|Habit result fades in and out|tool consistency across six|shared App Box geometry|real Habit and Protocol rows|Protocol interaction audit" tests/writing.browser.mjs`: initial 8/10. Seven unaffected cases pass: live Protocol toggle/reload, matrix at 360/390/416px, geometry at 360/390px, long Habit/Protocol growth. The new result-restoration case also passes. Log: `outputs/routine-cleanup-browser.log`.
+- Final affected selection uses `--test-name-pattern="Routine and Week open without legacy|completed Habit restores|Habit result fades in and out"` with the same production-CSS browser command: 3/3 pass, one case overlaps the main run. Ten distinct cases have passing final evidence. Log: `outputs/routine-cleanup-browser-final.log`.
+
+**Fixture corrections and observed behavior.** Browser sandbox loopback access
+was denied; approved outside-sandbox runs use isolated synthetic state and block
+external backend/model requests. The baseline browser selection passed preserved
+unfinished runs but failed the motion test's fixed 44px whole-row assumption:
+Schedule makes the completed row 96px. Motion now measures the copy region and
+its actual minimum (about 33.7px inside the existing top offset), preserving
+300ms word response, 600ms settling, both directions and no overlap. The extended
+reload check first tried the hidden Routine entry while Week's hash restored
+Week; it now explicitly reloads Today. No product fix was made for either test
+assumption. Final checks preserve unfinished setup runs through tool entry and
+reload, never save `routine-surface`, restore completed wording without replay
+through opening/edit return/reopen/reload, and keep deliberate tick/Undo motion.
+
+**Measurements and limits.** Note/Thoughts/Habit/Protocol reference frames remain
+648px with 24px foreheads at 360/390px, with no nested scroller. The cross-tool
+matrix also covers 416px. Long Habit/Protocol frames measure approximately
+1386/1016px and grow naturally. `outputs/routine-cleanup-restored.png` was visually
+inspected. Existing ResizeObserver notices remain. Physical phones, other browser
+engines, true contention, hosted template acceptance and the broad suite were
+not certified. Shared tokens, old content/records, Circle-day rules and sync
+activation are unchanged. No performance improvement or broad optimization is
+claimed. `git diff --check` passes after final records.
+
+## Explicit local Protocol Start and footer spacing — 2026-11-14
+
+Approved Start slice on main/6a09b62, preserving prior work.
+
+- `node --test tests/protocol-template-adoption.test.mjs tests/template-model.test.mjs tests/template-routes.test.mjs tests/template-publication.test.mjs`: 16/16. Fixed terms, source/answer snapshots, normalization/merge, retry identity, historical-ID collision protection, no skipped-reflection evidence, existing active/draft protection, length/answer validation and Day One gate.
+- `node node_modules/next/dist/bin/next build --webpack`: final build/TypeScript pass. Focused ESLint covers changed model/Protocol/preview/reader and tests.
+- With `$env:CIRCLE_PRODUCTION_CSS='1'`, `node --test --test-name-pattern='template|Admin Protocol preview' tests/content-admin.browser.mjs`: 10/10. Preview rim measures 25px from outer bottom, equal to 24px inside border, at 360/390/416 across durations. Admin Start disabled. Signed-in reader simulates both local-store failures, retains preview, retries successfully, saves one phase with exact source/version/reflection snapshot, opens destination and protects existing phase after reload.
+- Final reader follow-up: `--test-name-pattern='template Start|signed-in template reader'`: 3/3, including new account-scope invalidation. Counts overlap the prior selection.
+- Same production CSS, `node --test --test-name-pattern='adopted Protocol template|Protocol interaction audit|tool consistency across six|shared App Box geometry' tests/writing.browser.mjs`: 7/7. Adopted phase renders on actual Protocol, completion survives reload, name/End remain available while term editors are absent. Existing live toggle audit and shared tool matrix/geometry pass; reference Note/Thoughts/Habit/Protocol 648px/24px without nested scrolling.
+
+The reader navigation/store test and real-Protocol rendering test use separate isolated fixtures; no real hosted template or owner's data was used. Initial footer measurement found the legacy 8px margin. A save failure exposed Start's one-shot lifecycle; keeping it mounted restores retry. Initial fixture seeded Day One before account load finished; corrected ready/valid-run fixture passes. Synthetic save-error console output is expected; existing ResizeObserver notifications remain. No broad optimization justified. True cross-tab contention, physical phones, hosted template acceptance and original Effort-draft diagnosis remain open. Migration 004, publication, deployment and cloud-sync activation remain untouched.
+
+Final build/TypeScript and lint rechecked after the account-epoch guard and historical-ID/skipped-answer safeguards. Final reader recheck covered account scope and duration/spacing; its Start case initially raced a diagnostic DOM read against successful navigation. Replaced that diagnostic poll with waitForURL; isolated final Start save/failure/retry/reload case passes 1/1. The review server was restarted from the final build on 3012 and Admin returned HTTP 200. Inspected outputs/protocol-template-390.png with the Start action.
+
+## Faithful Protocol template preview — 2026-11-14
+
+Approved read-only setup/running preview on main/6a09b62, preserving prior changes.
+
+- `node node_modules/next/dist/bin/next build --webpack`: final build/TypeScript pass.
+- Focused ESLint for protocol-page.tsx, template-preview.tsx, template-editor.tsx and content-admin.browser.mjs: pass.
+- Production CSS enabled, `node --test --test-name-pattern='template' tests/content-admin.browser.mjs`: final 8/8. Protocol checks all five durations at 360/390/416, Preview N days, Day 1 identity, Back retaining selection, disabled completion, absent Edit/Phases, 28px/700 heading, 18px/700 labels, 24px header gap, reload and no saved Chapter/Protocol evidence.
+- Same environment, `node --test --test-name-pattern='Protocol interaction audit|tool consistency across six|shared App Box geometry' tests/writing.browser.mjs`: 6/6. Existing live toggle/reload behavior passes. Matrix 360/390/416, reference Note/Thoughts/Habit/Protocol 648px/24px, no nested scrolling.
+
+Screenshot inspection found glass prose rules overriding scoped heading/label weights; reordered the scoped rules and rebuilt/reverified. Screenshot fixture waits for shared frame resize before capture. Outputs/protocol-template-360.png, -390.png and -416.png capture read-only phase presentation. Existing ResizeObserver notification appeared during the live audit; no fix claimed. Runtime checks used approved outside-sandbox execution. No broad optimization justified. No personal evidence, stored definitions, migration, adoption or deployment changed. Physical phones and original Effort-draft diagnosis remain open.
+
+## Template cover and bounded AM/PM — 2026-11-14
+
+Approved follow-up on main/6a09b62, preserving all prior work.
+
+- `node node_modules/next/dist/bin/next build --webpack`: final build/TypeScript pass.
+- Focused ESLint: time-picker.tsx, template-preview.tsx, content-admin.browser.mjs pass.
+- Production CSS enabled with `$env:CIRCLE_PRODUCTION_CSS='1'`, `node --test --test-name-pattern='template' tests/content-admin.browser.mjs`: 8/8.
+- Expanded `--test-name-pattern='template cover'` selection: 3/3, verifying keyboard (360px), tap (390px) and swipe (416px) entry. Headings 28px/700; prose 18px/400; top/left 25px outer-border offsets equal 24px inner anchors, body gap 24px, no 12ch heading cap, cue target at least 44px. Inspected outputs/template-cover-390.png.
+- AM/PM option count is exactly two; ArrowDown at PM remains PM. Hour/minute independence, midnight, unsaved 6:00 AM hint, Back retention, Effort remove/save/reload and answer-line growth remain passing.
+- Shared tool consistency/geometry selection initially 4/5: Week History animation response at 390px returned [] instead of [240]. Other matrices and both Note/Thoughts/Habit/Protocol geometry cases pass at 648px/24px without nested scrolling. No Week code changed. Isolated final 390px matrix rerun passes 1/1, including the animation assertion. Final lint passes and refreshed Admin returns HTTP 200 at localhost:3012.
+
+Runtime checks used approved outside-sandbox execution. No broad optimization, publication, hosted migration or deployment. Physical phones and original-draft Effort diagnosis remain open.
+
+## Effort removal and separate time columns — 2026-11-14
+
+Approved local follow-up on main/6a09b62, preserving all earlier work.
+
+- `node --test tests/template-model.test.mjs tests/template-routes.test.mjs tests/template-publication.test.mjs`: 10/10. Blank/whitespace/removed Effort cannot borrow an evening cue or answer; existing configured links remain explicit.
+- `node node_modules/next/dist/bin/next build --webpack`: final production build and TypeScript pass.
+- Focused ESLint over time-picker.tsx, template-editor.tsx, template-model.js, template-preview.tsx and the two edited tests: pass.
+- `$env:CIRCLE_PRODUCTION_CSS='1'; node --test --test-name-pattern='template' tests/content-admin.browser.mjs`: final 5/5. Synthetic saved Effort linked to an evening answer is removed, saved, reloaded and remains absent; Add effort starts empty and clearing typed Effort also removes output. Cue “After dinner” is preserved. Independent Hour/Minute/AM-PM selection covers click, wheel, keyboard, initial unsaved 6/00/AM, minute 59/00 wrap without hour changes, midnight formatting and selected-answer retention after Back. No personal Chapter run is created. Both generated schedule sentences are absent before/after toggling the retained checkbox. Draft recovery, typed-answer lines and Protocol previews remain passing.
+- Same CSS environment, `node --test --test-name-pattern='tool consistency across six|shared App Box geometry' tests/writing.browser.mjs`: 5/5. Matrix 360/390/416px; reference Note/Thoughts/Habit/Protocol frames stay 648px with 24px foreheads at 360/390, without nested scrolling.
+
+Inspected outputs/template-time-picker.png with all three columns. The original reported draft was not inspected, so its precise “evening” origin remains unconfirmed. Empty Effort is not a baseline model reproduction; a stored answer link can reproduce the display and the new removal control clears it durably. Physical-phone acceptance and hosted template migration/publication/adoption are unverified. First build failed on an inferred string return type in fixedValue; the explicit TemplateValue return annotation passed the final build. Initial choice fixture waited for Continue despite automatic single-choice advance; corrected fixture passes. Runtime checks used approved outside-sandbox execution. No broad optimization justified; no deployment or personal evidence changes.
+
+## Template wheel, authoring guidance and answer lines — 2026-11-14
+
+Approved local follow-up on main/6a09b62, preserving pre-existing changes.
+
+- `node --test tests/template-model.test.mjs tests/template-routes.test.mjs tests/template-publication.test.mjs`: 9/9. Missing question wording, invalid and duplicate references identify the Page; immutable publication/access checks remain passing.
+- `node node_modules/next/dist/bin/next build --webpack`: final build/TypeScript pass.
+- Focused ESLint for time-picker.tsx, template-editor.tsx, template-model.js, template-preview.tsx and the two edited tests: pass.
+- `$env:CIRCLE_PRODUCTION_CSS='1'; node --test --test-name-pattern='template' tests/content-admin.browser.mjs`: final 4/4. Verifies initial visible 5:59/6:00/6:01 times with no selected answer, required Continue disabled, arrow/scroll/click selection, no personal Chapter evidence, fading Bone line and 25px outer-border offsets (24px inner anchors), multiline growth, draft recovery, personalized Routine results and Protocol preview.
+- Same CSS environment, `node --test --test-name-pattern='tool consistency across six|shared App Box geometry' tests/writing.browser.mjs`: 5/5. Tool matrix at 360/390/416px; Note/Thoughts/Habit/Protocol reference heights 648px and foreheads 24px at 360/390px, without nested scrolling.
+
+Inspected outputs/template-time-picker.png and outputs/template-answer-line.png. Initial answer-line test exposed shared transparent-input background and inherited 34ch width; moved the decoration to the scoped form and removed only its width cap. A subsequent geometry assertion caught intermediate Page travel; fixture now waits for settled position. First production-CSS attempt preceded build completion and found no os.html; final run uses completed output. Sandbox Node/runtime limitations required approved outside-sandbox execution. No physical-phone, hosted template migration/adoption/publication or deployment acceptance is claimed. No broad optimization justified.
+
+## Seven-point template review corrections — 2026-11-13
+
+Explicitly approved local changes on main/6a09b62 tracking fork/main, preserving all earlier uncommitted work. Synthetic browser fixtures intercept external requests; SQL uses isolated PGlite. No personal evidence edits, hosted migration, real authored publication, sync activation or deployment.
+
+Final commands use the CodexPrimaryRuntime.v26-1111-570-0 bundled Node executable:
+
+- `node node_modules/next/dist/bin/next build --webpack`: production build and tsconfig.vercel TypeScript pass.
+- Focused ESLint covers Admin account server/client/menu/media/catalog/publication/status, template model/editor/preview, account menu, shared player/Routine presentation/time picker, shell, phases and day-door: pass without warnings.
+- `node --test tests/template-model.test.mjs tests/template-publication.test.mjs tests/template-routes.test.mjs tests/content-admin-routes.test.mjs tests/content-admin.test.mjs tests/phases.test.mjs tests/day-door.test.mjs`: 33/33. New wording preserves saved definitions, private RPC validation, typed network/permission failures and updated Week access contract.
+- `node scripts/chapter-compiler.mjs --check`: 33 sources/0 quests; immutable published definitions unchanged.
+- `CIRCLE_PRODUCTION_CSS=1 node --test tests/content-admin.browser.mjs`: 17/17. Numeric answer measured 18px/400 at 390px, versus the initial failing 16px. Time hint cannot submit untouched; picker click/keyboard selections format 12-hour cues without saving Chapter evidence. Transient media failure keeps editor mounted; genuine denial locks access and Retry restores the owned recovery draft. Menu status is requested before opening, with no new request on repeated opens. Stable image ID produces one targeted request shared by editor/player across draft edits. Full Routine Page preview has Back/Record header, authored item content and no disclaimer. Existing Media/Article/Chapter/Catalog/recovery tests pass.
+- `CIRCLE_PRODUCTION_CSS=1 node --test --test-name-pattern="^Routine and Week|^Routine schedules|^tool consistency|^real Habit and Protocol" tests/writing.browser.mjs`: 6/6. Habit Building and Week Setup runs are seeded unfinished; both tools open and the exact stored runs remain unchanged. Reference empty tools 648px/24px at 360/390/416; long Habit/Protocol fixtures 1385.96875/1015.90625px with no nested tool scroller. The picker's small listbox scrollers are intentional input controls, not tool scroll owners.
+
+Visual QA inspected `outputs/template-result.png`, `outputs/template-number-page.png` and `outputs/template-time-picker.png`. Initial integration and font failures were corrected before the final production run; the important remaining typography cause was the legacy mobile-wide !important rule. Old native time controls remain for unmarked chapters. Menu/media work addresses measured repeated requests; no broad optimization was performed. No assertion is made about the cause of the developer's individual historical connectivity incidents.
+
+Local review server restarted on 3012 from the final build. `/os/admin` returns 200; unsigned `/os/admin/status` returns 401. Physical-phone input/access, real session expiry/revocation, hosted template acceptance, contention and backup/restore remain open. Earlier unrelated Habit source assertion and Protocol-history return test gap remain recorded. Migration 004 remains unapplied remotely.
+
+## Admin template builder and Catalog — 2026-11-13
+
+Approved local implementation on main/6a09b62 tracking fork/main, preserving all uncommitted Routine scheduling work. Synthetic isolated browser accounts with external requests intercepted, plus isolated PGlite migrations/RPCs. No hosted write, migration application, real publication, personal answer/adoption, sync activation or deployment.
+
+Commands below use the bundled Node executable under CodexPrimaryRuntime.v26-1111-570-0; the shell Node shim is unavailable:
+
+- `node --test tests/template-model.test.mjs tests/template-publication.test.mjs tests/template-routes.test.mjs tests/catalog-publication.test.mjs tests/catalog-routes.test.mjs tests/content-admin-routes.test.mjs tests/content-admin.test.mjs tests/content-design.test.mjs`: 20/20. Direct answers, bounds, choice coverage, invalid/reflection-linked rules, duplicate/broken IDs, unchanged authored sets, numeric/image Markdown round trip; isolated migration 004 and old paths, Admin/ordinary/signed-out access, receipts/retry/conflicts, immutable editions, private-to-published images, withdrawal/restore, rejected type changes, unavailable-image rollback. New route validation rechecks live Admin before publication.
+- Focused ESLint covers new template model/types/editor/preview, account Admin, Catalog manager/publication route/reader, shared player/types, authoring/compiler and new tests: pass without warnings.
+- `node scripts/chapter-compiler.mjs --check`: 33 sources/0 quests; no published definitions changed.
+- `node node_modules/next/dist/bin/next build --webpack`: production build and tsconfig.vercel TypeScript pass.
+- `CIRCLE_PRODUCTION_CSS=1 node --test tests/content-admin.browser.mjs`: 14/14, including new group authoring, Page/item duplicate/reorder, media placement, quantity binding, unsaved account/tab recovery, save/reload, actual result preview, group duration choice and publication with the draft's identity. Protocol reader uses its existing durations, fixed terms and skipped optional numeric reflection; reload and no personal Chapter/Protocol evidence verified. Existing Admin/Media/Article/Chapter reader paths also pass.
+- `CIRCLE_PRODUCTION_CSS=1 node --test --test-name-pattern="^Routine schedules|^tool consistency|^real Habit and Protocol" tests/writing.browser.mjs`: 5/5. Reference empty tools remain 648px with 24px anchors at 360/390/416; content-heavy Protocol draft 678.78125px. Long Habit/Protocol fixture 1385.96875/1015.90625px, no nested scrollers. New glass Chapter cover retains 704px frame/24px inner anchor at 390x900. Shared geometry/motion tokens were not edited.
+
+Attempts/fixes: initial TypeScript missing result-item type corrected; initial model test used the wrong compiler export and was corrected. Browser checks found ambiguous wrapped-select labels, a fixture that tried Continue on swipe-only information Pages, and a navigation-before-Undo race in the preceding schedule slice. Optional numeric input now preserves empty rather than inventing zero. Screenshot review corrected 44px-stretched checkbox proportions, inherited Record opacity and missing UTF-8 fixture response headers. `outputs/template-result.png` inspected. No broad optimization was justified.
+
+Migration 004 remains unapplied remotely. Hosted template saves/publication, real contention, backup/restore and physical phones remain unverified; existing Habit source assertion and Protocol-history return gap remain open. Developer review precedes hosted migration/acceptance. Personal adoption/reflection saving and Explore composition are separate reviewed work.
+
+## Routine scheduling — 2026-11-13
+
+Approved standalone Routine schedule implementation on main/6a09b62 tracking fork/main. Synthetic account/browser storage only; remote requests intercepted. No hosted personal writes, migration, deployment or writing activation.
+
+Commands use the bundled Node executable under CodexPrimaryRuntime.v26-1111-570-0 because the shell Node shim reports no runtime:
+
+- `node --test tests/routine-schedule.test.mjs tests/habit-identity.test.mjs tests/week-planning.test.mjs`: 30/31. Four new schedule cases pass (inclusive dates/06:00, repeating task snapshots/Undo/archive/stale merge, once/finite habits, legacy/Week isolation). The recorded pre-existing Habit source assertion expecting an obsolete identity-animation expression fails; do not interpret as a runtime regression.
+- `node node_modules/next/dist/bin/next build --webpack`: final production build and tsconfig.vercel TypeScript pass after the checkbox alignment fix.
+- `node node_modules/eslint/bin/eslint.js app/os/routine-schedule.js app/os/routine-schedule-control.tsx app/os/circle-os-model.js app/os/circle-os-shell.tsx tests/routine-schedule.test.mjs`: pass.
+- `CIRCLE_PRODUCTION_CSS=1 node --test --test-name-pattern="^Routine schedules|^tool consistency|^real Habit and Protocol" tests/writing.browser.mjs`: final CSS selection 5/5. Schedule choice, dated task completion and reload; matrix at 360/390/416px; long content without a nested scroller. Schedule screenshot `outputs/routine-schedule.png` inspected. Reference empty Note/Thoughts/Routine/Protocol-home frames remain 648px, 24px content anchors; content-heavy Protocol draft measures 678.78125px. Long Habit/Protocol fixture measures 1385.96875/1015.90625px with no nested scrolling. No shared minimum/anchor/motion tokens changed. The new schedule disclosure intentionally adds content beneath each standalone row, keeping its checkbox in the first row.
+
+The earlier expanded selection including `^Routine redesign keeps` failed at a Protocol-history return visibility assertion after its Routine editing/tick/Undo checks. Baseline attribution remains unresolved; no full Routine/Protocol regression pass is claimed. Physical phones, other engines and hosted other-domain sync remain open. Existing clock-based merge limitations are not solved by these bounded local checks. No optimization was justified.
+
+Final additional checks: `node --test tests/routine-schedule.test.mjs tests/circle-os-model.test.mjs tests/week-planning.test.mjs` passes 75/75. The scheduling browser case now also checks invalid-period errors and Record Undo after reload. Its first extension navigated before the completion control delivered Undo; waiting for the actual saved Undo before Back fixes the fixture sequence. The focused production-CSS case passes 1/1. No product code changed for that test correction.
+
+Final review also made duration validation use the actual current Circle day, so an oversized period cannot pass a different reference date and fail during the state update. After this fix, production build/TypeScript, focused lint, the 75 model checks and the full five-case production-CSS selection all pass again.
+
+
 ## Hosted catalog acceptance — 2026-11-12
 
 Developer reported successful manual migration 003 application, then explicitly

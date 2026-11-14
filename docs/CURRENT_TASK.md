@@ -1,56 +1,80 @@
 # Current task
 
-## Hosted catalog acceptance — 2026-11-12
+## Durable offline sign-in and crash recovery — 2026-11-14
 
-Approved local implementation is prepared: transactional publication, immutable
-versions, signed-in reader/images, withdrawal/restore and durable pending retries.
-Developer reports applying migration 003; approved hosted checks now verify it
-operationally. Never reapply 001/002/003. Existing work is preserved on main/9f2425f.
-11 focused SQL/route tests and 9 Admin browser cases pass. Production webpack build,
-production TypeScript, focused lint and chapter compiler (33 sources/0 quests)
-pass. Full tsconfig still reports cloudflare:workers. No geometry tokens changed.
-Added production-CSS browser checks pass for Article exact reload/image retry,
-Chapter preview without evidence, and existing-run reload/original-definition
-resolution. The extended hosted runner passes 62 functional checks, covering real
-Chapter v1/v2 preservation, Article publication, signed-in reader/image HTTP,
-signed-out denial, withdrawal/restore and exact cleanup/absence checks. All test
-accounts/content/images/receipts were removed. Full Reflect, real link expiry/
-contention, backup/restore and physical phones remain open. No commit/deployment
-or real authored publication. Next: developer reviews local Catalog publishing
-and chooses the first authored item. Deployment needs separate authorization.
+**Status:** Approved implementation complete for bounded local acceptance. Offline
+proof and signed-out state share a strict-durability IndexedDB record. Final
+production build/TypeScript, focused lint and diff checks pass. Recovery selection
+18/18; controller/proof tests 12/12. Full 360/390px crash journeys pass, including
+exact saved writing/drafts, offline edits, clearing, empty composer, completed
+logout, account separation and return without duplicate revisions.
+[Evidence](USER_JOURNEY_TESTING.md#durable-offline-entry-and-crash-recovery--2026-11-14).
 
-## Previous editor result
+**Scope/Git:** main/6a09b62; earlier work preserved. New offline-auth-store.ts,
+Supabase adapter, controller/types, two Auth test files and seven records changed.
+No hosted change, sync activation, staging, commit or deployment.
 
-## New glass Chapters and Articles — 2026-11-11
+**Next:** Review the local result, then choose a separately reviewed operating
+recovery slice (backup/restore or storage eviction). Phone testing stays deferred.
+New hosted/device acceptance and broader activation readiness remain open.
 
-Approved follow-up completed: Article editor and reading preview now show cover
-image, title, summary, then body. Production build/TypeScript, focused lint and
-the compiled-CSS Article save/reload/order browser journey pass. Preview server
-was restarted from the final build on port 3012; Admin returns HTTP 200.
+## Natural session expiry and writing recovery — 2026-11-14
 
-Developer reviewed Media and approved the editor/image slice, then specified
-glass design for newly created Chapters and Articles only. Existing definitions,
-drafts and runs retain their current appearance. Work remains uncommitted on
-main/9f2425f alongside the preserved pre-existing Admin work.
+**Status:** Approved follow-up complete for the bounded automated scope. Real
+one-hour offline signed-token expiry, service-worker tab reopening and hosted
+renewal pass at 390px. Exact saved entries/revisions and unfinished drafts remain
+unchanged. Subsequent renewal/revocation/account switching and exact hosted
+cleanup pass. Final hosted test 1/1 (3628 seconds), production build/TypeScript
+and focused lint pass. [Evidence](USER_JOURNEY_TESTING.md#natural-session-expiry-and-writing-recovery--2026-11-14).
 
-Implemented: explicit glass-v1 chapter design marker; new blank/template/copy
-defaults; preserved design on existing-version edits; image picking with alt text
-and captions; Markdown round trip; Article title/summary/cover and movable
-heading/paragraph/image blocks; shared draft save/recovery and reader preview.
-Catalog publishing remains a separate reviewed slice.
+**Scope/Git:** main/6a09b62; prior work preserved. Verification runner/test and six
+records only; no product runtime, hosted settings, migration, deployment, commit
+or sync activation changes. Earlier natural-expiry gaps below are now qualified
+by this evidence.
 
-Verification: Next production build/TypeScript and focused lint pass; 23 focused
-model/SQL/route cases pass. Production-CSS Admin suite passes 8/8, tool/legacy
-chapter checks 7/7. After the final glass-only anchor fix, the new-content journey
-passes again and measures cover text at 24px inside the frame border (25px from
-outer edge), frame height 704px in the isolated 390x900 Admin fixture. Existing
-reference tools remain 648px with 24px gaps at 360/390px.
-See [evidence](USER_JOURNEY_TESTING.md#new-glass-chapters-and-articles---2026-11-11).
+**Next:** Phone acceptance is deferred at the developer's explicit request.
+Prepare a reviewed operating-recovery slice (crash/eviction or backup/restore)
+from the remaining gates; no such implementation is authorized by this record.
+Device acceptance and wider activation readiness remain open.
 
-No hosted write/upload acceptance, physical-phone acceptance, publication,
-deployment or writing-sync activation is claimed for this slice. Existing hosted
-migrations must not be reapplied. The second Admin invitation still awaits
-verification. Earlier operational gaps remain in [setup](CONTENT_ADMIN_SETUP.md).
+## Hosted account-session recovery — 2026-11-14
 
-Next: developer reviews new Chapter/Article editing and previews, then review
-catalog publication, signed-in reader/asset access and withdrawal.
+**Status:** Approved runner/browser/records slice implemented and bounded hosted
+checks pass (1 test, sequential 360/390px journeys). Production build/TypeScript,
+focused lint and diff checks pass. Real early renewal, offline return, revocation,
+rejected-refresh lock and account restoration preserve exact writing/drafts.
+Two temporary hosted accounts deleted; absence confirmed. Natural JWT expiry
+remains unverified; no complete session-expiry certification is claimed.
+
+**Git/scope:** main/6a09b62; earlier changes preserved. Two new verification files
+and six records only. No product runtime, migration, deployment, commit or writing
+sync activation change. [Detailed evidence](USER_JOURNEY_TESTING.md#hosted-account-session-recovery--2026-11-14).
+
+**Next:** Complete the existing phone checklist; review a natural-token-expiry
+run separately from the verified early-renewal case. Phone/crash/OS eviction,
+operating recovery and other activation gates remain open. Earlier task below
+retains the phone checklist context.
+
+## Real-app offline writing recovery — 2026-11-14
+
+**Status:** Approved automated test/runner/records slice complete; real-phone
+acceptance pending. Final isolated Next production build/TypeScript and focused
+lint pass. Auth/recovery selection passes **15/15**, including new 360/390px
+real-app Note/Deep Thoughts journeys through two offline browser restarts.
+
+Service-worker navigation, saved Notes, unfinished answers, offline edits,
+offline logout, empty B and restored A all pass. Reconnection preserves exact
+saved entries without duplicate revisions. These use synthetic Auth and unrelated
+seeded setup/delivery gates; live hosted sessions and onboarding are not certified.
+[Commands, attempts and phone checklist](USER_JOURNEY_TESTING.md#real-app-offline-writing-recovery--2026-11-14).
+
+Earlier full Auth selection passed 15/17: unchanged menu assertions expect 650
+instead of current 700. Recorded separately, not removed or counted as passes.
+No product runtime, shared geometry, migration, hosted data or sync activation
+changes. main/6a09b62; prior modified/untracked work preserved; no staging/commit/
+deployment. Previous restart/template evidence remains in the journey and handoff.
+
+**Next:** Developer runs the phone checklist and supplies device/browser details
+and results. Hosted session expiry/revocation and crash/OS eviction/operating
+recovery remain separate reviewed work. Existing template/source/ResizeObserver
+gaps remain recorded.

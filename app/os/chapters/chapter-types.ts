@@ -20,6 +20,8 @@ export type ChapterOption = {
 };
 
 export type ChapterPage = {
+  inputFormat?: 'number';
+  imagePlacement?: 'before-text' | 'after-text';
   image?: { assetId: string; alt: string; caption?: string };
   id: string;
   type: ChapterPageType;

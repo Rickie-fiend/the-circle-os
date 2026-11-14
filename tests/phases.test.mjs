@@ -16,7 +16,7 @@ import {
 // usable on day one ... Protocol, and Week app will have a cover screen, with
 // the disabled button. for day two, is for Protocol ... at day 7, week and
 // athena review would be able."
-test("the App arrives in three phases, each earned by the one before", () => {
+test("historical phase helpers retain their thresholds without controlling App access", () => {
   assert.equal(PROTOCOL_DAY, 2);
   assert.equal(WEEK_DAY, 7);
 
@@ -34,9 +34,9 @@ test("an App opens when the chapter that sets it up is answered", () => {
   // it locked somebody who had done all the work out of the App that work was
   // for. The chapter is the actual dependency.
   assert.equal(SETUP_CHAPTER.protocol, "day-one");
-  assert.equal(SETUP_CHAPTER.week, "week-setup");
+  assert.equal(SETUP_CHAPTER.week, undefined);
   assert.equal(lockedUntil("protocol"), "day-one");
-  assert.equal(lockedUntil("week"), "week-setup");
+  assert.equal(lockedUntil("week"), "");
   assert.equal(lockedUntil("log"), "");
 
   const done = (id, version = 1) => ({
@@ -50,22 +50,21 @@ test("an App opens when the chapter that sets it up is answered", () => {
     assert.equal(appIsOpen(app, {}), true, app);
   }
 
-  // The two that need something set up behind them wait for that chapter.
+  // Protocol waits for Day One; Week stays open regardless of setup history.
   assert.equal(appIsOpen("protocol", {}), false);
-  assert.equal(appIsOpen("week", {}), false);
+  assert.equal(appIsOpen("week", {}), true);
   assert.equal(appIsOpen("protocol", done("day-one", 2)), true);
-  assert.equal(appIsOpen("week", done("day-one", 2)), false);
+  assert.equal(appIsOpen("week", done("day-one", 2)), true);
   assert.equal(appIsOpen("week", done("week-setup")), true);
 
   // Started is not answered: a chapter left half way opens nothing.
   assert.equal(
     appIsOpen("week", { "week-setup@1": { status: "in-progress" } }),
-    false,
+    true,
   );
 });
 
-test("days are counted in days lived, not days since installing", () => {
-  // Somebody who comes back on Friday is on their second day, not their fifth.
+test("the historical day helper counts date boundaries from Day One completion", () => {
   assert.equal(journeyDay("2026-09-01", "2026-09-01"), 1);
   assert.equal(journeyDay("2026-09-01", "2026-09-02"), 2);
   assert.equal(journeyDay("2026-09-01", "2026-09-07"), 7);
@@ -78,7 +77,7 @@ test("days are counted in days lived, not days since installing", () => {
   assert.equal(journeyDay("2026-09-08", "2026-09-01"), 0);
 });
 
-test("a locked App shows its cover rather than hiding", () => {
+test("Protocol retains its disabled cover while waiting for Day One", () => {
   const page = readFileSync("app/os/locked-app-page.tsx", "utf8");
   // Hiding it would be simpler and worse: the shape of the whole thing is the
   // argument for staying. Sai: "Protocol, and Week app will have a cover
@@ -90,10 +89,19 @@ test("a locked App shows its cover rather than hiding", () => {
 
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
   assert.match(shell, /const protocolIsOpen = appIsOpen\("protocol", state\.chapters\.runs\)/);
-  assert.match(shell, /const weekIsOpen = appIsOpen\("week", state\.chapters\.runs\)/);
   // The real Apps are behind the same gate, so a locked cover is never shown
   // beside the thing it stands in for.
   assert.match(shell, /\.\.\.\(protocolIsOpen \? \[\] : \[/);
-  assert.match(shell, /\{weekIsOpen \? null : \(/);
 
+});
+
+test("Week setup never gates access and unfinished Day One still gates Protocol", () => {
+  for (const runs of [{}, { 'week-setup@1': { status: 'in-progress' } }, { 'week-setup@1': { status: 'completed' } }]) {
+    const before = structuredClone(runs);
+    assert.equal(appIsOpen('week', runs), true);
+    assert.equal(appIsOpen('protocol', runs), false);
+    assert.deepEqual(runs, before, 'access checks leave saved runs intact');
+  }
+  assert.equal(appIsOpen('protocol', { 'day-one@3': { status: 'in-progress' } }), false);
+  assert.equal(appIsOpen('protocol', { 'day-one@1': { status: 'completed' } }), true);
 });

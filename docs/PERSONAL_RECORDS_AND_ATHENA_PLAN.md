@@ -1,5 +1,30 @@
 # Personal records and Athena evidence contract
 
+## Template adoption and preview boundary — 2026-11-14
+
+Explicit Routine adoption stores one immutable templateAdoptions group record:
+source ID/version, retry operation, adoption time, resolved settings, answered
+question/value/display snapshots, original schedule and item references. Habit
+definitions/tasks point to it; answers are not duplicated into each item or
+Chapter runs. Normalization and record merge preserve the map. Stopping/expiry
+retains it and prior completions. Reopening reuses a still-active group; deliberate
+later adoption uses a new operation after all items stop/expire. Reading source
+details saves no evidence. This activates no sync, AI use, quantity tracking or
+separate writing-history entry.
+
+Approved Protocol adoption exception — 2026-11-14: only explicit Start in the signed-in published-template reader creates a local phase, using existing domain actions and the current Circle day. Admin Start stays disabled. A started run carries a sourceTemplate snapshot: exact source ID/version, stable pending operation ID, adoption time, confirmed resolved items, and answered configuration/reflection question/value snapshots. Preview alone remains transient. Catalog changes never rewrite that snapshot. Repeated operations reuse the same run; existing active/draft phases are protected. Terms remain fixed after starting. Normalization and run-level merge preserve the snapshot. This does not enable cloud sync, AI use or quantity tracking.
+
+Admin and signed-in previews keep answers transient and excluded from personal
+evidence/AI until explicit adoption. Reload restarts preview; no adoption or
+completion is inferred. Accepted source snapshots retain original choice labels
+as well as values. Catalog revisions never rewrite adopted records.
+
+
+## Routine schedule records — 2026-11-13
+
+Standalone definitions may carry a schedule (mode, start Circle day, inclusive end or no end, chosen days). Changing the mode or period starts the new schedule today; unchanged saves do nothing. Old completion records remain untouched. Repeating task completions live in tasks.completions, keyed by Circle day and task ID, with saved wording and explicit dated undo values. Normalization and the existing record merge retain these records independently of the current definition. This is bounded local behavior, not certification of other-domain hosted sync. Week steps retain their existing one-task ownership.
+
+
 Updated: 2026-11-11, Asia/Bangkok. This owns source, revision, time, correction,
 deletion and migration rules. [Product](PRODUCT.md) owns visible behavior;
 [architecture](PRODUCTION_ARCHITECTURE.md) maps current/target systems;

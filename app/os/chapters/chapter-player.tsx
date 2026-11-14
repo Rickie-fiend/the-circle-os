@@ -17,6 +17,7 @@ import {
   type AppPagePlacement,
 } from "../app-session";
 import { CreativeButton } from "../button-engine";
+import { TimePicker } from '../time-picker';
 import { ContentFigure } from "../admin/content-media";
 import { sizeTextAreaToContent } from "../text-area-size";
 import {
@@ -146,6 +147,8 @@ function ChapterPageView({
   idlePlacement,
   hideIdleHeading,
   completionReady = false,
+  extraBody,
+  customPage,
   onEdit,
 }: {
   chapter: ChapterDefinition;
@@ -166,6 +169,8 @@ function ChapterPageView({
   idlePlacement?: AppPagePlacement;
   hideIdleHeading?: boolean;
   completionReady?: boolean;
+  extraBody?: ReactNode;
+  customPage?: ReactNode;
   onEdit?: (pageId: string, field: "title" | "body" | "question" | "why", value: string) => void;
 }) {
   const required = Boolean(page.required);
@@ -201,13 +206,15 @@ function ChapterPageView({
     const empty =
       value === "" || (Array.isArray(value) && value.length === 0);
     if (required && empty) return;
+    if (page.inputFormat === 'number' && !empty && (!String(value).trim() || !Number.isFinite(Number(value)) || (page.min !== undefined && Number(value) < page.min) || (page.max !== undefined && Number(value) > page.max))) return;
     onComplete({
       page,
-      value,
+      value: page.inputFormat === 'number' && !empty ? Number(value) : value,
       displaySnapshot: displayValue(value),
     });
   }
 
+  if (customPage) return customPage;
   if (page.type === "cover") {
     if (onEdit || page.image || chapter.designVersion === "glass-v1") {
       return (
@@ -220,11 +227,13 @@ function ChapterPageView({
         >
           <div className="os-session-intro-copy">
             <div className="os-info-page-main">
+              {page.imagePlacement === 'before-text' && <ContentFigure image={page.image} />}
               {onEdit ? <EditableCopy className="main" label="Edit cover title" onChange={(value) => onEdit(page.id, "title", value)} value={page.title || ""} /> : <h2>{title}</h2>}
             </div>
             <div className="os-info-page-sub">
-              <ContentFigure image={page.image} />
+              {!page.imagePlacement && <ContentFigure image={page.image} />}
               {onEdit ? <EditableCopy className="sub" label="Edit cover subtitle" onChange={(value) => onEdit(page.id, "body", value)} rows={2} value={page.body || ""} /> : <p>{renderedBody}</p>}
+              {page.imagePlacement === 'after-text' && <ContentFigure image={page.image} />}
             </div>
           </div>
         </PageLayout>
@@ -304,8 +313,9 @@ function ChapterPageView({
         variant={isIdle ? "app" : "chapter"}
       >
         <div className="os-page-main">
+          {page.imagePlacement === 'before-text' && <ContentFigure image={page.image} />}
           {mainContent}
-          <ContentFigure image={page.image} />
+          {!page.imagePlacement && <ContentFigure image={page.image} />}
         </div>
         <div
           className={`os-page-sub${
@@ -325,6 +335,8 @@ function ChapterPageView({
               : body
                 ? <p className="os-chapter-body">{body}</p>
                 : null}
+          {page.imagePlacement === 'after-text' && <ContentFigure image={page.image} />}
+          {extraBody}
         </div>
       </PageLayout>
     );
@@ -466,14 +478,14 @@ function ChapterPageView({
           * about two sentences. The cap is what a person might actually write
           * when a question lands, and the box grows with them rather than
           * asking them to scroll a one-row field. */}
-        <ChapterAnswerInput
+        {page.inputFormat === 'number' ? <input type="number" step="any" aria-label={page.question || page.title || 'Your answer'} required={required} min={page.min} max={page.max} value={String(value)} onChange={event => setValue(event.target.value)} /> : <ChapterAnswerInput
           label={page.question || page.title || "Your answer"}
           maxLength={page.type === "long-text" ? 4000 : 1200}
           onChange={setValue}
           placeholder={page.placeholder}
           rows={page.type === "long-text" ? 4 : 2}
           value={String(value)}
-        />
+        />}
       </form>
     );
     footer = (
@@ -494,12 +506,12 @@ function ChapterPageView({
     subContent = (
       <form className="os-survey-time" id={formId} onSubmit={submit}>
         {subContent}
-        <input
+        {chapter.designVersion === 'glass-v1' ? <TimePicker label={page.question || page.title || 'Time'} value={String(value)} onChange={setValue} /> : <input
           aria-label={page.question || page.title}
           type="time"
           value={String(value)}
           onChange={(event) => setValue(event.target.value)}
-        />
+        />}
       </form>
     );
     footer = (
@@ -526,10 +538,11 @@ function ChapterPageView({
       placement={chapter.designVersion === "glass-v1" ? "content-flow" : undefined}
     >
       <div className="os-page-main">
+        {page.imagePlacement === 'before-text' && <ContentFigure image={page.image} />}
         {onEdit ? <EditableCopy className="main" label="Edit page question" onChange={(value) => onEdit(page.id, "question", value)} rows={2} value={page.question || page.title || ""} /> : <h2>{title}</h2>}
-        <ContentFigure image={page.image} />
+        {!page.imagePlacement && <ContentFigure image={page.image} />}
       </div>
-      <div className="os-page-sub">{subContent}</div>
+      <div className="os-page-sub">{subContent}{page.imagePlacement === 'after-text' && <ContentFigure image={page.image} />}{extraBody}</div>
     </PageLayout>
   );
 }
@@ -562,6 +575,8 @@ export function ChapterPlayer({
   onLongPress,
   attentionKey,
   previewMode = false,
+  renderPageBody,
+  renderPage,
   onEditPage,
   onDismiss,
 }: {
@@ -593,6 +608,8 @@ export function ChapterPlayer({
   onLongPress?: () => void;
   attentionKey?: string;
   previewMode?: boolean;
+  renderPageBody?: (page: ChapterPage) => ReactNode;
+  renderPage?: (page: ChapterPage) => ReactNode;
   /** Swiping back off the first page closes the sheet a chapter is shown in. */
   onDismiss?: () => void;
   onEditPage?: (pageId: string, field: "title" | "body" | "question" | "why", value: string) => void;
@@ -865,6 +882,8 @@ export function ChapterPlayer({
           current={Math.max(1, countedPages.findIndex((item) => item.id === page.id) + 1)}
           key={page.id}
           page={page}
+          extraBody={renderPageBody?.(page)}
+          customPage={renderPage?.(page)}
           run={run}
           total={Math.max(1, countedPages.length)}
           onIdleAction={onIdleAction}

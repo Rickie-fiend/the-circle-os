@@ -1,5 +1,39 @@
 # Circle OS bugs and verification gaps
 
+## Offline entry after browser crash — 2026-11-14
+
+**Locally fixed and verified:** approved durable proof/closed-state store now
+passes the entire 360/390px crash journeys. Exact writing/drafts, offline edits,
+clearing, empty composer, completed logout/crash and account-return checks pass.
+Final recovery 18/18; controller/proof 12/12; build/TypeScript/lint pass. Historical
+reproduction below is superseded for synthetic desktop Chromium only. New actual
+phone/hosted acceptance, eviction and backup/restore remain open. Sync stays off.
+See [final evidence](docs/USER_JOURNEY_TESTING.md#durable-offline-entry-and-crash-recovery--2026-11-14).
+
+Reproduced in isolated production routes with synthetic Auth at 360/390px.
+Save a Note, retain an unfinished Deep Thought, confirm local storage, crash the
+test browser main process, then relaunch the same profile offline. Service-worker
+navigation succeeds, but Welcome back appears instead of restored writing tools.
+Expected: verified local account entry restores saved writing and its unfinished
+answer. Final recovery selection 15/17; both crash cases fail, existing checks
+pass. Approved investigation confirms exact saved entries/revisions and drafts
+survive; the offline proof is present before crashing and absent after reopening.
+Closed/password-flow markers remain absent. Launching offline from creation still
+fails, with one blank startup tab; the startup-gap hypothesis does not explain
+this run. Exact proof-loss mechanism remains unestablished. Later crash scenarios
+are unreached. No product fix made; next review durable proof and safe logout
+invalidation. Phone testing deferred; sync off. See
+[evidence](docs/USER_JOURNEY_TESTING.md#forced-browser-crash-writing-recovery--2026-11-14).
+
+## Unused template Effort showing “evening” — 2026-11-14
+
+Developer report: Effort shows “evening” when intended to be unused. Exact original-draft cause remains untraced. Blank fixed Effort does not reproduce the display in model/browser checks; an existing Effort answer link can produce it and previously had no direct remove action. Approved local follow-up adds Remove effort to clear its whole setting/link, trims blank output, and verifies remove/save/reload, blank re-add and clearing typed wording. Final model/publication 10/10 and production-CSS template 5/5 pass. Developer review of the original draft remains necessary before declaring that specific report resolved. No authored draft was silently changed.
+
+## Template review follow-up — 2026-11-13
+
+Locally addressed: numeric answers inherited a mobile-wide 16px !important rule; new glass numeric role is 18px/400. Native time UI is replaced for glass questions by a Circle picker with unsaved 6:00 AM hint. Admin routes formerly collapsed network/timeouts into 403 and the client unmounted editors; typed 401/403/503 handling and recovery are now distinct. Historic individual network incidents were not traced, so no claim is made about the developer's connection. Menu checks formerly started on every open; eager account-scoped lookup is reused. Image previews previously signed the entire library per instance; stable-ID targeted reads are shared. Generated preview text and obsolete Habit/Week entry dependencies are retired with old data preserved. See dated journey evidence for checks; physical-device acceptance remains open. Earlier unrelated verification gaps below remain open.
+
+
 Updated: 2026-11-11, Asia/Bangkok. This is the current triage index.
 Detailed reproductions, attempts and old conclusions remain in the
 [bug archive](docs/archive/2026-11-11-doc-cleanup/bugs.md) and
@@ -11,13 +45,30 @@ Replacing a planned flow does not mark its current runtime defects fixed.
 
 ## Current gaps
 
+Natural-expiry qualification — 2026-11-14: a real one-hour offline wait,
+unchanged expired signed token, service-worker tab reopening and real renewal
+pass at 390px with exact saved writing/drafts preserved. Both temporary accounts
+were removed and absence confirmed. This closes the bounded natural-expiry gap
+in earlier entries, not wider device/session certification. Phone acceptance is
+deferred by the developer. See
+[evidence](docs/USER_JOURNEY_TESTING.md#natural-session-expiry-and-writing-recovery--2026-11-14).
+
+Hosted-session qualification — 2026-11-14: actual production-route early renewal,
+revocation/rejected-refresh lock, offline return and exact writing restoration now
+pass at 360/390px using two temporary hosted accounts (cleanup confirmed). This
+qualifies the broader Auth/hosted-writing gaps below only for those cases.
+Natural JWT expiry, phone acceptance and operating recovery remain open. See
+[evidence](docs/USER_JOURNEY_TESTING.md#hosted-account-session-recovery--2026-11-14).
+
 | Area | Status and next check |
 | --- | --- |
-| Phone writing/caret | Developer reported long Note typing losing the visible caret above the keyboard. Full-page redesign has local checks, not complete physical-phone keyboard acceptance; recheck the affected device. |
+| Auth menu typography fixture | Full 2026-11-14 Auth selection passes 15/17. Two unchanged tests expect Edit alias font weight 650, while the current design renders 700. HEAD contains the same old assertion. These remain separate from the passing 15-case authentication/recovery runner; no assertion was removed or product defect inferred. |
+| Changed-image retry classification | Hosted acceptance confirmed replacement bytes are rejected and original bytes retained, but current Admin media route reports 503 rather than a client/conflict error. Kept as a classification gap; no unrelated route fix made. |
+| Protocol source-test marker | Expanded 2026-11-14 selection passes 135/136. The unchanged Footer source assertion in tests/protocol-home.test.mjs searches for the absent exact comment `/** The block`, producing an empty slice. Reconstructed pre-task Protocol source also fails. This remains a stale fixture gap; adopted Protocol runtime checks pass. No runtime defect is inferred or test removed. |
+| Phone writing/caret | Developer reports fixed on 2026-11-14. Device/browser and detailed steps were not supplied; this closes the reported symptom without claiming a new measured phone test. |
 | Runtime notices | ResizeObserver notices remain in recent test records. Do not infer resolution from passing journeys. |
-| Habit source assertion | Latest focused selection had an unrelated pre-existing Habit source-text mismatch; no broad-suite pass is claimed. |
 | Tool lived acceptance | Latest Protocol/shared-control work passes bounded local checks; developer lived review remains outstanding unless separately completed. |
-| Hosted writing | Migrations and synthetic hosted/test-store checks passed. Activation off; production-store/device restart/eviction, session expiry/revocation, real lock contention and backup/deletion still need evidence. |
+| Hosted writing | Migrations and synthetic hosted/test-store checks passed. Actual store restart passes three local cases (37/37 combined checks). Real production-route service-worker offline startup, two restarts, Note/Deep Thoughts editing, logout and account separation also pass at 360/390 (15/15 Auth/recovery selection, 2026-11-14). Activation off; real-device restart/eviction, hosted session expiry/revocation, real lock contention and backup/deletion remain open. |
 | Auth/device | Mail setup, session renewal/revocation, lost-device/manual lost-email recovery, regional/other-browser coverage remain incomplete. |
 | Reflect regression | Older fixture-reference/first-swipe failures remain dated unresolved evidence, alongside earlier passing fixtures and later developer reports. Diagnose current code/fixture before a blanket closure or new release claim. |
 | Chapter account chrome | Developer requested menu hiding during Chapters. Safe account/exit behavior needs review; saving the report did not approve a chrome change. |
@@ -27,6 +78,9 @@ Replacing a planned flow does not mark its current runtime defects fixed.
 
 | Change | Evidence and scope |
 | --- | --- |
+| Outdated button source checks | Developer-approved removal of nine obsolete test blocks/comments, 2026-11-14. Remaining checks 14/14, syntax and focused lint pass. No tests added or runtime bug fixed; prior browser evidence remains historical. See [record](docs/USER_JOURNEY_TESTING.md#retire-outdated-button-source-checks---2026-11-14). |
+| Week setup test date | Fixed synthetic declaration timestamps match the September fixture and preserve separate Character versions. Approved test-only correction, 2026-11-14: prior model selection now 24/24, related declaration checks 21/21 and focused lint pass. No runtime date bug or app change. See [evidence](docs/USER_JOURNEY_TESTING.md#week-setup-test-timestamps---2026-11-14). |
+| Habit source test gap | Two obsolete setup/identity source assertions replaced by saved-answer/projection model coverage and visible restoration/motion browser coverage, 2026-11-14. Focused model selection 42/42; final affected production-CSS browser selection 3/3. The motion fixture now measures copy independently of Schedule. No product defect or broad-suite certification is inferred. See [cleanup evidence](docs/USER_JOURNEY_TESTING.md#routine-presentation-cleanup---2026-11-14). |
 | Protocol checkbox-only action | Passive words, immediate ✓/press, synchronized Orange liquid text/face, no strike; reload, keyboard undo and reduced motion. Six production cases plus final recheck, 2026-11-11. Both previously open checked/press defects are resolved locally. |
 | Checkbox edge seams | All 24 fractional-offset/device-scale endpoint comparisons match hidden/unclipped references, 2026-11-11. |
 | Shared tool consistency | 24px anchors, typography and common engines; obsolete Week completion waits removed. 41 distinct compiled-CSS cases across runs/rechecks plus focused checks, 2026-11-11. |

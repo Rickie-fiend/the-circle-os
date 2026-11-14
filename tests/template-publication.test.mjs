@@ -1,0 +1,70 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {database,asAccount,A,B} from './helpers/writing-cloud.mjs';
+import {createTemplateDraft,createTemplatePage,fixedValue,validateTemplate} from '../app/os/admin/template-model.js';
+
+test('template RPCs enforce access, validation, immutable editions, receipts, images and withdrawal',async()=>{
+ const db=await database();
+ try{
+  await db.exec('create schema storage;create table storage.buckets(id text,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(bucket_id text,name text);alter table storage.objects enable row level security;');
+  for(const name of ['202611110001_content_admin.sql','202611110002_content_admin_operations.sql','202611110003_catalog_publication.sql','202611130004_content_templates.sql'])await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'));
+  await db.query('insert into public.circle_content_admins values($1)',[A]);
+  const rule=createTemplateDraft();rule.template.title='Rule validation';rule.template.items[0].action='Practice';
+  const number={...createTemplatePage('short-text'),question:'Starting amount',inputFormat:'number',min:0,max:50};rule.template.pages.push(number);
+  rule.template.items[0].target={...fixedValue(),source:'scale',answerKey:number.answerKey,factor:0.5,offset:0,min:0,max:20};
+  assert.deepEqual(validateTemplate(rule.template),[]);assert.equal((await db.query('select public.circle_template_valid($1) as valid',[rule.template])).rows[0].valid,true);
+  const reflection=structuredClone(rule.template);reflection.pages[0].purpose='reflection';assert.equal((await db.query('select public.circle_template_valid($1) as valid',[reflection])).rows[0].valid,false);
+  const choice={...createTemplatePage('single-choice'),question:'Cue',options:[{id:'a',label:'A'},{id:'b',label:'B'}]};rule.template.pages.push(choice);
+  rule.template.items[0].cue={...fixedValue(),source:'choice',answerKey:choice.answerKey,choices:[{answer:'a',value:'Morning'},{answer:'b',value:'Evening'}]};
+  assert.deepEqual(validateTemplate(rule.template),[]);assert.equal((await db.query('select public.circle_template_valid($1) as valid',[rule.template])).rows[0].valid,true);
+  rule.template.items[0].cue.choices.pop();assert.equal((await db.query('select public.circle_template_valid($1) as valid',[rule.template])).rows[0].valid,false);
+  const rpc=(who,name,value)=>asAccount(db,who,async tx=>(await tx.query(`select public.${name}($1) as result`,[value])).rows[0].result);
+  const save=(draft,revision=0)=>asAccount(db,A,tx=>tx.query('select public.circle_save_content_draft($1,$2,$3)',[draft,revision,crypto.randomUUID()]));
+  const asset='33333333-3333-4333-8333-333333333333';
+  await db.query("insert into public.circle_content_assets values($1,'Tree','image/png',9,now())",[asset]);
+  await db.query("insert into storage.objects values('circle-content',$1)",[asset]);
+  await db.exec('grant usage on schema storage to authenticated;grant select on storage.objects to authenticated;');
+  assert.deepEqual(await asAccount(db,B,async tx=>(await tx.query('select * from storage.objects')).rows),[]);
+  const d=createTemplateDraft();d.template.title='Original pack';d.template.description='An authored description';d.template.items[0].action='Read';d.template.cover={assetId:asset,alt:'A synthetic tree'};assert.deepEqual(validateTemplate(d.template),[]);
+  await save(d);
+  const command={action:'publish',id:d.draftId,draftId:d.draftId,draft:d,draftRevision:1,expectedRevision:0,operationId:crypto.randomUUID()};
+  await assert.rejects(rpc(B,'circle_catalog_change',command),/Admin required/);
+  const first=await rpc(A,'circle_catalog_change',command);assert.equal(first.version,1);assert.deepEqual(await rpc(A,'circle_catalog_change',command),first);
+  assert.equal((await asAccount(db,B,async tx=>(await tx.query('select * from storage.objects')).rows)).length,1);
+  await assert.rejects(rpc(A,'circle_catalog_change_003',command),/permission denied/);
+  await assert.rejects(rpc(A,'circle_catalog_change',{...command,operationId:crypto.randomUUID()}),/Catalog changed/);
+  const read=version=>asAccount(db,B,async tx=>(await tx.query('select public.circle_catalog_read($1,$2) as result',[d.draftId,version])).rows[0].result);
+  const list=()=>asAccount(db,B,async tx=>(await tx.query('select public.circle_catalog_read() as result')).rows[0].result);
+  assert.equal((await list())[0].description,d.template.description);assert.deepEqual((await list())[0].cover,d.template.cover);
+  assert.equal((await read(1)).content.template.title,'Original pack');
+  const changed=structuredClone(d);changed.template.title='Next pack';await save(changed,1);
+  await rpc(A,'circle_catalog_change',{...command,draft:changed,draftRevision:2,expectedRevision:1,operationId:crypto.randomUUID()});
+  assert.equal((await read(1)).content.template.title,'Original pack');assert.equal((await read(2)).content.template.title,'Next pack');
+  await assert.rejects(asAccount(db,null,tx=>tx.query('select public.circle_catalog_read($1,1)',[d.draftId])),/Sign in required/);
+  await rpc(A,'circle_catalog_change',{id:d.draftId,action:'withdraw',expectedRevision:2,operationId:crypto.randomUUID()});
+  assert.deepEqual(await asAccount(db,B,async tx=>(await tx.query('select public.circle_catalog_read() as result')).rows[0].result),[]);
+  assert.equal((await read(1)).content.template.title,'Original pack');
+  await rpc(A,'circle_catalog_change',{id:d.draftId,action:'restore',expectedRevision:3,operationId:crypto.randomUUID()});
+  assert.equal((await asAccount(db,B,async tx=>(await tx.query('select public.circle_catalog_read() as result')).rows[0].result))[0].title,'Next pack');
+  for(const edit of [t=>t.items[0].kind='negotiable',t=>t.items[0].target.source='javascript',t=>t.items[0].cue={...t.items[0].cue,source:'answer',answerKey:'absent'},t=>t.items[0].target.value='NaN']){
+   const invalid=structuredClone(changed);edit(invalid.template);invalid.draftId=`template-${crypto.randomUUID()}`;await save(invalid);
+   await assert.rejects(rpc(A,'circle_catalog_change',{...command,id:invalid.draftId,draftId:invalid.draftId,draft:invalid,operationId:crypto.randomUUID()}),/Invalid template/);
+  }
+  const p=createTemplateDraft('protocol');p.template.title='Protocol';p.template.items[0].action='Practice';await save(p);
+  await rpc(A,'circle_catalog_change',{...command,id:p.draftId,draftId:p.draftId,draft:p,operationId:crypto.randomUUID()});
+  const missing=structuredClone(p);missing.draftId=`template-${crypto.randomUUID()}`;missing.template.cover={assetId:'44444444-4444-4444-8444-444444444444',alt:'Unavailable'};await save(missing);
+  await assert.rejects(rpc(A,'circle_catalog_change',{...command,id:missing.draftId,draftId:missing.draftId,draft:missing,operationId:crypto.randomUUID()}),/Image unavailable/);
+  assert.equal((await db.query('select count(*)::int as n from public.circle_content_versions where id=$1',[missing.draftId])).rows[0].n,0);
+  const article={draftId:'after-template-article',article:{title:'Existing article path',summary:'Article description',cover:{assetId:asset,alt:'Article tree'},blocks:[{id:'text',type:'paragraph',text:'Original words'}]}};await save(article);
+  await rpc(A,'circle_catalog_change',{...command,id:article.draftId,draftId:article.draftId,draft:article,operationId:crypto.randomUUID()});
+  const chapter={draftId:'after-template-chapter',chapter:{id:'after-template-chapter',title:'Existing chapter path',purpose:'Internal purpose is not the description',pages:[{type:'cover',id:'cover',body:'Chapter cover description',image:{assetId:asset,alt:'Chapter tree'}},{type:'result',id:'end'}]}};await save(chapter);
+  await rpc(A,'circle_catalog_change',{...command,id:chapter.draftId,draftId:chapter.draftId,draft:chapter,operationId:crypto.randomUUID()});
+  const summaries=await list();
+  assert.equal(summaries.find(row=>row.id===article.draftId).description,article.article.summary);assert.deepEqual(summaries.find(row=>row.id===article.draftId).cover,article.article.cover);
+  assert.equal(summaries.find(row=>row.id===chapter.draftId).description,chapter.chapter.pages[0].body);assert.deepEqual(summaries.find(row=>row.id===chapter.draftId).cover,chapter.chapter.pages[0].image);
+  assert.equal(summaries.find(row=>row.id===p.draftId).cover,null);assert.equal(summaries.find(row=>row.id===p.draftId).description,'');
+  const replace={...article,draftId:d.draftId};await save(replace,2);
+  await assert.rejects(rpc(A,'circle_catalog_change',{...command,id:d.draftId,draftId:d.draftId,draft:replace,draftRevision:3,expectedRevision:4,operationId:crypto.randomUUID()}),/Content type cannot change/);
+ }finally{await db.close();}
+});

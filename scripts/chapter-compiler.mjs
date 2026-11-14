@@ -105,6 +105,8 @@ function parsePage(id, source, filename) {
         image: "imageId",
         image_alt: "imageAlt",
         image_caption: "imageCaption",
+        image_placement: "imagePlacement",
+        input_format: "inputFormat",
         question: "question",
         button: "button",
         answer: "answerKey",
@@ -328,6 +330,8 @@ export function validateChapter(chapter, filename = "chapter.md") {
   for (const page of chapter.pages) {
     const prefix = `page ${page.id || "(missing id)"}`;
     if (page.image && (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(page.image.assetId || "") || !page.image.alt?.trim())) errors.push(`${prefix}: image needs a valid asset reference and alternative text`);
+    if (page.imagePlacement !== undefined && !['before-text','after-text'].includes(page.imagePlacement)) errors.push(`${prefix}: invalid image placement`);
+    if (page.inputFormat !== undefined && (page.inputFormat !== 'number' || page.type !== 'short-text' || !Number.isFinite(page.min) || !Number.isFinite(page.max) || page.min > page.max)) errors.push(`${prefix}: invalid numeric bounds`);
     if (!ID_PATTERN.test(page.id || "")) errors.push(`${prefix}: invalid id`);
     if (!PAGE_TYPES.has(page.type)) errors.push(`${prefix}: unknown type`);
     if (INPUT_TYPES.has(page.type) && !ID_PATTERN.test(page.answerKey || "")) {

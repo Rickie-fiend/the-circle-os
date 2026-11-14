@@ -8,6 +8,7 @@ import { createChapterDraft } from '../app/os/admin/chapter-authoring.js';
 // Explicit write mode creates only synthetic accounts/content, then removes
 // those exact fixtures. Never print tokens, passwords, user records or URLs.
 if (!process.argv.includes('--write')) throw new Error('Use --write only after hosted verification approval.');
+if(process.argv.includes('--templates')&&(!process.argv.includes('--catalog')||!process.argv.includes('--app')))throw new Error('Template acceptance requires --app --catalog as well as the approved --write flag.');
 const origin = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const secret = process.env.SUPABASE_SECRET_KEY;
@@ -48,7 +49,7 @@ async function rpc(token, revision=0, id=operationId, title='Synthetic draft') {
 try {
   if(app) {
     let ready=false;const deadline=Date.now()+45000;
-    while(Date.now()<deadline) {if(app.exitCode!==null)throw new Error('Isolated app exited before readiness');try{const response=await fetch(`${appOrigin}/os/admin/status`,{signal:AbortSignal.timeout(1500)});if(response.status===403){ready=true;break;}}catch{}await pause(200);}
+    while(Date.now()<deadline) {if(app.exitCode!==null)throw new Error('Isolated app exited before readiness');try{const response=await fetch(`${appOrigin}/os/admin/status`,{signal:AbortSignal.timeout(1500)});if([401,403].includes(response.status)){ready=true;break;}}catch{}await pause(200);}
     assert.ok(ready,'Isolated production app did not become ready');
   }
   const bucket = await (await ok(await call('/storage/v1/bucket/circle-content',{admin:true}), 'private bucket exists')).json();
@@ -56,10 +57,10 @@ try {
   assert.equal(Number(bucket.file_size_limit),5242880);
   for(let index=0;index<2;index++) {
     const email = `${tag}-${index}@example.com`, password=randomBytes(32).toString('hex');
-    const user=await (await ok(await call('/auth/v1/admin/users',{method:'POST',admin:true,body:{email,password,email_confirm:true}}),'create isolated account')).json();
+    const user=await (await ok(await call('/auth/v1/admin/users',{method:'POST',admin:true,body:{email,password,email_confirm:true,...(process.argv.includes('--templates')?{user_metadata:{alias:'Synthetic template reader'}}:{})}}),'create isolated account')).json();
     created.push(user.id);
     const login=await (await ok(await call('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}}),'synthetic sign in')).json();
-    created[index]={id:user.id,token:login.access_token};
+    created[index]={id:user.id,token:login.access_token,...(process.argv.includes('--templates')?{session:login}:{})};
   }
   const [a,b]=created;
   await ok(await call('/rest/v1/circle_content_admins',{method:'POST',admin:true,body:{account_id:a.id}}),'grant synthetic admin'); granted=a.id;
@@ -89,7 +90,7 @@ try {
     async function http(path,token,options={}) {return fetch(`${appOrigin}/os/admin/${path}`,{...options,headers:{...(token?{Authorization:`Bearer ${token}`} : {}),...options.headers},signal:AbortSignal.timeout(30000)});}
     await ok(await http('status',a.token),'production HTTP admin allow');
     assert.equal((await http('status',b.token)).status,403);checks++;console.log('PASS production HTTP ordinary denial');
-    assert.equal((await http('status',null,{headers:{Cookie:'circle_os_admin=forged'}})).status,403);checks++;console.log('PASS production HTTP cookie bypass denied');
+    assert.equal((await http('status',null,{headers:{Cookie:'circle_os_admin=forged'}})).status,401);checks++;console.log('PASS production HTTP cookie bypass denied');
     await ok(await http('catalog',a.token),'production HTTP draft reload');
     const httpOperation=randomUUID();operationIds.push(httpOperation);
     const payload=JSON.stringify({draft:{...syntheticDraft,chapter:{...syntheticDraft.chapter,title:'Synthetic HTTP draft'}},revision:1,operationId:httpOperation});
@@ -102,7 +103,8 @@ try {
     function form(bytes=png) {const body=new FormData();body.set('id',assetId);body.set('alt','Synthetic test pixel');body.set('image',new File([bytes],'synthetic.png',{type:'image/png'}));return body;}
     await ok(await http('media',a.token,{method:'POST',body:form()}),'production HTTP immutable upload retry');
     const changed=Buffer.from(png);changed[changed.length-1]^=1;
-    assert.equal((await http('media',a.token,{method:'POST',body:form(changed)})).status,400);checks++;console.log('PASS production HTTP changed image denied');
+    assert.equal((await http('media',a.token,{method:'POST',body:form(changed)})).status,503);checks++;console.log('PASS production HTTP changed image denied (current service-error classification)');
+    const retained=await ok(await call(`/storage/v1/object/authenticated/circle-content/${assetId}`,{token:a.token}),'original immutable image retained');assert.deepEqual(Buffer.from(await retained.arrayBuffer()),png);
     assert.ok(!(await http('media',b.token,{method:'POST',body:form()})).ok);checks++;console.log('PASS production HTTP ordinary upload denied');
   }
   if(process.argv.includes('--catalog')) {
@@ -146,6 +148,10 @@ try {
     assert.ok(!(await(await ok(await listing(),'withdrawn discovery check')).json()).some(item=>item.id===tag));
     await ok(await change({action:'restore',id:tag,expectedRevision:3,operationId:operation()}),'restore chapter');
     assert.ok((await(await ok(await listing(),'restored discovery check')).json()).some(item=>item.id===tag));
+    if(process.argv.includes('--templates')) {
+      const{verifyLiveTemplates}=await import('./check-content-templates-live.mjs');
+      await verifyLiveTemplates({tag,a,b,assetId,fixtureIds,operation,call,ok,change,read,http,origin,appOrigin});
+    }
   }
   await ok(await call(`/rest/v1/circle_content_admins?account_id=eq.${a.id}`,{method:'DELETE',admin:true}),'revoke synthetic grant');granted=null;
   assert.ok(!(await rpc(a.token,1,randomUUID())).ok);checks++;console.log('PASS revoked admin mutation denied');

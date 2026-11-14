@@ -1,5 +1,62 @@
 # Content Admin and Explore plan
 
+## Local template completion and Explore — 2026-11-14
+
+The developer approved completing the local flow, starting with the specified
+three-row glass Explore layout. Chapters, Habit/Protocol and Articles each have
+an independent bounded carousel. Titles stay outside; available covers/titles/
+descriptions stay inside. Retain header/account and bottom navigation on Today's
+background, with no outer App Box. Empty rows have two blank panels; one item
+has a blank neighbour. Interior selections show both neighbours and appear closer
+with a subtle Orange shadow. Allow vertical scrolling. Taps open exact versions.
+
+Explicit Add to Routine saves a 21-day or ongoing group without replacing current
+items/identity. Reopen an active group rather than duplicate it; all stopped or
+expired permits a deliberate fresh copy. Save one immutable source/settings/answer
+snapshot with item references; retain old records. Protocol keeps its explicit
+Start, Day One gate and phase protection. Both paths share an account-scoped
+adoption lock, pending receipts and local acknowledgement before navigation.
+Circle marks disclose original details without saving evidence. Admin stays
+preview-only. This supersedes earlier local no-adoption/empty-Explore boundaries.
+
+Migration 004 and the real synthetic hosted/browser test were separately approved
+and completed on 2026-11-14: 88 functional checks plus browser adoption/reload and
+exact cleanup. See [results](CONTENT_ADMIN_SETUP.md). No real authored content,
+deployment or cloud-sync activation is included. Never reapply 001–004.
+
+## Protocol preview correction — 2026-11-14
+
+Approved Start follow-up: setup's primary action is Preview; the running preview offers Start. Signed-in exact-version readers deliberately save an active personal copy, retain the selected duration/resolved terms and source/answer snapshots, then open /os#protocol after local save acknowledgement. Admin Start is disabled. Existing active/draft phases offer Open Protocol instead. Day One access remains required. Account-scoped Web Locks serialize Start with a latest-local-state check; unsupported locking fails with an actionable error. Retry receipts survive reload in account-scoped session storage. Hosted migration 004, publication, cloud sync and Explore discovery remain separate.
+
+Approved two-step result preview reuses ProtocolPage: template name as provisional phase name, fixed terms, existing duration choices, Preview N days and a read-only Day 1 appearance. Back preserves selection. Authored action wording supplies the agreement text, including existing target/unit/effort slots. Separate cue/result fields remain saved and editable, with an Admin warning when present because current Protocol cannot display them. No automatic rewrite, deletion, adoption or hosted migration.
+
+## Template clarity update — 2026-11-14
+
+Approved follow-up: Remove effort clears its stored value/source/link to an empty fixed setting and survives save/recovery. Empty/whitespace Effort produces no result wording or cue fallback. Existing authored Effort stays visible until explicitly cleared/removed. The Routine preview omits generated daily schedule sentences but retains its ongoing checkbox. Time controls now use immediately visible independent Hour/Minute/AM-PM wheels.
+
+Approved local follow-up explains Setup Pages (reading/questions), Items (output habits/tasks), and optional intermediate result previews; a final result preview is automatic. Question wording is separate from optional Page title. Validation distinguishes missing wording, invalid references and duplicate references by Page number and displays those errors beside the affected Page. Internal references are not exposed as author-editable fields. Time and typed-answer controls follow the updated Design/Page standard. No adoption or hosted migration is included.
+
+## Approved review corrections — 2026-11-13
+
+Implemented locally after explicit developer approval: numeric answer typography; Circle time picker with unsaved placeholder; typed Admin connection/session/permission failures and editor-preserving transient errors; targeted/deduplicated image signing; eager account-scoped Admin-menu checks; shared full Routine Page preview, authored action wording and optional Effort; minimal preview text; retirement of Habit/Week tool-entry setup gates while retaining old records. Wording supports fixed text with target/unit/intensity slots (internal identifiers remain compatible). Unapplied migration 004 validates optional actionPattern; it has not been changed remotely. Existing templates without a pattern keep their original action plus separate quantity.
+
+
+## Template builder result — 2026-11-13
+
+The approved local builder slice adds Habit/task and fixed-task Protocol template types. Both reuse shared account/tab draft recovery, Media and Catalog operation retries. Editors support Explore name/description/cover, Page and item ordering/duplication/removal, text, image placement, choices, written/time/numeric questions, configuration/reflection purposes and result preview Pages. Questions used by result settings must be required configuration questions. Numeric targets support explicit authored lower/upper bounds, linear factor/offset/clamping, or exhaustive single-choice mappings; no code evaluation or automatic progression. No health formula or target is supplied by the implementation.
+
+Publication freezes the template definition and asset references into a version. Source identity is the draft ID. Routine/protocol template types cannot replace one another or a Chapter/Article under the same identity. Local migration 004 extends Catalog through an owner-only delegate for the existing publisher and new template validation. It is NOT applied to hosted Supabase. Existing 001/002/003 remain applied and must not be reapplied.
+
+Admin and signed-in exact-version template previews collect temporary answers, show actual resolved targets and preview 21-day/ongoing Routine or existing Protocol durations. They never adopt items, start phases, save reflection answers or create Chapter evidence. Explore adoption remains the next separately reviewed implementation slice. The earlier planning sections below are historical context where superseded by this result and the confirmed template direction.
+
+
+## Confirmed template direction — 2026-11-13
+
+Developer reviewed the Admin/Catalog flow and its functions. Next implement standalone Routine scheduling before the template builder and Explore adoption. A template may add a group of habits/tasks, daily for 21 days by default; an unchecked “Keep going until I stop” choice applies to the group, with individual items stoppable later. Template Protocol tasks stay fixed after starting; users choose the existing phase durations. Questions support configuration and saved reflections. Everyone receives the same authored task set; cues, times and confirmed quantities/intensities may vary. Completion remains a single checkbox, without quantity logging or automatic progression.
+
+The planned shared builder uses reorderable glass Pages with text, media-library images before/after text, choices, written/time/numeric questions and an actual personalized result preview. Explore display titles stay separate from task wording. Fixed, user-chosen and explicitly authored-rule suggestions are proposed value sources; health calculations require a separately reviewed source/rule. Template-origin Circle marks and source/version preservation are planned. Builder, personalization, Catalog template types and Explore adoption are not implemented by the scheduling slice.
+
+
 ## Catalog follow-up — 2026-11-11
 
 Developer approved local publication, signed-in reading/images and withdrawal/

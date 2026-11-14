@@ -6,6 +6,7 @@ import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import { PROTOCOL_DURATIONS } from "./circle-os-model.js";
 import { useAppBack } from "./app-back";
 import { RoutineHeaderButton } from "./routine-controls";
+import { TemplateSource } from './template-source';
 
 export type ProtocolItemView = {
   id: string;
@@ -15,7 +16,7 @@ export type ProtocolItemView = {
 };
 
 export type ProtocolView = {
-  run: { id: string; name: string; days: number; status: string };
+  run: { id: string; name: string; days: number; status: string; sourceTemplate?: unknown };
   day: number;
   isDraft: boolean;
   isOver: boolean;
@@ -83,6 +84,8 @@ export function ProtocolKeptPage({ seal, onClose }: { seal: ProtocolSealView; on
 }
 
 type ProtocolPageProps = {
+  previewMode?: boolean;
+  previewAction?: ReactNode;
   navigation?: ReactNode;
   protocol: ProtocolView;
   phaseRecords: ProtocolPhaseRecord[];
@@ -307,6 +310,8 @@ function ProtocolHome({
  * padding, and its header runs into the edge of the App Box.
  */
 export function ProtocolPage({
+  previewMode = false,
+  previewAction,
   navigation,
   protocol,
   phaseRecords,
@@ -446,7 +451,7 @@ export function ProtocolPage({
             styleId="default"
             type="button"
           >
-            {canBegin ? `Begin ${run.days} days` : "Add one non-negotiable"}
+            {canBegin ? (previewMode ? "Preview" : `Begin ${run.days} days`) : "Add one non-negotiable"}
           </CreativeButton>
         }
       >
@@ -455,7 +460,7 @@ export function ProtocolPage({
             tracks by position, so the name alone was stretched to fill the
             Main track and the page ran on for 650px. */}
         <div className="os-page-main os-protocol-identity">
-          <input
+          {previewMode ? <p className="os-app-page-heading os-protocol-name" data-os-app-heading>{run.name}</p> : <input
             aria-label="Protocol name"
             className="os-app-page-heading os-protocol-name-edit"
             data-os-app-heading
@@ -463,7 +468,7 @@ export function ProtocolPage({
             onChange={(event) => onRename(event.target.value)}
             placeholder="Monk Mode"
             value={run.name}
-          />
+          />}
 
           <div className="os-protocol-days" role="group" aria-label="How many days">
             {PROTOCOL_DURATIONS.map((days: number) => (
@@ -481,7 +486,7 @@ export function ProtocolPage({
         </div>
 
         <div className="os-page-sub os-app-page-stacks os-protocol-terms">
-          <ProtocolDraftGroup
+          {previewMode ? <ProtocolPreviewTerms items={nonNegotiable} label="Non-negotiable" /> : <ProtocolDraftGroup
             items={nonNegotiable}
             editingItemId={editingItemId}
             kind="non-negotiable"
@@ -489,8 +494,8 @@ export function ProtocolPage({
             onAddItem={onAddItem}
             onChangeItem={onChangeItem}
             onFinishItemEdit={onFinishItemEdit}
-          />
-          <ProtocolDraftGroup
+          />}
+          {previewMode ? <ProtocolPreviewTerms items={negotiable} label="Negotiable" /> : <ProtocolDraftGroup
             items={negotiable}
             editingItemId={editingItemId}
             kind="negotiable"
@@ -498,7 +503,7 @@ export function ProtocolPage({
             onAddItem={onAddItem}
             onChangeItem={onChangeItem}
             onFinishItemEdit={onFinishItemEdit}
-          />
+          />}
         </div>
       </PageLayout>
     );
@@ -602,12 +607,12 @@ export function ProtocolPage({
               hard is not a protocol. */}
           <p className="os-protocol-invite os-protocol-length-note">
             {run.days} days, agreed on day one.
-            {" "}Term changes start next Circle day at 06:00.
+            {" "}{run.sourceTemplate ? "Terms from this template stay fixed." : "Term changes start next Circle day at 06:00."}
           </p>
         </div>
 
         <div className="os-page-sub os-app-page-stacks os-protocol-terms">
-          <ProtocolDraftGroup
+          {run.sourceTemplate ? <ProtocolPreviewTerms items={protocol.editorNonNegotiable ?? nonNegotiable} label="Non-negotiable" /> : <ProtocolDraftGroup
             items={protocol.editorNonNegotiable ?? nonNegotiable}
             editingItemId={editingItemId}
             kind="non-negotiable"
@@ -615,8 +620,8 @@ export function ProtocolPage({
             onAddItem={onAddItem}
             onChangeItem={onChangeItem}
             onFinishItemEdit={onFinishItemEdit}
-          />
-          <ProtocolDraftGroup
+          />}
+          {run.sourceTemplate ? <ProtocolPreviewTerms items={protocol.editorNegotiable ?? negotiable} label="Negotiable" /> : <ProtocolDraftGroup
             items={protocol.editorNegotiable ?? negotiable}
             editingItemId={editingItemId}
             kind="negotiable"
@@ -624,7 +629,7 @@ export function ProtocolPage({
             onAddItem={onAddItem}
             onChangeItem={onChangeItem}
             onFinishItemEdit={onFinishItemEdit}
-          />
+          />}
         </div>
       </PageLayout>
     );
@@ -637,7 +642,7 @@ export function ProtocolPage({
       headerLeft={label}
       placement="identity-stack"
       /* Phases is navigation; Edit stays with the chosen phase name. */
-      headerRight={runningLabel}
+      headerRight={previewMode ? undefined : runningLabel}
       theme="orange"
       /* The day count moved down to where the day is actually finished. Sai:
        * "move day 7 of 7 progress to the bottom where complete the day button
@@ -648,7 +653,8 @@ export function ProtocolPage({
           <span className="os-protocol-progress">
             Day {day} of {run.days}
           </span>
-          {keptAll && !sealed ? (
+          {previewMode && previewAction}
+          {!previewMode && keptAll && !sealed ? (
             <CreativeButton
               className="os-protocol-begin os-protocol-complete"
               disabled={rewarding}
@@ -675,8 +681,9 @@ export function ProtocolPage({
           <p className="os-app-page-heading os-protocol-name" data-os-app-heading>
             {run.name}
           </p>
-          <button className="os-new-habit" type="button" onClick={() => setEditing(true)}>Edit</button>
+          {!previewMode && <button className="os-new-habit" type="button" onClick={() => setEditing(true)}>Edit</button>}
         </div>
+        {!previewMode && <TemplateSource source={run.sourceTemplate} />}
       </div>
 
       <div className="os-page-sub os-app-page-stacks os-protocol-terms">
@@ -684,7 +691,7 @@ export function ProtocolPage({
           <>
             <p className="os-record-label">Non-negotiable</p>
             {nonNegotiable.map((item) => (
-              <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} />
+              <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} disabled={previewMode} />
             ))}
           </>
         ) : null}
@@ -693,7 +700,7 @@ export function ProtocolPage({
           <>
             <p className="os-record-label os-protocol-second-label">Negotiable</p>
             {negotiable.map((item) => (
-              <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} />
+              <ProtocolBlock item={item} key={item.id} onToggle={onToggleItem} disabled={previewMode} />
             ))}
           </>
         ) : null}
@@ -707,9 +714,11 @@ export function ProtocolPage({
 function ProtocolBlock({
   item,
   onToggle,
+  disabled = false,
 }: {
   item: ProtocolItemView;
   onToggle: (itemId: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div
@@ -718,12 +727,16 @@ function ProtocolBlock({
       }${item.completed ? " is-kept" : ""}`}
     >
       <span className="os-protocol-block-text"><span className="os-protocol-word-base">{item.text}</span><span aria-hidden="true" className="os-protocol-word-liquid">{item.text}</span></span>
-      <CreativeButton aria-label={`${item.completed ? "Undo" : "Keep"}: ${item.text}`}
+      <CreativeButton disabled={disabled} aria-label={`${item.completed ? "Undo" : "Keep"}: ${item.text}`}
         aria-pressed={item.completed} className="os-row-tick os-row-tick-habit"
         keepMountedOnSuccess onClick={() => onToggle(item.id)} release="latch"
         role="habit" styleId="soft-clay" type="button" />
     </div>
   );
+}
+
+function ProtocolPreviewTerms({items,label}:{items:ProtocolItemView[];label:string}) {
+  return items.length ? <section className="os-protocol-group" aria-label={label}><p className="os-record-label">{label}</p>{items.map(item=><div className={`os-protocol-block is-draft${item.kind==='negotiable'?' is-negotiable':''}`} key={item.id}><span className="os-protocol-block-text">{item.text}</span></div>)}</section> : null;
 }
 
 function ProtocolDraftGroup({

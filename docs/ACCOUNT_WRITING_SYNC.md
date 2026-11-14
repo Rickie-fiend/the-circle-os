@@ -1,10 +1,62 @@
 # Account writing storage and transport
 
+Durable-entry update — 2026-11-14: approved IndexedDB proof/closed-state fix now
+passes the complete 360/390px crash journeys, including exact writing/drafts,
+offline edits, clearing, empty composer, completed logout and account return.
+Recovery selection 18/18, controller/proof 12/12, build/TypeScript/lint pass.
+This supersedes the bounded crash blocker below. Phone/hosted verification of
+this runtime change and eviction/backup gates remain open; activation stays off.
+See [final evidence](USER_JOURNEY_TESTING.md#durable-offline-entry-and-crash-recovery--2026-11-14).
+
+Crash qualification — 2026-11-14: production-route synthetic Chromium crash
+journeys fail at both 360/390px. The service worker serves offline /os after the
+crash, but Auth shows Welcome back rather than the writing tools. Final recovery
+selection 15/17; build/TypeScript/lint pass. Approved diagnostic follow-up confirms
+exact saved entries/revisions and drafts survive. Offline proof exists before
+crashing and is absent after reopening; logout/password-flow markers are absent.
+Launch-time offline mode still fails with one blank startup tab. Exact proof-loss
+mechanism remains unestablished; later crash steps were not reached.
+Normal-restart evidence remains bounded as recorded. Activation stays off;
+phone testing is deferred. See [crash evidence](USER_JOURNEY_TESTING.md#forced-browser-crash-writing-recovery--2026-11-14).
+
 Updated: 2026-11-11, Asia/Bangkok. This is the implemented account-writing
 protocol and its verification boundary. Automatic product activation remains off.
 Other lifestyle domains and legacy profile-server records are outside this contract.
 
 ## Current status
+
+Natural-expiry follow-up — 2026-11-14: the approved real one-hour offline wait
+passes at 390px. An unchanged server-issued signed token actually expired; the
+app reopened offline through the service worker with exact Note/draft text,
+then renewed to an unexpired token on reconnect without changing saved entries,
+versions or drafts. Hosted test 1/1 and cleanup pass. This qualifies the earlier
+natural-expiry gap below for this bounded desktop-tab journey. Phone acceptance
+is explicitly deferred; activation remains off. See
+[natural-expiry evidence](USER_JOURNEY_TESTING.md#natural-session-expiry-and-writing-recovery--2026-11-14).
+
+Hosted-session follow-up — 2026-11-14: actual production-route journeys at
+360/390px pass real sign-in, early renewal/token rotation, offline return,
+revoked-refresh rejection, lock and same-account restoration with exact saved
+entries/drafts preserved. Two temporary hosted accounts were deleted and absence
+confirmed. Natural JWT expiry was not tested: SDK scheduling metadata requested
+renewal early without changing signed tokens. Physical devices and remaining
+activation gates stay open; activation remains off. See
+[hosted-session evidence](USER_JOURNEY_TESTING.md#hosted-account-session-recovery--2026-11-14).
+
+Update — 2026-11-14: the actual writing-store adapter now has bounded normal
+desktop Chromium browser-process restart verification with persistent synthetic
+profiles and local PostgreSQL/HTTP/Auth fixtures. Saved history, unfinished drafts,
+exact pending uploads, denied sends, accepted/lost replies and account separation
+survive restart. Final storage/cloud browser suites pass 37/37, including three
+new restart cases. This qualifies earlier unverified cold-restart statements below
+only for this local fixture. The follow-up real Next production-route check also
+passes at 360/390px: actual service-worker offline opening, Note/Deep Thoughts
+recovery and offline edits through two browser-process restarts, offline logout,
+account isolation and reconnection without duplicate saved revisions. Final
+Auth/recovery selection passes 15/15; synthetic Auth does not certify real hosted
+sessions. Real phones, crash/OS eviction and backups remain open. Activation stays off.
+See [real-app evidence and phone checklist](USER_JOURNEY_TESTING.md#real-app-offline-writing-recovery--2026-11-14).
+See [restart evidence](USER_JOURNEY_TESTING.md#writing-browser-restart-recovery--2026-11-14).
 
 Both migrations were applied to the hosted project on 2026-11-06 after approval:
 
@@ -13,8 +65,9 @@ Both migrations were applied to the hosted project on 2026-11-06 after approval:
 
 Do not reapply either non-idempotent migration. Bounded hosted two-account
 RPC/access/conflict checks and separate synthetic IndexedDB reload checks passed
-as recorded below. They do not certify the production writing adapter, cold
-restart, offline page load, physical device, eviction or backups.
+as recorded below. Those older hosted checks do not certify the production
+adapter. The current local restart/offline-route evidence above closes its bounded
+desktop-browser gap; physical devices, eviction and backups remain unverified.
 
 The resolution migration SHA-256 is
 60b823dcc45f8ca5ff3623913272501e8dba6886178111600e4c410ec6e929e2.
@@ -186,7 +239,7 @@ Do not apply an already-applied migration to satisfy an outdated checklist.
 
 Setting NEXT_PUBLIC_CIRCLE_WRITING_SYNC=enabled requires a separately approved
 environment/build change. No activation is authorized by this documentation.
-Production-store cold restart/offline load/eviction, true lock contention,
+Real-device cold restart/offline load/eviction, true lock contention,
 manual account deletion, protected admin/log access, backup/restore and 30-day
 deleted-backup retention remain open release work.
 

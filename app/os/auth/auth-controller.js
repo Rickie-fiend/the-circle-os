@@ -71,7 +71,7 @@ export function createAuthController(adapter) {
     ++generation;
     locked();
     // Remove offline proof synchronously, before waiting for the network.
-    try { adapter.forget(); await adapter.signOut(); }
+    try { await adapter.forget(); await adapter.signOut(); }
     catch { emit({ message: "This window is locked. Sign-out could not finish. Check your connection and browser storage before sharing this browser." }); }
   }
   return {
@@ -79,7 +79,7 @@ export function createAuthController(adapter) {
     subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
     restore, signIn, consumeLink, setPassword, setAlias, signOut,
     cancelPending() { ++generation; adapter.cancelPending(); },
-    revoked() { ++generation; locked(); try { adapter.forget(); } catch { emit({ message: "Your browser could not clear sign-in. Close this window and check browser storage before using a shared device." }); } },
+    revoked() { ++generation; locked(); void (async () => { try { await adapter.forget(); } catch { emit({ message: "Your browser could not clear sign-in. Close this window and check browser storage before using a shared device." }); } })(); },
     dispose() { disposed = true; ++generation; listeners.clear(); },
   };
 }

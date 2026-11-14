@@ -179,6 +179,8 @@
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9-]*$"
           },
+          "inputFormat": { "const": "number" },
+          "imagePlacement": { "enum": ["before-text", "after-text"] },
           "why": {
           "description": "One sentence on why the question is worth answering, shown beside the field. Teaching arrives where it is needed instead of on a page of its own.",
           "type": "string"

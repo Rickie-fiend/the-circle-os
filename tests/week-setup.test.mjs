@@ -92,17 +92,20 @@ test("the week setup leaves a week with a goal, terms and a way back", () => {
   // Day one already happened: one part of him is named.
   let state = declareLife(createEmptyState(), "character", {
     body: A["character-body"], past: "A job I did not choose", starting: "body",
-  });
+  }, { declaredAt: `${DATE}T08:00:00.000Z` });
 
   state = declareLife(state, "sixMonth", {
     picture: chapterAnswerText(run, "six-month-picture"),
     why: chapterAnswerText(run, "six-month-why"),
-  });
+  }, { declaredAt: `${DATE}T09:00:00.000Z` });
   const him = currentCharacter(state);
   const traits = Object.fromEntries(
     CHARACTER_DIMENSIONS.map((dimension) => [dimension, chapterAnswerText(run, `character-${dimension}`)]),
   );
-  state = declareLife(state, "character", { ...traits, past: him.past, starting: him.starting });
+  // Separate fixture times preserve both Character editions on every run.
+  state = declareLife(state, "character", { ...traits, past: him.past, starting: him.starting }, {
+    declaredAt: `${DATE}T09:01:00.000Z`,
+  });
 
   const weekKey = planningWeekStartKey(DATE, 9);
   const opened = addWeekGoal(state, weekKey, "goal-week");

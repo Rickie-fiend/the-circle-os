@@ -1,5 +1,47 @@
 # Circle OS product
 
+## Template review follow-up — 2026-11-13
+
+Routine and Week open without their retired setup chapters. Old Habit/Week definitions, answers and unfinished runs remain available through explicit chapter/history paths. Day One/replacement onboarding and Protocol gating are not replaced by this change.
+
+Template quantities are targets; optional difficulty is labelled Effort in Admin. Authors can arrange action wording using target/unit/effort slots. The Routine result is a read-only tool Page with shared header/body/rows, without generated preview disclaimers or per-item type labels. Numeric answers match 18px prose roles; glass time questions offer a Circle picker and unsaved 6:00 AM hint.
+
+
+## Admin templates — local implementation, 2026-11-13
+
+Local completion follow-up — 2026-11-14: Explore browses published Chapters,
+Habit/Protocol templates and Articles in three bounded glass carousels. Each row
+retains its title and two blank panels when empty, or a blank neighbour for one
+item. Display only available saved cover/title/description fields, retain the
+header/account control and bottom navigation on Today's background, and open
+exact published versions. Browsing creates no personal evidence.
+
+Explicit Add to Routine creates the confirmed group for 21 days from the current
+Circle day, or ongoing when selected. Keep existing identity/items and permit
+individual stopping. Reopening the same template opens its existing group while
+any item remains active, including when a newer catalog edition exists. All
+stopped/expired permits a deliberate fresh copy, retaining old records. Local
+save acknowledgement precedes navigation; failure retains the preview/operation.
+Circle marks disclose immutable source versions, resolved settings and answered
+configuration/reflection snapshots. Other-domain cloud sync remains off.
+
+Approved Protocol Start slice (2026-11-14): the signed-in exact-version reader can explicitly start a local Protocol from confirmed template terms/duration after Preview. Existing phases/drafts are protected; Day One remains required. Source/version, resolved settings and answered setup/reflection snapshots accompany the personal copy. Template terms remain fixed after starting, while phase name and ending remain accessible. Admin previews cannot adopt. This bounded slice does not provide Explore discovery, hosted template publication or cloud sync.
+
+Admin has Habit/task and Protocol template editors with Explore titles,
+descriptions, media, reorderable Pages and item groups. Questions configure
+cue/time, target or Effort, or collect reflection. Fixed, direct-answer, choice
+and bounded linear settings are authored in Admin; answers do not change the
+authored task set. Previews stay temporary until explicit adoption in the signed-in
+reader; Admin actions remain disabled. Completion is checkbox-only. Publishing
+templates uses applied migration 004; bounded synthetic hosted/browser acceptance
+passed on 2026-11-14. Real authored publication remains deliberate.
+
+
+### Routine scheduling — 2026-11-13
+
+Standalone Routine habits/tasks support Once, Daily for a chosen period, and Daily until stopped. New choices start on the current local Circle day. Once stays pending until completed or archived; finite daily periods count inclusive calendar Circle days, not successful ticks. Clear stops future occurrences and retains records. Existing habits retain ongoing repetition and existing tasks retain one-time behavior. Week-linked steps keep their existing date ownership. A repeat task has separate dated completion/undo records.
+
+
 Updated: 2026-11-11, Asia/Bangkok. This document owns product direction and
 behavior. [Roadmap](ROADMAP.md) owns release dependencies; [decisions](DECISION_LOG.md)
 records reasons and open choices. A target is not a claim of implementation.
@@ -31,7 +73,7 @@ Provider quality and language readiness still require verification.
 
 | Area | Current state | Target or limit |
 | --- | --- | --- |
-| Navigation | Home, Today, Reflect and Explore bottom navigation; /os enters Today; Reflect remains /os/mirror | Home/Explore are intentionally empty. Onboarding's Home destination is planned. |
+| Navigation | Home, Today, Reflect and Explore bottom navigation; /os enters Today; Reflect remains /os/mirror | Home is intentionally empty; Explore uses three discovery rows. Onboarding's Home destination is planned. |
 | Daily tools | Full-page Note/Deep Thoughts, Routine/Protocol and Log/Week pairs, with supporting views | Preserve current functions while reviewing new root compositions. |
 | Accounts | Supabase email/password entry and account-separated local stores; legacy and development-test modes remain distinct | Public signup is the new onboarding target; current invitation-only configuration is not changed by documenting it. |
 | Writing sync | Both writing migrations applied; bounded hosted access, conflict and separate-test-store reload checks recorded | Automatic product activation remains off. Production-store/device recovery and operational gates remain open. |
@@ -52,7 +94,9 @@ inside the app, with images in chapters/articles. Ordinary content updates need
 no code change. Users preview/personalize templates before adding personal copies;
 catalog edits never rewrite their habits/phases or immutable chapter answers.
 See the [approved direction and proposed contracts](CONTENT_ADMIN_PLAN.md).
-This is planned work; the current Explore root remains empty.
+Explore browsing and local template adoption are implemented. Hosted template
+publication requires the reviewed migration and hosted acceptance; no deployment
+or real authored publication is implied.
 
 ## The experience
 

@@ -1,5 +1,11 @@
 # Circle OS work plan
 
+Queue status — 2026-11-14: developer approved completing local templates, starting
+with the specified Explore layout. Explore and Habit/Protocol adoption are
+implemented. Approved migration 004 and isolated hosted/browser acceptance are
+complete, including exact cleanup. Never reapply 001–004. Next review the product
+and author real content deliberately; remaining device/operating gaps persist.
+
 Updated: 2026-11-11, Asia/Bangkok. This is the working queue under
 [Roadmap](ROADMAP.md). A queued item is not approval to edit, provision, migrate,
 activate sync or deploy. [Current Task](CURRENT_TASK.md) names the active job.
@@ -11,16 +17,16 @@ The approved documentation cleanup aligns current rules and the replacement
 uncommitted. The developer's lived review of the latest Protocol interaction
 remains outstanding unless separately completed.
 
-The next implementation slice has not been selected. Choose a bounded item
-below and review its behavior, exact files, dependencies and verification first.
+The active scope is local Explore/template completion and preparing the concrete
+hosted acceptance procedure. Remote migration/testing remains separately gated.
 Reflect implementation is explicitly deferred.
 
 ## Ordered work
 
 | Order | Work | Current limit and next review |
 | --- | --- | --- |
-| 0 | Content Admin/catalog/media | Account permissions, shared drafts and private media now have bounded hosted checks. Second invitation acceptance is pending. Review chapter/article image placement and publication, then habit/Protocol editors; Explore consumption/adoption follows. |
-| 1 | Critical journey and current-tool acceptance | Preserve latest local tool/Protocol evidence. Reproduce open defects against current code; distinguish old fixture failures from current app defects. Phone keyboard/caret, other engines, ResizeObserver and the unrelated Habit source assertion remain gaps. |
+| 0 | Content Admin/catalog/media | Local Habit/Protocol authoring, Explore and adoption are implemented under the reviewed contract. Review the prepared migration 004 and real synthetic hosted/browser procedure for separate approval. Second invitation/operational/device gaps remain open. |
+| 1 | Critical journey and current-tool acceptance | Preserve latest local tool/Protocol evidence. Reproduce open defects against current code; distinguish old fixture failures from current app defects. Phone keyboard/caret, other engines and ResizeObserver remain gaps. The stale Habit setup/identity source checks have verified behavioral replacements; see the 2026-11-14 cleanup journey entry. |
 | 2 | Production writing recovery and activation readiness | Both migrations and bounded hosted resolution/test-store checks exist. Review production writing-store reload/restart, offline load, eviction/recovery, session expiry/revocation and actual phones before any activation proposal. Do not reapply migrations. |
 | 3 | Remaining record sync and operating recovery | Review per-domain ownership, revisions, atomic local/outbox writes, exact receipts, conflicts, deletion, backup/restore and admin/log access. Personal import needs its own owner mapping, backup and rollback approval. |
 | 4 | Replacement onboarding and needed Home behavior | Use the planned required-answer/one-habit flow, replacing the old optional-action plan. Resolve records, existing-user transition, uncertain answers, final completion and Home mapping. Keep records/history and safe-sync prerequisites. |
@@ -66,8 +72,9 @@ are still open. A chosen name need not be a real name.
 
 Latest bounded local tool evidence does not certify physical phones, other
 browser engines, hosted sync or the broad suite. The earlier Habit source-text
-assertion and ResizeObserver notices remain recorded. Historical test/lint/
-TypeScript failures are dated scopes, not fresh results against today's tree.
+failures have passing behavioral replacements; ResizeObserver notices remain
+open. Historical test/lint/TypeScript failures are dated scopes, not fresh
+results against today's tree.
 
 Hosted writing reload proof uses a separate test store, not the production
 writing adapter. Activation remains off. Session expiry/revocation, lock

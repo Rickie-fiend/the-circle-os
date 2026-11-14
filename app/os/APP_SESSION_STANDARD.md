@@ -1,5 +1,39 @@
 # Circle OS App Box and Page Standard
 
+## Template controls update — 2026-11-14
+
+Latest approved correction: Hour and Minute wrap, but AM/PM contains just one AM and one PM and stops at either end. Template covers reuse PageLayout and RoutineSwipeCue labelled Begin ›; keyboard, tap and swipe enter the same preview engine. The cover follows Design's 28/700 heading, 18/400 body and 24px anchors/gaps. Other chapter covers are unchanged.
+
+The approved follow-up uses three immediately visible, independently scrollable Hour, Minute and AM/PM columns, replacing the single full-time wheel. Its 6:00 AM hint is unsaved until a tap, scroll or keyboard selection; opening the Page does not enable required Continue. Hour and Minute wrap independently; AM/PM stops at either end without changing the other columns. Template written/numeric answers have a fading Bone underline within the 24px anchors and retain natural growth. Legacy unmarked chapters retain native time controls. Template result previews retain the ongoing checkbox but omit the generated daily schedule sentence.
+
+## Routine/Week entry and template controls — 2026-11-13
+
+Routine is an independent tool surface, not the completion state of Habit Building. Week no longer requires Week Setup. Legacy automatic Habit setup delivery and raw Week-setup pins no longer interrupt tool entry. Published definitions, unfinished runs, explicit chapter access and history remain intact. No completion record is synthesized; the transient Routine presentation run is never saved as personal Chapter evidence. Protocol's Day One gate remains unchanged.
+
+New glass time questions use the Circle picker; its displayed 6:00 AM hint is unsaved until explicit selection. Native controls remain for unmarked legacy chapters. Template result previews use the actual PageLayout/Routine anatomy and read-only completion faces. Back navigates within the preview; Record is presentation only. All normal tool gesture/geometry rules still apply.
+
+
+## Admin template previews — 2026-11-13
+
+Routine adoption follow-up — 2026-11-14: the final signed-in result has one
+explicit Add to Routine action; Admin shows it disabled. Keep the ongoing choice
+and temporary answers on failure. An already-active group offers Open Routine
+from its cover. Otherwise save the confirmed 21-day/ongoing group and source
+snapshot through the existing scoped store before opening /os#routine. Source
+marks disclose saved details without entering an editor or saving evidence.
+
+Explicit Protocol Start exception approved 2026-11-14: Preview opens the temporary running appearance; Start in the signed-in published reader creates a personal phase and opens Protocol only after local save acknowledgement. Admin Start is disabled. Duplicate retries reuse the pending operation, existing phases/drafts offer Open Protocol, Day One gate stays intact, and failure retains the preview for retry. All other preview interaction remains temporary.
+
+Approved Protocol result correction (2026-11-14): setup and running appearance use ProtocolPage with temporary state. Setup Back returns to questions; Preview N days opens the running appearance; running Back returns to setup and retains duration. Fixed terms are read-only, completion disabled, and live history/edit/end/seal actions unavailable. No phase, day evidence or Chapter run is saved.
+
+Template setup reuses ChapterPlayer/SwipeSession and PageLayout. Cover and terminal preview are generated; authored information/result previews can occur between questions. Information Pages retain swipe/arrow navigation; question inputs keep deliberate Continue. A final preview can resolve fixed values, linked answers and authored rules without saving a Chapter run, personal answers, habits, tasks or a phase. Optional numeric answers remain empty when skipped. Explicit numeric and image-placement fields are optional and preserved by Markdown/compiler/schema; existing Pages remain unchanged.
+
+
+## Routine scheduling controls — 2026-11-13
+
+Standalone habit/task rows have a collapsed Schedule disclosure. It offers Once, Daily for a period, and Daily until stopped; a finite period accepts a positive whole number of days and shows its inclusive end date. Controls retain 44px targets and the existing completion column. One-time items remain pending; daily task ticks leave tomorrow available. Clear archives the definition and keeps dated history. Week-linked steps retain their current day controls. Shared geometry/motion tokens remain unchanged.
+
+
 Updated: 2026-11-11, Asia/Bangkok. This owns Page structure, gestures, navigation,
 motion and immutable session behavior. [Design](../../DESIGN.md) owns visual
 values; [Product](../../docs/PRODUCT.md) owns meaning. The earlier trials and
@@ -123,7 +157,8 @@ Current Day One is to be replaced through the planned onboarding, not edited in 
 
 - Four roots: /os/home, /os (Today), /os/mirror (Reflect), /os/explore.
   Bottom navigation persists in tools under its current keyboard behavior.
-  Home/Explore intentionally contain no placeholder content.
+  Home intentionally contains no placeholder content. Explore has the approved
+  Chapters, Habit/Protocol and Articles discovery carousels.
 - Opened pairs are Note/Deep Thoughts, Routine/Protocol and Log/Week.
   Manual swipes and tappable cues use the shared session engine.
 - After any completed Day One, enter directly. Week/Log setup, weekly review

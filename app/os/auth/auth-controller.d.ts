@@ -4,7 +4,7 @@ export type AuthState = {
 };
 type Identity = { id: string; alias: string; offline?: boolean; passwordRequired?: boolean } | null;
 export type AuthAdapter = {
-  openScope(id: string): void; closeScope(): void; forget(): void; cancelPending(): void;
+  openScope(id: string): void; closeScope(): void; forget(): void | Promise<void>; cancelPending(): void;
   restore(): Promise<Identity>; signIn(email: string, password: string): Promise<Identity>;
   consumeLink(link: { token_hash: string; type: "invite" | "recovery" }): Promise<void>;
   setPassword(password: string): Promise<Identity>; setAlias(alias: string): Promise<Identity>;

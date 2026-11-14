@@ -108,6 +108,7 @@ export function readPinnedDoor(scope = getAccountScope()) {
   if (typeof window === "undefined") return null;
   try {
     const pin = window.localStorage.getItem(accountStorageKey(scope, PINNED_DOOR_KEY));
+    if (pin === 'week-setup') return null;
     if (DAY_DOOR_ORDER.includes(pin)) return pin;
     return typeof pin === "string" && pin.startsWith(CHAPTER_PIN) ? pin : null;
   } catch {

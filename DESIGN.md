@@ -1,5 +1,42 @@
 # Circle Design Guide
 
+## Template answer controls — 2026-11-14
+
+Approved follow-up replaces the single full-time wheel with three immediately visible, separately scrollable Hour, Minute and AM/PM columns. Initial centres are 6, 00 and AM; the minute wheel shows 59/00/01. AM/PM has exactly one AM and one PM and stops at its ends; only Hour/Minute wrap. Options retain 44px targets and keyboard access. Untouched hints are not answers. Template written/numeric answers use a transparent writing area with a thin Bone line fading to transparent at both 24px content anchors. Multiline answers grow naturally; other text-entry contexts retain their existing rules. Result previews omit the generated daily schedule sentence and retain the ongoing checkbox.
+
+Template opening Pages use shared PageLayout with 28px/700 heading, 18px/400 body, 24px inner anchors/gaps and unrestricted heading width. Their Begin › uses RoutineSwipeCue with a 44px target instead of the former large Swipe to begin button. This is scoped to template covers; existing Chapter covers are unchanged.
+
+## Template review corrections — 2026-11-13
+
+Glass numeric answers explicitly use the 18px/400 answer role, including under the legacy mobile 16px input floor. The Circle time control follows the approved 2026-11-14 three-column replacement above, with a 6:00 AM hint, 44px options and keyboard focus/arrow selection. Untouched hints are not answers. Template Routine result Pages use the shared PageLayout header and Routine body/copy presentation; per-item type badges and generated preview disclaimers are removed. Target means amount; optional Effort means difficulty and remains absent from a result when unused. Authored action wording may place target/unit/effort slots; existing plain wording stays readable.
+
+
+## Template preview scope — 2026-11-13
+
+Explore's approved 2026-11-14 design uses three independent glass carousels:
+Chapters, Habit/Protocol, Articles. Headings sit outside the panels at the 24px
+left anchor. Keep the logo/account header and bottom navigation, remove the
+visible outer frame, and use Today's Ink background. Cards use the shared glass,
+28px/700 headings, 18px/400 prose, 24px inner padding and compact-context minimum,
+growing naturally. The page scrolls vertically. First/last cards show the inward
+neighbour; interior selections show both neighbours. The selected card is subtly
+larger with Orange shadow. Native scrolling snaps and stops at both ends; keyboard
+arrows/Home/End provide the equivalent path. Missing cover/title/description
+fields stay absent. An empty row has two blank panels; a single item has a blank
+neighbour. Tapping authored content opens its exact version.
+
+Explicit Add to Routine uses the shared glass action rules, including disabled,
+press and accessibility states. Circle source marks open flat saved-detail
+disclosures with 44px targets. Source text retains the normal readable main and
+supporting roles; disclosure does not add an App Box or save evidence.
+
+Protocol Start follow-up (2026-11-14): setup says Preview; running preview's primary action is Start (disabled in Admin). Existing phase/draft uses Open Protocol. Measure the visible action rim at 24px from the inside bottom/side borders; remove the legacy 8px button top margin that overflowed its wrapper. Start remains mounted and returns to ready after a failed save so retry works.
+
+Protocol correction approved 2026-11-14: result previews reuse ProtocolPage for fixed-term setup and a read-only running phase. The template name is the phase name; duration uses the live choices. Preview phase opens Day 1 of the selected duration. Back retains duration. Completion is disabled; Phases/Edit/End/seal actions are absent. Protocol's own labels, agreement rows and separators replace the Routine representation.
+
+New Habit/task and Protocol templates reuse the glass Chapter player, shared Page anatomy and current brand/type tokens. Preview content is temporary; completion faces are visual only. Action wording uses the Routine main role; quantities/cues use its supporting role. Routine's ongoing choice has a 44px label target with a 28px checkbox. Optional numeric questions and before/after-text images apply only when explicitly declared. Unmarked historical Pages keep their rendering. Result preview Pages grow naturally and do not introduce nested rounded frames or scrollers.
+
+
 Updated: 2026-11-11, Asia/Bangkok. This owns the visual contract.
 [Product](docs/PRODUCT.md) owns meaning; the
 [Page standard](app/os/APP_SESSION_STANDARD.md) owns interaction and motion.
@@ -142,7 +179,8 @@ The [Page standard](app/os/APP_SESSION_STANDARD.md) distinguishes those contexts
 
 The persistent bottom navigation covers Home, Today, Reflect and Explore,
 including opened tools; current /os entry remains Today. It may hide for the
-keyboard under the existing behavior. Home/Explore remain intentionally empty.
+keyboard under the existing behavior. Home remains intentionally empty; Explore
+uses the three approved discovery rows above.
 
 Reuse PageLayout, SwipeSession, useAppBack, RoutineHeaderButton, RoutineSwipeCue
 and the button engine. Their legacy names do not restrict reuse to one tool.

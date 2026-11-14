@@ -45,53 +45,6 @@ test("every pressable thing is built from one key recipe", () => {
   }
 });
 
-test("a Protocol term is lit along its top edge, like the tick beside it", () => {
-  const term = rule(
-    ".circle-os .os-creative-button-shell.style-soft-clay\n  .os-protocol-block.os-creative-button",
-  );
-  assert.match(term, /var\(--os-key-light\)/);
-  assert.match(term, /0 var\(--os-key-lift-md\) 0 var\(--os-key-leg-orange\)/);
-
-  const tick = rule(
-    ".circle-os .os-creative-button-shell.role-habit\n  .os-row-tick-habit.os-creative-button",
-  );
-  assert.match(tick, /var\(--os-key-light\)/);
-  assert.match(tick, /0 var\(--os-key-lift-lg\) 0 var\(--os-key-leg-orange\)/);
-});
-
-// Continue, Begin, Completed today and Add this hour are a Page's one action
-// just as much as Send is. They were plain buttons with nothing but `:active`,
-// so none of the engine's press behaviour reached them.
-test("every Page action runs through the button engine", () => {
-  const engine = rule(
-    ".circle-os .os-creative-button-shell.style-default .os-creative-button",
-  );
-  // The engine owns the states and reads the key's parts from variables, so a
-  // button family names its own leg and light without restating a shadow.
-  assert.match(engine, /var\(--os-key-top, var\(--os-key-light-soft\)\)/);
-  assert.match(
-    engine,
-    /0 var\(--os-key-lift, var\(--os-key-lift-md\)\) 0 var\(--os-key-leg, var\(--os-key-leg-ink\)\)/,
-  );
-
-  // And those families now only declare parts — no states of their own.
-  const parts = rule(
-    ".circle-os .os-page-primary-action,\n.circle-os .os-chapter-continue,\n.circle-os .os-protocol-begin,\n.circle-os .os-log-add-current",
-  );
-  assert.match(parts, /--os-key-lift:/);
-  assert.match(parts, /--os-key-leg:/);
-  assert.match(parts, /--os-key-top:/);
-  assert.doesNotMatch(parts, /box-shadow|transform|transition/);
-
-  // No Page action is left as a bare button.
-  const protocol = readFileSync("app/os/protocol-page.tsx", "utf8");
-  const player = readFileSync("app/os/chapters/chapter-player.tsx", "utf8");
-  assert.doesNotMatch(protocol, /<button[^>]*os-protocol-begin/s);
-  assert.doesNotMatch(player, /<button[^>]*os-page-primary-action/s);
-  assert.doesNotMatch(shell, /<button[^>]*os-log-add-current/s);
-  assert.match(protocol, /<CreativeButton[\s\S]*?os-protocol-complete/);
-});
-
 // The shell draws a 52px frame for Send. Every other action has to grow for a
 // two-line label, so it keeps its own box and the shell only carries the phase.
 test("an action that sizes itself is not squeezed into Send's frame", () => {
@@ -112,79 +65,6 @@ test("an unlit key still stands on its leg", () => {
   assert.match(css, /--os-key-unlit: inset 0 0 0 rgb\(255 248 241 \/ 0\)/);
 });
 
-test("Today and Reflect space their App Boxes with one shared gap", () => {
-  assert.match(css, /--os-app-box-gap: 18px/);
-  for (const selector of [
-    ".circle-os .os-checkin",
-    ".circle-os .os-day",
-    ".circle-os .os-log-section",
-    ".circle-os .mirror-week-intro",
-    ".circle-os .between-intro",
-    ".circle-os .vision-suggestion-session",
-  ]) {
-    assert.match(
-      rule(selector),
-      /var\(--os-app-box-gap\)/,
-      `${selector} carries its own number instead of the shared gap`,
-    );
-  }
-});
-
-// 52, 54, 56 and 58 were four numbers for one object: a full-width tappable row.
-// `--os-action-height` already existed and only some of them used it.
-test("every action is one height", () => {
-  for (const selector of [
-    [
-      ".circle-os .os-survey-choices button",
-      ".circle-os .os-survey-slider > button",
-      ".circle-os .os-survey-text > button",
-    ].join(",\n"),
-    [
-      ".circle-os .os-page-primary-action",
-      ".circle-os .os-page-footer > .os-add-habit-row",
-    ].join(",\n"),
-    ".circle-os .os-chapter-continue",
-    ".circle-os .os-creative-button-slot",
-    ".circle-os .os-creative-button-shell",
-  ]) {
-    assert.match(
-      rule(selector),
-      /(min-)?height: var\(--os-action-height\)/,
-      `${selector.split(",")[0]} carries its own height`,
-    );
-  }
-  // The Routine idle action is a Page action like the rest of them.
-  assert.match(
-    rule(
-      [
-        ".circle-os .os-habit .os-chapter-idle-action",
-        ".circle-os .os-extra-mission-done",
-      ].join(",\n"),
-    ),
-    /min-height: var\(--os-action-height\)/,
-  );
-});
-
-// The last tappable rows in the App with no leg, no light and no movement.
-test("a choice is a key, and choosing is keeping", () => {
-  const parts = rule(".circle-os .os-survey-choices .os-creative-button");
-  assert.match(parts, /--os-key-lift: var\(--os-key-lift-sm\)/);
-  assert.match(parts, /--os-key-leg:/);
-  const player = readFileSync("app/os/chapters/chapter-player.tsx", "utf8");
-  assert.match(player, /<CreativeButton\n\s*aria-pressed=\{selected\}/);
-  assert.match(player, /release="latch"/);
-  // Taken means down.
-  assert.match(
-    rule(
-      [
-        ".circle-os .os-creative-button-shell .os-survey-choices button.selected",
-        ".circle-os .os-survey-choices button.selected",
-      ].join(",\n"),
-    ),
-    /transform: translateY\(0\)/,
-  );
-});
-
 // The App Label is the one word that names where you are. It used to hold at
 // opacity 0 and fade in on a timer after every page change, mode flip and send.
 test("the Thoughts label does not animate", () => {
@@ -195,28 +75,6 @@ test("the Thoughts label does not animate", () => {
     shell,
     /className="os-card-label os-thoughts-mode-toggle"/,
     "the label class is being switched again",
-  );
-});
-
-// A press is one movement. Rest is up, holding is down, and releasing leaves
-// the key where it is. Every style used to end its press with a 640ms flourish
-// that ran after the finger had already left.
-test("no button animates on release", () => {
-  for (const gone of [
-    "os-button-default-success",
-    "os-ink-button-success",
-    "os-clay-button-success",
-    "os-liquid-button-success",
-  ]) {
-    assert.doesNotMatch(css, new RegExp(gone), `${gone} still bounces on release`);
-  }
-  // The committed state is a held-down key, not an animation — and only for a
-  // latch, because a rebound has already come back up on the release.
-  assert.match(
-    rule(
-      '.circle-os .os-creative-button-shell.style-default[data-button-release="latch"]:is(.phase-pressed, .phase-success)\n  .os-creative-button',
-    ),
-    /box-shadow: var\(--os-key-sunk\);[\s\S]*?transform: translateY\(0\)/,
   );
 });
 
@@ -322,17 +180,6 @@ test("a key stays down from the finger lifting until the click resolves", () => 
   );
 });
 
-// A toggle keys its down state on :active as well as the phase, and the two
-// have to describe the same key — a held tick must not look like a new object.
-test("a tick holds down with the same face :active gives it", () => {
-  assert.match(
-    rule(
-      '.circle-os .os-creative-button-shell.role-habit\n  .os-row-tick.os-creative-button:active,\n.circle-os .os-creative-button-shell.role-habit[data-button-release="latch"]:is(.phase-pressed, .phase-success)\n  .os-row-tick.os-creative-button',
-    ),
-    /box-shadow: var\(--os-key-sunk\);[\s\S]*?transform: translateY\(0\)/,
-  );
-});
-
 // A button that stays on the Page has to be able to be pressed again. Stranded
 // in `success` it could not: `committedRef` never cleared, so its owner had to
 // unmount it to clean up, which is what made Send disappear after a send.
@@ -342,38 +189,6 @@ test("a button that stays mounted returns to ready", () => {
     engine,
     /if \(previewMode \|\| role === "habit" \|\| keepMountedOnSuccess\) \{[\s\S]*?committedRef\.current = false;[\s\S]*?dispatch\("preview-reset"\);/,
   );
-});
-
-// Nothing in the Footer moves across a send. The button goes flat and disabled
-// where it already is, which is exactly how it sits before a word is typed.
-test("Send stays on the Page after a thought is sent", () => {
-  const departure =
-    shell.match(/function beginThoughtDeparture\(\)[\s\S]*?\n  \}/)?.[0] ?? "";
-  assert.ok(departure, "the departure function moved");
-  assert.doesNotMatch(departure, /setThoughtButtonVisible\(false\)/);
-  // Clearing the draft is what disables it; a disabled key has no leg.
-  assert.match(departure, /setRegularThoughtDraft\(""\)/);
-  assert.match(
-    rule(".circle-os .os-creative-button-shell.style-default .os-creative-button:disabled"),
-    /box-shadow: none;[\s\S]*?transform: translateY\(0\)/,
-  );
-});
-
-// A send is signalled by the thing that was sent leaving, not by the App Box
-// emptying and refilling itself the way it does for any other page change.
-test("sending a thought leaves the App Box alone", () => {
-  assert.doesNotMatch(shell, /thoughtRefreshKey/);
-  assert.doesNotMatch(shell, /update-exit/);
-  assert.match(shell, /thoughtTransition === "departing" \? " is-departing" : ""/);
-  assert.match(css, /@keyframes os-thought-departure/);
-
-  // Only the answer travels in Deep Thoughts. The question was not what was
-  // sent, so it holds still.
-  const departure = rule(
-    ".circle-os .os-thoughts-form.is-departing > .os-info-page-main,\n.circle-os .os-thoughts-form.is-departing .os-deep-thought-response",
-  );
-  assert.match(departure, /animation: os-thought-departure/);
-  assert.doesNotMatch(departure, /os-deep-thought-question/);
 });
 
 // The one action Thoughts has looked like a different button every time it

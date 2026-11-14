@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { build } from "vite";
 import { createServer } from "node:http";
-import { resolve, extname } from "node:path";
+import { resolve, extname, sep } from "node:path";
 import react from "@vitejs/plugin-react";
 import { chromium, expect } from "@playwright/test";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, mkdtemp, rm } from "node:fs/promises";
+import { createEmptyState, ensureDay, getDateKey } from "../app/os/circle-os-model.js";
+import { createChapterRun, chapterRunId } from "../app/os/chapters/chapter-model.js";
+import { dayOpenRunId } from "../app/os/day-door.js";
 
 const authURL = "https://circle-auth.test";
 const issuer = `${authURL}/auth/v1`;
@@ -25,6 +28,8 @@ import {PathnameContext} from "next/dist/shared/lib/hooks-client-context.shared-
 import {publishedChapters} from "/app/os/chapters/registry.ts";
 import {createChapterRun,chapterRunId} from "/app/os/chapters/chapter-model.js";
 import { CircleOSPwa } from "/app/os/pwa-register.tsx";
+import {localAuth} from "/app/os/auth/offline-auth-store.ts";
+window.authLocal=localAuth;
 import "/app/globals.css";
 import "/app/os/os-app.css";
 function Probe() {
@@ -77,8 +82,10 @@ before(async () => {
 });
 after(async () => { await browser?.close(); if (vite) await new Promise(done => vite.close(done)); });
 
-async function isolated(width, work) {
-  const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true, timezoneId: "Asia/Bangkok" });
+async function isolated(width, work, persistent = false) {
+  const profile = persistent ? await mkdtemp(resolve("outputs/offline-profile-")) : null;
+  const options = { args: ["--enable-automation"], viewport: { width, height: 844 }, isMobile: true, hasTouch: true, timezoneId: "Asia/Bangkok" };
+  let context = profile ? await chromium.launchPersistentContext(profile, options) : await browser.newContext(options);
   const fixture = { alias: "River", aliasB: "Cloud", aliasFailure: false, confirmed: true, revoked: false, expiredLink: false, passwordRequests: 0, verifyRequests: 0, resetRequests: 0, requests: [], holdUser: null };
   const sessions = new Map();
   const user = id => ({ id, aud: "authenticated", role: "authenticated", email: `${id === accountA ? "a" : "b"}@example.test`,
@@ -92,12 +99,13 @@ async function isolated(width, work) {
     sessions.set(access_token, id);
     return { access_token, refresh_token: `refresh-${id}`, token_type: "bearer", expires_in: 3600, expires_at: now + 3600, user: user(id) };
   }
+  let offlineMode = false;
   const errors = []; const failed = [];
   context.on("page", page => { page.on("pageerror", error => errors.push(error.message)); page.on("requestfailed", request => failed.push(new URL(request.url()).pathname)); });
-  await context.route("**/*", async route => {
+  const routeHandler = async route => {
     const request = route.request(); const url = new URL(request.url());
     if (url.origin === origin || url.origin === productionOrigin) return route.continue();
-    if (url.origin !== authURL) return route.abort();
+    if (url.origin !== authURL || offlineMode) return route.abort();
     fixture.requests.push(`${request.method()} ${url.pathname}`);
     const send = (body, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body), headers: { "Access-Control-Allow-Origin": request.headers().origin || origin } });
     if (request.method() === "OPTIONS") return send({});
@@ -131,18 +139,44 @@ async function isolated(width, work) {
       return send(user(id));
     }
     return send({ msg: "Unexpected fixture endpoint" }, 404);
-  });
+  };
+  await context.route("**/*", routeHandler);
+  async function restart(offline, crash = false) {
+    if (crash) {
+      assert.ok(profile && resolve(profile).startsWith(resolve("outputs") + sep));
+      const ownedBrowser = context.browser();
+      const cdp = await ownedBrowser.newBrowserCDPSession();
+      const { arguments: args } = await cdp.send("Browser.getBrowserCommandLine");
+      assert.ok(args.includes("--user-data-dir=" + profile), "crash targets this test's disposable profile");
+      const disconnected = new Promise((done, reject) => {
+        const timer = setTimeout(() => reject(Error("Test browser did not crash")), 10000);
+        ownedBrowser.once("disconnected", () => { clearTimeout(timer); done(); });
+      });
+      // Crash the browser main process, without close/unload flushing.
+      // The crash command may never answer; disconnection is the completion proof.
+      void cdp.send("Browser.crash").catch(() => {});
+      await disconnected;
+      assert.equal(ownedBrowser.isConnected(), false);
+    } else await context.close();
+    offlineMode = offline;
+    context = await chromium.launchPersistentContext(profile, { ...options, offline });
+    if(crash) console.log("Crash browser startup",JSON.stringify({offline,restoredTabs:context.pages().map(p=>{try{return new URL(p.url()).pathname;}catch{return "blank";}})}));
+    await context.route("**/*", routeHandler);
+    page = await context.newPage();
+    page.on("pageerror", error => errors.push(error.message));
+    return {page, context};
+  }
   let page;
   try {
     page = await context.newPage();
-    await work({ page, context, fixture, session });
+    await work({ page, context, fixture, session, restart });
     assert.deepEqual(errors, [], "no browser page errors");
   } catch (error) {
     console.log("Synthetic auth test diagnostics", JSON.stringify({ errors, failed, text: await page?.locator("body").innerText().catch(() => "unavailable"),
       worker: await page?.evaluate(async () => ({ controller: navigator.serviceWorker.controller?.scriptURL, scope: (await navigator.serviceWorker.getRegistration())?.scope,
         caches: await Promise.all((await caches.keys()).map(async name => ({ name, keys: (await (await caches.open(name)).keys()).map(request => request.url) }))) })).catch(() => null) }));
     throw error;
-  } finally { await context.close(); }
+  } finally { await context.close(); if(profile) { assert.ok(resolve(profile).startsWith(resolve("outputs")+sep)); await rm(profile,{recursive:true,force:true}); } }
 }
 async function open(page, suffix = "") { await page.goto(`${origin}/os${suffix}`); }
 async function login(page, email = "a@example.test") {
@@ -162,6 +196,7 @@ async function logout(page) {
   await page.getByRole("button", { name: "Open account" }).click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeEnabled();
 }
 for (const width of [390, 360]) {
   test(`account header and greeting use the alias, edit safely and switch accounts at ${width}px`, { timeout: 180_000 }, async () => isolated(width, async ({ page, context, fixture }) => {
@@ -261,6 +296,7 @@ for (const width of [390, 360]) {
     await assetsCached(page);
     const expired = await session(accountA, true);
     await page.evaluate(({ prefix, token }) => { const key = `${prefix}:offline`; const proof = JSON.parse(localStorage.getItem(key)); proof.token = token; localStorage.setItem(key, JSON.stringify(proof)); }, { prefix, token: expired.access_token });
+    await page.evaluate(async({prefix,token})=>{const row=await window.authLocal(prefix);await window.authLocal(prefix,{proof:{...row.proof,token},expected:row.epoch});},{prefix,token:expired.access_token});
     await context.setOffline(true); await page.reload(); await ready(page);
     await expect(page.getByLabel("Note", { exact: true })).toHaveValue("Saved before flight");
     await page.getByLabel("Note", { exact: true }).fill("Written on the flight");
@@ -303,7 +339,36 @@ test("forged marker and forged proof do not open another account; logout closes 
   await context.setOffline(true); await page.reload(); await ready(page);
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("circle-os-account-scope-v1")).accountId), accountA);
   await page.evaluate(prefix => { const key = `${prefix}:offline`; const proof = JSON.parse(localStorage.getItem(key)); proof.accountId = "forged"; localStorage.setItem(key, JSON.stringify(proof)); }, prefix);
+  await page.evaluate(async prefix=>{const row=await window.authLocal(prefix);await window.authLocal(prefix,{proof:{...row.proof,accountId:"forged"},expected:row.epoch});},prefix);
   await page.reload(); await expect(page.getByTestId("evidence")).toHaveCount(0);
+}));
+
+test("real client: durable proof upgrade, stale writes, corrupt records and storage refusal stay guarded", {timeout:120000}, async()=>isolated(390,async({page,context})=>{
+  await open(page);await login(page);await ready(page);
+  await assetsCached(page);
+  await page.evaluate(async prefix=>{
+    const row=await window.authLocal(prefix);
+    await window.authLocal(prefix,{proof:null,expected:row.epoch});
+    const stale=await window.authLocal(prefix,{proof:row.proof,expected:row.epoch}).then(()=>false,e=>e.name==="AuthScopeChanged");
+    if(!stale)throw Error("stale verification restored signed-out state");
+    const closed=await window.authLocal(prefix);
+    if(closed.proof!==null)throw Error("closed state changed");
+    // Reset only this synthetic durable record to exercise legacy upgrade.
+    const db=await new Promise((yes,no)=>{const r=indexedDB.open(prefix+":durable-v1");r.onsuccess=()=>yes(r.result);r.onerror=()=>no(r.error);});
+    await new Promise((yes,no)=>{const t=db.transaction("auth","readwrite");t.objectStore("auth").delete("current");t.oncomplete=yes;t.onabort=()=>no(t.error);});db.close();
+  },prefix);
+  await context.setOffline(true);await page.reload();await ready(page);
+  assert.equal(await page.evaluate(async prefix=>Boolean((await window.authLocal(prefix))?.proof),prefix),true,"valid legacy proof migrated offline");
+  await page.evaluate(async prefix=>{
+    const db=await new Promise(yes=>{const r=indexedDB.open(prefix+":durable-v1");r.onsuccess=()=>yes(r.result);});
+    await new Promise(yes=>{const t=db.transaction("auth","readwrite");t.objectStore("auth").put({broken:true},"current");t.oncomplete=yes;});db.close();
+  },prefix);
+  await page.reload();await expect(page.getByTestId("evidence")).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Welcome back."})).toBeVisible();
+  await page.addInitScript(()=>{indexedDB.open=()=>{throw Error("synthetic storage refusal");};});
+  await context.setOffline(false);await page.reload();
+  await login(page);await expect(page.getByTestId("evidence")).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Welcome back."})).toBeVisible();
 }));
 test("invite link is scrubbed, password and alias are required, and reload resumes password entry", { timeout: 120_000 }, async () => isolated(360, async ({ page, fixture }) => {
   fixture.alias = "";
@@ -381,3 +446,96 @@ for (const width of [390, 360]) {
     await page.screenshot({ path: `work/auth-production-logout-${width}.png` });
   }));
 }
+
+
+for (const crash of [false,true]) for (const width of [360,390]) test(`production offline writing ${crash ? "crash" : "restart"} at ${width}px`, {timeout:180000,skip:!productionOrigin}, async()=>isolated(width,async device=>{
+  let {page}=device;
+  await page.goto(productionOrigin+"/os"); await login(page);
+  await expect(page.getByRole("heading",{name:"Start with what matters."})).toBeVisible();
+  // Seed unrelated setup/delivery gates in this isolated account's main store.
+  // This does not verify those journeys. Writing uses the real UI throughout.
+  const seed=ensureDay(createEmptyState(),getDateKey());
+  for(const name of ["index","sparks"])for(const c of JSON.parse(await readFile(new URL(`../app/os/chapters/published/${name}.json`,import.meta.url),"utf8")).chapters){
+    const run={...createChapterRun(c),status:"completed",completedAt:new Date().toISOString(),updatedAt:new Date().toISOString(),currentPageId:c.pages.at(-1).id,furthestPageId:c.pages.at(-1).id};
+    seed.chapters.runs[chapterRunId(c)]=run;
+    if(c.id==="day-open"){const key=dayOpenRunId(c,getDateKey());seed.chapters.runs[key]={...run,runId:key};}
+  }
+  await page.evaluate(({id,state})=>{
+    localStorage.setItem("circle-os-state-v2:account:"+id,JSON.stringify({savedAt:new Date().toISOString(),state}));
+  },{id:accountA,state:seed});
+  await page.reload();
+  await page.getByRole("button",{name:"Note",exact:true}).click();
+  const note=()=>page.getByRole("textbox",{name:"Write a note",exact:true});
+  const ledger=(id=accountA)=>page.evaluate(async id=>{
+    const db=await new Promise((resolve,reject)=>{const r=indexedDB.open("circle-os-writing-v1:account:"+id);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+    if(!db.objectStoreNames.contains("writing")){db.close();return undefined;}
+    try{return await new Promise((resolve,reject)=>{const r=db.transaction("writing").objectStore("writing").get("records");r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}finally{db.close();}
+  },id);
+  const saved=async text=>expect.poll(async()=>Object.values((await ledger()).entries).some(e=>e.versions.at(-1).content.body===text)).toBe(true);
+  const draft=async text=>expect.poll(async()=>Object.values((await ledger()).drafts).some(d=>d.content?.body===text)).toBe(true);
+  await note().fill("Offline saved note"); await saved("Offline saved note"); await note().blur();
+  await page.getByRole("button",{name:"Open Deep Thoughts",exact:true}).click();
+  const answer=()=>page.getByRole("textbox",{name:"Answer the deep thought",exact:true});
+  await answer().fill("Unfinished offline answer"); await draft("Unfinished offline answer"); await answer().blur();
+  await assetsCached(page);
+  const beforeCrash = await ledger();
+  const proofState = () => page.evaluate(prefix => {
+    const raw = localStorage.getItem(prefix+":offline");
+    let proof; try { proof=JSON.parse(raw); } catch { /* report malformed proof without its contents */ }
+    return { present:Boolean(raw), parsed:Boolean(proof), confirmed:proof?.confirmed===true,
+      ownerMatches:proof?.accountId==="10000000-0000-4000-8000-000000000001",
+      hasToken:Boolean(proof?.token), hasKeys:Boolean(proof?.jwks),
+      closed:localStorage.getItem(prefix+":closed"), passwordFlow:Boolean(localStorage.getItem(prefix+":password")),
+      online:navigator.onLine };
+  },prefix);
+  const proofBefore = await proofState();
+  ({page}=await device.restart(true,crash));
+  assert.equal((await page.goto(productionOrigin+"/os#thoughts")).fromServiceWorker(),true);
+  if(crash) console.log("Crash recovery diagnostics", JSON.stringify({width,proofBefore,proofAfter:await proofState()}));
+  assert.deepEqual((await ledger()).entries,beforeCrash.entries);
+  assert.deepEqual((await ledger()).drafts,beforeCrash.drafts);
+  await expect(answer()).toHaveValue("Unfinished offline answer");
+  await page.getByRole("button",{name:"Open Note",exact:true}).click();
+  await expect(note()).toHaveValue("Offline saved note");
+  await note().fill("Changed while offline"); await saved("Changed while offline"); await note().blur();
+  await page.getByRole("button",{name:"Open Deep Thoughts",exact:true}).click();
+  await answer().fill("Draft changed offline"); await draft("Draft changed offline"); await answer().blur();
+  const offlineDrafts = (await ledger()).drafts;
+  ({page}=await device.restart(true,crash));
+  assert.equal((await page.goto(productionOrigin+"/os#thoughts")).fromServiceWorker(),true); await expect(answer()).toHaveValue("Draft changed offline");
+  assert.deepEqual((await ledger()).drafts,offlineDrafts);
+  await page.getByRole("button",{name:"Open Note",exact:true}).click(); await expect(note()).toHaveValue("Changed while offline");
+  if(crash) {
+    await note().fill(""); await saved("");
+    const cleared = await ledger();
+    ({page}=await device.restart(true,true));
+    assert.equal((await page.goto(productionOrigin+"/os#note")).fromServiceWorker(),true);
+    await expect(note()).toHaveValue("");
+    assert.deepEqual((await ledger()).entries,cleared.entries,"clearing survives a crash without restoring old wording");
+    const newNote = page.getByRole("button",{name:"New Note",exact:true});
+    await newNote.click();
+    const emptyComposer = await ledger();
+    ({page}=await device.restart(true,true));
+    await page.goto(productionOrigin+"/os#note");
+    await expect(note()).toHaveValue("");
+    assert.deepEqual((await ledger()).entries,emptyComposer.entries,"untouched empty composer adds no saved entry");
+  }
+  const beforeReconnect=await ledger();
+  assert.equal(Object.values(beforeReconnect.entries).filter(e=>e.kind==="deep-thought").length,0);
+  await logout(page);
+  if(crash) { ({page}=await device.restart(true,true)); await page.goto(productionOrigin+"/os"); }
+  else await page.reload();
+  await expect(page.getByRole("heading",{name:"Welcome back."})).toBeVisible();
+  ({page}=await device.restart(false));
+  await page.goto(productionOrigin+"/os"); await login(page,"b@example.test");
+  await expect(page.getByRole("heading",{name:"Start with what matters."})).toBeVisible();
+  const empty=await ledger(accountB);
+  assert.deepEqual(empty?.entries||{},{});
+  assert.deepEqual(empty?.drafts||{},{});
+  await logout(page); await login(page);
+  await page.getByRole("button",{name:"Note",exact:true}).click(); await expect(note()).toHaveValue(crash ? "" : "Changed while offline");
+  assert.deepEqual((await ledger()).entries,beforeReconnect.entries,"reconnection creates no duplicate saved revisions");
+  await page.getByRole("button",{name:"Open Deep Thoughts",exact:true}).click();
+  await expect(answer()).toHaveValue("Draft changed offline");
+  assert.deepEqual((await ledger()).drafts,beforeReconnect.drafts,"account return preserves exact recovery buffers");
+},true));

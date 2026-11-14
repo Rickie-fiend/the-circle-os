@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { resolve, sep } from "node:path";
 
 // This isolated harness imports the actual engine/store. It is not a production
 // route or proof of the future writing UI, service worker, cloud sync or auth.
@@ -60,13 +62,39 @@ before(async () => {
         });
       },
     }],
-    server: { host: "127.0.0.1", port: 0, watch: { ignored: ["**/.next/**", "**/dist/**"] } },
+    server: { host: "127.0.0.1", port: 0, watch: { ignored: ["**/.next/**", "**/dist/**", "**/outputs/**"] } },
   });
   await server.listen();
   baseURL = `http://127.0.0.1:${server.httpServer.address().port}`;
   browser = await chromium.launch();
 });
 after(async () => { await browser?.close(); await server?.close(); });
+
+test("cold browser restart preserves production writing drafts, history and account isolation", { timeout: 90000 }, async () => {
+  const root = resolve("outputs"), profile = await mkdtemp(resolve(root, "writing-restart-"));
+  let context;
+  async function launch() {
+    context = await chromium.launchPersistentContext(profile);
+    await context.route("**/*", route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
+    const page = await context.newPage(); await open(page); await page.evaluate(() => window.api.init()); return page;
+  }
+  try {
+    let page = await launch();
+    await page.evaluate(async () => { await window.api.seed("Saved before closing"); await window.api.write(window.api.input("Unfinished before closing")); });
+    const before = await page.evaluate(() => window.api.load());
+    await context.close(); context = null;
+    page = await launch();
+    assert.deepEqual(await page.evaluate(() => window.api.load()), before);
+    await page.evaluate(() => window.api.activateAccountScope("synthetic-b"));
+    const empty = await page.evaluate(() => window.api.load());
+    assert.deepEqual(empty.entries, {}); assert.deepEqual(empty.drafts, {});
+    await page.evaluate(() => window.api.init());
+    assert.deepEqual(await page.evaluate(() => window.api.load()), before);
+  } finally {
+    await context?.close();
+    assert.ok(resolve(profile).startsWith(root + sep)); await rm(profile, { recursive: true, force: true });
+  }
+});
 
 test("permanently deleted Deep Thought retains question/use metadata across real store reload", { timeout: 60_000 }, async () => isolated(390, async page => {
   const entryId = await page.evaluate(async () => {

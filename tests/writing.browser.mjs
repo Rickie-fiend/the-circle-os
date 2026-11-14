@@ -64,6 +64,17 @@ if(sessionStorage.getItem("writing-fixture-ready"))window.api.mount();
 `;
 
 let server,browser,baseURL;
+test('adopted Routine template renders real rows, source details and dated completion after reload',{timeout:90000},async()=>isolated(390,async page=>{
+ await page.evaluate(async()=>{const{addRoutineTemplate}=await import('/app/os/routine-template-adoption.js');const{createTemplateDraft,createTemplateItem,createTemplatePage,fixedValue}=await import('/app/os/admin/template-model.js');const template=createTemplateDraft().template;template.title='A real Routine group';template.items[0].action='Read a page';template.items[0].identity='A reader';template.items.push({...createTemplateItem('task'),action:'Water a plant',cue:fixedValue('At seven')});const q={...createTemplatePage('short-text'),question:'Why this group?',purpose:'reflection'};template.pages.push(q);window.circle.updateState(s=>addRoutineTemplate(s,{template,sourceId:'synthetic-routine',version:2,operationId:'real-routine-fixture',ongoing:true,answers:{[q.answerKey]:'A quiet practice'}}).state);});
+ await openRoutineTool(page);const row=page.locator('.os-repeated-habit').filter({has:page.getByRole('textbox',{name:'Edit habit: Read a page',exact:true})});const task=page.locator('.os-task-row').filter({has:page.getByRole('textbox',{name:'Edit task: Water a plant',exact:true})});await expect(task.getByText('At seven',{exact:true})).toBeVisible();
+ for(const item of [row,task]){const positions=await item.evaluate(el=>({copy:el.querySelector('textarea').getBoundingClientRect().top,tick:el.querySelector('.os-row-tick').getBoundingClientRect().top}));assert.ok(Math.abs(positions.copy-positions.tick)<14,'source details must not move completion away from the action');}
+ const before=await page.evaluate(()=>({evidence:window.circle.state.evidence,records:window.circle.state.templateAdoptions,habit:Object.values(window.circle.state.habits.definitions).find(h=>h.action==='Read a page')}));
+ await row.locator('.os-template-source > summary').click();await expect(row.locator('.os-template-source-copy')).toContainText('A quiet practice');await expect(row.getByRole('link',{name:'Open original template',exact:true})).toHaveAttribute('href','/os/catalog/read?id=synthetic-routine&version=2');await page.getByRole('button',{name:'Record',exact:true}).focus();
+ const after=await page.evaluate(()=>({evidence:window.circle.state.evidence,records:window.circle.state.templateAdoptions,habit:Object.values(window.circle.state.habits.definitions).find(h=>h.action==='Read a page')}));assert.deepEqual(after,before,'reading a source saves no personal evidence');
+ await page.locator('.os-habit-session').screenshot({path:'outputs/routine-template-adopted-390.png'});
+ await row.getByRole('button',{name:'Mark done: Read a page',exact:true}).click();await task.getByRole('button',{name:'Complete task: Water a plant',exact:true}).click();await expect(task).toHaveCount(0);await page.reload();await ready(page);await openRoutineTool(page);await expect(page.getByRole('button',{name:'Undo: Read a page',exact:true})).toBeVisible();
+ assert.equal(await page.evaluate(()=>Object.keys(window.circle.state.templateAdoptions).length),1);assert.equal(await page.evaluate(()=>Object.values(window.circle.state.tasks.completions).filter(c=>c.completed).length),1);
+}));
 before(async()=>{
   server=await createServer({configFile:false,define:{"process.env":JSON.stringify({NODE_ENV:"development"})},
     plugins:[react(),{name:"writing-ui-fixture",resolveId(id){if(id==="virtual:writing-ui")return "\0writing-ui.tsx";},load(id){if(id==="\0writing-ui.tsx")return useProductionCSS?harness.replace('import "/app/globals.css";','').replace('import "/app/os/os-app.css";',''):harness;},
@@ -77,6 +88,120 @@ before(async()=>{
 });
 after(async()=>{await browser?.close();await server?.close();});
 async function open(page){await page.goto(`${baseURL}/os`,{waitUntil:"domcontentloaded",timeout:60_000});await page.waitForFunction(()=>Boolean(window.api),{},{timeout:60_000});}
+test('adopted Protocol template renders on the real Protocol page and keeps fixed terms',{timeout:90000},async()=>isolated(390,async page=>{
+ await page.evaluate(async()=>{const{startProtocolTemplate}=await import('/app/os/protocol-template-adoption.js');const{createTemplateDraft}=await import('/app/os/admin/template-model.js');const template=createTemplateDraft('protocol').template;template.title='Adopted reading';template.items[0].action='Read one page';window.circle.updateState(s=>startProtocolTemplate({...s,protocol:{...s.protocol,runs:{}}},{template,sourceId:'synthetic',version:1,operationId:'real-page-fixture',days:3,answers:{}}).state);});
+ await openRoutineTool(page,'Protocol');await expect(page.getByText('Adopted reading',{exact:true})).toBeVisible();await expect(page.getByText('Day 1 of 3',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Keep: Read one page',exact:true}).click();await expect(page.getByRole('button',{name:'Undo: Read one page',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Edit',exact:true}).click();await expect(page.getByRole('textbox',{name:'Protocol name',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'End',exact:true})).toBeVisible();await expect(page.getByRole('textbox',{name:/Edit Non-negotiable/})).toHaveCount(0);await expect(page.getByRole('button',{name:/Add a non-negotiable/})).toHaveCount(0);
+ await page.reload();await ready(page);await openRoutineTool(page,'Protocol');await expect(page.getByText('Adopted reading',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Undo: Read one page',exact:true})).toBeVisible();
+}));
+test('Routine and Week open without legacy setup completion and preserve unfinished runs', { timeout: 90000 }, async () => isolated(390, async page => {
+  const saved = await page.evaluate(() => {
+    const runs = Object.fromEntries(['habit-building', 'week-setup'].map(id => {
+      const chapter = window.api.publishedChapters.find(c => c.id === id);
+      const run = { ...window.api.createChapterRun(chapter), status: 'in-progress' };
+      return [run.runId, run];
+    }));
+    window.circle.updateState(s => ({ ...s, chapters: { ...s.chapters, runs: {
+      ...Object.fromEntries(Object.entries(s.chapters.runs).filter(([key]) => !key.startsWith('habit-building@') && !key.startsWith('week-setup@'))), ...runs,
+    } } }));
+    return runs;
+  });
+  const verifyRuns = async () => {
+    const runs = await page.evaluate(() => window.circle.state.chapters.runs);
+    assert.deepEqual(Object.fromEntries(Object.entries(runs).filter(([key]) => key.startsWith('habit-building@') || key.startsWith('week-setup@'))), saved);
+    assert.ok(!Object.values(runs).some(run => run.chapterId === 'routine-surface'), 'opening tools never saves their presentation run');
+  };
+  await openRoutineTool(page);
+  await expect(page.getByRole('button', { name: 'New habit', exact: true })).toBeVisible();
+  await expect(page.locator('.os-habit-session .os-chapter-cover')).toHaveCount(0);
+  await page.locator('.os-habit-session').getByRole('button', { name: 'Back', exact: true }).click();
+  await page.getByRole('button', { name: 'Log', exact: true }).click();
+  await page.getByRole('button', { name: 'Open Week', exact: true }).click();
+  await expect(page.getByRole('button', { name: '+ Add goal', exact: true })).toBeVisible();
+  await verifyRuns();
+  await page.evaluate(() => history.replaceState(null, '', '/os'));
+  await page.reload(); await ready(page); await openRoutineTool(page);
+  await expect(page.getByRole('button', { name: 'New habit', exact: true })).toBeVisible();
+  await verifyRuns();
+}));
+
+test('completed Habit restores its result without replay on reopen and edit return', { timeout: 90000 }, async () => isolated(390, async page => {
+  await page.evaluate(() => window.circle.updateState(s => {
+    const added = window.api.addHabitDefinition(s, 'restored-result');
+    const next = window.api.updateHabitDefinitionParts(added.state, added.id, {
+      action: 'Read a line', cue: 'After breakfast', identity: 'I am a reader',
+    });
+    return window.api.toggleHabitForDay(next, added.id, window.api.getDateKey());
+  }));
+  const box = page.locator('.os-habit-session');
+  const row = box.locator('.os-repeated-habit').filter({ has: page.getByRole('textbox', { name: 'Edit habit: Read a line', exact: true }) });
+  const verifyArrival = async action => {
+    await page.evaluate(() => {
+      window.habitArrival = [];
+      window.habitArrivalDone = false;
+      const start = performance.now();
+      const sample = () => {
+        const row = [...document.querySelectorAll('.os-routine-open .os-repeated-habit')].find(el => el.querySelector('.os-habit-identity-copy')?.textContent === 'I am a reader');
+        if (row && !row.classList.contains('is-editing')) {
+          const result = row.querySelector('.os-habit-identity-copy');
+          window.habitArrival.push({
+            result: Number(getComputedStyle(result).opacity),
+            action: Number(getComputedStyle(row.querySelector('.os-habit-action-copy')).opacity),
+            fading: result.getAnimations().some(animation => animation.transitionProperty === 'opacity' && animation.playState === 'running'),
+          });
+        }
+        if (performance.now() - start < 1200) requestAnimationFrame(sample);
+        else window.habitArrivalDone = true;
+      };
+      requestAnimationFrame(sample);
+    });
+    await action();
+    await page.waitForFunction(() => window.habitArrivalDone);
+    const frames = await page.evaluate(() => window.habitArrival);
+    assert.ok(frames.length > 0, 'observe the completed result during arrival');
+    assert.ok(frames.every(frame => frame.result === 1 && frame.action === 0 && !frame.fading), 'restored wording appears immediately without replay or overlapping words');
+  };
+  await verifyArrival(() => openRoutineTool(page));
+  await row.getByRole('button', { name: 'Edit habit behind: I am a reader', exact: true }).click();
+  await expect(row.getByRole('textbox', { name: 'Edit habit: Read a line', exact: true })).toBeVisible();
+  await expect(row.getByRole('textbox', { name: 'When you do it: Read a line', exact: true })).toHaveValue('After breakfast');
+  await verifyArrival(() => box.getByRole('button', { name: 'Record', exact: true }).focus());
+  await box.getByRole('button', { name: 'Back', exact: true }).click();
+  await verifyArrival(() => openRoutineTool(page));
+  await page.reload(); await ready(page);
+  await verifyArrival(() => openRoutineTool(page));
+  await expect(row.getByRole('button', { name: 'Undo: Read a line', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await box.screenshot({ path: 'outputs/routine-cleanup-restored.png' });
+}, { reducedMotion: 'no-preference' }));
+test('Routine schedules repeat tasks, preserve Record and recover after reload', {timeout:120_000}, async()=>isolated(390, async page=>{
+  await openRoutineTool(page);
+  await page.getByRole('button',{name:'Add task',exact:true}).click();
+  const task=page.getByRole('textbox',{name:'Edit task: New Task',exact:true});
+  await task.fill('Synthetic daily reading');
+  const row=page.locator('.os-task-row').filter({hasText:'Schedule'}).last();
+  await row.locator('summary').click();
+  await row.getByLabel('Repeat',{exact:true}).selectOption('daily');
+  await row.getByLabel('Number of days').fill('0');
+  await row.getByLabel('Number of days').blur();
+  await expect(row.getByRole('alert')).toContainText('at least 1');
+  await row.getByLabel('Number of days').fill('2');
+  await row.getByLabel('Number of days').blur();
+  const edges=await row.evaluate(el=>{const text=el.querySelector('textarea').getBoundingClientRect(),tick=el.querySelector('.os-row-tick').getBoundingClientRect();return {textTop:text.top,tickTop:tick.top};});
+  assert.ok(Math.abs(edges.textTop-edges.tickTop)<24,JSON.stringify(edges));
+  await row.screenshot({path:'outputs/routine-schedule.png'});
+  await page.getByRole('button',{name:'Complete task: Synthetic daily reading',exact:true}).click();
+  await expect(page.locator('.os-task-row')).toHaveCount(0);
+  const record=await page.evaluate(()=>{const s=window.circle.state;const t=Object.values(s.tasks.items).find(t=>t.text==='Synthetic daily reading');return {schedule:t.schedule,status:t.status,done:Object.values(s.tasks.completions).filter(c=>c.completed).length};});
+  assert.equal(record.schedule.days,2);assert.equal(record.status,'open');assert.equal(record.done,1);
+  await page.reload();await ready(page);await openRoutineTool(page);
+  assert.equal(await page.evaluate(()=>Object.values(window.circle.state.tasks.completions).filter(c=>c.completed).length),1);
+  await page.getByRole('button',{name:'Record',exact:true}).click();
+  await page.getByRole('button',{name:'Undo task: Synthetic daily reading',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>Object.values(window.circle.state.tasks.completions).filter(c=>c.completed).length)).toBe(0);
+  await page.getByRole('button',{name:'Back',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Complete task: Synthetic daily reading',exact:true})).toBeVisible();
+}));
 async function ready(page){await page.waitForFunction(()=>Boolean(window.api),{},{timeout:60_000});await expect(page.locator(".os-route-stage")).toHaveAttribute("aria-busy","false",{timeout:30_000});await page.evaluate(()=>document.fonts.ready);}
 async function isolated(width,work,{account=true,reducedMotion="reduce",height=844,clock=false,deviceScaleFactor=1}={}){
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor,isMobile:true,hasTouch:true,timezoneId:"Asia/Bangkok",reducedMotion});
@@ -362,7 +487,11 @@ for (const width of [360,390,416]) test(`bottom navigation routes and stays visi
   for(const name of ["Home","Explore"]){
     await nav.getByRole("link",{name,exact:true}).click();
     await expect(page.getByRole("main",{name,exact:true})).toHaveCount(1);
-    assert.equal(await page.getByRole("main",{name,exact:true}).innerHTML(),"");
+    if(name==="Home")assert.equal(await page.getByRole("main",{name,exact:true}).innerHTML(),"");
+    else {
+      await expect(page.locator('.os-explore-row-title')).toHaveText(['Chapters','Habit/Protocol','Articles']);
+      await expect(page.locator('.os-explore-panel')).toHaveCount(6);
+    }
     await expect(nav.getByRole("link",{name,exact:true})).toHaveAttribute("aria-current","page");
   }
   await nav.getByRole("link",{name:"Reflect",exact:true}).click();
@@ -890,8 +1019,11 @@ test("Habit result fades in and out without overlapping words, including restore
   const row = page.locator(".os-repeated-habit").filter({ has: page.getByRole("textbox", { name: "Edit habit: Read a line", exact: true }) });
   const before = await row.evaluate(el => {
     const r = el.getBoundingClientRect(), text = el.querySelector(".os-mission-text-edit"), t = text.getBoundingClientRect(), s = getComputedStyle(text);
-    return { height: r.height, x: t.x-r.x, y: t.y-r.y, size: s.fontSize, weight: s.fontWeight, line: s.lineHeight, spacing: s.letterSpacing };
+    // Schedule remains below the animated copy; measure the region that resizes.
+    return { height: el.querySelector('.os-habit-copy-swap').getBoundingClientRect().height, x: t.x-r.x, y: t.y-r.y, size: s.fontSize, weight: s.fontWeight, line: s.lineHeight, spacing: s.letterSpacing };
   });
+  const completedHeight = await row.locator('.os-habit-copy-swap').evaluate(el => parseFloat(getComputedStyle(el).minHeight));
+  assert.ok(before.height > completedHeight, 'the original action and cue need more room than the completed result');
   await row.evaluate(el => {
     window.identityMotion = { frames: [], done: false };
     const observer = new MutationObserver(() => {
@@ -903,7 +1035,7 @@ test("Habit result fades in and out without overlapping words, including restore
         const outgoing = getComputedStyle(el.querySelector(".os-habit-action-copy")), fill = getComputedStyle(el.querySelector(".os-checkbox-liquid")), r = el.getBoundingClientRect(), t = copy.getBoundingClientRect(), old = el.querySelector(".os-mission-text-edit").getBoundingClientRect();
         const fade=copy.getAnimations().find(a=>'transitionProperty' in a&&a.transitionProperty==='opacity');
         const progress=typeof fade?.currentTime==='number'?Number(fade.currentTime)/300:null;
-        window.identityMotion.frames.push({ time, progress, opacity: Number(s.opacity), easing:s.transitionTimingFunction, clip: s.clipPath, x: t.x-r.x, y: t.y-r.y, oldY: old.y-r.y, height: r.height, size: s.fontSize, weight: s.fontWeight, line: s.lineHeight, spacing: s.letterSpacing, filter: s.filter, outgoing: Number(outgoing.opacity), outgoingFilter: outgoing.filter, duration: s.transitionDuration, delay: s.transitionDelay, color: s.color, fill: Math.min(1,Math.max(0,(110-parseFloat(fill.clipPath.split(' ')[1]))/120)), fillDuration: fill.transitionDuration });
+        window.identityMotion.frames.push({ time, progress, opacity: Number(s.opacity), easing:s.transitionTimingFunction, clip: s.clipPath, x: t.x-r.x, y: t.y-r.y, oldY: old.y-r.y, height: el.querySelector('.os-habit-copy-swap').getBoundingClientRect().height, size: s.fontSize, weight: s.fontWeight, line: s.lineHeight, spacing: s.letterSpacing, filter: s.filter, outgoing: Number(outgoing.opacity), outgoingFilter: outgoing.filter, duration: s.transitionDuration, delay: s.transitionDelay, color: s.color, fill: Math.min(1,Math.max(0,(110-parseFloat(fill.clipPath.split(' ')[1]))/120)), fillDuration: fill.transitionDuration });
         if (time < 1600) requestAnimationFrame(sample); else window.identityMotion.done = true;
       };
       sample();
@@ -923,20 +1055,20 @@ test("Habit result fades in and out without overlapping words, including restore
   assert.ok(frames.every(f => f.size === before.size && f.weight === before.weight && f.line === before.line && f.spacing === before.spacing), "both faces retain identical font metrics");
   assert.ok(frames.every(f => f.filter === "none" && f.outgoingFilter === "none"), "no blur hides the dissolve");
   assert.ok(frames.filter(f => f.time < 280).every(f => Math.abs(f.height-before.height) < 0.5), "row holds its height through the response");
-  assert.ok(frames.some(f => f.time > 400 && f.time < 750 && f.height > 44.5 && f.height < before.height - 0.5), "excess space settles only after the words change");
-  assert.ok(frames.some(f => f.time > 750 && f.time < 850 && f.height > 44.01), "the visible row continues settling near the end of its 600ms duration");
+  assert.ok(frames.some(f => f.time > 400 && f.time < 750 && f.height > completedHeight + 0.5 && f.height < before.height - 0.5), "excess space settles only after the words change");
+  assert.ok(frames.some(f => f.time > 750 && f.time < 850 && f.height > completedHeight + 0.01), "the visible copy continues settling near the end of its 600ms duration");
   assert.ok(frames.some(f => f.time > 70 && f.time < 230 && f.fill > 0 && f.fill < 0.95 && f.fillDuration.startsWith("0.3s")), "Orange visibly grows inside the rim over 300ms");
-  const last = frames.at(-1); assert.equal(last.opacity, 1); assert.ok(Math.abs(last.height-44) < 0.5);
+  const last = frames.at(-1); assert.equal(last.opacity, 1); assert.ok(Math.abs(last.height-completedHeight) < 0.5);
   assert.equal(last.color, "rgb(241, 239, 232)");
   const verifyReturn=async()=>{
-    await row.evaluate(el=>{window.habitReturn=[];window.habitReturnDone=false;const observer=new MutationObserver(()=>{if(el.classList.contains('completed'))return;observer.disconnect();const start=performance.now();const sample=()=>{const face=el.querySelector('.os-habit-identity-copy'),result=getComputedStyle(face),action=getComputedStyle(el.querySelector('.os-habit-action-copy')),copy=el.querySelector('.os-habit-copy-swap'),fade=face.getAnimations().find(a=>'transitionProperty' in a&&a.transitionProperty==='opacity');window.habitReturn.push({t:performance.now()-start,progress:typeof fade?.currentTime==='number'?Number(fade.currentTime)/300:null,result:Number(result.opacity),easing:result.transitionTimingFunction,action:Number(action.opacity),height:el.getBoundingClientRect().height,immediate:copy.classList.contains('is-immediate'),returning:copy.classList.contains('is-returning')});if(performance.now()-start<1200)requestAnimationFrame(sample);else window.habitReturnDone=true;};sample();});observer.observe(el,{attributes:true,attributeFilter:['class']});});
+    await row.evaluate(el=>{window.habitReturn=[];window.habitReturnDone=false;const observer=new MutationObserver(()=>{if(el.classList.contains('completed'))return;observer.disconnect();const start=performance.now();const sample=()=>{const face=el.querySelector('.os-habit-identity-copy'),result=getComputedStyle(face),action=getComputedStyle(el.querySelector('.os-habit-action-copy')),copy=el.querySelector('.os-habit-copy-swap'),fade=face.getAnimations().find(a=>'transitionProperty' in a&&a.transitionProperty==='opacity');window.habitReturn.push({t:performance.now()-start,progress:typeof fade?.currentTime==='number'?Number(fade.currentTime)/300:null,result:Number(result.opacity),easing:result.transitionTimingFunction,action:Number(action.opacity),height:copy.getBoundingClientRect().height,immediate:copy.classList.contains('is-immediate'),returning:copy.classList.contains('is-returning')});if(performance.now()-start<1200)requestAnimationFrame(sample);else window.habitReturnDone=true;};sample();});observer.observe(el,{attributes:true,attributeFilter:['class']});});
     await row.getByRole('button',{name:'Undo: Read a line',exact:true}).click();await page.waitForFunction(()=>window.habitReturnDone);
     const returning=await page.evaluate(()=>window.habitReturn);
     assert.ok(returning.some(f=>f.t<300&&f.result>0&&f.result<1),'result visibly fades out on uncheck');
     assert.ok(returning.every(f=>f.easing==='ease-out'),'Task-style fade-out keeps its curve');
     const pairs=frames.filter(f=>f.progress>0.1&&f.progress<0.9).map(f=>({incoming:f,outgoing:returning.filter(r=>r.progress!==null).sort((a,b)=>Math.abs(a.progress-(1-f.progress))-Math.abs(b.progress-(1-f.progress)))[0]})).filter(pair=>pair.outgoing&&Math.abs(pair.outgoing.progress-(1-pair.incoming.progress))<0.04);
     assert.ok(pairs.length>=3&&pairs.every(pair=>Math.abs(pair.incoming.opacity-pair.outgoing.result)<0.12),'measured fade curves match when played in reverse');
-    assert.ok(returning.filter(f=>f.t<280).every(f=>f.action===0&&Math.abs(f.height-44)<0.5),'original words and row geometry wait through the response');
+    assert.ok(returning.filter(f=>f.t<280).every(f=>f.action===0&&Math.abs(f.height-completedHeight)<0.5),'original words and copy geometry wait through the response');
     assert.ok(returning.every(f=>f.result===0||f.action===0),'word faces never overlap');
     assert.ok(returning.every(f=>!f.immediate),'restoration suppression does not swallow deliberate Undo');
     assert.ok(returning.some(f=>f.t>750&&f.t<850&&f.returning),'return state covers the full response and height settle with minified CSS time units');

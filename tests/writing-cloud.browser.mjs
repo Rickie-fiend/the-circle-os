@@ -4,6 +4,8 @@ import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
 import { chromium, expect } from "@playwright/test";
 import { A, B, database, remote } from "./helpers/writing-cloud.mjs";
+import { mkdtemp, rm } from "node:fs/promises";
+import { resolve, sep } from "node:path";
 
 // The real store/transport talks to a local PostgreSQL RPC fixture. Bearer tokens
 // here are deliberately synthetic; this does not test hosted JWT validation.
@@ -72,7 +74,7 @@ before(async () => {
         const result=name==="circle_writing_inventory"?await api.inventory(body.after_id):name==="circle_writing_receipts"?await api.receipts(body.operation_ids):name==="circle_writing_resolve"?await api.resolve(body.request):name==="circle_writing_resolution_history"?await api.resolutions(body.after_id):await api.apply(body.request);
         res.setHeader("Content-Type","application/json");res.end(JSON.stringify(result));
       }catch {res.writeHead(400).end('{"error":"Synthetic RPC failed"}');}
-    });}}],optimizeDeps:{include:["react","react-dom/client"]},server:{host:"127.0.0.1",port:0,watch:{ignored:["**/.next/**","**/dist/**"]}}});
+    });}}],optimizeDeps:{include:["react","react-dom/client"]},server:{host:"127.0.0.1",port:0,watch:{ignored:["**/.next/**","**/dist/**","**/outputs/**"]}}});
   await server.listen();baseURL=`http://127.0.0.1:${server.httpServer.address().port}`;
   browser=await chromium.launch();
 });
@@ -83,6 +85,45 @@ async function device(width=390){const context=await browser.newContext({viewpor
   const page=await context.newPage();await page.goto(`${baseURL}/__writing-cloud-test`);await page.waitForFunction(()=>window.api);return {context,page};}
 const read=page=>page.evaluate(()=>window.api.read());
 const sync=page=>page.evaluate(()=>window.api.sync());
+
+for (const lostReply of [false, true]) test(`cold browser restart recovers pending uploads with lost reply ${lostReply}`, { timeout: 90000 }, async () => {
+  await reset();
+  const root = resolve("outputs"), profile = await mkdtemp(resolve(root, "writing-cloud-restart-"));
+  let context;
+  async function launch() {
+    context = await chromium.launchPersistentContext(profile);
+    await context.route("**/*", route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
+    const page = await context.newPage(); await page.goto(`${baseURL}/__writing-cloud-test`); await page.waitForFunction(() => window.api); return page;
+  }
+  try {
+    let page = await launch();
+    await page.evaluate(() => window.api.save("Durable pending words"));
+    if (lostReply) {
+      await page.route("**/rpc/circle_writing_apply", async route => { await route.fetch(); await route.abort(); });
+    } else await page.evaluate(() => window.api.authenticate(false));
+    await assert.rejects(sync(page));
+    const before = await read(page);
+    assert.equal(Object.keys(before.queue.pending).length, 1);
+    const accepted = await remote(db).inventory("");
+    assert.equal(accepted.length, lostReply ? 1 : 0);
+    await context.close(); context = null;
+    page = await launch();
+    assert.deepEqual(await read(page), before, "the same pending operation survives a new browser process");
+    assert.equal((await sync(page)).pending, 0);
+    await sync(page);
+    const heads = await remote(db).inventory("");
+    assert.equal(heads.length, 1);
+    assert.equal((await read(page)).state.entries.entry.versions.length, 1);
+    if (lostReply) assert.deepEqual(heads, accepted, "retry does not change the accepted head");
+    await page.evaluate(id => window.api.select(id), B);
+    const empty = await read(page); assert.deepEqual(empty.state.entries, {}); assert.deepEqual(empty.queue.pending, {});
+    await page.evaluate(id => window.api.select(id), A);
+    assert.equal((await read(page)).state.entries.entry.versions.at(-1).content.body, "Durable pending words");
+  } finally {
+    await context?.close();
+    assert.ok(resolve(profile).startsWith(root + sep)); await rm(profile, { recursive: true, force: true });
+  }
+});
 
 async function conflictDevices(width) {
   const one=await device(width),two=await device(width);

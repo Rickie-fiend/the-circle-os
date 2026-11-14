@@ -7,6 +7,7 @@ import type { ChapterDraft } from './chapter-authoring.js';
 import { ArticleEditor } from './article-editor';
 import { ContentRequest } from './content-media';
 import { CatalogManager } from './catalog-manager';
+import { TemplateEditor } from './template-editor';
 
 function tabOwner(accountId: string) {
   let tab = sessionStorage.getItem('circle-admin-tab');
@@ -21,6 +22,7 @@ export function AccountAdmin() {
   const [message, setMessage] = useState('Checking Admin access…');
   const [media, setMedia] = useState(false);
   const [articles, setArticles] = useState(false);
+  const [templates, setTemplates] = useState<'routine'|'protocol'|null>(null);
   const [catalog, setCatalog] = useState(false);
   const [assets, setAssets] = useState<Array<{id:string;alt:string;preview:string|null}>>([]);
   const [file, setFile] = useState<File|null>(null);
@@ -40,13 +42,13 @@ export function AccountAdmin() {
     headers.set('Authorization', `Bearer ${data.session.access_token}`);
     const response = await fetch(input, { ...init, headers, cache: 'no-store', signal: AbortSignal.any([scope.signal, AbortSignal.timeout(30000), ...(init?.signal ? [init.signal] : [])]) });
     assertAccountScope(scope);
-    if (response.status === 403) queueMicrotask(() => { setAllowed(false); setMessage('Admin access could not be confirmed. Sign in again or check the connection.'); });
+    if (response.status === 401 || response.status === 403) queueMicrotask(() => { setAllowed(false); setMessage(response.status === 401 ? 'Sign in again.' : 'Admin access is not available for this account.'); });
     return response;
   }, [connection, ownerScope]);
   useEffect(() => {
     let active = true;
     void request('/os/admin/status').then(async response => {
-      if (!response.ok) throw new Error('Admin access and catalog setup are required.');
+      if (!response.ok) { const detail=await response.json(); throw new Error(detail.error || 'Connection unavailable. Try again.'); }
       if (active) setAllowed(true);
     }).catch(error => { if (active) setMessage(error.message); });
     return () => { active = false; };
@@ -121,12 +123,12 @@ export function AccountAdmin() {
       setAssets(result); setMessage(successMessage);
     } catch(error) { setMessage(error instanceof Error ? error.message : 'Could not open images.'); }
   }
-  const chapterRepository = useMemo(() => ({ ...repository, read: async () => (await repository.read()).filter(row => !('article' in row)) }), [repository]);
-  if (!allowed) return <main className="os-admin"><p role="status">{message}</p><a href="/os">Back to Today</a></main>;
+  const chapterRepository = useMemo(() => ({ ...repository, read: async () => (await repository.read()).filter(row => !('article' in row) && !('template' in row)) }), [repository]);
+  if (!allowed) return <main className="os-admin"><p role="status">{message}</p><button type="button" onClick={()=>void request('/os/admin/status').then(response=>{if(response.ok){setAllowed(true);setMessage('');}else setMessage(response.status===503?'Connection unavailable. Try again.':'Sign in again or check your account access.');}).catch(()=>setMessage('Connection unavailable. Try again.'))}>Retry</button><a href="/os">Back to Today</a></main>;
   return <ContentRequest.Provider value={request}>
     <button className="os-admin" onClick={()=>setCatalog(value=>!value)}>Catalog publishing</button>
     {catalog ? <CatalogManager request={request}/> : <>
-    <nav className="os-admin os-admin-actions" aria-label="Content tools"><button onClick={() => {setMedia(false);setArticles(false);}}>Chapters</button><button onClick={() => {setMedia(false);setArticles(true);}}>Articles</button><button onClick={() => void openMedia()}>Media</button></nav>
+    <nav className="os-admin os-admin-actions" aria-label="Content tools"><button onClick={() => {setTemplates(null);setMedia(false);setArticles(false);}}>Chapters</button><button onClick={() => {setTemplates(null);setMedia(false);setArticles(true);}}>Articles</button><button onClick={()=>{setMedia(false);setTemplates('routine');}}>Habit templates</button><button onClick={()=>{setMedia(false);setTemplates('protocol');}}>Protocol templates</button><button onClick={() => void openMedia()}>Media</button></nav>
     {media ? <main className="os-admin os-admin-media"><h1>Media</h1><form className="os-admin-panel os-admin-fields os-admin-media-upload" aria-busy={uploading} onSubmit={async event => {
       event.preventDefault(); if (!file || !alt.trim() || uploading) return;
       const scope = ownerScope;
@@ -155,7 +157,7 @@ export function AccountAdmin() {
       {asset.preview ? <img src={asset.preview} alt={asset.alt} loading="lazy" /> : <span>Preview unavailable</span>}
       </div>
       <figcaption title={asset.alt}>{asset.alt}</figcaption><button type="button" aria-label={`Copy image reference: ${asset.alt}`} onClick={() => { void navigator.clipboard.writeText(asset.id).then(() => setMessage('Image reference copied.'),() => setMessage('Could not copy the image reference.')); }}>Copy reference</button>
-    </figure>)}</section></main> : articles ? <ArticleEditor repository={repository}/> : <ChapterEditor repository={chapterRepository} adminRequest={request} accountCatalog />}
+    </figure>)}</section></main> : templates ? <TemplateEditor key={templates} kind={templates} repository={repository}/> : articles ? <ArticleEditor repository={repository}/> : <ChapterEditor repository={chapterRepository} adminRequest={request} accountCatalog />}
     </>}
   </ContentRequest.Provider>;
 }

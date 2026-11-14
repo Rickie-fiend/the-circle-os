@@ -1,4 +1,4 @@
-import { accountAdmin } from '../account-admin-server';
+import { accountAdmin, adminFailure } from '../account-admin-server';
 
 export async function GET(request: Request) {
   try {
@@ -6,7 +6,7 @@ export async function GET(request: Request) {
     const response = await fetch(`${url}/rest/v1/circle_content_drafts?select=*&order=updated_at.desc`, { headers, cache: 'no-store', signal: AbortSignal.timeout(12000) });
     if (!response.ok) return Response.json({ error: 'Could not open shared drafts.' }, { status: 503 });
     return Response.json(await response.json(), { headers: { 'Cache-Control': 'no-store' } });
-  } catch { return Response.json({ error: 'Admin access required.' }, { status: 403 }); }
+  } catch (error) { return adminFailure(error); }
 }
 
 export async function POST(request: Request) {
@@ -17,5 +17,5 @@ export async function POST(request: Request) {
     const response = await fetch(`${url}/rest/v1/rpc/circle_save_content_draft`, { method: 'POST', headers, body: JSON.stringify({ draft: body.draft, expected_revision: body.revision, operation_id: body.operationId }), cache: 'no-store', signal: AbortSignal.timeout(12000) });
     if (!response.ok) return Response.json({ error: 'This draft could not be saved. Reload to check for another edit. Your device copy is retained.' }, { status: 409 });
     return Response.json(await response.json(), { headers: { 'Cache-Control': 'no-store' } });
-  } catch { return Response.json({ error: 'Admin access or connection required. Your device copy is retained.' }, { status: 403 }); }
+  } catch (error) { return adminFailure(error); }
 }

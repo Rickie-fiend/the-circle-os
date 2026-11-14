@@ -5,23 +5,22 @@ type Asset = { id: string; alt: string; preview: string | null };
 export const ContentRequest = createContext<typeof fetch | null>(null);
 export const PublishedImages = createContext(false);
 
+const imageRequests = new WeakMap<typeof fetch, Map<string, {at:number;promise:Promise<Asset[]>}>>();
 export function ContentFigure({ image }: { image?: ContentImage }) {
   const request = useContext(ContentRequest);
   const published = useContext(PublishedImages);
   const [source, setSource] = useState<{id:string;url:string|null}>();
   const [refresh, setRefresh] = useState(0);
+  const assetId = image?.assetId;
   useEffect(() => {
-    if (!image || !request) return;
+    if (!assetId || !request) return;
     let active = true;
-    const read = () => void request(published ? `/os/catalog/media?id=${encodeURIComponent(image.assetId)}` : '/os/admin/media').then(async response => {
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      const rows: Asset[] = published ? [{id:image.assetId,alt:image.alt,preview:data.preview}] : data;
-      if (active) setSource({id:image.assetId,url:rows.find(row => row.id === image.assetId)?.preview || null});
-    }).catch(() => { if (active) setSource({id:image.assetId,url:null}); });
+    const read = () => { let cache=imageRequests.get(request); if(!cache){cache=new Map();imageRequests.set(request,cache);} const key=`${published}:${assetId}`; if(refresh)cache.delete(key); let entry=cache.get(key); if(!entry || Date.now()-entry.at>240000){entry={at:Date.now(),promise:request(published ? `/os/catalog/media?id=${encodeURIComponent(assetId)}` : `/os/admin/media?id=${encodeURIComponent(assetId)}`).then(async response=>{if(!response.ok)throw Error();const data=await response.json();return published?[{id:assetId,alt:'',preview:data.preview}]:data;})};cache.set(key,entry);} void entry.promise.then(rows => {
+      if (active) setSource({id:assetId,url:rows.find(row => row.id === assetId)?.preview || null});
+    }).catch(() => { cache!.delete(key); if (active) setSource({id:assetId,url:null}); }); };
     read(); const timer = setInterval(read, 240000);
     return () => { active = false; clearInterval(timer); };
-  }, [image, request, refresh, published]);
+  }, [assetId, request, refresh, published]);
   if (!image) return null;
   return <figure className="os-content-figure">
     {/* Private signed previews must bypass shared image caches. */}

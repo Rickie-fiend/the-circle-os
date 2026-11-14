@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { BottomNavigation } from "./bottom-navigation";
 import { RoutineHeaderButton, RoutineSwipeCue } from "./routine-controls";
+import { RoutineBody, RoutineItemCopy, routineFrame } from './routine-presentation';
+import { TemplateSource, type TemplateSourceSnapshot } from './template-source';
+import { RoutineScheduleControl, type RoutineSchedule } from './routine-schedule-control';
+import { scheduleActive } from './routine-schedule.js';
 import { usePathname, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
@@ -21,6 +25,8 @@ import {
 } from "react";
 import {
   CIRCLE_DAY_START_HOUR,
+  setRoutineSchedule,
+  routineHabitVisible,
   addHabitDefinition,
   archiveHabitDefinition,
   archiveTask,
@@ -223,7 +229,6 @@ import {
 import {
   normalizeChapterPublication,
   publicationIsNewerThanRun,
-  firstUsePublicationDone,
   selectFirstUsePublication,
   selectPendingAppPublication,
   writeSyncedChapterPublications,
@@ -234,7 +239,6 @@ import {
   selectScheduledChapter,
 } from "./chapters/chapter-scheduler.js";
 import { useChapterPublications } from "./chapters/use-chapter-publications";
-import { BUILT_IN_PUBLISHED_AT } from "./chapters/chapter-supply";
 import type {
   ChapterPublication,
   ChapterDefinition,
@@ -921,6 +925,7 @@ export type CircleState = {
       updatedAt: string;
     }
   >;
+  templateAdoptions: Record<string, TemplateSourceSnapshot>;
   habits: {
     identity: {
       text: string;
@@ -938,6 +943,8 @@ export type CircleState = {
         createdAt: string;
         updatedAt: string;
         setupRunId?: string;
+        schedule?: RoutineSchedule;
+        templateAdoptionId?: string;
       }
     >;
     completions: Record<
@@ -959,12 +966,17 @@ export type CircleState = {
     >;
   };
   tasks: {
+    completions?: Record<string, { id: string; taskId: string; dateKey: string; completed: boolean; updatedAt: string; completedAt: string | null; text: string }>;
     items: Record<
       string,
       {
         id: string;
         text: string;
         status: "open" | "completed" | "archived";
+        schedule?: RoutineSchedule;
+        templateAdoptionId?: string;
+        cue?: string;
+        identity?: string;
         createdAt: string;
         updatedAt: string;
         completedAt: string | null;
@@ -1539,6 +1551,8 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     </CircleStateContext.Provider>
   );
 }
+
+export const ROUTINE_APP_VERSION = 'habit-protocol-v5';
 
 export function useCircleState() {
   const value = useContext(CircleStateContext);
@@ -2179,12 +2193,9 @@ export function TodayExperience() {
     publicationProfileId,
     state.chapters.runs,
   );
-  // The bundled Habit lesson stays optional after shorter onboarding. Authored
-  // deliveries and explicit first-use publications retain their existing paths.
-  const habitPublication = pendingHabitPublication?.chapter.id === "habit-building" &&
-    (questStepStatus("habit-building", state.chapters.runs, { state, publications }).done ||
-      (state.chapters.runs["day-one@3"]?.status === "completed" && pendingHabitPublication.publishedAt === BUILT_IN_PUBLISHED_AT))
-      ? null : pendingHabitPublication;
+  // Routine opens independently of setup. Old setup definitions and runs stay
+  // available through explicit Chapter/history paths, outside automatic entry.
+  const habitPublication = pendingHabitPublication?.chapter.id === 'habit-building' || pendingHabitPublication?.firstUse ? null : pendingHabitPublication;
   const pendingLogPublication = selectPendingAppPublication(
     publications,
     "log",
@@ -2196,26 +2207,14 @@ export function TodayExperience() {
   // A first-use chapter published from Admin stands in place of the compiled
   // setup chapter for its App. Sai authors these; the App must open on what he
   // wrote rather than on what shipped in the bundle.
-  const habitSetupPublication = selectFirstUsePublication(
-    questStepStatus("habit-building", state.chapters.runs, { state, publications }).done ? [] : publications,
-    "habit",
-    publicationProfileId,
-    state.chapters.runs,
-  );
   const logSetupPublication = selectFirstUsePublication(
     questStepStatus("log-setup", state.chapters.runs, { state, publications }).done ? [] : publications,
     "log",
     publicationProfileId,
     state.chapters.runs,
   );
-  // And finishing one seals that App's setup for good. Without this the
-  // published chapter retires on completion and the compiled one — still
-  // unanswered — comes straight back, so the person is set up twice.
-  const habitSetupSealed = firstUsePublicationDone(
-    publications,
-    "habit",
-    state.chapters.runs,
-  );
+  // Recover saved answers from completed Habit Building publications without
+  // making those setup Chapters a prerequisite for opening Routine.
   const completedHabitSetupPublication = useMemo(
     () =>
       publications
@@ -2323,6 +2322,7 @@ export function TodayExperience() {
       saveDayOneRun(nextRun);
       return;
     }
+    if (pinnedChapter.id === 'habit-building') { saveHabitBuildingRun(nextRun); return; }
     updateState((current) =>
       storeChapterRun(current, nextRun, pinnedChapter.session),
     );
@@ -2384,7 +2384,6 @@ export function TodayExperience() {
    * `phases.js` for why the date was the wrong key.
    */
   const protocolIsOpen = appIsOpen("protocol", state.chapters.runs);
-  const weekIsOpen = appIsOpen("week", state.chapters.runs);
 
   const weekSetupRun = useMemo(() => {
     if (!weekSetupChapter) return null;
@@ -2528,44 +2527,13 @@ export function TodayExperience() {
 
   const logSetupChapter = getPublishedChapter("log-setup");
   const habitBuildingChapter = getPublishedChapter("habit-building");
-  const habitBuildingRun = useMemo(() => {
-    if (!habitBuildingChapter) return null;
-    const stored =
-      state.chapters.runs[chapterRunId(habitBuildingChapter)] ||
-      createChapterRun(habitBuildingChapter);
-    // A published setup chapter that has been finished seals this App's setup,
-    // so the compiled chapter is done whether or not it was ever opened. It
-    // stays a run rather than disappearing, because Routine reads a completed
-    // run as "show the idle Page". An earlier version of the compiled chapter,
-    // already answered, seals it the same way: setting up happens once.
-    const sealed =
-      habitSetupSealed ||
-      questStepStatus("habit-building", state.chapters.runs, { state, publications }).done ||
-      chapterEverCompleted(state.chapters.runs, habitBuildingChapter.id);
-    if (sealed && stored.status !== "completed") {
-      return { ...stored, status: "completed" as const };
-    }
-    return stored;
-  }, [habitBuildingChapter, habitSetupSealed, state, publications]);
-  const activeHabitChapter = useMemo(() => {
-    if (!habitBuildingChapter) return null;
-    return {
-      ...habitBuildingChapter,
-      pages: habitBuildingChapter.pages.map((page) =>
-        page.type === "idle" ? { ...page, title: "" } : page,
-      ),
-    };
-  }, [habitBuildingChapter]);
-  // Short Day One opens the usable Routine/Protocol surface without claiming
-  // that Habit Building was answered. Its real run remains available in Quests.
-  const activeHabitRun = habitBuildingRun &&
-    state.chapters.runs["day-one@3"]?.status === "completed"
-      ? { ...habitBuildingRun, status: "completed" as const }
-      : habitBuildingRun;
+  // One transient completed frame reuses the shared player without claiming
+  // that Habit Building was answered. Saved setup runs remain separate.
+  const { definition: activeHabitChapter, run: activeHabitRun } = useMemo(routineFrame, []);
   const habits = Object.values(state.habits.definitions)
     .filter((habit) =>
       clearingRoutineRows.includes(`habit:${habit.id}`) ||
-      (habit.status === "active" && Boolean(habit.text.trim())) ||
+      (habit.status === "active" && Boolean(habit.text.trim()) && routineHabitVisible(state, habit, dateKey)) ||
       ((habit.status === "draft" || habit.status === "active") && habit.id === newHabitId),
     )
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
@@ -2615,6 +2583,9 @@ export function TodayExperience() {
   const habitCompletion = (habitId: string, key = dateKey) =>
     state.habits.completions[`${key}:${habitId}`];
   const oneTimeTasks = Object.values(state.tasks.items)
+    .map(task => task.schedule && task.schedule.mode !== 'once' && state.tasks.completions?.[`${dateKey}:${task.id}`]?.completed
+      ? { ...task, status: 'completed' as const } : task)
+    .filter(task => scheduleActive(task.schedule, dateKey))
     .filter(
       (task) => task.status === "open" || leavingMissionIds.includes(task.id) || clearingRoutineRows.includes(`task:${task.id}`),
     )
@@ -2645,7 +2616,7 @@ export function TodayExperience() {
   // in front of him every time he opens the app.
   // The version changes with the order: a saved index from the old arrangement
   // would land on the wrong Page, and a new version returns to page zero.
-  const habitAppVersion = "habit-protocol-v5";
+  const habitAppVersion = ROUTINE_APP_VERSION;
   const habitAppIndex = appSessionIndex(
     state,
     "today-habit",
@@ -2750,7 +2721,7 @@ export function TodayExperience() {
    * The App's job here is only to say which doors are ready.
    */
   const dayOneDelivered = [thoughtsPublication, habitPublication, logPublication,
-    habitSetupPublication, logSetupPublication].some(publication => publication?.chapter.id === "day-one");
+    logSetupPublication].some(publication => publication?.chapter.id === "day-one");
   // Day One is the only automatic entry sheet. All later chapters are chosen.
   const doorOffers = finishedDayOneVersion ? {} : {
     "day-one": {
@@ -3093,7 +3064,7 @@ export function TodayExperience() {
     clearTaskExit(id);
     setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
     setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-    updateState((current) => reopenTask(current, id));
+    updateState((current) => reopenTask(current, id, dateKey));
   }
 
   // Goals and tasks save directly, fade immediately, then release their row.
@@ -3126,12 +3097,12 @@ export function TodayExperience() {
   function finishTask(id: string) {
     const task = state.tasks.items[id];
     if (!task || !task.text.trim()) return;
-    if (task.status === "completed") {
+    if (task.status === "completed" || state.tasks.completions?.[`${dateKey}:${id}`]?.completed) {
       reopenFinishedTask(id);
       return;
     }
     clearTaskExit(id);
-    updateState((current) => completeTask(current, id));
+    updateState((current) => completeTask(current, id, dateKey));
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
     // Match the Habit handoff: respond/fade for 300ms, then release the row
@@ -4346,23 +4317,7 @@ export function TodayExperience() {
           )}
         </section>
 
-        {habitSetupPublication ? (
-          <section className="os-habit" aria-label="Routine setup">
-            <PublishedChapterDelivery
-              className="os-habit-session"
-              hideIdleHeading
-              label="Routine setup"
-              onCompleted={(current, run) =>
-                applyHabitBuildingCompletion(
-                  current,
-                  habitSetupPublication.chapter,
-                  run,
-                )
-              }
-              publication={habitSetupPublication}
-            />
-          </section>
-        ) : habitPublication ? (
+        {habitPublication ? (
           <section className="os-habit" aria-label="Routine session">
             <PublishedChapterDelivery
               className="os-habit-session"
@@ -4381,9 +4336,9 @@ export function TodayExperience() {
               publication={habitPublication}
             />
           </section>
-        ) : activeHabitChapter && activeHabitRun ? (
+        ) : (
           <section className={`os-habit${routineOpen ? " os-routine-open" : ""}`} aria-label="Routine session">
-            {!routineOpen && activeHabitRun.status === "completed" ? (
+            {!routineOpen ? (
               <div className="os-routine-entry" aria-label="Daily commitments">
                 <button ref={noteEntryRef} className="os-note-entry" type="button" onClick={openNoteTool}>Note</button>
                 <button type="button" onClick={() => openWritingTool(checkInThoughtsApp)}>Deep Thoughts</button>
@@ -4391,12 +4346,12 @@ export function TodayExperience() {
                 <button type="button" onClick={() => openRoutineTool(1)}>Protocol</button>
               </div>
             ) : null}
-            <div hidden={!routineOpen && activeHabitRun.status === "completed"}>
-            {activeHabitRun.status === "completed" ? <div className="os-routine-navigation" aria-label="Daily tool navigation">
+            <div hidden={!routineOpen}>
+            <div className="os-routine-navigation" aria-label="Daily tool navigation">
               <button type="button" onClick={() => changeHabitAppPage(habitAppIndex === 0 ? (sealedProtocolDay ? 2 : 1) : 0)}>
                 {habitAppIndex === 0 ? "Open Protocol" : "Open Routine"}
               </button>
-            </div> : null}
+            </div>
             <ChapterPlayer
               className={`os-habit-session${habitMode !== "habit" ? " is-history" : ""}${routineBack.className ? ` ${routineBack.className}` : ""}`}
               definition={activeHabitChapter}
@@ -4444,7 +4399,7 @@ export function TodayExperience() {
                 </section>
               </>) : null}
               idleContent={habitMode !== "habit" ? undefined : (
-                <div className="os-routine-body">
+                <RoutineBody>
                   <section className="os-habit-body-session" aria-labelledby="habit-session-title">
                     <h2 className="os-record-label" id="habit-session-title">Habits</h2>
                     <div className="os-repeated-habits">
@@ -4463,6 +4418,7 @@ export function TodayExperience() {
                             inert={clearingRoutineRows.includes(`habit:${habit.id}`)}
                             data-clearing={clearingRoutineRows.includes(`habit:${habit.id}`) || undefined}
                             onBlurCapture={(event) => {
+                              if ((event.target as HTMLElement).closest('.os-template-source')) return;
                               const next = event.relatedTarget as Node | null;
                               if (next && event.currentTarget.contains(next)) {
                                 finishHabitEdit(habit.id);
@@ -4498,7 +4454,7 @@ export function TodayExperience() {
                                 completed && identity && editingHabitId !== habit.id,
                               )}
                             >
-                              <div className="os-habit-action-copy">
+                              <RoutineItemCopy>
                                 <textarea
                                   aria-label={`Edit habit: ${action || "New Habit"}`}
                                   aria-required
@@ -4534,7 +4490,7 @@ export function TodayExperience() {
                                   rows={1}
                                   value={habit.identity}
                                 />
-                              </div>
+                              </RoutineItemCopy>
                               {identity ? (
                                 // A button, not a line of text. It is the way
                                 // back to the habit behind the identity, and
@@ -4567,6 +4523,8 @@ export function TodayExperience() {
                                 </button>
                               ) : null}
                             </HabitCopySwap>
+                            <RoutineScheduleControl day={dateKey} schedule={habit.schedule} defaultMode="ongoing" onChange={(mode, days) => updateState(current => setRoutineSchedule(current, 'habit', habit.id, mode, days, dateKey))} />
+                            <TemplateSource source={habit.templateAdoptionId ? state.templateAdoptions[habit.templateAdoptionId] : undefined} />
                             <CreativeButton
                               aria-label={`${completed ? "Undo" : "Mark done"}: ${action || "New Habit"}`}
                               aria-pressed={completed}
@@ -4617,6 +4575,9 @@ export function TodayExperience() {
                             rows={1}
                             value={task.text}
                           />
+                          {(task.cue || task.identity) && <div className="os-template-task-cues">{task.cue && <p className="os-record-cue">{task.cue}</p>}{task.identity && <p className="os-record-cue">{task.identity}</p>}</div>}
+                          {!goalStepForTask(state, task.id) && <RoutineScheduleControl day={dateKey} schedule={task.schedule} defaultMode="once" onChange={(mode, days) => updateState(current => setRoutineSchedule(current, 'task', task.id, mode, days, dateKey))} />}
+                          <TemplateSource source={task.templateAdoptionId ? state.templateAdoptions[task.templateAdoptionId] : undefined} />
                           <CreativeButton
                             aria-label={`${task.status === "completed" ? "Undo" : "Complete"} task: ${task.text || "New Task"}`}
                             aria-pressed={task.status === "completed"}
@@ -4634,7 +4595,7 @@ export function TodayExperience() {
                     </div>
                     <button className="os-routine-create" type="button" onClick={beginNewTask}>Add task</button>
                   </section>
-                </div>
+                </RoutineBody>
               )}
               idlePlacement={
                 habitMode !== "habit" ? "content-flow" : "identity-stack"
@@ -4758,7 +4719,7 @@ export function TodayExperience() {
             />
             </div>
           </section>
-        ) : null}
+        )}
 
         {/* One door, one sheet.
           *
@@ -5126,25 +5087,8 @@ export function TodayExperience() {
             </PageLayout>
             )}
 
-            {/* The Week Page waits for a week.
-              *
-              * On day one there is nothing for it to show — no week lived, no
-              * review to read — so it shows its cover with the key dark, and
-              * the person can see it coming. Sai: "at day 7, week and athena
-              * review would be able." */}
-            {weekIsOpen ? null : (
-              <LockedAppPage
-                className="os-log-page os-log-week os-locked-app"
-                key="log-week-locked"
-                label="Week"
-                opensAfter={getPublishedChapter(lockedUntil("week"))?.title || ""}
-                title="A week you can read."
-                why="The week's setup writes the goal and the phase this Page is built to show. Until then there is nothing here that would be true."
-              />
-            )}
-
-            {weekIsOpen ? (
-            weekBack.side !== "current" ? <WeekHistoryPage
+            {/* Week opens independently of its retained setup Chapters. */}
+            {weekBack.side !== "current" ? <WeekHistoryPage
               activity={weekActivityHistory(state)}
               weeks={recordedWeeks}
               selectedWeek={weekBack.side === "week" ? historyWeek : null}
@@ -5185,7 +5129,7 @@ export function TodayExperience() {
                   </CreativeButton>
                 ) : null}
             />
-            ) : null}
+            }
           </SwipeSession>
           </div>
         </section>

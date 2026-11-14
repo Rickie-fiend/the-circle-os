@@ -1,5 +1,89 @@
 # Circle OS architecture
 
+## Durable offline entry — 2026-11-14
+
+Approved implementation adds issuer-namespaced IndexedDB proof/closed state with
+strict transaction durability and expected epochs. Local entry verifies proof and
+rechecks its epoch; logout locks immediately and awaits durable closure before
+network logout. Valid legacy proof imports only into an absent record; an existing
+closed record wins. SDK session/refresh-token storage and server authorization
+remain unchanged. Controller handles asynchronous invalidation errors.
+Full synthetic production crash journeys pass at 360/390px: recovery 18/18,
+controller/proof 12/12; build/TypeScript/lint pass. Earlier blocker below is
+superseded for this bounded desktop scope. New phone/hosted acceptance, eviction
+and backup/restore remain open; no deployment or activation occurred.
+See [evidence](USER_JOURNEY_TESTING.md#durable-offline-entry-and-crash-recovery--2026-11-14).
+
+## Browser crash recovery blocker — 2026-11-14
+
+Forced Chromium main-process crash now has production-route synthetic evidence
+at 360/390px: service-worker offline navigation succeeds but Auth displays Welcome
+back, blocking writing recovery. Final selection 15/17; build/TypeScript/lint pass.
+Approved diagnostic follow-up confirms exact saved entries/revisions and drafts
+survive. Offline proof exists before the crash and is absent afterward, with no
+closed/password-flow markers. Launching offline from creation still reproduces
+the failure, and startup reports one blank tab. Exact proof-loss mechanism is
+unestablished; downstream crash assertions remain unreached. Review durable proof
+and safe logout invalidation separately. No product/hosted/runtime setting changed.
+Sync remains off and phones remain deferred. See
+[evidence](USER_JOURNEY_TESTING.md#forced-browser-crash-writing-recovery--2026-11-14).
+
+## Natural session expiry — 2026-11-14
+
+The isolated production app now has 390px real natural-expiry evidence: a full
+one-hour offline wait with an unchanged issued JWT, service-worker tab reopening,
+exact saved Note/unfinished Deep Thought restoration and real renewal on reconnect.
+Saved entries/revisions/drafts remain identical. Test and exact temporary-account
+cleanup pass. This qualifies the natural-expiry gap in earlier entries only for
+desktop Chromium tab reopening; phone testing is deferred by the developer.
+No runtime/settings or sync activation changed. See
+[evidence](USER_JOURNEY_TESTING.md#natural-session-expiry-and-writing-recovery--2026-11-14).
+
+## Hosted session verification — 2026-11-14
+
+An isolated production build with sync disabled now has bounded real Supabase
+sign-in, early token renewal, offline return and revoked-session lock/return
+evidence at 360/390px. Saved writing and unfinished drafts remain exact through
+account switching. Temporary hosted accounts were removed with absence checks.
+Natural JWT expiry and physical-device recovery remain open; early refresh is
+driven by SDK scheduling metadata, not an expired signed token. No runtime or
+hosted settings changed. See [evidence](USER_JOURNEY_TESTING.md#hosted-account-session-recovery--2026-11-14).
+
+## Admin reliability and independent tool entry — 2026-11-13
+
+Admin routes distinguish 401 session, 403 confirmed role denial and 503 service/transport errors. Transient failures leave the mounted editor and account/tab recovery intact. Account-menu role lookup starts at account-control mount and shares its pending/positive result by current AccountScope; sign-out/account changes invalidate the scope. This UI cache never authorizes server operations: each protected request still verifies identity and role.
+
+ContentFigure uses stable asset IDs and deduplicates targeted image reads per request function/account context for the existing signed-link interval. The private media route can sign only the requested asset instead of listing/signing the whole library per preview. Routine's presentation frame is independent of legacy habit completion; Week setup no longer gates Week. Historical chapter storage/readers and explicit entry remain separate.
+
+
+## Local template authoring — 2026-11-13
+
+2026-11-14 completion: Explore uses the verified-caller catalog request path and
+one listing. Its route removes withdrawn items for every role; migration 004 adds
+optional saved description/cover metadata without per-edition reads. Older lists
+still render available titles. Account-scope keys discard late responses and
+remount browsing. Routine adoption reuses Habit/Task/schedule actions and stores
+one immutable templateAdoptions group plus definition references. Normalization
+and merge preserve it. Both adoption kinds share an account-scoped
+circle-template-adoption Web Lock, read/merge latest local state, and await the
+scoped store before navigation. Existing Protocol pending keys remain compatible;
+Routine has its own pending operation. An active group blocks another copy of
+the same source across catalog versions. Native source disclosures do not commit
+an edit. General whole-state editing contention and cloud sync remain separate.
+
+Protocol Start follow-up (2026-11-14): a pure adoption model reuses Protocol domain actions; sourceTemplate metadata lives on the personal run and survives normalization/merge. The reader checks signed-in account scope, serializes Start under an account-scoped Web Lock, reads latest local state, merges it with current state, and saves through the existing scoped store before navigation. Session-scoped pending operation IDs enable retry without duplicate runs. Lock-unavailable browsers fail safely; cloud sync and hosted acceptance are not enabled.
+
+Template definitions are separate typed envelopes in the existing shared Admin draft/recovery repository. The editor uses the existing private Media picker and Chapter player with optional numeric inputs, image placement and caller-supplied result content. Template settings are declarative fixed/answer/choice/linear-bound values; no executable expressions or provider calls. Published template identity follows draft identity. Exact-version previews retain temporary run state only and never write personal domain records.
+
+Migration 004 is applied after explicit approval (2026-11-14). It adds template
+catalog kinds, validates questions/rules, freezes editions/assets, preserves
+receipts/withdrawal and supplies saved browse metadata. The original publisher is
+an owner-only delegate under the catalog lock. Never reapply 001–004. Bounded
+hosted acceptance passed 88 functional checks plus actual browser adoption/tick/
+reload and exact cleanup. Adoption now also saves the intended shared Page index
+before navigation. General contention and backup/restore remain unverified.
+
+
 Updated: 2026-11-11, Asia/Bangkok. This owns the current/target system map.
 [Product](PRODUCT.md) owns direction; [record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md)
 owns evidence lifecycles; [writing sync](ACCOUNT_WRITING_SYNC.md) owns its protocol.
@@ -11,7 +95,7 @@ Dated implementation history remains [archived](archive/2026-11-11-doc-cleanup/P
 | --- | --- |
 | Web runtime | Existing Vinext/Cloudflare-compatible and separate Next.js/Vercel build targets. Verify the intended target; passing one does not certify the other. |
 | App shell | CircleStateProvider and shared Page/swipe/App-back/button engines. Full-page daily-tool pairs coexist with existing Reflect/chapter contexts. |
-| Roots | /os/home, /os (Today), /os/mirror (Reflect), /os/explore; shared bottom navigation. Home/Explore intentionally empty. |
+| Roots | /os/home, /os (Today), /os/mirror (Reflect), /os/explore; shared bottom navigation. Home is empty; Explore has three native glass carousels. |
 | Account entry | Supabase verified email/password and auth alias, reset-link handling, account scope and retained offline-entry proof. Current setup is invitation-only; public signup belongs to the replacement onboarding target. |
 | Main local state | IndexedDB plus localStorage copy, migrations and legacy outbox. Account-separated keys in account mode; circle-os-state-v2 in legacy mode. |
 | Account writing | Separate owner-scoped IndexedDB ledger and local queue/cloud state; not copied into CircleState or the legacy server payload. |
@@ -66,6 +150,14 @@ Product activation remains off. See the exact
 [protocol and remaining gates](ACCOUNT_WRITING_SYNC.md), not older pending-migration
 statements. No admin-writing reader or service-role evidence transport is added
 by those RPCs.
+
+The 2026-11-14 local verification now includes the actual production Note/Deep
+Thoughts routes with real service-worker offline opening through two persistent
+Chromium process restarts. Saved text/drafts, offline edits/logout, empty accounts
+and reconnection without duplicate saved revisions pass. Auth/recovery selection
+passes 15/15 with synthetic signed Auth fixtures. The isolated runner keeps the
+review build intact. Live sessions and target phones remain separate evidence.
+See [offline recovery](USER_JOURNEY_TESTING.md#real-app-offline-writing-recovery--2026-11-14).
 
 ### Tool and domain behavior
 
@@ -205,14 +297,15 @@ the accepted lack of another AI opt-in prompt does not verify provider terms.
 
 ## Required proof before wider use
 
-Production writing adapter/device recovery; session expiry/revocation and lost
+Target-device writing recovery beyond the verified local desktop restart/offline
+production routes; hosted session expiry/revocation and lost
 devices; true database lock contention; regional connections; other-domain sync;
 approved legacy owner mapping/import/rollback; backup/restore/deletion/retention;
 protected admin/log operations; explicit entitlement/evidence boundaries; target
 phone/keyboard/install/update behavior; and actual hosted release journeys.
 
 Use the [roadmap release gates](ROADMAP.md#release-gates) and
-[journey record](USER_JOURNEY_TESTING.md). Local builds or the separate durable
-test store do not certify the production writing store, cold browser restart,
-offline page load, physical phone or operating-system eviction.
+[journey record](USER_JOURNEY_TESTING.md). The local actual-route restart/offline
+tests qualify the earlier store-only gap, not real hosted sessions, physical
+phones, crash recovery or operating-system eviction.
 

@@ -1,5 +1,83 @@
 # Content Admin foundation
 
+## Hosted template acceptance completed — 2026-11-14
+
+Developer explicitly approved migration 004 and the prepared synthetic hosted/
+browser procedure. Migration applied once successfully; never reapply 001–004.
+Final `--write --app --catalog --templates` run passed 88 functional checks plus
+the real browser Explore → Routine/Protocol → completion → reload journey.
+Both template kinds preserve immutable v1/v2 editions, source/reflection settings,
+access boundaries, metadata, withdrawal and restore. Exact fixture absence was
+confirmed after every attempt, including the successful final run. No real
+authored content, deployment or sync activation occurred. Earlier pending notes
+below describe the preparation stage and are superseded by this result.
+
+The live journey exposed an actual destination defect: saved Routine selection
+overrode Protocol's hash after Start. The reader now atomically saves the desired
+shared page index with adoption; final build/TypeScript, lint, local retry cases
+3/3 and hosted browser pass. Runner expectations now match signed-out 401 and
+changed-image retry 503; retained original image bytes are independently checked.
+The latter classification remains an operating/UI issue, not a claimed fix.
+Fixture storage initialization now excludes opaque/foreign-origin pages, removing
+its SecurityError. Phone, true contention and backup/restore gaps remain open.
+
+## Template support and migration 004 — 2026-11-13
+
+Local completion follow-up — 2026-11-14: Explore and Habit/Protocol adoption are
+implemented with bounded local browser/model verification. A read-only check of
+the configured CircleOS Server project confirmed circle_template_valid(jsonb)
+is absent, so migration 004 remains unapplied. Its listing now also returns only
+saved cover/description metadata; older lists still supply their existing titles.
+
+Local Admin adds Habit templates and Protocol templates. Draft saving/recovery uses the existing hosted foundation; synthetic browser verification does not certify a new hosted template-save journey. Publishing the new kinds requires `supabase/migrations/202611130004_content_templates.sql`, prepared and exercised in isolated SQL tests only. Do not apply it without separate developer review/approval. Never reapply migrations 001/002/003.
+
+Review migration 004, then authorize the bounded hosted slice below. Physical
+phones, true contention and backup/restore remain separate verification gaps.
+
+## Prepared hosted template acceptance
+
+This procedure is prepared, not run. It requires separate approval for the live
+database migration and synthetic writes. The target is the existing configured
+CircleOS Server project; no new project, branch, deployment or account grant for
+a real person is requested.
+
+1. Recheck that migration 004 is absent; inspect current foundation objects and
+   applicable advisors. Never reapply 001/002/003 or an already-applied 004.
+2. Apply [migration 004](../supabase/migrations/202611130004_content_templates.sql)
+   once, transactionally. It extends catalog kinds/validation/publication and
+   listing metadata, preserving immutable editions, private media and receipts.
+   It adds no hosted personal-record table or sync activation.
+3. Using installed Node and Playwright with private existing configuration, run:
+
+   ```text
+   node --env-file=.env.local scripts/check-content-admin-live.mjs --write --app --catalog --templates
+   ```
+
+   The existing runner starts an isolated local production Next server and
+   creates two temporary verified synthetic accounts, one temporary Admin grant,
+   private image, drafts, publication versions and receipts. Template fixtures
+   are clearly synthetic and briefly visible to signed-in catalog readers.
+   The new helper verifies Routine/Protocol v1/v2 immutability, exact reads,
+   metadata, denial, withdrawal/restore and real browser discovery/adoption.
+   An isolated browser signs in as the synthetic ordinary account, seeds only its
+   local Day One gate, then follows Explore → setup → Add/Start → real tool →
+   completion → reload. It checks retained reflection/source settings. This is
+   template acceptance, not onboarding certification. No personal owner data is
+   used and no AI provider is called. Session values remain inside the isolated
+   context; no credential dumps or traces are emitted.
+4. Close the browser and remove only the registered synthetic drafts, immutable
+   versions/references, image, receipts, grant and accounts, including after a
+   failed check. Stop only the child server. Confirm exact fixture absence.
+   Report any cleanup failure immediately; never delete broadly to clean up.
+5. Record actual results and remaining gaps. Failure is not permission to alter
+   real content, drop tables, reapply migrations or deploy. Preserve additive
+   records and review recovery separately if an operational issue remains.
+
+Implementation is in the [runner](../scripts/check-content-admin-live.mjs) and
+[template helper](../scripts/check-content-templates-live.mjs). Syntax, lint and
+write/dependency-gate checks are local preparation, not hosted acceptance.
+
+
 ## Hosted catalog verification — 2026-11-12
 
 Developer reports applying migration 003; the approved hosted test pass verifies

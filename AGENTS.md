@@ -23,9 +23,15 @@ This file governs the whole repository. Circle OS is the live product at
   will change, why, which files are involved, the intended result, and how it
   will be checked. Ask for the developer's manual review and explicit approval,
   then wait before editing. This includes code, tests, documentation, and handoffs.
+- For a behavior change, explain what the developer will see and identify
+  assumptions before requesting approval. Give concrete expected outcomes for
+  normal, empty, or failure cases where relevant.
 - Approval covers the reviewed scope. A general roadmap, bug priority, or request
   to discuss an idea is not approval to edit. Obtain approval for changes outside
   the agreed scope. Read-only investigation may prepare the concrete proposal.
+  Once approved, continue through implementation, focused tests, fixes, and
+  verification without repeatedly requesting approval for work within that scope.
+  Ask again if the intended outcome or scope needs to change.
 - If the intended outcome, context, or acceptance criteria are unclear, ask
   focused questions and resolve them before making dependent changes. Do not
   invent the developer's intent to keep moving.
@@ -147,7 +153,9 @@ if verification is blocked, record the gap and remind the developer.
   genuinely new cover receives the slower staged reveal.
 - The installed Taste skills are references, not authority. They may improve
   craft, but they must not override this file, `DESIGN.md`, the Page standard,
-  or established Circle OS behavior.
+  or established Circle OS behavior. Follow the existing design system by default
+  and select additional design skills for a specific task need. Their instructions
+  must not introduce unrequested styling, animation, or redesign work.
 
 ## Implementation rules
 
@@ -159,13 +167,11 @@ if verification is blocked, record the gap and remind the developer.
 - Use `apply_patch` for intentional source edits.
 - Do not deploy unless the user asks to publish or keep the live site updated.
 
-## Working alongside another agent
+## Working agreements
 
-Codex and Claude both change this repository, and the developer brainstorms
-with both. Codex implements. Claude reviews, optimizes, and keeps the design
-system and architecture coherent. The developer decides the product. Neither
-agent is the other's approver: both answer to the developer, and Claude's
-review is advice with reasons, not permission.
+Codex handles implementation, review, and verification. The developer decides
+the product and approves changes. Codex's review is advice with reasons, not
+permission to change the agreed scope.
 
 ### Before starting
 
@@ -227,8 +233,8 @@ changing one by accident is the failure mode.
 
 ### What an agent does not decide alone
 
-- Visual language — colour, typography, brand. Those belong to a Claude Design
-  session with the developer, not to code.
+- Visual language — colour, typography, brand. Changes require the developer's
+  explicit approval and must follow the established design references.
 - The ratios and budgets that shape how the app feels. They are guesses awaiting
   lived use, and the developer is the only one using the app.
 - Athena's philosophy. The wisdom and practice libraries are the developer's
@@ -242,4 +248,8 @@ changing one by accident is the failure mode.
 Use the workflow's [check selection](docs/DEVELOPMENT_WORKFLOW.md#choosing-checks)
 and session-handoff checklist. Run the smallest useful checks that verify the
 approved change. Preserve the invariants above and report any verification gap.
+
+Review the final diff against the agreed behavior for disagreements, regressions,
+and missing verification. Report observed results, remaining gaps, and short steps
+the developer can use to review the result.
 

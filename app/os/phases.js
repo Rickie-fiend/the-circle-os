@@ -1,10 +1,9 @@
 /**
  * How far into the journey a person is, and what that opens.
  *
- * Current rule: Protocol opens after Day One is completed; Week opens after
- * Week setup is completed, in any published version. Dates do not unlock Apps.
- * Week setup is automatically offered after the next Circle day begins
- * following Day One completion. That offer timing is separate from App access.
+ * Current rule: Protocol opens after Day One is completed. Routine and Week
+ * do not require legacy setup chapters. Old runs remain explicit history;
+ * dates and fabricated chapter completions never unlock those tools.
  *
  * Historical rationale for the earlier day-based plan follows. Its day-two
  * and day-seven thresholds are not current App gates. Sai originally said:
@@ -77,6 +76,9 @@ export function phaseForDay(day) {
 /**
  * The chapter that opens each gated App.
  *
+ * Only Protocol is gated now, by Day One. Week opens directly. The earlier
+ * setup-based rationale below is historical and does not control Week access.
+ *
  * An App opens when the chapter that sets it up has been answered, not when a
  * date arrives. Sai: "For protocol and week app, unlock after completing the
  * set-up chapter."
@@ -95,14 +97,13 @@ export function phaseForDay(day) {
  */
 export const SETUP_CHAPTER = {
   protocol: "day-one",
-  week: "week-setup",
 };
 
 /**
  * Whether an App is open yet.
  *
  * Everything a person can use on the first day is open from the first day.
- * The two that need something set up behind them wait for that chapter.
+ * Protocol waits for Day One. Week opens without a setup requirement.
  */
 export function appIsOpen(app, runs) {
   const chapterId = SETUP_CHAPTER[app];

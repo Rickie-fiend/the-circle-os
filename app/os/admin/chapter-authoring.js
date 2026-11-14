@@ -337,6 +337,8 @@ export function validateChapterDraft(draft) {
   if (new Set(ids).size !== ids.length) errors.push("Every page needs a unique ID.");
   chapter.pages.forEach((page, index) => {
     const label = `Page ${index + 1}`;
+    if (page.imagePlacement !== undefined && !['before-text','after-text'].includes(page.imagePlacement)) errors.push(`${label} has an invalid image placement.`);
+    if (page.inputFormat !== undefined && (page.inputFormat !== 'number' || page.type !== 'short-text' || !Number.isFinite(page.min) || !Number.isFinite(page.max) || page.min > page.max)) errors.push(`${label} needs valid numeric bounds.`);
     if (page.image && (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(page.image.assetId || "") || !page.image.alt?.trim())) errors.push(`${label} needs a valid image reference and alternative text.`);
     if (!ID_PATTERN.test(page.id || "")) errors.push(`${label} ID must use lowercase words and hyphens.`);
     if (!CHAPTER_PAGE_TYPES.includes(page.type)) errors.push(`${label} has an unsupported type.`);
@@ -385,6 +387,8 @@ export function chapterDraftToMarkdown(draft) {
       line("Image", page.image?.assetId),
       line("Image alt", page.image?.alt),
       line("Image caption", page.image?.caption),
+      line("Image placement", page.imagePlacement),
+      line("Input format", page.inputFormat),
       line("Question", page.question),
       line("Why", page.why),
       line("Button", page.button),

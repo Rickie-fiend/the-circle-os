@@ -14,6 +14,7 @@ import {
   updateHabitDefinitionParts,
 } from "../app/os/circle-os-model.js";
 import { applyHabitBuildingCompletion } from "../app/os/habit-building-model.js";
+import { createChapterRun, storeChapterRun } from "../app/os/chapters/chapter-model.js";
 import { selectThoughtPrompt } from "../app/os/thought-prompt-model.js";
 
 function recordedHabit() {
@@ -328,57 +329,38 @@ test("habit typing keeps spaces verbatim until blur commits the value", () => {
   assert.equal(state.evidence.localRevision, revision + 1);
 });
 
-test("published and compiled Habit setup paths project answers on completion", () => {
-  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  const model = readFileSync("app/os/habit-building-model.js", "utf8");
-  const css = readFileSync("app/os/os-app.css", "utf8");
-  assert.match(model, /chapterAnswerText\(run, "habit-action"\)/);
-  assert.match(model, /chapterAnswerText\(run, "habit-time-place"\)/);
-  assert.match(model, /chapterAnswerText\(run, "habit-identity"\)/);
-  assert.match(model, /updateHabitDefinitionParts\(added\.state, added\.id, \{[\s\S]*?action,[\s\S]*?cue,[\s\S]*?identity,/);
-  assert.match(shell, /onCompleted=\{\(current, run\) =>[\s\S]*?applyHabitBuildingCompletion\([\s\S]*?habitSetupPublication\.chapter,[\s\S]*?run,/);
-  assert.match(shell, /habitPublication\.chapter\.id === "habit-building"[\s\S]*?applyHabitBuildingCompletion\([\s\S]*?habitPublication\.chapter,[\s\S]*?run,/);
-  assert.match(shell, /function saveHabitBuildingRun\(nextRun: ChapterRun\)[\s\S]*?applyHabitBuildingCompletion\(next, habitBuildingChapter, nextRun\)/);
-  assert.match(model, /const starter = Object\.values\(state\.habits\.definitions\)/);
-  assert.match(model, /const habitId = starter\?\.id \|\| `chapter-run:\$\{run\.runId\}`/);
-  assert.match(shell, /const completedHabitSetupPublication = useMemo/);
-  assert.match(shell, /publication\.chapter\.id === "habit-building"/);
-  assert.match(shell, /habit\.setupRunId === completedRun\.runId/);
-  assert.match(shell, /applyHabitBuildingCompletion\([\s\S]*?publication\.chapter,[\s\S]*?latestRun,/);
-  assert.match(css, /\.os-habit-action-copy,[\s\S]*?\.os-habit-identity-copy[\s\S]*?transition: opacity 220ms/);
-  assert.match(css, /\.os-habit-copy-swap\.show-identity \.os-habit-action-copy[\s\S]*?opacity: 0/);
-  // The identity is shown once the row has finished making room for it, not on
-  // a delay of its own — a delay counted from the tick drifted away from the
-  // timer that moves the height, and the identity could arrive before the space.
-  assert.match(css, /\.os-habit-copy-swap\.show-identity\.has-settled \.os-habit-identity-copy[\s\S]*?opacity: 1/);
-});
+test("legacy Habit setup preserves answers through reload and creates its habit only once completed", () => {
+  const at = "2026-11-01T08:00:00.000Z";
+  const values = [
+    ["habit-action", "Walk five minutes"],
+    ["habit-time-place", "after coffee"],
+    ["habit-identity", "a steady walker"],
+  ];
+  const chapter = {
+    id: "habit-building", version: 1, session: "habit", title: "Build a habit",
+    pages: [
+      ...values.map(([answerKey]) => ({ id: answerKey, type: "short-text", answerKey })),
+      { id: "result", type: "result" },
+      { id: "habit", type: "idle", body: "I will {{habit-action}} {{habit-time-place}}, so I can become {{habit-identity}}." },
+    ],
+  };
+  const run = createChapterRun(chapter, values.map(([answerKey, value]) => ({
+    pageId: answerKey, answerKey, value, displaySnapshot: value, answeredAt: at, changedAt: at,
+  })));
+  const state = storeChapterRun(createEmptyState(), run, "habit");
+  assert.strictEqual(applyHabitBuildingCompletion(state, chapter, run), state);
+  assert.deepEqual(state.habits.definitions, {}, "unfinished answers do not create a habit");
 
-test("arriving on the Page is not an event the identity animates through", () => {
-  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  const css = readFileSync("app/os/os-app.css", "utf8");
-
-  // Three things used to reach the swap as `showIdentity` going true, and only
-  // one of them is a change: the tick. Coming back to Routine, and closing the
-  // editor after a tap, are the row being what it already is. Sai: "identity
-  // flashes everytime i view the page."
-  assert.match(shell, /const justCompleted = completed && !wasCompleted\.current/);
-  assert.match(shell, /if \(showIdentity && justCompleted && !firstRun\.current\)/);
-  assert.match(shell, /setImmediate\(showIdentity\)/);
-
-  // The slow reveal and the three-second wait are both scoped to the change.
-  // Unscoped, the 720ms fade also ran on arrival, which is the flash itself.
-  assert.match(
-    css,
-    /\.os-habit-copy-swap\.show-identity\.has-settled:not\(\.is-immediate\)[\s\S]*?transition: opacity 720ms/,
-  );
-  assert.match(
-    css,
-    /\.os-habit-copy-swap\.show-identity:not\(\.has-settled\) \.os-habit-action-copy[\s\S]*?transition-delay: 3000ms/,
-  );
-
-  // The identity is the way back to the habit behind it.
-  assert.match(shell, /className="os-habit-identity-copy"[\s\S]*?onClick=/);
-  assert.match(shell, /showIdentity=\{Boolean\([\s\S]*?editingHabitId !== habit\.id/);
+  const completedRun = { ...run, status: "completed", currentPageId: "habit", furthestPageId: "habit", completedAt: at };
+  const completed = applyHabitBuildingCompletion(storeChapterRun(state, completedRun, "habit"), chapter, completedRun);
+  const reloaded = normalizeState(JSON.parse(JSON.stringify(completed)));
+  const habits = Object.values(reloaded.habits.definitions);
+  assert.equal(habits.length, 1);
+  assert.deepEqual([habits[0].action, habits[0].cue, habits[0].identity], values.map(([, value]) => value));
+  assert.equal(habits[0].text, "I will Walk five minutes after coffee, so I can become a steady walker.");
+  assert.equal(habits[0].setupRunId, run.runId);
+  assert.deepEqual(reloaded.chapters.runs[run.runId], completedRun, "the original version and answers survive reload");
+  assert.strictEqual(applyHabitBuildingCompletion(reloaded, chapter, reloaded.chapters.runs[run.runId]), reloaded);
 });
 
 test("one gap separates Habits from Tasks, declared once", () => {

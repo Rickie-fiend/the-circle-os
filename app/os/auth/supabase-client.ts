@@ -2,6 +2,7 @@ import { createClient, type Session } from "@supabase/supabase-js";
 import { activateAccountScope, getAccountScope } from "../account-scope";
 import { verifyOfflineProof, type OfflineProof } from "./offline-proof";
 import type { AuthAdapter } from "./auth-controller";
+import { localAuth } from "./offline-auth-store";
 
 export type AuthConfig = { mode: "legacy" | "supabase" | "test" | "invalid"; url: string; key: string };
 export function readAuthConfig(): AuthConfig {
@@ -39,18 +40,30 @@ export function createSupabaseAdapter(config: AuthConfig) {
     try { return JSON.parse(localStorage.getItem(proofKey) || "null"); } catch { return null; }
   }
   const assertCurrent = (attempt: number) => { if (attempt !== revision) throw new Error("The account changed. Please sign in again."); };
-  function forget() {
+  async function forget() {
     ++revision;
     localStorage.setItem(closedKey, "yes");
     localStorage.removeItem(proofKey);
     localStorage.removeItem(flowKey);
+    await localAuth(prefix, { proof: null });
   }
   async function offline() {
+    const attempt = revision;
     if (localStorage.getItem(closedKey) === "yes" || localStorage.getItem(flowKey)) return null;
-    const identity = await verifyOfflineProof(readProof(), issuer);
+    let stored = await localAuth(prefix);
+    if (!stored) {
+      const old = readProof();
+      if (!await verifyOfflineProof(old, issuer)) return null;
+      stored = await localAuth(prefix, { proof: old, expected: null });
+    }
+    const identity = await verifyOfflineProof(stored?.proof || null, issuer);
+    const current = await localAuth(prefix);
+    assertCurrent(attempt);
+    if (current?.epoch !== stored?.epoch || localStorage.getItem(closedKey) === "yes" || localStorage.getItem(flowKey)) return null;
     return identity ? { ...identity, offline: true } : null;
   }
-  async function verify(session: Session | null, attempt: number) {
+  async function verify(session: Session | null, attempt: number, epoch: string | null) {
+    assertCurrent(attempt);
     if (!session) return null;
     const { data, error } = await client.auth.getUser(session.access_token);
     assertCurrent(attempt);
@@ -64,6 +77,8 @@ export function createSupabaseAdapter(config: AuthConfig) {
     const alias = typeof user.user_metadata?.alias === "string" ? user.user_metadata.alias.trim().slice(0, 40) : "";
     const proof: OfflineProof = { issuer, accountId: user.id, alias, token: session.access_token, jwks, confirmed: true };
     if (!await verifyOfflineProof(proof, issuer)) throw new Error("This project needs an asymmetric signing key before offline access can be used.");
+    assertCurrent(attempt);
+    await localAuth(prefix, { proof, expected: epoch });
     assertCurrent(attempt);
     localStorage.setItem(proofKey, JSON.stringify(proof));
     localStorage.removeItem(closedKey);
@@ -89,37 +104,40 @@ export function createSupabaseAdapter(config: AuthConfig) {
         if (checked.error || !checked.data.user?.email_confirmed_at) throw new Error("Please request a new password link.");
         return { id: checked.data.user.id, alias: "", passwordRequired: true };
       }
-      if (localStorage.getItem(closedKey) === "yes") return null;
+      if (localStorage.getItem(closedKey) === "yes" || (await localAuth(prefix))?.proof === null) return null;
       // Recovery/invitation sessions are never normal app sessions until the
       // new password has been saved, including across a browser reload.
       if (!navigator.onLine) return offline();
+      const epoch = (await localAuth(prefix))?.epoch ?? null;
       try {
         const { data, error } = await client.auth.getSession();
         assertCurrent(attempt);
         if (error) throw error;
-        const identity = await verify(data.session, attempt);
-        if (!identity) forget();
+        const identity = await verify(data.session, attempt, epoch);
+        if (!identity) await forget();
         return identity;
       } catch (error) {
         assertCurrent(attempt);
         if (isNetworkError(error)) return offline();
-        forget(); throw error;
+        if (error instanceof Error && error.name === "AuthScopeChanged") throw error;
+        await forget(); throw error;
       }
     },
     async signIn(email, password) {
       if (!navigator.onLine) throw new Error("Connect to the internet to sign in.");
-      forget(); const attempt = revision;
+      await forget(); const attempt = revision;
+      const epoch = (await localAuth(prefix))?.epoch ?? null;
       const { data, error } = await client.auth.signInWithPassword({ email: email.trim(), password });
       assertCurrent(attempt);
       if (error) throw error;
       localStorage.removeItem(flowKey);
-      const identity = await verify(data.session, attempt);
+      const identity = await verify(data.session, attempt, epoch);
       client.auth.startAutoRefresh();
       return identity;
     },
     async consumeLink(link) {
       if (!navigator.onLine) throw new Error("Connect to the internet to open this link.");
-      forget(); const attempt = revision;
+      await forget(); const attempt = revision;
       localStorage.setItem(flowKey, link.type);
       const { error } = await client.auth.verifyOtp(link);
       assertCurrent(attempt);
@@ -129,12 +147,13 @@ export function createSupabaseAdapter(config: AuthConfig) {
       if (!navigator.onLine) throw new Error("Connect to the internet to save your password.");
       if (!localStorage.getItem(flowKey)) throw new Error("Please request a new password link.");
       const attempt = revision;
+      const epoch = (await localAuth(prefix))?.epoch ?? null;
       const { error } = await client.auth.updateUser({ password });
       assertCurrent(attempt);
       if (error) throw error;
       const { data, error: sessionError } = await client.auth.getSession();
       if (sessionError) throw sessionError;
-      const identity = await verify(data.session, attempt);
+      const identity = await verify(data.session, attempt, epoch);
       assertCurrent(attempt); localStorage.removeItem(flowKey);
       return identity;
     },
@@ -143,12 +162,13 @@ export function createSupabaseAdapter(config: AuthConfig) {
       if (!value || value.length > 40) throw new Error("Use an alias between 1 and 40 letters or characters.");
       if (!navigator.onLine) throw new Error("Connect to the internet to save your alias.");
       const attempt = revision;
+      const epoch = (await localAuth(prefix))?.epoch ?? null;
       const { error } = await client.auth.updateUser({ data: { alias: value } });
       assertCurrent(attempt);
       if (error) throw error;
       const { data, error: sessionError } = await client.auth.getSession();
       if (sessionError) throw sessionError;
-      return verify(data.session, attempt);
+      return verify(data.session, attempt, epoch);
     },
     async signOut() {
       client.auth.stopAutoRefresh();
