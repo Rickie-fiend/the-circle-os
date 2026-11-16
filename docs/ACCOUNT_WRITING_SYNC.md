@@ -1,5 +1,75 @@
 # Account writing storage and transport
 
+## Local synthetic backup and restore — 2026-11-15
+
+Approved rehearsal complete: two exact database/media restores and two complete
+360/390px browser selections pass. Missing/corrupt backup rejection, pre-commit
+connection-termination rollback, owner isolation and stable retry pass. Final
+build/TypeScript, lint and existing focused suite 69/69 pass; cleanup confirmed.
+
+**Open safety failure:** an older snapshot restores a later-deleted entry/account
+and loses a newer accepted edit. Independent deletion suppression remains
+unimplemented. Local timings do not certify production recovery or 30-day expiry.
+No product-code, migration-file, hosted-resource or live-sync change; original backup untouched.
+[Evidence](USER_JOURNEY_TESTING.md#local-synthetic-backup-and-restore--2026-11-15)
+and [procedure](BACKUP_RESTORE_RUNBOOK.md).
+
+Next: review independent deletion/account-revocation evidence and current/off-site
+backup coverage before proposing the operating implementation.
+
+## Backup readiness audit — 2026-11-15
+
+Approved audit/documentation scope complete. [Runbook](BACKUP_RESTORE_RUNBOOK.md)
+records connector-confirmed Free plan, Singapore/PostgreSQL 17 project and empty
+branch list. Signed-in scheduled-backup Dashboard explicitly reports Free Plan
+does not include project backups. Developer then identified the existing local
+backup at D:/CircleOS-backups/before-catalog-003. Read-only inspection confirms
+roles/schema/data SQL, four writing tables, Auth data and one image; file times
+are 2026-11-12 06:56–06:58 Bangkok. This is a pre-catalog-003 historical copy,
+not a restore-verified/current backup. Off-site copies and scheduling remain
+unknown. Detailed coverage and limitations are in the runbook.
+
+Deletion markers live in the same database; restoring an older backup can predate
+them. Independent post-backup deletion/account/session reconciliation is proposed,
+not implemented. Production loss window, restore time and 30-day deleted-backup
+expiry remain unverified. The runbook prepares a synthetic local rehearsal and
+separate hosted drill gates, acceptance matrix, cost/target checks and cleanup.
+
+Next: review current/off-site coverage and independent deletion evidence, then
+approve a concrete isolated rehearsal. No new dump, restore, provisioning, product code,
+migration, live-sync activation, commit or deployment occurred.
+
+Hosted recovery follow-up — 2026-11-15: final clearing-inclusive hosted
+journeys pass twice at 360/390px with fresh A/B accounts per width. Corrected a
+History-row click during a guarded Page transition; test-only Send diagnostics
+remain. Earlier intermittent Send failure did not recur and is not marked fixed.
+Build/TypeScript, focused lint and 58/58 model/transport tests pass. All temporary
+accounts removed; scoped SQL confirms zero writing rows. No runtime/deployment
+change; sync stays off, phones deferred. Next review backup/restore separately.
+See [evidence](USER_JOURNEY_TESTING.md#hosted-recovery-diagnostics-and-repeat-acceptance--2026-11-15).
+
+Hosted production-store recovery — 2026-11-14: isolated sync-enabled production
+build now has real Auth/RPC recovery evidence at 360/390px using temporary accounts.
+Accepted writing restores exactly; interrupted recovery retries, local-only work
+does not return, deletion suppresses stale records and accounts remain separated.
+Final clearing-inclusive acceptance fails: latest run times out waiting for Deep
+Thought Send to create a saved entry; clearing remains unverified. Earlier complete
+recovery selection passed both widths, but current acceptance is not complete.
+Completed runs deleted temporary users; scoped writing-table cleanup is verified.
+Diagnose the Send/fixture boundary before a separate product-fix proposal.
+Live activation remains
+off; database backup restoration, retention, local-only draft protection and phone
+acceptance remain open. See [evidence](USER_JOURNEY_TESTING.md#hosted-production-writing-recovery--2026-11-14).
+
+Storage-loss qualification — 2026-11-14: approved synthetic desktop checks now
+cover partial and full local-data removal. Production recovery 24/24, store 22/22,
+provider 16/16 and controller/proof 12/12 pass; build/TypeScript and lint pass.
+Automatic writing sync stays off.
+Full origin loss has no unbacked-writing recovery source. Phone/OS eviction,
+hosted restore, retention and remote stale-copy suppression remain open.
+Next review backup/restore separately. Earlier gap lists are qualified only by
+this bounded evidence. See [results and limits](USER_JOURNEY_TESTING.md#storage-loss-and-recovery--2026-11-14).
+
 Durable-entry update — 2026-11-14: approved IndexedDB proof/closed-state fix now
 passes the complete 360/390px crash journeys, including exact writing/drafts,
 offline edits, clearing, empty composer, completed logout and account return.

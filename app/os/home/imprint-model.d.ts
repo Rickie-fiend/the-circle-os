@@ -1,0 +1,15 @@
+export type Point = [number, number];
+export type ImprintArea = "starting" | "notes" | "thoughts" | "routine" | "log-week" | "protocol";
+export type LegacyRecipe = { version: 1; phase: number; bend: number; turns: number; spread: number; twist: number; fullness: number };
+export type ThreadBundle = { area: ImprintArea; outer: Point[]; inner: Point[]; light: number; lightPhase?: number; accent: number; occlude?: boolean };
+export type ThreadRecipe = Omit<LegacyRecipe, "version"> & { version: 2; bundles: ThreadBundle[] };
+export type DrawingRecipe = LegacyRecipe | ThreadRecipe | FoldRecipe;
+export type OnboardingInput = { name: string; birthday: string; answers: Record<string, unknown>; feeling?: number };
+export const IMPRINT_AREAS: readonly ImprintArea[];
+export function createImprintRecipe(input: OnboardingInput): FoldRecipe;
+export function createThreadRecipe(input: OnboardingInput): ThreadRecipe;
+export function retainImprintRecipe(existing: DrawingRecipe | null | undefined, input: OnboardingInput): DrawingRecipe;
+export function imprintThreads(recipe: DrawingRecipe, count?: number): (ThreadBundle & { threads: { points: Point[]; u: number; width: number; light: number; grain: number }[] })[];
+export function imprintPoint(recipe: LegacyRecipe, t: number, strand: number): { x: number; y: number; z: number; light: number };
+export function imprintSegments(recipe: LegacyRecipe, strands?: number, steps?: number): { points: { x: number; y: number; z: number; light: number }[]; depth: number; area: ImprintArea; t: number; strand: number }[];
+import type { FoldRecipe } from "./imprint-folds";

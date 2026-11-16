@@ -121,6 +121,28 @@ async function isolated(width, work) {
   } finally { await context.close(); }
 }
 
+for (const width of [360,390]) test(`storage-loss: erased A ledger cannot borrow B or old local copies at ${width}px`, {timeout:60000}, async()=>isolated(width,async page=>{
+  const before=await page.evaluate(async()=>{
+    const a=window.api;
+    const deleted=await a.seed("Permanently removed synthetic text");
+    await a.life("trash",deleted.entryId);await a.life("delete",deleted.entryId,{confirmed:true});
+    await a.seed("A lost writing");await a.write(a.input("A lost draft"));
+    localStorage.setItem("circle-os-state-v2:account:synthetic-a",JSON.stringify({oldAnswer:"Permanently removed synthetic text"}));
+    a.activateAccountScope("synthetic-b");await a.seed("B retained writing");
+    const b=await a.load();a.init();
+    await new Promise((yes,no)=>{const r=indexedDB.deleteDatabase("circle-os-writing-v1:account:synthetic-a");r.onsuccess=yes;r.onerror=()=>no(r.error);r.onblocked=()=>no(Error("Disposable database deletion blocked"));});
+    return b;
+  });
+  await page.reload();await page.waitForFunction(()=>Boolean(window.api));
+  const after=await page.evaluate(async()=>{
+    const a=window.api;a.init();const empty=await a.load();
+    a.activateAccountScope("synthetic-b");const b=await a.load();return {empty,b};
+  });
+  assert.deepEqual(after.empty.entries,{});assert.deepEqual(after.empty.drafts,{});
+  assert.equal(JSON.stringify(after.empty).includes("Permanently removed synthetic text"),false);
+  assert.deepEqual(after.b,before);
+}));
+
 for (const width of [390, 360]) {
   test(`draft recovery, lost-response retry and saved versions at ${width}px`, { timeout: 60_000 }, async () => isolated(width, async page => {
     const draftId = await page.evaluate(async () => { const a=window.api, d=a.input(); await a.write(d); return d.id; });

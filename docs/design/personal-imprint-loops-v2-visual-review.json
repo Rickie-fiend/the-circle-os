@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-16",
+  "status": "review-with-limitations",
+  "inspected": [
+    "Six full-image browser comparison at 1280px",
+    "Six silhouettes in a common frame",
+    "360/390/416px browser layout and recipe actions",
+    "Mira crown detail and Noor 390px export",
+    "Sori whole-loop diagnostic including rear returns",
+    "Front/angled SVG strand controls, all three selected loops for each form at 390px"
+  ],
+  "samples": [
+    {
+      "id": "mira",
+      "recipeHash": "37f633c516a90151fab020df1c9b7be915272a439bbd5f766b135abcad2f946b",
+      "geometryHash": "2c4cccf89aa6588efce3f5789eb65acea5fc5003b79ec53c8b551506c0b3823c",
+      "renderHash": "9caa25e7852db78c9728cfd3cb898ef140fd794d2475fd3eb9b157b979779a87"
+    },
+    {
+      "id": "arun",
+      "recipeHash": "47fafe96f7515479d95f66c4dfb3e184f561ae2bda7bbe99fa0c4d3e129ac912",
+      "geometryHash": "fd24df97f94271fb8382c915744d965571596abb7ec535af23a65ed14d04aef0",
+      "renderHash": "728316d84eec04860f2259bd3ab64ea60f3b5b75fb48c961a18fbfef330d3dc3"
+    },
+    {
+      "id": "lin",
+      "recipeHash": "1249c0ae48e865cd111a64601a8ccb73eb1286bb830b86f719ada28dd1bd5469",
+      "geometryHash": "0b95dced22bd6fe5a44ba4d27f1ebbf93b3e0060eedc25f7203cbf3d547b5760",
+      "renderHash": "72ed77bdabe242bab87eecb6e6645c2c01a384650b1cab58b2272a9a2d9d2433"
+    },
+    {
+      "id": "noor",
+      "recipeHash": "592edf65a831b512de613e2e1455dd83e647414b938ca57410460476ca185da8",
+      "geometryHash": "96a92ed0533588cc63bd62110ebc8cd34bd3a6033862c46c5f4a6c278353db8c",
+      "renderHash": "8a09fa9b1c1d59edcc5d8c933d196e4e143921893072c4834171d639b6f090f1"
+    },
+    {
+      "id": "tala",
+      "recipeHash": "1eab724e53c081bb9bbadaa233e665214a4ed818916f833fb6704c8d230f8d63",
+      "geometryHash": "5119deed8281855432414c2a05001caa754409aa06bb595d368e9b1fce419f09",
+      "renderHash": "e0f9eee06950d136f12d51543faecc139a4f1672896c085e21e0c0dcf0cacc5b"
+    },
+    {
+      "id": "sori",
+      "recipeHash": "e9c4457e45e593dad291c09cc39e199fdbaf19eff234d58646a50caecf6361fe",
+      "geometryHash": "49fc37d387c605fbef739f1463eae73d392e4a6301fa015e8fc1daa9a9aed5a2",
+      "renderHash": "c755918da853bd8f786f0ef2d62f8cd3cccf779530b41204349e2f1b96239ee7"
+    }
+  ],
+  "observations": [
+    "The six examples differ in lobe placement, fold direction, aspect and main openings. Mira and Lin remain visibly related, while Noor is narrower and Tala/Sori have different stacked returns.",
+    "Only round fibre tubes produce visible material and occlude other tubes. The closed bundle guide is invisible and supplies broad lighting estimates. No silhouette clip, guide-depth rejection or hidden endpoint is used to finish a strand.",
+    "Crossovers show rear strands through open spacing between front strands. Complete traced curves include their hidden returns; the final geometry has no strand ends.",
+    "The appearance is still more orderly, thinner and darker than the original reference. Tight folds can read as pinched even though their curves are continuous. The narrow Noor form has less apparent fullness than the broader examples.",
+    "The silhouette view represents the projected bundle guide; small thread interstices are not main openings. Low-resolution mask edges are diagnostic, not the final artwork boundary.",
+    "Finite projected-crossing checks and one projected component do not establish complete physical non-intersection or welded connectivity. Broad guide-derived shadows are an approximation, not path-traced fibre illumination."
+  ],
+  "implementationReviewed": true,
+  "finalVisualGatePassed": false,
+  "finalDeveloperAcceptance": "pending",
+  "next": "Developer compares the six forms, their phone images and whole-strand views against the original reference before approving further artwork or Orange/source integration."
+}

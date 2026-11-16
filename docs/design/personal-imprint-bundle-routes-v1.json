@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "structure": "docs/design/personal-imprint-structure-v1.json",
+  "meaning": "Visible projected ribbon courses. Widths are reference pixels, not physical thickness. Endpoints are construction ports, not strand ends. No hidden connections or depth order are established.",
+  "parameterization": "u is normalized distance along the visible guide; v from -1 to 1 keeps a fixed position across the ribbon. Left/right use the guide direction. Width stations are full widths, interpolated with smoothstep.",
+  "bundles": [
+    {"id":"B1","widths":[[0,12],[0.15,30],[0.35,52],[0.55,64],[0.75,62],[0.9,38],[1,12]],"entry":"Crown approach, continuation unresolved","exit":"Upper underside at F2, hidden return unresolved"},
+    {"id":"B2","widths":[[0,10],[0.2,22],[0.4,28],[0.6,24],[0.8,30],[1,10]],"entry":"Left shoulder approach","exit":"Shoulder/diagonal junction F1; overlap, not automatic join"},
+    {"id":"B3","widths":[[0,12],[0.2,36],[0.4,50],[0.6,74],[0.8,60],[1,14]],"entry":"Left fan upper rim","exit":"Diagonal approach near F1; continuation unresolved"},
+    {"id":"B4","widths":[[0,12],[0.2,34],[0.4,28],[0.6,42],[0.8,30],[1,10]],"entry":"Upper diagonal approach","exit":"Lower return approach; depth/continuation unresolved"},
+    {"id":"B5","widths":[[0,10],[0.2,30],[0.4,54],[0.6,62],[0.8,54],[1,12]],"entry":"Lower fan lip at F3","exit":"Bottom fan return; hidden continuation unresolved"},
+    {"id":"B6","widths":[[0,10],[0.2,24],[0.4,42],[0.6,48],[0.8,32],[1,12]],"entry":"Left waist return","exit":"Lower crossing F4; overlap, not automatic join"}
+  ],
+  "junctions": [
+    {"id":"F1","kind":"overlap candidate","between":["B2","B4"],"join":false,"reason":"Visible shoulder/diagonal junction does not establish matching thread identities."},
+    {"id":"F2","kind":"disappearance candidate","between":["B1","B4"],"join":false,"reason":"Upper underside may conceal a continuation. Resolve depth in step 3."},
+    {"id":"F3","kind":"overlap candidate","between":["B4","B5"],"join":false,"reason":"Waist lip visible; hidden routing unknown."},
+    {"id":"F4","kind":"overlap candidate","between":["B4","B6"],"join":false,"reason":"Lower crossing has separate visible flow families. No proximity connection."}
+  ],
+  "reserveOwnership": [
+    {"id":"R1","bounds":[0,0,1024,325],"owner":"B1","reason":"Crown outer rim; follows the crown envelope."},
+    {"id":"R2","bounds":[0,325,550,470],"owner":"B2","reason":"Shoulder/approach rim beside the enclosed opening."},
+    {"id":"R3","bounds":[550,325,1024,770],"owner":"B1","reason":"Upper right underside/rim follows crown return."},
+    {"id":"R4","bounds":[0,470,550,900],"owner":"B3","reason":"Left fan exterior rim."},
+    {"id":"R5","bounds":[0,900,400,1536],"owner":"B6","reason":"Lower left exterior return."},
+    {"id":"R6","bounds":[550,770,1024,1536],"owner":"B5","reason":"Lower right fan exterior rim."},
+    {"id":"R7","bounds":[400,900,550,1536],"owner":"B5","reason":"Bottom tip belongs to lower fan envelope; inner crossing remains provisional."}
+  ],
+  "reserveRule": "Ownership applies only to U3 material outside all original territories. Bounding rectangles are selectors, not fill geometry. Ownership does not extend ribbon rails or authorize thread generation there. Material without an owner remains explicitly unresolved; U1/U2 depth stays provisional."
+}

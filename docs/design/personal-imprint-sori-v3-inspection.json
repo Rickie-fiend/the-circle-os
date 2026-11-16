@@ -1,0 +1,339 @@
+{
+  "status": "review-with-limitations",
+  "readyForReview": true,
+  "sourceHashes": {
+    "scripts/lib/imprint-sori-geometry.mjs": "abe738690ad1c0b643e98d3fd45c7fd453252e9924fd318ccf7b3cfbc7e098b5",
+    "scripts/lib/imprint-loop-geometry.mjs": "c1152c8a07caa7f2388ab40b9e58e20d7af1c24c8bd227588ff357150c655b0a",
+    "scripts/lib/imprint-loop-crossings.mjs": "e2d660d734cb2d00b78f839f587955ea1714bd6254b04773a37371e6d700e888",
+    "scripts/lib/imprint-material-renderer.mjs": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "scripts/render-imprint-sori.mjs": "a4e7fa8e1492105261ff900fe4ebad60b202fe69bbcc6084e856e486f418544b"
+  },
+  "overlaps": {
+    "count": 7,
+    "markers": [
+      [
+        490,
+        230
+      ],
+      [
+        470,
+        530
+      ],
+      [
+        245,
+        675
+      ],
+      [
+        650,
+        640
+      ],
+      [
+        470,
+        840
+      ],
+      [
+        580,
+        1020
+      ],
+      [
+        420,
+        1200
+      ]
+    ],
+    "method": "Internal visual count of broad fold/overlap regions; developer review pending, not individual filament intersections."
+  },
+  "geometryHash": "53f96ec7b711f56bb6117dce846cb5361d79c6a9171ddc44f8b3e8cff37065e8",
+  "recipe": {
+    "kind": "closed-loop",
+    "version": 2,
+    "method": "periodic-folded-bundle-v1",
+    "family": "return",
+    "controls": [
+      [
+        420,
+        220,
+        42,
+        225.556251,
+        0.187664
+      ],
+      [
+        630,
+        250,
+        84,
+        192.54202049999998,
+        0.376286
+      ],
+      [
+        680,
+        420,
+        266,
+        184.861932,
+        -0.330654
+      ],
+      [
+        460,
+        570,
+        448,
+        265.79121150000003,
+        -0.266919
+      ],
+      [
+        230,
+        400,
+        98,
+        259.06776,
+        0.357765
+      ],
+      [
+        260,
+        630,
+        56,
+        253.16701949999998,
+        -0.52565
+      ],
+      [
+        470,
+        760,
+        336,
+        257.9097495,
+        0.044193
+      ],
+      [
+        770,
+        620,
+        112,
+        260.1705705,
+        0.412522
+      ],
+      [
+        790,
+        910,
+        42,
+        280.332138,
+        -0.207617
+      ],
+      [
+        550,
+        1000,
+        420,
+        192.89039549999998,
+        0.662914
+      ],
+      [
+        300,
+        850,
+        112,
+        217.35477600000002,
+        0.132552
+      ],
+      [
+        360,
+        1030,
+        42,
+        228.14972999999998,
+        -0.458751
+      ],
+      [
+        450,
+        1180,
+        84,
+        260.1703725,
+        0.685145
+      ],
+      [
+        600,
+        1110,
+        280,
+        237.43375049999997,
+        0.137446
+      ],
+      [
+        540,
+        880,
+        503.99999999999994,
+        240.23090399999998,
+        -0.273531
+      ],
+      [
+        370,
+        640,
+        251.99999999999997,
+        232.402671,
+        0.320379
+      ],
+      [
+        540,
+        410,
+        112,
+        209.1310335,
+        -0.146818
+      ]
+    ],
+    "filamentCount": 128,
+    "thickness": 36.95609952695668,
+    "phase": 0.03919427325762808,
+    "grain": 4.782327281389938
+  },
+  "steps": 1536,
+  "inspection": {
+    "strands": 128,
+    "ends": 0,
+    "closureFailures": 0,
+    "maxSeamPosition": 8.202999702951849e-13,
+    "maxSeamTangent": 3.834298230240177e-9,
+    "maxSeamCurvature": 0.00008200845256766523,
+    "peakTurnDegrees": 26.433310932628654,
+    "minStep": 0.5738851370510588,
+    "nonfinite": 0,
+    "outside": 0,
+    "majorHoles": 3,
+    "holeAreasSourcePixels": [
+      3200,
+      1664,
+      1664
+    ],
+    "minorHoles": 2,
+    "connectedComponents": 1,
+    "materialArea": 850592,
+    "mirroredIoU": 0.7706501465494271,
+    "projectedCrossings": 79778,
+    "nearCrossings": 0,
+    "minCrossingDepth": 1.6116461249004859
+  },
+  "gates": {
+    "closed": true,
+    "tangentContinuous": true,
+    "curvatureContinuous": true,
+    "finite": true,
+    "insideFrame": true,
+    "smoothTurns": true,
+    "connected": true,
+    "openingLimit": true,
+    "asymmetric": true,
+    "depthSeparation": true
+  },
+  "outputs": {
+    "390": {
+      "path": "docs/design/personal-imprint-sori-v3-390.png",
+      "hash": "8030b0384908831bd858859633a49f8c78f429f1a162d6d3c267d14d0031b6e3"
+    },
+    "full": {
+      "path": "docs/design/personal-imprint-sori-v3-full.png",
+      "hash": "04747e1b1f3bb0c9885f8b8596d7167106f89dcf80fe7c7ebe07ae35660d21cf"
+    },
+    "crown": {
+      "path": "docs/design/personal-imprint-sori-v3-crown.png",
+      "hash": "d76b1561154f04a0069325e494122f6d8695beade8eb61ea4931c0edffbff44a"
+    },
+    "shoulder": {
+      "path": "docs/design/personal-imprint-sori-v3-shoulder.png",
+      "hash": "4830e3828bdb33b6effa0d6b0c23b0b50b04ab88955fdb473b925afb3cfffbce"
+    },
+    "lower": {
+      "path": "docs/design/personal-imprint-sori-v3-lower.png",
+      "hash": "b0ca9672c550a9cc7828948a8867f8865289e26b88aa100d38ca00f266863dcd"
+    },
+    "shadows": {
+      "path": "docs/design/personal-imprint-sori-v3-shadows.png",
+      "hash": "6749563782615072ea0b70a235f65dcdc527f332cecba2630e463088285ecd59"
+    }
+  },
+  "renderHash": "04747e1b1f3bb0c9885f8b8596d7167106f89dcf80fe7c7ebe07ae35660d21cf",
+  "strands": {
+    "count": 128,
+    "represented": 128,
+    "visibleSegments": 196608,
+    "hiddenSegments": 0
+  },
+  "material": {
+    "materialPixels": 850280,
+    "shadowedPixels": 357057,
+    "contactShadowSamples": 2332306,
+    "shadowSource": "surface depth horizon and short rays against other generated fibres",
+    "colorSpace": "linear light, sRGB output",
+    "fibreSamples": 5054887,
+    "nonfiniteShades": 0,
+    "clippedHighlights": 0,
+    "minShade": 2.8929081265921532e-12,
+    "maxShade": 0.9366069436073303,
+    "supersampling": 3
+  },
+  "independent": {
+    "geometryReproduced": true,
+    "reference": {
+      "area": 15232,
+      "bounds": [
+        332,
+        392,
+        468,
+        528
+      ],
+      "widthRatio": 0.16355140186915887,
+      "heightRatio": 0.10324483775811209
+    },
+    "openings": [
+      {
+        "area": 3200,
+        "bounds": [
+          472,
+          604,
+          552,
+          672
+        ],
+        "widthRatio": 0.09375,
+        "heightRatio": 0.056962025316455694
+      },
+      {
+        "area": 1664,
+        "bounds": [
+          560,
+          900,
+          600,
+          960
+        ],
+        "widthRatio": 0.049107142857142856,
+        "heightRatio": 0.05063291139240506
+      },
+      {
+        "area": 1664,
+        "bounds": [
+          476,
+          1100,
+          544,
+          1132
+        ],
+        "widthRatio": 0.08035714285714286,
+        "heightRatio": 0.028481012658227847
+      }
+    ],
+    "gates": {
+      "closed": true,
+      "tangentContinuous": true,
+      "curvatureContinuous": true,
+      "finite": true,
+      "insideFrame": true,
+      "smoothTurns": true,
+      "connected": true,
+      "openingLimit": true,
+      "asymmetric": true,
+      "depthSeparation": true
+    },
+    "openingScale": true,
+    "sourcesCurrent": true,
+    "assetsCurrent": true,
+    "pixels": {
+      "clipped": 0,
+      "transparent": 0
+    }
+  },
+  "limits": [
+    "Overlap markers are an internal visual review, not an automated proof of every visible overlap.",
+    "Reference opening uses the preserved authored boundary, an approximation of the pictured rim.",
+    "Finite projected crossing checks are not a full physical collision proof.",
+    "Final visual acceptance remains pending."
+  ],
+  "colorCaptureCompatibility": {
+    "rendererHash": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "proof": "Seven accepted monochrome full PNGs reproduced exactly; capture changes no shading or geometry."
+  }
+}

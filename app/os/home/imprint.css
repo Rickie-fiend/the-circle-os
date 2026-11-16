@@ -1,0 +1,37 @@
+.personal-imprint { display: block; width: 100%; height: auto; aspect-ratio: 520 / 800; }
+@font-face { font-family: "Imprint Review Geist"; src: url("/fonts/geist-latin.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+.imprint-study { background: #191813; color: #f1efe8; font-family: "Imprint Review Geist", sans-serif; min-height: 100vh; padding: 24px; box-sizing: border-box; }
+.imprint-study a { display: inline-flex; align-items: center; min-height: 44px; }
+.imprint-master-comparison a { color: inherit; }
+.imprint-study summary { min-height: 44px; padding-top: 12px; box-sizing: border-box; cursor: pointer; }
+.imprint-study details p { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.imprint-study a:focus-visible, .imprint-study summary:focus-visible { outline: 2px solid #e36b37; outline-offset: 3px; }
+.imprint-study-art { max-width: 520px; margin: auto; background: #191813; }
+.imprint-master-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 520px)); gap: 24px; justify-content: center; }
+.imprint-master-comparison figure { margin: 0; min-width: 0; }
+.imprint-master-comparison figcaption { padding: 12px 0; }
+.imprint-master-image { display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; }
+.imprint-personal-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 390px)); gap: 24px; justify-content: center; }
+.imprint-personal-grid figure { margin: 0; min-width: 0; }
+.imprint-personal-grid figcaption { padding: 12px 0; }
+.imprint-personal-grid figcaption span { display: block; font-size: 14px; padding-top: 8px; color: #f1efe8b3; }
+.imprint-personal-grid a { color: inherit; }
+.imprint-loop-grid { grid-template-columns: repeat(3, minmax(0, 390px)); }
+.imprint-loop-reference, .imprint-loop-trace { display: block; width: 100%; max-width: 390px; height: auto; aspect-ratio: 2 / 3; margin: 16px auto; }
+.imprint-study > p > a { color: inherit; }
+.imprint-personal-checks { max-width: 680px; margin: 24px auto; }
+.imprint-personal-checks label { display: block; padding-bottom: 8px; }
+.imprint-personal-checks select { min-height: 44px; padding: 8px 16px; background: #191813; color: #f1efe8; border: 1px solid #f1efe844; border-radius: 8px; font: inherit; }
+.imprint-personal-checks .imprint-study-controls { margin: 16px 0; max-width: none; }
+.imprint-personal-checks select:focus-visible { outline: 2px solid #e36b37; outline-offset: 3px; }
+.imprint-personal-checks button:disabled { opacity: .6; }
+.imprint-personal-checks input[type=range] { display:block; width:100%; min-height:44px; accent-color:#e36b37; }
+.imprint-personal-checks > button { min-height:44px; padding:8px 16px; font:inherit; background:#403e35; color:#f1efe8; border:1px solid #f1efe844; border-radius:8px; }
+@media (max-width: 1100px) { .imprint-personal-grid { grid-template-columns: repeat(2, minmax(0, 390px)); } }
+@media (max-width: 760px) { .imprint-personal-grid { grid-template-columns: minmax(0, 390px); } }
+@media (max-width: 760px) { .imprint-master-comparison { grid-template-columns: minmax(0, 520px); } }
+.imprint-study-controls { max-width: 520px; margin: 24px auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.imprint-study-controls button { min-height: 44px; padding: 8px 16px; background: #403e35; color: #f1efe8; border: 1px solid #f1efe844; border-radius: 8px; font: inherit; }
+.imprint-study-controls button:focus-visible { outline: 2px solid #e36b37; outline-offset: 3px; }
+.imprint-study-controls button[aria-pressed=true] { border-color: #e36b37; }
+@media (forced-colors: active) { .personal-imprint { forced-color-adjust: none; } }

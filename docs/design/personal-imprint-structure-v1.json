@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "status": "authored construction map; final artwork review follows steps 1–5",
+  "reference": "docs/design/personal-imprint-thread-reference-v1.png",
+  "viewBox": [0, 0, 1024, 1536],
+  "coordinates": "Reference pixels, origin top left; x right, y down.",
+  "meaning": "Projected bundle territories and visible flow only. No physical surface, depth, strand topology or personal data is inferred. Overlapping territories are intentional and do not establish depth order.",
+  "constructionRules": {
+    "allowedMaterial": "Inside S1, excluding enclosed openings. Exterior-connected void markers identify background cores; S1 owns their full edges.",
+    "allowedBundle": "Intersection of a bundle territory with allowedMaterial. Raw territory paths may overlap or extend beyond S1; never generate directly in their unclipped area.",
+    "uncertainRecesses": "U1 and U2 remain material candidates, not established holes. Review their depth before generating threads there.",
+    "unassignedMaterial": "U3: envelope material outside all six bundle territories. This boundary/transition reserve is explicit uncertainty, not permission to add threads. Assign it to an authored route in step 2 before use.",
+    "overlap": "Territory draw order is only diagram presentation. It is not physical front-to-back order.",
+    "flowArrows": "Reading direction for visible routes, not actual movement or a required direction for individual threads. Hidden continuations are unauthored."
+  },
+  "silhouette": {
+    "id": "S1",
+    "name": "Outer envelope",
+    "confidence": "authored approximation of visible outer threads",
+    "path": "M 728 73 C 823 65 898 132 925 218 C 951 291 949 407 936 470 C 920 558 862 595 779 613 C 707 628 624 618 579 660 C 540 697 543 747 576 780 C 606 812 674 807 736 826 C 818 839 868 881 886 957 C 916 1080 855 1221 777 1314 C 704 1394 602 1429 493 1426 C 387 1423 288 1374 239 1304 C 192 1243 174 1176 200 1111 C 222 1059 279 1027 302 982 C 317 945 278 909 241 878 C 164 820 108 747 94 667 C 77 595 106 520 158 485 C 181 470 211 466 230 450 C 253 429 250 382 290 350 C 334 314 375 327 421 339 C 468 353 510 341 531 300 C 548 266 552 210 589 159 C 625 110 678 78 728 73 Z"
+  },
+  "voids": [
+    {"id":"V1","name":"Shoulder opening","kind":"enclosed opening","confidence":"visually identified background opening; authored rim checked against reference scanlines","anchor":[404,454],"path":"M 393 393 C 427 391 451 413 465 440 C 478 463 473 495 455 514 C 437 535 397 539 368 520 C 344 505 330 483 331 459 C 331 433 344 414 363 404 C 374 398 384 394 393 393 Z"},
+    {"id":"V2","name":"Right waist bay","kind":"exterior connected gap","confidence":"clear background core; silhouette owns the actual edge","anchor":[751,716],"path":"M 704 655 C 753 635 824 643 868 669 C 900 690 899 746 858 777 C 817 805 751 800 697 783 C 648 768 611 747 612 714 C 612 687 653 668 704 655 Z"},
+    {"id":"V3","name":"Left waist bay","kind":"exterior connected gap","confidence":"clear background core; silhouette owns the actual edge","anchor":[216,982],"path":"M 170 926 C 193 912 229 926 250 948 C 266 966 265 990 247 1010 C 225 1034 184 1043 159 1021 C 134 1000 143 945 170 926 Z"}
+  ],
+  "bundles": [
+    {"id":"B1","name":"Crown curl","tone":"#86B3C2","anchor":[805,205],"path":"M 425 345 C 509 371 542 292 565 215 C 599 112 658 66 737 68 C 866 64 952 197 950 327 C 956 470 887 584 778 615 C 663 649 573 638 520 726 C 502 642 525 562 582 498 C 653 418 723 383 743 325 C 705 350 660 364 602 368 C 530 374 469 373 425 345 Z","guide":"M 562 350 C 616 316 571 192 688 130 C 793 74 899 179 891 320 C 886 439 785 493 667 552 C 601 585 561 618 543 657"},
+    {"id":"B2","name":"Shoulder loop","tone":"#C7AB78","anchor":[319,383],"path":"M 216 470 C 249 438 241 381 289 345 C 332 311 375 324 424 337 C 473 354 517 337 542 307 C 574 369 559 454 521 507 C 491 549 454 563 407 559 C 331 556 271 520 216 470 Z","guide":"M 251 453 C 280 429 272 378 323 361 C 372 345 405 379 449 368 C 493 359 523 391 513 440 C 508 469 496 490 476 509"},
+    {"id":"B3","name":"Left fan","tone":"#A9B88B","anchor":[164,648],"path":"M 231 448 C 269 471 307 501 364 516 C 412 533 472 524 522 485 C 542 562 516 630 474 686 C 433 740 381 801 365 884 C 353 946 358 1002 389 1043 C 321 1005 293 927 236 879 C 147 813 93 742 88 663 C 75 565 128 487 195 471 C 212 467 224 459 231 448 Z","guide":"M 236 497 C 111 526 105 630 148 716 C 191 802 300 830 347 758 C 396 683 432 604 486 560"},
+    {"id":"B4","name":"Central turn","tone":"#BA9CB9","anchor":[440,840],"path":"M 502 477 C 567 431 645 401 717 379 C 668 455 621 534 576 608 C 527 692 505 739 526 794 C 545 847 594 877 617 948 C 647 1045 611 1149 541 1228 C 498 1276 440 1328 430 1398 C 361 1357 330 1291 338 1220 C 348 1143 368 1101 349 1049 C 329 993 291 975 292 928 C 295 865 367 831 399 764 C 437 685 442 558 502 477 Z","guide":"M 641 440 C 557 508 500 589 483 684 C 465 777 438 819 403 860 C 352 919 357 971 401 1022 C 450 1080 421 1165 397 1235 C 382 1282 403 1331 424 1355"},
+    {"id":"B5","name":"Right lower fan","tone":"#C38D7E","anchor":[810,1042],"path":"M 521 754 C 557 797 611 805 683 813 C 804 820 869 870 891 965 C 923 1104 836 1284 735 1360 C 662 1414 576 1437 482 1426 C 486 1361 537 1305 588 1248 C 648 1179 679 1112 661 1044 C 643 976 592 941 549 897 C 510 857 499 800 521 754 Z","guide":"M 580 833 C 679 833 795 871 835 958 C 890 1075 809 1234 704 1311 C 655 1347 603 1371 551 1383"},
+    {"id":"B6","name":"Lower return","tone":"#8DB7AB","anchor":[294,1206],"path":"M 296 956 C 328 984 358 1011 363 1061 C 371 1128 332 1160 338 1217 C 345 1284 419 1278 476 1249 C 544 1216 604 1162 636 1101 C 661 1174 635 1255 588 1322 C 561 1359 533 1393 514 1427 C 423 1432 316 1384 250 1320 C 187 1256 171 1180 199 1112 C 225 1051 295 1022 296 956 Z","guide":"M 317 1026 C 317 1091 238 1123 239 1193 C 239 1263 313 1323 379 1322 C 449 1320 530 1278 580 1204"}
+  ],
+  "folds": [
+    {"id":"F1","name":"Shoulder / diagonal junction","bundles":["B2","B4"],"confidence":"junction visible; depth order provisional","path":"M 319 514 C 391 549 471 511 520 470"},
+    {"id":"F2","name":"Upper underside lip","bundles":["B1","B4"],"confidence":"visible curved lip; hidden continuation unknown","path":"M 582 602 C 663 568 779 616 869 558"},
+    {"id":"F3","name":"Waist turn","bundles":["B4","B5"],"confidence":"overlap interpretation, not established depth","path":"M 526 777 C 560 826 638 827 697 837"},
+    {"id":"F4","name":"Lower crossing","bundles":["B4","B6"],"confidence":"crossing visible; separation needs depth study","path":"M 339 1235 C 416 1256 512 1198 574 1138"}
+  ],
+  "uncertain": [
+    {"id":"U1","name":"Crown recess","classification":"shaded material candidate; not subtracted as a hole","anchor":[656,262],"path":"M 619 210 C 653 190 695 204 709 237 C 721 264 702 291 672 309 C 642 329 608 324 593 297 C 575 266 590 232 619 210 Z","reason":"Faint returning strands are visible. The black core alone cannot establish a through-hole."},
+    {"id":"U2","name":"Lower recess","classification":"shaded material candidate; not subtracted as a hole","anchor":[502,1044],"path":"M 450 962 C 494 944 541 966 556 1009 C 572 1051 553 1100 514 1124 C 476 1149 437 1129 430 1094 C 423 1051 438 1014 450 962 Z","reason":"Dark valley includes faint strand flow. Keep potential surface until depth is authored."}
+  ]
+}

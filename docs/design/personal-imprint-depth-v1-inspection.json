@@ -1,0 +1,126 @@
+{
+  "grid": 4,
+  "expectedCells": 45095,
+  "coveredCells": 44341,
+  "uncoveredCells": 754,
+  "coveragePercent": 98.32797427652733,
+  "shellInspection": [
+    {
+      "id": "B1",
+      "degenerate": 0,
+      "nonManifoldEdges": 0
+    },
+    {
+      "id": "B2",
+      "degenerate": 0,
+      "nonManifoldEdges": 0
+    },
+    {
+      "id": "B3",
+      "degenerate": 0,
+      "nonManifoldEdges": 0
+    },
+    {
+      "id": "B4",
+      "degenerate": 0,
+      "nonManifoldEdges": 0
+    },
+    {
+      "id": "B5",
+      "degenerate": 0,
+      "nonManifoldEdges": 0
+    },
+    {
+      "id": "B6",
+      "degenerate": 0,
+      "nonManifoldEdges": 0
+    }
+  ],
+  "overlapInspection": [
+    {
+      "id": "F1",
+      "samples": 17,
+      "minGap": 127.0528017590815
+    },
+    {
+      "id": "F2",
+      "samples": 83,
+      "minGap": 180.53555598241894
+    },
+    {
+      "id": "F3",
+      "samples": 42,
+      "minGap": 49.17275782873992
+    },
+    {
+      "id": "F4",
+      "samples": 89,
+      "minGap": 133.01186371410844
+    }
+  ],
+  "meshes": [
+    {
+      "id": "B1",
+      "vertices": 24684,
+      "triangles": 49360,
+      "returnPoints": 201
+    },
+    {
+      "id": "B2",
+      "vertices": 6138,
+      "triangles": 12272,
+      "returnPoints": 201
+    },
+    {
+      "id": "B3",
+      "vertices": 18064,
+      "triangles": 36120,
+      "returnPoints": 201
+    },
+    {
+      "id": "B4",
+      "vertices": 24244,
+      "triangles": 48484,
+      "returnPoints": 201
+    },
+    {
+      "id": "B5",
+      "vertices": 20178,
+      "triangles": 40344,
+      "returnPoints": 201
+    },
+    {
+      "id": "B6",
+      "vertices": 12450,
+      "triangles": 24896,
+      "returnPoints": 201
+    }
+  ],
+  "junctions": [
+    {
+      "id": "F1",
+      "front": "B4",
+      "back": "B2",
+      "status": "authored overlap interpretation"
+    },
+    {
+      "id": "F2",
+      "front": "B4",
+      "back": "B1",
+      "status": "authored underside interpretation"
+    },
+    {
+      "id": "F3",
+      "front": "B5",
+      "back": "B4",
+      "status": "authored waist interpretation"
+    },
+    {
+      "id": "F4",
+      "front": "B6",
+      "back": "B4",
+      "status": "authored lower crossing interpretation"
+    }
+  ],
+  "limits": "Conservative boundary cells omitted. Coverage is sampled, not exact silhouette identity. Shell backs/return courses are explicit; final strand turns remain Step 4."
+}

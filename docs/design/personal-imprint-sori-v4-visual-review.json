@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-16",
+  "status": "review-with-limitations",
+  "geometryHash": "ba49645808d14a9faccfeff2a57760ca4cd6c6bd595f63973cf949788756dfdf",
+  "renderHash": "c33fb2d5b19b053480f33a23ce5afef44a802c2e61ae8f74c7f762de1c7d0081",
+  "inspected": [
+    "390px front render",
+    "Crown and lower detail renders",
+    "15 degree angled render",
+    "Guide depth image",
+    "360/390/416/1280px browser comparison, links and missing/rejected states"
+  ],
+  "observations": [
+    "The rounded section swells and recesses across the width, with phase and height changes along the course. Individual strand paths visibly bend through these changes.",
+    "The broad Sori course is preserved, but local surface edges shift with the relief. One main enclosed opening remains; four smaller interstices are reported separately.",
+    "Seven marked broad fold/overlap regions remain the internal review count. Fine ridges within a bundle are not additional broad-bundle crossings.",
+    "Some ridge lips remain thin and wire-like. Rear routes become more visible from the angled camera. The result does not establish the reference's solid, densely layered appearance.",
+    "No loose endpoints are introduced; apparent strand emergence at folds must be judged visually as well as by closure checks."
+  ],
+  "finalVisualGatePassed": false,
+  "finalDeveloperAcceptance": "pending"
+}

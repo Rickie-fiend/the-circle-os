@@ -176,7 +176,7 @@ async function isolated(width, work, persistent = false) {
       worker: await page?.evaluate(async () => ({ controller: navigator.serviceWorker.controller?.scriptURL, scope: (await navigator.serviceWorker.getRegistration())?.scope,
         caches: await Promise.all((await caches.keys()).map(async name => ({ name, keys: (await (await caches.open(name)).keys()).map(request => request.url) }))) })).catch(() => null) }));
     throw error;
-  } finally { await context.close(); if(profile) { assert.ok(resolve(profile).startsWith(resolve("outputs")+sep)); await rm(profile,{recursive:true,force:true}); } }
+  } finally { await context.close(); if(profile) { assert.ok(resolve(profile).startsWith(resolve("outputs")+sep)); await rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:250}); } }
 }
 async function open(page, suffix = "") { await page.goto(`${origin}/os${suffix}`); }
 async function login(page, email = "a@example.test") {
@@ -185,6 +185,56 @@ async function login(page, email = "a@example.test") {
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
 }
 async function ready(page) { await expect(page.getByTestId("evidence")).toBeVisible({ timeout: 20_000 }); }
+for(const width of [360,390]) for(const loss of ["auth","all"]) test(`production storage-loss ${loss} at ${width}px`,{timeout:120000,skip:!productionOrigin},async()=>isolated(width,async({page,context})=>{
+  await page.goto(productionOrigin+"/os");await login(page);
+  await expect(page.getByRole("heading",{name:"Start with what matters."})).toBeVisible();
+  // Only unrelated setup gates are seeded; writing goes through the real UI.
+  const seed=ensureDay(createEmptyState(),getDateKey());
+  for(const name of ["index","sparks"])for(const c of JSON.parse(await readFile(new URL(`../app/os/chapters/published/${name}.json`,import.meta.url),"utf8")).chapters){
+    const run={...createChapterRun(c),status:"completed",completedAt:new Date().toISOString(),updatedAt:new Date().toISOString(),currentPageId:c.pages.at(-1).id,furthestPageId:c.pages.at(-1).id};
+    seed.chapters.runs[chapterRunId(c)]=run;
+    if(c.id==="day-open"){const key=dayOpenRunId(c,getDateKey());seed.chapters.runs[key]={...run,runId:key};}
+  }
+  await page.goto(productionOrigin+"/brand");
+  await page.evaluate(({id,state})=>localStorage.setItem("circle-os-state-v2:account:"+id,JSON.stringify({savedAt:new Date().toISOString(),state})),{id:accountA,state:seed});
+  await page.goto(productionOrigin+"/os");await expect(page.locator(".os-splash")).toHaveCount(0,{timeout:20000});await page.getByRole("button",{name:"Note",exact:true}).click();
+  const ledger=()=>page.evaluate(async id=>{
+    const db=await new Promise((yes,no)=>{const r=indexedDB.open("circle-os-writing-v1:account:"+id);r.onsuccess=()=>yes(r.result);r.onerror=()=>no(r.error);});
+    try{if(!db.objectStoreNames.contains("writing"))return null;return await new Promise(yes=>{const r=db.transaction("writing").objectStore("writing").get("records");r.onsuccess=()=>yes(r.result||null);});}finally{db.close();}
+  },accountA);
+  await page.getByRole("textbox",{name:"Write a note",exact:true}).fill("Synthetic storage-loss Note");
+  await expect.poll(async()=>Object.values((await ledger())?.entries||{}).some(e=>e.versions.at(-1).content.body==="Synthetic storage-loss Note")).toBe(true);
+  await page.getByRole("button",{name:"Open Deep Thoughts",exact:true}).click();
+  await page.getByRole("textbox",{name:"Answer the deep thought",exact:true}).fill("Synthetic unsent storage-loss answer");
+  await expect.poll(async()=>Object.values((await ledger())?.drafts||{}).some(d=>d.content?.body==="Synthetic unsent storage-loss answer")).toBe(true);
+  const before=await ledger();
+  await assetsCached(page);
+  const cdp=await context.newCDPSession(page);
+  if(loss==="all") await cdp.send("Storage.clearDataForOrigin",{origin:productionOrigin,storageTypes:"all"});
+  else await page.evaluate(async prefix=>{
+    localStorage.clear();
+    await new Promise((yes,no)=>{const r=indexedDB.deleteDatabase(prefix+":durable-v1");r.onsuccess=yes;r.onerror=()=>no(r.error);r.onblocked=()=>no(Error("Disposable auth deletion blocked"));});
+  },prefix);
+  await context.setOffline(true);
+  if(loss==="all") {
+    await page.goto("about:blank");
+    const failure=await page.goto(productionOrigin+"/os").then(()=>false,()=>true);
+    assert.equal(failure,true,"cleared offline shell is unavailable");
+  } else {
+    await page.reload();await expect(page.getByRole("heading",{name:"Welcome back."})).toBeVisible();
+  }
+  await context.setOffline(false);await page.goto(productionOrigin+"/os");await login(page);
+  if(loss==="all") {
+    await expect(page.getByRole("heading",{name:"Start with what matters."})).toBeVisible();
+    const after=await ledger();assert.deepEqual(after?.entries||{},{});assert.deepEqual(after?.drafts||{},{});
+  } else {
+    await page.getByRole("button",{name:"Note",exact:true}).click();
+    await expect(page.getByRole("textbox",{name:"Write a note",exact:true})).toHaveValue("Synthetic storage-loss Note");
+    await page.getByRole("button",{name:"Open Deep Thoughts",exact:true}).click();
+    await expect(page.getByRole("textbox",{name:"Answer the deep thought",exact:true})).toHaveValue("Synthetic unsent storage-loss answer");
+    const after=await ledger();assert.deepEqual(after.entries,before.entries);assert.deepEqual(after.drafts,before.drafts);
+  }
+},true));
 async function assetsCached(page) {
   await page.waitForFunction(() => document.documentElement.dataset.osOfflineReady === "true");
   await page.waitForFunction(async () => {
@@ -448,7 +498,8 @@ for (const width of [390, 360]) {
 }
 
 
-for (const crash of [false,true]) for (const width of [360,390]) test(`production offline writing ${crash ? "crash" : "restart"} at ${width}px`, {timeout:180000,skip:!productionOrigin}, async()=>isolated(width,async device=>{
+for (const mode of ["restart","crash","storage-loss"]) for (const width of [360,390]) test(`production offline writing ${mode} at ${width}px`, {timeout:180000,skip:!productionOrigin}, async()=>isolated(width,async device=>{
+  const crash = mode === "crash";
   let {page}=device;
   await page.goto(productionOrigin+"/os"); await login(page);
   await expect(page.getByRole("heading",{name:"Start with what matters."})).toBeVisible();
@@ -489,6 +540,7 @@ for (const crash of [false,true]) for (const width of [360,390]) test(`productio
       online:navigator.onLine };
   },prefix);
   const proofBefore = await proofState();
+  if(mode === "storage-loss") await page.evaluate(() => localStorage.clear());
   ({page}=await device.restart(true,crash));
   assert.equal((await page.goto(productionOrigin+"/os#thoughts")).fromServiceWorker(),true);
   if(crash) console.log("Crash recovery diagnostics", JSON.stringify({width,proofBefore,proofAfter:await proofState()}));

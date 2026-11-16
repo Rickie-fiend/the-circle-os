@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "geometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+  "settingsHash": "bf0428224cc1ff227e4704dc7c8f5a50c11826cc3438c827cc2520bdbfd40cdb",
+  "rendererHash": "997af50eda12b69a7330eaeb1594accf79d414673ba2655bc492459160fe4bc2",
+  "rendererModuleHash": "7bcf15f82e94d198991b769113b4e330b5287849ea9aa355694beb22e9ce1a2e",
+  "outputs": {
+    "390": {
+      "path": "docs/design/personal-imprint-material-v1-390.png",
+      "hash": "04883791cce32a8c34fa2e8f332d88e6fcf010367a4989cf5a69a91d50799048"
+    },
+    "full": {
+      "path": "docs/design/personal-imprint-material-v1-full.png",
+      "hash": "db99a242cf5682d86ee4b4b4ba948d72059fb33b7bc627b91d26a98676e7539e"
+    },
+    "crown": {
+      "path": "docs/design/personal-imprint-material-v1-crown.png",
+      "hash": "4a0a4299c09db77a89a843465e0ed51394b7b6a183fddee2610d3d4751c895ef"
+    },
+    "shoulder": {
+      "path": "docs/design/personal-imprint-material-v1-shoulder.png",
+      "hash": "e95ad48daa2842d6aa4515c2b5e6c838143d36b2d87001004cd72eadb2f45e74"
+    },
+    "lower": {
+      "path": "docs/design/personal-imprint-material-v1-lower.png",
+      "hash": "da34f0d466fcc1a34ec01359829355162df07f02ac401f92d97b8b9835afc5a0"
+    },
+    "shadows": {
+      "path": "docs/design/personal-imprint-material-v1-shadows.png",
+      "hash": "0a24a252bdaf0623c63f548c194a01f39e76a3740940d2bd3bbf5d81f7dccf7d"
+    }
+  },
+  "renderHash": "db99a242cf5682d86ee4b4b4ba948d72059fb33b7bc627b91d26a98676e7539e",
+  "strands": {
+    "count": 1281,
+    "represented": 1281,
+    "visibleSegments": 141908,
+    "hiddenSegments": 98589
+  },
+  "material": {
+    "materialPixels": 721552,
+    "shadowedPixels": 197228,
+    "contactShadowSamples": 152201,
+    "shadowSource": "surface depth horizon and short rays against other generated fibres",
+    "colorSpace": "linear light, sRGB output",
+    "fibreSamples": 3017839,
+    "nonfiniteShades": 0,
+    "clippedHighlights": 0,
+    "minShade": 0.042899999767541885,
+    "maxShade": 0.9135349988937378,
+    "supersampling": 3
+  },
+  "geometryUnchanged": true,
+  "step4Gates": {
+    "coverage": true,
+    "interiorGaps": true,
+    "support": true,
+    "finite": true,
+    "endpoints": true,
+    "population": true,
+    "foregroundCrossings": true,
+    "visual": true
+  },
+  "gates": {
+    "acceptedGeometry": true,
+    "geometryUnchanged": true,
+    "finite": true,
+    "unclipped": true,
+    "currentSettings": true,
+    "currentRenderer": true,
+    "outputHashes": true,
+    "dimensions": true,
+    "preservedVoids": true,
+    "opaque": true,
+    "phoneMatchesFull": true,
+    "allStrandsRepresented": true
+  },
+  "visualReview": {
+    "date": "2026-11-16",
+    "status": "review-with-limitations",
+    "geometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+    "settingsHash": "bf0428224cc1ff227e4704dc7c8f5a50c11826cc3438c827cc2520bdbfd40cdb",
+    "rendererHash": "997af50eda12b69a7330eaeb1594accf79d414673ba2655bc492459160fe4bc2",
+    "rendererModuleHash": "7bcf15f82e94d198991b769113b4e330b5287849ea9aa355694beb22e9ce1a2e",
+    "rendererRefactor": "Material shader extracted for reuse by personal variants, then given optional periodic-strand and fibre-only visibility modes. Rerendering with the original defaults preserves all six canonical output hashes exactly, including the reviewed full image.",
+    "renderHash": "db99a242cf5682d86ee4b4b4ba948d72059fb33b7bc627b91d26a98676e7539e",
+    "inspected": [
+      "full composition",
+      "390px export",
+      "crown",
+      "shoulder",
+      "lower return",
+      "360/390/416/1280px browser comparisons"
+    ],
+    "observations": [
+      "Round fibre profiles and highlights are visible in enlarged details. Upper-left light and surface-derived shadows make broad depth changes legible.",
+      "The shoulder opening and exterior bays remain clear. No bright backing membrane fills the spaces between strands.",
+      "No clipped highlights or out-of-domain image pixels beyond the antialias edge allowance remain after changing the reduction filter to linear.",
+      "Several visible strand entries still read as cut tips. They are transitions into the supporting surface; the final route endpoints remain geometrically buried. These two claims must not be confused.",
+      "The lit master remains more even and less continuous/sculptural than the reference, including at phone size. Material rendering does not establish a reference-level volume or flow match."
+    ],
+    "materialImplementationReviewed": true,
+    "finalVisualGatePassed": false,
+    "finalDeveloperAcceptance": "pending",
+    "next": "Developer reviews the lit full/phone/detail pair. Visible entry placement and layered surface depth remain the concrete geometry issues to resolve if further refinement is selected."
+  },
+  "readyForDeveloperReview": true,
+  "independentInspection": {
+    "outputChecks": [
+      {
+        "name": "390",
+        "hash": "04883791cce32a8c34fa2e8f332d88e6fcf010367a4989cf5a69a91d50799048",
+        "hashMatches": true,
+        "width": 390,
+        "height": 585,
+        "dimensionsMatch": true
+      },
+      {
+        "name": "full",
+        "hash": "db99a242cf5682d86ee4b4b4ba948d72059fb33b7bc627b91d26a98676e7539e",
+        "hashMatches": true,
+        "width": 1024,
+        "height": 1536,
+        "dimensionsMatch": true
+      },
+      {
+        "name": "crown",
+        "hash": "4a0a4299c09db77a89a843465e0ed51394b7b6a183fddee2610d3d4751c895ef",
+        "hashMatches": true,
+        "width": 820,
+        "height": 800,
+        "dimensionsMatch": true
+      },
+      {
+        "name": "shoulder",
+        "hash": "e95ad48daa2842d6aa4515c2b5e6c838143d36b2d87001004cd72eadb2f45e74",
+        "hashMatches": true,
+        "width": 820,
+        "height": 714,
+        "dimensionsMatch": true
+      },
+      {
+        "name": "lower",
+        "hash": "da34f0d466fcc1a34ec01359829355162df07f02ac401f92d97b8b9835afc5a0",
+        "hashMatches": true,
+        "width": 820,
+        "height": 700,
+        "dimensionsMatch": true
+      },
+      {
+        "name": "shadows",
+        "hash": "0a24a252bdaf0623c63f548c194a01f39e76a3740940d2bd3bbf5d81f7dccf7d",
+        "hashMatches": true,
+        "width": 1024,
+        "height": 1536,
+        "dimensionsMatch": true
+      }
+    ],
+    "geometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+    "rendererHash": "997af50eda12b69a7330eaeb1594accf79d414673ba2655bc492459160fe4bc2",
+    "rendererModuleHash": "7bcf15f82e94d198991b769113b4e330b5287849ea9aa355694beb22e9ce1a2e",
+    "inspectorHash": "3fd220c010c51bc39f7a20275ecb3d2fd42c2340f76a16be716ef707c66d0ff8",
+    "outsideMaterialPixels": 0,
+    "changedMaterialPixels": 635099,
+    "clippedPixels": 0,
+    "opaquePixels": 1572864,
+    "minChannel": 16,
+    "maxChannel": 223,
+    "phoneMatchesFull": true
+  },
+  "materialChecksPass": true,
+  "finalArtworkAccepted": false
+}

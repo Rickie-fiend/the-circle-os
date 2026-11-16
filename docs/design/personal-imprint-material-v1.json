@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "geometry": "docs/design/personal-imprint-flow-network-v4-geometry.json",
+  "geometryInspection": "docs/design/personal-imprint-flow-network-v4-inspection.json",
+  "geometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+  "width": 1024,
+  "height": 1536,
+  "supersampling": 3,
+  "resamplingKernel": "linear",
+  "palette": { "background": [25, 24, 19], "fibre": [241, 239, 232], "support": [64, 62, 53] },
+  "fibre": { "width": 2.4, "radialSegments": 12, "ambient": 0.055, "diffuse": 0.85, "specular": 0.05, "roughnessExponent": 22 },
+  "surface": { "depthScale": 6, "normalRadius": 12, "ambient": 0.14, "diffuse": 0.09 },
+  "light": { "direction": [-0.58, -0.65, 0.7], "angularRadius": 0.5 },
+  "shadow": { "strength": 0.5, "maxDistance": 160, "steps": 32, "bias": 1.2, "fibreContactStrength": 0.22, "fibreContactDistances": [0.75, 1.5, 3, 6] },
+  "notes": "Static monochrome material study. Depth units are converted to scene units for normals and light rays; projected Step 4 geometry is unchanged. No raster reference contributes colour or shadow."
+}

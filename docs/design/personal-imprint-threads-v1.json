@@ -1,0 +1,12 @@
+{
+  "version":1,
+  "surface":"docs/design/personal-imprint-depth-v1-geometry.json",
+  "courses":"docs/design/personal-imprint-bundle-routes-v1-geometry.json",
+  "reference":"docs/design/personal-imprint-thread-reference-v1.png",
+  "spacing":4,
+  "spacingMeaning":"Initial 4 reference-pixel contour spacing; projected pitch varies through bends. Reference scanline peak gaps are reported separately, not a physical thread count.",
+  "stroke":0.8,
+  "minimumLength":80,
+  "meaning":"Contours of an across-course scalar on actual shell triangles. Each retained contour has a stable bundle/level/component identity and a full front/back return. No endpoint connections between different contours. This is an interpretation of flow, not recovered physical filaments.",
+  "limits":"Contours may split at patch boundaries or nearest-course field singularities; these are reported. The 4px shell boundary margin remains. No new boundary-conforming surface revision is claimed by this first thread study."
+}

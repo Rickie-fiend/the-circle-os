@@ -1,0 +1,14 @@
+"use client";
+/* eslint-disable @next/next/no-img-element -- Exact growth-study exports. */
+import {useEffect,useState} from 'react';
+type Report={ready:boolean;states:Record<string,Record<string,{days:number;spread:number;brightness:number}>>;samples:{id:string;label:string;outputs:Record<string,{path:string;hash:string}>}[]};
+export default function ImprintGrowthPreview(){
+ const [report,setReport]=useState<Report|null>(null),[state,setState]=useState('month-3'),[error,setError]=useState(false);
+ useEffect(()=>{const c=new AbortController();fetch('/docs/design/personal-imprint-growth-v1.json',{signal:c.signal,cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(setReport).catch(()=>{if(!c.signal.aborted)setError(true);});return()=>c.abort();},[]);
+ return <main className="imprint-study"><p>Personal Imprint · three months of use</p><p role="status">{error?'Growth inspection unavailable.':report?.ready?'Front-facing areas · accumulated spread · fading brightness':'Growth study is not ready.'}</p>
+ {report?.ready&&<><div className="imprint-personal-checks"><label htmlFor="growth-state">Usage example</label><select id="growth-state" value={state} onChange={e=>setState(e.target.value)}>{Object.keys(report.states).map(s=><option key={s}>{s}</option>)}</select><p>One fictional person: Routine daily; Notes and Log every two days; Protocol every four; Thoughts every five; Chapters every nine. All begin on day one at 06:00. Repeat saves add no growth. Growth rates and brightness levels are visual examples.</p><p>Color waits 24 hours, then fades once at the first local 06:00 cutoff. Monday 9pm fades Wednesday 6am. It stays at that faded brightness afterward. Compare next-day, two-days-later and after-one-month views: spread and faded color stay the same. Isolated group examples show fully grown areas.</p></div>
+ <p>Brighter Orange trial: compare same-areas-fresh and same-areas-faded for equal area sizes. Faded color keeps its Orange hue. The proposed faded brightness is 60% of fresh.</p>
+ <details><summary>Fresh and faded side by side</summary><div className="imprint-master-comparison">{['same-areas-fresh','same-areas-faded'].map(mode=><figure key={mode}><figcaption>{mode==='same-areas-fresh'?'Fresh Orange':'Faded Orange'}</figcaption><img className="imprint-master-image" src={`/${report.samples[5].outputs[mode].path}?v=${report.samples[5].outputs[mode].hash}`} alt={`Sori ${mode}`}/></figure>)}</div></details>
+ <div className="imprint-personal-grid imprint-loop-grid">{report.samples.map(s=><figure key={s.id}><figcaption>{s.label}</figcaption><img className="imprint-master-image" src={`/${s.outputs[state].path}?v=${s.outputs[state].hash}`} alt={`${s.label} ${state}`}/></figure>)}</div></>}
+ <p><a href="?study=color">Earlier color study</a> · <a href="?study=generator">Accepted shapes</a></p></main>;
+}

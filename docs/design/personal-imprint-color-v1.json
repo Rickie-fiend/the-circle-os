@@ -1,0 +1,893 @@
+{
+  "status": "ready-for-review",
+  "ready": true,
+  "samples": [
+    {
+      "id": "mira",
+      "label": "Mira",
+      "geometryHash": "57c2aeaf76d0f80bf263acf1f8d745140d63b5473eee5a4d9cd57dbe6f92db82",
+      "baselineHash": "05163a129e02e7bfb9d4498df225363f80736ca246e3e0efb3e1d4d6d9b3cf11",
+      "sceneMs": 11316,
+      "outputs": {
+        "bone": {
+          "path": "docs/design/personal-imprint-color-v1-mira-bone.png",
+          "hash": "10986a2227d4f0ade36e2ba366c32418367d275883d14311d24bfb00f3b7fc4e"
+        },
+        "input": {
+          "path": "docs/design/personal-imprint-color-v1-mira-input.png",
+          "hash": "223da17d29e23737b1eb69e8eb7b72ada6a90f286182f88de08b3288da9603aa"
+        },
+        "completion": {
+          "path": "docs/design/personal-imprint-color-v1-mira-completion.png",
+          "hash": "652ad652e25b3f1ad266727055b91cf03463fc5b81eee48b905815309226feed"
+        },
+        "mixed": {
+          "path": "docs/design/personal-imprint-color-v1-mira-mixed.png",
+          "hash": "1864851a89802febceafcbbcf3c9483b0aaec0ad3eaa41fa9a125ea5ed7990d3"
+        },
+        "older": {
+          "path": "docs/design/personal-imprint-color-v1-mira-older.png",
+          "hash": "7800d40fb7e334fd03e97b27190feb67d5a8f1e3e503587bffaad8e9bc3279b8"
+        },
+        "busy": {
+          "path": "docs/design/personal-imprint-color-v1-mira-busy.png",
+          "hash": "f328e9965659fae85a345349205a50acfff12332e0d81235f097355e2e19d085"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-color-v1-mira-starting.png",
+          "hash": "82e0981a9bd192ad290861c356f364d21ea60367a65241e5ab67966f6f9fa0c6"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-color-v1-mira-notes.png",
+          "hash": "652ad652e25b3f1ad266727055b91cf03463fc5b81eee48b905815309226feed"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-color-v1-mira-thoughts.png",
+          "hash": "ca0fd53d26d9c4bb1b7cc564304ac8b3b32f936a4bc1b0be6f1b13f7e75ee39f"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-color-v1-mira-routine.png",
+          "hash": "b148a48fda60e2ac203c6ee2ec1eea9ce11e5c282b9b85012a3e7950c0c598b5"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-color-v1-mira-log-week.png",
+          "hash": "5368ba7d534f97c7d5448471a1ade28d98875ec9a3644d10e6b8236ffe288e85"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-color-v1-mira-protocol.png",
+          "hash": "087610ac0ae45abf9b0bc5635e93559feb39e78fa676e1957efd2f851aff570e"
+        }
+      },
+      "updates": [
+        {
+          "name": "bone",
+          "milliseconds": 264,
+          "changedSamples": 0
+        },
+        {
+          "name": "input",
+          "milliseconds": 295,
+          "changedSamples": 605274
+        },
+        {
+          "name": "completion",
+          "milliseconds": 281,
+          "changedSamples": 605274
+        },
+        {
+          "name": "mixed",
+          "milliseconds": 497,
+          "changedSamples": 2505567
+        },
+        {
+          "name": "older",
+          "milliseconds": 456,
+          "changedSamples": 2505567
+        },
+        {
+          "name": "busy",
+          "milliseconds": 488,
+          "changedSamples": 2695785
+        },
+        {
+          "name": "starting",
+          "milliseconds": 322,
+          "changedSamples": 416144
+        },
+        {
+          "name": "notes",
+          "milliseconds": 314,
+          "changedSamples": 605274
+        },
+        {
+          "name": "thoughts",
+          "milliseconds": 271,
+          "changedSamples": 280278
+        },
+        {
+          "name": "routine",
+          "milliseconds": 283,
+          "changedSamples": 739174
+        },
+        {
+          "name": "log-week",
+          "milliseconds": 308,
+          "changedSamples": 676997
+        },
+        {
+          "name": "protocol",
+          "milliseconds": 307,
+          "changedSamples": 495955
+        }
+      ],
+      "coordinates": {
+        "path": "docs/design/personal-imprint-color-v1-mira-coordinates.bin",
+        "hash": "e850db905004bb928ef03c47dc1baf5cc31da8d532222cd54ce505e946892cd8",
+        "width": 390,
+        "height": 585
+      }
+    },
+    {
+      "id": "arun",
+      "label": "Arun",
+      "geometryHash": "269b2092099bfb259f875a6a25a980c5490b8fde9ca096d2e918febe889be2fd",
+      "baselineHash": "4db85eb1598881331c588047ec637f891c8fa0b2d8578e4ce2c45913a2f090a3",
+      "sceneMs": 14702,
+      "outputs": {
+        "bone": {
+          "path": "docs/design/personal-imprint-color-v1-arun-bone.png",
+          "hash": "86bfad368b69868a558837d286cff84da55afe7e239b5e0c52e5e088bd90e89f"
+        },
+        "input": {
+          "path": "docs/design/personal-imprint-color-v1-arun-input.png",
+          "hash": "48179dfb317e0ab2a014cce62db7962729a50a9566d5e69167d2b5a2568d9c47"
+        },
+        "completion": {
+          "path": "docs/design/personal-imprint-color-v1-arun-completion.png",
+          "hash": "cb04e97285fa9cdeb15fc382443f4c0e4ceda3db53a22c6dd041b05b1c00d531"
+        },
+        "mixed": {
+          "path": "docs/design/personal-imprint-color-v1-arun-mixed.png",
+          "hash": "cc47d50faec7acb3ccacead65b60bf532dbc60e3684ee60b6c6a1df6c14bb0d2"
+        },
+        "older": {
+          "path": "docs/design/personal-imprint-color-v1-arun-older.png",
+          "hash": "2fee997d69796a2ad17ad1decc9aa62bc4adcbf33ce8484e6ce07f9a2cc9cd1c"
+        },
+        "busy": {
+          "path": "docs/design/personal-imprint-color-v1-arun-busy.png",
+          "hash": "63ca681368e57e033b8d6b1bfd3a0b04b4626af1175037952655f3454ce259f3"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-color-v1-arun-starting.png",
+          "hash": "3adfcc927e1bd48ca479eeda47d6313c42dba9d4c382f904419f4d93d068f81e"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-color-v1-arun-notes.png",
+          "hash": "cb04e97285fa9cdeb15fc382443f4c0e4ceda3db53a22c6dd041b05b1c00d531"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-color-v1-arun-thoughts.png",
+          "hash": "237a15c1dac821c04e27c27ef0c64c22177d9dc56c9c07f6cca26fd11327865d"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-color-v1-arun-routine.png",
+          "hash": "d64bcf4a454accf218fec122644353729ba3978361c518ca614e9f7435dc24eb"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-color-v1-arun-log-week.png",
+          "hash": "d93e06e10e250c1bc1464370648dc224317a529aab8be48b7c219f0d64e18a95"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-color-v1-arun-protocol.png",
+          "hash": "876af8395c9c80aa6526847b1323c8f22e57e2570dd036eeb3e0af411610cb43"
+        }
+      },
+      "updates": [
+        {
+          "name": "bone",
+          "milliseconds": 336,
+          "changedSamples": 0
+        },
+        {
+          "name": "input",
+          "milliseconds": 334,
+          "changedSamples": 699263
+        },
+        {
+          "name": "completion",
+          "milliseconds": 326,
+          "changedSamples": 699263
+        },
+        {
+          "name": "mixed",
+          "milliseconds": 586,
+          "changedSamples": 2829467
+        },
+        {
+          "name": "older",
+          "milliseconds": 500,
+          "changedSamples": 2829467
+        },
+        {
+          "name": "busy",
+          "milliseconds": 599,
+          "changedSamples": 3463345
+        },
+        {
+          "name": "starting",
+          "milliseconds": 304,
+          "changedSamples": 612917
+        },
+        {
+          "name": "notes",
+          "milliseconds": 310,
+          "changedSamples": 699263
+        },
+        {
+          "name": "thoughts",
+          "milliseconds": 328,
+          "changedSamples": 784462
+        },
+        {
+          "name": "routine",
+          "milliseconds": 391,
+          "changedSamples": 760860
+        },
+        {
+          "name": "log-week",
+          "milliseconds": 375,
+          "changedSamples": 753626
+        },
+        {
+          "name": "protocol",
+          "milliseconds": 350,
+          "changedSamples": 367110
+        }
+      ],
+      "coordinates": {
+        "path": "docs/design/personal-imprint-color-v1-arun-coordinates.bin",
+        "hash": "102280bff693b203c74ca9c405498750eb499fde310ae926f2eead7752ee8b23",
+        "width": 390,
+        "height": 585
+      }
+    },
+    {
+      "id": "lin",
+      "label": "Lin",
+      "geometryHash": "172c01339be8a0ece761efd3d58d39b84aeb6fe5c7d8e374b3298d3b3b269b83",
+      "baselineHash": "9ccbee220c0951a52bec3c65b0dc7345cba0344df1cb8e392afaedc40d92a4c9",
+      "sceneMs": 13454,
+      "outputs": {
+        "bone": {
+          "path": "docs/design/personal-imprint-color-v1-lin-bone.png",
+          "hash": "dd99b8854f127f059321b351878a6988c69756d53747f34f3bfaa7c6fac01502"
+        },
+        "input": {
+          "path": "docs/design/personal-imprint-color-v1-lin-input.png",
+          "hash": "370e1481cfab5e5051c745d3f7ae107470f5b787c5601bc8ae07dfaa4f841f1a"
+        },
+        "completion": {
+          "path": "docs/design/personal-imprint-color-v1-lin-completion.png",
+          "hash": "f10695cbddf57a45ca82d5ea7b1148348134587e7eca8d75f10fcaea27758d1b"
+        },
+        "mixed": {
+          "path": "docs/design/personal-imprint-color-v1-lin-mixed.png",
+          "hash": "1846c5a9f1238d596d1499ab42c3f1b5020e7c5f7bd657fccadecf0c29c27f05"
+        },
+        "older": {
+          "path": "docs/design/personal-imprint-color-v1-lin-older.png",
+          "hash": "eae9e19c6b31e20f0156643e80427fee50df862609e2ea554e4d5761a3d130ec"
+        },
+        "busy": {
+          "path": "docs/design/personal-imprint-color-v1-lin-busy.png",
+          "hash": "7e950e9cba192482cf172c69bdc5ce41e386cfca4a9ab719d195e15feddb7126"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-color-v1-lin-starting.png",
+          "hash": "73ca0553568eab86e4b7ec1d67c3b7acf51f7512ca4e0b9452cd6de00077131e"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-color-v1-lin-notes.png",
+          "hash": "f10695cbddf57a45ca82d5ea7b1148348134587e7eca8d75f10fcaea27758d1b"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-color-v1-lin-thoughts.png",
+          "hash": "5baa2bc4af9b54e8f8c348ed0a9efd746abfb180a9661f83c87eeb333058ff03"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-color-v1-lin-routine.png",
+          "hash": "0ff3a82f8895ff89e8c7a626786c12b04edd773fbeac193b723eae782a56bda6"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-color-v1-lin-log-week.png",
+          "hash": "65447c11a40f7b2a501bd6bd3475900aa2e49cd792cb579eb4604ce1530205f7"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-color-v1-lin-protocol.png",
+          "hash": "141215085c8fd5f3457a71d9cb5df9f45d859fe23ce56d362d7e6b058ed624e4"
+        }
+      },
+      "updates": [
+        {
+          "name": "bone",
+          "milliseconds": 317,
+          "changedSamples": 0
+        },
+        {
+          "name": "input",
+          "milliseconds": 303,
+          "changedSamples": 717157
+        },
+        {
+          "name": "completion",
+          "milliseconds": 313,
+          "changedSamples": 717157
+        },
+        {
+          "name": "mixed",
+          "milliseconds": 564,
+          "changedSamples": 3039712
+        },
+        {
+          "name": "older",
+          "milliseconds": 461,
+          "changedSamples": 3039712
+        },
+        {
+          "name": "busy",
+          "milliseconds": 484,
+          "changedSamples": 3273743
+        },
+        {
+          "name": "starting",
+          "milliseconds": 304,
+          "changedSamples": 503058
+        },
+        {
+          "name": "notes",
+          "milliseconds": 297,
+          "changedSamples": 717157
+        },
+        {
+          "name": "thoughts",
+          "milliseconds": 274,
+          "changedSamples": 341389
+        },
+        {
+          "name": "routine",
+          "milliseconds": 305,
+          "changedSamples": 877858
+        },
+        {
+          "name": "log-week",
+          "milliseconds": 305,
+          "changedSamples": 843714
+        },
+        {
+          "name": "protocol",
+          "milliseconds": 313,
+          "changedSamples": 625612
+        }
+      ],
+      "coordinates": {
+        "path": "docs/design/personal-imprint-color-v1-lin-coordinates.bin",
+        "hash": "0430a624d94e590c407d929eeadd9fe5643a0fa2e31306af836f793c78623db3",
+        "width": 390,
+        "height": 585
+      }
+    },
+    {
+      "id": "noor",
+      "label": "Noor",
+      "geometryHash": "0cc870b2175d85fe247e6e24f0a41a769e5eccf68f27fcb6abf3988c25cc540e",
+      "baselineHash": "027df2e25e3b33a40cd5dc5d31ad53ccd2aa218b9a096b4af5f01c9e04c11a61",
+      "sceneMs": 16447,
+      "outputs": {
+        "bone": {
+          "path": "docs/design/personal-imprint-color-v1-noor-bone.png",
+          "hash": "799a8f4b9e247c3cc75661056c447b3616f58341789785131f15e8ea2163b635"
+        },
+        "input": {
+          "path": "docs/design/personal-imprint-color-v1-noor-input.png",
+          "hash": "09dec9f8b1b6137446c989a8730e285b1a4e96c3da852a3b8d96d4615bd566cf"
+        },
+        "completion": {
+          "path": "docs/design/personal-imprint-color-v1-noor-completion.png",
+          "hash": "5bfc5da8457ec24a477bd3cd206eb759269e0e226712eb6eb5d19d929becb06e"
+        },
+        "mixed": {
+          "path": "docs/design/personal-imprint-color-v1-noor-mixed.png",
+          "hash": "83612a3e65ae2e84b959ee1f829cc7cf60f98d3c66f44af58b3d61b8eba76dca"
+        },
+        "older": {
+          "path": "docs/design/personal-imprint-color-v1-noor-older.png",
+          "hash": "9c03b4b59e301d5dc974f050b3302cadee01f43773fa3f5a17e630cc0669a5b0"
+        },
+        "busy": {
+          "path": "docs/design/personal-imprint-color-v1-noor-busy.png",
+          "hash": "5f92a62ef029352f6d6987033763e6bde693a1773aee81b587b13ad1612c5e72"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-color-v1-noor-starting.png",
+          "hash": "6409717b317f9e78888206b666faa74abcfcf515fea8436de05c77ba609d92f5"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-color-v1-noor-notes.png",
+          "hash": "5bfc5da8457ec24a477bd3cd206eb759269e0e226712eb6eb5d19d929becb06e"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-color-v1-noor-thoughts.png",
+          "hash": "db43716f63deffa5c8c445180a560c34cfbb1a895cd5d4df5a0f6d77122a800e"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-color-v1-noor-routine.png",
+          "hash": "34c87fdc777cc98f80527d2596bf868dac9f08b83c8f70ad899ad33960e11244"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-color-v1-noor-log-week.png",
+          "hash": "c9e57218a22228edccc2d40980c7633acea139c98ef055cfc2dafa5b21cefe3a"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-color-v1-noor-protocol.png",
+          "hash": "ae44f810a22cd25737871be7878ac1244e9e920cfa6c22bac11573236fc03fde"
+        }
+      },
+      "updates": [
+        {
+          "name": "bone",
+          "milliseconds": 311,
+          "changedSamples": 0
+        },
+        {
+          "name": "input",
+          "milliseconds": 319,
+          "changedSamples": 684626
+        },
+        {
+          "name": "completion",
+          "milliseconds": 306,
+          "changedSamples": 684626
+        },
+        {
+          "name": "mixed",
+          "milliseconds": 515,
+          "changedSamples": 2755633
+        },
+        {
+          "name": "older",
+          "milliseconds": 468,
+          "changedSamples": 2755633
+        },
+        {
+          "name": "busy",
+          "milliseconds": 496,
+          "changedSamples": 3366549
+        },
+        {
+          "name": "starting",
+          "milliseconds": 316,
+          "changedSamples": 598274
+        },
+        {
+          "name": "notes",
+          "milliseconds": 314,
+          "changedSamples": 684626
+        },
+        {
+          "name": "thoughts",
+          "milliseconds": 303,
+          "changedSamples": 760342
+        },
+        {
+          "name": "routine",
+          "milliseconds": 295,
+          "changedSamples": 727363
+        },
+        {
+          "name": "log-week",
+          "milliseconds": 331,
+          "changedSamples": 738474
+        },
+        {
+          "name": "protocol",
+          "milliseconds": 292,
+          "changedSamples": 360961
+        }
+      ],
+      "coordinates": {
+        "path": "docs/design/personal-imprint-color-v1-noor-coordinates.bin",
+        "hash": "89b152289aad17099c1443feb2d057189752b9ccb423eccb83e839c52716c871",
+        "width": 390,
+        "height": 585
+      }
+    },
+    {
+      "id": "tala",
+      "label": "Tala",
+      "geometryHash": "b53f85ae82ac6f945c743402438ca644aae77405453e8ab396c51b12a15acaa6",
+      "baselineHash": "adaf28039783dfbc922f74b34a2c70ed66776282a32e80f69eb0f9eb0da4fc9d",
+      "sceneMs": 15311,
+      "outputs": {
+        "bone": {
+          "path": "docs/design/personal-imprint-color-v1-tala-bone.png",
+          "hash": "82cd3c43ca9e3766eb621e90b1dea7af6a3f892e314845f0ed705374ec758344"
+        },
+        "input": {
+          "path": "docs/design/personal-imprint-color-v1-tala-input.png",
+          "hash": "342729963947a4bf74330e1cbc6c0e1c873af7b36c07fb29592c95189b318bd0"
+        },
+        "completion": {
+          "path": "docs/design/personal-imprint-color-v1-tala-completion.png",
+          "hash": "3682bd9a32b40a6f387549ba5c8e0375c92e0f5531d480ca87e3c673374255a3"
+        },
+        "mixed": {
+          "path": "docs/design/personal-imprint-color-v1-tala-mixed.png",
+          "hash": "e9f539391469e8b5c8d71237fe5b40a803dbc3381ab5e20d000c706dbe4e694f"
+        },
+        "older": {
+          "path": "docs/design/personal-imprint-color-v1-tala-older.png",
+          "hash": "e003ec1dd43a60c024ab3817e1afff287c93073c027aa667aee30cdc8995187f"
+        },
+        "busy": {
+          "path": "docs/design/personal-imprint-color-v1-tala-busy.png",
+          "hash": "25f2fbe7cef020329489dc090b381107102e1a84df1dc3ade055f5e780742da8"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-color-v1-tala-starting.png",
+          "hash": "35eea0291a9d82c06b6895480eed12d6bc74b71b0ff9dc66f48f58a1a88dff70"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-color-v1-tala-notes.png",
+          "hash": "3682bd9a32b40a6f387549ba5c8e0375c92e0f5531d480ca87e3c673374255a3"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-color-v1-tala-thoughts.png",
+          "hash": "93904640c2dadee39a1bb287cfb279d05b020188e11e49560bcf698d85d02629"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-color-v1-tala-routine.png",
+          "hash": "753ee377aa997a4f053fead4ce053c6a3fa0b8ef61ce3a81d8855737c215f110"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-color-v1-tala-log-week.png",
+          "hash": "8b1596704862c5a19d398b2ef13082892974e7264889dc9f5eb3e274e166760e"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-color-v1-tala-protocol.png",
+          "hash": "7416cb8216dc973c3d4cd870aa5a48bdef10f28dddd4a361a940f53fbaad9dca"
+        }
+      },
+      "updates": [
+        {
+          "name": "bone",
+          "milliseconds": 343,
+          "changedSamples": 0
+        },
+        {
+          "name": "input",
+          "milliseconds": 354,
+          "changedSamples": 867169
+        },
+        {
+          "name": "completion",
+          "milliseconds": 443,
+          "changedSamples": 867169
+        },
+        {
+          "name": "mixed",
+          "milliseconds": 765,
+          "changedSamples": 2988007
+        },
+        {
+          "name": "older",
+          "milliseconds": 973,
+          "changedSamples": 2988007
+        },
+        {
+          "name": "busy",
+          "milliseconds": 727,
+          "changedSamples": 3554393
+        },
+        {
+          "name": "starting",
+          "milliseconds": 327,
+          "changedSamples": 596661
+        },
+        {
+          "name": "notes",
+          "milliseconds": 418,
+          "changedSamples": 867169
+        },
+        {
+          "name": "thoughts",
+          "milliseconds": 341,
+          "changedSamples": 797325
+        },
+        {
+          "name": "routine",
+          "milliseconds": 331,
+          "changedSamples": 496431
+        },
+        {
+          "name": "log-week",
+          "milliseconds": 318,
+          "changedSamples": 733722
+        },
+        {
+          "name": "protocol",
+          "milliseconds": 341,
+          "changedSamples": 602879
+        }
+      ],
+      "coordinates": {
+        "path": "docs/design/personal-imprint-color-v1-tala-coordinates.bin",
+        "hash": "facdfccaf9d2f91887ac1ef292edafd69694807491ff89d1e5a1e587c3adfa10",
+        "width": 390,
+        "height": 585
+      }
+    },
+    {
+      "id": "sori",
+      "label": "Sori",
+      "geometryHash": "151b4421c9075a574a067efdf2234e18ced197d0ca40cf4137f740624e63087a",
+      "baselineHash": "bc7585249641a2d65b339743d8c5ac07ff92e33337a6db2784b932fcbd591231",
+      "sceneMs": 14817,
+      "outputs": {
+        "bone": {
+          "path": "docs/design/personal-imprint-color-v1-sori-bone.png",
+          "hash": "9430f35445945f3b5039dab5a7619ed4038cea793e09bde424d80dfea1dd8838"
+        },
+        "input": {
+          "path": "docs/design/personal-imprint-color-v1-sori-input.png",
+          "hash": "863f5e91ecac01965c1acd16741f2c1b5e754cd7a38fc61b906a51aa0fe71a47"
+        },
+        "completion": {
+          "path": "docs/design/personal-imprint-color-v1-sori-completion.png",
+          "hash": "1af267652250d3876d01729afad07efb90f1a270816c0a072c256f0857320c5c"
+        },
+        "mixed": {
+          "path": "docs/design/personal-imprint-color-v1-sori-mixed.png",
+          "hash": "e78ff730cf9bc3ab06dbf77ac418a3d18036eaa60df885d7fd8ddcc00bbb9843"
+        },
+        "older": {
+          "path": "docs/design/personal-imprint-color-v1-sori-older.png",
+          "hash": "435c5e3652d5be330badd9c421d7eb1ca938820ae7a0961f3fbd8278b23306b9"
+        },
+        "busy": {
+          "path": "docs/design/personal-imprint-color-v1-sori-busy.png",
+          "hash": "e416231775233a35bffcd26fadb636091dbb3e78ba091b5ac34f25ce86ecf439"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-color-v1-sori-starting.png",
+          "hash": "79369fe9fec41faa4c80e3ebc49e967ea421c12a327c8a423024a594b5002b29"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-color-v1-sori-notes.png",
+          "hash": "1af267652250d3876d01729afad07efb90f1a270816c0a072c256f0857320c5c"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-color-v1-sori-thoughts.png",
+          "hash": "73c7ed78be220064f844571ea14419537d968a83cef4d2c7be97cbace465a958"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-color-v1-sori-routine.png",
+          "hash": "cb002ff14ffdb2767330915cbcba8bf5825996eb95ec7ce9df3c77f973197c20"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-color-v1-sori-log-week.png",
+          "hash": "3fb1e288a023b83073341b70a30e5b8aa53af39f8b221eb2cc2a37d815623c02"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-color-v1-sori-protocol.png",
+          "hash": "59ca520e09a64d723896f33a735d35a36f9217cc4f81f52969b9ca53dea0ecc2"
+        }
+      },
+      "updates": [
+        {
+          "name": "bone",
+          "milliseconds": 271,
+          "changedSamples": 0
+        },
+        {
+          "name": "input",
+          "milliseconds": 288,
+          "changedSamples": 878850
+        },
+        {
+          "name": "completion",
+          "milliseconds": 310,
+          "changedSamples": 878850
+        },
+        {
+          "name": "mixed",
+          "milliseconds": 530,
+          "changedSamples": 3039808
+        },
+        {
+          "name": "older",
+          "milliseconds": 467,
+          "changedSamples": 3039808
+        },
+        {
+          "name": "busy",
+          "milliseconds": 489,
+          "changedSamples": 3621708
+        },
+        {
+          "name": "starting",
+          "milliseconds": 326,
+          "changedSamples": 610725
+        },
+        {
+          "name": "notes",
+          "milliseconds": 305,
+          "changedSamples": 878850
+        },
+        {
+          "name": "thoughts",
+          "milliseconds": 305,
+          "changedSamples": 821192
+        },
+        {
+          "name": "routine",
+          "milliseconds": 293,
+          "changedSamples": 505715
+        },
+        {
+          "name": "log-week",
+          "milliseconds": 337,
+          "changedSamples": 749865
+        },
+        {
+          "name": "protocol",
+          "milliseconds": 310,
+          "changedSamples": 609257
+        }
+      ],
+      "coordinates": {
+        "path": "docs/design/personal-imprint-color-v1-sori-coordinates.bin",
+        "hash": "41428fe8721c80e8599e403c8be67acb41a0211417f8edef472af68708accb82",
+        "width": 390,
+        "height": 585
+      }
+    }
+  ],
+  "states": {
+    "bone": {},
+    "input": {
+      "notes": 0.35
+    },
+    "completion": {
+      "notes": 0.95
+    },
+    "mixed": {
+      "starting": 0.6,
+      "notes": 0.8,
+      "routine": 0.95,
+      "log-week": 0.55,
+      "protocol": 0.7
+    },
+    "older": {
+      "starting": 0.16,
+      "notes": 0.22,
+      "routine": 0.26,
+      "log-week": 0.15,
+      "protocol": 0.19
+    },
+    "busy": {
+      "starting": 0.95,
+      "notes": 0.95,
+      "thoughts": 0.95,
+      "routine": 0.95,
+      "log-week": 0.95,
+      "protocol": 0.95
+    },
+    "starting": {
+      "starting": 0.95
+    },
+    "notes": {
+      "notes": 0.95
+    },
+    "thoughts": {
+      "thoughts": 0.95
+    },
+    "routine": {
+      "routine": 0.95
+    },
+    "log-week": {
+      "log-week": 0.95
+    },
+    "protocol": {
+      "protocol": 0.95
+    }
+  },
+  "limits": [
+    "Synthetic strengths and ages only; real activity weights and fade duration are undecided.",
+    "Areas are stable material coordinates with irregular feathered boundaries.",
+    "No real records, storage, Home integration or phone renderer."
+  ],
+  "sources": {
+    "scripts/lib/imprint-material-renderer.mjs": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "app/os/home/imprint-color-model.js": "3747b368c4d2610c75bbc67523912055ca2028ba4742365b173de73a1dea0d01",
+    "scripts/render-imprint-color.mjs": "aae0d5e00a501b2469f7533232fcfb29f0bb2766c95d74469248716b792cbf80"
+  },
+  "independent": {
+    "sources": true,
+    "checks": [
+      {
+        "id": "mira",
+        "gates": {
+          "geometry": true,
+          "baseline": true,
+          "assets": true,
+          "opaque": true,
+          "olderQuieter": true,
+          "inputQuieter": true,
+          "border": true
+        }
+      },
+      {
+        "id": "arun",
+        "gates": {
+          "geometry": true,
+          "baseline": true,
+          "assets": true,
+          "opaque": true,
+          "olderQuieter": true,
+          "inputQuieter": true,
+          "border": true
+        }
+      },
+      {
+        "id": "lin",
+        "gates": {
+          "geometry": true,
+          "baseline": true,
+          "assets": true,
+          "opaque": true,
+          "olderQuieter": true,
+          "inputQuieter": true,
+          "border": true
+        }
+      },
+      {
+        "id": "noor",
+        "gates": {
+          "geometry": true,
+          "baseline": true,
+          "assets": true,
+          "opaque": true,
+          "olderQuieter": true,
+          "inputQuieter": true,
+          "border": true
+        }
+      },
+      {
+        "id": "tala",
+        "gates": {
+          "geometry": true,
+          "baseline": true,
+          "assets": true,
+          "opaque": true,
+          "olderQuieter": true,
+          "inputQuieter": true,
+          "border": true
+        }
+      },
+      {
+        "id": "sori",
+        "gates": {
+          "geometry": true,
+          "baseline": true,
+          "assets": true,
+          "opaque": true,
+          "olderQuieter": true,
+          "inputQuieter": true,
+          "border": true
+        }
+      }
+    ],
+    "passed": true
+  }
+}

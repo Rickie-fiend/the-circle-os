@@ -1,0 +1,112 @@
+{
+  "id": "arun",
+  "label": "Arun",
+  "description": "Several reported experiences",
+  "recipe": {
+    "version": 1,
+    "normalizationVersion": 1,
+    "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+    "parameters": {
+      "width": 0.01352479,
+      "balance": -0.02035342,
+      "bend": 7.47311177,
+      "lean": 0.0020756,
+      "height": 0.05919432,
+      "spacing": 12.40769017,
+      "depth": 0.0313937,
+      "phase": 4.06731379
+    }
+  },
+  "recipeHash": "4b7b00354a0691cd3c6f5b735fc901912b278b55dbc75cce0f029edf265cf915",
+  "geometryHash": "fc09ba8ab2395d5a8184113b7df7aa948c79304f8055d5d344d7d48b5ee84360",
+  "bounds": {
+    "left": 88.10866658859591,
+    "right": 951.2409752990364,
+    "top": 34.792931734981956,
+    "bottom": 1459.7484066993152
+  },
+  "minJacobianBound": 1.0015529726992503,
+  "geometryInspection": {
+    "outsideVertices": 0,
+    "nonfinite": 0,
+    "invalidTriangles": 0,
+    "unsupportedRoutePoints": 0,
+    "foregroundCrossings": 0,
+    "checkedEndpoints": 2562,
+    "exposedEndpoints": 0,
+    "namedFoldFailures": 0,
+    "coveringStrandFailures": 0,
+    "materialSamples": 47707,
+    "supportedSamples": 47707,
+    "coverage": 1,
+    "uniqueStrandIds": 1281
+  },
+  "gates": {
+    "coverage": true,
+    "interiorGaps": true,
+    "support": true,
+    "finite": true,
+    "foregroundCrossings": true,
+    "endpoints": true,
+    "topology": true,
+    "invertible": true,
+    "comfortableBounds": true,
+    "finiteShading": true,
+    "unclippedShading": true,
+    "allStrandsRepresented": true
+  },
+  "checks": {
+    "repeatSame": true,
+    "orderSame": true,
+    "correctionRetained": true,
+    "freshCorrectionDifferent": true,
+    "feelingExcluded": true
+  },
+  "status": "rendered",
+  "outputs": {
+    "390": {
+      "path": "docs/design/personal-imprint-personal-v1-arun-390.png",
+      "hash": "880b1d908235b8f595aff9c45f489597d3119f4398f4c8cb72e09f26f29e6461"
+    },
+    "full": {
+      "path": "docs/design/personal-imprint-personal-v1-arun-full.png",
+      "hash": "9bc3784c9474da5d0d2ecba1eac5797e6b567e2d17f28a3ed46bf9017e2f4f4e"
+    },
+    "crown": {
+      "path": "docs/design/personal-imprint-personal-v1-arun-crown.png",
+      "hash": "69453808bf5f56bcc6b53489fa917932f453c00380deeec08045e02aa31ca76e"
+    },
+    "shoulder": {
+      "path": "docs/design/personal-imprint-personal-v1-arun-shoulder.png",
+      "hash": "cf1bc61e499e7efd9d8051177dc49bf1f703f3d540d5aef651ef46ab18fea193"
+    },
+    "lower": {
+      "path": "docs/design/personal-imprint-personal-v1-arun-lower.png",
+      "hash": "03795dedba884dbf86a0a8e504d18cc8c1bb87dbaafb1bccd94ce45bc75a2d36"
+    },
+    "shadows": {
+      "path": "docs/design/personal-imprint-personal-v1-arun-shadows.png",
+      "hash": "8b6540f526cc988beb48c7e851e0e28ab6622a9ccf4137aac08f60d3a79f04b7"
+    }
+  },
+  "renderHash": "9bc3784c9474da5d0d2ecba1eac5797e6b567e2d17f28a3ed46bf9017e2f4f4e",
+  "strands": {
+    "count": 1281,
+    "represented": 1281,
+    "visibleSegments": 141908,
+    "hiddenSegments": 98589
+  },
+  "material": {
+    "materialPixels": 763229,
+    "shadowedPixels": 206795,
+    "contactShadowSamples": 148177,
+    "shadowSource": "surface depth horizon and short rays against other generated fibres",
+    "colorSpace": "linear light, sRGB output",
+    "fibreSamples": 3104153,
+    "nonfiniteShades": 0,
+    "clippedHighlights": 0,
+    "minShade": 0.042899999767541885,
+    "maxShade": 0.9137119650840759,
+    "supersampling": 3
+  }
+}

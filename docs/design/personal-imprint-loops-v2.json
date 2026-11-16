@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "width": 1024,
+  "height": 1536,
+  "supersampling": 3,
+  "resamplingKernel": "linear",
+  "palette": { "background": [25, 24, 19], "fibre": [241, 239, 232], "support": [64, 62, 53] },
+  "fibre": { "width": 1.5, "radialSegments": 12, "ambient": 0.035, "diffuse": 0.9, "specular": 0.05, "roughnessExponent": 22 },
+  "surface": { "depthScale": 1, "normalRadius": 12, "ambient": 0.14, "diffuse": 0.09, "visible": false, "occlude": false },
+  "light": { "direction": [-0.58, -0.65, 0.7], "angularRadius": 0.5 },
+  "shadow": { "strength": 0.5, "maxDistance": 200, "steps": 32, "bias": 1.2, "fibreContactStrength": 0.22, "fibreContactDistances": [0.75, 1.5, 3, 6] },
+  "notes": "Monochrome closed-loop sculpture study. Only swept fibres contribute visible pixels and occlude each other. The closed bundle guide estimates lighting and broad shadows; it is neither painted nor an opaque visibility mask. All examples use fictional inputs."
+}

@@ -1,0 +1,10 @@
+import type { ImprintArea } from "./imprint-model";
+export type FoldRecipe = { version: 3; knots: number[][]; phase: number; flatten: number; filamentCount: number };
+export type FoldPoint = { x: number; y: number; z: number; light: number; front: number };
+export type Filament = { points: FoldPoint[]; area: ImprintArea; accent: number; width: number; grain: number };
+export type FoldScene = { depth: Float32Array; filaments: Filament[]; width: number; height: number; sx: number; sy: number };
+export function createFoldRecipe(random: () => number): FoldRecipe;
+export function foldFrame(recipe: FoldRecipe, t: number): { center: number[]; normal: number[]; binormal: number[] };
+export function foldFilament(recipe: FoldRecipe, index: number, samples?: number): Filament;
+export function makeFoldScene(recipe: FoldRecipe, width: number, height: number): FoldScene;
+export function paintFoldScene(context: CanvasRenderingContext2D, scene: FoldScene, colors: Partial<Record<ImprintArea, number>>): void;

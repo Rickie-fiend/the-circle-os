@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "normalizationVersion": 1,
+  "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+  "parameters": {
+    "width": 0.01352479,
+    "balance": -0.02035342,
+    "bend": 7.47311177,
+    "lean": 0.0020756,
+    "height": 0.05919432,
+    "spacing": 12.40769017,
+    "depth": 0.0313937,
+    "phase": 4.06731379
+  }
+}

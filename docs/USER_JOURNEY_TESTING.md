@@ -1,5 +1,252 @@
 # Circle OS user-journey test record
 
+## Local synthetic backup and restore — 2026-11-15
+
+Developer approved the automated local rehearsal, official image downloads,
+disposable resources, deletion/interruption diagnostics and listed records.
+Added scripts/check-backup-restore.mjs and tests/backup-restore.browser.mjs.
+No product runtime, migration-file, hosted-resource, live-sync, commit or deployment
+change. Existing working-tree changes and real November 12 backup preserved.
+
+Final command: node scripts/check-backup-restore.mjs --write
+(Supabase CLI 3.1.0; Docker engine 29.9.3; local PostgreSQL 17.11.0.011).
+The runner creates unique source/target project IDs under outputs, copies only
+repository migrations into the source, excludes hosted environment files/variables
+and privileged app configuration, and uses generated local identities/keys.
+CLI-default published ports are rebound to loopback before fixtures; gateway
+certificates are retained in temporary snapshot images and dependent services
+restart after DB rebinding. Source/target Auth uses ES256; no private key enters
+the browser. Source public/private schema ownership and a synthetic custom role
+are restored using the disposable local bootstrap administrator.
+
+Fixtures use real writing models/sync/RPCs: 6 heads, 10 receipts, 1 stored conflict
+and 1 resolution; Note revisions, dated empty clearing, Deep Thought source and
+Trash are present. Three synthetic Auth users/identities, two immutable article
+editions, catalog/media links, receipts and one pixel image are included.
+Exact row digests across 16 selected tables compare all restored values without
+printing Auth rows. Only auth.users/auth.identities are backed up here, not full
+Auth sessions/provider configuration. Media uses a separately hashed 5,632-byte
+archive of the actual owned local volume (/mnt), cleared before each restoration;
+downloaded pixel bytes must match. This file-backend method is local-specific.
+
+Final run circle-rehearsal-075be178 passes two normal restores. Each includes
+exact rows, media hash, same-account login, empty B/anonymous denial and stable
+retry preserving writing/receipts. Each restored app run passes 360/390px,
+including Note/Deep Thought exact text, clearing, reload and empty B History:
+1/1 browser test per restore, 30478ms and 32125ms, with no page errors.
+Setup gates are seeded; writing fixture creation uses models/RPCs, not authoring UI.
+Build/TypeScript and final focused lint pass. Existing writing/model/transport/
+resolution suite passes 69/69 (23866ms). git diff --check passes.
+
+Missing backup and modified digest are rejected. Interruption terminates the
+actual import connection after a pre-commit marker; subsequent metadata confirms
+rollback. This is a pre-commit SQL transaction failure test, not power-loss or
+mid-COPY certification. No incomplete restore is offered to a production reader.
+
+Measured diagnostic FAIL: after backup, a newer Note edit is accepted, an entry
+is permanently deleted through the model/sync path, and another Auth account is
+deleted. Restoring the older snapshot loses that newer edit and brings back
+the deleted entry/account. No independent deletion safeguard was implemented;
+the rehearsal intentionally records this open release gate.
+
+Measurements: backup/archive creation 1090ms; SQL import/schema-notification
+626ms and 452ms; simulated post-backup loss window 1321ms; cleanup 7967ms.
+The data/schema/role SQL artifact is 98,659 bytes. Full run before cleanup is
+227661ms including local stacks, build and both browser runs. These tiny-sample
+timings are not a production RPO/RTO, media-inclusive restore time or safe
+reopen time. The loss window is the scripted scenario, not a chosen backup cadence.
+
+Evidence: outputs/backup-restore-final.log, outputs/backup-restore-result.json
+and outputs/backup-restore-focused.log. Earlier iterative failures are in
+outputs/backup-restore-run*.log: initial network binding, generated certificates,
+stale DB connections, server-conflict fixture, storage path/copy, acknowledged
+deletion state and restore role privilege. Those failures were not product fixes
+or passes. One earlier successful rehearsal preceded the final measurement change.
+
+All final owned containers/volumes, network, snapshot images, synthetic dumps,
+credentials/build directories were removed and absence checked. Official image
+caches remain for reuse; no global Docker prune. The owned preflight config was
+removed. Historical schema.sql/data.sql hashes still match earlier inspection.
+No real backup contents were imported. Phones, provider backups, off-site cadence,
+full Auth/session configuration, 30-day retention and deletion replay remain open.
+No geometry/type/motion, Circle-day or immutable product content change; no
+geometry measurements or broad optimization were needed.
+
+Next: review durable deletion/account-revocation evidence outside the restored
+failure domain and the backup cadence/off-site route before an operating recovery
+implementation. See [runbook](BACKUP_RESTORE_RUNBOOK.md).
+
+## Hosted recovery diagnostics and repeat acceptance — 2026-11-15
+
+Developer approved test-side diagnostics, isolated accounts per width, fixture
+corrections, hosted writes/cleanup and seven records. paing-branch/main at
+3d96cb1; ten pre-existing modified files and two untracked recovery files preserved.
+No product runtime change, staging, commit, push, deployment or sync activation.
+
+The browser test now uses a fresh A/B pair for each width. Test-only capture
+records Send click/submit timing, answer lengths, button/form readiness and local
+entry/draft/queue counts on failure; it does not log credentials or answer text.
+The first diagnostic run passed Send and recovery but failed opening the restored
+Note from History (59980ms). Source inspection shows History can render during
+the App Back transition, while another flip is guarded. The fixture now waits
+for the Note Page's os-app-flip class to clear before clicking the History row.
+Its exact original-content assertion and all recovery assertions remain.
+
+Final complete hosted runs both pass 1/1 with sequential 360/390px journeys:
+77294ms and 71815ms. They cover exact accepted entries/versions/source links,
+interrupted recovery/retry, deliberate loss of local-only writing, dated empty
+Note revision/history after clearing, stale-copy/fresh-store deletion suppression
+and empty account B. Deletion construction remains protocol-level, not new UI
+deletion certification. Logs: outputs/writing-recovery-diagnostic.log (failed
+History attempt), outputs/writing-recovery-diagnostic-second.log and
+outputs/writing-recovery-diagnostic-repeat.log (passes).
+
+Commands: node --env-file=.env.local scripts/check-writing-recovery-live.mjs
+--write; node --test tests/writing-cloud-database.test.mjs
+tests/writing-transport.test.mjs tests/writing-model.test.mjs
+tests/writing-sync.test.mjs; node node_modules/eslint/bin/eslint.js
+scripts/check-writing-recovery-live.mjs tests/writing-recovery-live.browser.mjs.
+Both final disposable webpack builds/TypeScript and final lint pass; focused
+tests pass 58/58 (3464ms). Sandbox Node shim failed; installed Node outside the
+sandbox completed these checks. Existing multiple-lockfile warning persists.
+
+All ten temporary users across three runs have confirmed 404 absence. Scoped
+read-only SQL verifies zero heads/receipts/conflicts/resolutions for each pair.
+The earlier intermittent Send failure did not reproduce; its cause remains
+unestablished and it is not marked fixed. Diagnostics remain for recurrence.
+No geometry/type/motion, immutable content, Circle-day or personal-data change;
+no new geometry measurements or measured optimization were needed.
+
+Next: review this bounded result, then separately scope operating backup/restore
+and deletion suppression. Live sync stays off; phones remain deferred. These
+passes do not certify backups, retention or protection of unsent/local-only work.
+Earlier failed snapshots below are historical evidence.
+
+## Hosted production-writing recovery — 2026-11-14
+
+Developer approved the actual production-store hosted recovery proposal, isolated
+sync-enabled build and temporary-account writes/cleanup. paing-branch/3d96cb1;
+previous ten-file storage-loss work preserved. Two new files:
+scripts/check-writing-recovery-live.mjs and tests/writing-recovery-live.browser.mjs.
+
+The runner copies app/public/config into an outputs temporary build, excludes
+.env files, passes public Auth config and enables writing sync only in that build.
+The secret key reaches only the Node test worker for temporary-account lifecycle,
+never the app server or client bundle. Real Auth, writing RPCs, production CSS,
+actual account IndexedDB and production runner are used at 360/390px.
+Unrelated setup/delivery gates are seeded while unmounted. Writing is authored
+through actual Note and Deep Thought UI; no personal data is accessed.
+
+The rehearsal compares accepted entries, stable IDs, original versions and
+attribution against server inventory and recovered ledger. It checks an interrupted
+restore with RPC requests blocked; retry recovers exact accepted records. A later
+unsynced Note edit and unsent answer are deliberately erased and do not return.
+Deletion is authored through existing model/queue code and authenticated RPC,
+then tested through product recovery using a captured stale ledger and fresh store.
+B's inventory/ledger stays empty. Final run adds actual UI clearing, exact server
+empty-revision acceptance and fresh-browser restoration of its original history.
+
+Commands (installed Node v24.22.1 on PATH; existing Playwright installation):
+
+~~~powershell
+node --env-file=.env.local scripts/check-writing-recovery-live.mjs --write
+node --test tests/writing-cloud-database.test.mjs tests/writing-transport.test.mjs tests/writing-model.test.mjs tests/writing-sync.test.mjs
+node node_modules/eslint/bin/eslint.js scripts/check-writing-recovery-live.mjs tests/writing-recovery-live.browser.mjs
+git diff --check
+~~~
+
+Model/SQL/transport 58/58 pass (3865ms). Corrected hosted rehearsal passed 1/1,
+sequential 360/390px journeys (124846ms); production build/TypeScript and lint pass.
+Final clearing-inclusive acceptance is NOT complete. The clearing fixture initially
+targeted a new blank composer; it now opens a saved History row and asserts its
+exact original content before clearing. An assumed Untitled label failed, so the
+fixture now selects an actual writing row with the exact-content assertion kept.
+Latest final run (outputs/writing-recovery-live-final-result.log) fails at 360px
+waiting 45 seconds for Deep Thought Send to create a saved entry (54916ms total).
+The screen still shows the question and Send. There is no established cause:
+runtime behavior versus fixture/timing remains unresolved. Clearing, stale-copy
+and fresh-account checks are unreached in this final run, even though earlier
+pre-clearing selection passed both widths. Retain the failing test. First attempt reached interrupted
+recovery but assumed a missing ledger was persisted empty; fixture now accepts
+absent storage. Second attempt hit default five-second polling during acceptance;
+explicit 45-second network polling fixes the harness. No product runtime changed.
+Earlier temporary users were deleted with 404 checks; scoped SQL confirmed zero
+heads, receipts, conflicts and resolutions for each completed pair. Final users
+also have confirmed 404 absence; scoped SQL verifies final writing-table cleanup.
+The local account-ID report contains only generated IDs; no credentials or tokens.
+
+Consulted Supabase changelog and official User Management documentation before
+implementation. No relevant SDK/schema change required. Outside-sandbox execution
+was approved for junctions, browser launch and hosted network access.
+
+Limits: this proves recovery from surviving accepted server records. It does not
+restore damaged/deleted server data, certify backups or 30-day deleted-backup
+retention, protect unsent/local-only writing or certify physical devices. Terminal
+deletion request construction is protocol-level; no new UI deletion acceptance
+is claimed. Live sync remains disabled. No migration, personal import, deployment,
+geometry/type/motion change or optimization. Next review diagnostics for the
+intermittent Send/fixture boundary; any runtime fix needs separate approval.
+Operating backup restore and deletion suppression remain later work.
+
+## Storage loss and recovery — 2026-11-14
+
+Developer approved the tests-and-records proposal. Clean paing-branch/3d96cb1;
+product runtime, hosted configuration, migrations and writing activation unchanged.
+
+Production checks use a disposable Next webpack build, production CSS, synthetic
+signed Auth and disposable persistent Chromium profiles at 360/390px. Note saves
+and unsent Deep Thoughts are made through actual UI; unrelated setup/delivery gates
+are seeded. Cases remove localStorage only, all local Auth state only, or all origin
+data through Chromium's storage API. These are explicit removal simulations, not
+evidence of spontaneous OS/phone eviction.
+
+Store cases delete A's writing database, retaining B's exact ledger and an opaque
+older local copy. No old copy becomes a saved writing entry. This is a bounded
+store-layer import check, not full compatibility-display or cloud resurrection proof.
+
+Commands use installed Node v24.22.1 on PATH and installed Playwright browsers:
+
+~~~powershell
+node scripts/check-writing-offline.mjs
+node --test tests/writing-storage.browser.mjs
+node --test tests/writing-provider.browser.mjs
+node --test tests/supabase-auth.test.mjs
+node node_modules/eslint/bin/eslint.js tests/supabase-auth.browser.mjs tests/writing-storage.browser.mjs scripts/check-writing-offline.mjs
+git diff --check
+~~~
+
+Final production recovery 24/24 (137424ms), store 22/22 (8025ms), provider 16/16
+(57951ms), controller/proof 12/12 pass. Final isolated production webpack build
+including TypeScript, focused lint after fixture corrections and diff checks pass.
+Two unchanged menu typography cases remain outside the runner selection; they
+are not counted as passing. Initial selection passed 24/24 with
+a small raw-store sentinel for Auth loss; the final fixture was strengthened to
+real saved writing and drafts. Intermediate stronger run found setup overlay
+timing and a nullable empty-draft fixture assumption. Setup is now seeded while
+the app is unmounted, and draft reads handle empty content. A Windows EBUSY during
+disposable profile cleanup led to bounded retries after existing path validation.
+Default Node shim failed; explicit installed Node resolved it. Sandbox junction
+and browser-launch restrictions required approved outside-sandbox execution.
+
+No backups, export feature, sync activation, migration, deployment or personal data
+changes. Full origin erasure removes the offline shell and unbacked local writing;
+sign-in is not a backup. Phone acceptance remains deferred. No measured optimization
+or fresh geometry measurement justified. Logs are local ignored outputs/storage-loss-*.
+
+| Removal/failure | Observed recovery boundary |
+| --- | --- |
+| localStorage only | Durable Auth permits offline return; saved entries, revisions and drafts match exactly. |
+| All Auth state only | Offline entry locks; fresh online sign-in exposes unchanged saved Note and unfinished Deep Thought. |
+| A writing database only | A ledger opens empty; B's exact ledger survives. Opaque old local copy is not imported by the writing store. |
+| All origin data | Offline navigation fails after cached shell removal; online sign-in leaves writing empty. |
+| Temporary storage refusal | Existing store/provider checks reject writes, retain retryable draft/open state and recover after storage works again. |
+| Clearing/deletion | Existing crash regression checks clearing; store/provider checks scrub deleted bodies and prevent old receipt state from rendering. Remote/backup resurrection remains unverified. |
+
+Next: review a backup/restore design covering saved records, local-only unsent drafts,
+ownership, exact acknowledgements and deletion suppression. No such implementation
+is authorized by these tests. The absence of recovery after full removal is a
+release-readiness gap, not a defect newly repaired in this slice.
+
 ## Durable offline entry and crash recovery — 2026-11-14
 
 Developer approved the implementation proposal. main/6a09b62; previous work

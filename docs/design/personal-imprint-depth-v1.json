@@ -1,0 +1,26 @@
+{
+  "version":1,
+  "structure":"docs/design/personal-imprint-structure-v1.json",
+  "courses":"docs/design/personal-imprint-bundle-routes-v1-geometry.json",
+  "ownership":"docs/design/personal-imprint-bundle-routes-v1.json",
+  "meaning":"Authored orthographic shell study. Positive z faces viewer. Depth units are reference pixels, not real dimensions. Full territories develop the narrow courses; shell backs provide explicit hidden return surfaces. This is an interpretation, not reconstructed physical threads.",
+  "grid":4,
+  "seamExpansion":"One grid cell of neighbouring territory support, restricted to actual material vertices. This expands geometry at joins rather than painting gaps shut.",
+  "bundles":[
+    {"id":"B1","depth":[[0,0],[0.35,16],[0.7,4],[1,-8]],"rise":22,"radius":160,"thickness":10},
+    {"id":"B2","depth":[[0,65],[0.4,79],[1,58]],"rise":18,"radius":85,"thickness":10},
+    {"id":"B3","depth":[[0,130],[0.45,145],[1,122]],"rise":26,"radius":180,"thickness":12},
+    {"id":"B4","depth":[[0,200],[0.3,216],[0.65,192],[1,205]],"rise":22,"radius":100,"thickness":12},
+    {"id":"B5","depth":[[0,270],[0.4,287],[1,265]],"rise":28,"radius":180,"thickness":12},
+    {"id":"B6","depth":[[0,340],[0.5,356],[1,334]],"rise":24,"radius":140,"thickness":12}
+  ],
+  "junctions":[
+    {"id":"F1","front":"B4","back":"B2","status":"authored overlap interpretation"},
+    {"id":"F2","front":"B4","back":"B1","status":"authored underside interpretation"},
+    {"id":"F3","front":"B5","back":"B4","status":"authored waist interpretation"},
+    {"id":"F4","front":"B6","back":"B4","status":"authored lower crossing interpretation"}
+  ],
+  "recesses":[{"id":"U1","resolution":"retain crown material as rounded recess; no through-opening inferred"},{"id":"U2","resolution":"retain lower material as rounded recess; visible returning strokes support a surface"}],
+  "hiddenReturns":"Each shell includes a geometric back and boundary walls. A continuous closed course follows the visible guide, a rounded depth turn at its end, the back guide with reversed u, and a rounded return to its start. This is an authored continuation model, not recovered strand identity. Individual thread turns need Step 4 development; no automatic inter-bundle joins.",
+  "limits":"Conservative grid discretization leaves a small boundary margin. Gaps larger than that are measured. Oblique view exposes separated shells and may require later depth refinement; do not treat it as the reference's actual hidden sculpture."
+}

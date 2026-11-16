@@ -1,0 +1,73 @@
+{
+  "strands": 199,
+  "unsupportedStrands": 0,
+  "closureFailures": 0,
+  "patches": [
+    {
+      "id": "B1",
+      "strands": 39,
+      "outsideSamples": 0,
+      "examples": [],
+      "foldedCells": 0,
+      "orientation": "positive",
+      "pitchMin": 1.2482674984335014,
+      "pitchMax": 7.466539732080294
+    },
+    {
+      "id": "B2",
+      "strands": 7,
+      "outsideSamples": 0,
+      "examples": [],
+      "foldedCells": 0,
+      "orientation": "positive",
+      "pitchMin": 1.5986760855633706,
+      "pitchMax": 8.129339119134402
+    },
+    {
+      "id": "B3",
+      "strands": 26,
+      "outsideSamples": 0,
+      "examples": [],
+      "foldedCells": 0,
+      "orientation": "negative",
+      "pitchMin": 1.264911066660417,
+      "pitchMax": 9.13165416747656
+    },
+    {
+      "id": "B4",
+      "strands": 41,
+      "outsideSamples": 0,
+      "examples": [],
+      "foldedCells": 0,
+      "orientation": "negative",
+      "pitchMin": 1.2500000014999983,
+      "pitchMax": 7.135119223232321
+    },
+    {
+      "id": "B5",
+      "strands": 38,
+      "outsideSamples": 0,
+      "examples": [],
+      "foldedCells": 0,
+      "orientation": "positive",
+      "pitchMin": 1.2458843861206605,
+      "pitchMax": 6.287515450195073
+    },
+    {
+      "id": "B6",
+      "strands": 48,
+      "outsideSamples": 0,
+      "examples": [],
+      "foldedCells": 0,
+      "orientation": "negative",
+      "pitchMin": 1.8821070226546948,
+      "pitchMax": 2.528813414912351
+    }
+  ],
+  "coverage": {
+    "expected": 45095,
+    "covered": 32067,
+    "percent": 71.10987914402928
+  },
+  "meaning": "Report failures explicitly; renderer does not clip unsupported routes to the silhouette."
+}

@@ -1,0 +1,756 @@
+{
+  "version": 1,
+  "status": "rendered",
+  "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+  "materialSettingsHash": "bf0428224cc1ff227e4704dc7c8f5a50c11826cc3438c827cc2520bdbfd40cdb",
+  "sourceHashes": {
+    "app/os/home/imprint-personal-recipe.js": "6b571d32f965ab87499911b5fe6b0c86ffe2c8517a51dafaf73a9021c8d6b308",
+    "app/os/home/imprint-personal-samples.js": "8bd464820fd14a8c63f45c6abd9b3a8a312b2da3ac702a6efa77877d585b4eb9",
+    "scripts/lib/imprint-personal-geometry.mjs": "5d6fa1b6f6a20efad642dfa27e276b4d9c5225d7fc6f3ce4ecadc796e01a255d",
+    "scripts/lib/imprint-geometry-inspection.mjs": "d27e7a8cad9f0788feeb06425a56815c02e00190ba55b75975d4fbe4dd4d38b5",
+    "scripts/lib/imprint-material-renderer.mjs": "7bcf15f82e94d198991b769113b4e330b5287849ea9aa355694beb22e9ce1a2e",
+    "scripts/render-imprint-variations.mjs": "7db097712ab703db095a31e46d68111d6db5987f3ff740cf5af99725b4a6c202"
+  },
+  "baseline": {
+    "path": "docs/design/personal-imprint-material-v1-full.png",
+    "hash": "db99a242cf5682d86ee4b4b4ba948d72059fb33b7bc627b91d26a98676e7539e"
+  },
+  "samples": [
+    {
+      "id": "mira",
+      "label": "Mira",
+      "description": "An uncertain starting point",
+      "recipe": {
+        "version": 1,
+        "normalizationVersion": 1,
+        "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+        "parameters": {
+          "width": 0.05773559,
+          "balance": -0.03710649,
+          "bend": 14.2876593,
+          "lean": -0.00364099,
+          "height": 0.02358527,
+          "spacing": 8.55227266,
+          "depth": -0.02425618,
+          "phase": 5.63933941
+        }
+      },
+      "recipeHash": "a8d7322c8912be748fb12e135263f7e980fc7913934fe20d5efa5bed4f0a214b",
+      "geometryHash": "e2a337941379a6f07249c04adc5c8cc0f9aa9b78e64411a3e0235bf5ab252bf6",
+      "bounds": {
+        "left": 93.28301949821346,
+        "right": 970.4953390861094,
+        "top": 58.43979403754331,
+        "bottom": 1437.985717614379
+      },
+      "minJacobianBound": 1.0089951647094255,
+      "geometryInspection": {
+        "outsideVertices": 0,
+        "nonfinite": 0,
+        "invalidTriangles": 0,
+        "unsupportedRoutePoints": 0,
+        "foregroundCrossings": 0,
+        "checkedEndpoints": 2562,
+        "exposedEndpoints": 0,
+        "namedFoldFailures": 0,
+        "coveringStrandFailures": 0,
+        "materialSamples": 48260,
+        "supportedSamples": 48260,
+        "coverage": 1,
+        "uniqueStrandIds": 1281
+      },
+      "gates": {
+        "coverage": true,
+        "interiorGaps": true,
+        "support": true,
+        "finite": true,
+        "foregroundCrossings": true,
+        "endpoints": true,
+        "topology": true,
+        "invertible": true,
+        "comfortableBounds": true,
+        "finiteShading": true,
+        "unclippedShading": true,
+        "allStrandsRepresented": true
+      },
+      "checks": {
+        "repeatSame": true,
+        "orderSame": true,
+        "correctionRetained": true,
+        "freshCorrectionDifferent": true,
+        "feelingExcluded": true
+      },
+      "status": "rendered",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-personal-v1-mira-390.png",
+          "hash": "0f3b7159cabb9c169aff35224f18ba1a1b270f35f30aa0ee52b95e8ada257398"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-personal-v1-mira-full.png",
+          "hash": "5ab6ebe1454a6b60bcbd5699d8f943e19ed42eafdb9e227dd0dab52cb9894a5a"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-personal-v1-mira-crown.png",
+          "hash": "d563b5863b570eaf8941a7be94e601fd2228ad88c23c90e41fd9340eb7b1d040"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-personal-v1-mira-shoulder.png",
+          "hash": "b34c663d35988caa20530aaaa70189ad188e5f96987580417ce65338dca2609d"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-personal-v1-mira-lower.png",
+          "hash": "184cfaf3376ad3a931d7bac3c01c64b761a4e2a17f00a8f8639e4227a0e8733e"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-personal-v1-mira-shadows.png",
+          "hash": "c52340347d889c251920e437ed8462c22148ddada72243f3ed93d66ad785d92b"
+        }
+      },
+      "renderHash": "5ab6ebe1454a6b60bcbd5699d8f943e19ed42eafdb9e227dd0dab52cb9894a5a",
+      "strands": {
+        "count": 1281,
+        "represented": 1281,
+        "visibleSegments": 141908,
+        "hiddenSegments": 98589
+      },
+      "material": {
+        "materialPixels": 772249,
+        "shadowedPixels": 200016,
+        "contactShadowSamples": 136949,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 3116922,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 0.042899999767541885,
+        "maxShade": 0.9130740761756897,
+        "supersampling": 3
+      },
+      "independentInspection": {
+        "geometry": {
+          "outsideVertices": 0,
+          "nonfinite": 0,
+          "invalidTriangles": 0,
+          "unsupportedRoutePoints": 0,
+          "foregroundCrossings": 0,
+          "checkedEndpoints": 2562,
+          "exposedEndpoints": 0,
+          "namedFoldFailures": 0,
+          "coveringStrandFailures": 0,
+          "materialSamples": 48260,
+          "supportedSamples": 48260,
+          "coverage": 1,
+          "uniqueStrandIds": 1281
+        },
+        "checks": {
+          "reproducible": true,
+          "reordered": true,
+          "retained": true
+        },
+        "outputs": [
+          {
+            "name": "390",
+            "hashMatches": true,
+            "dimensions": [
+              390,
+              585
+            ]
+          },
+          {
+            "name": "full",
+            "hashMatches": true,
+            "dimensions": [
+              1024,
+              1536
+            ]
+          },
+          {
+            "name": "crown",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              800
+            ]
+          },
+          {
+            "name": "shoulder",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              714
+            ]
+          },
+          {
+            "name": "lower",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              700
+            ]
+          },
+          {
+            "name": "shadows",
+            "hashMatches": true,
+            "dimensions": [
+              1024,
+              1536
+            ]
+          }
+        ],
+        "image": {
+          "voidViolations": 0,
+          "clippedChannels": 0,
+          "nonOpaque": 0,
+          "minChannel": 16,
+          "maxChannel": 223,
+          "phoneMatchesFull": true
+        },
+        "gates": {
+          "coverage": true,
+          "interiorGaps": true,
+          "support": true,
+          "finite": true,
+          "foregroundCrossings": true,
+          "endpoints": true,
+          "recipeCurrent": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "invertible": true,
+          "comfortableBounds": true,
+          "topology": true,
+          "rendered": true,
+          "rendererChecks": true,
+          "outputHashes": true,
+          "dimensions": true,
+          "preservedVoids": true,
+          "unclipped": true,
+          "opaque": true,
+          "phoneMatchesFull": true
+        }
+      }
+    },
+    {
+      "id": "arun",
+      "label": "Arun",
+      "description": "Several reported experiences",
+      "recipe": {
+        "version": 1,
+        "normalizationVersion": 1,
+        "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+        "parameters": {
+          "width": 0.01352479,
+          "balance": -0.02035342,
+          "bend": 7.47311177,
+          "lean": 0.0020756,
+          "height": 0.05919432,
+          "spacing": 12.40769017,
+          "depth": 0.0313937,
+          "phase": 4.06731379
+        }
+      },
+      "recipeHash": "4b7b00354a0691cd3c6f5b735fc901912b278b55dbc75cce0f029edf265cf915",
+      "geometryHash": "fc09ba8ab2395d5a8184113b7df7aa948c79304f8055d5d344d7d48b5ee84360",
+      "bounds": {
+        "left": 88.10866658859591,
+        "right": 951.2409752990364,
+        "top": 34.792931734981956,
+        "bottom": 1459.7484066993152
+      },
+      "minJacobianBound": 1.0015529726992503,
+      "geometryInspection": {
+        "outsideVertices": 0,
+        "nonfinite": 0,
+        "invalidTriangles": 0,
+        "unsupportedRoutePoints": 0,
+        "foregroundCrossings": 0,
+        "checkedEndpoints": 2562,
+        "exposedEndpoints": 0,
+        "namedFoldFailures": 0,
+        "coveringStrandFailures": 0,
+        "materialSamples": 47707,
+        "supportedSamples": 47707,
+        "coverage": 1,
+        "uniqueStrandIds": 1281
+      },
+      "gates": {
+        "coverage": true,
+        "interiorGaps": true,
+        "support": true,
+        "finite": true,
+        "foregroundCrossings": true,
+        "endpoints": true,
+        "topology": true,
+        "invertible": true,
+        "comfortableBounds": true,
+        "finiteShading": true,
+        "unclippedShading": true,
+        "allStrandsRepresented": true
+      },
+      "checks": {
+        "repeatSame": true,
+        "orderSame": true,
+        "correctionRetained": true,
+        "freshCorrectionDifferent": true,
+        "feelingExcluded": true
+      },
+      "status": "rendered",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-personal-v1-arun-390.png",
+          "hash": "880b1d908235b8f595aff9c45f489597d3119f4398f4c8cb72e09f26f29e6461"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-personal-v1-arun-full.png",
+          "hash": "9bc3784c9474da5d0d2ecba1eac5797e6b567e2d17f28a3ed46bf9017e2f4f4e"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-personal-v1-arun-crown.png",
+          "hash": "69453808bf5f56bcc6b53489fa917932f453c00380deeec08045e02aa31ca76e"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-personal-v1-arun-shoulder.png",
+          "hash": "cf1bc61e499e7efd9d8051177dc49bf1f703f3d540d5aef651ef46ab18fea193"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-personal-v1-arun-lower.png",
+          "hash": "03795dedba884dbf86a0a8e504d18cc8c1bb87dbaafb1bccd94ce45bc75a2d36"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-personal-v1-arun-shadows.png",
+          "hash": "8b6540f526cc988beb48c7e851e0e28ab6622a9ccf4137aac08f60d3a79f04b7"
+        }
+      },
+      "renderHash": "9bc3784c9474da5d0d2ecba1eac5797e6b567e2d17f28a3ed46bf9017e2f4f4e",
+      "strands": {
+        "count": 1281,
+        "represented": 1281,
+        "visibleSegments": 141908,
+        "hiddenSegments": 98589
+      },
+      "material": {
+        "materialPixels": 763229,
+        "shadowedPixels": 206795,
+        "contactShadowSamples": 148177,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 3104153,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 0.042899999767541885,
+        "maxShade": 0.9137119650840759,
+        "supersampling": 3
+      },
+      "independentInspection": {
+        "geometry": {
+          "outsideVertices": 0,
+          "nonfinite": 0,
+          "invalidTriangles": 0,
+          "unsupportedRoutePoints": 0,
+          "foregroundCrossings": 0,
+          "checkedEndpoints": 2562,
+          "exposedEndpoints": 0,
+          "namedFoldFailures": 0,
+          "coveringStrandFailures": 0,
+          "materialSamples": 47707,
+          "supportedSamples": 47707,
+          "coverage": 1,
+          "uniqueStrandIds": 1281
+        },
+        "checks": {
+          "reproducible": true,
+          "reordered": true,
+          "retained": true
+        },
+        "outputs": [
+          {
+            "name": "390",
+            "hashMatches": true,
+            "dimensions": [
+              390,
+              585
+            ]
+          },
+          {
+            "name": "full",
+            "hashMatches": true,
+            "dimensions": [
+              1024,
+              1536
+            ]
+          },
+          {
+            "name": "crown",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              800
+            ]
+          },
+          {
+            "name": "shoulder",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              714
+            ]
+          },
+          {
+            "name": "lower",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              700
+            ]
+          },
+          {
+            "name": "shadows",
+            "hashMatches": true,
+            "dimensions": [
+              1024,
+              1536
+            ]
+          }
+        ],
+        "image": {
+          "voidViolations": 0,
+          "clippedChannels": 0,
+          "nonOpaque": 0,
+          "minChannel": 16,
+          "maxChannel": 223,
+          "phoneMatchesFull": true
+        },
+        "gates": {
+          "coverage": true,
+          "interiorGaps": true,
+          "support": true,
+          "finite": true,
+          "foregroundCrossings": true,
+          "endpoints": true,
+          "recipeCurrent": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "invertible": true,
+          "comfortableBounds": true,
+          "topology": true,
+          "rendered": true,
+          "rendererChecks": true,
+          "outputHashes": true,
+          "dimensions": true,
+          "preservedVoids": true,
+          "unclipped": true,
+          "opaque": true,
+          "phoneMatchesFull": true
+        }
+      }
+    },
+    {
+      "id": "lin",
+      "label": "Lin",
+      "description": "A different daily rhythm",
+      "recipe": {
+        "version": 1,
+        "normalizationVersion": 1,
+        "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+        "parameters": {
+          "width": 0.01030872,
+          "balance": -0.01740142,
+          "bend": -14.73424739,
+          "lean": -0.01373276,
+          "height": -0.03527973,
+          "spacing": 0.10516026,
+          "depth": -0.05242133,
+          "phase": 4.78494729
+        }
+      },
+      "recipeHash": "50d4f184be3cc06588c407ac71f8a713ffea19eca6bf81c96a00b352c2a00c1c",
+      "geometryHash": "96e048837495ff24cc9501a1a1ee8d95caf8dd8419d1732e311d7c2cf5b42a30",
+      "bounds": {
+        "left": 80.23466347917717,
+        "right": 958.9286261612544,
+        "top": 96.92536916508183,
+        "bottom": 1402.910615419241
+      },
+      "minJacobianBound": 0.9574506794263881,
+      "geometryInspection": {
+        "outsideVertices": 0,
+        "nonfinite": 0,
+        "invalidTriangles": 0,
+        "unsupportedRoutePoints": 0,
+        "foregroundCrossings": 0,
+        "checkedEndpoints": 2562,
+        "exposedEndpoints": 0,
+        "namedFoldFailures": 0,
+        "coveringStrandFailures": 0,
+        "materialSamples": 43787,
+        "supportedSamples": 43787,
+        "coverage": 1,
+        "uniqueStrandIds": 1281
+      },
+      "gates": {
+        "coverage": true,
+        "interiorGaps": true,
+        "support": true,
+        "finite": true,
+        "foregroundCrossings": true,
+        "endpoints": true,
+        "topology": true,
+        "invertible": true,
+        "comfortableBounds": true,
+        "finiteShading": true,
+        "unclippedShading": true,
+        "allStrandsRepresented": true
+      },
+      "checks": {
+        "repeatSame": true,
+        "orderSame": true,
+        "correctionRetained": true,
+        "freshCorrectionDifferent": true,
+        "feelingExcluded": true
+      },
+      "status": "rendered",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-personal-v1-lin-390.png",
+          "hash": "482fc95a9ed3f29fefe32604b819e88d2826d2b5eee1b71cdcf8fdd70c5d2cbd"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-personal-v1-lin-full.png",
+          "hash": "68f20972ebd6f2492b3dbe5a86cc59a66b88b75d7fd316e37ccd751fed5e272c"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-personal-v1-lin-crown.png",
+          "hash": "bd01610dbe05cb63ae9b4a0df53a48ac585278c387c41c93712b932b69a5f08d"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-personal-v1-lin-shoulder.png",
+          "hash": "6e29ea5feda5edadc344095f333141acacae1f012291c43b23c07289bb90114c"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-personal-v1-lin-lower.png",
+          "hash": "5e6cefc934f94b3f35f678c3d4985de0da1f5dca2cf7efa6d783dd91739cce3b"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-personal-v1-lin-shadows.png",
+          "hash": "05f374a5522569f34822e1217672c5a88f7ca9df83b78273f23b350ea031974a"
+        }
+      },
+      "renderHash": "68f20972ebd6f2492b3dbe5a86cc59a66b88b75d7fd316e37ccd751fed5e272c",
+      "strands": {
+        "count": 1281,
+        "represented": 1281,
+        "visibleSegments": 141907,
+        "hiddenSegments": 98590
+      },
+      "material": {
+        "materialPixels": 700464,
+        "shadowedPixels": 186441,
+        "contactShadowSamples": 149875,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 2986125,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 0.042899999767541885,
+        "maxShade": 0.9132263660430908,
+        "supersampling": 3
+      },
+      "independentInspection": {
+        "geometry": {
+          "outsideVertices": 0,
+          "nonfinite": 0,
+          "invalidTriangles": 0,
+          "unsupportedRoutePoints": 0,
+          "foregroundCrossings": 0,
+          "checkedEndpoints": 2562,
+          "exposedEndpoints": 0,
+          "namedFoldFailures": 0,
+          "coveringStrandFailures": 0,
+          "materialSamples": 43787,
+          "supportedSamples": 43787,
+          "coverage": 1,
+          "uniqueStrandIds": 1281
+        },
+        "checks": {
+          "reproducible": true,
+          "reordered": true,
+          "retained": true
+        },
+        "outputs": [
+          {
+            "name": "390",
+            "hashMatches": true,
+            "dimensions": [
+              390,
+              585
+            ]
+          },
+          {
+            "name": "full",
+            "hashMatches": true,
+            "dimensions": [
+              1024,
+              1536
+            ]
+          },
+          {
+            "name": "crown",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              800
+            ]
+          },
+          {
+            "name": "shoulder",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              714
+            ]
+          },
+          {
+            "name": "lower",
+            "hashMatches": true,
+            "dimensions": [
+              820,
+              700
+            ]
+          },
+          {
+            "name": "shadows",
+            "hashMatches": true,
+            "dimensions": [
+              1024,
+              1536
+            ]
+          }
+        ],
+        "image": {
+          "voidViolations": 0,
+          "clippedChannels": 0,
+          "nonOpaque": 0,
+          "minChannel": 16,
+          "maxChannel": 223,
+          "phoneMatchesFull": true
+        },
+        "gates": {
+          "coverage": true,
+          "interiorGaps": true,
+          "support": true,
+          "finite": true,
+          "foregroundCrossings": true,
+          "endpoints": true,
+          "recipeCurrent": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "invertible": true,
+          "comfortableBounds": true,
+          "topology": true,
+          "rendered": true,
+          "rendererChecks": true,
+          "outputHashes": true,
+          "dimensions": true,
+          "preservedVoids": true,
+          "unclipped": true,
+          "opaque": true,
+          "phoneMatchesFull": true
+        }
+      }
+    }
+  ],
+  "readyForReview": true,
+  "limitations": [
+    "Working visual baseline retains cut-looking entries and less layered volume than the reference.",
+    "Fixed topology and bounded deformations only; no answer-to-fold semantics or uniqueness guarantee.",
+    "Synthetic inputs and in-memory retention only; no account storage or production Home integration."
+  ],
+  "baseUnchanged": true,
+  "independentInspection": {
+    "inspectorHash": "6da58a6e56ab79d69711bd730867fa2d896d7c0953feda3a25b0fe48c1d08a77",
+    "sourceChecks": [
+      {
+        "path": "app/os/home/imprint-personal-recipe.js",
+        "current": "6b571d32f965ab87499911b5fe6b0c86ffe2c8517a51dafaf73a9021c8d6b308",
+        "expected": "6b571d32f965ab87499911b5fe6b0c86ffe2c8517a51dafaf73a9021c8d6b308"
+      },
+      {
+        "path": "app/os/home/imprint-personal-samples.js",
+        "current": "8bd464820fd14a8c63f45c6abd9b3a8a312b2da3ac702a6efa77877d585b4eb9",
+        "expected": "8bd464820fd14a8c63f45c6abd9b3a8a312b2da3ac702a6efa77877d585b4eb9"
+      },
+      {
+        "path": "scripts/lib/imprint-personal-geometry.mjs",
+        "current": "5d6fa1b6f6a20efad642dfa27e276b4d9c5225d7fc6f3ce4ecadc796e01a255d",
+        "expected": "5d6fa1b6f6a20efad642dfa27e276b4d9c5225d7fc6f3ce4ecadc796e01a255d"
+      },
+      {
+        "path": "scripts/lib/imprint-geometry-inspection.mjs",
+        "current": "d27e7a8cad9f0788feeb06425a56815c02e00190ba55b75975d4fbe4dd4d38b5",
+        "expected": "d27e7a8cad9f0788feeb06425a56815c02e00190ba55b75975d4fbe4dd4d38b5"
+      },
+      {
+        "path": "scripts/lib/imprint-material-renderer.mjs",
+        "current": "7bcf15f82e94d198991b769113b4e330b5287849ea9aa355694beb22e9ce1a2e",
+        "expected": "7bcf15f82e94d198991b769113b4e330b5287849ea9aa355694beb22e9ce1a2e"
+      },
+      {
+        "path": "scripts/render-imprint-variations.mjs",
+        "current": "7db097712ab703db095a31e46d68111d6db5987f3ff740cf5af99725b4a6c202",
+        "expected": "7db097712ab703db095a31e46d68111d6db5987f3ff740cf5af99725b4a6c202"
+      }
+    ],
+    "gates": {
+      "baseUnchanged": true,
+      "settingsCurrent": true,
+      "sourcesCurrent": true,
+      "baselineImageUnchanged": true,
+      "threeSamples": true,
+      "distinctSamples": true
+    }
+  },
+  "checksPass": true,
+  "visualReview": {
+    "date": "2026-11-16",
+    "status": "review-with-limitations",
+    "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+    "samples": [
+      {
+        "id": "mira",
+        "recipeHash": "a8d7322c8912be748fb12e135263f7e980fc7913934fe20d5efa5bed4f0a214b",
+        "geometryHash": "e2a337941379a6f07249c04adc5c8cc0f9aa9b78e64411a3e0235bf5ab252bf6",
+        "renderHash": "5ab6ebe1454a6b60bcbd5699d8f943e19ed42eafdb9e227dd0dab52cb9894a5a"
+      },
+      {
+        "id": "arun",
+        "recipeHash": "4b7b00354a0691cd3c6f5b735fc901912b278b55dbc75cce0f029edf265cf915",
+        "geometryHash": "fc09ba8ab2395d5a8184113b7df7aa948c79304f8055d5d344d7d48b5ee84360",
+        "renderHash": "9bc3784c9474da5d0d2ecba1eac5797e6b567e2d17f28a3ed46bf9017e2f4f4e"
+      },
+      {
+        "id": "lin",
+        "recipeHash": "50d4f184be3cc06588c407ac71f8a713ffea19eca6bf81c96a00b352c2a00c1c",
+        "geometryHash": "96e048837495ff24cc9501a1a1ee8d95caf8dd8419d1732e311d7c2cf5b42a30",
+        "renderHash": "68f20972ebd6f2492b3dbe5a86cc59a66b88b75d7fd316e37ccd751fed5e272c"
+      }
+    ],
+    "inspected": [
+      "all three 390px exports",
+      "four-form desktop comparison",
+      "390px stacked browser comparison",
+      "Arun full image",
+      "Mira shoulder detail",
+      "Lin lower return"
+    ],
+    "observations": [
+      "The three samples retain the working master's fold/opening layout and individual routes. Mira is broader, Arun taller and Lin shorter with a different lean; differences are restrained and visible in comparison.",
+      "The uncertain sample retains the complete construction. No answer count, text length, effort or worth controls material quantity.",
+      "No new detached strip, closed opening or cut-through strand is observed. Original cut-looking entries and weaker layered volume remain limitations of the accepted working baseline.",
+      "Geometry inspection establishes actual support and buried endpoints. It does not certify reference-level continuity or arbitrary future personal shapes.",
+      "Phone/browser comparison is readable with scroll. This is an isolated review gallery, not the production Home layout."
+    ],
+    "developerBaselineDecision": "Proceed with the current artwork as a working baseline, retaining its known visual limitations.",
+    "developerVariantAcceptance": "pending",
+    "scope": "Bounded fixed-topology visual fingerprints from synthetic answers. No per-answer folds, semantic life interpretation, real persistence, Orange or product integration."
+  }
+}

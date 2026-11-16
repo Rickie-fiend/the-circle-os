@@ -1,0 +1,174 @@
+{
+  "generatedStrands": 381,
+  "retainedStrands": 367,
+  "rejectedUnsupported": [
+    "B1:-13:146",
+    "B1:-14:160",
+    "B1:-21:175",
+    "B1:-25:196",
+    "B1:-27:200",
+    "B1:-28:203",
+    "B3:-19:83",
+    "B5:-11:42",
+    "B5:-11:53",
+    "B5:-9:89",
+    "B5:-8:94",
+    "B5:-7:99",
+    "B6:21:142",
+    "B6:24:149"
+  ],
+  "inspection": [
+    {
+      "bundle": "B1",
+      "fieldRange": [
+        -121.42673589234472,
+        151.18800427785374
+      ],
+      "contourComponents": 216,
+      "omittedShort": 145,
+      "naturallyClosed": 7,
+      "projectedPitch": {
+        "p05": 3.9467988552241495,
+        "median": 3.9991549730798788,
+        "p95": 4.053441362601721
+      }
+    },
+    {
+      "bundle": "B2",
+      "fieldRange": [
+        -78.20359685903074,
+        123.99384143505083
+      ],
+      "contourComponents": 141,
+      "omittedShort": 105,
+      "naturallyClosed": 0,
+      "projectedPitch": {
+        "p05": 3.846631199966318,
+        "median": 4.000452705083835,
+        "p95": 4.261990849593037
+      }
+    },
+    {
+      "bundle": "B3",
+      "fieldRange": [
+        -139.2931273802669,
+        259.443357860405
+      ],
+      "contourComponents": 217,
+      "omittedShort": 151,
+      "naturallyClosed": 6,
+      "projectedPitch": {
+        "p05": 3.884518944120847,
+        "median": 3.999396134335681,
+        "p95": 4.052998499977153
+      }
+    },
+    {
+      "bundle": "B4",
+      "fieldRange": [
+        -223.86037213952332,
+        77.79266598604792
+      ],
+      "contourComponents": 214,
+      "omittedShort": 134,
+      "naturallyClosed": 0,
+      "projectedPitch": {
+        "p05": 3.939781325710013,
+        "median": 3.9996086289496895,
+        "p95": 4.055338455893102
+      }
+    },
+    {
+      "bundle": "B5",
+      "fieldRange": [
+        -75.21162425588446,
+        227.62172787997093
+      ],
+      "contourComponents": 196,
+      "omittedShort": 124,
+      "naturallyClosed": 0,
+      "projectedPitch": {
+        "p05": 3.971290579328942,
+        "median": 3.9990215216327885,
+        "p95": 4.027948176212218
+      }
+    },
+    {
+      "bundle": "B6",
+      "fieldRange": [
+        -105.7057795187925,
+        132.9334759593121
+      ],
+      "contourComponents": 162,
+      "omittedShort": 106,
+      "naturallyClosed": 0,
+      "projectedPitch": {
+        "p05": 3.957495174957486,
+        "median": 4.0007793190476555,
+        "p95": 4.046044728682718
+      }
+    }
+  ],
+  "nonfinite": 0,
+  "closureFailures": 0,
+  "visibleSamples": 698453,
+  "occludedSamples": 848725,
+  "selectedDiagnosticStrands": [
+    "B1:-9:13",
+    "B1:23:111",
+    "B2:-10:25",
+    "B3:8:29",
+    "B3:-28:95",
+    "B4:9:29",
+    "B4:-22:172",
+    "B5:-9:76",
+    "B5:25:138",
+    "B6:-2:10",
+    "B6:18:134"
+  ],
+  "referenceSpacing": {
+    "row": 600,
+    "xRange": [
+      110,
+      240
+    ],
+    "peaks": [
+      113,
+      116,
+      122,
+      126,
+      130,
+      134,
+      142,
+      149,
+      162,
+      170,
+      184,
+      187,
+      197,
+      208,
+      214,
+      220,
+      225
+    ],
+    "gaps": [
+      3,
+      6,
+      4,
+      4,
+      4,
+      8,
+      7,
+      13,
+      8,
+      14,
+      3,
+      10,
+      11,
+      6,
+      6,
+      5
+    ]
+  },
+  "limitations": "Weighted flow scalar may still pinch/split. Whole unsupported strands rejected; short contours omitted. 4px surface boundary margin inherited. Boundary-conforming revision and visual fidelity remain incomplete."
+}

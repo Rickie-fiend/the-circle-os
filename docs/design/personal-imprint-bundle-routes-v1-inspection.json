@@ -1,0 +1,64 @@
+{
+  "routes": [
+    {
+      "id": "B1",
+      "sections": 201,
+      "outsideMaterial": 0,
+      "outsideTerritory": 0,
+      "reversedCells": 0,
+      "crossedSections": 0
+    },
+    {
+      "id": "B2",
+      "sections": 201,
+      "outsideMaterial": 0,
+      "outsideTerritory": 0,
+      "reversedCells": 0,
+      "crossedSections": 0
+    },
+    {
+      "id": "B3",
+      "sections": 201,
+      "outsideMaterial": 0,
+      "outsideTerritory": 0,
+      "reversedCells": 0,
+      "crossedSections": 0
+    },
+    {
+      "id": "B4",
+      "sections": 201,
+      "outsideMaterial": 0,
+      "outsideTerritory": 0,
+      "reversedCells": 0,
+      "crossedSections": 0
+    },
+    {
+      "id": "B5",
+      "sections": 201,
+      "outsideMaterial": 0,
+      "outsideTerritory": 0,
+      "reversedCells": 0,
+      "crossedSections": 0
+    },
+    {
+      "id": "B6",
+      "sections": 201,
+      "outsideMaterial": 0,
+      "outsideTerritory": 0,
+      "reversedCells": 0,
+      "crossedSections": 0
+    }
+  ],
+  "reserve": {
+    "samples": 1270,
+    "unowned": 0,
+    "assigned": {
+      "B1": 708,
+      "B2": 9,
+      "B3": 115,
+      "B5": 396,
+      "B6": 42
+    }
+  },
+  "scope": "Sampled projected geometry inspection, not final appearance or analytic proof"
+}

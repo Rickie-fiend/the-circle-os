@@ -1,0 +1,17 @@
+{
+ "version":2,
+ "structure":"docs/design/personal-imprint-structure-v1.json",
+ "meaning":"Authored matched boundary stations. Each patch has one ordered periodic strand family; front u increases, back u reverses, with explicit rounded port turns. No distance contours or nearest-end connections. Depth and boundaries remain design interpretations.",
+ "samples":320,
+ "minimumPitch":1.2,
+ "patches":[
+  {"id":"B1","count":56,"z":0,"rise":24,"left":[[550,330],[565,220],[630,130],[730,90],[835,135],[905,230],[925,350],[915,470],[860,550],[775,595],[665,610],[575,650]],"right":[[600,345],[630,300],[675,260],[715,260],[740,285],[740,330],[700,385],[640,435],[590,490],[555,550],[535,610],[530,665]]},
+  {"id":"B2","count":30,"z":65,"rise":18,"left":[[245,460],[280,385],[330,345],[410,355],[480,360],[515,395],[510,460],[475,520],[400,545],[315,520]],"right":[[280,475],[300,420],[350,385],[400,380],[445,390],[480,425],[485,470],[455,525],[400,535],[350,515]]},
+  {"id":"B3","count":56,"z":130,"rise":26,"left":[[225,485],[155,515],[110,595],[120,700],[175,795],[250,860],[335,800],[460,600]],"right":[[340,550],[300,575],[240,640],[270,690],[315,700],[350,660],[395,610],[450,570]]},
+  {"id":"B4","count":48,"z":200,"rise":22,"left":[[615,450],[525,535],[455,650],[420,770],[345,885],[325,960],[370,1030],[385,1130],[350,1250],[420,1370]],"right":[[700,400],[635,500],[565,615],[525,740],[545,840],[610,955],[600,1050],[570,1140],[520,1250],[470,1370]]},
+  {"id":"B5","count":52,"z":270,"rise":28,"left":[[575,820],[690,840],[810,880],[865,965],[860,1080],[790,1210],[695,1310],[560,1395]],"right":[[530,830],[565,900],[620,970],[650,1040],[635,1130],[590,1220],[520,1300],[500,1380]]},
+  {"id":"B6","count":48,"z":340,"rise":24,"left":[[310,1025],[250,1080],[215,1180],[260,1300],[380,1380],[520,1390],[620,1300]],"right":[[370,1090],[340,1130],[330,1180],[360,1240],[420,1280],[490,1275],[535,1230]]}
+ ],
+ "connections":"Each front patch connects only to its own back via two rounded depth turns. Across-position v maps identically; no branches or neighbour switches. Inter-bundle overlaps preserve F1–F4 depth order.",
+ "limits":"Authored patch widths and ports require inspection before acceptance. Dense bunching at narrow ports must be recorded rather than concealed. These surfaces replace the grid boundary only within their explicit footprint; complete envelope coverage is measured separately."
+}

@@ -1,5 +1,328 @@
 # Circle OS decision log
 
+## 2026-11-16 — Brighter fresh and faded Orange requested
+
+Developer requires both fresh and faded Orange to be recognizable at a glance,
+with an obvious difference between them. The old Bone-darkening tint and .18
+faded presence were inadequate. The revised growth study trials full fresh and
+.60 faded Orange luminance (developer-requested trial after .72) with a monotonic
+.35 shade exponent on colored fibres.
+These numbers remain visual review; brand Orange is still #E36B37. Area feathering,
+growth/spread and the confirmed one-time 24-hour-then-06:00 cutoff stay unchanged.
+The stronger trial exposed sampled-coordinate stippling, so exports now use the
+existing full-resolution material capture before antialias reduction. Accepted
+monochrome images reproduce exactly; comparisons show equal-area fresh/faded.
+No production Home, real records, persistence, sync or deployment is included.
+
+## 2026-11-16 — Fade once after a full day, at local 06:00
+
+Developer corrected the ongoing recency decay and explicitly selected: wait one
+full 24-hour day after color application, then fade once at the first local 06:00
+at or after that time. Monday 21:00 therefore fades Wednesday 06:00; Tuesday
+05:30 fades Wednesday 06:00. A 06:00 application fades at 06:00 the next day.
+After this single change, faded brightness remains steady. Accumulated spread
+stays. A later application can begin a fresh brightness cycle. This replaces the
+earlier illustrative exponential brightness decay. Bright/faded numeric levels,
+qualifying activity and per-contribution evidence handling remain review.
+The synthetic growth study now demonstrates identical faded images after two
+days and one month; production clock/record integration remains unimplemented.
+
+## 2026-11-16 — Front-facing areas and lasting use-driven spread
+
+Developer requires all six areas to be visible from the front and requested a
+few-month user example. Confirmed: accumulated spread stays while older brightness
+fades. Growth follows recorded use of each area's functions, not elapsed signup
+age. Approved synthetic revision includes calibrated visible anchors, day 1/week
+2/month 1/month 3, unequal tool use, inactivity and checks. Numeric growth/recency
+rates remain illustrative, not approved production weights. Geometry stays fixed.
+The growth study passes 36 front-footprint checks and four-width browser tests;
+visual clarity/placements remain developer review. See Home brief.
+
+## 2026-11-16 — Accepted forms; abstract local color areas
+
+Developer accepted the six rounded forms and approved a synthetic color study
+before Home integration. Their corrections replace the earlier whole-thread
+constant-hue rule: a group affects an area of the bundle; a thread may pass into
+and out of Orange. Areas follow the material, have abstract asymmetric shapes,
+and fade softly/unevenly at their ends and edges. No abrupt color cuts or geometric
+circle/square masks. Six groups and completion-origin direction remain; strengths,
+activity aggregation and fade duration are still open. Feeling stays separate.
+
+The local study implements feathered material fields, cached coordinate color
+controls and 72 synthetic exports. Accepted geometry and seven monochrome full
+PNGs reproduce exactly. Focused tests 46/46, independent asset/geometry/pixel
+checks, scoped type/lint and four-width browser checks pass. Interactive phone
+coordinates approximate supersampled export edges. Appearance/placements and
+production data/performance remain review. No Home/records/sync activation or
+deployment. See the abstract color entry in PERSONAL_IMPRINT_HOME.md.
+
+## 2026-11-16 — V4 accepted; shared rounded generator approved
+
+Developer reviewed Sori v4 and said it looks good. This closes that artwork's
+visual gate; it does not certify every generated form or full physical collision
+freedom. Developer chose Home before returning to backup work and approved a
+generator/preview slice: retain accepted v4 and earlier recipes, extend rounded
+construction across sweep/return/curl, six full fictional examples, 30 additional
+synthetic cases, small openings, 128 closed strands and at most ten broad visible
+overlaps, repeat/correction/failure checks and rendering measurements. Initial
+answers determine a numeric recipe; feeling/activity do not change geometry and
+later corrections retain the original. New forms remain developer visual review.
+Production Home layout/navigation, Orange mapping, feeling storage, account
+recipe persistence and phone rendering follow a separately reviewed slice.
+No signup/sync activation, migration, publication, staging, commit or deployment.
+Current results and limits belong in PERSONAL_IMPRINT_HOME.md and CURRENT_TASK.md.
+
+Implemented as rounded-loop v1 with three numeric constructions, the v4 relief
+field and coherent seeded deformations. The six full examples and 30 balanced
+geometry cases pass; final focused tests 44/44, independent asset/pixel/hash
+inspection and four browser widths pass. The accepted Sori hashes remain intact.
+Family members remain related, and some folds read sparse/dark/wire-like. Broad
+visible-overlap interpretation and visual acceptance of the six new forms remain
+developer review. Measured desktop generation/rendering takes tens of seconds;
+phone execution, retained render data and whole-strand recoloring need review
+before Home integration. See the shared-generator entry in the Home brief.
+
+## 2026-11-16 — Sori relief across and along bundles
+
+Developer confirmed smooth rounded ridges/valleys within bundles, varying across
+their width and along their curved length. Approved a Sori-only geometry pass,
+preserved broad arrangement, small-opening limit, closed loops and at most ten
+broad overlaps, comparison/depth views, focused checks and records. Implementation
+uses a periodic bounded thickness field in the bundle frame. This changes actual
+strand positions, with the guide following final depths; material settings stay
+the same. V3 and the original six forms remain preserved.
+
+V4 has one small main opening below the reference rim's relative dimensions,
+128 closed strands and seven internally marked broad overlap regions. Thirty-nine
+focused checks, independent geometry/hash/pixel inspection and four browser widths
+pass. Ridge lips remain thin in places; dense reference-level volume and developer
+visual acceptance remain open. No extension to other forms, real recipe migration,
+product integration, Orange, sync activation or deployment. Detailed measurements
+and failed approaches are in the Sori relief entry in PERSONAL_IMPRINT_HOME.md.
+
+## 2026-11-16 — Sori-only tighter folds and smaller openings
+
+Developer confirmed the upper-left enclosed reference opening as the relative
+size target and at most ten visible broad-bundle overlaps. Approved a Sori-only
+revision with more folds, tighter placement and optional outline changes, plus
+comparison/inspection and records. Individual-thread weaving is not the target.
+The trial preserves original forms and uses the existing closed-loop/material
+engines with an authored course. Three measured gaps fall below the reference
+rim's relative width/height; seven fold/overlap regions are marked in internal
+review. Geometry/pixel/hash checks, 36 existing focused tests and four browser
+widths pass. Visual acceptance and the marked overlap interpretation remain
+developer review. No extension to other forms, real recipe migration, Orange,
+production Home, sync activation or deployment. See the Sori entry in the Home brief.
+
+## 2026-11-16 — Distinct closed-loop forms approved and implemented
+
+Developer clarified that personal variations must differ at a glance through
+folds, curves and overall form while keeping the original reference's thread
+language. One complex organic asymmetric composition per person; every strand
+is a smooth closed circuit, including hidden returns, with no loose or buried
+ends. Allow 0–3 main openings; fine thread spacing does not count. Similar
+answers may produce unrelated forms. Natural proportions share the review frame.
+This supersedes fixed-fold variation and concealed terminations for new forms;
+the historical Step 4/5 master remains preserved with its documented limits.
+
+Approved implementation: versioned periodic construction, three related families,
+six synthetic examples, phone/detail/silhouette/whole-strand inspection, focused
+recipe/geometry checks, browser review and continuity records. Input fields,
+normalization, feeling exclusion and correction retention stay as previously
+reviewed. No semantic life score, uniqueness guarantee or real recipe persistence.
+
+Six forms now contain 768 complete end-free loops. Only fibre tubes render and
+occlude other fibres; the invisible guide supplies lighting estimates. All six
+pass independent geometry/hash/pixel inspections, with one main projected
+component and 1–3 main openings. Thirty-six focused checks and four browser widths
+pass. Finite crossing checks are not a full physical collision proof. Internal
+review records thinner/more orderly volume and pinched folds compared with the
+reference; final developer visual acceptance stays open. Earlier material and
+personal outputs reproduce unchanged. No Orange, production Home/onboarding,
+personal records, sync activation, commit or deployment. Full suite/build/lint
+remain paused. Precise evidence and limitations are in PERSONAL_IMPRINT_HOME.md.
+
+## 2026-11-16 — Bounded personal forms approved and implemented
+
+Developer accepted the current monochrome artwork as a working baseline, retaining
+its cut-looking entries/volume limits. Approved the proposed fixed-topology visual
+fingerprint, complete onboarding input list, moderate variation and focused recipe
+tests. Three synthetic forms are implemented and internally verified; their visual
+acceptance remains developer review. The earlier fold-per-answer idea is deferred
+for this slice, not silently implemented or inferred from experience count.
+
+Name/birthday, situations/life-right-now, supplied experiences/statuses, wanted
+changes/details/focus, usual times and confirmed habit/cue participate. Feeling,
+credentials/account fields and later activity do not. Normalize harmless formatting
+and selection order; preserve explicit uncertainty. Store only versioned numeric
+controls plus a pinned base reference in the prototype recipe. Retain an existing
+recipe after profile corrections. No real recipe storage or deletion contract is
+implemented. The small recipe reproduces geometry using the preserved base.
+
+Surface, material boundary/opening and strand/covering-point maps move together;
+lighting is recalculated. All three samples keep the original strand identities,
+topology and buried ends. Shared-renderer extraction preserves every canonical
+Step 5 PNG byte. Prototype controls actually recompute/retain recipes in memory.
+The full suite/build/lint remain paused; 32 focused checks, geometry/material
+inspections and isolated browser review pass. No Orange, real records/accounts,
+onboarding or Home integration, sync activation, deployment or commit. See the
+bounded prototype entry in PERSONAL_IMPRINT_HOME.md for precise evidence/limits.
+
+## 2026-11-16 — Step 5 material implemented; final visual gate open
+
+Developer approved the bounded monochrome material/lighting pass and review
+artifacts. It is implemented on the unchanged inspected Step 4 geometry: round
+fibres, upper-left light, weak fill, geometry-derived broad/contact shadows and
+phone-size exports. The isolated preview defaults to the hash-bound lit result.
+Material/output checks and browser render review pass; tests/build/lint stay paused.
+
+The lit inspection qualifies the earlier unlit Step 4 visual conclusion: several
+strand entries still read as cut tips, and layered volume/continuous flow remain
+short of the reference. Actual final endpoints remain geometrically buried. Do not
+treat those endpoint or material checks as final aesthetic acceptance. The result
+is ready for developer review, with the final visual gate explicitly open. No
+Orange, personal integration, product data, sync activation or deployment is added.
+See the current Step 5 entry in PERSONAL_IMPRINT_HOME.md for artifacts and evidence.
+
+## 2026-11-16 — Step 4 construction completed
+
+The approved full repair is implemented and internally verified. One independent
+boundary-conforming surface atlas covers the intended material; three authored
+courses, refined by measured reference directions, support whole strand routes.
+This replaces disconnected patches/bridge fans as the canonical isolated master.
+No forced closed-loop requirement, distance-band generation or nearest-end splicing.
+Concealed ends are beneath named faces and actual neighbouring foreground strands;
+local same-depth crossings are geometric underpasses. Exact output/hash inspection
+and internal visual review pass all recorded gates; the preview shows that pair.
+
+This is Step 4 acceptance only. Reference-level material, lighting and perceived
+volume remain Step 5, with final developer artwork review afterward. Static
+reference assistance does not implement personal geometry, source mapping, recipe
+persistence or production Home. Tests/build/lint remain paused; geometry inspection
+and isolated browser-render review ran. No product data/sync/deployment changes.
+
+## 2026-11-16 — Whole-composition repair gates approved
+
+Developer approved a complete flow-network rebuild, with three longer courses
+across the six organising zones, shared junction sections, missing-material repair,
+spacing/volume revision and repeated inspection. Required supporting coverage ≥99%,
+no unexplained interior gaps, supported routes, concealed named-fold endpoints,
+ordered unbranched connections and no stretched bridge bands. Final review stays
+after Step 5; Step 4 must pass its internal gates first. Contract/audit/guide
+blueprint are prepared but replacement geometry is not yet implemented.
+
+## 2026-11-16 — Connect or conceal strand ends
+
+Developer approved one-to-one explicit strand connections, named covering folds
+and geometric hidden continuations/terminations, remaining coverage/spacing work
+and records. Strands need not close on their own patches. Inter-patch joins must
+preserve identity/order, and buried endpoints must be depth-covered by their named
+fold. No automatic nearest-end connection, opacity concealment or invented void.
+Endpoint concealment alone is not Step 4 acceptance; coverage and visible flow
+must also pass before Step 5. Tests/build/lint remain paused.
+
+## 2026-11-16 — Authored patch repair approved
+
+Developer approved replacing Step 4 distance contours with authored matched
+patches and v-preserving connections, plus boundary/return/spacing repair and
+inspection views. Each strand returns on its own patch back; no proximity joins.
+New patch boundaries are actual surface geometry, not image clipping. Remaining
+mapped material cannot silently become void. Patch coverage and port concealment
+must be completed before Step 5. Final density/fidelity remain unaccepted;
+tests/build/lint stay paused. No production or personal integration.
+
+## 2026-11-16 — Step 4 approved; structural acceptance still open
+
+Developer approved full surface-aware strands, complete returns, spacing work,
+boundary refinement, renders and records. Current scalar-contour study is not
+accepted: weighted flow still pinches/splits, unsupported routes are rejected
+whole, and the surface boundary revision is outstanding. Keep Step 4 active;
+lighting must not conceal geometry/routing defects. Tests/build/lint stay paused,
+final developer visual review after steps 1–5. No personal or product integration.
+
+## 2026-11-16 — Step 3 surface construction
+
+Developer approved expanding territories into volume, authored local overlaps,
+hidden continuations and front/oblique/depth views. New shell study uses material
+boundaries and U3 ownership, with actual backs/walls and closed course returns.
+U1/U2 remain recessed material; no unsupported through-holes. F1/F2 place B4 over
+B2/B1, F3 B5 over B4, F4 B6 over B4. These are explicit provisional interpretations,
+not recovered physical topology or final appearance. Conservative boundary margin,
+separated depth and individual thread routing remain open. Tests/build/lint stay
+paused; final visual review follows steps 1–5. No production integration.
+
+## 2026-11-16 — Step 2 bundle routes
+
+Developer approved paired bundle boundaries, controlled widths, cross-sections,
+explicit junction assumptions, U3 ownership and construction views/records.
+Projected courses use the original visible guides and authored width stations.
+No automatic endpoint joins, hidden topology, new depth order, personal mapping
+or final artwork acceptance is implied. U3 ownership selects reserve material;
+it is not fill geometry or permission to place threads outside the rails.
+Current narrow courses need further surface development before dense threads.
+Tests/build/lint remain paused; final developer review follows steps 1–5.
+
+## 2026-11-16 — Structure before threads
+
+Developer identified that proximity-connected curves cross intended bundle paths
+and voids. Approved Step 1: an explicit structure map and three construction views,
+with source inspection/rendering and continuity records. Six projected bundle
+territories are construction groups, not activity/color-region decisions. Allowed
+area intersects each territory with the envelope and excludes enclosed openings.
+Dark crown/lower recesses remain uncertain material; darkness alone is not a hole.
+Unassigned rim/transitions remain explicit (about 2.8% sampled), requiring route
+assignment before use. Territory order is not depth; hidden topology is unknown.
+The five-step direction is structure → routes/width → depth → threads → lighting,
+with final developer visual review after the sequence. Only Step 1 is implemented
+and approved in this slice; no new product behavior or personal integration.
+Tests/build/lint stay paused. See the Step 1 entry in PERSONAL_IMPRINT_HOME.md.
+
+## 2026-11-16 — Monochrome master refinement review
+
+Developer approved the proposed shape-only refinement and continuity records.
+Keep v1 preserved and compare a sibling v2. Tests/build/lint stay paused until
+shape agreement. Closed circuits are a structural property, not visual acceptance:
+the new proximity-connected study still has artificial bends and flat folds.
+No Orange, onboarding variation or production integration is authorized here.
+
+## 2026-11-15 — Fixed personal artwork and completion-origin color
+
+Current iteration instruction: the developer called the traced shape a good start,
+but requires every drawn strand to be a continuous individual line, not separately
+rendered fragments attempting to connect. Test suites are paused until the exact
+shape is settled. The latest drawing uses one complete cubic path per strand;
+reference-guided flow replaces fragment splicing and segmented stroke lighting.
+Only source continuity inspection and artwork rendering are in the current review.
+
+Current visual-review approach: the developer rejected the procedural output and
+approved trying one faithful vector master traced from the reference. Match the
+static monochrome silhouette/folds/strands first; review it before Orange and
+onboarding variation. This is an isolated fidelity checkpoint, not approval to
+use a raster as personal geometry or to declare traced visible fragments complete
+hidden threads. The prior procedural studies remain historical evidence.
+
+Approved follow-up: generate a standalone thread reference with the reviewed
+prompt, then revise the isolated renderer around individually traceable curves,
+layered folds and strand-following Orange. The central artwork is formed by
+threads; a membrane or crossing wireframe grid does not meet the visual target.
+The generated PNG is a review benchmark, not a replacement for personal geometry.
+
+Follow-up visual correction: individual threads retain their paths, with no
+abrupt ends or hue changes; increase density and use multiple curves/folds rather
+than a single ring with a large central opening. The version-3 study uses complete
+filaments, one hue per filament, smooth periodic curvature and overlapping folds.
+This refines the approved artwork prototype; it changes no actual personal records.
+
+Developer approved an isolated synthetic artwork prototype and records. Onboarding
+answers including name/birthday, excluding feeling, create the original form;
+later profile edits retain it. Daily activity changes Orange only. Six regions:
+starting answers/Chapters, Notes, Deep Thoughts, Habits/Tasks, Log/Week, Protocol.
+Shared task completion colors the region of the page where it was checked.
+Completed Chapters color the starting region without extending geometry.
+This supersedes earlier area alternatives and owning-area-only color advice.
+Real data integration, origin metadata, recipe persistence and color/fade formulas
+remain separately reviewed work. See [Home brief](PERSONAL_IMPRINT_HOME.md).
+
 ## 2026-11-14 — Durable local offline entry and logout
 
 Developer approved storing offline proof and signed-out state in one issuer-scoped

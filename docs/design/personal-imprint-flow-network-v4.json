@@ -1,0 +1,26 @@
+{
+ "version":4,
+ "maxStrands":1400,
+ "surfaceThickness":24,
+ "strandWidth":0.85,
+ "populationRadius":12,
+ "construction":"One boundary-conforming surface atlas, independent of strand count. Three authored guide families establish continuous courses across six zones. Reference ridge directions refine local course direction; whole trajectories are integrated on the surface, never spliced or generated as distance bands. Adjacent atlas cells share the same surface function. All nonperiodic ends turn into the supported volume beneath the named front face.",
+ "structure":"docs/design/personal-imprint-structure-v1.json",
+ "previousGeometry":"docs/design/personal-imprint-strand-connections-v3-geometry.json",
+ "previousInspection":"docs/design/personal-imprint-strand-connections-v3-inspection.json",
+ "meaning":"Whole-composition repair contract. Six bundle labels are regions of one flow network, not required separate ribbons. Old geometry is a diagnostic input, not accepted v4 output.",
+ "families":[
+  {"id":"N1","zones":["B1","B4"],"course":"Crown return enters the central diagonal through a shared cross-section, then reaches the lower crossing.","sharedJunction":"J1","endCover":"B6","guide":"M 575 630 C 710 555 885 540 900 380 C 920 220 825 100 735 115 C 620 130 600 240 615 315 C 625 375 660 393 650 425 C 570 510 490 605 468 710 C 450 810 365 864 370 950 C 375 1020 430 1040 410 1130 C 390 1230 385 1290 450 1340"},
+  {"id":"N2","zones":["B2","B3"],"course":"Shoulder passes directly into the left fan; both internal ports tuck beneath the central diagonal.","sharedJunction":"J2","endCover":"B4","guide":"M 320 520 C 260 470 265 395 310 368 C 365 337 445 375 480 400 C 530 440 493 509 420 536 C 340 570 246 472 160 535 C 90 588 110 718 195 780 C 290 846 365 724 405 660 C 430 623 452 601 470 600"},
+  {"id":"N3","zones":["B5","B6"],"course":"Lower right fan turns into the bottom/left return; upper ports tuck beneath nearby central folds.","sharedJunction":"J3","endCover":"B4","guide":"M 560 830 C 690 833 820 881 850 980 C 888 1100 781 1280 670 1334 C 555 1390 360 1350 268 1260 C 208 1205 235 1120 310 1070 C 360 1035 396 1050 430 1080"}
+ ],
+ "junctions":[
+  {"id":"J1","from":"B1","to":"B4","requirement":"Replace the exposed bridge with identical boundary stations and matched first derivatives. Redraw approach rails instead of stretching a connector."},
+  {"id":"J2","from":"B2","to":"B3","requirement":"Continue around the shoulder opening into the fan with an authored width transition; do not cross V1."},
+  {"id":"J3","from":"B5","to":"B6","requirement":"One broad lower return with shared boundary stations. Remove the current transverse connector fan."}
+ ],
+ "gates":{"supportCoverageMinimum":0.99,"unexplainedInteriorGapsMaximum":0,"unsupportedStrandsMaximum":0,"exposedEndpointsMaximum":0,"branchedConnectionsMaximum":0,"visualBridgeBandsMaximum":0,"finalVisualReview":"after step 5; internal full-composition inspection must pass before step 5"},
+ "boundaryTolerancePixels":4,
+ "boundaryToleranceMeaning":"Diagnostic classification only, not permission to omit 1% anywhere. All uncovered interior cells farther than this from silhouette/opening edges fail independently of total coverage.",
+ "status":"canonical implemented construction source; exact generated geometry and visual acceptance are recorded in the matching inspection report"
+}

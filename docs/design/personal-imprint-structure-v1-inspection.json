@@ -1,0 +1,55 @@
+{
+  "source": "docs/design/personal-imprint-thread-reference-v1.png",
+  "areas": 16,
+  "bundles": 6,
+  "boundarySampling": "32 samples per cubic; proper segment crossing inspection",
+  "guideInspection": [
+    {
+      "id": "B1",
+      "samples": 129,
+      "outsideMaterial": 0,
+      "outsideBundle": 0
+    },
+    {
+      "id": "B2",
+      "samples": 129,
+      "outsideMaterial": 0,
+      "outsideBundle": 0
+    },
+    {
+      "id": "B3",
+      "samples": 97,
+      "outsideMaterial": 0,
+      "outsideBundle": 0
+    },
+    {
+      "id": "B4",
+      "samples": 161,
+      "outsideMaterial": 0,
+      "outsideBundle": 0
+    },
+    {
+      "id": "B5",
+      "samples": 97,
+      "outsideMaterial": 0,
+      "outsideBundle": 0
+    },
+    {
+      "id": "B6",
+      "samples": 97,
+      "outsideMaterial": 0,
+      "outsideBundle": 0
+    }
+  ],
+  "coverage": {
+    "gridSpacing": 4,
+    "materialSamples": 45094,
+    "unassignedSamples": 1269,
+    "unassignedPercent": 2.8141216126313924
+  },
+  "views": [
+    "overlay",
+    "structure",
+    "silhouette"
+  ]
+}

@@ -1,0 +1,2304 @@
+{
+  "ready": true,
+  "events": [
+    {
+      "group": "starting",
+      "day": 1
+    },
+    {
+      "group": "notes",
+      "day": 1
+    },
+    {
+      "group": "thoughts",
+      "day": 1
+    },
+    {
+      "group": "routine",
+      "day": 1
+    },
+    {
+      "group": "log-week",
+      "day": 1
+    },
+    {
+      "group": "protocol",
+      "day": 1
+    },
+    {
+      "group": "notes",
+      "day": 2
+    },
+    {
+      "group": "routine",
+      "day": 2
+    },
+    {
+      "group": "log-week",
+      "day": 2
+    },
+    {
+      "group": "routine",
+      "day": 3
+    },
+    {
+      "group": "notes",
+      "day": 4
+    },
+    {
+      "group": "routine",
+      "day": 4
+    },
+    {
+      "group": "log-week",
+      "day": 4
+    },
+    {
+      "group": "protocol",
+      "day": 4
+    },
+    {
+      "group": "thoughts",
+      "day": 5
+    },
+    {
+      "group": "routine",
+      "day": 5
+    },
+    {
+      "group": "notes",
+      "day": 6
+    },
+    {
+      "group": "routine",
+      "day": 6
+    },
+    {
+      "group": "log-week",
+      "day": 6
+    },
+    {
+      "group": "routine",
+      "day": 7
+    },
+    {
+      "group": "notes",
+      "day": 8
+    },
+    {
+      "group": "routine",
+      "day": 8
+    },
+    {
+      "group": "log-week",
+      "day": 8
+    },
+    {
+      "group": "protocol",
+      "day": 8
+    },
+    {
+      "group": "starting",
+      "day": 9
+    },
+    {
+      "group": "routine",
+      "day": 9
+    },
+    {
+      "group": "notes",
+      "day": 10
+    },
+    {
+      "group": "thoughts",
+      "day": 10
+    },
+    {
+      "group": "routine",
+      "day": 10
+    },
+    {
+      "group": "log-week",
+      "day": 10
+    },
+    {
+      "group": "routine",
+      "day": 11
+    },
+    {
+      "group": "notes",
+      "day": 12
+    },
+    {
+      "group": "routine",
+      "day": 12
+    },
+    {
+      "group": "log-week",
+      "day": 12
+    },
+    {
+      "group": "protocol",
+      "day": 12
+    },
+    {
+      "group": "routine",
+      "day": 13
+    },
+    {
+      "group": "notes",
+      "day": 14
+    },
+    {
+      "group": "routine",
+      "day": 14
+    },
+    {
+      "group": "log-week",
+      "day": 14
+    },
+    {
+      "group": "thoughts",
+      "day": 15
+    },
+    {
+      "group": "routine",
+      "day": 15
+    },
+    {
+      "group": "notes",
+      "day": 16
+    },
+    {
+      "group": "routine",
+      "day": 16
+    },
+    {
+      "group": "log-week",
+      "day": 16
+    },
+    {
+      "group": "protocol",
+      "day": 16
+    },
+    {
+      "group": "routine",
+      "day": 17
+    },
+    {
+      "group": "starting",
+      "day": 18
+    },
+    {
+      "group": "notes",
+      "day": 18
+    },
+    {
+      "group": "routine",
+      "day": 18
+    },
+    {
+      "group": "log-week",
+      "day": 18
+    },
+    {
+      "group": "routine",
+      "day": 19
+    },
+    {
+      "group": "notes",
+      "day": 20
+    },
+    {
+      "group": "thoughts",
+      "day": 20
+    },
+    {
+      "group": "routine",
+      "day": 20
+    },
+    {
+      "group": "log-week",
+      "day": 20
+    },
+    {
+      "group": "protocol",
+      "day": 20
+    },
+    {
+      "group": "routine",
+      "day": 21
+    },
+    {
+      "group": "notes",
+      "day": 22
+    },
+    {
+      "group": "routine",
+      "day": 22
+    },
+    {
+      "group": "log-week",
+      "day": 22
+    },
+    {
+      "group": "routine",
+      "day": 23
+    },
+    {
+      "group": "notes",
+      "day": 24
+    },
+    {
+      "group": "routine",
+      "day": 24
+    },
+    {
+      "group": "log-week",
+      "day": 24
+    },
+    {
+      "group": "protocol",
+      "day": 24
+    },
+    {
+      "group": "thoughts",
+      "day": 25
+    },
+    {
+      "group": "routine",
+      "day": 25
+    },
+    {
+      "group": "notes",
+      "day": 26
+    },
+    {
+      "group": "routine",
+      "day": 26
+    },
+    {
+      "group": "log-week",
+      "day": 26
+    },
+    {
+      "group": "starting",
+      "day": 27
+    },
+    {
+      "group": "routine",
+      "day": 27
+    },
+    {
+      "group": "notes",
+      "day": 28
+    },
+    {
+      "group": "routine",
+      "day": 28
+    },
+    {
+      "group": "log-week",
+      "day": 28
+    },
+    {
+      "group": "protocol",
+      "day": 28
+    },
+    {
+      "group": "routine",
+      "day": 29
+    },
+    {
+      "group": "notes",
+      "day": 30
+    },
+    {
+      "group": "thoughts",
+      "day": 30
+    },
+    {
+      "group": "routine",
+      "day": 30
+    },
+    {
+      "group": "log-week",
+      "day": 30
+    },
+    {
+      "group": "routine",
+      "day": 31
+    },
+    {
+      "group": "notes",
+      "day": 32
+    },
+    {
+      "group": "routine",
+      "day": 32
+    },
+    {
+      "group": "log-week",
+      "day": 32
+    },
+    {
+      "group": "protocol",
+      "day": 32
+    },
+    {
+      "group": "routine",
+      "day": 33
+    },
+    {
+      "group": "notes",
+      "day": 34
+    },
+    {
+      "group": "routine",
+      "day": 34
+    },
+    {
+      "group": "log-week",
+      "day": 34
+    },
+    {
+      "group": "thoughts",
+      "day": 35
+    },
+    {
+      "group": "routine",
+      "day": 35
+    },
+    {
+      "group": "starting",
+      "day": 36
+    },
+    {
+      "group": "notes",
+      "day": 36
+    },
+    {
+      "group": "routine",
+      "day": 36
+    },
+    {
+      "group": "log-week",
+      "day": 36
+    },
+    {
+      "group": "protocol",
+      "day": 36
+    },
+    {
+      "group": "routine",
+      "day": 37
+    },
+    {
+      "group": "notes",
+      "day": 38
+    },
+    {
+      "group": "routine",
+      "day": 38
+    },
+    {
+      "group": "log-week",
+      "day": 38
+    },
+    {
+      "group": "routine",
+      "day": 39
+    },
+    {
+      "group": "notes",
+      "day": 40
+    },
+    {
+      "group": "thoughts",
+      "day": 40
+    },
+    {
+      "group": "routine",
+      "day": 40
+    },
+    {
+      "group": "log-week",
+      "day": 40
+    },
+    {
+      "group": "protocol",
+      "day": 40
+    },
+    {
+      "group": "routine",
+      "day": 41
+    },
+    {
+      "group": "notes",
+      "day": 42
+    },
+    {
+      "group": "routine",
+      "day": 42
+    },
+    {
+      "group": "log-week",
+      "day": 42
+    },
+    {
+      "group": "routine",
+      "day": 43
+    },
+    {
+      "group": "notes",
+      "day": 44
+    },
+    {
+      "group": "routine",
+      "day": 44
+    },
+    {
+      "group": "log-week",
+      "day": 44
+    },
+    {
+      "group": "protocol",
+      "day": 44
+    },
+    {
+      "group": "starting",
+      "day": 45
+    },
+    {
+      "group": "thoughts",
+      "day": 45
+    },
+    {
+      "group": "routine",
+      "day": 45
+    },
+    {
+      "group": "notes",
+      "day": 46
+    },
+    {
+      "group": "routine",
+      "day": 46
+    },
+    {
+      "group": "log-week",
+      "day": 46
+    },
+    {
+      "group": "routine",
+      "day": 47
+    },
+    {
+      "group": "notes",
+      "day": 48
+    },
+    {
+      "group": "routine",
+      "day": 48
+    },
+    {
+      "group": "log-week",
+      "day": 48
+    },
+    {
+      "group": "protocol",
+      "day": 48
+    },
+    {
+      "group": "routine",
+      "day": 49
+    },
+    {
+      "group": "notes",
+      "day": 50
+    },
+    {
+      "group": "thoughts",
+      "day": 50
+    },
+    {
+      "group": "routine",
+      "day": 50
+    },
+    {
+      "group": "log-week",
+      "day": 50
+    },
+    {
+      "group": "routine",
+      "day": 51
+    },
+    {
+      "group": "notes",
+      "day": 52
+    },
+    {
+      "group": "routine",
+      "day": 52
+    },
+    {
+      "group": "log-week",
+      "day": 52
+    },
+    {
+      "group": "protocol",
+      "day": 52
+    },
+    {
+      "group": "routine",
+      "day": 53
+    },
+    {
+      "group": "starting",
+      "day": 54
+    },
+    {
+      "group": "notes",
+      "day": 54
+    },
+    {
+      "group": "routine",
+      "day": 54
+    },
+    {
+      "group": "log-week",
+      "day": 54
+    },
+    {
+      "group": "thoughts",
+      "day": 55
+    },
+    {
+      "group": "routine",
+      "day": 55
+    },
+    {
+      "group": "notes",
+      "day": 56
+    },
+    {
+      "group": "routine",
+      "day": 56
+    },
+    {
+      "group": "log-week",
+      "day": 56
+    },
+    {
+      "group": "protocol",
+      "day": 56
+    },
+    {
+      "group": "routine",
+      "day": 57
+    },
+    {
+      "group": "notes",
+      "day": 58
+    },
+    {
+      "group": "routine",
+      "day": 58
+    },
+    {
+      "group": "log-week",
+      "day": 58
+    },
+    {
+      "group": "routine",
+      "day": 59
+    },
+    {
+      "group": "notes",
+      "day": 60
+    },
+    {
+      "group": "thoughts",
+      "day": 60
+    },
+    {
+      "group": "routine",
+      "day": 60
+    },
+    {
+      "group": "log-week",
+      "day": 60
+    },
+    {
+      "group": "protocol",
+      "day": 60
+    },
+    {
+      "group": "routine",
+      "day": 61
+    },
+    {
+      "group": "notes",
+      "day": 62
+    },
+    {
+      "group": "routine",
+      "day": 62
+    },
+    {
+      "group": "log-week",
+      "day": 62
+    },
+    {
+      "group": "starting",
+      "day": 63
+    },
+    {
+      "group": "routine",
+      "day": 63
+    },
+    {
+      "group": "notes",
+      "day": 64
+    },
+    {
+      "group": "routine",
+      "day": 64
+    },
+    {
+      "group": "log-week",
+      "day": 64
+    },
+    {
+      "group": "protocol",
+      "day": 64
+    },
+    {
+      "group": "thoughts",
+      "day": 65
+    },
+    {
+      "group": "routine",
+      "day": 65
+    },
+    {
+      "group": "notes",
+      "day": 66
+    },
+    {
+      "group": "routine",
+      "day": 66
+    },
+    {
+      "group": "log-week",
+      "day": 66
+    },
+    {
+      "group": "routine",
+      "day": 67
+    },
+    {
+      "group": "notes",
+      "day": 68
+    },
+    {
+      "group": "routine",
+      "day": 68
+    },
+    {
+      "group": "log-week",
+      "day": 68
+    },
+    {
+      "group": "protocol",
+      "day": 68
+    },
+    {
+      "group": "routine",
+      "day": 69
+    },
+    {
+      "group": "notes",
+      "day": 70
+    },
+    {
+      "group": "thoughts",
+      "day": 70
+    },
+    {
+      "group": "routine",
+      "day": 70
+    },
+    {
+      "group": "log-week",
+      "day": 70
+    },
+    {
+      "group": "routine",
+      "day": 71
+    },
+    {
+      "group": "starting",
+      "day": 72
+    },
+    {
+      "group": "notes",
+      "day": 72
+    },
+    {
+      "group": "routine",
+      "day": 72
+    },
+    {
+      "group": "log-week",
+      "day": 72
+    },
+    {
+      "group": "protocol",
+      "day": 72
+    },
+    {
+      "group": "routine",
+      "day": 73
+    },
+    {
+      "group": "notes",
+      "day": 74
+    },
+    {
+      "group": "routine",
+      "day": 74
+    },
+    {
+      "group": "log-week",
+      "day": 74
+    },
+    {
+      "group": "thoughts",
+      "day": 75
+    },
+    {
+      "group": "routine",
+      "day": 75
+    },
+    {
+      "group": "notes",
+      "day": 76
+    },
+    {
+      "group": "routine",
+      "day": 76
+    },
+    {
+      "group": "log-week",
+      "day": 76
+    },
+    {
+      "group": "protocol",
+      "day": 76
+    },
+    {
+      "group": "routine",
+      "day": 77
+    },
+    {
+      "group": "notes",
+      "day": 78
+    },
+    {
+      "group": "routine",
+      "day": 78
+    },
+    {
+      "group": "log-week",
+      "day": 78
+    },
+    {
+      "group": "routine",
+      "day": 79
+    },
+    {
+      "group": "notes",
+      "day": 80
+    },
+    {
+      "group": "thoughts",
+      "day": 80
+    },
+    {
+      "group": "routine",
+      "day": 80
+    },
+    {
+      "group": "log-week",
+      "day": 80
+    },
+    {
+      "group": "protocol",
+      "day": 80
+    },
+    {
+      "group": "starting",
+      "day": 81
+    },
+    {
+      "group": "routine",
+      "day": 81
+    },
+    {
+      "group": "notes",
+      "day": 82
+    },
+    {
+      "group": "routine",
+      "day": 82
+    },
+    {
+      "group": "log-week",
+      "day": 82
+    },
+    {
+      "group": "routine",
+      "day": 83
+    },
+    {
+      "group": "notes",
+      "day": 84
+    },
+    {
+      "group": "routine",
+      "day": 84
+    },
+    {
+      "group": "log-week",
+      "day": 84
+    },
+    {
+      "group": "protocol",
+      "day": 84
+    },
+    {
+      "group": "thoughts",
+      "day": 85
+    },
+    {
+      "group": "routine",
+      "day": 85
+    },
+    {
+      "group": "notes",
+      "day": 86
+    },
+    {
+      "group": "routine",
+      "day": 86
+    },
+    {
+      "group": "log-week",
+      "day": 86
+    },
+    {
+      "group": "routine",
+      "day": 87
+    },
+    {
+      "group": "notes",
+      "day": 88
+    },
+    {
+      "group": "routine",
+      "day": 88
+    },
+    {
+      "group": "log-week",
+      "day": 88
+    },
+    {
+      "group": "protocol",
+      "day": 88
+    },
+    {
+      "group": "routine",
+      "day": 89
+    },
+    {
+      "group": "starting",
+      "day": 90
+    },
+    {
+      "group": "notes",
+      "day": 90
+    },
+    {
+      "group": "thoughts",
+      "day": 90
+    },
+    {
+      "group": "routine",
+      "day": 90
+    },
+    {
+      "group": "log-week",
+      "day": 90
+    }
+  ],
+  "states": {
+    "day-1": {
+      "starting": {
+        "days": 1,
+        "spread": 0.044436963731715684,
+        "brightness": 1
+      },
+      "notes": {
+        "days": 1,
+        "spread": 0.044436963731715684,
+        "brightness": 1
+      },
+      "thoughts": {
+        "days": 1,
+        "spread": 0.044436963731715684,
+        "brightness": 1
+      },
+      "routine": {
+        "days": 1,
+        "spread": 0.044436963731715684,
+        "brightness": 1
+      },
+      "log-week": {
+        "days": 1,
+        "spread": 0.044436963731715684,
+        "brightness": 1
+      },
+      "protocol": {
+        "days": 1,
+        "spread": 0.044436963731715684,
+        "brightness": 1
+      }
+    },
+    "week-2": {
+      "starting": {
+        "days": 2,
+        "spread": 0.0868992837177377,
+        "brightness": 0.6
+      },
+      "notes": {
+        "days": 8,
+        "spread": 0.30485607160112127,
+        "brightness": 1
+      },
+      "thoughts": {
+        "days": 3,
+        "spread": 0.12747470713057618,
+        "brightness": 0.6
+      },
+      "routine": {
+        "days": 14,
+        "spread": 0.4707866584999497,
+        "brightness": 1
+      },
+      "log-week": {
+        "days": 8,
+        "spread": 0.30485607160112127,
+        "brightness": 1
+      },
+      "protocol": {
+        "days": 4,
+        "spread": 0.1662470819248194,
+        "brightness": 0.6
+      }
+    },
+    "month-1": {
+      "starting": {
+        "days": 4,
+        "spread": 0.1662470819248194,
+        "brightness": 0.6
+      },
+      "notes": {
+        "days": 16,
+        "spread": 0.5167749188101746,
+        "brightness": 1
+      },
+      "thoughts": {
+        "days": 7,
+        "spread": 0.2725294909757163,
+        "brightness": 1
+      },
+      "routine": {
+        "days": 30,
+        "spread": 0.7442708400868994,
+        "brightness": 1
+      },
+      "log-week": {
+        "days": 16,
+        "spread": 0.5167749188101746,
+        "brightness": 1
+      },
+      "protocol": {
+        "days": 8,
+        "spread": 0.30485607160112127,
+        "brightness": 0.6
+      }
+    },
+    "month-3": {
+      "starting": {
+        "days": 11,
+        "spread": 0.3934693402873666,
+        "brightness": 1
+      },
+      "notes": {
+        "days": 46,
+        "spread": 0.876425255938386,
+        "brightness": 1
+      },
+      "thoughts": {
+        "days": 19,
+        "spread": 0.5783738945129965,
+        "brightness": 1
+      },
+      "routine": {
+        "days": 90,
+        "spread": 0.9832759770115296,
+        "brightness": 1
+      },
+      "log-week": {
+        "days": 46,
+        "spread": 0.876425255938386,
+        "brightness": 1
+      },
+      "protocol": {
+        "days": 23,
+        "spread": 0.6484680042135369,
+        "brightness": 0.6
+      }
+    },
+    "next-day-06-faded-once": {
+      "starting": {
+        "days": 11,
+        "spread": 0.3934693402873666,
+        "brightness": 0.6
+      },
+      "notes": {
+        "days": 46,
+        "spread": 0.876425255938386,
+        "brightness": 0.6
+      },
+      "thoughts": {
+        "days": 19,
+        "spread": 0.5783738945129965,
+        "brightness": 0.6
+      },
+      "routine": {
+        "days": 90,
+        "spread": 0.9832759770115296,
+        "brightness": 0.6
+      },
+      "log-week": {
+        "days": 46,
+        "spread": 0.876425255938386,
+        "brightness": 0.6
+      },
+      "protocol": {
+        "days": 23,
+        "spread": 0.6484680042135369,
+        "brightness": 0.6
+      }
+    },
+    "two-days-later-unchanged": {
+      "starting": {
+        "days": 11,
+        "spread": 0.3934693402873666,
+        "brightness": 0.6
+      },
+      "notes": {
+        "days": 46,
+        "spread": 0.876425255938386,
+        "brightness": 0.6
+      },
+      "thoughts": {
+        "days": 19,
+        "spread": 0.5783738945129965,
+        "brightness": 0.6
+      },
+      "routine": {
+        "days": 90,
+        "spread": 0.9832759770115296,
+        "brightness": 0.6
+      },
+      "log-week": {
+        "days": 46,
+        "spread": 0.876425255938386,
+        "brightness": 0.6
+      },
+      "protocol": {
+        "days": 23,
+        "spread": 0.6484680042135369,
+        "brightness": 0.6
+      }
+    },
+    "after-one-month-without-use": {
+      "starting": {
+        "days": 11,
+        "spread": 0.3934693402873666,
+        "brightness": 0.6
+      },
+      "notes": {
+        "days": 46,
+        "spread": 0.876425255938386,
+        "brightness": 0.6
+      },
+      "thoughts": {
+        "days": 19,
+        "spread": 0.5783738945129965,
+        "brightness": 0.6
+      },
+      "routine": {
+        "days": 90,
+        "spread": 0.9832759770115296,
+        "brightness": 0.6
+      },
+      "log-week": {
+        "days": 46,
+        "spread": 0.876425255938386,
+        "brightness": 0.6
+      },
+      "protocol": {
+        "days": 23,
+        "spread": 0.6484680042135369,
+        "brightness": 0.6
+      }
+    },
+    "starting": {
+      "starting": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "notes": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "thoughts": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "routine": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "log-week": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "protocol": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      }
+    },
+    "notes": {
+      "starting": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "notes": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "thoughts": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "routine": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "log-week": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "protocol": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      }
+    },
+    "thoughts": {
+      "starting": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "notes": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "thoughts": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "routine": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "log-week": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "protocol": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      }
+    },
+    "routine": {
+      "starting": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "notes": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "thoughts": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "routine": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "log-week": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "protocol": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      }
+    },
+    "log-week": {
+      "starting": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "notes": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "thoughts": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "routine": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "log-week": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "protocol": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      }
+    },
+    "protocol": {
+      "starting": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "notes": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "thoughts": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "routine": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "log-week": {
+        "days": 0,
+        "spread": 0,
+        "brightness": 0
+      },
+      "protocol": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      }
+    },
+    "same-areas-fresh": {
+      "starting": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "notes": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "thoughts": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "routine": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "log-week": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      },
+      "protocol": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 1
+      }
+    },
+    "same-areas-faded": {
+      "starting": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 0.6
+      },
+      "notes": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 0.6
+      },
+      "thoughts": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 0.6
+      },
+      "routine": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 0.6
+      },
+      "log-week": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 0.6
+      },
+      "protocol": {
+        "days": 90,
+        "spread": 1,
+        "brightness": 0.6
+      }
+    }
+  },
+  "fadeRule": "Wait 24 elapsed hours after application, then fade once at the first local 06:00 at or after that time. No further dimming.",
+  "samples": [
+    {
+      "id": "mira",
+      "label": "Mira",
+      "anchors": {
+        "starting": {
+          "t": 0.03576751798391342,
+          "u": 0.625,
+          "scale": 1
+        },
+        "notes": {
+          "t": 0.8353466987609863,
+          "u": 0.5,
+          "scale": 1
+        },
+        "thoughts": {
+          "t": 0.5405046343803406,
+          "u": 0.234375,
+          "scale": 1
+        },
+        "routine": {
+          "t": 0.21194817125797272,
+          "u": 0.671875,
+          "scale": 1
+        },
+        "log-week": {
+          "t": 0.6151644587516785,
+          "u": 0.640625,
+          "scale": 1
+        },
+        "protocol": {
+          "t": 0.7290146350860596,
+          "u": 0.234375,
+          "scale": 1.3224999999999998
+        }
+      },
+      "visibility": {
+        "starting": 2468,
+        "notes": 1418,
+        "thoughts": 3085,
+        "routine": 1982,
+        "log-week": 2614,
+        "protocol": 748
+      },
+      "outputs": {
+        "day-1": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-day-1.png",
+          "hash": "f19a25aeb74b185cb6956d53859afbc721c0be0a36778c533023e0c703ef87cc"
+        },
+        "week-2": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-week-2.png",
+          "hash": "f638167a29315289347e08078bd784300b9584a95ddfbb5e869fb641818103f0"
+        },
+        "month-1": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-month-1.png",
+          "hash": "4f8ba10b9d5c9bf18ca4c0be20cff8029c5ddd213a2ea7d4aacd5209474b77c7"
+        },
+        "month-3": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-month-3.png",
+          "hash": "818cdd60295555f68be2674a26678086c5fcd49e579929a57a17425617b159e0"
+        },
+        "next-day-06-faded-once": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-next-day-06-faded-once.png",
+          "hash": "a6581d57c80b31d65f897e42efd1fde508d8260449af85c6bd51a0adba073722"
+        },
+        "two-days-later-unchanged": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-two-days-later-unchanged.png",
+          "hash": "a6581d57c80b31d65f897e42efd1fde508d8260449af85c6bd51a0adba073722"
+        },
+        "after-one-month-without-use": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-after-one-month-without-use.png",
+          "hash": "a6581d57c80b31d65f897e42efd1fde508d8260449af85c6bd51a0adba073722"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-starting.png",
+          "hash": "a2424c00dba0ac63d7d40f8c6f0d4b6c9bfebc4fced7cca0a5aeb94cf1c7f786"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-notes.png",
+          "hash": "6be30d343fe968805f5dbad9e47692d42fdc72a58e7615c3f5251ed68bc59755"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-thoughts.png",
+          "hash": "91065baad7a37afaeb3088dd7950d8a69162f28e89c25b109442db9c3d734c5c"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-routine.png",
+          "hash": "f2e97ca92c9ecb453c4a23f3f83f552ecb4d46f37f12b9ad2a044956b1f7d33a"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-log-week.png",
+          "hash": "5c5c527dda7c1c2f617c3138b902f03d44074e3050a15bb283742f704c0d3bf4"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-protocol.png",
+          "hash": "89c06fa5957efd2394969b32ce824b288913515c44a24edd2fa9a86a7c2b8e71"
+        },
+        "same-areas-fresh": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-same-areas-fresh.png",
+          "hash": "6bc97af8277855747ab6539afafa5ca5993e901b2098bc4fe192ae5914b9e283"
+        },
+        "same-areas-faded": {
+          "path": "docs/design/personal-imprint-growth-v1-mira-same-areas-faded.png",
+          "hash": "e6fd55bf95c679d6dfc545517c85dd07ffb0804d15f0597eb08fc8698fe20b44"
+        }
+      },
+      "coverage": {
+        "day-1": 590092,
+        "week-2": 1196575,
+        "month-1": 1723212,
+        "month-3": 2394825,
+        "next-day-06-faded-once": 2342471,
+        "two-days-later-unchanged": 2342471,
+        "after-one-month-without-use": 2342471,
+        "starting": 558144,
+        "notes": 596807,
+        "thoughts": 875549,
+        "routine": 749409,
+        "log-week": 819600,
+        "protocol": 1167909,
+        "same-areas-fresh": 2808361,
+        "same-areas-faded": 2752349
+      },
+      "coverageUnits": "supersample pixels",
+      "baselineHash": "10986a2227d4f0ade36e2ba366c32418367d275883d14311d24bfb00f3b7fc4e",
+      "fullBaselineHash": "05163a129e02e7bfb9d4498df225363f80736ca246e3e0efb3e1d4d6d9b3cf11"
+    },
+    {
+      "id": "arun",
+      "label": "Arun",
+      "anchors": {
+        "starting": {
+          "t": 0.9029638171195984,
+          "u": 0.7265625,
+          "scale": 1
+        },
+        "notes": {
+          "t": 0.6808663010597229,
+          "u": 0.5625,
+          "scale": 1
+        },
+        "thoughts": {
+          "t": 0.5323149561882019,
+          "u": 0.5546875,
+          "scale": 1
+        },
+        "routine": {
+          "t": 0.4825042486190796,
+          "u": 0.734375,
+          "scale": 1
+        },
+        "log-week": {
+          "t": 0.21630778908729553,
+          "u": 0.2578125,
+          "scale": 1
+        },
+        "protocol": {
+          "t": 0.37251120805740356,
+          "u": 0.734375,
+          "scale": 1
+        }
+      },
+      "visibility": {
+        "starting": 1662,
+        "notes": 565,
+        "thoughts": 3024,
+        "routine": 3937,
+        "log-week": 1612,
+        "protocol": 1815
+      },
+      "outputs": {
+        "day-1": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-day-1.png",
+          "hash": "44d2f482d0a43a676cf32e1a3348ee473a611ce40fd39430edd01894a2dc92a2"
+        },
+        "week-2": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-week-2.png",
+          "hash": "380a3e0971d0945380dd4ada1382669ff891fda97d7a3a4129a33f47a1a52db0"
+        },
+        "month-1": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-month-1.png",
+          "hash": "1bb7bca9259a08677555b17dd26c25cb001430f758cdad7a52f6d6134ad2957f"
+        },
+        "month-3": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-month-3.png",
+          "hash": "29551156a0cee0cf436763e53cf8a9f5605c7aaa1c7e0630300c742541d579e2"
+        },
+        "next-day-06-faded-once": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-next-day-06-faded-once.png",
+          "hash": "4756e64936c2a230e0e16ae175dd5b76b9cc4c23ad87f8890a3c36734190b483"
+        },
+        "two-days-later-unchanged": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-two-days-later-unchanged.png",
+          "hash": "4756e64936c2a230e0e16ae175dd5b76b9cc4c23ad87f8890a3c36734190b483"
+        },
+        "after-one-month-without-use": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-after-one-month-without-use.png",
+          "hash": "4756e64936c2a230e0e16ae175dd5b76b9cc4c23ad87f8890a3c36734190b483"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-starting.png",
+          "hash": "f1df71d1330b6977c2ed18b6d7a7243ec1c7db887eee2158fbeba450594acae4"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-notes.png",
+          "hash": "9de51601f5b6dc2e1d2bceac7886e9e527180f40890e7e48cac8daf062ad2675"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-thoughts.png",
+          "hash": "31d0bd7210f209a3e904008f5fd66dce712ac7d43c0982b1a1075e9834818960"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-routine.png",
+          "hash": "7c55d916549c68db2363a5e194ebb9f40d051da67245528c45e712a8af2fec24"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-log-week.png",
+          "hash": "27a38636002c533e0bd42bd24e5743c31c9f83b5ea6fb4fc64a9ef801d7c0549"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-protocol.png",
+          "hash": "6e35073ee174dfef19c7329db4185034549456fa3f58a059587e513937ffba4f"
+        },
+        "same-areas-fresh": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-same-areas-fresh.png",
+          "hash": "8e6fd438ceeabf7ccd75d2c220b5006849c54d0bc3bb80bf272864ab05cd3990"
+        },
+        "same-areas-faded": {
+          "path": "docs/design/personal-imprint-growth-v1-arun-same-areas-faded.png",
+          "hash": "cb728889f6b9178b82922b8b19ecfdff2a59ab8eb5a4654cab906867d783be94"
+        }
+      },
+      "coverage": {
+        "day-1": 676673,
+        "week-2": 1368003,
+        "month-1": 1979548,
+        "month-3": 2847430,
+        "next-day-06-faded-once": 2753051,
+        "two-days-later-unchanged": 2753051,
+        "after-one-month-without-use": 2753051,
+        "starting": 599850,
+        "notes": 681173,
+        "thoughts": 1129594,
+        "routine": 1434290,
+        "log-week": 927539,
+        "protocol": 1403162,
+        "same-areas-fresh": 3607629,
+        "same-areas-faded": 3498339
+      },
+      "coverageUnits": "supersample pixels",
+      "baselineHash": "86bfad368b69868a558837d286cff84da55afe7e239b5e0c52e5e088bd90e89f",
+      "fullBaselineHash": "4db85eb1598881331c588047ec637f891c8fa0b2d8578e4ce2c45913a2f090a3"
+    },
+    {
+      "id": "lin",
+      "label": "Lin",
+      "anchors": {
+        "starting": {
+          "t": 0.8858024477958679,
+          "u": 0.4453125,
+          "scale": 1
+        },
+        "notes": {
+          "t": 0.09532074630260468,
+          "u": 0.1796875,
+          "scale": 1
+        },
+        "thoughts": {
+          "t": 0.22224628925323486,
+          "u": 0.2734375,
+          "scale": 1
+        },
+        "routine": {
+          "t": 0.5617188811302185,
+          "u": 0.5546875,
+          "scale": 1
+        },
+        "log-week": {
+          "t": 0.6839568614959717,
+          "u": 0.34375,
+          "scale": 1.15
+        },
+        "protocol": {
+          "t": 0.4109330177307129,
+          "u": 0.5859375,
+          "scale": 1
+        }
+      },
+      "visibility": {
+        "starting": 4293,
+        "notes": 1149,
+        "thoughts": 2714,
+        "routine": 2148,
+        "log-week": 838,
+        "protocol": 963
+      },
+      "outputs": {
+        "day-1": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-day-1.png",
+          "hash": "aa2a8a6c6b9dd7e54f3603e2d38c670607d4f20880663f315fd8bcda70613037"
+        },
+        "week-2": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-week-2.png",
+          "hash": "7dafbb028e79832443c09b4ff7bc6004aa1a020bde40be55c73b77a0dc0f6a86"
+        },
+        "month-1": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-month-1.png",
+          "hash": "322e4b5c2c959fd07f8d3da80f08546f72f702152073555cd3f8bbbd711fce24"
+        },
+        "month-3": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-month-3.png",
+          "hash": "0244429cc5551ab8e2f6ad41fbadc697c3f5ed1fd7ce0896f7b517ca24042dca"
+        },
+        "next-day-06-faded-once": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-next-day-06-faded-once.png",
+          "hash": "1b2e91a5f1eabf0cf9823719ca944272008ca6123a46bc70cee9b01f57bd6de4"
+        },
+        "two-days-later-unchanged": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-two-days-later-unchanged.png",
+          "hash": "1b2e91a5f1eabf0cf9823719ca944272008ca6123a46bc70cee9b01f57bd6de4"
+        },
+        "after-one-month-without-use": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-after-one-month-without-use.png",
+          "hash": "1b2e91a5f1eabf0cf9823719ca944272008ca6123a46bc70cee9b01f57bd6de4"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-starting.png",
+          "hash": "857bd9d8e2e83986cf784b42af151c612aa22b7e7e4ef0e819799c3a01491f5c"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-notes.png",
+          "hash": "7e019b371982f537bd67c37e43e0cd237f76464bb3ad8ed8a200e24971f851bc"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-thoughts.png",
+          "hash": "52fe8999246c5e3cf636de4e6f60219c8c493027c4cced28bf038e1ab07b62dc"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-routine.png",
+          "hash": "ac9761f05bf5558c7f545e5044da8308374b242762928f796ce4bd4ab61a9da2"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-log-week.png",
+          "hash": "225fad3e51dc02b4a4aaf1dcaa187206db1028c473be323805a143315af49624"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-protocol.png",
+          "hash": "bbe3bec5cd75a9a0aeb318ddd5d695482f53e88b211d4e800404c871b06a4392"
+        },
+        "same-areas-fresh": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-same-areas-fresh.png",
+          "hash": "46fc86b71859ee1bc89e17af498dd5dcde630b80e475c33d05e15f3185d2a5f9"
+        },
+        "same-areas-faded": {
+          "path": "docs/design/personal-imprint-growth-v1-lin-same-areas-faded.png",
+          "hash": "8dff42d73e0b8adeac64b5649e2506028aab695d547a5b105ac11b425c575ed1"
+        }
+      },
+      "coverage": {
+        "day-1": 585641,
+        "week-2": 1311321,
+        "month-1": 1911610,
+        "month-3": 2721193,
+        "next-day-06-faded-once": 2656747,
+        "two-days-later-unchanged": 2656747,
+        "after-one-month-without-use": 2656747,
+        "starting": 852021,
+        "notes": 813229,
+        "thoughts": 761108,
+        "routine": 1085954,
+        "log-week": 1225168,
+        "protocol": 692317,
+        "same-areas-fresh": 3339038,
+        "same-areas-faded": 3265201
+      },
+      "coverageUnits": "supersample pixels",
+      "baselineHash": "dd99b8854f127f059321b351878a6988c69756d53747f34f3bfaa7c6fac01502",
+      "fullBaselineHash": "9ccbee220c0951a52bec3c65b0dc7345cba0344df1cb8e392afaedc40d92a4c9"
+    },
+    {
+      "id": "noor",
+      "label": "Noor",
+      "anchors": {
+        "starting": {
+          "t": 0.6012486219406128,
+          "u": 0.8984375,
+          "scale": 1
+        },
+        "notes": {
+          "t": 0.102531298995018,
+          "u": 0.5078125,
+          "scale": 1
+        },
+        "thoughts": {
+          "t": 0.715497612953186,
+          "u": 0.40625,
+          "scale": 1
+        },
+        "routine": {
+          "t": 0.5188137292861938,
+          "u": 0.5390625,
+          "scale": 1
+        },
+        "log-week": {
+          "t": 0.4555515646934509,
+          "u": 0.7578125,
+          "scale": 1
+        },
+        "protocol": {
+          "t": 0.3470101058483124,
+          "u": 0.140625,
+          "scale": 1.15
+        }
+      },
+      "visibility": {
+        "starting": 4986,
+        "notes": 1759,
+        "thoughts": 2096,
+        "routine": 2283,
+        "log-week": 3484,
+        "protocol": 573
+      },
+      "outputs": {
+        "day-1": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-day-1.png",
+          "hash": "5693eefab2f4b0f653d4cd7b40abea924b0a19fc6d766e01767129acaae8ec2c"
+        },
+        "week-2": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-week-2.png",
+          "hash": "f074715857b2c0a48c8406c173e0e2e1b066585728f69e1112503f7f44d27d44"
+        },
+        "month-1": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-month-1.png",
+          "hash": "ca34c31875c3e6cb8d47a1c925e82c2660438dea18b4207e39d9c26969f2a112"
+        },
+        "month-3": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-month-3.png",
+          "hash": "98670675fedee2f90954af05072c3e152646b4f939b27df3d6b9e1b862ba1d6a"
+        },
+        "next-day-06-faded-once": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-next-day-06-faded-once.png",
+          "hash": "66241eaea2dfeea6f3daa4ef852c43fb05cd69226f71ed451acfa234891a2310"
+        },
+        "two-days-later-unchanged": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-two-days-later-unchanged.png",
+          "hash": "66241eaea2dfeea6f3daa4ef852c43fb05cd69226f71ed451acfa234891a2310"
+        },
+        "after-one-month-without-use": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-after-one-month-without-use.png",
+          "hash": "66241eaea2dfeea6f3daa4ef852c43fb05cd69226f71ed451acfa234891a2310"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-starting.png",
+          "hash": "c436acf03a313f2e24f32ae7635da211a9b01a862988b4d00788eb09365e2c8c"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-notes.png",
+          "hash": "7c749fba10a019f2b2eadf426923b25a483463182aab32e7836ecdab0b6ffccc"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-thoughts.png",
+          "hash": "c1166cfefedae5c2f022f583d23c9a60e0630a268126db01ea1023ffe9b3ac0b"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-routine.png",
+          "hash": "5410d6ac61429115d4ae03dbac6062739b9d8ced20f31875c88303e0c9f101de"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-log-week.png",
+          "hash": "2dc3c18fbeec58229a5af02b38e5bf2d949f1ecdb3aa79eb9a410ee416f0d36a"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-protocol.png",
+          "hash": "0e0a281ea389c013233a6ce560330f8d6d2520ce96d8a80e36af8bd95a944e73"
+        },
+        "same-areas-fresh": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-same-areas-fresh.png",
+          "hash": "72be2eaede647d4d6782811bc16188a38c316d8c2b7956e349d1decff6cca763"
+        },
+        "same-areas-faded": {
+          "path": "docs/design/personal-imprint-growth-v1-noor-same-areas-faded.png",
+          "hash": "a813852f0ecfb42f45b5e8e5f27ac1f1e20ac3ba3dff441a08b21ca58230fc42"
+        }
+      },
+      "coverage": {
+        "day-1": 756149,
+        "week-2": 1464843,
+        "month-1": 2117389,
+        "month-3": 3134335,
+        "next-day-06-faded-once": 3065766,
+        "two-days-later-unchanged": 3065766,
+        "after-one-month-without-use": 3065766,
+        "starting": 1198331,
+        "notes": 869181,
+        "thoughts": 698095,
+        "routine": 1105807,
+        "log-week": 1419232,
+        "protocol": 1129223,
+        "same-areas-fresh": 3735416,
+        "same-areas-faded": 3661349
+      },
+      "coverageUnits": "supersample pixels",
+      "baselineHash": "799a8f4b9e247c3cc75661056c447b3616f58341789785131f15e8ea2163b635",
+      "fullBaselineHash": "027df2e25e3b33a40cd5dc5d31ad53ccd2aa218b9a096b4af5f01c9e04c11a61"
+    },
+    {
+      "id": "tala",
+      "label": "Tala",
+      "anchors": {
+        "starting": {
+          "t": 0.09270786494016647,
+          "u": 0.7578125,
+          "scale": 1
+        },
+        "notes": {
+          "t": 0.8629765510559082,
+          "u": 0.6640625,
+          "scale": 1
+        },
+        "thoughts": {
+          "t": 0.34409400820732117,
+          "u": 0.8046875,
+          "scale": 1
+        },
+        "routine": {
+          "t": 0.5527312159538269,
+          "u": 0.828125,
+          "scale": 1
+        },
+        "log-week": {
+          "t": 0.44140303134918213,
+          "u": 0.234375,
+          "scale": 1
+        },
+        "protocol": {
+          "t": 0.6432111263275146,
+          "u": 0.9375,
+          "scale": 1
+        }
+      },
+      "visibility": {
+        "starting": 5169,
+        "notes": 2983,
+        "thoughts": 3481,
+        "routine": 1918,
+        "log-week": 1250,
+        "protocol": 973
+      },
+      "outputs": {
+        "day-1": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-day-1.png",
+          "hash": "f182127a1f0f71e2ee4c51074463c01534682350b71e4cfd3f20d542b8c1208d"
+        },
+        "week-2": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-week-2.png",
+          "hash": "afbe99b6d51999732e27aef89f95a971f79e6c7c71be8e2dec4712ec830b0d4d"
+        },
+        "month-1": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-month-1.png",
+          "hash": "78e30a789e68171fbc6bb22fbe78f5f08c4212eac23efa3c0fc58841a3ca7105"
+        },
+        "month-3": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-month-3.png",
+          "hash": "90c03cc98848aacd1d14b0c8af0799bfc21a61e55cc17396a5065fcedf482643"
+        },
+        "next-day-06-faded-once": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-next-day-06-faded-once.png",
+          "hash": "d6a1f4a95f030640decd4f657dbb09696cd043950a228cff5e9f5f10e7502533"
+        },
+        "two-days-later-unchanged": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-two-days-later-unchanged.png",
+          "hash": "d6a1f4a95f030640decd4f657dbb09696cd043950a228cff5e9f5f10e7502533"
+        },
+        "after-one-month-without-use": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-after-one-month-without-use.png",
+          "hash": "d6a1f4a95f030640decd4f657dbb09696cd043950a228cff5e9f5f10e7502533"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-starting.png",
+          "hash": "6f36623daa15307cc8b1cef153ffb3d1f6ec8f47c60d36c796edc242be5157b1"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-notes.png",
+          "hash": "f59ff8db3df386ca0ff765e9ea773c30784852c1fddad702d671951c4eeaf609"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-thoughts.png",
+          "hash": "e136e5f328721be99ad584b5c126550af61400bfc47f81b7a353ad0c9ea84964"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-routine.png",
+          "hash": "821547dfa024aa7defc9fd7c891c6dcd560a6fa31a84fcf6038252b950f23a24"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-log-week.png",
+          "hash": "8d8cb7f14711c07dce7c7da80cdc0d581c2f8a9f72767d99a2c0a39791dfed6c"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-protocol.png",
+          "hash": "daa352c85fdcfe1327d27e843559f7bda15c36d0c6e16bf82ea85c0871187ef1"
+        },
+        "same-areas-fresh": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-same-areas-fresh.png",
+          "hash": "a5d9451f2b026519ad04d26cfd6dfffe2fa79c2a9fdb7457aab839395d0b3d6a"
+        },
+        "same-areas-faded": {
+          "path": "docs/design/personal-imprint-growth-v1-tala-same-areas-faded.png",
+          "hash": "5065d51223042703a738b1be221d2dda8cbd5e1a91c681c70cab301eed06129c"
+        }
+      },
+      "coverage": {
+        "day-1": 664129,
+        "week-2": 1425901,
+        "month-1": 2198938,
+        "month-3": 3360014,
+        "next-day-06-faded-once": 3262129,
+        "two-days-later-unchanged": 3262129,
+        "after-one-month-without-use": 3262129,
+        "starting": 1178774,
+        "notes": 1025062,
+        "thoughts": 1341053,
+        "routine": 972883,
+        "log-week": 1095635,
+        "protocol": 875704,
+        "same-areas-fresh": 4303000,
+        "same-areas-faded": 4235614
+      },
+      "coverageUnits": "supersample pixels",
+      "baselineHash": "82cd3c43ca9e3766eb621e90b1dea7af6a3f892e314845f0ed705374ec758344",
+      "fullBaselineHash": "adaf28039783dfbc922f74b34a2c70ed66776282a32e80f69eb0f9eb0da4fc9d"
+    },
+    {
+      "id": "sori",
+      "label": "Sori",
+      "anchors": {
+        "starting": {
+          "t": 0.9336819648742676,
+          "u": 0.828125,
+          "scale": 1
+        },
+        "notes": {
+          "t": 0.10056042671203613,
+          "u": 0.8125,
+          "scale": 1
+        },
+        "thoughts": {
+          "t": 0.29106247425079346,
+          "u": 0.09375,
+          "scale": 1
+        },
+        "routine": {
+          "t": 0.459422767162323,
+          "u": 0.5625,
+          "scale": 1
+        },
+        "log-week": {
+          "t": 0.5079761147499084,
+          "u": 0.9140625,
+          "scale": 1
+        },
+        "protocol": {
+          "t": 0.696153998374939,
+          "u": 0.578125,
+          "scale": 1
+        }
+      },
+      "visibility": {
+        "starting": 2573,
+        "notes": 6195,
+        "thoughts": 2498,
+        "routine": 1684,
+        "log-week": 3656,
+        "protocol": 1930
+      },
+      "outputs": {
+        "day-1": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-day-1.png",
+          "hash": "5a9f64023e994857122f7aca76e3a3a924244de304ad595fe1ab4fb53461de4a"
+        },
+        "week-2": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-week-2.png",
+          "hash": "8b951a256b92a0a42a6677c81dad8fe968313539bf7b820b406f24d1af76ed8f"
+        },
+        "month-1": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-month-1.png",
+          "hash": "2705ec97e713a671929d67c520ff373efa6ebd87fb82288572a12e8fa6dccd90"
+        },
+        "month-3": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-month-3.png",
+          "hash": "e5a48f825be730e4987619cf5af11a34cb4124fa6db27661e69fadf7222222dc"
+        },
+        "next-day-06-faded-once": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-next-day-06-faded-once.png",
+          "hash": "86b236536c25dc1d2f83e478aedaf76e6ed77422c2320386e74c05882dc7764f"
+        },
+        "two-days-later-unchanged": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-two-days-later-unchanged.png",
+          "hash": "86b236536c25dc1d2f83e478aedaf76e6ed77422c2320386e74c05882dc7764f"
+        },
+        "after-one-month-without-use": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-after-one-month-without-use.png",
+          "hash": "86b236536c25dc1d2f83e478aedaf76e6ed77422c2320386e74c05882dc7764f"
+        },
+        "starting": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-starting.png",
+          "hash": "6a80774bfba91ade47cb2fc47e06bd39e91ad40d017c98738948c6ddf576a4a3"
+        },
+        "notes": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-notes.png",
+          "hash": "971d8cdc11ef266deabe6669a944bb9f41aa84572ed6ab5fbc6b098096807213"
+        },
+        "thoughts": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-thoughts.png",
+          "hash": "9798e34ba23d75670f3a5116de248825d7acb6727379ce696985d1345b9748a8"
+        },
+        "routine": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-routine.png",
+          "hash": "2f768e1571dc0f908ac62ee507bc535540117c463fb6ad041fb8a3d0d4dcb1e6"
+        },
+        "log-week": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-log-week.png",
+          "hash": "ee7b2fe78986144c0afb3f865391eee2a1f14f5443c78c0cefbe272399158c39"
+        },
+        "protocol": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-protocol.png",
+          "hash": "8de15c84f2f216a7fb4f90a38551c20d730938f4ae985e9d1af0832033669913"
+        },
+        "same-areas-fresh": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-same-areas-fresh.png",
+          "hash": "09676aea6190a8aea34b185dabefd7a098885fd86358d8239fe7fe9e90aad942"
+        },
+        "same-areas-faded": {
+          "path": "docs/design/personal-imprint-growth-v1-sori-same-areas-faded.png",
+          "hash": "0fbb3668dc231b76a0b983e99ab2d6de24471db5b3c0f419979863ed349c984e"
+        }
+      },
+      "coverage": {
+        "day-1": 828746,
+        "week-2": 1600916,
+        "month-1": 2309932,
+        "month-3": 3649035,
+        "next-day-06-faded-once": 3566400,
+        "two-days-later-unchanged": 3566400,
+        "after-one-month-without-use": 3566400,
+        "starting": 999975,
+        "notes": 1238250,
+        "thoughts": 1170886,
+        "routine": 965380,
+        "log-week": 1155664,
+        "protocol": 1070908,
+        "same-areas-fresh": 4410632,
+        "same-areas-faded": 4328595
+      },
+      "coverageUnits": "supersample pixels",
+      "baselineHash": "9430f35445945f3b5039dab5a7619ed4038cea793e09bde424d80dfea1dd8838",
+      "fullBaselineHash": "bc7585249641a2d65b339743d8c5ac07ff92e33337a6db2784b932fcbd591231"
+    }
+  ],
+  "limits": [
+    "Fictional use-days at 06:00; growth and bright/faded levels remain illustrative.",
+    "Group-level latest-application preview; per-contribution evidence handling is not implemented.",
+    "Growth color exports use full-resolution visible material coordinates before antialias reduction; anchor calibration uses phone samples.",
+    "Anchors are calibrated once on visible material per form; no daily relocation."
+  ],
+  "colorTrial": {
+    "fresh": 1,
+    "faded": 0.6,
+    "shadeExponent": 0.35,
+    "palette": [
+      227,
+      107,
+      55
+    ]
+  },
+  "orangeInspection": {
+    "checks": [
+      {
+        "id": "mira",
+        "visibleFresh": 11940,
+        "visibleFaded": 8344,
+        "meanRedDifference": 41.994007670182164,
+        "gates": {
+          "assets": true,
+          "baseline": true,
+          "visibleFaded": true,
+          "distinct": true,
+          "ordered": true,
+          "opaque": true,
+          "clearBorder": true,
+          "singleFade": true
+        }
+      },
+      {
+        "id": "arun",
+        "visibleFresh": 9690,
+        "visibleFaded": 5307,
+        "meanRedDifference": 39.64367816091954,
+        "gates": {
+          "assets": true,
+          "baseline": true,
+          "visibleFaded": true,
+          "distinct": true,
+          "ordered": true,
+          "opaque": true,
+          "clearBorder": true,
+          "singleFade": true
+        }
+      },
+      {
+        "id": "lin",
+        "visibleFresh": 11340,
+        "visibleFaded": 7403,
+        "meanRedDifference": 41.276644603539104,
+        "gates": {
+          "assets": true,
+          "baseline": true,
+          "visibleFaded": true,
+          "distinct": true,
+          "ordered": true,
+          "opaque": true,
+          "clearBorder": true,
+          "singleFade": true
+        }
+      },
+      {
+        "id": "noor",
+        "visibleFresh": 14468,
+        "visibleFaded": 8445,
+        "meanRedDifference": 39.59171107164002,
+        "gates": {
+          "assets": true,
+          "baseline": true,
+          "visibleFaded": true,
+          "distinct": true,
+          "ordered": true,
+          "opaque": true,
+          "clearBorder": true,
+          "singleFade": true
+        }
+      },
+      {
+        "id": "tala",
+        "visibleFresh": 12703,
+        "visibleFaded": 7886,
+        "meanRedDifference": 37.42163327415673,
+        "gates": {
+          "assets": true,
+          "baseline": true,
+          "visibleFaded": true,
+          "distinct": true,
+          "ordered": true,
+          "opaque": true,
+          "clearBorder": true,
+          "singleFade": true
+        }
+      },
+      {
+        "id": "sori",
+        "visibleFresh": 16461,
+        "visibleFaded": 9720,
+        "meanRedDifference": 38.62263374485597,
+        "gates": {
+          "assets": true,
+          "baseline": true,
+          "visibleFaded": true,
+          "distinct": true,
+          "ordered": true,
+          "opaque": true,
+          "clearBorder": true,
+          "singleFade": true
+        }
+      }
+    ],
+    "passed": true,
+    "limits": "Pixel thresholds are internal diagnostics; at-a-glance appearance requires developer review."
+  }
+}

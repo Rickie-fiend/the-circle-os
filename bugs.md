@@ -1,5 +1,53 @@
 # Circle OS bugs and verification gaps
 
+## Local synthetic backup and restore — 2026-11-15
+
+Approved rehearsal complete: two exact database/media restores and two complete
+360/390px browser selections pass. Missing/corrupt backup rejection, pre-commit
+connection-termination rollback, owner isolation and stable retry pass. Final
+build/TypeScript, lint and existing focused suite 69/69 pass; cleanup confirmed.
+
+**Open safety failure:** an older snapshot restores a later-deleted entry/account
+and loses a newer accepted edit. Independent deletion suppression remains
+unimplemented. Local timings do not certify production recovery or 30-day expiry.
+No product-code, migration-file, hosted-resource or live-sync change; original backup untouched.
+[Evidence](docs/USER_JOURNEY_TESTING.md#local-synthetic-backup-and-restore--2026-11-15)
+and [procedure](docs/BACKUP_RESTORE_RUNBOOK.md).
+
+Next: review independent deletion/account-revocation evidence and current/off-site
+backup coverage before proposing the operating implementation.
+
+Hosted recovery follow-up — 2026-11-15: final clearing-inclusive hosted
+journeys pass twice at 360/390px with fresh A/B accounts per width. Corrected a
+History-row click during a guarded Page transition; test-only Send diagnostics
+remain. Earlier intermittent Send failure did not recur and is not marked fixed.
+Build/TypeScript, focused lint and 58/58 model/transport tests pass. All temporary
+accounts removed; scoped SQL confirms zero writing rows. No runtime/deployment
+change; sync stays off, phones deferred. Next review backup/restore separately.
+See [evidence](docs/USER_JOURNEY_TESTING.md#hosted-recovery-diagnostics-and-repeat-acceptance--2026-11-15).
+
+Hosted production-store recovery — 2026-11-14: isolated sync-enabled production
+build now has real Auth/RPC recovery evidence at 360/390px using temporary accounts.
+Accepted writing restores exactly; interrupted recovery retries, local-only work
+does not return, deletion suppresses stale records and accounts remain separated.
+Final clearing-inclusive acceptance fails: latest run times out waiting for Deep
+Thought Send to create a saved entry; clearing remains unverified. Earlier complete
+recovery selection passed both widths, but current acceptance is not complete.
+Completed runs deleted temporary users; scoped writing-table cleanup is verified.
+Diagnose the Send/fixture boundary before a separate product-fix proposal.
+Live activation remains
+off; database backup restoration, retention, local-only draft protection and phone
+acceptance remain open. See [evidence](docs/USER_JOURNEY_TESTING.md#hosted-production-writing-recovery--2026-11-14).
+
+Storage-loss qualification — 2026-11-14: approved synthetic desktop checks now
+cover partial and full local-data removal. Production recovery 24/24, store 22/22,
+provider 16/16 and controller/proof 12/12 pass; build/TypeScript and lint pass.
+Automatic writing sync stays off.
+Full origin loss has no unbacked-writing recovery source. Phone/OS eviction,
+hosted restore, retention and remote stale-copy suppression remain open.
+Next review backup/restore separately. Earlier gap lists are qualified only by
+this bounded evidence. See [results and limits](docs/USER_JOURNEY_TESTING.md#storage-loss-and-recovery--2026-11-14).
+
 ## Offline entry after browser crash — 2026-11-14
 
 **Locally fixed and verified:** approved durable proof/closed-state store now

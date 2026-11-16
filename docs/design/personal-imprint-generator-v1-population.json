@@ -1,0 +1,2494 @@
+{
+  "status": "complete",
+  "sourceHashes": {
+    "app/os/home/imprint-relief-recipe.js": "5f57f6e341fc72fac9c4243c85bbea0a0b75ebd390f395c910e69081ea11a702",
+    "app/os/home/imprint-relief-samples.js": "d56d7ef14d2ffe13cc7db5e9738cef499a85c93b83868d7a7a4c92e7ddcf812e",
+    "app/os/home/imprint-relief-courses.js": "2b7b509d2465ef6865396ef62c221226e1eaa8e16ee52ed2eef64c6d3322083b",
+    "app/os/home/imprint-loop-recipe.js": "deca929cb16da0763751e9482fb36d8975f7896e427f62cc04a4c0503895ca55",
+    "app/os/home/imprint-personal-recipe.js": "6b571d32f965ab87499911b5fe6b0c86ffe2c8517a51dafaf73a9021c8d6b308",
+    "scripts/lib/imprint-relief-geometry.mjs": "d2e6628f740b26a6660a595c40b3d1b2ffc1edc38a99649f190f0a7f708d48ac",
+    "scripts/lib/imprint-relief-inspection.mjs": "2e6b8f55f10c5f6e9823d5a32f053ed585012fddbea8af1c7f1b3b458f25c7cb",
+    "scripts/lib/imprint-sori-relief.mjs": "a26653b7baec706c66c508c5edc3ac4a4cd450fd58282b504307c6e95d650ede",
+    "scripts/lib/imprint-sori-geometry.mjs": "abe738690ad1c0b643e98d3fd45c7fd453252e9924fd318ccf7b3cfbc7e098b5",
+    "scripts/lib/imprint-loop-geometry.mjs": "c1152c8a07caa7f2388ab40b9e58e20d7af1c24c8bd227588ff357150c655b0a",
+    "scripts/lib/imprint-loop-crossings.mjs": "e2d660d734cb2d00b78f839f587955ea1714bd6254b04773a37371e6d700e888",
+    "scripts/lib/imprint-loop-inspection.mjs": "5e9b27fc0c0c46e2204cba26da1315f1eaa6ad0d016c8de463685f15cc947245",
+    "scripts/lib/imprint-material-renderer.mjs": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "scripts/lib/imprint-network-geometry.mjs": "1a121315ed2f311681d10c1405cc6d6fe6e17adfccbbececef2a43d294e78b3c",
+    "scripts/lib/imprint-generator-artifacts.mjs": "a2d1ebf84ee56e7c1083511f019ba2cd3cdd26ad72a32ca3ab74bda813ad618f",
+    "scripts/render-imprint-generator.mjs": "32041586fd00aaac5f1c0076041c36036d282059076c2b6b153e54aac95395e3",
+    "docs/design/personal-imprint-loops-v2.json": "0202accb2d0d64bcea3c8b5bd506b3e1cd9e63941e324cfc471c683e31f75598"
+  },
+  "fixturesHash": "52fdfc424080d845c16674a0074a461b8fde0792768fe537717c9c38bf93f7a4",
+  "results": [
+    {
+      "id": "case-000",
+      "family": "sweep",
+      "recipeHash": "7a157e10a20793db81f19241a4b6ee0899555382c34716be05553d041ddd78e7",
+      "geometryHash": "2e7e57a8120835599d63d0e14b5cdd67519dfff174caadc8beb89faab7430d79",
+      "milliseconds": 16819,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 12800,
+          "inspectionMs": 3416,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 6.0425383098474e-13,
+        "maxSeamTangent": 3.4371472061274696e-9,
+        "maxSeamCurvature": 0.00007983414809370396,
+        "peakTurnDegrees": 23.285236469400594,
+        "minStep": 0.22188825939804827,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3440
+        ],
+        "minorHoles": 5,
+        "connectedComponents": 1,
+        "materialArea": 720688,
+        "mirroredIoU": 0.6931549073412773,
+        "projectedCrossings": 77337,
+        "nearCrossings": 0,
+        "minCrossingDepth": 3.1137537383486364
+      },
+      "openings": [
+        {
+          "area": 3440,
+          "bounds": [
+            392,
+            1096,
+            520,
+            1140
+          ],
+          "widthRatio": 0.14732142857142858,
+          "heightRatio": 0.041666666666666664
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-001",
+      "family": "return",
+      "recipeHash": "22ab0a1965ee86554019c2d127b11d72aad52ffc588a056a9d03ad245246fe3a",
+      "geometryHash": "0e8bcd52df752b7ab5397eee257437f30956fd4049c2cd89b3ad3071a6669d3f",
+      "milliseconds": 16555,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 12083,
+          "inspectionMs": 4026,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 7.91737208895945e-13,
+        "maxSeamTangent": 5.271441804947986e-9,
+        "maxSeamCurvature": 0.00009165725883006587,
+        "peakTurnDegrees": 17.57999201501443,
+        "minStep": 0.2825183672532934,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1232
+        ],
+        "minorHoles": 5,
+        "connectedComponents": 1,
+        "materialArea": 748944,
+        "mirroredIoU": 0.6591287704249814,
+        "projectedCrossings": 81064,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.5042885382839923
+      },
+      "openings": [
+        {
+          "area": 1232,
+          "bounds": [
+            512,
+            628,
+            552,
+            676
+          ],
+          "widthRatio": 0.049107142857142856,
+          "heightRatio": 0.043333333333333335
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-002",
+      "family": "return",
+      "recipeHash": "a274781912e00da474f8811fe141d31b0141dd2a223db873665b5de3dd591cd0",
+      "geometryHash": "9d6c4f167f82ceecd1ef90fbbd97b5b53d384f4ff3ff2bcf30e61adf5491c82a",
+      "milliseconds": 12478,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 9883,
+          "inspectionMs": 2133,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 7.71061648166013e-13,
+        "maxSeamTangent": 5.776399043224511e-9,
+        "maxSeamCurvature": 0.00010235762154022186,
+        "peakTurnDegrees": 19.232556371870327,
+        "minStep": 0.302178226653383,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1312
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 777520,
+        "mirroredIoU": 0.7411322106771766,
+        "projectedCrossings": 81065,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.642502584205688
+      },
+      "openings": [
+        {
+          "area": 1312,
+          "bounds": [
+            464,
+            624,
+            504,
+            680
+          ],
+          "widthRatio": 0.049107142857142856,
+          "heightRatio": 0.05
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-003",
+      "family": "sweep",
+      "recipeHash": "4859c76405ed5205ee2d039a25153d5f4144f3a497700aa79bdd1c1ac3fbd81f",
+      "geometryHash": "7ba2925a2e52b5641332a73512d339416d991477dc03475665d4cf01125c4639",
+      "milliseconds": 15919,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 11576,
+          "inspectionMs": 3811,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 4.930982292108147e-13,
+        "maxSeamTangent": 3.075096307454235e-9,
+        "maxSeamCurvature": 0.00007998577926593523,
+        "peakTurnDegrees": 19.03657514868337,
+        "minStep": 0.18662869529852796,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          2704
+        ],
+        "minorHoles": 5,
+        "connectedComponents": 1,
+        "materialArea": 556976,
+        "mirroredIoU": 0.5099110821947517,
+        "projectedCrossings": 77336,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.4759953345978887
+      },
+      "openings": [
+        {
+          "area": 2704,
+          "bounds": [
+            412,
+            1056,
+            528,
+            1100
+          ],
+          "widthRatio": 0.13392857142857142,
+          "heightRatio": 0.046875
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-004",
+      "family": "sweep",
+      "recipeHash": "7cdffa47c19c26e3a6797caabeeabc3dca91f23ad5144af4f1614fa77636096e",
+      "geometryHash": "e86b087660644b8affcd1343fb742d4a0eb99662d77a39dbbdf9c4534eb827e1",
+      "milliseconds": 18024,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 11462,
+          "inspectionMs": 5362,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.968558980384841e-13,
+        "maxSeamTangent": 3.4135644425146873e-9,
+        "maxSeamCurvature": 0.00010294780685663985,
+        "peakTurnDegrees": 23.667810512895404,
+        "minStep": 0.21633229135683021,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3840
+        ],
+        "minorHoles": 3,
+        "connectedComponents": 1,
+        "materialArea": 799440,
+        "mirroredIoU": 0.6600770815336567,
+        "projectedCrossings": 77339,
+        "nearCrossings": 0,
+        "minCrossingDepth": 3.249359692612802
+      },
+      "openings": [
+        {
+          "area": 3840,
+          "bounds": [
+            548,
+            1120,
+            684,
+            1172
+          ],
+          "widthRatio": 0.15625,
+          "heightRatio": 0.04487179487179487
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-005",
+      "family": "return",
+      "recipeHash": "9ebb6230e8b36cec921749db58769b75cdc93b4ea70b8b2982eb5d55746a0318",
+      "geometryHash": "4791c26a0871c63acbeb5e117308ec479e085d45f245e52366097fe904aeb73c",
+      "milliseconds": 18603,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 15487,
+          "inspectionMs": 2621,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 7.503546602517922e-13,
+        "maxSeamTangent": 5.422516559388815e-9,
+        "maxSeamCurvature": 0.00009596273580504051,
+        "peakTurnDegrees": 19.74043640449413,
+        "minStep": 0.2917282471795315,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1136
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 659552,
+        "mirroredIoU": 0.5564281668869171,
+        "projectedCrossings": 81061,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.6169179345969056
+      },
+      "openings": [
+        {
+          "area": 1136,
+          "bounds": [
+            552,
+            632,
+            592,
+            680
+          ],
+          "widthRatio": 0.049107142857142856,
+          "heightRatio": 0.04452054794520548
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-006",
+      "family": "curl",
+      "recipeHash": "d613c503becab2d1136c8c5a5182855af30dc822e4fe17198e9dae468a652c02",
+      "geometryHash": "b77f62fa2e580bf5884db148ea713e00271caefb818437dddad4ea9aec46ac3d",
+      "milliseconds": 15285,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 11903,
+          "inspectionMs": 2976,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.115907697472721e-13,
+        "maxSeamTangent": 2.92619408270042e-9,
+        "maxSeamCurvature": 0.00006380657942100825,
+        "peakTurnDegrees": 26.400930293653264,
+        "minStep": 0.2595241975882823,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          5632,
+          1648
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 622992,
+        "mirroredIoU": 0.5870628515529469,
+        "projectedCrossings": 76326,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.4938510110507597
+      },
+      "openings": [
+        {
+          "area": 5632,
+          "bounds": [
+            372,
+            520,
+            472,
+            600
+          ],
+          "widthRatio": 0.11607142857142858,
+          "heightRatio": 0.07720588235294118
+        },
+        {
+          "area": 1648,
+          "bounds": [
+            604,
+            848,
+            668,
+            904
+          ],
+          "widthRatio": 0.07589285714285714,
+          "heightRatio": 0.05514705882352941
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-007",
+      "family": "return",
+      "recipeHash": "e30e4ea9ad918673d1f8b6b88c605ba8edbe3a9a9ad4eccb0c0fb63b870546f1",
+      "geometryHash": "7cd16bd9c3c927e7e45d3650cf924b330520c04a2206bc3e1636913567f4e9b8",
+      "milliseconds": 12004,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 9053,
+          "inspectionMs": 2357,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 8.138738998739172e-13,
+        "maxSeamTangent": 5.633948526823647e-9,
+        "maxSeamCurvature": 0.00009235961999277312,
+        "peakTurnDegrees": 19.842971276456037,
+        "minStep": 0.3109278114691725,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1440
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 846208,
+        "mirroredIoU": 0.7368230928376737,
+        "projectedCrossings": 81061,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.7256828707634297
+      },
+      "openings": [
+        {
+          "area": 1440,
+          "bounds": [
+            516,
+            608,
+            556,
+            668
+          ],
+          "widthRatio": 0.0514018691588785,
+          "heightRatio": 0.047337278106508875
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-008",
+      "family": "return",
+      "recipeHash": "dec7f7f22415a8be6d45056ba9e05ebe2a5662364e457dbd50f06be37ebeb986",
+      "geometryHash": "13fa8893a22a853dc74af0cd2a7063d6aaf52541be5dbcfd8349423fe9693424",
+      "milliseconds": 11399,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 9098,
+          "inspectionMs": 1818,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 9.617295015509985e-13,
+        "maxSeamTangent": 5.511173932764369e-9,
+        "maxSeamCurvature": 0.00010482371861390685,
+        "peakTurnDegrees": 18.146287696187347,
+        "minStep": 0.3145459256305513,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1504
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 896192,
+        "mirroredIoU": 0.8387499179305364,
+        "projectedCrossings": 81064,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.720122580510977
+      },
+      "openings": [
+        {
+          "area": 1504,
+          "bounds": [
+            472,
+            612,
+            516,
+            668
+          ],
+          "widthRatio": 0.05357142857142857,
+          "heightRatio": 0.045180722891566265
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-009",
+      "family": "sweep",
+      "recipeHash": "3bf2689fccb8fef129d37db4815b57bad0f770ef6ac17f04fd5918beef778a38",
+      "geometryHash": "31de4d676578ba78e43dbac186e7b09696e83789055b45e69520d715d077e853",
+      "milliseconds": 12830,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 10411,
+          "inspectionMs": 1957,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.576742089018747e-13,
+        "maxSeamTangent": 3.5623356394442595e-9,
+        "maxSeamCurvature": 0.0000919322595679684,
+        "peakTurnDegrees": 19.02798938157966,
+        "minStep": 0.21369217242163446,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          4016
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 833616,
+        "mirroredIoU": 0.6812740004517732,
+        "projectedCrossings": 77339,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.6678622800588143
+      },
+      "openings": [
+        {
+          "area": 4016,
+          "bounds": [
+            512,
+            1140,
+            648,
+            1192
+          ],
+          "widthRatio": 0.15625,
+          "heightRatio": 0.042682926829268296
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-010",
+      "family": "return",
+      "recipeHash": "56f5911bd82a38f182df00e0302ab2d37e37f34e4d2bf02d2be7b34067b8ed7f",
+      "geometryHash": "ad56c323c7b47e78a59c016da6be83d7762b5da618d16f25978bacf053e0873b",
+      "milliseconds": 11064,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 8038,
+          "inspectionMs": 2483,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 8.929405006348116e-13,
+        "maxSeamTangent": 6.310213521306444e-9,
+        "maxSeamCurvature": 0.00010419570787589328,
+        "peakTurnDegrees": 22.2962093298222,
+        "minStep": 0.3172657829653558,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1392
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 814208,
+        "mirroredIoU": 0.7727304396293457,
+        "projectedCrossings": 81065,
+        "nearCrossings": 0,
+        "minCrossingDepth": 3.1709029808848146
+      },
+      "openings": [
+        {
+          "area": 1392,
+          "bounds": [
+            476,
+            624,
+            520,
+            676
+          ],
+          "widthRatio": 0.05357142857142857,
+          "heightRatio": 0.04666666666666667
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-011",
+      "family": "curl",
+      "recipeHash": "33cc237b0f717749c6afb1ad2dc306b8e590b2060e39ace46e3c510201ee3a0e",
+      "geometryHash": "10c6f88870e5119f1dcc4c2cfe13fb9b0dcf6a48dc8c92283e8bb97ff9fbcf4d",
+      "milliseconds": 41902,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 9429,
+          "inspectionMs": 2431,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": false,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        },
+        {
+          "steps": 6144,
+          "constructionMs": 24429,
+          "inspectionMs": 4573,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.686117965451148e-13,
+        "maxSeamTangent": 3.064408624147721e-9,
+        "maxSeamCurvature": 0.00008662795297668805,
+        "peakTurnDegrees": 16.919255173518696,
+        "minStep": 0.15800755876518882,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          6448,
+          1904
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 707056,
+        "mirroredIoU": 0.5701190264700657,
+        "projectedCrossings": 76355,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.837522720364161
+      },
+      "openings": [
+        {
+          "area": 6448,
+          "bounds": [
+            576,
+            456,
+            664,
+            560
+          ],
+          "widthRatio": 0.11274509803921569,
+          "heightRatio": 0.07988165680473373
+        },
+        {
+          "area": 1904,
+          "bounds": [
+            352,
+            864,
+            416,
+            940
+          ],
+          "widthRatio": 0.08333333333333333,
+          "heightRatio": 0.05917159763313609
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-012",
+      "family": "return",
+      "recipeHash": "cd5c279c210e697998c98082eeba1018ffe761a5ebe6b82b13d8b79d582645c6",
+      "geometryHash": "00d4acb4c487ef2c2ee5204d0cdd0b7c5c52f61fc186a4b5c2f2149cf248ec53",
+      "milliseconds": 11661,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 9111,
+          "inspectionMs": 2035,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 7.898218673057189e-13,
+        "maxSeamTangent": 5.63482020766168e-9,
+        "maxSeamCurvature": 0.00009183335633216186,
+        "peakTurnDegrees": 19.766176688812457,
+        "minStep": 0.2799924618943548,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1376
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 802304,
+        "mirroredIoU": 0.6627648638790331,
+        "projectedCrossings": 81064,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.883944674388791
+      },
+      "openings": [
+        {
+          "area": 1376,
+          "bounds": [
+            472,
+            616,
+            516,
+            672
+          ],
+          "widthRatio": 0.05357142857142857,
+          "heightRatio": 0.046583850931677016
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-013",
+      "family": "sweep",
+      "recipeHash": "5fcf82d047f2589c56e9d541a38ad9c1ecf6197c4d0b994ea881c8d2c025d872",
+      "geometryHash": "75a9627d59040d12e8384aaf703247ec9c5d0446facf496f1410f95e64b4885d",
+      "milliseconds": 11986,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 9388,
+          "inspectionMs": 2083,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.060341497586722e-13,
+        "maxSeamTangent": 3.612593811867648e-9,
+        "maxSeamCurvature": 0.00009130405669492028,
+        "peakTurnDegrees": 18.3003110674548,
+        "minStep": 0.20087570750817593,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3680
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 775248,
+        "mirroredIoU": 0.6429758231324811,
+        "projectedCrossings": 77338,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.596944028524026
+      },
+      "openings": [
+        {
+          "area": 3680,
+          "bounds": [
+            368,
+            1152,
+            492,
+            1208
+          ],
+          "widthRatio": 0.1553398058252427,
+          "heightRatio": 0.04437869822485207
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-014",
+      "family": "return",
+      "recipeHash": "27b0e18c1291a3890fa9d6e4b556c296be21461e8ed5b6f2cd3c797807352dcf",
+      "geometryHash": "231d49c5bfbf13997500047a94fac8549a4d82c16e104441c9e75dbbb487f7c1",
+      "milliseconds": 16612,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 11510,
+          "inspectionMs": 4448,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 8.658131612109979e-13,
+        "maxSeamTangent": 5.035903475237119e-9,
+        "maxSeamCurvature": 0.00010263346407261159,
+        "peakTurnDegrees": 20.330003512379193,
+        "minStep": 0.21928242346275292,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 0,
+        "holeAreasSourcePixels": [],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 530096,
+        "mirroredIoU": 0.6223190676721183,
+        "projectedCrossings": 81059,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.532333834755972
+      },
+      "openings": [],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-015",
+      "family": "return",
+      "recipeHash": "0b7edd12b8f97be2c881fc2510d2767ddaf500825da33f669fe90ac91b0e7eb9",
+      "geometryHash": "4b2f40f68b3b4b045e0c004b2d3bc74d6548b68514f7993e71864d0d240d9102",
+      "milliseconds": 16896,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 14649,
+          "inspectionMs": 1882,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 7.585189305861217e-13,
+        "maxSeamTangent": 5.7263869621191815e-9,
+        "maxSeamCurvature": 0.00009117124416458633,
+        "peakTurnDegrees": 19.64655458243406,
+        "minStep": 0.2678712938746566,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1040
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 589728,
+        "mirroredIoU": 0.536582315420853,
+        "projectedCrossings": 81062,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.5727625124373876
+      },
+      "openings": [
+        {
+          "area": 1040,
+          "bounds": [
+            448,
+            640,
+            492,
+            688
+          ],
+          "widthRatio": 0.05357142857142857,
+          "heightRatio": 0.04887218045112782
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-016",
+      "family": "sweep",
+      "recipeHash": "069e513f740a887349ccce5455ed52fdd287d7d15867dff85a60ef5f33d9a9e7",
+      "geometryHash": "5c91857ab0815e8857578acd2f18feda726a3bae61c8db6bc75bb1c68cec5e22",
+      "milliseconds": 8621,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 6749,
+          "inspectionMs": 1546,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.712692894303979e-13,
+        "maxSeamTangent": 3.32970970301289e-9,
+        "maxSeamCurvature": 0.00007958078640513122,
+        "peakTurnDegrees": 21.61883873587049,
+        "minStep": 0.2157623248904554,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3280
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 679568,
+        "mirroredIoU": 0.5350946942316033,
+        "projectedCrossings": 77340,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.9364043197831444
+      },
+      "openings": [
+        {
+          "area": 3280,
+          "bounds": [
+            404,
+            1120,
+            508,
+            1172
+          ],
+          "widthRatio": 0.12053571428571429,
+          "heightRatio": 0.04516129032258064
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-017",
+      "family": "curl",
+      "recipeHash": "08f0cf5d3a9e25d6e6d15c10fdb0fc0a1ee4708bceedb88b9efbbccd22af8802",
+      "geometryHash": "9e31294c14607560f6f23b10fe523d5ca5421f152fe30b86915ff09ee41e2979",
+      "milliseconds": 8111,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 6308,
+          "inspectionMs": 1485,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 4.591427151416456e-13,
+        "maxSeamTangent": 2.92619408270042e-9,
+        "maxSeamCurvature": 0.00006863224546560225,
+        "peakTurnDegrees": 22.76365076970026,
+        "minStep": 0.276965582911117,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          5392,
+          1600
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 599344,
+        "mirroredIoU": 0.804383429672447,
+        "projectedCrossings": 76326,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.1349222631356493
+      },
+      "openings": [
+        {
+          "area": 5392,
+          "bounds": [
+            500,
+            520,
+            592,
+            604
+          ],
+          "widthRatio": 0.10714285714285714,
+          "heightRatio": 0.08270676691729323
+        },
+        {
+          "area": 1600,
+          "bounds": [
+            364,
+            844,
+            424,
+            900
+          ],
+          "widthRatio": 0.07142857142857142,
+          "heightRatio": 0.05639097744360902
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-018",
+      "family": "return",
+      "recipeHash": "4be79256632ab84efe2082394f76ebc8b17e6b8ac0b6dd2e8b55f7be4554e15d",
+      "geometryHash": "b58ba45d14ad6e5a96c5b5ac1f0b659ea1c74c8dd88060e80aec923f25cdaa15",
+      "milliseconds": 9760,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 8019,
+          "inspectionMs": 1370,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 8.897402405238227e-13,
+        "maxSeamTangent": 5.995566172523748e-9,
+        "maxSeamCurvature": 0.00009746615916231011,
+        "peakTurnDegrees": 21.402287770653512,
+        "minStep": 0.3212262759063083,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1296
+        ],
+        "minorHoles": 5,
+        "connectedComponents": 1,
+        "materialArea": 754048,
+        "mirroredIoU": 0.8045642517996631,
+        "projectedCrossings": 81064,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.9123110207969822
+      },
+      "openings": [
+        {
+          "area": 1296,
+          "bounds": [
+            500,
+            632,
+            544,
+            684
+          ],
+          "widthRatio": 0.05357142857142857,
+          "heightRatio": 0.04929577464788732
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-019",
+      "family": "curl",
+      "recipeHash": "daeb6d4be942a1a1674aa3675a6cf8a98d07b971166b688b01b17a3d9abc542d",
+      "geometryHash": "62f22d3870699b169104e5d5859be867e92c6dfdea43a493cd247a117337b46e",
+      "milliseconds": 8173,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 6477,
+          "inspectionMs": 1385,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.006175727489942e-13,
+        "maxSeamTangent": 3.0112261271735136e-9,
+        "maxSeamCurvature": 0.00006843760536801027,
+        "peakTurnDegrees": 24.773418862257543,
+        "minStep": 0.28225379065331674,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          5888,
+          1728
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 641936,
+        "mirroredIoU": 0.6735213147576541,
+        "projectedCrossings": 76324,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.33152420917616
+      },
+      "openings": [
+        {
+          "area": 5888,
+          "bounds": [
+            532,
+            508,
+            628,
+            596
+          ],
+          "widthRatio": 0.11160714285714286,
+          "heightRatio": 0.08156028368794327
+        },
+        {
+          "area": 1728,
+          "bounds": [
+            356,
+            852,
+            420,
+            908
+          ],
+          "widthRatio": 0.07589285714285714,
+          "heightRatio": 0.05319148936170213
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-020",
+      "family": "curl",
+      "recipeHash": "9282ba133c98826b691628d643f65d9e177a3b6d949ecff6eb0e485f65a40df1",
+      "geometryHash": "1909f75b392cd5c0f3093e59c1f837d33d3bff270fcd82d89649329343b4a81b",
+      "milliseconds": 7914,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 6229,
+          "inspectionMs": 1370,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.120102081387372e-13,
+        "maxSeamTangent": 3.190328971050412e-9,
+        "maxSeamCurvature": 0.00008000186686698832,
+        "peakTurnDegrees": 29.777449022289392,
+        "minStep": 0.3145544375881685,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          6032,
+          1728
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 664384,
+        "mirroredIoU": 0.7893648194432474,
+        "projectedCrossings": 76326,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.5188643193696376
+      },
+      "openings": [
+        {
+          "area": 6032,
+          "bounds": [
+            468,
+            456,
+            544,
+            560
+          ],
+          "widthRatio": 0.10101010101010101,
+          "heightRatio": 0.07988165680473373
+        },
+        {
+          "area": 1728,
+          "bounds": [
+            384,
+            868,
+            432,
+            936
+          ],
+          "widthRatio": 0.06565656565656566,
+          "heightRatio": 0.05325443786982249
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-021",
+      "family": "sweep",
+      "recipeHash": "83fa6c6386d73af5609736a40ac2d8104536e196f943d54ee6b852d24f2a0c7a",
+      "geometryHash": "617215b6fb9aa0b969a3588b7ec6c9ecc82dd05c5e261f74c7de01e75678b5c4",
+      "milliseconds": 7949,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 6071,
+          "inspectionMs": 1562,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.895364129370234e-13,
+        "maxSeamTangent": 3.4290589246704862e-9,
+        "maxSeamCurvature": 0.00009952672285863946,
+        "peakTurnDegrees": 24.194333796845832,
+        "minStep": 0.20269846166545424,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3664
+        ],
+        "minorHoles": 3,
+        "connectedComponents": 1,
+        "materialArea": 770480,
+        "mirroredIoU": 0.8029503163727583,
+        "projectedCrossings": 77338,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.729781975812298
+      },
+      "openings": [
+        {
+          "area": 3664,
+          "bounds": [
+            508,
+            1096,
+            640,
+            1144
+          ],
+          "widthRatio": 0.15178571428571427,
+          "heightRatio": 0.04482758620689655
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-023",
+      "family": "curl",
+      "recipeHash": "0bea299673094f64a344931da17d9dc7696512d12b509f45f915b04736a5c006",
+      "geometryHash": "87f5f515ce2e400daed75e27e015640b6c2bc2ce353096c58c2ae0da7d91c941",
+      "milliseconds": 7896,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 6192,
+          "inspectionMs": 1354,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.006175727489942e-13,
+        "maxSeamTangent": 3.042085641682156e-9,
+        "maxSeamCurvature": 0.00006940857205157904,
+        "peakTurnDegrees": 26.652689294533847,
+        "minStep": 0.2754552612350388,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          6192,
+          1856
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 678128,
+        "mirroredIoU": 0.6822656187981265,
+        "projectedCrossings": 76329,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.531494453380018
+      },
+      "openings": [
+        {
+          "area": 6192,
+          "bounds": [
+            416,
+            492,
+            512,
+            584
+          ],
+          "widthRatio": 0.11160714285714286,
+          "heightRatio": 0.08
+        },
+        {
+          "area": 1856,
+          "bounds": [
+            596,
+            856,
+            660,
+            920
+          ],
+          "widthRatio": 0.07589285714285714,
+          "heightRatio": 0.056666666666666664
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-024",
+      "family": "curl",
+      "recipeHash": "c65a0667e96a37305b304fc3d23a28942429e17f24e2b23c04976fbf3946fa50",
+      "geometryHash": "86fb1f8f70270e2a8d71f712d443f2dac456f664e3c1eeadbfed101451200f6b",
+      "milliseconds": 10032,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 8339,
+          "inspectionMs": 1369,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.392320200396768e-13,
+        "maxSeamTangent": 2.639549112047733e-9,
+        "maxSeamCurvature": 0.0000918278987460481,
+        "peakTurnDegrees": 26.73027340437537,
+        "minStep": 0.3191161768918708,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          6464,
+          1888
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 711232,
+        "mirroredIoU": 0.791480272437835,
+        "projectedCrossings": 76326,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.3773706535392294
+      },
+      "openings": [
+        {
+          "area": 6464,
+          "bounds": [
+            504,
+            456,
+            588,
+            560
+          ],
+          "widthRatio": 0.10476190476190476,
+          "heightRatio": 0.07988165680473373
+        },
+        {
+          "area": 1888,
+          "bounds": [
+            372,
+            868,
+            428,
+            940
+          ],
+          "widthRatio": 0.07142857142857142,
+          "heightRatio": 0.05621301775147929
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-026",
+      "family": "curl",
+      "recipeHash": "d56658a101d679578d4fbd17a4098e3ef75b52f5c7057be614be424cad43318c",
+      "geometryHash": "3870ea7e97966f395ca8b356f2c16aea2eb37400d862d2165ce15f75f8a647e4",
+      "milliseconds": 8867,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 7228,
+          "inspectionMs": 1295,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.392640207733813e-13,
+        "maxSeamTangent": 3.5527136788005013e-9,
+        "maxSeamCurvature": 0.00007978671662229252,
+        "peakTurnDegrees": 26.436008441259524,
+        "minStep": 0.3296265744871671,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          6976,
+          2000
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 766720,
+        "mirroredIoU": 0.6799298860648554,
+        "projectedCrossings": 76326,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.472567313145907
+      },
+      "openings": [
+        {
+          "area": 6976,
+          "bounds": [
+            376,
+            456,
+            472,
+            560
+          ],
+          "widthRatio": 0.11261261261261261,
+          "heightRatio": 0.07988165680473373
+        },
+        {
+          "area": 2000,
+          "bounds": [
+            604,
+            868,
+            664,
+            936
+          ],
+          "widthRatio": 0.07207207207207207,
+          "heightRatio": 0.05325443786982249
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-027",
+      "family": "curl",
+      "recipeHash": "12dcfaa4a9851b0103b567cc21ae5386df8b6988bc4d322d3bd20bbe011bb3d0",
+      "geometryHash": "78c316a75fb825ec6404a4e044dd88b94056a9c12907f7449a59522573986a8e",
+      "milliseconds": 8465,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 6769,
+          "inspectionMs": 1363,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.454080866910399e-13,
+        "maxSeamTangent": 2.9673135796061135e-9,
+        "maxSeamCurvature": 0.00007059364764530855,
+        "peakTurnDegrees": 28.257584898173516,
+        "minStep": 0.32571513209885733,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          6496,
+          1920
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 717424,
+        "mirroredIoU": 0.6596587333900877,
+        "projectedCrossings": 76327,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.6599293524224255
+      },
+      "openings": [
+        {
+          "area": 6496,
+          "bounds": [
+            376,
+            476,
+            476,
+            572
+          ],
+          "widthRatio": 0.11607142857142858,
+          "heightRatio": 0.07861635220125786
+        },
+        {
+          "area": 1920,
+          "bounds": [
+            600,
+            860,
+            660,
+            928
+          ],
+          "widthRatio": 0.07142857142857142,
+          "heightRatio": 0.05660377358490566
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-028",
+      "family": "sweep",
+      "recipeHash": "d1ded8f605f69a268822bba981734407047c846d1a6c5d64240e2395322014ef",
+      "geometryHash": "f45a52727158bb6f479e09a3cdc7e6996795d5792cd839016cb69873665a56a8",
+      "milliseconds": 8066,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 6394,
+          "inspectionMs": 1364,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.712692894303979e-13,
+        "maxSeamTangent": 3.837398413940481e-9,
+        "maxSeamCurvature": 0.00009680085335957197,
+        "peakTurnDegrees": 21.507003898856265,
+        "minStep": 0.20110052317501914,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3888
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 813136,
+        "mirroredIoU": 0.6949372998932765,
+        "projectedCrossings": 77338,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.8519090984145348
+      },
+      "openings": [
+        {
+          "area": 3888,
+          "bounds": [
+            352,
+            1148,
+            476,
+            1208
+          ],
+          "widthRatio": 0.1553398058252427,
+          "heightRatio": 0.047337278106508875
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-029",
+      "family": "sweep",
+      "recipeHash": "4e5b85eea55b97366a1b663f642aa6fb375ea51a1c4c41fd7ea67700b203af4e",
+      "geometryHash": "0cf9ad88dadc5cad8a6c2fb815b3528dc53383dbe284fe78aaba5b4e70cef33d",
+      "milliseconds": 30780,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 23437,
+          "inspectionMs": 6496,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.155231163830949e-13,
+        "maxSeamTangent": 3.425376119478741e-9,
+        "maxSeamCurvature": 0.00008242295810085721,
+        "peakTurnDegrees": 19.4865477222699,
+        "minStep": 0.17866049913348397,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3088
+        ],
+        "minorHoles": 3,
+        "connectedComponents": 1,
+        "materialArea": 645808,
+        "mirroredIoU": 0.6905968586387434,
+        "projectedCrossings": 77338,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.5336383368654207
+      },
+      "openings": [
+        {
+          "area": 3088,
+          "bounds": [
+            384,
+            1152,
+            480,
+            1208
+          ],
+          "widthRatio": 0.15432098765432098,
+          "heightRatio": 0.04437869822485207
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-030",
+      "family": "sweep",
+      "recipeHash": "b3549ed9c75b50bdc01547b663d80e7df8d076ba2d34b37f7523a4d4684248b1",
+      "geometryHash": "f3f9af9dff03f285c8ef7572aaa09c1ef3d510c5d19fad75ebfc823857588314",
+      "milliseconds": 22913,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 19541,
+          "inspectionMs": 2722,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.209785393794664e-13,
+        "maxSeamTangent": 3.834601618250703e-9,
+        "maxSeamCurvature": 0.00009280678265927062,
+        "peakTurnDegrees": 21.018770562156902,
+        "minStep": 0.18269690478936862,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3504
+        ],
+        "minorHoles": 3,
+        "connectedComponents": 1,
+        "materialArea": 728432,
+        "mirroredIoU": 0.6739098463122288,
+        "projectedCrossings": 77339,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.5593616452244414
+      },
+      "openings": [
+        {
+          "area": 3504,
+          "bounds": [
+            436,
+            1112,
+            556,
+            1164
+          ],
+          "widthRatio": 0.13839285714285715,
+          "heightRatio": 0.0457516339869281
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    },
+    {
+      "id": "case-031",
+      "family": "curl",
+      "recipeHash": "eceec64100e1d07bd6193d39258c0a9a4e78a6b595e13e9f452ffa6fb77a6fed",
+      "geometryHash": "34669832eae80da025fb3de5f7b099758380b3b612ef0bbec32e1980a17e0fce",
+      "milliseconds": 12499,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 9712,
+          "inspectionMs": 2389,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 4.798268316321875e-13,
+        "maxSeamTangent": 3.0212691549237004e-9,
+        "maxSeamCurvature": 0.00006355287432313019,
+        "peakTurnDegrees": 23.214845766755822,
+        "minStep": 0.2638381376461866,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          5184,
+          1536
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 565536,
+        "mirroredIoU": 0.7916666666666666,
+        "projectedCrossings": 76326,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.184928372648424
+      },
+      "openings": [
+        {
+          "area": 5184,
+          "bounds": [
+            448,
+            532,
+            536,
+            612
+          ],
+          "widthRatio": 0.10267857142857142,
+          "heightRatio": 0.08203125
+        },
+        {
+          "area": 1536,
+          "bounds": [
+            372,
+            840,
+            428,
+            896
+          ],
+          "widthRatio": 0.06696428571428571,
+          "heightRatio": 0.05859375
+        }
+      ],
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      }
+    }
+  ],
+  "colorCaptureCompatibility": {
+    "rendererHash": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "proof": "Seven accepted monochrome full PNGs reproduced exactly; capture changes no shading or geometry."
+  }
+}

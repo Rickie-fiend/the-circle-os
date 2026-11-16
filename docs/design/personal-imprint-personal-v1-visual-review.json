@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-16",
+  "status": "review-with-limitations",
+  "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+  "samples": [
+    { "id": "mira", "recipeHash": "a8d7322c8912be748fb12e135263f7e980fc7913934fe20d5efa5bed4f0a214b", "geometryHash": "e2a337941379a6f07249c04adc5c8cc0f9aa9b78e64411a3e0235bf5ab252bf6", "renderHash": "5ab6ebe1454a6b60bcbd5699d8f943e19ed42eafdb9e227dd0dab52cb9894a5a" },
+    { "id": "arun", "recipeHash": "4b7b00354a0691cd3c6f5b735fc901912b278b55dbc75cce0f029edf265cf915", "geometryHash": "fc09ba8ab2395d5a8184113b7df7aa948c79304f8055d5d344d7d48b5ee84360", "renderHash": "9bc3784c9474da5d0d2ecba1eac5797e6b567e2d17f28a3ed46bf9017e2f4f4e" },
+    { "id": "lin", "recipeHash": "50d4f184be3cc06588c407ac71f8a713ffea19eca6bf81c96a00b352c2a00c1c", "geometryHash": "96e048837495ff24cc9501a1a1ee8d95caf8dd8419d1732e311d7c2cf5b42a30", "renderHash": "68f20972ebd6f2492b3dbe5a86cc59a66b88b75d7fd316e37ccd751fed5e272c" }
+  ],
+  "inspected": ["all three 390px exports", "four-form desktop comparison", "390px stacked browser comparison", "Arun full image", "Mira shoulder detail", "Lin lower return"],
+  "observations": [
+    "The three samples retain the working master's fold/opening layout and individual routes. Mira is broader, Arun taller and Lin shorter with a different lean; differences are restrained and visible in comparison.",
+    "The uncertain sample retains the complete construction. No answer count, text length, effort or worth controls material quantity.",
+    "No new detached strip, closed opening or cut-through strand is observed. Original cut-looking entries and weaker layered volume remain limitations of the accepted working baseline.",
+    "Geometry inspection establishes actual support and buried endpoints. It does not certify reference-level continuity or arbitrary future personal shapes.",
+    "Phone/browser comparison is readable with scroll. This is an isolated review gallery, not the production Home layout."
+  ],
+  "developerBaselineDecision": "Proceed with the current artwork as a working baseline, retaining its known visual limitations.",
+  "developerVariantAcceptance": "pending",
+  "scope": "Bounded fixed-topology visual fingerprints from synthetic answers. No per-answer folds, semantic life interpretation, real persistence, Orange or product integration."
+}

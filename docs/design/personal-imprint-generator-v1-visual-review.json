@@ -1,0 +1,70 @@
+{
+  "status": "review-with-limitations",
+  "date": "2026-11-16",
+  "developerAcceptance": "pending",
+  "samples": [
+    {
+      "id": "mira",
+      "recipeHash": "9c794f9ea865163f84544d11bc74540e1b0e933b9770ec6d8be89e9da022dae9",
+      "geometryHash": "57c2aeaf76d0f80bf263acf1f8d745140d63b5473eee5a4d9cd57dbe6f92db82",
+      "renderHash": "05163a129e02e7bfb9d4498df225363f80736ca246e3e0efb3e1d4d6d9b3cf11"
+    },
+    {
+      "id": "arun",
+      "recipeHash": "004cf3781a558b85feba891ff920aa4fca900608abb84605ee2eb11c5e9a109c",
+      "geometryHash": "269b2092099bfb259f875a6a25a980c5490b8fde9ca096d2e918febe889be2fd",
+      "renderHash": "4db85eb1598881331c588047ec637f891c8fa0b2d8578e4ce2c45913a2f090a3"
+    },
+    {
+      "id": "lin",
+      "recipeHash": "15ad93ea72d5684eed26c69ee0351880cb9e25e8f88e69ba6eee90a8032f1bcd",
+      "geometryHash": "172c01339be8a0ece761efd3d58d39b84aeb6fe5c7d8e374b3298d3b3b269b83",
+      "renderHash": "9ccbee220c0951a52bec3c65b0dc7345cba0344df1cb8e392afaedc40d92a4c9"
+    },
+    {
+      "id": "noor",
+      "recipeHash": "40861fbdc25609a40d97f73908745e673453c65aaf5f22679858b685eff00979",
+      "geometryHash": "0cc870b2175d85fe247e6e24f0a41a769e5eccf68f27fcb6abf3988c25cc540e",
+      "renderHash": "027df2e25e3b33a40cd5dc5d31ad53ccd2aa218b9a096b4af5f01c9e04c11a61"
+    },
+    {
+      "id": "tala",
+      "recipeHash": "52ff6e97dee23fba103a47069b7e86e9bdae25e7144d772616025ff2fb9fd2d4",
+      "geometryHash": "b53f85ae82ac6f945c743402438ca644aae77405453e8ab396c51b12a15acaa6",
+      "renderHash": "adaf28039783dfbc922f74b34a2c70ed66776282a32e80f69eb0f9eb0da4fc9d"
+    },
+    {
+      "id": "sori",
+      "recipeHash": "624f2aea7e0fac9793066d7ad3992edae534d53e4b2ec6f7715fe6b55bc887f7",
+      "geometryHash": "151b4421c9075a574a067efdf2234e18ced197d0ca40cf4137f740624e63087a",
+      "renderHash": "bc7585249641a2d65b339743d8c5ac07ff92e33337a6db2784b932fcbd591231"
+    }
+  ],
+  "gates": {
+    "sourcesCurrent": true,
+    "approvedSoriPreserved": true,
+    "sixExamples": true,
+    "threeFamilies": true,
+    "distinctGeometry": true,
+    "renderRepeated": true,
+    "population": true,
+    "onlyFibres": true
+  },
+  "observed": [
+    "All six phone images and the desktop/mobile gallery screenshots were inspected.",
+    "The three families have recognizably different arrangements. Members of one family remain related; seeded handedness improves their visual separation.",
+    "Some inner folds remain dark, sparse or wire-like. Reference-level volume across all forms is not claimed.",
+    "Internal phone review did not identify more than ten broad overlapping bundles in a form. The exact visible-region interpretation remains developer review; projected strand crossings do not count broad overlaps."
+  ],
+  "limits": [
+    "Thirty additional cases have geometry checks, not full material renders or manual visual acceptance.",
+    "Only the first full material render was repeated byte-for-byte; all six geometries and 66 rendered/data assets were independently checked.",
+    "Finite proper projected crossing and guide-mask checks are not complete physical collision or visible-opening proofs.",
+    "There is no production Home integration, account recipe persistence, phone execution or live recoloring in this slice."
+  ],
+  "screenshots": [
+    "outputs/imprint/generator-full-comparison.png",
+    "outputs/imprint/generator-preview-390.png"
+  ],
+  "next": "Developer compares all six at phone size, including form separation, volume, opening appearance and the broad-overlap limit."
+}

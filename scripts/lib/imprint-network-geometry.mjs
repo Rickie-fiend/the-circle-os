@@ -1,0 +1,24 @@
+// Shared, count-independent material geometry for the isolated artwork study.
+export function sampleCubicPath(path, steps=96) {
+  const tokens=path.match(/[MCZ]|-?\d+(?:\.\d+)?/g),out=[];let i=0,a;
+  while(i<tokens.length){const cmd=tokens[i++];if(cmd==="M"){a=[+tokens[i++],+tokens[i++]];out.push(a);}else if(cmd==="C"){const b=[+tokens[i++],+tokens[i++]],c=[+tokens[i++],+tokens[i++]],d=[+tokens[i++],+tokens[i++]];for(let j=1;j<=steps;j++){const t=j/steps,s=1-t;out.push([s*s*s*a[0]+3*s*s*t*b[0]+3*s*t*t*c[0]+t*t*t*d[0],s*s*s*a[1]+3*s*s*t*b[1]+3*s*t*t*c[1]+t*t*t*d[1]]);}a=d;}else if(cmd==="Z")out.push(out[0]);else throw Error(`Unsupported command ${cmd}`);}return out;
+}
+export function inside([x,y],polygon){let result=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){const[a,b]=polygon[i],[c,d]=polygon[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)result=!result;}return result;}
+export function materialDomain(map){const boundaries=[sampleCubicPath(map.silhouette.path),...map.voids.filter(v=>v.kind==="enclosed opening").map(v=>sampleCubicPath(v.path))];const contains=p=>inside(p,boundaries[0])&&!boundaries.slice(1).some(b=>inside(p,b));return {boundaries,contains};}
+export function scanlineIntervals(boundaries,y){const intersections=[];for(const polygon of boundaries)for(let i=1;i<polygon.length;i++){const a=polygon[i-1],b=polygon[i];if((a[1]>y)!==(b[1]>y))intersections.push(a[0]+(y-a[1])*(b[0]-a[0])/(b[1]-a[1]));}intersections.sort((a,b)=>a-b);const result=[];for(let i=0;i<intersections.length;i+=2)result.push([intersections[i],intersections[i+1]]);return result;}
+// All boundary vertices are scanline events. Between events, straight boundary
+// edges produce exact trapezoids, including both sides of the shoulder opening.
+export function buildMaterialMesh(domain,heightAt,step=4){
+  const events=[...new Set(domain.boundaries.flatMap(p=>p.map(v=>v[1])))].sort((a,b)=>a-b),vertices=[],triangles=[],cache=new Map();
+  const vertex=(x,y)=>{const key=`${x.toFixed(6)},${y.toFixed(6)}`;if(cache.has(key))return cache.get(key);const index=vertices.length;vertices.push([x,y,heightAt(x,y)]);cache.set(key,index);return index;};
+  for(let e=1;e<events.length;e++){const y0=events[e-1],y1=events[e];if(y1-y0<1e-6)continue;const mid=(y0+y1)/2,intervals=scanlineIntervals(domain.boundaries,mid),eps=Math.min(1e-7,(y1-y0)*1e-5),top=scanlineIntervals(domain.boundaries,y0+eps),bottom=scanlineIntervals(domain.boundaries,y1-eps);if(top.length!==intervals.length||bottom.length!==intervals.length)throw Error("Unresolved material topology event");
+    for(let k=0;k<intervals.length;k++){const count=Math.max(1,Math.ceil(Math.max(top[k][1]-top[k][0],bottom[k][1]-bottom[k][0])/step));for(let j=0;j<count;j++){const a=j/count,b=(j+1)/count,lerp=(v,t)=>v[0]+(v[1]-v[0])*t;const p=vertex(lerp(top[k],a),y0),q=vertex(lerp(top[k],b),y0),r=vertex(lerp(bottom[k],b),y1),s=vertex(lerp(bottom[k],a),y1);triangles.push([p,q,r],[p,r,s]);}}
+  }return {id:"material-surface",vertices,triangles};
+}
+export function rasterDepth(mesh,width,height,scale=1){const depth=new Float32Array(width*height).fill(-Infinity);for(const tri of mesh.triangles){const[a,b,c]=tri.map(i=>mesh.vertices[i].map((v,k)=>k<2?v*scale:v)),area=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);if(Math.abs(area)<1e-10)continue;for(let y=Math.max(0,Math.floor(Math.min(a[1],b[1],c[1])));y<=Math.min(height-1,Math.ceil(Math.max(a[1],b[1],c[1])));y++)for(let x=Math.max(0,Math.floor(Math.min(a[0],b[0],c[0])));x<=Math.min(width-1,Math.ceil(Math.max(a[0],b[0],c[0])));x++){const p=x+.5,q=y+.5,u=((p-a[0])*(c[1]-a[1])-(q-a[1])*(c[0]-a[0]))/area,v=((b[0]-a[0])*(q-a[1])-(b[1]-a[1])*(p-a[0]))/area;if(u>=0&&v>=0&&u+v<=1)depth[y*width+x]=Math.max(depth[y*width+x],(1-u-v)*a[2]+u*b[2]+v*c[2]);}}return depth;}
+export function shaInput(value){return JSON.stringify(value);}
+export function createSurfaceQuery(mesh,foldAt){
+ const bins=new Map(),size=8;
+ for(let i=0;i<mesh.triangles.length;i++){const p=mesh.triangles[i].map(v=>mesh.vertices[v]),xs=p.map(v=>v[0]),ys=p.map(v=>v[1]);for(let y=Math.floor(Math.min(...ys)/size);y<=Math.floor(Math.max(...ys)/size);y++)for(let x=Math.floor(Math.min(...xs)/size);x<=Math.floor(Math.max(...xs)/size);x++){const key=y*129+x;if(!bins.has(key))bins.set(key,[]);bins.get(key).push(i);}}
+ return(x,y)=>{let result;for(const i of bins.get(Math.floor(y/size)*129+Math.floor(x/size))||[]){const[a,b,c]=mesh.triangles[i].map(j=>mesh.vertices[j]),area=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);if(Math.abs(area)<1e-12)continue;const u=((x-a[0])*(c[1]-a[1])-(y-a[1])*(c[0]-a[0]))/area,v=((b[0]-a[0])*(y-a[1])-(b[1]-a[1])*(x-a[0]))/area;if(u>=-1e-6&&v>=-1e-6&&u+v<=1.000001){const z=(1-u-v)*a[2]+u*b[2]+v*c[2];if(!result||z>result.z)result={triangle:i,z,fold:foldAt?foldAt((a[0]+b[0]+c[0])/3,(a[1]+b[1]+c[1])/3):undefined};}}return result;};
+}

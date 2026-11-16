@@ -24,7 +24,7 @@ try {
   // Select authentication/recovery behavior. The separate menu typography
   // cases still expect the retired 650 weight and remain unchanged.
   const selection='real client:|edited alias|forged marker|invite link|wrong password|successful password|cross-tab logout|missing or invalid|production';
-  console.log('Running authentication/recovery checks; account-menu typography cases remain separate.');
+  console.log('Running authentication/recovery and production storage-loss checks; account-menu typography cases remain separate.');
   await run(['--test','--test-reporter=tap','--test-name-pattern='+selection,resolve('tests/supabase-auth.browser.mjs')],process.cwd(),{CIRCLE_AUTH_PRODUCTION_ORIGIN:origin});
 } finally {
   if(app&&app.exitCode===null){const closed=new Promise(done=>app.once('exit',done));app.kill();await closed;}

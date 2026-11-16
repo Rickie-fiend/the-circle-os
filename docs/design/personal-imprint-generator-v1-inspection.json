@@ -1,0 +1,2916 @@
+{
+  "version": 1,
+  "status": "ready-for-visual-review",
+  "readyForReview": true,
+  "settings": {
+    "version": 2,
+    "width": 1024,
+    "height": 1536,
+    "supersampling": 3,
+    "resamplingKernel": "linear",
+    "palette": {
+      "background": [
+        25,
+        24,
+        19
+      ],
+      "fibre": [
+        241,
+        239,
+        232
+      ],
+      "support": [
+        64,
+        62,
+        53
+      ]
+    },
+    "fibre": {
+      "width": 1.5,
+      "radialSegments": 12,
+      "ambient": 0.035,
+      "diffuse": 0.9,
+      "specular": 0.05,
+      "roughnessExponent": 22
+    },
+    "surface": {
+      "depthScale": 1,
+      "normalRadius": 12,
+      "ambient": 0.14,
+      "diffuse": 0.09,
+      "visible": false,
+      "occlude": false
+    },
+    "light": {
+      "direction": [
+        -0.58,
+        -0.65,
+        0.7
+      ],
+      "angularRadius": 0.5
+    },
+    "shadow": {
+      "strength": 0.5,
+      "maxDistance": 200,
+      "steps": 32,
+      "bias": 1.2,
+      "fibreContactStrength": 0.22,
+      "fibreContactDistances": [
+        0.75,
+        1.5,
+        3,
+        6
+      ]
+    },
+    "notes": "Monochrome closed-loop sculpture study. Only swept fibres contribute visible pixels and occlude each other. The closed bundle guide estimates lighting and broad shadows; it is neither painted nor an opaque visibility mask. All examples use fictional inputs."
+  },
+  "sourceHashes": {
+    "app/os/home/imprint-relief-recipe.js": "5f57f6e341fc72fac9c4243c85bbea0a0b75ebd390f395c910e69081ea11a702",
+    "app/os/home/imprint-relief-samples.js": "d56d7ef14d2ffe13cc7db5e9738cef499a85c93b83868d7a7a4c92e7ddcf812e",
+    "app/os/home/imprint-relief-courses.js": "2b7b509d2465ef6865396ef62c221226e1eaa8e16ee52ed2eef64c6d3322083b",
+    "app/os/home/imprint-loop-recipe.js": "deca929cb16da0763751e9482fb36d8975f7896e427f62cc04a4c0503895ca55",
+    "app/os/home/imprint-personal-recipe.js": "6b571d32f965ab87499911b5fe6b0c86ffe2c8517a51dafaf73a9021c8d6b308",
+    "scripts/lib/imprint-relief-geometry.mjs": "d2e6628f740b26a6660a595c40b3d1b2ffc1edc38a99649f190f0a7f708d48ac",
+    "scripts/lib/imprint-relief-inspection.mjs": "2e6b8f55f10c5f6e9823d5a32f053ed585012fddbea8af1c7f1b3b458f25c7cb",
+    "scripts/lib/imprint-sori-relief.mjs": "a26653b7baec706c66c508c5edc3ac4a4cd450fd58282b504307c6e95d650ede",
+    "scripts/lib/imprint-sori-geometry.mjs": "abe738690ad1c0b643e98d3fd45c7fd453252e9924fd318ccf7b3cfbc7e098b5",
+    "scripts/lib/imprint-loop-geometry.mjs": "c1152c8a07caa7f2388ab40b9e58e20d7af1c24c8bd227588ff357150c655b0a",
+    "scripts/lib/imprint-loop-crossings.mjs": "e2d660d734cb2d00b78f839f587955ea1714bd6254b04773a37371e6d700e888",
+    "scripts/lib/imprint-loop-inspection.mjs": "5e9b27fc0c0c46e2204cba26da1315f1eaa6ad0d016c8de463685f15cc947245",
+    "scripts/lib/imprint-material-renderer.mjs": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "scripts/lib/imprint-network-geometry.mjs": "1a121315ed2f311681d10c1405cc6d6fe6e17adfccbbececef2a43d294e78b3c",
+    "scripts/lib/imprint-generator-artifacts.mjs": "a2d1ebf84ee56e7c1083511f019ba2cd3cdd26ad72a32ca3ab74bda813ad618f",
+    "scripts/render-imprint-generator.mjs": "32041586fd00aaac5f1c0076041c36036d282059076c2b6b153e54aac95395e3",
+    "docs/design/personal-imprint-loops-v2.json": "0202accb2d0d64bcea3c8b5bd506b3e1cd9e63941e324cfc471c683e31f75598"
+  },
+  "approvedReference": {
+    "geometryHash": "ba49645808d14a9faccfeff2a57760ca4cd6c6bd595f63973cf949788756dfdf",
+    "renderHash": "c33fb2d5b19b053480f33a23ce5afef44a802c2e61ae8f74c7f762de1c7d0081",
+    "sourcesMatch": true,
+    "assetsMatch": true,
+    "outputs": {
+      "390": {
+        "path": "docs/design/personal-imprint-sori-v4-390.png",
+        "hash": "54c3a979439bb5fecc9864ffb7551cc0af3f1e0a6e6f218a3acd3764cfb6f252"
+      },
+      "full": {
+        "path": "docs/design/personal-imprint-sori-v4-full.png",
+        "hash": "c33fb2d5b19b053480f33a23ce5afef44a802c2e61ae8f74c7f762de1c7d0081"
+      },
+      "crown": {
+        "path": "docs/design/personal-imprint-sori-v4-crown.png",
+        "hash": "0c45ed3504e95740dd86b172a9280f47797878adca505a59a6687625aca3b2e7"
+      },
+      "shoulder": {
+        "path": "docs/design/personal-imprint-sori-v4-shoulder.png",
+        "hash": "5c58ee867d2e43ba17953c101a5f562acdc785a4ad90100d4cae28a7f68429da"
+      },
+      "lower": {
+        "path": "docs/design/personal-imprint-sori-v4-lower.png",
+        "hash": "5b705f3368bcb7952b6e5607a1c2b529dfa3828373a00c47680901508ef7f76f"
+      },
+      "shadows": {
+        "path": "docs/design/personal-imprint-sori-v4-shadows.png",
+        "hash": "393749c4b8c0ba2ca9fa46626658dc05e36980a1436ab8c89fd04c2c6f6694c1"
+      },
+      "selected": {
+        "path": "docs/design/personal-imprint-sori-v4-selected-loops.json",
+        "hash": "fdf41077d7d9c6b9ead8a3bddebb00cc23d96f56e72b7f7c9c69ffd1c2799bdb"
+      },
+      "loops": {
+        "path": "docs/design/personal-imprint-sori-v4-loops.svg",
+        "hash": "328629db0c34c1fa28431dae29bfc1dc77ef85526d2f388518ca183c3353986d"
+      },
+      "depth": {
+        "path": "docs/design/personal-imprint-sori-v4-depth.png",
+        "hash": "7bdac1c76667c84041771ed4a16fdfb7aada93ab38b94f3daddaa4d64a41c5bf"
+      },
+      "angled": {
+        "path": "docs/design/personal-imprint-sori-v4-angled-full.png",
+        "hash": "4426c1c1026c05c8df4c1de0033634c35c2830a08f5b4bd4f7ef07363f51da13"
+      },
+      "overlaps": {
+        "path": "docs/design/personal-imprint-sori-v4-overlaps.png",
+        "hash": "725b76de2303ebfe8cbc655711bc3fab0c21eec31b7defe29995b20fca0063d4"
+      }
+    }
+  },
+  "samples": [
+    {
+      "id": "mira",
+      "label": "Mira",
+      "recipe": {
+        "kind": "rounded-loop",
+        "version": 1,
+        "method": "rounded-folded-bundle-v1",
+        "course": {
+          "kind": "closed-loop",
+          "version": 2,
+          "method": "periodic-folded-bundle-v1",
+          "family": "curl",
+          "controls": [
+            [
+              341.322241,
+              254.282407,
+              9.250242,
+              241.45726,
+              0.023085
+            ],
+            [
+              487.244028,
+              130.738835,
+              12.658067,
+              295,
+              0.272542
+            ],
+            [
+              660.476271,
+              303.794307,
+              42.245778,
+              295,
+              -0.209831
+            ],
+            [
+              693.948319,
+              544.124314,
+              129.963734,
+              295,
+              0.390907
+            ],
+            [
+              539.697862,
+              694.491908,
+              316.555237,
+              295,
+              -0.242872
+            ],
+            [
+              305.086699,
+              676.105867,
+              431.061584,
+              295,
+              0.176586
+            ],
+            [
+              204.755841,
+              814.76426,
+              63.145106,
+              295,
+              -0.065301
+            ],
+            [
+              260.029399,
+              988.957756,
+              4.237901,
+              295,
+              0.060231
+            ],
+            [
+              477.846237,
+              1116.134374,
+              16.524246,
+              295,
+              0.069821
+            ],
+            [
+              661.746575,
+              1048.854045,
+              54.091688,
+              295,
+              0.105853
+            ],
+            [
+              768.962421,
+              828.266485,
+              130.73137,
+              295,
+              0.124921
+            ],
+            [
+              724.460629,
+              710.947099,
+              373.882096,
+              295,
+              0.612806
+            ],
+            [
+              525.855125,
+              819.810297,
+              466.904725,
+              295,
+              -0.416141
+            ],
+            [
+              472.494301,
+              1076.330558,
+              266.924557,
+              239.162018,
+              0.371169
+            ],
+            [
+              357.420179,
+              1147.51007,
+              33.198307,
+              218.663074,
+              0.205597
+            ],
+            [
+              277.090912,
+              993.815037,
+              47.685029,
+              248.061758,
+              0.184169
+            ],
+            [
+              310.918556,
+              692.744612,
+              160.67644,
+              295,
+              0.194487
+            ],
+            [
+              457.942313,
+              420.116433,
+              329.172626,
+              295,
+              -0.225424
+            ],
+            [
+              493.106188,
+              210.37889,
+              113.516048,
+              225.387132,
+              0.284104
+            ]
+          ],
+          "filamentCount": 128,
+          "thickness": 50,
+          "phase": 0.046269942516461014,
+          "grain": 4.811371040207643
+        },
+        "relief": {
+          "method": "periodic-rounded-section-v1",
+          "amplitude": 0.8
+        },
+        "deformation": {
+          "width": 1.14528247,
+          "height": 0.81446754,
+          "lean": 0.10715744,
+          "bend": -9.46656162,
+          "phase": 4.37651444,
+          "depth": 1.78439078,
+          "mirror": -1
+        }
+      },
+      "recipeHash": "9c794f9ea865163f84544d11bc74540e1b0e933b9770ec6d8be89e9da022dae9",
+      "geometryHash": "57c2aeaf76d0f80bf263acf1f8d745140d63b5473eee5a4d9cd57dbe6f92db82",
+      "steps": 3072,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 12554,
+          "inspectionMs": 3962,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.30961349689659e-13,
+        "maxSeamTangent": 3.1776437161565097e-9,
+        "maxSeamCurvature": 0.00006893363174230278,
+        "peakTurnDegrees": 24.73624729567987,
+        "minStep": 0.24606001129112412,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          4480,
+          1328
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 492080,
+        "mirroredIoU": 0.8164904612840352,
+        "projectedCrossings": 76327,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.3304641964798725
+      },
+      "openings": [
+        {
+          "area": 4480,
+          "bounds": [
+            472,
+            564,
+            560,
+            632
+          ],
+          "widthRatio": 0.10267857142857142,
+          "heightRatio": 0.08108108108108109
+        },
+        {
+          "area": 1328,
+          "bounds": [
+            592,
+            832,
+            652,
+            876
+          ],
+          "widthRatio": 0.07142857142857142,
+          "heightRatio": 0.05405405405405406
+        }
+      ],
+      "maxSampleError": 5.30961349689659e-13,
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      },
+      "status": "verified",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-390.png",
+          "hash": "10986a2227d4f0ade36e2ba366c32418367d275883d14311d24bfb00f3b7fc4e"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-full.png",
+          "hash": "05163a129e02e7bfb9d4498df225363f80736ca246e3e0efb3e1d4d6d9b3cf11"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-crown.png",
+          "hash": "47a81d2d88c3803938de0d5a1af3b18a4eba4c01c11eb0ce11cf1b6eda64e658"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-shoulder.png",
+          "hash": "43953fd25f0876289b67d6a1858ebd6d9511bf81b029339dff65a559210fd418"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-lower.png",
+          "hash": "8abcd84cab2e55386a3cb2641da3c4edec3dcbda73b796c3f3571656d05a6fad"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-shadows.png",
+          "hash": "d7e5a5bd7de481023c40f19fe8404340d3d0231369eb5a98f0c2e5f31623b5f7"
+        },
+        "selected": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-selected-loops.json",
+          "hash": "b4467cc82c4373b4aee72088b7ae4cac7e0ba7b6e30ed8ca4419aa80990ca512"
+        },
+        "loops": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-loops.svg",
+          "hash": "7833074fd176cafaec60530612d4ea90a586cb56c835a432e80604a9440ce2ea"
+        },
+        "silhouette": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-silhouette.png",
+          "hash": "c47300970ddbf756a57d0f4e11334f69acddb99653c7e04780b5c075ce6fede2"
+        },
+        "depth": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-depth.png",
+          "hash": "b62e156e752467e6be7ad9e039de0f28372fa49e7c899199d1ad8ad0cabae81f"
+        },
+        "recipe": {
+          "path": "docs/design/personal-imprint-generator-v1-mira-recipe.json",
+          "hash": "fb5529f13a52af990be783534194960d8e5a7d6a906be57375d18c18cd2223a9"
+        }
+      },
+      "renderHash": "05163a129e02e7bfb9d4498df225363f80736ca246e3e0efb3e1d4d6d9b3cf11",
+      "strands": {
+        "count": 128,
+        "represented": 128,
+        "visibleSegments": 393216,
+        "hiddenSegments": 0
+      },
+      "material": {
+        "materialPixels": 492311,
+        "shadowedPixels": 319575,
+        "contactShadowSamples": 1591637,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 3188414,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 1.87817549692486e-17,
+        "maxShade": 0.9301971793174744,
+        "supersampling": 3
+      },
+      "renderMs": 21227,
+      "renderRepeat": {
+        "milliseconds": 19500,
+        "hash": "05163a129e02e7bfb9d4498df225363f80736ca246e3e0efb3e1d4d6d9b3cf11",
+        "matches": true
+      },
+      "independent": {
+        "inspection": {
+          "strands": 128,
+          "ends": 0,
+          "closureFailures": 0,
+          "maxSeamPosition": 5.30961349689659e-13,
+          "maxSeamTangent": 3.1776437161565097e-9,
+          "maxSeamCurvature": 0.00006893363174230278,
+          "peakTurnDegrees": 24.73624729567987,
+          "minStep": 0.24606001129112412,
+          "nonfinite": 0,
+          "outside": 0,
+          "majorHoles": 2,
+          "holeAreasSourcePixels": [
+            4480,
+            1328
+          ],
+          "minorHoles": 1,
+          "connectedComponents": 1,
+          "materialArea": 492080,
+          "mirroredIoU": 0.8164904612840352,
+          "projectedCrossings": 76327,
+          "nearCrossings": 0,
+          "minCrossingDepth": 2.3304641964798725
+        },
+        "openings": [
+          {
+            "area": 4480,
+            "bounds": [
+              472,
+              564,
+              560,
+              632
+            ],
+            "widthRatio": 0.10267857142857142,
+            "heightRatio": 0.08108108108108109
+          },
+          {
+            "area": 1328,
+            "bounds": [
+              592,
+              832,
+              652,
+              876
+            ],
+            "widthRatio": 0.07142857142857142,
+            "heightRatio": 0.05405405405405406
+          }
+        ],
+        "maxSampleError": 5.30961349689659e-13,
+        "behaviour": {
+          "repeated": true,
+          "reordered": true,
+          "retained": true,
+          "feelingExcluded": true
+        },
+        "assets": [
+          {
+            "name": "390",
+            "matches": true
+          },
+          {
+            "name": "full",
+            "matches": true
+          },
+          {
+            "name": "crown",
+            "matches": true
+          },
+          {
+            "name": "shoulder",
+            "matches": true
+          },
+          {
+            "name": "lower",
+            "matches": true
+          },
+          {
+            "name": "shadows",
+            "matches": true
+          },
+          {
+            "name": "selected",
+            "matches": true
+          },
+          {
+            "name": "loops",
+            "matches": true
+          },
+          {
+            "name": "silhouette",
+            "matches": true
+          },
+          {
+            "name": "depth",
+            "matches": true
+          },
+          {
+            "name": "recipe",
+            "matches": true
+          }
+        ],
+        "pixels": {
+          "clipped": 0,
+          "nonopaque": 0,
+          "outside": 0,
+          "phoneMatches": true
+        },
+        "gates": {
+          "closed": true,
+          "tangentContinuous": true,
+          "curvatureContinuous": true,
+          "finite": true,
+          "insideFrame": true,
+          "smoothTurns": true,
+          "connected": true,
+          "openingLimit": true,
+          "asymmetric": true,
+          "depthSeparation": true,
+          "smallOpenings": true,
+          "actualSamples": true,
+          "recipeReproduced": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "assetsCurrent": true,
+          "selectedMatch": true,
+          "dimensions": true,
+          "opaque": true,
+          "unclipped": true,
+          "preservedVoids": true,
+          "phoneMatches": true,
+          "allStrands": true,
+          "finiteShading": true
+        }
+      }
+    },
+    {
+      "id": "arun",
+      "label": "Arun",
+      "recipe": {
+        "kind": "rounded-loop",
+        "version": 1,
+        "method": "rounded-folded-bundle-v1",
+        "course": {
+          "kind": "closed-loop",
+          "version": 2,
+          "method": "periodic-folded-bundle-v1",
+          "family": "sweep",
+          "controls": [
+            [
+              664.773152,
+              208.938878,
+              67.050154,
+              278.784244,
+              -0.001222
+            ],
+            [
+              826.057905,
+              245.799889,
+              27.007043,
+              295,
+              0.086467
+            ],
+            [
+              802.465825,
+              458.282291,
+              107.781453,
+              263.925824,
+              0.041915
+            ],
+            [
+              654.898819,
+              542.805526,
+              193.125512,
+              269.28305,
+              -0.421702
+            ],
+            [
+              527.833399,
+              675.156269,
+              349.321856,
+              295,
+              0.359864
+            ],
+            [
+              430.032413,
+              852.586695,
+              426.81451,
+              251.3816,
+              0.482043
+            ],
+            [
+              639.818399,
+              1088.552325,
+              276.792571,
+              295,
+              0.227409
+            ],
+            [
+              693.356358,
+              1102.591119,
+              108.604315,
+              268.662948,
+              0.306536
+            ],
+            [
+              747.604241,
+              1271.445667,
+              21.672141,
+              295,
+              0.200539
+            ],
+            [
+              540.58787,
+              1366.542043,
+              54.996574,
+              295,
+              0.100379
+            ],
+            [
+              346.637823,
+              1301.26953,
+              129.672325,
+              295,
+              -0.084451
+            ],
+            [
+              286.922712,
+              1083.122498,
+              243.205094,
+              293.488108,
+              0.21326
+            ],
+            [
+              415.773009,
+              933.204487,
+              560.546474,
+              295,
+              0.660703
+            ],
+            [
+              568.055073,
+              752.751226,
+              468.912448,
+              295,
+              0.514902
+            ],
+            [
+              540.823646,
+              583.184314,
+              343.55191,
+              295,
+              0.344524
+            ],
+            [
+              345.770626,
+              458.432274,
+              205.751606,
+              295,
+              -0.292213
+            ],
+            [
+              200.895459,
+              537.480125,
+              19.345182,
+              218.466226,
+              0.196813
+            ],
+            [
+              188.883146,
+              735.958402,
+              53.513592,
+              295,
+              0.176084
+            ],
+            [
+              311.573472,
+              830.209215,
+              106.381088,
+              295,
+              0.511171
+            ],
+            [
+              448.527,
+              709.683373,
+              188.291216,
+              295,
+              -0.179704
+            ],
+            [
+              494.421305,
+              526.588001,
+              369.558042,
+              295,
+              -0.304137
+            ],
+            [
+              602.886912,
+              375.787595,
+              152.483394,
+              283.340884,
+              0.468566
+            ],
+            [
+              587.935342,
+              254.158079,
+              50.98768,
+              194.620272,
+              0.544103
+            ]
+          ],
+          "filamentCount": 128,
+          "thickness": 50,
+          "phase": 0.04309952466469258,
+          "grain": 3.4786569695114955
+        },
+        "relief": {
+          "method": "periodic-rounded-section-v1",
+          "amplitude": 0.8
+        },
+        "deformation": {
+          "width": 1.05317665,
+          "height": 0.89823292,
+          "lean": 0.05604834,
+          "bend": 5.39656028,
+          "phase": 6.241,
+          "depth": 1.81116452,
+          "mirror": -1
+        }
+      },
+      "recipeHash": "004cf3781a558b85feba891ff920aa4fca900608abb84605ee2eb11c5e9a109c",
+      "geometryHash": "269b2092099bfb259f875a6a25a980c5490b8fde9ca096d2e918febe889be2fd",
+      "steps": 3072,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 11042,
+          "inspectionMs": 2725,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.907341372570309e-13,
+        "maxSeamTangent": 3.243687902600336e-9,
+        "maxSeamCurvature": 0.00008228808733002538,
+        "peakTurnDegrees": 23.606054146778593,
+        "minStep": 0.21957418354029293,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3840
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 806544,
+        "mirroredIoU": 0.7275780527091401,
+        "projectedCrossings": 77338,
+        "nearCrossings": 0,
+        "minCrossingDepth": 3.1447025349022124
+      },
+      "openings": [
+        {
+          "area": 3840,
+          "bounds": [
+            380,
+            1116,
+            516,
+            1168
+          ],
+          "widthRatio": 0.15625,
+          "heightRatio": 0.04516129032258064
+        }
+      ],
+      "maxSampleError": 5.907341372570309e-13,
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      },
+      "status": "verified",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-390.png",
+          "hash": "86bfad368b69868a558837d286cff84da55afe7e239b5e0c52e5e088bd90e89f"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-full.png",
+          "hash": "4db85eb1598881331c588047ec637f891c8fa0b2d8578e4ce2c45913a2f090a3"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-crown.png",
+          "hash": "63faa8259e1f22bcf2486734c866adcec745bff0f07c57cc12a711fa4b0ebcb9"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-shoulder.png",
+          "hash": "14856d3c79fe8d7c1a3f599d4099458150d08ac57ecc4e7a63008f94c096609c"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-lower.png",
+          "hash": "7720016983ee26180c3db143b1e9a8716886f8e529ede56c731691915ca4e718"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-shadows.png",
+          "hash": "5ce3303f818952ae4aea0f1e8692bd4789d27f8979f80cbc098d5a9679725eec"
+        },
+        "selected": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-selected-loops.json",
+          "hash": "42e0ed6d43c7be9769479c3a4a063af73ee31ff5a8ebe5b83b65414bb3f119e1"
+        },
+        "loops": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-loops.svg",
+          "hash": "18afcc45cd845db5f89745b5fcf87b44ba5d5ef74e8a252fabdc08a1fead5feb"
+        },
+        "silhouette": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-silhouette.png",
+          "hash": "232865fb9a2ec59dbc241e8d578d21e83d24c12dd53bd70bebde62753b7e15c3"
+        },
+        "depth": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-depth.png",
+          "hash": "25556c14a1056c14cfc3b28939184711e25fbe3abc12124c364c26aeb48e068a"
+        },
+        "recipe": {
+          "path": "docs/design/personal-imprint-generator-v1-arun-recipe.json",
+          "hash": "0e16d3ecc7806589bc57be103d83490f7a5bc29adf3b8679f423eff60e451332"
+        }
+      },
+      "renderHash": "4db85eb1598881331c588047ec637f891c8fa0b2d8578e4ce2c45913a2f090a3",
+      "strands": {
+        "count": 128,
+        "represented": 128,
+        "visibleSegments": 393216,
+        "hiddenSegments": 0
+      },
+      "material": {
+        "materialPixels": 806558,
+        "shadowedPixels": 611707,
+        "contactShadowSamples": 2041583,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 4427898,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 3.1296190411504e-22,
+        "maxShade": 0.9291322827339172,
+        "supersampling": 3
+      },
+      "renderMs": 30722,
+      "independent": {
+        "inspection": {
+          "strands": 128,
+          "ends": 0,
+          "closureFailures": 0,
+          "maxSeamPosition": 5.907341372570309e-13,
+          "maxSeamTangent": 3.243687902600336e-9,
+          "maxSeamCurvature": 0.00008228808733002538,
+          "peakTurnDegrees": 23.606054146778593,
+          "minStep": 0.21957418354029293,
+          "nonfinite": 0,
+          "outside": 0,
+          "majorHoles": 1,
+          "holeAreasSourcePixels": [
+            3840
+          ],
+          "minorHoles": 4,
+          "connectedComponents": 1,
+          "materialArea": 806544,
+          "mirroredIoU": 0.7275780527091401,
+          "projectedCrossings": 77338,
+          "nearCrossings": 0,
+          "minCrossingDepth": 3.1447025349022124
+        },
+        "openings": [
+          {
+            "area": 3840,
+            "bounds": [
+              380,
+              1116,
+              516,
+              1168
+            ],
+            "widthRatio": 0.15625,
+            "heightRatio": 0.04516129032258064
+          }
+        ],
+        "maxSampleError": 5.907341372570309e-13,
+        "behaviour": {
+          "repeated": true,
+          "reordered": true,
+          "retained": true,
+          "feelingExcluded": true
+        },
+        "assets": [
+          {
+            "name": "390",
+            "matches": true
+          },
+          {
+            "name": "full",
+            "matches": true
+          },
+          {
+            "name": "crown",
+            "matches": true
+          },
+          {
+            "name": "shoulder",
+            "matches": true
+          },
+          {
+            "name": "lower",
+            "matches": true
+          },
+          {
+            "name": "shadows",
+            "matches": true
+          },
+          {
+            "name": "selected",
+            "matches": true
+          },
+          {
+            "name": "loops",
+            "matches": true
+          },
+          {
+            "name": "silhouette",
+            "matches": true
+          },
+          {
+            "name": "depth",
+            "matches": true
+          },
+          {
+            "name": "recipe",
+            "matches": true
+          }
+        ],
+        "pixels": {
+          "clipped": 0,
+          "nonopaque": 0,
+          "outside": 0,
+          "phoneMatches": true
+        },
+        "gates": {
+          "closed": true,
+          "tangentContinuous": true,
+          "curvatureContinuous": true,
+          "finite": true,
+          "insideFrame": true,
+          "smoothTurns": true,
+          "connected": true,
+          "openingLimit": true,
+          "asymmetric": true,
+          "depthSeparation": true,
+          "smallOpenings": true,
+          "actualSamples": true,
+          "recipeReproduced": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "assetsCurrent": true,
+          "selectedMatch": true,
+          "dimensions": true,
+          "opaque": true,
+          "unclipped": true,
+          "preservedVoids": true,
+          "phoneMatches": true,
+          "allStrands": true,
+          "finiteShading": true
+        }
+      }
+    },
+    {
+      "id": "lin",
+      "label": "Lin",
+      "recipe": {
+        "kind": "rounded-loop",
+        "version": 1,
+        "method": "rounded-folded-bundle-v1",
+        "course": {
+          "kind": "closed-loop",
+          "version": 2,
+          "method": "periodic-folded-bundle-v1",
+          "family": "curl",
+          "controls": [
+            [
+              341.322241,
+              254.282407,
+              9.250242,
+              241.45726,
+              0.023085
+            ],
+            [
+              487.244028,
+              130.738835,
+              12.658067,
+              295,
+              0.272542
+            ],
+            [
+              660.476271,
+              303.794307,
+              42.245778,
+              295,
+              -0.209831
+            ],
+            [
+              693.948319,
+              544.124314,
+              129.963734,
+              295,
+              0.390907
+            ],
+            [
+              539.697862,
+              694.491908,
+              316.555237,
+              295,
+              -0.242872
+            ],
+            [
+              305.086699,
+              676.105867,
+              431.061584,
+              295,
+              0.176586
+            ],
+            [
+              204.755841,
+              814.76426,
+              63.145106,
+              295,
+              -0.065301
+            ],
+            [
+              260.029399,
+              988.957756,
+              4.237901,
+              295,
+              0.060231
+            ],
+            [
+              477.846237,
+              1116.134374,
+              16.524246,
+              295,
+              0.069821
+            ],
+            [
+              661.746575,
+              1048.854045,
+              54.091688,
+              295,
+              0.105853
+            ],
+            [
+              768.962421,
+              828.266485,
+              130.73137,
+              295,
+              0.124921
+            ],
+            [
+              724.460629,
+              710.947099,
+              373.882096,
+              295,
+              0.612806
+            ],
+            [
+              525.855125,
+              819.810297,
+              466.904725,
+              295,
+              -0.416141
+            ],
+            [
+              472.494301,
+              1076.330558,
+              266.924557,
+              239.162018,
+              0.371169
+            ],
+            [
+              357.420179,
+              1147.51007,
+              33.198307,
+              218.663074,
+              0.205597
+            ],
+            [
+              277.090912,
+              993.815037,
+              47.685029,
+              248.061758,
+              0.184169
+            ],
+            [
+              310.918556,
+              692.744612,
+              160.67644,
+              295,
+              0.194487
+            ],
+            [
+              457.942313,
+              420.116433,
+              329.172626,
+              295,
+              -0.225424
+            ],
+            [
+              493.106188,
+              210.37889,
+              113.516048,
+              225.387132,
+              0.284104
+            ]
+          ],
+          "filamentCount": 128,
+          "thickness": 50,
+          "phase": 0.046269942516461014,
+          "grain": 4.811371040207643
+        },
+        "relief": {
+          "method": "periodic-rounded-section-v1",
+          "amplitude": 0.8
+        },
+        "deformation": {
+          "width": 1.0464765,
+          "height": 0.9129929,
+          "lean": -0.11050686,
+          "bend": -35.70516713,
+          "phase": 1.29435013,
+          "depth": 1.72573028,
+          "mirror": 1
+        }
+      },
+      "recipeHash": "15ad93ea72d5684eed26c69ee0351880cb9e25e8f88e69ba6eee90a8032f1bcd",
+      "geometryHash": "172c01339be8a0ece761efd3d58d39b84aeb6fe5c7d8e374b3298d3b3b269b83",
+      "steps": 3072,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 11656,
+          "inspectionMs": 2303,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.186961971048731e-13,
+        "maxSeamTangent": 3.064408624147721e-9,
+        "maxSeamCurvature": 0.00007989736330313574,
+        "peakTurnDegrees": 26.960826376029885,
+        "minStep": 0.306364823790429,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 2,
+        "holeAreasSourcePixels": [
+          5760,
+          1680
+        ],
+        "minorHoles": 1,
+        "connectedComponents": 1,
+        "materialArea": 629728,
+        "mirroredIoU": 0.6219401631912964,
+        "projectedCrossings": 76327,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.5190205122328053
+      },
+      "openings": [
+        {
+          "area": 5760,
+          "bounds": [
+            560,
+            512,
+            664,
+            596
+          ],
+          "widthRatio": 0.12053571428571429,
+          "heightRatio": 0.07913669064748201
+        },
+        {
+          "area": 1680,
+          "bounds": [
+            360,
+            848,
+            420,
+            908
+          ],
+          "widthRatio": 0.07142857142857142,
+          "heightRatio": 0.05755395683453238
+        }
+      ],
+      "maxSampleError": 5.186961971048731e-13,
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      },
+      "status": "verified",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-390.png",
+          "hash": "dd99b8854f127f059321b351878a6988c69756d53747f34f3bfaa7c6fac01502"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-full.png",
+          "hash": "9ccbee220c0951a52bec3c65b0dc7345cba0344df1cb8e392afaedc40d92a4c9"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-crown.png",
+          "hash": "5f4be3e4e8e31bf333be7b6f3bc29b4001e1e2e4e2e6cbd9be58ff1517bd0217"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-shoulder.png",
+          "hash": "765a7d0b92f721d833832fcc3b5b9587eb7fe856bee559f9b53f0e7acaaa65c3"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-lower.png",
+          "hash": "5a7b563da1d0ea50429001d6dfefcae596feb9c7112d6befcf6b1c8d88f68650"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-shadows.png",
+          "hash": "8246689a00e6141d797484753a60b61848b07a9985cd8825b077be9c26da1ccd"
+        },
+        "selected": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-selected-loops.json",
+          "hash": "6a685db53545df4a16612317ef125f6fc52f6c4e823c7bf7fc431422133a8c2f"
+        },
+        "loops": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-loops.svg",
+          "hash": "2dd4d95076b9deeccdff551d435da7189f7e5b18c6c1060178f198e72df6d055"
+        },
+        "silhouette": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-silhouette.png",
+          "hash": "e4b31caaafae24e7c8359e3b457938b12133f1fcc925f54334f417ffd5f62e21"
+        },
+        "depth": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-depth.png",
+          "hash": "c9b5dc5030e291eaad60e0d7dc98d3d668239e6535161af8f33796c3d92e4547"
+        },
+        "recipe": {
+          "path": "docs/design/personal-imprint-generator-v1-lin-recipe.json",
+          "hash": "2d4970af87417e120feb72773c358c7ef6b72e76c74e210b9cc9eb28daf34b52"
+        }
+      },
+      "renderHash": "9ccbee220c0951a52bec3c65b0dc7345cba0344df1cb8e392afaedc40d92a4c9",
+      "strands": {
+        "count": 128,
+        "represented": 128,
+        "visibleSegments": 393216,
+        "hiddenSegments": 0
+      },
+      "material": {
+        "materialPixels": 629963,
+        "shadowedPixels": 469162,
+        "contactShadowSamples": 2034624,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 3889534,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 1.1689889028513711e-18,
+        "maxShade": 0.9351440668106079,
+        "supersampling": 3
+      },
+      "renderMs": 19548,
+      "independent": {
+        "inspection": {
+          "strands": 128,
+          "ends": 0,
+          "closureFailures": 0,
+          "maxSeamPosition": 5.186961971048731e-13,
+          "maxSeamTangent": 3.064408624147721e-9,
+          "maxSeamCurvature": 0.00007989736330313574,
+          "peakTurnDegrees": 26.960826376029885,
+          "minStep": 0.306364823790429,
+          "nonfinite": 0,
+          "outside": 0,
+          "majorHoles": 2,
+          "holeAreasSourcePixels": [
+            5760,
+            1680
+          ],
+          "minorHoles": 1,
+          "connectedComponents": 1,
+          "materialArea": 629728,
+          "mirroredIoU": 0.6219401631912964,
+          "projectedCrossings": 76327,
+          "nearCrossings": 0,
+          "minCrossingDepth": 2.5190205122328053
+        },
+        "openings": [
+          {
+            "area": 5760,
+            "bounds": [
+              560,
+              512,
+              664,
+              596
+            ],
+            "widthRatio": 0.12053571428571429,
+            "heightRatio": 0.07913669064748201
+          },
+          {
+            "area": 1680,
+            "bounds": [
+              360,
+              848,
+              420,
+              908
+            ],
+            "widthRatio": 0.07142857142857142,
+            "heightRatio": 0.05755395683453238
+          }
+        ],
+        "maxSampleError": 5.186961971048731e-13,
+        "behaviour": {
+          "repeated": true,
+          "reordered": true,
+          "retained": true,
+          "feelingExcluded": true
+        },
+        "assets": [
+          {
+            "name": "390",
+            "matches": true
+          },
+          {
+            "name": "full",
+            "matches": true
+          },
+          {
+            "name": "crown",
+            "matches": true
+          },
+          {
+            "name": "shoulder",
+            "matches": true
+          },
+          {
+            "name": "lower",
+            "matches": true
+          },
+          {
+            "name": "shadows",
+            "matches": true
+          },
+          {
+            "name": "selected",
+            "matches": true
+          },
+          {
+            "name": "loops",
+            "matches": true
+          },
+          {
+            "name": "silhouette",
+            "matches": true
+          },
+          {
+            "name": "depth",
+            "matches": true
+          },
+          {
+            "name": "recipe",
+            "matches": true
+          }
+        ],
+        "pixels": {
+          "clipped": 0,
+          "nonopaque": 0,
+          "outside": 0,
+          "phoneMatches": true
+        },
+        "gates": {
+          "closed": true,
+          "tangentContinuous": true,
+          "curvatureContinuous": true,
+          "finite": true,
+          "insideFrame": true,
+          "smoothTurns": true,
+          "connected": true,
+          "openingLimit": true,
+          "asymmetric": true,
+          "depthSeparation": true,
+          "smallOpenings": true,
+          "actualSamples": true,
+          "recipeReproduced": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "assetsCurrent": true,
+          "selectedMatch": true,
+          "dimensions": true,
+          "opaque": true,
+          "unclipped": true,
+          "preservedVoids": true,
+          "phoneMatches": true,
+          "allStrands": true,
+          "finiteShading": true
+        }
+      }
+    },
+    {
+      "id": "noor",
+      "label": "Noor",
+      "recipe": {
+        "kind": "rounded-loop",
+        "version": 1,
+        "method": "rounded-folded-bundle-v1",
+        "course": {
+          "kind": "closed-loop",
+          "version": 2,
+          "method": "periodic-folded-bundle-v1",
+          "family": "sweep",
+          "controls": [
+            [
+              664.773152,
+              208.938878,
+              67.050154,
+              278.784244,
+              -0.001222
+            ],
+            [
+              826.057905,
+              245.799889,
+              27.007043,
+              295,
+              0.086467
+            ],
+            [
+              802.465825,
+              458.282291,
+              107.781453,
+              263.925824,
+              0.041915
+            ],
+            [
+              654.898819,
+              542.805526,
+              193.125512,
+              269.28305,
+              -0.421702
+            ],
+            [
+              527.833399,
+              675.156269,
+              349.321856,
+              295,
+              0.359864
+            ],
+            [
+              430.032413,
+              852.586695,
+              426.81451,
+              251.3816,
+              0.482043
+            ],
+            [
+              639.818399,
+              1088.552325,
+              276.792571,
+              295,
+              0.227409
+            ],
+            [
+              693.356358,
+              1102.591119,
+              108.604315,
+              268.662948,
+              0.306536
+            ],
+            [
+              747.604241,
+              1271.445667,
+              21.672141,
+              295,
+              0.200539
+            ],
+            [
+              540.58787,
+              1366.542043,
+              54.996574,
+              295,
+              0.100379
+            ],
+            [
+              346.637823,
+              1301.26953,
+              129.672325,
+              295,
+              -0.084451
+            ],
+            [
+              286.922712,
+              1083.122498,
+              243.205094,
+              293.488108,
+              0.21326
+            ],
+            [
+              415.773009,
+              933.204487,
+              560.546474,
+              295,
+              0.660703
+            ],
+            [
+              568.055073,
+              752.751226,
+              468.912448,
+              295,
+              0.514902
+            ],
+            [
+              540.823646,
+              583.184314,
+              343.55191,
+              295,
+              0.344524
+            ],
+            [
+              345.770626,
+              458.432274,
+              205.751606,
+              295,
+              -0.292213
+            ],
+            [
+              200.895459,
+              537.480125,
+              19.345182,
+              218.466226,
+              0.196813
+            ],
+            [
+              188.883146,
+              735.958402,
+              53.513592,
+              295,
+              0.176084
+            ],
+            [
+              311.573472,
+              830.209215,
+              106.381088,
+              295,
+              0.511171
+            ],
+            [
+              448.527,
+              709.683373,
+              188.291216,
+              295,
+              -0.179704
+            ],
+            [
+              494.421305,
+              526.588001,
+              369.558042,
+              295,
+              -0.304137
+            ],
+            [
+              602.886912,
+              375.787595,
+              152.483394,
+              283.340884,
+              0.468566
+            ],
+            [
+              587.935342,
+              254.158079,
+              50.98768,
+              194.620272,
+              0.544103
+            ]
+          ],
+          "filamentCount": 128,
+          "thickness": 50,
+          "phase": 0.04309952466469258,
+          "grain": 3.4786569695114955
+        },
+        "relief": {
+          "method": "periodic-rounded-section-v1",
+          "amplitude": 0.8
+        },
+        "deformation": {
+          "width": 1.03851026,
+          "height": 1.10893527,
+          "lean": 0.09419127,
+          "bend": -25.06353015,
+          "phase": 1.29056092,
+          "depth": 1.84695833,
+          "mirror": 1
+        }
+      },
+      "recipeHash": "40861fbdc25609a40d97f73908745e673453c65aaf5f22679858b685eff00979",
+      "geometryHash": "0cc870b2175d85fe247e6e24f0a41a769e5eccf68f27fcb6abf3988c25cc540e",
+      "steps": 3072,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 9492,
+          "inspectionMs": 2229,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 5.712692894303979e-13,
+        "maxSeamTangent": 3.6063106393980657e-9,
+        "maxSeamCurvature": 0.0000781467840824095,
+        "peakTurnDegrees": 20.12728928673017,
+        "minStep": 0.2052567534182073,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          3648
+        ],
+        "minorHoles": 4,
+        "connectedComponents": 1,
+        "materialArea": 768848,
+        "mirroredIoU": 0.6671176797113516,
+        "projectedCrossings": 77340,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.8370905673752493
+      },
+      "openings": [
+        {
+          "area": 3648,
+          "bounds": [
+            524,
+            1148,
+            644,
+            1208
+          ],
+          "widthRatio": 0.15346534653465346,
+          "heightRatio": 0.047337278106508875
+        }
+      ],
+      "maxSampleError": 5.712692894303979e-13,
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      },
+      "status": "verified",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-390.png",
+          "hash": "799a8f4b9e247c3cc75661056c447b3616f58341789785131f15e8ea2163b635"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-full.png",
+          "hash": "027df2e25e3b33a40cd5dc5d31ad53ccd2aa218b9a096b4af5f01c9e04c11a61"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-crown.png",
+          "hash": "4f5c5972b9595a9252558a3a2f923f894fb6f9fb2f1456a1f12a01c46c07a7a3"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-shoulder.png",
+          "hash": "cbdc460cfe0e08378a9e367d64bbe53cb703bbc4bbcef070c108b71d64e1c2b1"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-lower.png",
+          "hash": "d11ce2505f17c9ef6ed374f1d9d2bc4c37e6522f17f4e01ff3aa118ba69eb793"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-shadows.png",
+          "hash": "6f63fa94b16c6c847616123e6dc131b1ab95369d4461d9f723d1e75af3eef4b2"
+        },
+        "selected": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-selected-loops.json",
+          "hash": "d0630d75affd3fa100f511792e292828eaa63d870833a9c58561daec7f215f16"
+        },
+        "loops": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-loops.svg",
+          "hash": "7fbe1458cf3f0e96afdf37e9b2a6a858f1a4984005030b7375538b6bf5d45038"
+        },
+        "silhouette": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-silhouette.png",
+          "hash": "9dfb393751c5a7f3f11649cbb6a99573fe1f9ca4f4a6ed3e87e4999b265de112"
+        },
+        "depth": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-depth.png",
+          "hash": "77c9db06a30ae1a7297750f467e8ebefb585f047f4d6411ad581a0998b40a262"
+        },
+        "recipe": {
+          "path": "docs/design/personal-imprint-generator-v1-noor-recipe.json",
+          "hash": "299f59f1aeff9b88bce89e12cc88f1131635797faf657c59b3f6e0e81408adaa"
+        }
+      },
+      "renderHash": "027df2e25e3b33a40cd5dc5d31ad53ccd2aa218b9a096b4af5f01c9e04c11a61",
+      "strands": {
+        "count": 128,
+        "represented": 128,
+        "visibleSegments": 393216,
+        "hiddenSegments": 0
+      },
+      "material": {
+        "materialPixels": 768474,
+        "shadowedPixels": 581341,
+        "contactShadowSamples": 1938034,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 4315372,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 5.816390645347013e-20,
+        "maxShade": 0.9351602792739868,
+        "supersampling": 3
+      },
+      "renderMs": 20463,
+      "independent": {
+        "inspection": {
+          "strands": 128,
+          "ends": 0,
+          "closureFailures": 0,
+          "maxSeamPosition": 5.712692894303979e-13,
+          "maxSeamTangent": 3.6063106393980657e-9,
+          "maxSeamCurvature": 0.0000781467840824095,
+          "peakTurnDegrees": 20.12728928673017,
+          "minStep": 0.2052567534182073,
+          "nonfinite": 0,
+          "outside": 0,
+          "majorHoles": 1,
+          "holeAreasSourcePixels": [
+            3648
+          ],
+          "minorHoles": 4,
+          "connectedComponents": 1,
+          "materialArea": 768848,
+          "mirroredIoU": 0.6671176797113516,
+          "projectedCrossings": 77340,
+          "nearCrossings": 0,
+          "minCrossingDepth": 2.8370905673752493
+        },
+        "openings": [
+          {
+            "area": 3648,
+            "bounds": [
+              524,
+              1148,
+              644,
+              1208
+            ],
+            "widthRatio": 0.15346534653465346,
+            "heightRatio": 0.047337278106508875
+          }
+        ],
+        "maxSampleError": 5.712692894303979e-13,
+        "behaviour": {
+          "repeated": true,
+          "reordered": true,
+          "retained": true,
+          "feelingExcluded": true
+        },
+        "assets": [
+          {
+            "name": "390",
+            "matches": true
+          },
+          {
+            "name": "full",
+            "matches": true
+          },
+          {
+            "name": "crown",
+            "matches": true
+          },
+          {
+            "name": "shoulder",
+            "matches": true
+          },
+          {
+            "name": "lower",
+            "matches": true
+          },
+          {
+            "name": "shadows",
+            "matches": true
+          },
+          {
+            "name": "selected",
+            "matches": true
+          },
+          {
+            "name": "loops",
+            "matches": true
+          },
+          {
+            "name": "silhouette",
+            "matches": true
+          },
+          {
+            "name": "depth",
+            "matches": true
+          },
+          {
+            "name": "recipe",
+            "matches": true
+          }
+        ],
+        "pixels": {
+          "clipped": 0,
+          "nonopaque": 0,
+          "outside": 0,
+          "phoneMatches": true
+        },
+        "gates": {
+          "closed": true,
+          "tangentContinuous": true,
+          "curvatureContinuous": true,
+          "finite": true,
+          "insideFrame": true,
+          "smoothTurns": true,
+          "connected": true,
+          "openingLimit": true,
+          "asymmetric": true,
+          "depthSeparation": true,
+          "smallOpenings": true,
+          "actualSamples": true,
+          "recipeReproduced": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "assetsCurrent": true,
+          "selectedMatch": true,
+          "dimensions": true,
+          "opaque": true,
+          "unclipped": true,
+          "preservedVoids": true,
+          "phoneMatches": true,
+          "allStrands": true,
+          "finiteShading": true
+        }
+      }
+    },
+    {
+      "id": "tala",
+      "label": "Tala",
+      "recipe": {
+        "kind": "rounded-loop",
+        "version": 1,
+        "method": "rounded-folded-bundle-v1",
+        "course": {
+          "kind": "closed-loop",
+          "version": 2,
+          "method": "periodic-folded-bundle-v1",
+          "family": "return",
+          "controls": [
+            [
+              420,
+              220,
+              42,
+              225.556251,
+              0.187664
+            ],
+            [
+              630,
+              250,
+              84,
+              192.54202049999998,
+              0.376286
+            ],
+            [
+              680,
+              420,
+              266,
+              184.861932,
+              -0.330654
+            ],
+            [
+              460,
+              570,
+              448,
+              265.79121150000003,
+              -0.266919
+            ],
+            [
+              230,
+              400,
+              98,
+              259.06776,
+              0.357765
+            ],
+            [
+              260,
+              630,
+              56,
+              253.16701949999998,
+              -0.52565
+            ],
+            [
+              470,
+              760,
+              336,
+              257.9097495,
+              0.044193
+            ],
+            [
+              770,
+              620,
+              112,
+              260.1705705,
+              0.412522
+            ],
+            [
+              790,
+              910,
+              42,
+              280.332138,
+              -0.207617
+            ],
+            [
+              550,
+              1000,
+              420,
+              192.89039549999998,
+              0.662914
+            ],
+            [
+              300,
+              850,
+              112,
+              217.35477600000002,
+              0.132552
+            ],
+            [
+              360,
+              1030,
+              42,
+              228.14972999999998,
+              -0.458751
+            ],
+            [
+              450,
+              1180,
+              84,
+              260.1703725,
+              0.685145
+            ],
+            [
+              600,
+              1110,
+              280,
+              237.43375049999997,
+              0.137446
+            ],
+            [
+              540,
+              880,
+              503.99999999999994,
+              240.23090399999998,
+              -0.273531
+            ],
+            [
+              370,
+              640,
+              251.99999999999997,
+              232.402671,
+              0.320379
+            ],
+            [
+              540,
+              410,
+              112,
+              209.1310335,
+              -0.146818
+            ]
+          ],
+          "filamentCount": 128,
+          "thickness": 36.95609952695668,
+          "phase": 0.03919427325762808,
+          "grain": 4.782327281389938
+        },
+        "relief": {
+          "method": "periodic-rounded-section-v1",
+          "amplitude": 0.8
+        },
+        "deformation": {
+          "width": 0.97464715,
+          "height": 1.0886917,
+          "lean": 0.05668211,
+          "bend": -32.67467241,
+          "phase": 4.11965727,
+          "depth": 1.69573385,
+          "mirror": -1
+        }
+      },
+      "recipeHash": "52ff6e97dee23fba103a47069b7e86e9bdae25e7144d772616025ff2fb9fd2d4",
+      "geometryHash": "b53f85ae82ac6f945c743402438ca644aae77405453e8ab396c51b12a15acaa6",
+      "steps": 3072,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 8235,
+          "inspectionMs": 1921,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 8.023786343467865e-13,
+        "maxSeamTangent": 5.511173932764369e-9,
+        "maxSeamCurvature": 0.00008507543922801099,
+        "peakTurnDegrees": 19.142228101576997,
+        "minStep": 0.2915999181220934,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1392
+        ],
+        "minorHoles": 5,
+        "connectedComponents": 1,
+        "materialArea": 821408,
+        "mirroredIoU": 0.6564385506404672,
+        "projectedCrossings": 81062,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.6884445888235526
+      },
+      "openings": [
+        {
+          "area": 1392,
+          "bounds": [
+            488,
+            608,
+            532,
+            668
+          ],
+          "widthRatio": 0.05357142857142857,
+          "heightRatio": 0.04819277108433735
+        }
+      ],
+      "maxSampleError": 8.023786343467865e-13,
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      },
+      "status": "verified",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-390.png",
+          "hash": "82cd3c43ca9e3766eb621e90b1dea7af6a3f892e314845f0ed705374ec758344"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-full.png",
+          "hash": "adaf28039783dfbc922f74b34a2c70ed66776282a32e80f69eb0f9eb0da4fc9d"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-crown.png",
+          "hash": "6774a9cdfc6cdc976853d625e8f617d9356249e3946581daf1aed46b97230218"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-shoulder.png",
+          "hash": "7b59eff22f896f0cb5c534bded2bd5179a61d4d699157e72a4c044f19065fbcd"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-lower.png",
+          "hash": "c0f309db3a65cc03b67c7102ec11f3d2e8a922729365a262f3c6e0474696dfb5"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-shadows.png",
+          "hash": "a90e474de5830ec682ab27ec828cd0beefda339d24010ba441c0e8e72a199468"
+        },
+        "selected": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-selected-loops.json",
+          "hash": "315bebf5662c295c3701b40225d633aa42c2a1154ca3a47a23005ec6a41f6e01"
+        },
+        "loops": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-loops.svg",
+          "hash": "42e9f6c3351185c7281b0b54dfdb6c9ebbcb6524922e20f4e66f732e7bd77e80"
+        },
+        "silhouette": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-silhouette.png",
+          "hash": "da5fc9330a3e1ce6c1e6556968967a0c47200b26e4cf8f78202f9673f3f409f2"
+        },
+        "depth": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-depth.png",
+          "hash": "7cb4a218bd494969c9a558597865a3baf3e58153448a5c4c60858792251ee3e9"
+        },
+        "recipe": {
+          "path": "docs/design/personal-imprint-generator-v1-tala-recipe.json",
+          "hash": "51e1abf4c17da3bb50b66c3cb85cc2315fbbda528b420f0361256aa07710b525"
+        }
+      },
+      "renderHash": "adaf28039783dfbc922f74b34a2c70ed66776282a32e80f69eb0f9eb0da4fc9d",
+      "strands": {
+        "count": 128,
+        "represented": 128,
+        "visibleSegments": 393216,
+        "hiddenSegments": 0
+      },
+      "material": {
+        "materialPixels": 821432,
+        "shadowedPixels": 609739,
+        "contactShadowSamples": 2534479,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 4815617,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 2.665537137569963e-19,
+        "maxShade": 0.9232471585273743,
+        "supersampling": 3
+      },
+      "renderMs": 22555,
+      "independent": {
+        "inspection": {
+          "strands": 128,
+          "ends": 0,
+          "closureFailures": 0,
+          "maxSeamPosition": 8.023786343467865e-13,
+          "maxSeamTangent": 5.511173932764369e-9,
+          "maxSeamCurvature": 0.00008507543922801099,
+          "peakTurnDegrees": 19.142228101576997,
+          "minStep": 0.2915999181220934,
+          "nonfinite": 0,
+          "outside": 0,
+          "majorHoles": 1,
+          "holeAreasSourcePixels": [
+            1392
+          ],
+          "minorHoles": 5,
+          "connectedComponents": 1,
+          "materialArea": 821408,
+          "mirroredIoU": 0.6564385506404672,
+          "projectedCrossings": 81062,
+          "nearCrossings": 0,
+          "minCrossingDepth": 2.6884445888235526
+        },
+        "openings": [
+          {
+            "area": 1392,
+            "bounds": [
+              488,
+              608,
+              532,
+              668
+            ],
+            "widthRatio": 0.05357142857142857,
+            "heightRatio": 0.04819277108433735
+          }
+        ],
+        "maxSampleError": 8.023786343467865e-13,
+        "behaviour": {
+          "repeated": true,
+          "reordered": true,
+          "retained": true,
+          "feelingExcluded": true
+        },
+        "assets": [
+          {
+            "name": "390",
+            "matches": true
+          },
+          {
+            "name": "full",
+            "matches": true
+          },
+          {
+            "name": "crown",
+            "matches": true
+          },
+          {
+            "name": "shoulder",
+            "matches": true
+          },
+          {
+            "name": "lower",
+            "matches": true
+          },
+          {
+            "name": "shadows",
+            "matches": true
+          },
+          {
+            "name": "selected",
+            "matches": true
+          },
+          {
+            "name": "loops",
+            "matches": true
+          },
+          {
+            "name": "silhouette",
+            "matches": true
+          },
+          {
+            "name": "depth",
+            "matches": true
+          },
+          {
+            "name": "recipe",
+            "matches": true
+          }
+        ],
+        "pixels": {
+          "clipped": 0,
+          "nonopaque": 0,
+          "outside": 0,
+          "phoneMatches": true
+        },
+        "gates": {
+          "closed": true,
+          "tangentContinuous": true,
+          "curvatureContinuous": true,
+          "finite": true,
+          "insideFrame": true,
+          "smoothTurns": true,
+          "connected": true,
+          "openingLimit": true,
+          "asymmetric": true,
+          "depthSeparation": true,
+          "smallOpenings": true,
+          "actualSamples": true,
+          "recipeReproduced": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "assetsCurrent": true,
+          "selectedMatch": true,
+          "dimensions": true,
+          "opaque": true,
+          "unclipped": true,
+          "preservedVoids": true,
+          "phoneMatches": true,
+          "allStrands": true,
+          "finiteShading": true
+        }
+      }
+    },
+    {
+      "id": "sori",
+      "label": "Sori",
+      "recipe": {
+        "kind": "rounded-loop",
+        "version": 1,
+        "method": "rounded-folded-bundle-v1",
+        "course": {
+          "kind": "closed-loop",
+          "version": 2,
+          "method": "periodic-folded-bundle-v1",
+          "family": "return",
+          "controls": [
+            [
+              420,
+              220,
+              42,
+              225.556251,
+              0.187664
+            ],
+            [
+              630,
+              250,
+              84,
+              192.54202049999998,
+              0.376286
+            ],
+            [
+              680,
+              420,
+              266,
+              184.861932,
+              -0.330654
+            ],
+            [
+              460,
+              570,
+              448,
+              265.79121150000003,
+              -0.266919
+            ],
+            [
+              230,
+              400,
+              98,
+              259.06776,
+              0.357765
+            ],
+            [
+              260,
+              630,
+              56,
+              253.16701949999998,
+              -0.52565
+            ],
+            [
+              470,
+              760,
+              336,
+              257.9097495,
+              0.044193
+            ],
+            [
+              770,
+              620,
+              112,
+              260.1705705,
+              0.412522
+            ],
+            [
+              790,
+              910,
+              42,
+              280.332138,
+              -0.207617
+            ],
+            [
+              550,
+              1000,
+              420,
+              192.89039549999998,
+              0.662914
+            ],
+            [
+              300,
+              850,
+              112,
+              217.35477600000002,
+              0.132552
+            ],
+            [
+              360,
+              1030,
+              42,
+              228.14972999999998,
+              -0.458751
+            ],
+            [
+              450,
+              1180,
+              84,
+              260.1703725,
+              0.685145
+            ],
+            [
+              600,
+              1110,
+              280,
+              237.43375049999997,
+              0.137446
+            ],
+            [
+              540,
+              880,
+              503.99999999999994,
+              240.23090399999998,
+              -0.273531
+            ],
+            [
+              370,
+              640,
+              251.99999999999997,
+              232.402671,
+              0.320379
+            ],
+            [
+              540,
+              410,
+              112,
+              209.1310335,
+              -0.146818
+            ]
+          ],
+          "filamentCount": 128,
+          "thickness": 36.95609952695668,
+          "phase": 0.03919427325762808,
+          "grain": 4.782327281389938
+        },
+        "relief": {
+          "method": "periodic-rounded-section-v1",
+          "amplitude": 0.8
+        },
+        "deformation": {
+          "width": 0.96844453,
+          "height": 0.94569736,
+          "lean": 0.03222679,
+          "bend": 30.10733335,
+          "phase": 2.93787362,
+          "depth": 1.66739114,
+          "mirror": 1
+        }
+      },
+      "recipeHash": "624f2aea7e0fac9793066d7ad3992edae534d53e4b2ec6f7715fe6b55bc887f7",
+      "geometryHash": "151b4421c9075a574a067efdf2234e18ced197d0ca40cf4137f740624e63087a",
+      "steps": 3072,
+      "attempts": [
+        {
+          "steps": 3072,
+          "constructionMs": 8468,
+          "inspectionMs": 1838,
+          "gates": {
+            "closed": true,
+            "tangentContinuous": true,
+            "curvatureContinuous": true,
+            "finite": true,
+            "insideFrame": true,
+            "smoothTurns": true,
+            "connected": true,
+            "openingLimit": true,
+            "asymmetric": true,
+            "depthSeparation": true,
+            "smallOpenings": true,
+            "actualSamples": true
+          }
+        }
+      ],
+      "inspection": {
+        "strands": 128,
+        "ends": 0,
+        "closureFailures": 0,
+        "maxSeamPosition": 8.84732708998023e-13,
+        "maxSeamTangent": 5.6981040893572685e-9,
+        "maxSeamCurvature": 0.00010247592988046607,
+        "peakTurnDegrees": 19.044215361321132,
+        "minStep": 0.2736284338730746,
+        "nonfinite": 0,
+        "outside": 0,
+        "majorHoles": 1,
+        "holeAreasSourcePixels": [
+          1472
+        ],
+        "minorHoles": 5,
+        "connectedComponents": 1,
+        "materialArea": 845808,
+        "mirroredIoU": 0.8233650662251656,
+        "projectedCrossings": 81064,
+        "nearCrossings": 0,
+        "minCrossingDepth": 2.8859686207311537
+      },
+      "openings": [
+        {
+          "area": 1472,
+          "bounds": [
+            476,
+            620,
+            524,
+            676
+          ],
+          "widthRatio": 0.05803571428571429,
+          "heightRatio": 0.04746835443037975
+        }
+      ],
+      "maxSampleError": 8.84732708998023e-13,
+      "gates": {
+        "closed": true,
+        "tangentContinuous": true,
+        "curvatureContinuous": true,
+        "finite": true,
+        "insideFrame": true,
+        "smoothTurns": true,
+        "connected": true,
+        "openingLimit": true,
+        "asymmetric": true,
+        "depthSeparation": true,
+        "smallOpenings": true,
+        "actualSamples": true
+      },
+      "status": "verified",
+      "outputs": {
+        "390": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-390.png",
+          "hash": "9430f35445945f3b5039dab5a7619ed4038cea793e09bde424d80dfea1dd8838"
+        },
+        "full": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-full.png",
+          "hash": "bc7585249641a2d65b339743d8c5ac07ff92e33337a6db2784b932fcbd591231"
+        },
+        "crown": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-crown.png",
+          "hash": "bf69792d65ae7fc315037f0bfbd1cb63b83c69546a9ad65fbb2f082321078631"
+        },
+        "shoulder": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-shoulder.png",
+          "hash": "dbea7cacc79b51492563a4ea8443a63323f76f0d134b6943933d07d272e1363e"
+        },
+        "lower": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-lower.png",
+          "hash": "9c3b1aed4ef6a86573e2f3858a0c56ff6fc7882be5da02805670f010d0f1e37e"
+        },
+        "shadows": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-shadows.png",
+          "hash": "4e795d7738bc3447319b8d01588260a386e425e5d0de50cd4d9c39a58facbb3f"
+        },
+        "selected": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-selected-loops.json",
+          "hash": "05167f913a3d0637c8512902d46d4e089471501d73f33427930c8ff1a7e5cb53"
+        },
+        "loops": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-loops.svg",
+          "hash": "7dc9759b5c8bd1c787f4e89f1ac57eedd577155ac0d2cefd4dd6eaa2a9de74d5"
+        },
+        "silhouette": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-silhouette.png",
+          "hash": "0129b6f5305deae19504885bd55d57550958c3bad43e07dd96600021554b4821"
+        },
+        "depth": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-depth.png",
+          "hash": "3ce721ae2993a5145ab6389b145453281430e8cc08111c58f28e7fc2abe4c270"
+        },
+        "recipe": {
+          "path": "docs/design/personal-imprint-generator-v1-sori-recipe.json",
+          "hash": "ec2f8da17cba584fab917ecabf68ad1533e7fe7423bf59970823013674bd2d1b"
+        }
+      },
+      "renderHash": "bc7585249641a2d65b339743d8c5ac07ff92e33337a6db2784b932fcbd591231",
+      "strands": {
+        "count": 128,
+        "represented": 128,
+        "visibleSegments": 393216,
+        "hiddenSegments": 0
+      },
+      "material": {
+        "materialPixels": 845889,
+        "shadowedPixels": 591632,
+        "contactShadowSamples": 2316059,
+        "shadowSource": "surface depth horizon and short rays against other generated fibres",
+        "colorSpace": "linear light, sRGB output",
+        "fibreSamples": 4905621,
+        "nonfiniteShades": 0,
+        "clippedHighlights": 0,
+        "minShade": 2.05766720452022e-20,
+        "maxShade": 0.9335832595825195,
+        "supersampling": 3
+      },
+      "renderMs": 27704,
+      "independent": {
+        "inspection": {
+          "strands": 128,
+          "ends": 0,
+          "closureFailures": 0,
+          "maxSeamPosition": 8.84732708998023e-13,
+          "maxSeamTangent": 5.6981040893572685e-9,
+          "maxSeamCurvature": 0.00010247592988046607,
+          "peakTurnDegrees": 19.044215361321132,
+          "minStep": 0.2736284338730746,
+          "nonfinite": 0,
+          "outside": 0,
+          "majorHoles": 1,
+          "holeAreasSourcePixels": [
+            1472
+          ],
+          "minorHoles": 5,
+          "connectedComponents": 1,
+          "materialArea": 845808,
+          "mirroredIoU": 0.8233650662251656,
+          "projectedCrossings": 81064,
+          "nearCrossings": 0,
+          "minCrossingDepth": 2.8859686207311537
+        },
+        "openings": [
+          {
+            "area": 1472,
+            "bounds": [
+              476,
+              620,
+              524,
+              676
+            ],
+            "widthRatio": 0.05803571428571429,
+            "heightRatio": 0.04746835443037975
+          }
+        ],
+        "maxSampleError": 8.84732708998023e-13,
+        "behaviour": {
+          "repeated": true,
+          "reordered": true,
+          "retained": true,
+          "feelingExcluded": true
+        },
+        "assets": [
+          {
+            "name": "390",
+            "matches": true
+          },
+          {
+            "name": "full",
+            "matches": true
+          },
+          {
+            "name": "crown",
+            "matches": true
+          },
+          {
+            "name": "shoulder",
+            "matches": true
+          },
+          {
+            "name": "lower",
+            "matches": true
+          },
+          {
+            "name": "shadows",
+            "matches": true
+          },
+          {
+            "name": "selected",
+            "matches": true
+          },
+          {
+            "name": "loops",
+            "matches": true
+          },
+          {
+            "name": "silhouette",
+            "matches": true
+          },
+          {
+            "name": "depth",
+            "matches": true
+          },
+          {
+            "name": "recipe",
+            "matches": true
+          }
+        ],
+        "pixels": {
+          "clipped": 0,
+          "nonopaque": 0,
+          "outside": 0,
+          "phoneMatches": true
+        },
+        "gates": {
+          "closed": true,
+          "tangentContinuous": true,
+          "curvatureContinuous": true,
+          "finite": true,
+          "insideFrame": true,
+          "smoothTurns": true,
+          "connected": true,
+          "openingLimit": true,
+          "asymmetric": true,
+          "depthSeparation": true,
+          "smallOpenings": true,
+          "actualSamples": true,
+          "recipeReproduced": true,
+          "geometryReproduced": true,
+          "behaviour": true,
+          "assetsCurrent": true,
+          "selectedMatch": true,
+          "dimensions": true,
+          "opaque": true,
+          "unclipped": true,
+          "preservedVoids": true,
+          "phoneMatches": true,
+          "allStrands": true,
+          "finiteShading": true
+        }
+      }
+    }
+  ],
+  "gates": {
+    "sourcesCurrent": true,
+    "approvedSoriPreserved": true,
+    "sixExamples": true,
+    "threeFamilies": true,
+    "distinctGeometry": true,
+    "renderRepeated": true,
+    "population": true,
+    "onlyFibres": true
+  },
+  "pairwiseSilhouettes": [
+    {
+      "a": "mira",
+      "b": "arun",
+      "silhouetteIoU": 0.5008413617115701
+    },
+    {
+      "a": "mira",
+      "b": "lin",
+      "silhouetteIoU": 0.6765022357188972
+    },
+    {
+      "a": "mira",
+      "b": "noor",
+      "silhouetteIoU": 0.4850100812150219
+    },
+    {
+      "a": "mira",
+      "b": "tala",
+      "silhouetteIoU": 0.5251551294913239
+    },
+    {
+      "a": "mira",
+      "b": "sori",
+      "silhouetteIoU": 0.5401816138954891
+    },
+    {
+      "a": "arun",
+      "b": "lin",
+      "silhouetteIoU": 0.6034689102048836
+    },
+    {
+      "a": "arun",
+      "b": "noor",
+      "silhouetteIoU": 0.6651220997091254
+    },
+    {
+      "a": "arun",
+      "b": "tala",
+      "silhouetteIoU": 0.6846924414272705
+    },
+    {
+      "a": "arun",
+      "b": "sori",
+      "silhouetteIoU": 0.7856315379960231
+    },
+    {
+      "a": "lin",
+      "b": "noor",
+      "silhouetteIoU": 0.5859460047898977
+    },
+    {
+      "a": "lin",
+      "b": "tala",
+      "silhouetteIoU": 0.6313990718422852
+    },
+    {
+      "a": "lin",
+      "b": "sori",
+      "silhouetteIoU": 0.6813615562726759
+    },
+    {
+      "a": "noor",
+      "b": "tala",
+      "silhouetteIoU": 0.7138447743693205
+    },
+    {
+      "a": "noor",
+      "b": "sori",
+      "silhouetteIoU": 0.7412519842639244
+    },
+    {
+      "a": "tala",
+      "b": "sori",
+      "silhouetteIoU": 0.725896480331263
+    }
+  ],
+  "checksPass": true,
+  "limitations": [
+    "Finite samples do not guarantee every possible input or full physical collision freedom.",
+    "Broad visible overlaps require visual review; projected strand crossings are a different measurement.",
+    "The generator is an isolated offline renderer; no phone rendering or personal recipe storage is implemented."
+  ],
+  "colorCaptureCompatibility": {
+    "rendererHash": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "proof": "Seven accepted monochrome full PNGs reproduced exactly; capture changes no shading or geometry."
+  }
+}

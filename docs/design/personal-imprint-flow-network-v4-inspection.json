@@ -1,0 +1,93 @@
+{
+  "version": 4,
+  "sourceHash": "9fb726b8f329913dd492580709151e6e7870c36c36e95f7792d192b2a2c939d9",
+  "geometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+  "renderHash": "840155b827f599de0ba85365089c48ff10f5c3a68798f9aeb9e566a63a26ecff",
+  "surface": {
+    "vertices": 464493,
+    "triangles": 702470,
+    "expectedSamples": 721551,
+    "supportedSamples": 721551,
+    "coverage": 1,
+    "missingSamples": 0,
+    "independentOfStrandCount": true
+  },
+  "strands": {
+    "count": 1281,
+    "unresolvedTrajectories": {
+      "limit": 0,
+      "short": 6879,
+      "duplicate": 0
+    },
+    "omittedShort": 0,
+    "unsupported": 0,
+    "nonfinite": 0,
+    "visiblePopulation": 0.9999986140965781,
+    "populationRadius": 12,
+    "explicitlyUnbranched": true
+  },
+  "endpoints": {
+    "count": 2562,
+    "exposed": 0,
+    "namedFoldCheck": true,
+    "minimumClearance": 16
+  },
+  "gates": {
+    "coverage": true,
+    "interiorGaps": true,
+    "support": true,
+    "finite": true,
+    "endpoints": true,
+    "population": true,
+    "foregroundCrossings": true,
+    "visual": true
+  },
+  "visualReview": {
+    "status": "pass",
+    "date": "2026-11-16",
+    "timezone": "Asia/Bangkok",
+    "reviewer": "Codex internal Step 4 geometry review; developer final artwork review remains after Step 5",
+    "geometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+    "renderHash": "840155b827f599de0ba85365089c48ff10f5c3a68798f9aeb9e566a63a26ecff",
+    "artifacts": [
+      "full",
+      "390",
+      "crown",
+      "shoulder",
+      "lower",
+      "routes",
+      "coverage"
+    ],
+    "findings": [
+      "Full silhouette and shoulder opening follow the material map. Exterior bays remain clear; crown and lower recess material is populated.",
+      "The sculpture reads as one flowing composition. The old detached ribbon islands and long transverse connector fans are absent.",
+      "Close-ups show separate curved strands through the crown, shoulder and lower turn. Selected full-route diagnostics retain uninterrupted identities.",
+      "Concealed endpoint continuations are local and lie beneath recorded neighbouring foreground strands. Independent geometry inspection validates their actual coverers.",
+      "The coverage diagnostic contains no missing material regions. Mobile-size render preserves the overall form."
+    ],
+    "limits": "This accepts monochrome construction geometry only. Reference-level material, highlights, shadow and perceived volume remain Step 5. It is a static reference-assisted master, not a personal generator or physical reconstruction."
+  },
+  "readyForStep5": true,
+  "construction": {
+    "method": "shared boundary-conforming surface atlas; authored courses refined by reference ridge direction",
+    "localUnderpasses": 26,
+    "concealmentFailures": 0,
+    "maxLocalExtension": 8.201306851991529
+  },
+  "independentInspection": {
+    "geometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+    "outsideVertices": 0,
+    "nonfinite": 0,
+    "invalidTriangles": 0,
+    "unsupportedRoutePoints": 0,
+    "foregroundCrossings": 0,
+    "checkedEndpoints": 2562,
+    "exposedEndpoints": 0,
+    "namedFoldFailures": 0,
+    "coveringStrandFailures": 0,
+    "materialSamples": 45095,
+    "supportedSamples": 45095,
+    "coverage": 1,
+    "uniqueStrandIds": 1281
+  }
+}

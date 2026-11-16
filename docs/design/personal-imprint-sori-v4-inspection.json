@@ -1,0 +1,392 @@
+{
+  "status": "review-with-limitations",
+  "readyForReview": true,
+  "steps": 3072,
+  "sourceHashes": {
+    "scripts/lib/imprint-sori-relief.mjs": "a26653b7baec706c66c508c5edc3ac4a4cd450fd58282b504307c6e95d650ede",
+    "scripts/lib/imprint-sori-geometry.mjs": "abe738690ad1c0b643e98d3fd45c7fd453252e9924fd318ccf7b3cfbc7e098b5",
+    "scripts/lib/imprint-loop-geometry.mjs": "c1152c8a07caa7f2388ab40b9e58e20d7af1c24c8bd227588ff357150c655b0a",
+    "scripts/lib/imprint-loop-crossings.mjs": "e2d660d734cb2d00b78f839f587955ea1714bd6254b04773a37371e6d700e888",
+    "scripts/lib/imprint-loop-inspection.mjs": "5e9b27fc0c0c46e2204cba26da1315f1eaa6ad0d016c8de463685f15cc947245",
+    "scripts/lib/imprint-material-renderer.mjs": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "scripts/render-imprint-sori-relief.mjs": "7e4d22965505f30132e9560d91e05fccc088d3c517ca6d44a223c8bb596f751d",
+    "docs/design/personal-imprint-loops-v2.json": "0202accb2d0d64bcea3c8b5bd506b3e1cd9e63941e324cfc471c683e31f75598"
+  },
+  "geometryHash": "ba49645808d14a9faccfeff2a57760ca4cd6c6bd595f63973cf949788756dfdf",
+  "relief": {
+    "method": "periodic-rounded-section-v1",
+    "amplitude": 0.8
+  },
+  "overlaps": {
+    "count": 7,
+    "markers": [
+      [
+        490,
+        230
+      ],
+      [
+        470,
+        530
+      ],
+      [
+        245,
+        675
+      ],
+      [
+        650,
+        640
+      ],
+      [
+        470,
+        840
+      ],
+      [
+        580,
+        1020
+      ],
+      [
+        420,
+        1200
+      ]
+    ],
+    "method": "Internal visual count of broad fold/overlap regions; developer review pending, not individual filament intersections."
+  },
+  "inspection": {
+    "strands": 128,
+    "ends": 0,
+    "closureFailures": 0,
+    "maxSeamPosition": 8.202999702951849e-13,
+    "maxSeamTangent": 3.730327444286912e-9,
+    "maxSeamCurvature": 0.00009166827460915423,
+    "peakTurnDegrees": 15.409732363194484,
+    "minStep": 0.2898821575549822,
+    "nonfinite": 0,
+    "outside": 0,
+    "majorHoles": 1,
+    "holeAreasSourcePixels": [
+      1488
+    ],
+    "minorHoles": 4,
+    "connectedComponents": 1,
+    "materialArea": 874544,
+    "mirroredIoU": 0.767012575566547,
+    "projectedCrossings": 81065,
+    "nearCrossings": 0,
+    "minCrossingDepth": 1.6866716084000097
+  },
+  "gates": {
+    "closed": true,
+    "tangentContinuous": true,
+    "curvatureContinuous": true,
+    "finite": true,
+    "insideFrame": true,
+    "smoothTurns": true,
+    "connected": true,
+    "openingLimit": true,
+    "asymmetric": true,
+    "depthSeparation": true
+  },
+  "outputs": {
+    "390": {
+      "path": "docs/design/personal-imprint-sori-v4-390.png",
+      "hash": "54c3a979439bb5fecc9864ffb7551cc0af3f1e0a6e6f218a3acd3764cfb6f252"
+    },
+    "full": {
+      "path": "docs/design/personal-imprint-sori-v4-full.png",
+      "hash": "c33fb2d5b19b053480f33a23ce5afef44a802c2e61ae8f74c7f762de1c7d0081"
+    },
+    "crown": {
+      "path": "docs/design/personal-imprint-sori-v4-crown.png",
+      "hash": "0c45ed3504e95740dd86b172a9280f47797878adca505a59a6687625aca3b2e7"
+    },
+    "shoulder": {
+      "path": "docs/design/personal-imprint-sori-v4-shoulder.png",
+      "hash": "5c58ee867d2e43ba17953c101a5f562acdc785a4ad90100d4cae28a7f68429da"
+    },
+    "lower": {
+      "path": "docs/design/personal-imprint-sori-v4-lower.png",
+      "hash": "5b705f3368bcb7952b6e5607a1c2b529dfa3828373a00c47680901508ef7f76f"
+    },
+    "shadows": {
+      "path": "docs/design/personal-imprint-sori-v4-shadows.png",
+      "hash": "393749c4b8c0ba2ca9fa46626658dc05e36980a1436ab8c89fd04c2c6f6694c1"
+    },
+    "selected": {
+      "path": "docs/design/personal-imprint-sori-v4-selected-loops.json",
+      "hash": "fdf41077d7d9c6b9ead8a3bddebb00cc23d96f56e72b7f7c9c69ffd1c2799bdb"
+    },
+    "loops": {
+      "path": "docs/design/personal-imprint-sori-v4-loops.svg",
+      "hash": "328629db0c34c1fa28431dae29bfc1dc77ef85526d2f388518ca183c3353986d"
+    },
+    "depth": {
+      "path": "docs/design/personal-imprint-sori-v4-depth.png",
+      "hash": "7bdac1c76667c84041771ed4a16fdfb7aada93ab38b94f3daddaa4d64a41c5bf"
+    },
+    "angled": {
+      "path": "docs/design/personal-imprint-sori-v4-angled-full.png",
+      "hash": "4426c1c1026c05c8df4c1de0033634c35c2830a08f5b4bd4f7ef07363f51da13"
+    },
+    "overlaps": {
+      "path": "docs/design/personal-imprint-sori-v4-overlaps.png",
+      "hash": "725b76de2303ebfe8cbc655711bc3fab0c21eec31b7defe29995b20fca0063d4"
+    }
+  },
+  "renderHash": "c33fb2d5b19b053480f33a23ce5afef44a802c2e61ae8f74c7f762de1c7d0081",
+  "strands": {
+    "count": 128,
+    "represented": 128,
+    "visibleSegments": 393216,
+    "hiddenSegments": 0
+  },
+  "material": {
+    "materialPixels": 874753,
+    "shadowedPixels": 592450,
+    "contactShadowSamples": 2314038,
+    "shadowSource": "surface depth horizon and short rays against other generated fibres",
+    "colorSpace": "linear light, sRGB output",
+    "fibreSamples": 5013939,
+    "nonfiniteShades": 0,
+    "clippedHighlights": 0,
+    "minShade": 5.461595010882587e-13,
+    "maxShade": 0.9355068802833557,
+    "supersampling": 3
+  },
+  "independent": {
+    "inspectorHash": "ddf64254c48eb2a0a6335d441fe8314fe3c9424b76c90aefc5293b2c0298d78a",
+    "inspection": {
+      "strands": 128,
+      "ends": 0,
+      "closureFailures": 0,
+      "maxSeamPosition": 8.202999702951849e-13,
+      "maxSeamTangent": 3.730327444286912e-9,
+      "maxSeamCurvature": 0.00009166827460915423,
+      "peakTurnDegrees": 15.409732363194484,
+      "minStep": 0.2898821575549822,
+      "nonfinite": 0,
+      "outside": 0,
+      "majorHoles": 1,
+      "holeAreasSourcePixels": [
+        1488
+      ],
+      "minorHoles": 4,
+      "connectedComponents": 1,
+      "materialArea": 874544,
+      "mirroredIoU": 0.767012575566547,
+      "projectedCrossings": 81065,
+      "nearCrossings": 0,
+      "minCrossingDepth": 1.6866716084000097
+    },
+    "reference": {
+      "area": 15232,
+      "bounds": [
+        332,
+        392,
+        468,
+        528
+      ],
+      "widthRatio": 0.16355140186915887,
+      "heightRatio": 0.10324483775811209
+    },
+    "openings": [
+      {
+        "area": 1488,
+        "bounds": [
+          472,
+          608,
+          516,
+          664
+        ],
+        "widthRatio": 0.05286343612334802,
+        "heightRatio": 0.046296296296296294
+      }
+    ],
+    "transverse": [
+      {
+        "t": 0.08,
+        "range": 120.93125877937513
+      },
+      {
+        "t": 0.21,
+        "range": 46.81330100861436
+      },
+      {
+        "t": 0.43,
+        "range": 56.17694711295692
+      },
+      {
+        "t": 0.67,
+        "range": 63.829463877191486
+      },
+      {
+        "t": 0.86,
+        "range": 41.35592356104763
+      }
+    ],
+    "longitudinal": [
+      {
+        "u": 0.12,
+        "range": 20.252000513284518
+      },
+      {
+        "u": 0.24,
+        "range": 64.37036039250991
+      },
+      {
+        "u": 0.36,
+        "range": 35.20255821148401
+      }
+    ],
+    "xyChanges": 387198,
+    "depthChanges": 381790,
+    "maxSampleError": 8.202999702951849e-13,
+    "sourceChecks": [
+      {
+        "path": "scripts/lib/imprint-sori-relief.mjs",
+        "pass": true
+      },
+      {
+        "path": "scripts/lib/imprint-sori-geometry.mjs",
+        "pass": true
+      },
+      {
+        "path": "scripts/lib/imprint-loop-geometry.mjs",
+        "pass": true
+      },
+      {
+        "path": "scripts/lib/imprint-loop-crossings.mjs",
+        "pass": true
+      },
+      {
+        "path": "scripts/lib/imprint-loop-inspection.mjs",
+        "pass": true
+      },
+      {
+        "path": "scripts/lib/imprint-material-renderer.mjs",
+        "pass": true
+      },
+      {
+        "path": "scripts/render-imprint-sori-relief.mjs",
+        "pass": true
+      },
+      {
+        "path": "docs/design/personal-imprint-loops-v2.json",
+        "pass": true
+      }
+    ],
+    "assets": [
+      {
+        "name": "390",
+        "pass": true
+      },
+      {
+        "name": "full",
+        "pass": true
+      },
+      {
+        "name": "crown",
+        "pass": true
+      },
+      {
+        "name": "shoulder",
+        "pass": true
+      },
+      {
+        "name": "lower",
+        "pass": true
+      },
+      {
+        "name": "shadows",
+        "pass": true
+      },
+      {
+        "name": "selected",
+        "pass": true
+      },
+      {
+        "name": "loops",
+        "pass": true
+      },
+      {
+        "name": "depth",
+        "pass": true
+      },
+      {
+        "name": "angled",
+        "pass": true
+      },
+      {
+        "name": "overlaps",
+        "pass": true
+      }
+    ],
+    "pixels": {
+      "clipped": 0,
+      "nonopaque": 0,
+      "phoneMatches": true,
+      "outsidePixels": 0
+    },
+    "gates": {
+      "closed": true,
+      "tangentContinuous": true,
+      "curvatureContinuous": true,
+      "finite": true,
+      "insideFrame": true,
+      "smoothTurns": true,
+      "connected": true,
+      "openingLimit": true,
+      "asymmetric": true,
+      "depthSeparation": true,
+      "geometryReproduced": true,
+      "sourcesCurrent": true,
+      "assetsCurrent": true,
+      "selectedMatch": true,
+      "openingSize": true,
+      "courseUnchanged": true,
+      "actualSamples": true,
+      "transverseRelief": true,
+      "longitudinalRelief": true,
+      "depthChanged": true,
+      "dimensions": true,
+      "unclipped": true,
+      "opaque": true,
+      "phoneMatches": true,
+      "allStrands": true,
+      "overlapLimit": true,
+      "preservedVoids": true
+    }
+  },
+  "limitations": [
+    "The transverse/longitudinal ranges measure the geometric relief field, not an aesthetic score.",
+    "Seven broad overlap regions are visually marked; final interpretation remains developer review.",
+    "Finite projected crossing checks are not a complete physical collision proof.",
+    "Guide shadows approximate illumination; the reference appearance is not certified."
+  ],
+  "checksPass": true,
+  "visualReview": {
+    "date": "2026-11-16",
+    "status": "review-with-limitations",
+    "geometryHash": "ba49645808d14a9faccfeff2a57760ca4cd6c6bd595f63973cf949788756dfdf",
+    "renderHash": "c33fb2d5b19b053480f33a23ce5afef44a802c2e61ae8f74c7f762de1c7d0081",
+    "inspected": [
+      "390px front render",
+      "Crown and lower detail renders",
+      "15 degree angled render",
+      "Guide depth image",
+      "360/390/416/1280px browser comparison, links and missing/rejected states"
+    ],
+    "observations": [
+      "The rounded section swells and recesses across the width, with phase and height changes along the course. Individual strand paths visibly bend through these changes.",
+      "The broad Sori course is preserved, but local surface edges shift with the relief. One main enclosed opening remains; four smaller interstices are reported separately.",
+      "Seven marked broad fold/overlap regions remain the internal review count. Fine ridges within a bundle are not additional broad-bundle crossings.",
+      "Some ridge lips remain thin and wire-like. Rear routes become more visible from the angled camera. The result does not establish the reference's solid, densely layered appearance.",
+      "No loose endpoints are introduced; apparent strand emergence at folds must be judged visually as well as by closure checks."
+    ],
+    "finalVisualGatePassed": false,
+    "finalDeveloperAcceptance": "pending"
+  },
+  "colorCaptureCompatibility": {
+    "rendererHash": "9f7d3bd85dd3506a92ce0b6d211e9f6261929d4869fdd99b43c7dcf7b0260ee0",
+    "proof": "Seven accepted monochrome full PNGs reproduced exactly; capture changes no shading or geometry."
+  }
+}

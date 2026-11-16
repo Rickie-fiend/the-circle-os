@@ -1,0 +1,112 @@
+{
+  "id": "lin",
+  "label": "Lin",
+  "description": "A different daily rhythm",
+  "recipe": {
+    "version": 1,
+    "normalizationVersion": 1,
+    "baseGeometryHash": "b9b45f97d25edc1562f4be6e715a3f075b980ee329801db43f5ff16c9310e289",
+    "parameters": {
+      "width": 0.01030872,
+      "balance": -0.01740142,
+      "bend": -14.73424739,
+      "lean": -0.01373276,
+      "height": -0.03527973,
+      "spacing": 0.10516026,
+      "depth": -0.05242133,
+      "phase": 4.78494729
+    }
+  },
+  "recipeHash": "50d4f184be3cc06588c407ac71f8a713ffea19eca6bf81c96a00b352c2a00c1c",
+  "geometryHash": "96e048837495ff24cc9501a1a1ee8d95caf8dd8419d1732e311d7c2cf5b42a30",
+  "bounds": {
+    "left": 80.23466347917717,
+    "right": 958.9286261612544,
+    "top": 96.92536916508183,
+    "bottom": 1402.910615419241
+  },
+  "minJacobianBound": 0.9574506794263881,
+  "geometryInspection": {
+    "outsideVertices": 0,
+    "nonfinite": 0,
+    "invalidTriangles": 0,
+    "unsupportedRoutePoints": 0,
+    "foregroundCrossings": 0,
+    "checkedEndpoints": 2562,
+    "exposedEndpoints": 0,
+    "namedFoldFailures": 0,
+    "coveringStrandFailures": 0,
+    "materialSamples": 43787,
+    "supportedSamples": 43787,
+    "coverage": 1,
+    "uniqueStrandIds": 1281
+  },
+  "gates": {
+    "coverage": true,
+    "interiorGaps": true,
+    "support": true,
+    "finite": true,
+    "foregroundCrossings": true,
+    "endpoints": true,
+    "topology": true,
+    "invertible": true,
+    "comfortableBounds": true,
+    "finiteShading": true,
+    "unclippedShading": true,
+    "allStrandsRepresented": true
+  },
+  "checks": {
+    "repeatSame": true,
+    "orderSame": true,
+    "correctionRetained": true,
+    "freshCorrectionDifferent": true,
+    "feelingExcluded": true
+  },
+  "status": "rendered",
+  "outputs": {
+    "390": {
+      "path": "docs/design/personal-imprint-personal-v1-lin-390.png",
+      "hash": "482fc95a9ed3f29fefe32604b819e88d2826d2b5eee1b71cdcf8fdd70c5d2cbd"
+    },
+    "full": {
+      "path": "docs/design/personal-imprint-personal-v1-lin-full.png",
+      "hash": "68f20972ebd6f2492b3dbe5a86cc59a66b88b75d7fd316e37ccd751fed5e272c"
+    },
+    "crown": {
+      "path": "docs/design/personal-imprint-personal-v1-lin-crown.png",
+      "hash": "bd01610dbe05cb63ae9b4a0df53a48ac585278c387c41c93712b932b69a5f08d"
+    },
+    "shoulder": {
+      "path": "docs/design/personal-imprint-personal-v1-lin-shoulder.png",
+      "hash": "6e29ea5feda5edadc344095f333141acacae1f012291c43b23c07289bb90114c"
+    },
+    "lower": {
+      "path": "docs/design/personal-imprint-personal-v1-lin-lower.png",
+      "hash": "5e6cefc934f94b3f35f678c3d4985de0da1f5dca2cf7efa6d783dd91739cce3b"
+    },
+    "shadows": {
+      "path": "docs/design/personal-imprint-personal-v1-lin-shadows.png",
+      "hash": "05f374a5522569f34822e1217672c5a88f7ca9df83b78273f23b350ea031974a"
+    }
+  },
+  "renderHash": "68f20972ebd6f2492b3dbe5a86cc59a66b88b75d7fd316e37ccd751fed5e272c",
+  "strands": {
+    "count": 1281,
+    "represented": 1281,
+    "visibleSegments": 141907,
+    "hiddenSegments": 98590
+  },
+  "material": {
+    "materialPixels": 700464,
+    "shadowedPixels": 186441,
+    "contactShadowSamples": 149875,
+    "shadowSource": "surface depth horizon and short rays against other generated fibres",
+    "colorSpace": "linear light, sRGB output",
+    "fibreSamples": 2986125,
+    "nonfiniteShades": 0,
+    "clippedHighlights": 0,
+    "minShade": 0.042899999767541885,
+    "maxShade": 0.9132263660430908,
+    "supersampling": 3
+  }
+}
