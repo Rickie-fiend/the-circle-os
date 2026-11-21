@@ -1,5 +1,21 @@
 # Circle OS decision log
 
+## 2026-11-17 — Activity proposal approved for an isolated study
+
+Developer approved the saved activity proposal, including the qualifying event
+map, first-save/edit distinction and Trash recovery rules. A group grows once
+per used Circle day, with each day's own original application time. Later accepted
+actions pulse its existing area but do not refresh old growth. Restore retains
+age without a pulse; failed writes, retries, drafts and edits do not qualify.
+Task origin must be known rather than inferred from historical records. Trash,
+Undo, clearing, deletion and archive retain distinct projection behavior.
+
+Implemented as a pure synthetic model and isolated preview with focused checks.
+The [Home brief](PERSONAL_IMPRINT_HOME.md#activity-model-study--2026-11-17) owns
+the source audit, rendering limits and verification. No production contribution
+storage, retention change, Home integration, sync or deployment is authorized.
+
+
 ## 2026-11-16 — Brighter fresh and faded Orange requested
 
 Developer requires both fresh and faded Orange to be recognizable at a glance,

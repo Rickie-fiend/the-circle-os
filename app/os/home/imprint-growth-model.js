@@ -52,6 +52,23 @@ export function growthPaint(anchors,state,t,u){
  return {weight,brightness:weight?amount/weight:0};
 }
 export function growthAmount(anchors,state,t,u){const p=growthPaint(anchors,state,t,u);return p.weight*p.brightness;}
+// Nested differences preserve the feathered footprint and each day's own age.
+export function contributionPaint(anchors,state,t,u,pulse={}){
+ let weight=0,amount=0;
+ for(const group of COLOR_GROUPS){
+  let previous=0,groupAmount=0;
+  const layers=state[group]?.layers??[];
+  for(let i=0;i<layers.length;i++){
+   const layer=layers[i];
+   if(layers[i+1]?.brightness===layer.brightness)continue;
+   const next=growthWeight(anchors[group],t,u,layer.spread);
+   groupAmount+=Math.max(0,next-previous)*layer.brightness;previous=next;
+  }
+  groupAmount+=(previous-groupAmount)*(pulse[group]??0);
+  weight=Math.max(weight,previous);amount=Math.max(amount,groupAmount);
+ }
+ return {weight,brightness:weight?amount/weight:0};
+}
 export function paintOrangePixel(bone,weight,brightness){
  if(!weight||!brightness)return [...bone];
  // Lift existing strand illumination monotonically; gaps/occlusion are never

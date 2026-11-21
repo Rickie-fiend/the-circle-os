@@ -11,6 +11,7 @@ import { loopImprintSamples } from "./imprint-loop-samples.js";
 import ImprintGeneratorPreview from "./imprint-generator-preview";
 import ImprintColorPreview from "./imprint-color-preview";
 import ImprintGrowthPreview from "./imprint-growth-preview";
+import ImprintActivityPreview from "./imprint-activity-preview";
 
 const samples = [
   { name: "Synthetic A", birthday: "1994-03-12", answers: { situation: ["study"], experience: "making something", wanted: "learn", habit: "Read one page", wake: "07:00", bed: "23:00" } },
@@ -20,6 +21,7 @@ const samples = [
 
 // Review harness only: no personal stores, routes, completion actions or writes.
 export default function ImprintPreview() {
+  if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("study") === "activity") return <ImprintActivityPreview />;
   if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("study") === "growth") return <ImprintGrowthPreview />;
   if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("study") === "color") return <ImprintColorPreview />;
   if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("study") === "generator") return <ImprintGeneratorPreview />;

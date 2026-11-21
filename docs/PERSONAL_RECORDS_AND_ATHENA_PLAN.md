@@ -115,6 +115,15 @@ unknown/unavailable. Derived setup satisfaction never manufactures completed run
 
 ## Trash, permanent deletion and retention
 
+Approved Imprint study (2026-11-17): the isolated synthetic projection excludes
+trashed, cleared, undone and deleted sources; another active source keeps the
+group/day contribution. Restore keeps its original application age and does not
+pulse. Definition archive retains completed evidence. Permanent deletion is
+terminal in the study. This distinguishes projection from the existing writing
+lifecycle below; it creates no production store or retention obligation. Missing
+historical times/origins remain unknown. See the
+[source audit and study boundaries](PERSONAL_IMPRINT_HOME.md#read-only-source-coverage-audit).
+
 Trash is recoverable, excluded from Athena and has no automatic expiry.
 Restore and confirmed Delete forever are distinct actions. Permanent deletion
 must scrub accepted text, versions and drafts within its reviewed domain and

@@ -1,0 +1,14 @@
+import type {ActivityGrowth} from './imprint-activity-model.js';
+export type Anchors=Record<string,{t:number;u:number;scale:number}>;
+export const FRESH_ORANGE:number;
+export const FADED_ORANGE:number;
+export const ORANGE_SHADE_EXPONENT:number;
+export function colorFadeAt(at:string|Date):Date;
+export function colorBrightnessAt(at:string|Date,now:string|Date):number;
+export function contributionPaint(anchors:Anchors,state:ActivityGrowth,t:number,u:number,pulse?:Record<string,number>):{weight:number;brightness:number};
+export function growthWeight(anchor:Anchors[string],t:number,u:number,spread:number):number;
+export function paintOrangePixel(bone:number[],weight:number,brightness:number):number[];
+export function growthPaint(anchors:Anchors,state:Record<string,{spread:number;brightness:number}>,t:number,u:number):{weight:number;brightness:number};
+export function growthAmount(anchors:Anchors,state:Record<string,{spread:number;brightness:number}>,t:number,u:number):number;
+export function fictionalUse():{group:string;day:number}[];
+export function usageState(events:{group:string;day:number;at?:string}[],day:number):Record<string,{days:number;spread:number;brightness:number}>;

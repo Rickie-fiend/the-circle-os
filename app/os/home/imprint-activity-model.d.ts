@@ -1,0 +1,15 @@
+export type ActivitySource = {owner:string;group:string;day:string;source:string;at:string;operation:string;status:'active'|'trash'|'undone'|'cleared'|'deleted'};
+export type ActivityState = {sources:ActivitySource[];receipts:Omit<ActivitySource,'status'>[]};
+export type ActivityAction = {kind:string;owner:string;day:string;source:string;at:string;operation:string;accepted:boolean;changed:boolean;origin?:string;firstSave?:boolean;nonempty?:boolean;correction?:boolean;draft?:boolean;endAt?:string;savedAt?:string};
+export type Contribution = {group:string;day:string;at:string;sources:string[];brightness:number};
+export type ActivityGrowth = Record<string,{days:number;spread:number;layers:(Contribution & {spread:number})[]}>;
+export const PULSE_MS:number;
+export const ACTIVITY_GROUPS:Readonly<Record<string,string|null>>;
+export function activityDay(at:string|Date):string;
+export function emptyActivity():ActivityState;
+export function acceptActivity(state:ActivityState,action:ActivityAction):{state:ActivityState;pulse:boolean};
+export function changeActivitySource(state:ActivityState,owner:string,source:string,change:string):ActivityState;
+export function activityContributions(state:ActivityState,owner:string,now:string|Date):Contribution[];
+export function activityGrowthState(state:ActivityState,owner:string,now:string|Date):ActivityGrowth;
+export function growthFromContributions(contributions:Contribution[]):ActivityGrowth;
+export function activityPulse(elapsed:number,initial?:number):number;

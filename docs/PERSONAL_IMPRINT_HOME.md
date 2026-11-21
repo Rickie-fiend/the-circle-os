@@ -1,5 +1,85 @@
 # Personal Imprint: Circle OS Home
 
+## Activity model study — 2026-11-17
+
+The developer approved [the activity proposal](IMPRINT_ACTIVITY_PROPOSAL.md),
+including its event map and edit/Trash rules. The isolated preview is
+`http://127.0.0.1:3024/?study=activity` (start with
+`node scripts/preview-personal-imprint.mjs`). Production Home remains separate.
+
+`imprint-activity-model.js` accepts receipt metadata, with stable owner, source,
+operation, attributed day and application time; it stores no writing bodies.
+Only successful, changed, qualifying actions count. A Note's first nonempty save,
+a sent Thought, finished Chapter, Routine habit/task completion, Week task
+completion, ended saved Log block or daily Protocol seal qualifies. Unknown task
+origin is excluded. Edits, drafts, unchanged saves, retries and failed writes add
+neither spread nor a pulse. The receipt boundary is synthetic; no production
+durability adapter is claimed.
+
+Each group/day grows once. Its first application time stays stable while sources
+are added, removed or restored. Each day's new feathered field is the difference
+between successive nested growth fields, with its own fresh/faded clock. Older
+growth is not refreshed. Cross-group overlap retains the existing maximum-field
+combination. The curve `1-exp(-days/22)` and Orange trial 1/.60/.35 remain visual
+examples. Geometry, anchors and accepted Bone assets are unchanged.
+
+The canvas gives accepted actions a 1.5-second smooth brightening of that area's
+existing color. Rapid actions restart from the current pulse amplitude; reduced
+motion shows the final state directly. Reconciliation and source restoration do
+not pulse. A deliberate completion after Undo can pulse once with a new operation
+ID while keeping the original day's growth clock. Trash/Undo/clearing temporarily
+exclude a source, deletion is terminal in this model, and archiving a definition
+retains its completed evidence. These are projection rules, not new writing UI.
+
+The preview has two fictional owners, six accepted shapes, synthetic actions,
+multiple saves/day, failures/retries, edits, future Log, lifecycle controls,
+before/at-cutoff times and a quiet month. Reload synthetic records round-trips
+the in-memory fixture; real browser reload returns to the seed without a pulse.
+There is no persistent contribution store. Interactive coloring uses the existing
+sampled phone coordinates and approximates fine edges; this does not resolve the
+production phone renderer. The separate full-resolution Sori reference uses the
+shared supersampled material capture. Its unchanged monochrome render reproduces
+the accepted hash. [Four exports/report](design/personal-imprint-activity-v1.json)
+cover mixed ages, all faded, quiet month and Trash. Faded and quiet images are
+byte-identical; Restore reproduces the original mixed-age state.
+
+### Read-only source coverage audit
+
+| Source | Existing evidence | Limits for future adapters |
+| --- | --- | --- |
+| Account writing (`app/os/writing-model.js`, save/history/lifecycle) | Account-bound store; entry ID/kind/source; startedAt, createdAt, immutable version savedAt and attribution day/timeZone; receipts; active/trashed state and terminal tombstones | Determine first nonempty acceptance from versions/receipt, preserve starting day across 06:00; do not use updatedAt as new activity. Deleted bodies are scrubbed and retained usage is minimal. No new retention requirement is activated here. |
+| Chapter (`chapters/chapter-types.ts`, `chapter-model.js`) | runId, exact chapter/version, completed status/completedAt, answer snapshots | Owner comes from the scoped store. Missing historical dates remain unknown; browsing/history is not completion. |
+| Habits (`circle-os-model.js`, toggleHabitForDay) | habit/day completion ID, dateKey, completed, completedAt, wording snapshot | Undo clears completedAt. Original application time across Undo cannot always be recovered from current records alone. Never invent it. |
+| Tasks (`circle-os-model.js`, task completion functions) | One task identity shared by Routine and Week; one-time completedAt or dated repeating completion records | No reliable historical completion-origin field. Missing Routine/Week origin stays unknown; never infer it from where the task is currently shown. Undo may clear original time. |
+| Protocol (`circle-os-model.js`, daily seal) | run/day seal identity, dateKey, sealed flag, sealedAt/unsealedAt and accepted terms | A seal is distinct from a phase finish or term tick. Re-sealing can overwrite current timestamps; original contribution evidence needs separately reviewed handling. |
+| Log (`circle-os-shell.tsx`, saveLog; `circle-os-model.js`, upsertTimeBlock) | Block ID, enclosing day, start/end strings, createdAt/updatedAt; corrections retain ID/day/range | Historical timezone/precise occurrence is not universal. Resolve cross-midnight/06:00 ranges from known attribution only. A late save needs a reviewed age mapping; current synthetic actions provide explicit savedAt/endAt/application time. |
+
+No real record import, adapter, lifecycle mutation, persistent contribution store,
+production clock, Home wiring, sync activation, migration or deployment is included.
+Historical missing metadata stays unknown. Current account-separated local-first
+storage and immutable Chapters/readings are untouched.
+
+### Verification
+
+Installed bundled Node v24.22.1 runs the focused activity/growth/fade/color/Orange
+tests; scoped strict TypeScript and focused ESLint pass. The renderer verifies
+the accepted monochrome hash before exporting. The independent asset test checks
+hashes, 390x585 dimensions and byte-identical faded/quiet outputs. Browser checks
+at 360/390/416/1280px cover owner isolation, qualifying/failure/retry/edit paths,
+multiple sources, visible pulse and settling, Trash/Restore/Undo/clear/delete,
+archive, future Log, unknown/Week task origin, exact cutoff, no extra fading,
+reconciliation and reload without pulse replay, reduced motion and unavailable/
+incomplete/corrupt assets. All six shape assets are exercised at 390px. Empty
+activity reproduces the source Bone canvas exactly. No overflow, sub-44px targets,
+storage writes or page errors were observed. Screenshots/report are in
+`outputs/imprint/activity-*`; browser checks use installed Chromium outside the
+sandbox. Full suite/build remain unrun for this bounded preview-only slice.
+
+No further optimization is justified by these checks; repeated equal-age growth
+layers are collapsed algebraically during painting. The developer still judges
+the appearance, pulse and growth curve. Production renderer/cache measurements,
+historical attribution decisions and Home integration remain separately reviewed.
+
 Updated: 2026-11-16, Asia/Bangkok. Status: isolated synthetic artwork prototype;
 production Home and personal-record integration remain unimplemented.
 

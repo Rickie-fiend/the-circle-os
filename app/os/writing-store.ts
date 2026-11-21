@@ -16,6 +16,7 @@ import {
 import { assertWritingCloudState, canonicalWriting, createWritingCloudState,
   inventoryWritingChanges, type WritingCloudBundle } from "./writing-cloud-model.js";
 import { prepareWritingChoice, queueWritingChoice } from "./writing-conflict-model.js";
+import { canReviewWritingImprint, recordWritingImprint } from "./home/imprint-writing-activity";
 
 export const WRITING_DATABASE_NAME = "circle-os-writing-v1";
 const STORE_NAME = "writing";
@@ -199,6 +200,10 @@ export async function commitWritingOperation(scope: AccountScope, command: Writi
         try {
           const before = storedState(request.result, owner);
           const result = applyWritingOperation(before, prepared);
+          if (canReviewWritingImprint(scope)) {
+            const group = recordWritingImprint(before, result);
+            if (group) result.imprintPulse = group;
+          }
           if (scope.kind === "account") {
             const sync = store.get(SYNC_KEY);
             sync.onsuccess = () => {

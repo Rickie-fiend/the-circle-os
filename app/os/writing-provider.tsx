@@ -14,6 +14,8 @@ import {
   type WritingCommand, type WritingReceipt, type WritingState,
 } from "./writing-model.js";
 import { WritingSyncProvider } from "./writing-sync-provider";
+import { canReviewWritingImprint, projectWritingImprint } from "./home/imprint-writing-activity";
+import type { Pulse } from "./home/imprint-activity-canvas";
 
 type Props = {
   scope: AccountScope;
@@ -44,6 +46,11 @@ export type WritingContextValue = {
   /** Resolves with local acceptance only. Render current views, never this receipt. */
   commit: (command: WritingCommand) => Promise<WritingReceipt>;
   refresh: () => Promise<boolean>;
+  imprint: {
+    days: ReturnType<typeof projectWritingImprint>;
+    pulseRevision: number;
+    takePulses: (activeSources: Set<string>) => Pulse[];
+  } | null;
 };
 
 const WritingContext = createContext<WritingContextValue | null>(null);
@@ -75,6 +82,25 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [read, setRead] = useState<{ status: WritingContextValue["status"]; error: string | null }>({ status: "loading", error: null });
   const [write, setWrite] = useState<WriteStatus>(idleWrite);
+  const [pulseRevision, setPulseRevision] = useState(0);
+  const pulseSerial = useRef(0);
+  const pendingPulses = useRef(new Map<string, { scope: AccountScope; source: string; expires: number; pulse: Pulse }>());
+  const reviewImprint = canReviewWritingImprint(scope);
+  const imprintDays = useMemo(() => reviewImprint && snapshot?.ledger.owner === owner
+    ? projectWritingImprint(snapshot.ledger) : [], [reviewImprint, snapshot, owner]);
+  const takePulses = useCallback((activeSources: Set<string>) => {
+    const events: Pulse[] = [];
+    const now = performance.now();
+    for (const [group, event] of pendingPulses.current) {
+      if (event.scope !== scope || !isAccountScopeCurrent(scope) || event.expires < now) {
+        pendingPulses.current.delete(group);
+      } else if (activeSources.has(event.source)) {
+        pendingPulses.current.delete(group);
+        events.push(event.pulse);
+      }
+    }
+    return events;
+  }, [scope]);
 
   const refresh = useCallback(async (fromStorage = false): Promise<boolean> => {
     if (!mounted.current || activeInputs.current !== inputs || !enabled || !isAccountScopeCurrent(scope)) return false;
@@ -144,10 +170,26 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
       const result = await commitWritingOperation(scope, command);
       assertAccountScope(scope);
       if (!mounted.current) throw new WritingError("view-closed", "This writing session has closed.");
+      if (result.imprintPulse && document.visibilityState === "visible") {
+        const group = result.imprintPulse;
+        pendingPulses.current.set(group, {
+          scope, source: result.receipt.entryId, expires: performance.now() + 10_000,
+          pulse: { group, serial: ++pulseSerial.current },
+        });
+      } else if (result.receipt.outcome === "trashed" || result.receipt.outcome === "deleted" || result.receipt.outcome === "saved") {
+        const entry = result.state.entries[result.receipt.entryId];
+        const content = entry?.versions.at(-1)?.content;
+        if (entry?.status !== "active" || !(content?.title.trim() || content?.body.trim())) {
+          for (const [group, event] of pendingPulses.current) {
+            if (event.source === result.receipt.entryId) pendingPulses.current.delete(group);
+          }
+        }
+      }
       // Do not render result.state: another tab may have changed it already.
       await refreshCurrent.current();
       assertAccountScope(scope);
       if (!mounted.current) throw new WritingError("view-closed", "This writing session has closed.");
+      if (result.imprintPulse) setPulseRevision(value => value + 1);
       const receipt = freeze(structuredClone(result.receipt));
       if (attempt === latestWrite.current) setWrite({ operationId: receipt.operationId, status: receipt.outcome, receipt, error: null });
       return receipt;
@@ -181,6 +223,8 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
     write,
     commit,
     refresh: () => refresh(),
+    imprint: reviewImprint && scopeCurrent && snapshot?.ledger.owner === owner
+      ? { days: imprintDays, pulseRevision, takePulses } : null,
   };
   return <WritingContext.Provider value={value}><WritingSyncProvider key={owner} scope={scope} enabled={enabled}>{children}</WritingSyncProvider></WritingContext.Provider>;
 }

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { after, before, test } from "node:test";
 import { createServer } from "vite";
@@ -31,6 +32,7 @@ import * as logHistory from "/app/os/log-history.js";
 import * as circleStore from "/app/os/circle-os-store.ts";
 import * as writingStore from "/app/os/writing-store.ts";
 import * as writingModel from "/app/os/writing-model.js";
+import {openDevelopmentTestSession} from "/app/os/auth/development-test-session.js";
 import * as chapterPublications from "/app/os/chapters/chapter-publication-store.ts";
 import {useWriting} from "/app/os/writing-provider.tsx";
 import {createChapterRun,chapterRunId} from "/app/os/chapters/chapter-model.js";
@@ -51,15 +53,16 @@ function TypeChapterFixture(){const config=window.typeChapter;const original=pub
  const [definition,setDefinition]=useState(()=>({...original,pages:original.pages.map(p=>p.type===config.type?{...p,body:"Synthetic supporting text."}:p)}));const target=definition.pages.find(p=>p.type===config.type);
  const [run,setRun]=useState(()=>({...createChapterRun(definition),currentPageId:target.id,furthestPageId:target.id}));
  return React.createElement(ChapterPlayer,{definition,run,label:"Typography fixture",onRunChange:setRun,previewMode:config.edit,onEditPage:config.edit?(id,field,value)=>setDefinition(d=>({...d,pages:d.pages.map(p=>p.id===id?{...p,[field]:value}:p)})):undefined});}
-function Root(){const [path,setPath]=useState("/os");window.goto=setPath;const move=next=>{history.replaceState(history.state,"",next);setPath(next);};const router={push:move,replace:move,prefetch:()=>Promise.resolve(),refresh(){},back(){setPath("/os");},forward(){}};
+function Root(){const [path,setPath]=useState(location.pathname==="/os/home"?"/os/home":"/os");const move=next=>{history.replaceState(history.state,"",next);setPath(next);};window.goto=setPath;window.navigate=move;const router={push:move,replace:move,prefetch:()=>Promise.resolve(),refresh(){},back(){setPath("/os");},forward(){}};
  return React.createElement(AppRouterContext.Provider,{value:router},React.createElement(PathnameContext.Provider,{value:path},
  React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(OSFrame,null,path==="/os/home"?React.createElement(Home):path==="/os/explore"?React.createElement(Explore):path==="/os/type-chapter"?React.createElement(TypeChapterFixture):path==="/os/mirror"?React.createElement(Mirror):path==="/os/admin"?React.createElement(ChapterEditor):React.createElement(TodayExperience)))));}
 const root=createRoot(document.getElementById("root"));
-window.api={...scopes,...circle,...logHistory,...circleStore,...writingStore,...writingModel,...chapterPublications,createChapterRun,chapterRunId,publishedChapters,fixture,writePinnedChapter,readPinnedDoor,
- async init(account=true){if(account)scopes.activateAccountScope("synthetic-writer-a");await circleStore.saveCircleState(scopes.getAccountScope(),fixture());sessionStorage.setItem("writing-fixture-ready","yes");root.render(React.createElement(Root));},
+window.api={...scopes,...circle,...logHistory,...circleStore,...writingStore,...writingModel,...chapterPublications,createChapterRun,chapterRunId,publishedChapters,fixture,writePinnedChapter,readPinnedDoor,openDevelopmentTestSession,
+ async init(account=true){if(account==="imprint")openDevelopmentTestSession();else if(account)scopes.activateAccountScope("synthetic-writer-a");await circleStore.saveCircleState(scopes.getAccountScope(),fixture());sessionStorage.setItem("writing-fixture-ready",account==="imprint"?"imprint":"yes");root.render(React.createElement(Root));},
  mount(){root.render(React.createElement(Root));},
  load(){return writingStore.loadWritingState(scopes.getAccountScope());}
 };
+if(sessionStorage.getItem("writing-fixture-ready")==="imprint")openDevelopmentTestSession();
 if(sessionStorage.getItem("writing-fixture-ready"))window.api.mount();
 `;
 
@@ -80,7 +83,13 @@ before(async()=>{
     plugins:[react(),{name:"writing-ui-fixture",resolveId(id){if(id==="virtual:writing-ui")return "\0writing-ui.tsx";},load(id){if(id==="\0writing-ui.tsx")return useProductionCSS?harness.replace('import "/app/globals.css";','').replace('import "/app/os/os-app.css";',''):harness;},
       configureServer(vite){vite.middlewares.use(async(request,response,next)=>{
         if(useProductionCSS&&request.url==="/fixture-production.css"){response.setHeader("Content-Type","text/css; charset=utf-8");response.end(productionStyles);return;}
-        if(!["/os","/os/mirror","/os/connect"].includes(request.url?.split("?")[0]))return next();
+        const pathname=request.url?.split("?")[0];
+        if(pathname==="/os/home/imprint-art/bone"||pathname==="/os/home/imprint-art/coordinates"){
+          const bone=pathname.endsWith("/bone");
+          response.setHeader("Content-Type",bone?"image/png":"application/octet-stream");
+          response.end(readFileSync(`docs/design/personal-imprint-color-v1-sori-${bone?"bone.png":"coordinates.bin"}`));return;
+        }
+        if(!["/os","/os/home","/os/mirror","/os/connect"].includes(pathname))return next();
         try{response.setHeader("Content-Type","text/html; charset=utf-8");response.end(await vite.transformIndexHtml("/os",'<meta name="viewport" content="width=device-width, initial-scale=1">'+(useProductionCSS?'<link rel="stylesheet" href="/fixture-production.css">':'')+'<div id="root"></div><script type="module" src="/@id/virtual:writing-ui"></script>'));}catch(cause){next(cause);}
       });}}],server:{host:"127.0.0.1",port:0,watch:{ignored:["**/.next/**","**/dist/**"]}},
     optimizeDeps:{include:["react","react-dom/client","next/link","next/navigation","next/dist/shared/lib/app-router-context.shared-runtime.js","next/dist/shared/lib/hooks-client-context.shared-runtime.js"]}});
@@ -2173,6 +2182,169 @@ test("failed local commit keeps open text and retry saves once",{timeout:90_000}
   await box.getByRole("button",{name:"Try again",exact:true}).click();await saved(page);
   assert.equal(Object.values((await page.evaluate(()=>window.api.load())).entries)[0].versions.length,1);
 }));
+
+for (const width of [360, 390]) test(`real writing feeds the Home Imprint at ${width}px`, { timeout: 120_000 }, async () => {
+  const reduced = width === 360;
+  await isolated(width, async (page, context) => {
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    const showHome = async () => {
+      await page.evaluate(() => window.navigate("/os/home"));
+      await expect(canvas).toHaveAttribute("data-ready", "true");
+    };
+    const today = () => page.evaluate(() => window.navigate("/os"));
+    const pixels = async () => createHash("sha256").update(await canvas.evaluate(element => element.toDataURL())).digest("hex");
+    const days = () => page.evaluate(async () => (await window.api.load()).imprint?.days || {});
+    const openNote = async () => {
+      await today();
+      await page.getByRole("button", { name: "Note", exact: true }).click();
+      return notePage(page);
+    };
+    await showHome();
+    const empty = await pixels();
+    const note = await openNote();
+    await page.evaluate(() => {
+      const put = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (value, ...args) {
+        if (this.name === "writing" && value.imprint) {
+          IDBObjectStore.prototype.put = put;
+          throw new DOMException("Synthetic full device", "QuotaExceededError");
+        }
+        return put.call(this, value, ...args);
+      };
+    });
+    await note.getByRole("textbox", { name: "Note title", exact: true }).fill("First Imprint Note");
+    await expect(note.getByRole("alert")).toContainText("Your open text is still here");
+    assert.deepEqual(await days(), {});
+    assert.deepEqual((await page.evaluate(() => window.api.load())).entries, {});
+    await context.setOffline(true);
+    await note.getByRole("button", { name: "Try again", exact: true }).click();
+    await saved(page);
+    await showHome();
+    if (!reduced) {
+      await expect(canvas).toHaveAttribute("data-pulsing", "true");
+      const during = await pixels();
+      await expect(canvas).toHaveAttribute("data-pulsing", "false");
+      assert.notEqual(await pixels(), during);
+    }
+    const firstNote = await pixels();
+    assert.notEqual(firstNote, empty);
+    assert.equal(Object.values(await days()).filter(day => day.group === "notes").length, 1);
+    await context.setOffline(false);
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.equal(await pixels(), firstNote);
+
+    await openNote();
+    await options(note, "History");
+    await expect(note.getByRole("heading", { name: "History", exact: true })).toBeVisible();
+    await expect(note).not.toHaveClass(/os-app-flip/);
+    await trashRow(note, "First Imprint Note").click();
+    await expect.poll(() => page.evaluate(() => window.writing.trash.map(entry => entry.title))).toContain("First Imprint Note");
+    await showHome();
+    await expect.poll(pixels).toBe(empty);
+    await openNote();
+    await options(note, "History");
+    await expect(note.getByRole("heading", { name: "History", exact: true })).toBeVisible();
+    await expect(note).not.toHaveClass(/os-app-flip/);
+    await note.getByRole("button", { name: "Trash", exact: true }).click();
+    await expect(note.getByRole("heading", { name: "Trash", exact: true })).toBeVisible();
+    await expect(note).not.toHaveClass(/os-app-flip/);
+    await row(note, "First Imprint Note").click();
+    await expect(note.getByRole("heading", { name: "First Imprint Note", exact: true })).toBeVisible();
+    await expect(note).not.toHaveClass(/os-app-flip/);
+    await note.getByRole("button", { name: "Restore", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.writing.history.map(entry => entry.title))).toContain("First Imprint Note");
+    await showHome();
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.equal(await pixels(), firstNote);
+
+    await today();
+    const thought = await thoughts(page);
+    await page.clock.setFixedTime(new Date("2026-11-21T05:55:00+07:00"));
+    await thought.getByRole("textbox", { name: "Answer the deep thought", exact: true }).fill("Across the Circle day.");
+    await expect.poll(() => page.evaluate(async () => Object.values((await window.api.load()).drafts)
+      .some(draft => draft.status === "active" && draft.content?.body === "Across the Circle day."))).toBe(true);
+    await page.clock.setFixedTime(new Date("2026-11-21T06:10:00+07:00"));
+    await thought.getByRole("button", { name: "Send", exact: true }).click();
+    await saved(page, 2);
+    const stamp = (await days())["thoughts:2026-11-20"];
+    assert.equal(stamp.at, "2026-11-20T23:10:00.000Z");
+    assert.equal(stamp.timeZone, "Asia/Bangkok");
+    assert.equal(stamp.fadeAt, Date.parse("2026-11-23T06:00:00+07:00"));
+    await showHome();
+    await expect.poll(pixels).not.toBe(firstNote);
+    await page.evaluate(() => window.api.openDevelopmentTestSession(true));
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.equal(await pixels(), empty);
+  }, { account: "imprint", reducedMotion: reduced ? "reduce" : "no-preference" });
+});
+
+test("Home claims the Imprint pulse on arrival even when the artwork is delayed", { timeout: 90_000 }, async () => {
+  await isolated(390, async page => {
+    const nav = page.getByRole("navigation", { name: "Circle OS", exact: true });
+    const home = nav.getByRole("link", { name: "Home", exact: true });
+    const today = nav.getByRole("link", { name: "Today", exact: true });
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    let reviewRequested = false;
+    const reviewLoad = Promise.withResolvers();
+    await page.route(url => url.pathname === "/app/os/home/imprint-writing-review.tsx", async route => {
+      reviewRequested = true;
+      await reviewLoad.promise;
+      await route.continue();
+    });
+
+    try {
+      await page.getByRole("button", { name: "Note", exact: true }).click();
+      await notePage(page).getByRole("textbox", { name: "Note title", exact: true }).fill("Note before a slow Home visit");
+      await saved(page);
+      await expect.poll(() => page.evaluate(() => window.writing.write.status)).toBe("saved");
+      await home.click();
+      await expect(page.getByRole("main", { name: "Home", exact: true })).toHaveCount(1);
+      await expect.poll(() => reviewRequested).toBe(true);
+      await expect(canvas).toHaveCount(0);
+      await page.clock.fastForward(10_100);
+    } finally {
+      reviewLoad.resolve();
+    }
+
+    await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    await page.clock.runFor(450);
+    await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    const brightened = await canvas.evaluate(element => element.toDataURL());
+    await page.clock.runFor(1_500);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    const settled = await canvas.evaluate(element => element.toDataURL());
+    assert.notEqual(brightened, settled);
+
+    await today.click();
+    await home.click();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+
+  }, { account: "imprint", reducedMotion: "no-preference", clock: true });
+});
+
+test("Home shows saved Imprint growth without a pulse after the window expires", { timeout: 90_000 }, async () => {
+  await isolated(390, async page => {
+    const home = page.getByRole("navigation", { name: "Circle OS", exact: true })
+      .getByRole("link", { name: "Home", exact: true });
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    await page.getByRole("button", { name: "Note", exact: true }).click();
+    await notePage(page).getByRole("textbox", { name: "Note title", exact: true }).fill("Note before an expired Home visit");
+    await saved(page);
+    await expect.poll(() => page.evaluate(() => window.writing.write.status)).toBe("saved");
+    await page.clock.fastForward(10_100);
+    await home.click();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.ok(await canvas.evaluate(element => {
+      const { data } = element.getContext("2d").getImageData(0, 0, element.width, element.height);
+      return data.some((value, index) => index % 4 === 0 && value - data[index + 1] > 50);
+    }), "the saved Note leaves visible Orange");
+  }, { account: "imprint", reducedMotion: "no-preference", clock: true });
+});
 
 test("another tab's correction requires review before Note autosave",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
   const box=notePage(page);await box.getByRole("textbox",{name:"Note title",exact:true}).fill("Shared synthetic Note");await saved(page);await expect.poll(()=>page.evaluate(()=>window.writing.status)).toBe("ready");

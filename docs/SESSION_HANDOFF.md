@@ -1,61 +1,59 @@
 # Session handoff
 
-## Git save and next proposal — 2026-11-16
+## Imprint activity study — 2026-11-17, Asia/Bangkok
 
-Developer requested saving [the activity proposal](IMPRINT_ACTIVITY_PROPOSAL.md),
-pushing all repository work and merging into Rickie-fiend/the-circle-os paing-branch.
-The proposal records answered questions separately from suggested event/edit/Trash
-rules. Its implementation is pending approval. Remote fork/paing-branch fetched
-at 3d96cb1, matching the starting local HEAD. Repository-owned recovery/artwork
-work is included; unreferenced Codex attachment copies and Supabase CLI cache
-stay local. No deployment is authorized. Git completion is reported in chat.
+**Approval/Git.** Developer approved implementing the saved activity proposal,
+including its event map and edit/Trash rules. Continued after the first partial
+model. Branch paing-branch, HEAD 4a50c2f. Existing untracked
+.codex-attachments/ and supabase/.temp/ are preserved. No staging, commit or
+deployment. [Previous snapshot](archive/2026-11-17-imprint-activity/SESSION_HANDOFF_BEFORE.md)
+preserves the brighter Orange study and Git-save history.
 
-## Brighter fresh/faded Orange — 2026-11-16, Asia/Bangkok
+**Implemented.** Pure receipt-based synthetic activity model/types, six-group
+qualifying map, per-owner/day growth, independent contribution-age rendering,
+1.5-second smooth/restartable pulse and reduced-motion final state. Source
+lifecycle distinguishes Trash/Restore, Undo, clearing, terminal deletion and
+archive; new completion after Undo can pulse once without refreshing its day's
+clock. Added two-owner preview actions, failure/retry/edit/future-Log controls,
+cutoff/inactivity and in-memory reconciliation. Browser reload returns to the
+seed without replaying animation. Full-resolution Sori reference/export script
+retains accepted baseline and emits four activity images/report.
 
-**Scope/Git.** Developer requested stronger Orange in fresh and faded states,
-visible at a glance with a clear difference. This continues the approved color/
-growth study. Trial values are fresh 1, faded .60 (developer's next trial, previously .72), shade exponent .35, using brand
-Orange. The six fresh comparison hashes are unchanged; all 90 exports, eight tests,
-scoped type/lint and four browser widths pass at 60%. Visual acceptance is pending. paing-branch, HEAD 3d96cb1; existing
-recovery/artwork preserved, no staging/commit/deployment.
-[Prior snapshot](archive/2026-11-16-imprint-orange-60/SESSION_HANDOFF_BEFORE.md).
+**Checks.** Bundled Node v24.22.1 was used because the default node shim reports
+no installed runtime. Focused command: node --test tests/personal-imprint-activity.test.mjs
+tests/personal-imprint-growth.test.mjs tests/personal-imprint-fade.test.mjs
+tests/personal-imprint-color.test.mjs tests/personal-imprint-orange.test.mjs:
+18/18 pass. Scoped strict tsc on imprint-activity-preview.tsx and focused ESLint
+on activity model/samples/preview, growth model, render/browser scripts and test
+pass. node scripts/render-imprint-activity.mjs verifies accepted monochrome hash;
+asset test independently checks dimensions/hashes and identical faded/quiet
+images. node scripts/review-imprint-activity.mjs verifies 360/390/416/1280px,
+six shapes at 390px, qualifying/failure/retry paths, visible pulse, lifecycle,
+cutoff, inactivity, owner isolation, reconciliation/reload, reduced motion and
+missing/incomplete/corrupt artwork. No page errors, overflow, small targets or
+storage writes. Outputs: outputs/imprint/activity-browser.json and screenshots.
+The local review server is running outside the sandbox on 127.0.0.1:3024;
+GET /?study=activity returned HTTP 200. The first sandbox server was unreachable
+from the host and was stopped. Temporary QA servers closed.
+Initial sandbox browser attempt could not find installed Chromium; browser
+checks use approved outside-sandbox execution. A final expanded check initially
+hit an ambiguous test selector; it was corrected and rerun.
 
-**Changed.** Growth model separates feathered material-area weight from temporal
-Orange luminance. The shade lift is monotonic and only applies to visible colored
-fibres; inactive Bone is unchanged. Overlap combines maximum field weight and
-maximum weighted presence separately to remain continuous. Same-area fresh/faded
-states and a side-by-side Sori disclosure expose the difference without changing
-spread. Existing geometry/anchors/growth and the 24-hour-wait-then-local-06:00
-single fade are unchanged; no further dimming occurs afterward.
+**Limits/invariants.** Interactive fine edges remain the existing sampled-phone
+approximation; separate exported reference uses full-resolution visible material.
+No production renderer/cache or persistent contribution store. Source audit
+finds historical task origins and some original times unavailable; no history
+is inferred or imported. Accepted geometry/anchors/Bone, production Circle day,
+local-first storage, Page geometry and immutable chapters/readings are untouched.
+No real record mutations, sync activation, migration or deployment. Numeric
+growth/Orange levels and appearance remain developer review; target-phone
+performance and broader recovery/deletion/device gaps remain. Full build/suite
+were not run for the bounded isolated preview. No measured broad optimization
+is justified; equal-age layers are collapsed during painting.
 
-The first brighter trial exposed cached phone-coordinate stippling. The growth
-exporter now rebuilds the same accepted geometry and reuses the shared full-
-resolution material capture, interpolated lookup fields and established antialias
-reduction. All six full monochrome PNGs reproduce exactly before coloring. Phone
-coordinate files are used only for front-anchor calibration; exported Orange
-uses depth-winning full-resolution fibre samples. Old sampled interactive study
-is retained. Final comparison screenshot inspected; the coarse stippling is gone
-from these exports. This is display tone lifting, not physical re-lighting.
-
-**Checks.** Node v24.22.1 render-imprint-growth.mjs outputs 15 states/90 images and
-asserts identical next-day/two-days/month-later faded images. New independent
-inspect-imprint-orange.mjs passes all asset hashes, accepted baseline references,
-alpha/borders, fresh>=faded RGB and visibility/separation diagnostics. Observed
-faded-Orange samples range 5,307–9,720 per form under the internal threshold;
-mean fresh-minus-faded red difference is 37.4–42.0. These are diagnostic values,
-not human visibility acceptance. Eight focused orange/fade/growth/color tests,
-strict scoped TypeScript and focused lint pass. Browser at 360/390/416/1280px
-passes all states/assets, open comparison, 44px targets, reload and missing/
-incomplete reports, with no page errors/overflow/storage writes. Browser used
-approved outside-sandbox execution; QA server closed, prior local3024 retained.
-
-**Limits/invariants/next.** Contrast inside colored material is compressed by the
-shade lift, so the developer must judge depth/brightness. Trial levels remain
-open. Actual activity ownership, per-contribution evidence and a production phone
-renderer/cache remain unimplemented; group latest-application preview is explicit.
-Full build/suite/lint paused; older preview baseline lint issue remains. No real
-records, clock, shared Page/tool geometry, persistence, Home or sync changes.
-Backup/deletion/device gaps persist and writing sync stays off.
-[Home brief](PERSONAL_IMPRINT_HOME.md#brighter-fresh-and-faded-orange--2026-11-16)
-owns full details. Developer next reviews ?study=growth using same-area fresh/faded
-options and the comparison disclosure before final numeric levels/Home integration.
+**Records/next.** Home brief owns source coverage/verification/limits;
+record contract and decision log describe approved synthetic projection boundaries.
+Proposal and Current Task now reflect approval.
+Developer next reviews http://127.0.0.1:3024/?study=activity, especially pulse,
+mixed ages and restoration. Production Home integration remains a separate
+reviewed scope; automatic writing sync remains off.

@@ -1,7 +1,10 @@
 # Personal Imprint activity model proposal
 
-Saved: 2026-11-16, Asia/Bangkok. Status: proposal saved at developer request;
-implementation is not yet approved. This does not activate production Home.
+Saved: 2026-11-16, Asia/Bangkok. Developer approved implementation, including
+the event map and edit/Trash rules, on 2026-11-17. Implemented as an isolated
+synthetic study; production Home is not activated. Current implementation,
+source audit, verification and limits are in
+[the Home brief](PERSONAL_IMPRINT_HOME.md#activity-model-study--2026-11-17).
 
 ## Confirmed choices
 
@@ -19,7 +22,7 @@ implementation is not yet approved. This does not activate production Home.
   time. There is no further dimming. Current display trial: fresh 1, faded .60,
   Orange shade exponent .35; final appearance remains visual review.
 
-## Suggested qualifying-event map — approval pending
+## Approved qualifying-event map
 
 | Area | Proposed action |
 | --- | --- |
@@ -30,12 +33,12 @@ implementation is not yet approved. This does not activate production Home.
 | Log/Week | A saved Log block ends, or a task is completed from Week |
 | Protocol | Complete a daily seal |
 
-Proposed: later writing edits are corrections, not another contribution or pulse.
+Later writing edits are corrections, not another contribution or pulse.
 Drafts, unchanged saves, retries, reopening and reload do not qualify. This means
 editing an old saved entry is not a new used-day contribution under this proposal.
-These save/edit details still require approval with the event map.
+The developer approved these save/edit details with the event map.
 
-## Proposed implementation slice
+## Approved implementation slice
 
 1. Add a pure activity model under app/os/home. Each owner/group/day contribution
    has its own original application time and supporting source identities, without
@@ -48,10 +51,10 @@ These save/edit details still require approval with the event map.
    Trigger only after a successful durable action; failures create no growth or
    pulse. Merely loading/reconciling records must not replay animation.
 3. Demonstrate source removal/recovery. Deleting one of five Notes leaves the
-   day's contribution; removing its last qualifying source removes it. Proposed
+   day's contribution; removing its last qualifying source removes it. Approved
    Trash behavior: temporarily remove the contribution; Restore returns its
    original size and age without presenting it as new activity. This is not yet
-   an approved change to writing lifecycle or retained metadata.
+   a production change to writing lifecycle or retained metadata.
 4. Extend the isolated preview with realistic synthetic actions, multiple uses
    per day, mixed contribution ages, Undo, deletion, Trash/Restore, failed saves,
    reload and exact cutoff scenarios. Keep current growth curve illustrative.
@@ -76,6 +79,4 @@ remain stable through retries/reloads and reviewed source removals.
 
 No real profile import or personal-record mutation, new persistent contribution
 store, production Home wiring, phone renderer rollout, sync activation, migration
-or deployment is included. Those are subsequent reviewed scopes. The developer
-must approve this proposal, including the suggested event map and edit/Trash rules,
-before implementation.
+or deployment is included. Those remain subsequent reviewed scopes.

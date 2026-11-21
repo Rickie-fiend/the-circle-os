@@ -78,13 +78,14 @@ export type WritingState = {
   entries: Record<string, WritingEntry>;
   drafts: Record<string, WritingDraft>;
   receipts: Record<string, WritingReceipt>;
+  imprint?: import("./home/imprint-writing-activity").WritingImprint;
   tombstones: Record<string, {
     id: string; generation: number; deletedAt: string;
     /** Absent on older deletion markers; never reconstruct missing history. */
     usage?: { kind: WritingKind; answeredAt: string; questionId?: string; question?: string };
   }>;
 };
-export type WritingResult = { state: WritingState; receipt: WritingReceipt };
+export type WritingResult = { state: WritingState; receipt: WritingReceipt; imprintPulse?: "notes" | "thoughts" };
 export type WritingHistoryEntry = Omit<WritingEntry, "versions" | "currentVersionId"> & {
   versionId: string;
   content: WritingContent;

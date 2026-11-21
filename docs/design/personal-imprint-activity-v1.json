@@ -1,0 +1,3251 @@
+{
+  "ready": true,
+  "sample": "sori",
+  "fullBaselineHash": "bc7585249641a2d65b339743d8c5ac07ff92e33337a6db2784b932fcbd591231",
+  "states": {
+    "mixed": {
+      "starting": {
+        "days": 3,
+        "spread": 0.12747470713057618,
+        "layers": [
+          {
+            "group": "starting",
+            "day": "2026-10-09",
+            "at": "2026-10-09T02:00:00.000Z",
+            "sources": [
+              "old-0-9"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "starting",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-0-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "starting",
+            "day": "2026-10-27",
+            "at": "2026-10-27T02:00:00.000Z",
+            "sources": [
+              "old-0-27"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          }
+        ]
+      },
+      "notes": {
+        "days": 16,
+        "spread": 0.5167749188101746,
+        "layers": [
+          {
+            "group": "notes",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-1-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-1-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-1-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-1-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-1-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-1-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-1-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-1-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-1-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-1-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-1-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-1-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-1-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-1-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-1-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          },
+          {
+            "group": "notes",
+            "day": "2026-11-17",
+            "at": "2026-11-17T14:00:00.000Z",
+            "sources": [
+              "today-note"
+            ],
+            "brightness": 1,
+            "spread": 0.5167749188101746
+          }
+        ]
+      },
+      "thoughts": {
+        "days": 6,
+        "spread": 0.23869961330312628,
+        "layers": [
+          {
+            "group": "thoughts",
+            "day": "2026-10-05",
+            "at": "2026-10-05T02:00:00.000Z",
+            "sources": [
+              "old-2-5"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-2-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-15",
+            "at": "2026-10-15T02:00:00.000Z",
+            "sources": [
+              "old-2-15"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-2-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-25",
+            "at": "2026-10-25T02:00:00.000Z",
+            "sources": [
+              "old-2-25"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-2-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          }
+        ]
+      },
+      "routine": {
+        "days": 30,
+        "spread": 0.7442708400868994,
+        "layers": [
+          {
+            "group": "routine",
+            "day": "2026-10-01",
+            "at": "2026-10-01T02:00:00.000Z",
+            "sources": [
+              "old-3-1"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-3-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-03",
+            "at": "2026-10-03T02:00:00.000Z",
+            "sources": [
+              "old-3-3"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-3-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-05",
+            "at": "2026-10-05T02:00:00.000Z",
+            "sources": [
+              "old-3-5"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-3-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-07",
+            "at": "2026-10-07T02:00:00.000Z",
+            "sources": [
+              "old-3-7"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-3-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-09",
+            "at": "2026-10-09T02:00:00.000Z",
+            "sources": [
+              "old-3-9"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-3-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-11",
+            "at": "2026-10-11T02:00:00.000Z",
+            "sources": [
+              "old-3-11"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-3-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-13",
+            "at": "2026-10-13T02:00:00.000Z",
+            "sources": [
+              "old-3-13"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-3-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-15",
+            "at": "2026-10-15T02:00:00.000Z",
+            "sources": [
+              "old-3-15"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-3-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5167749188101746
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-17",
+            "at": "2026-10-17T02:00:00.000Z",
+            "sources": [
+              "old-3-17"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5382479742172622
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-3-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5587668322400161
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-19",
+            "at": "2026-10-19T02:00:00.000Z",
+            "sources": [
+              "old-3-19"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5783738945129965
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-3-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5971096784708669
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-21",
+            "at": "2026-10-21T02:00:00.000Z",
+            "sources": [
+              "old-3-21"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6150129010765164
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-3-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6321205588285577
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-23",
+            "at": "2026-10-23T02:00:00.000Z",
+            "sources": [
+              "old-3-23"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6484680042135369
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-3-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6640890187608376
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-25",
+            "at": "2026-10-25T02:00:00.000Z",
+            "sources": [
+              "old-3-25"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6790158828512474
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-3-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6932794424234432
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-27",
+            "at": "2026-10-27T02:00:00.000Z",
+            "sources": [
+              "old-3-27"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7069091727162443
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-3-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7199332391783511
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-29",
+            "at": "2026-10-29T02:00:00.000Z",
+            "sources": [
+              "old-3-29"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7323785556714418
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-3-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7442708400868994
+          }
+        ]
+      },
+      "log-week": {
+        "days": 15,
+        "spread": 0.4943032925625275,
+        "layers": [
+          {
+            "group": "log-week",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-4-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-4-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-4-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-4-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-4-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-4-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-4-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-4-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-4-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-4-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-4-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-4-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-4-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-4-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-4-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          }
+        ]
+      },
+      "protocol": {
+        "days": 7,
+        "spread": 0.2725294909757163,
+        "layers": [
+          {
+            "group": "protocol",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-5-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-5-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-5-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-5-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-5-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-5-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-5-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          }
+        ]
+      }
+    },
+    "faded": {
+      "starting": {
+        "days": 3,
+        "spread": 0.12747470713057618,
+        "layers": [
+          {
+            "group": "starting",
+            "day": "2026-10-09",
+            "at": "2026-10-09T02:00:00.000Z",
+            "sources": [
+              "old-0-9"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "starting",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-0-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "starting",
+            "day": "2026-10-27",
+            "at": "2026-10-27T02:00:00.000Z",
+            "sources": [
+              "old-0-27"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          }
+        ]
+      },
+      "notes": {
+        "days": 16,
+        "spread": 0.5167749188101746,
+        "layers": [
+          {
+            "group": "notes",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-1-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-1-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-1-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-1-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-1-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-1-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-1-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-1-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-1-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-1-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-1-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-1-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-1-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-1-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-1-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          },
+          {
+            "group": "notes",
+            "day": "2026-11-17",
+            "at": "2026-11-17T14:00:00.000Z",
+            "sources": [
+              "today-note"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5167749188101746
+          }
+        ]
+      },
+      "thoughts": {
+        "days": 6,
+        "spread": 0.23869961330312628,
+        "layers": [
+          {
+            "group": "thoughts",
+            "day": "2026-10-05",
+            "at": "2026-10-05T02:00:00.000Z",
+            "sources": [
+              "old-2-5"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-2-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-15",
+            "at": "2026-10-15T02:00:00.000Z",
+            "sources": [
+              "old-2-15"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-2-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-25",
+            "at": "2026-10-25T02:00:00.000Z",
+            "sources": [
+              "old-2-25"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-2-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          }
+        ]
+      },
+      "routine": {
+        "days": 30,
+        "spread": 0.7442708400868994,
+        "layers": [
+          {
+            "group": "routine",
+            "day": "2026-10-01",
+            "at": "2026-10-01T02:00:00.000Z",
+            "sources": [
+              "old-3-1"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-3-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-03",
+            "at": "2026-10-03T02:00:00.000Z",
+            "sources": [
+              "old-3-3"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-3-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-05",
+            "at": "2026-10-05T02:00:00.000Z",
+            "sources": [
+              "old-3-5"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-3-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-07",
+            "at": "2026-10-07T02:00:00.000Z",
+            "sources": [
+              "old-3-7"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-3-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-09",
+            "at": "2026-10-09T02:00:00.000Z",
+            "sources": [
+              "old-3-9"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-3-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-11",
+            "at": "2026-10-11T02:00:00.000Z",
+            "sources": [
+              "old-3-11"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-3-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-13",
+            "at": "2026-10-13T02:00:00.000Z",
+            "sources": [
+              "old-3-13"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-3-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-15",
+            "at": "2026-10-15T02:00:00.000Z",
+            "sources": [
+              "old-3-15"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-3-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5167749188101746
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-17",
+            "at": "2026-10-17T02:00:00.000Z",
+            "sources": [
+              "old-3-17"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5382479742172622
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-3-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5587668322400161
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-19",
+            "at": "2026-10-19T02:00:00.000Z",
+            "sources": [
+              "old-3-19"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5783738945129965
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-3-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5971096784708669
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-21",
+            "at": "2026-10-21T02:00:00.000Z",
+            "sources": [
+              "old-3-21"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6150129010765164
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-3-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6321205588285577
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-23",
+            "at": "2026-10-23T02:00:00.000Z",
+            "sources": [
+              "old-3-23"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6484680042135369
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-3-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6640890187608376
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-25",
+            "at": "2026-10-25T02:00:00.000Z",
+            "sources": [
+              "old-3-25"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6790158828512474
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-3-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6932794424234432
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-27",
+            "at": "2026-10-27T02:00:00.000Z",
+            "sources": [
+              "old-3-27"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7069091727162443
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-3-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7199332391783511
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-29",
+            "at": "2026-10-29T02:00:00.000Z",
+            "sources": [
+              "old-3-29"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7323785556714418
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-3-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7442708400868994
+          }
+        ]
+      },
+      "log-week": {
+        "days": 15,
+        "spread": 0.4943032925625275,
+        "layers": [
+          {
+            "group": "log-week",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-4-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-4-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-4-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-4-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-4-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-4-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-4-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-4-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-4-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-4-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-4-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-4-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-4-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-4-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-4-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          }
+        ]
+      },
+      "protocol": {
+        "days": 7,
+        "spread": 0.2725294909757163,
+        "layers": [
+          {
+            "group": "protocol",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-5-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-5-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-5-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-5-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-5-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-5-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-5-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          }
+        ]
+      }
+    },
+    "quiet": {
+      "starting": {
+        "days": 3,
+        "spread": 0.12747470713057618,
+        "layers": [
+          {
+            "group": "starting",
+            "day": "2026-10-09",
+            "at": "2026-10-09T02:00:00.000Z",
+            "sources": [
+              "old-0-9"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "starting",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-0-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "starting",
+            "day": "2026-10-27",
+            "at": "2026-10-27T02:00:00.000Z",
+            "sources": [
+              "old-0-27"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          }
+        ]
+      },
+      "notes": {
+        "days": 16,
+        "spread": 0.5167749188101746,
+        "layers": [
+          {
+            "group": "notes",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-1-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-1-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-1-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-1-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-1-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-1-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-1-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-1-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-1-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-1-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-1-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-1-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-1-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-1-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-1-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          },
+          {
+            "group": "notes",
+            "day": "2026-11-17",
+            "at": "2026-11-17T14:00:00.000Z",
+            "sources": [
+              "today-note"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5167749188101746
+          }
+        ]
+      },
+      "thoughts": {
+        "days": 6,
+        "spread": 0.23869961330312628,
+        "layers": [
+          {
+            "group": "thoughts",
+            "day": "2026-10-05",
+            "at": "2026-10-05T02:00:00.000Z",
+            "sources": [
+              "old-2-5"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-2-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-15",
+            "at": "2026-10-15T02:00:00.000Z",
+            "sources": [
+              "old-2-15"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-2-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-25",
+            "at": "2026-10-25T02:00:00.000Z",
+            "sources": [
+              "old-2-25"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-2-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          }
+        ]
+      },
+      "routine": {
+        "days": 30,
+        "spread": 0.7442708400868994,
+        "layers": [
+          {
+            "group": "routine",
+            "day": "2026-10-01",
+            "at": "2026-10-01T02:00:00.000Z",
+            "sources": [
+              "old-3-1"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-3-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-03",
+            "at": "2026-10-03T02:00:00.000Z",
+            "sources": [
+              "old-3-3"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-3-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-05",
+            "at": "2026-10-05T02:00:00.000Z",
+            "sources": [
+              "old-3-5"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-3-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-07",
+            "at": "2026-10-07T02:00:00.000Z",
+            "sources": [
+              "old-3-7"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-3-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-09",
+            "at": "2026-10-09T02:00:00.000Z",
+            "sources": [
+              "old-3-9"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-3-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-11",
+            "at": "2026-10-11T02:00:00.000Z",
+            "sources": [
+              "old-3-11"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-3-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-13",
+            "at": "2026-10-13T02:00:00.000Z",
+            "sources": [
+              "old-3-13"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-3-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-15",
+            "at": "2026-10-15T02:00:00.000Z",
+            "sources": [
+              "old-3-15"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-3-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5167749188101746
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-17",
+            "at": "2026-10-17T02:00:00.000Z",
+            "sources": [
+              "old-3-17"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5382479742172622
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-3-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5587668322400161
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-19",
+            "at": "2026-10-19T02:00:00.000Z",
+            "sources": [
+              "old-3-19"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5783738945129965
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-3-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5971096784708669
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-21",
+            "at": "2026-10-21T02:00:00.000Z",
+            "sources": [
+              "old-3-21"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6150129010765164
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-3-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6321205588285577
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-23",
+            "at": "2026-10-23T02:00:00.000Z",
+            "sources": [
+              "old-3-23"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6484680042135369
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-3-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6640890187608376
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-25",
+            "at": "2026-10-25T02:00:00.000Z",
+            "sources": [
+              "old-3-25"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6790158828512474
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-3-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6932794424234432
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-27",
+            "at": "2026-10-27T02:00:00.000Z",
+            "sources": [
+              "old-3-27"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7069091727162443
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-3-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7199332391783511
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-29",
+            "at": "2026-10-29T02:00:00.000Z",
+            "sources": [
+              "old-3-29"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7323785556714418
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-3-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7442708400868994
+          }
+        ]
+      },
+      "log-week": {
+        "days": 15,
+        "spread": 0.4943032925625275,
+        "layers": [
+          {
+            "group": "log-week",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-4-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-4-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-4-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-4-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-4-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-4-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-4-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-4-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-4-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-4-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-4-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-4-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-4-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-4-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-4-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          }
+        ]
+      },
+      "protocol": {
+        "days": 7,
+        "spread": 0.2725294909757163,
+        "layers": [
+          {
+            "group": "protocol",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-5-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-5-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-5-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-5-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-5-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-5-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-5-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          }
+        ]
+      }
+    },
+    "trash": {
+      "starting": {
+        "days": 3,
+        "spread": 0.12747470713057618,
+        "layers": [
+          {
+            "group": "starting",
+            "day": "2026-10-09",
+            "at": "2026-10-09T02:00:00.000Z",
+            "sources": [
+              "old-0-9"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "starting",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-0-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "starting",
+            "day": "2026-10-27",
+            "at": "2026-10-27T02:00:00.000Z",
+            "sources": [
+              "old-0-27"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          }
+        ]
+      },
+      "notes": {
+        "days": 15,
+        "spread": 0.4943032925625275,
+        "layers": [
+          {
+            "group": "notes",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-1-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-1-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-1-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-1-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-1-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-1-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-1-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-1-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-1-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-1-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-1-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-1-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-1-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-1-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "notes",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-1-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          }
+        ]
+      },
+      "thoughts": {
+        "days": 6,
+        "spread": 0.23869961330312628,
+        "layers": [
+          {
+            "group": "thoughts",
+            "day": "2026-10-05",
+            "at": "2026-10-05T02:00:00.000Z",
+            "sources": [
+              "old-2-5"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-2-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-15",
+            "at": "2026-10-15T02:00:00.000Z",
+            "sources": [
+              "old-2-15"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-2-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-25",
+            "at": "2026-10-25T02:00:00.000Z",
+            "sources": [
+              "old-2-25"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "thoughts",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-2-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          }
+        ]
+      },
+      "routine": {
+        "days": 30,
+        "spread": 0.7442708400868994,
+        "layers": [
+          {
+            "group": "routine",
+            "day": "2026-10-01",
+            "at": "2026-10-01T02:00:00.000Z",
+            "sources": [
+              "old-3-1"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-3-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-03",
+            "at": "2026-10-03T02:00:00.000Z",
+            "sources": [
+              "old-3-3"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-3-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-05",
+            "at": "2026-10-05T02:00:00.000Z",
+            "sources": [
+              "old-3-5"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-3-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-07",
+            "at": "2026-10-07T02:00:00.000Z",
+            "sources": [
+              "old-3-7"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-3-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-09",
+            "at": "2026-10-09T02:00:00.000Z",
+            "sources": [
+              "old-3-9"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-3-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-11",
+            "at": "2026-10-11T02:00:00.000Z",
+            "sources": [
+              "old-3-11"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-3-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-13",
+            "at": "2026-10-13T02:00:00.000Z",
+            "sources": [
+              "old-3-13"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-3-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-15",
+            "at": "2026-10-15T02:00:00.000Z",
+            "sources": [
+              "old-3-15"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-3-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5167749188101746
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-17",
+            "at": "2026-10-17T02:00:00.000Z",
+            "sources": [
+              "old-3-17"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5382479742172622
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-3-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5587668322400161
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-19",
+            "at": "2026-10-19T02:00:00.000Z",
+            "sources": [
+              "old-3-19"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5783738945129965
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-3-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.5971096784708669
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-21",
+            "at": "2026-10-21T02:00:00.000Z",
+            "sources": [
+              "old-3-21"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6150129010765164
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-3-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6321205588285577
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-23",
+            "at": "2026-10-23T02:00:00.000Z",
+            "sources": [
+              "old-3-23"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6484680042135369
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-3-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6640890187608376
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-25",
+            "at": "2026-10-25T02:00:00.000Z",
+            "sources": [
+              "old-3-25"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6790158828512474
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-3-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.6932794424234432
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-27",
+            "at": "2026-10-27T02:00:00.000Z",
+            "sources": [
+              "old-3-27"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7069091727162443
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-3-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7199332391783511
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-29",
+            "at": "2026-10-29T02:00:00.000Z",
+            "sources": [
+              "old-3-29"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7323785556714418
+          },
+          {
+            "group": "routine",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-3-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.7442708400868994
+          }
+        ]
+      },
+      "log-week": {
+        "days": 15,
+        "spread": 0.4943032925625275,
+        "layers": [
+          {
+            "group": "log-week",
+            "day": "2026-10-02",
+            "at": "2026-10-02T02:00:00.000Z",
+            "sources": [
+              "old-4-2"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-4-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-06",
+            "at": "2026-10-06T02:00:00.000Z",
+            "sources": [
+              "old-4-6"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-4-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-10",
+            "at": "2026-10-10T02:00:00.000Z",
+            "sources": [
+              "old-4-10"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-4-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-14",
+            "at": "2026-10-14T02:00:00.000Z",
+            "sources": [
+              "old-4-14"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-4-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.30485607160112127
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-18",
+            "at": "2026-10-18T02:00:00.000Z",
+            "sources": [
+              "old-4-18"
+            ],
+            "brightness": 0.6,
+            "spread": 0.33574615713570466
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-4-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3652635810597181
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-22",
+            "at": "2026-10-22T02:00:00.000Z",
+            "sources": [
+              "old-4-22"
+            ],
+            "brightness": 0.6,
+            "spread": 0.3934693402873666
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-4-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4204217212151905
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-26",
+            "at": "2026-10-26T02:00:00.000Z",
+            "sources": [
+              "old-4-26"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4461764201692413
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-4-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4707866584999497
+          },
+          {
+            "group": "log-week",
+            "day": "2026-10-30",
+            "at": "2026-10-30T02:00:00.000Z",
+            "sources": [
+              "old-4-30"
+            ],
+            "brightness": 0.6,
+            "spread": 0.4943032925625275
+          }
+        ]
+      },
+      "protocol": {
+        "days": 7,
+        "spread": 0.2725294909757163,
+        "layers": [
+          {
+            "group": "protocol",
+            "day": "2026-10-04",
+            "at": "2026-10-04T02:00:00.000Z",
+            "sources": [
+              "old-5-4"
+            ],
+            "brightness": 0.6,
+            "spread": 0.044436963731715684
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-08",
+            "at": "2026-10-08T02:00:00.000Z",
+            "sources": [
+              "old-5-8"
+            ],
+            "brightness": 0.6,
+            "spread": 0.0868992837177377
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-12",
+            "at": "2026-10-12T02:00:00.000Z",
+            "sources": [
+              "old-5-12"
+            ],
+            "brightness": 0.6,
+            "spread": 0.12747470713057618
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-16",
+            "at": "2026-10-16T02:00:00.000Z",
+            "sources": [
+              "old-5-16"
+            ],
+            "brightness": 0.6,
+            "spread": 0.1662470819248194
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-20",
+            "at": "2026-10-20T02:00:00.000Z",
+            "sources": [
+              "old-5-20"
+            ],
+            "brightness": 0.6,
+            "spread": 0.20329653010653836
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-24",
+            "at": "2026-10-24T02:00:00.000Z",
+            "sources": [
+              "old-5-24"
+            ],
+            "brightness": 0.6,
+            "spread": 0.23869961330312628
+          },
+          {
+            "group": "protocol",
+            "day": "2026-10-28",
+            "at": "2026-10-28T02:00:00.000Z",
+            "sources": [
+              "old-5-28"
+            ],
+            "brightness": 0.6,
+            "spread": 0.2725294909757163
+          }
+        ]
+      }
+    }
+  },
+  "outputs": {
+    "mixed": {
+      "path": "docs/design/personal-imprint-activity-v1-mixed.png",
+      "hash": "9ccfd30f520383a79852a3f0c3bd807570bf014117e960172e09a662687eb703"
+    },
+    "faded": {
+      "path": "docs/design/personal-imprint-activity-v1-faded.png",
+      "hash": "a47dc7d7e6a2fa5f833153119dc0a2715de45976d9093edde48f5f6c8ddad6c3"
+    },
+    "quiet": {
+      "path": "docs/design/personal-imprint-activity-v1-quiet.png",
+      "hash": "a47dc7d7e6a2fa5f833153119dc0a2715de45976d9093edde48f5f6c8ddad6c3"
+    },
+    "trash": {
+      "path": "docs/design/personal-imprint-activity-v1-trash.png",
+      "hash": "bb6a45fc50d403aa5bd577a72dd624ad6b25a81ca6e37736bdd7455eecaa849f"
+    }
+  },
+  "limits": [
+    "Synthetic data only; growth curve and numeric Orange levels remain illustrative.",
+    "Interactive phone samples approximate fine edges; these images use full-resolution visible material before reduction."
+  ]
+}
