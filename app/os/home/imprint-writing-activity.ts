@@ -9,6 +9,7 @@ type FirstUse = { group: Group; day: string; at: string; timeZone: string; fadeA
 export type WritingImprint = { sources: Record<string, string>; days: Record<string, FirstUse> };
 
 export function canReviewWritingImprint(scope: AccountScope) {
+  if (process.env.CIRCLE_IMPRINT_HOSTED_REVIEW === "enabled") return scope.kind === "account";
   return process.env.NODE_ENV === "development" && isDevelopmentTestAccount(scope);
 }
 

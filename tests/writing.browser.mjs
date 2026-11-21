@@ -9,6 +9,8 @@ import sharp from "sharp";
 
 // Exercise the exact minified styles served by Next as well as editable CSS.
 const useProductionCSS=process.env.CIRCLE_PRODUCTION_CSS==="1";
+const hostedImprintReview = process.env.CIRCLE_TEST_HOSTED_IMPRINT === "1";
+const imprintAccount = hostedImprintReview ? true : "imprint";
 const productionStylePaths=useProductionCSS?[...new Set([...readFileSync(".next/server/app/os.html","utf8").matchAll(/href="(\/_next\/static\/[^"?]+\.css)(?:\?[^" ]*)?"/g)].map(m=>m[1]))]:[];
 if(useProductionCSS)assert.ok(productionStylePaths.length,"build Next before production-CSS checks");
 const productionStyles=productionStylePaths.map(path=>readFileSync(`.next${path.slice("/_next".length)}`,"utf8")).join("\n");
@@ -79,7 +81,9 @@ test('adopted Routine template renders real rows, source details and dated compl
  assert.equal(await page.evaluate(()=>Object.keys(window.circle.state.templateAdoptions).length),1);assert.equal(await page.evaluate(()=>Object.values(window.circle.state.tasks.completions).filter(c=>c.completed).length),1);
 }));
 before(async()=>{
-  server=await createServer({configFile:false,define:{"process.env":JSON.stringify({NODE_ENV:"development"})},
+  server=await createServer({configFile:false,define:{"process.env":JSON.stringify({
+    NODE_ENV:"development", CIRCLE_IMPRINT_HOSTED_REVIEW: hostedImprintReview ? "enabled" : "disabled",
+  })},
     plugins:[react(),{name:"writing-ui-fixture",resolveId(id){if(id==="virtual:writing-ui")return "\0writing-ui.tsx";},load(id){if(id==="\0writing-ui.tsx")return useProductionCSS?harness.replace('import "/app/globals.css";','').replace('import "/app/os/os-app.css";',''):harness;},
       configureServer(vite){vite.middlewares.use(async(request,response,next)=>{
         if(useProductionCSS&&request.url==="/fixture-production.css"){response.setHeader("Content-Type","text/css; charset=utf-8");response.end(productionStyles);return;}
@@ -2323,7 +2327,7 @@ test("Home claims the Imprint pulse on arrival even when the artwork is delayed"
     await expect(canvas).toHaveAttribute("data-ready", "true");
     await expect(canvas).toHaveAttribute("data-pulsing", "false");
 
-  }, { account: "imprint", reducedMotion: "no-preference", clock: true });
+  }, { account: imprintAccount, reducedMotion: "no-preference", clock: true });
 });
 
 test("Home shows saved Imprint growth without a pulse after the window expires", { timeout: 90_000 }, async () => {
@@ -2343,7 +2347,7 @@ test("Home shows saved Imprint growth without a pulse after the window expires",
       const { data } = element.getContext("2d").getImageData(0, 0, element.width, element.height);
       return data.some((value, index) => index % 4 === 0 && value - data[index + 1] > 50);
     }), "the saved Note leaves visible Orange");
-  }, { account: "imprint", reducedMotion: "no-preference", clock: true });
+  }, { account: imprintAccount, reducedMotion: "no-preference", clock: true });
 });
 
 test("another tab's correction requires review before Note autosave",{timeout:90_000},async()=>isolated(390,async(page,context)=>{

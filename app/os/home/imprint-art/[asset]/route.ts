@@ -4,7 +4,9 @@ import { join } from "node:path";
 export const runtime = "nodejs";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ asset: string }> }) {
-  if (process.env.NODE_ENV !== "development") return new Response(null, { status: 404 });
+  if (process.env.CIRCLE_IMPRINT_HOSTED_REVIEW !== "enabled" && process.env.NODE_ENV !== "development") {
+    return new Response(null, { status: 404 });
+  }
   const { asset } = await params;
   const assetName = asset === "bone" ? "bone.png" : asset === "coordinates" ? "coordinates.bin" : null;
   if (!assetName) return new Response(null, { status: 404 });
