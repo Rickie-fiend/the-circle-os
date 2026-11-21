@@ -1,5 +1,55 @@
 # Personal Imprint: Circle OS Home
 
+## Local Chapter finishes — 2026-11-22
+
+The Starting/Chapters patch reads new finishes from saved runs in the signed-in
+Home review. The existing finish action works on new and resumed runs. The
+finish time determines the local 06:00 Circle day. Finishes each make a pulse
+available for ten seconds after successful save. The first finish sets the
+day's age and later finishes support the same growth. Reload, retries, previews,
+History, and older completed runs create no pulse. Older run dates and
+definitions are preserved. Home uses run identity and timing only.
+
+## Local Log blocks — 2026-11-22
+
+New blocks with a known end time support the signed-in Log/Week patch after
+they are saved and have ended. A newly elapsed block can pulse when the app
+is open and visible, and a late first save can pulse at acceptance. The
+clock for a day first qualified by Log starts at the qualifying block's
+recorded end. A Week check and multiple Log blocks share one day's growth.
+The original day clock remains after clearing while a source still supports
+the day. Word edits do not create another event. Reload and resume catch up
+quietly. Older blocks without recorded timing, and newly recorded blocks
+whose exact end is ambiguous because of a clock change, stay in Log history.
+
+The adapter stores the original time zone and exact end alongside the block.
+After midnight the saved Circle day remains the day of the start slot, including
+05:00–06:00. Tracked clears reuse the dated receipt that suppresses stale
+restoration. This is the local signed-in review scope. See
+[Current Task](CURRENT_TASK.md) for the review path.
+
+## Local daily Protocol seals — 2026-11-22
+
+The signed-in Imprint review now projects newly saved Protocol seals from
+the account's local Circle state. One dated seal supports the Protocol patch;
+multiple seals on the same Circle day support one day's growth. Open Home
+within ten seconds of the save to see the existing pulse. Checking terms alone
+adds no color. Undoing a required term in a running phase removes that seal's
+support. Changing an optional term or archiving a finished phase preserves it. A new
+seal after Undo can pulse, keeping the original contribution's time and zone.
+Reopening Home or loading the local records shows the saved color without a
+pulse. If neither local store saves the change, Home shows the last saved state.
+
+This slice starts with new seals, following the local Routine and Week rollout.
+Older seals remain available in Protocol history. The saved day, reward screen,
+wording, and account boundary are the existing Protocol behavior. The source
+metadata lives on the seal record alongside its status and is read by the same
+Home projection and local save acknowledgement used for Routine and Week.
+[Verification and review](CURRENT_TASK.md) are recorded separately.
+
+The previous study, initial source audit, and hosted writing evidence describe
+earlier slices. The new Protocol source work is local pending review and release.
+
 ## Activity model study — 2026-11-17
 
 The developer approved [the activity proposal](IMPRINT_ACTIVITY_PROPOSAL.md),

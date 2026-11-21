@@ -148,6 +148,7 @@ export type ChapterRun = {
   startedAt: string | null;
   updatedAt: string;
   completedAt: string | null;
+  imprintFinish?: { day: string; timeZone: string };
   deferCount?: number;
   deferredAt?: string | null;
   dismissedAt?: string | null;

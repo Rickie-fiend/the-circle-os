@@ -2301,6 +2301,413 @@ test("a fresh signed-in account sees the sample Imprint before onboarding", { sk
   }, { account: "fresh-imprint" });
 });
 
+test("Routine habit saves feed Home and Undo removes only the last daily contribution", { timeout: 90_000 }, async () => {
+  await isolated(390, async (page, context) => {
+    await page.evaluate(() => window.circle.updateState(state => {
+      for (const action of ["Read a page", "Walk outside"]) {
+        const added = window.api.addHabitDefinition(state);
+        state = window.api.updateHabitDefinitionParts(added.state, added.id, { action, identity: "A learner" });
+      }
+      return state;
+    }));
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    const pixels = () => canvas.evaluate(element => element.toDataURL());
+    const showHome = async () => {
+      await page.evaluate(() => window.navigate("/os/home"));
+      await expect(canvas).toHaveAttribute("data-ready", "true");
+    };
+    const routine = async () => {
+      await page.evaluate(() => window.navigate("/os"));
+      await openRoutineTool(page);
+      return page.locator(".os-habit-session");
+    };
+    const waitForSources = count => expect.poll(() => page.evaluate(() =>
+      window.circle.localImprint.days.flatMap(day => day.sources).length)).toBe(count);
+    const complete = async (action, count) => {
+      await (await routine()).getByRole("button", { name: `Mark done: ${action}`, exact: true }).click();
+      await waitForSources(count);
+      await showHome();
+      await expect(canvas).toHaveAttribute("data-pulsing", "true");
+      await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    };
+
+    await showHome();
+    const empty = await pixels();
+    await context.setOffline(true);
+    await complete("Read a page", 1);
+    const first = await pixels();
+    assert.notEqual(first, empty);
+    await complete("Walk outside", 2);
+    assert.equal(await pixels(), first);
+    await context.setOffline(false);
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.equal(await pixels(), first);
+
+    let box = await routine();
+    await box.getByRole("button", { name: "Undo: Read a page", exact: true }).click();
+    await waitForSources(1);
+    await showHome();
+    assert.equal(await pixels(), first);
+    box = await routine();
+    await box.getByRole("button", { name: "Record", exact: true }).click();
+    await box.getByRole("button", { name: "Undo: Walk outside", exact: true }).click();
+    await waitForSources(0);
+    await showHome();
+    assert.equal(await pixels(), empty);
+    await complete("Read a page", 1);
+    assert.equal(await pixels(), first);
+
+    box = await routine();
+    await page.evaluate(() => {
+      const set = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key.startsWith("circle-os-state-v2")) throw new DOMException("Synthetic full device", "QuotaExceededError");
+        return set.call(this, key, value);
+      };
+      const put = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (value, key) {
+        if (this.name === "state") throw new DOMException("Synthetic full device", "QuotaExceededError");
+        return put.call(this, value, key);
+      };
+    });
+    const failedSave = page.waitForEvent("console", { predicate: message =>
+      message.text() === "Circle local state could not be saved." });
+    await box.getByRole("button", { name: "Undo: Read a page", exact: true }).click();
+    await failedSave;
+    await showHome();
+    assert.equal(await pixels(), first);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+  }, { account: imprintAccount, reducedMotion: "no-preference" });
+});
+
+test("Week task check colors Log/Week, Routine Undo removes it, and Routine re-check changes patches", { timeout: 90_000 }, async () => {
+  await isolated(390, async (page, context) => {
+    const go = path => page.evaluate(path => window.navigate(path), path);
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    const showHome = async () => {
+      await go("/os/home");
+      await expect(canvas).toHaveAttribute("data-ready", "true");
+    };
+    const pixels = () => canvas.evaluate(element => element.toDataURL());
+    const groups = () => page.evaluate(() => window.circle.localImprint.days.map(day => day.group));
+    await showHome();
+    const empty = await pixels();
+    await go("/os");
+    await page.getByRole("button", { name: "Log", exact: true }).click();
+    await page.getByRole("button", { name: "Open Week", exact: true }).click();
+    const week = page.locator(".os-week-overview");
+    await week.getByRole("button", { name: "+ Add goal", exact: true }).click();
+    const goal = week.getByRole("textbox", { name: "Goal for this week", exact: true });
+    await goal.fill("Read more");
+    await goal.blur();
+    await week.getByRole("button", { name: "Show steps for Read more", exact: true }).click();
+    await week.getByRole("button", { name: "+ Add step", exact: true }).click();
+    const step = week.getByRole("textbox", { name: "One step toward this goal", exact: true });
+    await step.fill("Read one page");
+    await step.blur();
+    await context.setOffline(true);
+    await week.getByRole("button", { name: "Complete step: Read one page", exact: true }).click();
+    await expect.poll(groups).toEqual(["log-week"]);
+    await showHome();
+    await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    const weekColor = await pixels();
+    assert.notEqual(weekColor, empty);
+
+    await go("/os");
+    await openRoutineTool(page);
+    const routine = page.locator(".os-habit-session");
+    await routine.getByRole("button", { name: "Record", exact: true }).click();
+    await routine.getByRole("button", { name: "Undo task: Read one page", exact: true }).click();
+    await expect.poll(groups).toEqual([]);
+    await showHome();
+    assert.equal(await pixels(), empty);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+
+    await go("/os");
+    await openRoutineTool(page);
+    await routine.getByRole("button", { name: "Complete task: Read one page", exact: true }).click();
+    await expect.poll(groups).toEqual(["routine"]);
+    await showHome();
+    await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    const routineColor = await pixels();
+    assert.notEqual(routineColor, weekColor);
+    assert.notEqual(routineColor, empty);
+    await context.setOffline(false);
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.equal(await pixels(), routineColor);
+  }, { account: imprintAccount, reducedMotion: "no-preference" });
+});
+
+test("Chapter Imprint counts durable Day One and resumed published finishes", { timeout: 90_000 }, async () => {
+  await isolated(390, async (page, context) => {
+    const go = path => page.evaluate(path => window.navigate(path), path);
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    const days = () => page.evaluate(() => window.circle.localImprint.days);
+    const seed = (id, pin = false) => page.evaluate(({ id, pin }) => {
+      const api = window.api;
+      const chapter = api.publishedChapters.filter(chapter => chapter.id === id).at(-1);
+      const terminal = chapter.pages.find(page => page.type === "result");
+      const run = { ...api.createChapterRun(chapter), status: "in-progress",
+        currentPageId: terminal.id, furthestPageId: terminal.id, startedAt: new Date().toISOString() };
+      if (pin) api.writePinnedChapter(id);
+      window.circle.updateState(state => ({
+        ...state, chapters: { ...state.chapters, runs: {
+          ...Object.fromEntries(Object.entries(state.chapters.runs).filter(([, run]) => run.chapterId !== id)),
+          [run.runId]: run,
+        } },
+      }));
+      return run.runId;
+    }, { id, pin });
+    const finish = async (session) => {
+      await expect(session.getByText("Swipe when ready", { exact: true })).toBeVisible();
+      await session.scrollIntoViewIfNeeded();
+      const { x, y, width, height } = await session.boundingBox();
+      await page.mouse.move(x + width * .8, y + Math.min(150, height / 2));
+      await page.mouse.down();
+      await page.mouse.move(x + width * .2, y + Math.min(150, height / 2), { steps: 14 });
+      await page.mouse.up();
+    };
+    const showPulse = async () => {
+      await go("/os/home");
+      await expect(canvas).toHaveAttribute("data-ready", "true");
+      await expect(canvas).toHaveAttribute("data-pulsing", "true");
+      await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    };
+    await go("/os/home");
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    assert.deepEqual(await days(), []);
+    const dayOne = await seed("day-one");
+    await context.setOffline(true);
+    await go("/os");
+    await finish(page.locator(".os-day-one-session"));
+    await expect.poll(async () => (await days())[0]?.sources).toEqual([`chapter:${dayOne}`]);
+    await showPulse();
+    const [first] = await days();
+
+    const continued = await seed("declare-mission-statement", true);
+    await go("/os");
+    await finish(page.locator(".os-quest-step-session"));
+    await expect.poll(async () => (await days())[0]?.sources.length).toBe(2);
+    await showPulse();
+    assert.deepEqual(await days(), [{ ...first, sources: [`chapter:${dayOne}`, `chapter:${continued}`] }]);
+    await context.setOffline(false);
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+
+    await seed("declare-vision", true);
+    await go("/os");
+    await page.evaluate(() => {
+      const set = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key.startsWith("circle-os-state-v2")) throw new DOMException("Synthetic full device", "QuotaExceededError");
+        return set.call(this, key, value);
+      };
+      const put = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (value, key) {
+        if (this.name === "state") throw new DOMException("Synthetic full device", "QuotaExceededError");
+        return put.call(this, value, key);
+      };
+    });
+    const failed = page.waitForEvent("console", { predicate: message => message.text() === "Circle local state could not be saved." });
+    await finish(page.locator(".os-quest-step-session"));
+    await failed;
+    await go("/os/home");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.equal((await days())[0].sources.length, 2);
+  }, { account: imprintAccount, reducedMotion: "no-preference" });
+});
+
+test("Log Imprint waits for the end, pulses for a late save, and survives reload", { timeout: 90_000 }, async () => {
+  await isolated(390, async (page, context) => {
+    await page.clock.setSystemTime(new Date("2026-11-22T14:55:00+07:00"));
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    const go = path => page.evaluate(path => window.navigate(path), path);
+    const home = async () => {
+      await go("/os/home");
+      await expect(canvas).toHaveAttribute("data-ready", "true");
+    };
+    const openLog = async () => {
+      await go("/os");
+      if (!(await page.locator(".os-log-session").isVisible())) {
+        await page.getByRole("button", { name: "Log", exact: true }).click();
+      }
+    };
+    const save = async (hour, words, existing) => {
+      const row = page.locator(`[data-log-hour="${hour}"]`);
+      if (existing) await row.getByRole("button", { name: existing, exact: true }).click();
+      else await row.locator(".os-add-moment").click();
+      await row.getByRole("textbox", { name: /^Main activity at/ }).fill(words);
+      await row.getByRole("button", { name: "Save main activity", exact: true }).click();
+    };
+    const days = () => page.evaluate(() => window.circle.localImprint.days);
+    await home();
+    await context.setOffline(true);
+    await openLog();
+    await save(14, "An on-time walk");
+    await home();
+    assert.deepEqual(await days(), []);
+    const untilEnd = await page.evaluate(() => Date.parse("2026-11-22T15:00:00+07:00") - Date.now());
+    await page.clock.fastForward(untilEnd + 100);
+    await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    const [first] = await days();
+    assert.equal(first.at, "2026-11-22T08:00:00.000Z");
+
+    await openLog();
+    await save(13, "A late walk");
+    await home();
+    await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.equal((await days())[0].at, first.at);
+    assert.equal((await days())[0].sources.length, 2);
+    await context.setOffline(false);
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+
+    await openLog();
+    await save(14, "", "An on-time walk");
+    await home();
+    await expect.poll(async () => (await days())[0]?.sources.length).toBe(1);
+    assert.equal((await days())[0].at, first.at);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+
+    await openLog();
+    await page.evaluate(() => {
+      const set = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key.startsWith("circle-os-state-v2")) throw new DOMException("Synthetic full device", "QuotaExceededError");
+        return set.call(this, key, value);
+      };
+      const put = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (value, key) {
+        if (this.name === "state") throw new DOMException("Synthetic full device", "QuotaExceededError");
+        return put.call(this, value, key);
+      };
+    });
+    const failed = page.waitForEvent("console", { predicate: message => message.text() === "Circle local state could not be saved." });
+    await save(12, "A failed save");
+    await failed;
+    await home();
+    assert.equal((await days())[0].sources.length, 1);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await openLog();
+    await save(13, "An edited walk", "A late walk");
+    await home();
+    assert.equal((await days())[0].at, first.at);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    await openLog();
+    await save(13, "", "An edited walk");
+    await home();
+    await expect.poll(days).toEqual([]);
+  }, { account: imprintAccount, reducedMotion: "no-preference", clock: true });
+});
+
+test("a saved Protocol seal colors Home and a failed re-seal leaves the patch empty", { timeout: 90_000 }, async () => {
+  await isolated(390, async (page, context) => {
+    await page.evaluate(() => window.circle.updateState(state => {
+      const a = window.api;
+      state = a.startProtocolDraft(state, "imprint-phase").state;
+      state = a.setProtocolDays(state, "imprint-phase", 3);
+      state = a.addProtocolItem(state, "imprint-phase", "non-negotiable", "imprint-term").state;
+      state = a.updateProtocolItem(state, "imprint-phase", "imprint-term", "Read a page");
+      return a.beginProtocolRun(state, "imprint-phase", a.getDateKey());
+    }));
+    const nav = page.getByRole("navigation", { name: "Circle OS", exact: true });
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    const box = page.locator(".os-habit-session");
+    const keep = box.getByRole("button", { name: "Keep: Read a page", exact: true });
+    const seal = box.getByRole("button", { name: "Completed today", exact: true });
+    const days = () => page.evaluate(() => window.circle.localImprint.days);
+    const pixels = () => canvas.evaluate(element => element.toDataURL());
+    const home = async () => {
+      await nav.getByRole("link", { name: "Home", exact: true }).click();
+      await expect(canvas).toHaveAttribute("data-ready", "true");
+    };
+    const protocol = async () => {
+      await nav.getByRole("link", { name: "Today", exact: true }).click();
+      await openRoutineTool(page, "Protocol");
+    };
+    const observeSeal = async () => {
+      await seal.click();
+      await expect(box.getByText("Day 1 of 3 kept", { exact: true })).toBeVisible();
+      await expect.poll(async () => (await days()).map(day => day.group)).toEqual(["protocol"]);
+      await home();
+      await expect(canvas).toHaveAttribute("data-pulsing", "true");
+      await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    };
+
+    await home();
+    const empty = await pixels();
+    await context.setOffline(true);
+    await protocol();
+    await keep.click();
+    await expect(seal).toBeVisible();
+    await home();
+    assert.equal(await pixels(), empty);
+    await protocol();
+    await observeSeal();
+    const [first] = await days();
+    const colored = await pixels();
+    assert.notEqual(colored, empty);
+    await context.setOffline(false);
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.equal(await pixels(), colored);
+
+    await protocol();
+    await box.getByRole("button", { name: "Undo: Read a page", exact: true }).click();
+    await expect.poll(days).toEqual([]);
+    await home();
+    assert.equal(await pixels(), empty);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    await protocol();
+    await keep.click();
+    await observeSeal();
+    assert.deepEqual(await days(), [first]);
+    assert.equal(await pixels(), colored);
+
+    await protocol();
+    await box.getByRole("button", { name: "Undo: Read a page", exact: true }).click();
+    await expect.poll(days).toEqual([]);
+    await expect(keep).toHaveAttribute("aria-busy", "false");
+    await keep.click();
+    await expect(seal).toBeVisible();
+    await page.evaluate(() => {
+      const set = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key.startsWith("circle-os-state-v2")) throw new DOMException("Synthetic full device", "QuotaExceededError");
+        return set.call(this, key, value);
+      };
+      const put = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (value, key) {
+        if (this.name === "state") throw new DOMException("Synthetic full device", "QuotaExceededError");
+        return put.call(this, value, key);
+      };
+    });
+    const failed = page.waitForEvent("console", { predicate: message => message.text() === "Circle local state could not be saved." });
+    await seal.click();
+    await failed;
+    await home();
+    assert.equal(await pixels(), empty);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    assert.equal(await pixels(), empty);
+    assert.deepEqual(await days(), []);
+  }, { account: imprintAccount, reducedMotion: "no-preference" });
+});
+
 test("Home claims the Imprint pulse on arrival even when the artwork is delayed", { timeout: 90_000 }, async () => {
   await isolated(390, async page => {
     const nav = page.getByRole("navigation", { name: "Circle OS", exact: true });

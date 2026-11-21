@@ -1,59 +1,28 @@
 # Session handoff
 
-## Imprint activity study — 2026-11-17, Asia/Bangkok
+## Chapter finishes on Home Imprint — 2026-11-22, Asia/Bangkok
 
-**Approval/Git.** Developer approved implementing the saved activity proposal,
-including its event map and edit/Trash rules. Continued after the first partial
-model. Branch paing-branch, HEAD 4a50c2f. Existing untracked
-.codex-attachments/ and supabase/.temp/ are preserved. No staging, commit or
-deployment. [Previous snapshot](archive/2026-11-17-imprint-activity/SESSION_HANDOFF_BEFORE.md)
-preserves the brighter Orange study and Git-save history.
+**Approval and Git.** The developer approved adding new Chapter finishes to
+the Starting/Chapters patch under the signed-in review. Work stays local on
+`main` at `b95e51b` with the existing Log, Protocol and Routine/Week changes
+present. The changes are uncommitted and have not been deployed.
 
-**Implemented.** Pure receipt-based synthetic activity model/types, six-group
-qualifying map, per-owner/day growth, independent contribution-age rendering,
-1.5-second smooth/restartable pulse and reduced-motion final state. Source
-lifecycle distinguishes Trash/Restore, Undo, clearing, terminal deletion and
-archive; new completion after Undo can pulse once without refreshing its day's
-clock. Added two-owner preview actions, failure/retry/edit/future-Log controls,
-cutoff/inactivity and in-memory reconciliation. Browser reload returns to the
-seed without replaying animation. Full-resolution Sori reference/export script
-retains accepted baseline and emits four activity images/report.
+**Implementation.** The real Chapter save entries share a completion wrapper.
+It stamps the finish's original local day and zone on new completed runs.
+The account's successful device save is the boundary for color and pulse.
+Two runs on one day share one contribution age. A completed run retry preserves
+the original stamp. Drafts, previews, and older untracked runs stay outside
+the projection. The Chapter definitions, answer snapshots, protection around
+the finish gesture, and existing effects of completed Chapters stay intact.
 
-**Checks.** Bundled Node v24.22.1 was used because the default node shim reports
-no installed runtime. Focused command: node --test tests/personal-imprint-activity.test.mjs
-tests/personal-imprint-growth.test.mjs tests/personal-imprint-fade.test.mjs
-tests/personal-imprint-color.test.mjs tests/personal-imprint-orange.test.mjs:
-18/18 pass. Scoped strict tsc on imprint-activity-preview.tsx and focused ESLint
-on activity model/samples/preview, growth model, render/browser scripts and test
-pass. node scripts/render-imprint-activity.mjs verifies accepted monochrome hash;
-asset test independently checks dimensions/hashes and identical faded/quiet
-images. node scripts/review-imprint-activity.mjs verifies 360/390/416/1280px,
-six shapes at 390px, qualifying/failure/retry paths, visible pulse, lifecycle,
-cutoff, inactivity, owner isolation, reconciliation/reload, reduced motion and
-missing/incomplete/corrupt artwork. No page errors, overflow, small targets or
-storage writes. Outputs: outputs/imprint/activity-browser.json and screenshots.
-The local review server is running outside the sandbox on 127.0.0.1:3024;
-GET /?study=activity returned HTTP 200. The first sandbox server was unreachable
-from the host and was stopped. Temporary QA servers closed.
-Initial sandbox browser attempt could not find installed Chromium; browser
-checks use approved outside-sandbox execution. A final expanded check initially
-hit an ambiguous test selector; it was corrected and rerun.
+**Checks.** 40 focused Node tests passed. The Chapter compiler checked 33
+sources and zero quests. Focused ESLint and Vercel-project TypeScript passed.
+The wider Day One simplification selection still has two stale assertions
+expecting Week to remain locked. The current product allows access; that test
+and gate were outside this scope. Browser evidence is in
+[Journey testing](USER_JOURNEY_TESTING.md#chapter-finishes-on-home-imprint--2026-11-22).
+Physical phones and a hosted catalog resume remain unverified.
 
-**Limits/invariants.** Interactive fine edges remain the existing sampled-phone
-approximation; separate exported reference uses full-resolution visible material.
-No production renderer/cache or persistent contribution store. Source audit
-finds historical task origins and some original times unavailable; no history
-is inferred or imported. Accepted geometry/anchors/Bone, production Circle day,
-local-first storage, Page geometry and immutable chapters/readings are untouched.
-No real record mutations, sync activation, migration or deployment. Numeric
-growth/Orange levels and appearance remain developer review; target-phone
-performance and broader recovery/deletion/device gaps remain. Full build/suite
-were not run for the bounded isolated preview. No measured broad optimization
-is justified; equal-age layers are collapsed during painting.
-
-**Records/next.** Home brief owns source coverage/verification/limits;
-record contract and decision log describe approved synthetic projection boundaries.
-Proposal and Current Task now reflect approval.
-Developer next reviews http://127.0.0.1:3024/?study=activity, especially pulse,
-mixed ages and restoration. Production Home integration remains a separate
-reviewed scope; automatic writing sync remains off.
+**Next.** [Current Task](CURRENT_TASK.md) gives the local visual review.
+[Log handoff](archive/2026-11-22-log-imprint/SESSION_HANDOFF.md) preserves the
+previous task and its independent checks.

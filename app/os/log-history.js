@@ -23,6 +23,22 @@ export function logEntryWords(block) {
   };
 }
 
+/** @param {LogDay & { date: string, logCorrections?: Record<string, LogCorrection> }} day
+ * @param {LogBlock} block
+ * @param {string} at
+ */
+export function logClearingReceipt(day, block, at) {
+  const id = `clear:${block.id}:${at}`;
+  return {
+    ...day.logCorrections,
+    [id]: {
+      id, dateKey: day.date, blockId: block.id, correctedAt: at,
+      before: structuredClone(block),
+      after: { ...block, title: "", activity: "", note: "", moments: [], updatedAt: at },
+    },
+  };
+}
+
 /** Correct only words in an existing past entry. Receipts and the current
  * dated empty value survive independently; clearing never removes its ID.
  * @param {import("./circle-os-shell").CircleState} state

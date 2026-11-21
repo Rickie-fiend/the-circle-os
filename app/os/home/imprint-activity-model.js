@@ -37,12 +37,15 @@ export function acceptActivity(state, action) {
   if (previous.source !== source || previous.group !== group || previous.day !== day || time(previous.at) !== applied) throw Error('An activity operation cannot change identity or time.');
   return {state,pulse:false};
  }
- // A source identifies one occurrence (task/habit + day, seal + day, or run).
- // It cannot acquire a second area through another completion surface.
+ // A task can change areas only after its active completion has been undone.
  const existing=state.sources.find(item => item.owner===owner&&item.source===source);
- if(existing && (existing.status!=='undone'||!['habit-completed','task-completed','protocol-sealed'].includes(action.kind)||existing.group!==group||existing.day!==day))return {state,pulse:false};
+ const movingTask=existing?.task===true&&action.kind==='task-completed';
+ if(existing && (existing.status!=='undone'||!['habit-completed','task-completed','protocol-sealed'].includes(action.kind)||
+  (!movingTask&&(existing.group!==group||existing.day!==day))))return {state,pulse:false};
  const receipt={owner,group,day,source,at:new Date(applied).toISOString(),operation};
- return {state:{sources:existing?state.sources.map(item=>item===existing?{...item,status:'active'}:item):[...state.sources,{...receipt,status:'active'}],receipts:[...state.receipts,receipt]},pulse:true};
+ const nextSource={...receipt,at:existing?.group===group&&existing.day===day?existing.at:receipt.at,
+  ...(action.kind==='task-completed'?{task:true}:{}),status:'active'};
+ return {state:{sources:existing?state.sources.map(item=>item===existing?nextSource:item):[...state.sources,nextSource],receipts:[...state.receipts,receipt]},pulse:true};
 }
 
 export function changeActivitySource(state, owner, source, change) {
@@ -63,7 +66,9 @@ export function activityContributions(state, owner, now) {
   groups.get(key).push(item);
  }
  return [...groups.values()].filter(items => items.some(item => item.status === 'active')).map(items => {
-  const original = items.reduce((first,item) => time(item.at) < time(first.at) ? item : first);
+  const {group,day}=items[0];
+  const original = state.receipts.filter(receipt=>receipt.owner===owner&&receipt.group===group&&receipt.day===day)
+   .reduce((first,item) => time(item.at) < time(first.at) ? item : first,items[0]);
   return {group:original.group,day:original.day,at:original.at,sources:items.filter(item => item.status === 'active').map(item => item.source).sort(),brightness:colorBrightnessAt(original.at,now)};
  }).sort((a,b) => time(a.at)-time(b.at) || a.day.localeCompare(b.day) || a.group.localeCompare(b.group));
 }

@@ -68,14 +68,16 @@ export async function loadCircleState(scope: AccountScope) {
   return normalizeState(newest?.state ?? createEmptyState());
 }
 
-export function saveCircleState(scope: AccountScope, state: unknown) {
+export function saveCircleState(scope: AccountScope, state: unknown, acceptLocalFallback = false) {
   const storageKey = accountStorageKey(scope, CIRCLE_OS_STORAGE_KEY);
   const record: StoredCircleState = {
     savedAt: new Date().toISOString(),
     state: structuredClone(state),
   };
+  let localSaved = false;
   try {
     window.localStorage.setItem(storageKey, JSON.stringify(record));
+    localSaved = true;
   } catch {
     // IndexedDB remains the main phone copy when localStorage is unavailable.
   }
@@ -84,7 +86,12 @@ export function saveCircleState(scope: AccountScope, state: unknown) {
     .catch(() => undefined)
     .then(async () => {
       assertAccountScope(scope);
-      await indexedState(scope, "readwrite", (store) => store.put(record, CIRCLE_OS_STORAGE_KEY));
+      try {
+        await indexedState(scope, "readwrite", (store) => store.put(record, CIRCLE_OS_STORAGE_KEY));
+      } catch (error) {
+        assertAccountScope(scope);
+        if (!acceptLocalFallback || !localSaved) throw error;
+      }
     });
   return saveQueue;
 }

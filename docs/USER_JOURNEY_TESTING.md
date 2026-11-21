@@ -1,5 +1,69 @@
 # Circle OS user-journey test record
 
+## Chapter finishes on Home Imprint — 2026-11-22
+
+Two compiled-CSS Chromium cases passed at 390px in the synthetic signed-in
+harness. The Chapter case resumes Day One and a bundled published Chapter
+from their saved finish Pages. The actual final swipe saves each while
+offline, Home pulses twice with one day's growth, and reload shows the
+saved color without replay. Forced failures in both local stores leave the
+last saved patch intact. The delayed-artwork Home pulse case also passed.
+The direct hosted catalog route and physical devices remain unverified.
+
+40 focused model tests passed, including the 06:00 boundary, old-run exclusion,
+retry age, and preservation of exact-version history. The Chapter compiler
+checked 33 sources and zero quests. Focused ESLint and TypeScript passed.
+Two other Day One simplification assertions still expect the retired Week
+gate and fail independently of this Chapter Imprint change.
+
+## Log blocks on Home Imprint — 2026-11-22
+
+The synthetic signed-in Chromium journey at 390px saves a Log block offline
+before its end, enters Home, advances the clock through the boundary, and
+observes a single pulse. A later save for an already-ended slot pulses in the
+same patch and preserves the first day's age. The journey also checks settled
+color on reload, a forced failure of both local stores, removal of a supporting
+block and the last block, and word edits without another pulse. The model
+checks pin midnight and 06:00 attribution, DST
+ambiguity, the shared Week clock, and stale-copy suppression after clearing.
+
+The compiled-CSS selection also verified full-page Log adoption at
+360/390/416px, past Log corrections at 360/390px, the Week task Imprint path,
+and 360/416px tool matrices and reference geometry at 360/390px. The 390px
+matrix missed a Deep Thoughts Trash header animation sample in that selection
+and a Protocol draft header animation sample on rerun. It passed in isolation
+against the freshly built CSS. The Log-specific and Week Imprint paths
+passed both selections. Hosted and physical-phone journeys
+remain outside this local evidence.
+
+## Protocol seals on Home Imprint — 2026-11-22
+
+The 390px Chromium case uses the actual Protocol controls, account-scoped local
+stores and Home canvas in the synthetic signed-in harness. A term tick alone
+leaves the canvas unchanged. A seal while offline colors one patch and pulses on
+Home arrival. Reload shows the same settled pixels without a pulse. Undo of a
+required term removes the color, and re-sealing returns the same color and
+original fade clock. When both local stores reject the next seal, Home stays
+empty through reload. Browser networking was restricted to the local harness.
+
+`CIRCLE_TEST_HOSTED_IMPRINT=1 CIRCLE_PRODUCTION_CSS=1 node --test` on the selected
+`tests/writing.browser.mjs` cases passed the final eight-case run. It covered the
+Protocol seal journey and interaction audit, Routine/Week and delayed Home pulse
+regressions, the 390px tool matrix and both geometry checks. The 360px and 416px
+tool matrices passed in the earlier run. The first 390px matrix missed a
+Deep Thoughts Trash header animation sample and passed on rerun. The earlier
+Protocol journey clicked the re-check during its busy state; waiting for the
+control to settle allowed the failure and reload checks to run. The shared
+Note, Deep Thoughts, Habit and Protocol references measured 648px high with
+24px anchors and no nested scroller at 360/390px. Chromium emitted the known
+ResizeObserver notification during other tool journeys.
+
+41 focused model tests passed. They include original age after re-sealing,
+duplicate acceptance, two seals sharing one day, older untracked seals, required
+and optional terms, archive behavior and the 06:00 boundary. The pre-existing
+Protocol Footer source assertion also failed before editing. This is local
+Chromium evidence. Real phones and the deployed signed-in journey were not tested.
+
 ## Local synthetic backup and restore — 2026-11-15
 
 Developer approved the automated local rehearsal, official image downloads,

@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -74,6 +75,7 @@ import {
   setDreamlineStepDone,
   startDreamline,
   toggleProtocolItem,
+  protocolSealId,
   updateProtocolItem,
   previousDateKey,
   reopenTask,
@@ -90,6 +92,7 @@ import {
   setDayLogRange,
   setDayTitle,
   toggleHabitForDay,
+  habitCompletionId,
   updateHabitDefinition,
   updateHabitDefinitionDraft,
   updateDreamlineSetup,
@@ -104,7 +107,23 @@ import {
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
-import { WritingProvider, useWriting } from "./writing-provider";
+import { WritingProvider, useWriting, type WritingImprintPulse } from "./writing-provider";
+import { canReviewWritingImprint, type ImprintDay } from "./home/imprint-writing-activity";
+import {
+  chapterImprintSource,
+  projectLocalImprint,
+  protocolImprintSource,
+  routineImprintSource,
+  stampChapterFinish,
+  taskImprintGroup,
+  taskImprintSource,
+  type ProtocolImprintSeal,
+  type RoutineCompletion,
+  type TaskImprintRecord,
+  type TaskOrigin,
+} from "./home/imprint-local-activity";
+import { captureLogImprint, logImprintSources, type LogImprintTiming } from "./home/imprint-log-activity";
+import { writingAttribution } from "./writing-model.js";
 import { AccountWritingPage } from "./writing-pages";
 import { pickQuote } from "./quotes/quote-client";
 import { QuotePage, type QuoteNavigation } from "./quotes/quote-page";
@@ -127,7 +146,7 @@ import { sizeTextAreaToContent } from "./text-area-size";
 import { useAppBack } from "./app-back";
 import { AccountMenu } from "./auth/account-menu";
 import { useAccountIdentity } from "./auth/account-context";
-import { correctLogEntry, logHistoryDays, type LogCorrection } from "./log-history.js";
+import { correctLogEntry, logClearingReceipt, logHistoryDays, type LogCorrection } from "./log-history.js";
 import { LogHistoryPage } from "./log-history-page";
 import { weekHistory, weekActivityHistory } from "./week-history.js";
 import { WeekHistoryPage } from "./week-history-page";
@@ -589,7 +608,7 @@ export function PublishedChapterDelivery({
   onCompleted?: (state: CircleState, run: ChapterRun) => CircleState;
   runId?: string;
 }) {
-  const { state, updateState, dateKey } = useCircleState();
+  const { state, updateState, updateChapterState, dateKey } = useCircleState();
   const chapter = publication.chapter;
   const activeRunId = runId || chapterRunId(chapter);
   const createActiveRun = () => ({
@@ -605,7 +624,7 @@ export function PublishedChapterDelivery({
     if (nextRun.status === "completed" && run.status !== "completed") {
       onCompletedReturn?.();
     }
-    updateState((current) => {
+    updateChapterState(nextRun, (current) => {
       if (chapter.id === "day-one") {
         return saveDayOneProgress(current, chapter, nextRun, dateKey);
       }
@@ -808,6 +827,7 @@ export type TimeBlock = {
   moments?: string[];
   createdAt: string;
   updatedAt?: string;
+  imprintLog?: LogImprintTiming;
 };
 
 type CircleDay = {
@@ -949,11 +969,8 @@ export type CircleState = {
     >;
     completions: Record<
       string,
-      {
-        id: string;
+      RoutineCompletion & {
         habitId: string;
-        dateKey: string;
-        completed: boolean;
         completedAt: string | null;
         updatedAt: string;
         snapshot?: {
@@ -966,7 +983,7 @@ export type CircleState = {
     >;
   };
   tasks: {
-    completions?: Record<string, { id: string; taskId: string; dateKey: string; completed: boolean; updatedAt: string; completedAt: string | null; text: string }>;
+    completions?: Record<string, { id: string; taskId: string; dateKey: string; completed: boolean; updatedAt: string; completedAt: string | null; text: string; imprint?: TaskImprintRecord }>;
     items: Record<
       string,
       {
@@ -980,6 +997,7 @@ export type CircleState = {
         createdAt: string;
         updatedAt: string;
         completedAt: string | null;
+        imprint?: TaskImprintRecord;
       }
     >;
   };
@@ -1056,7 +1074,7 @@ export type CircleState = {
   protocol: {
     runs: Record<string, Record<string, unknown>>;
     completions: Record<string, Record<string, unknown>>;
-    seals: Record<string, Record<string, unknown>>;
+    seals: Record<string, ProtocolImprintSeal & Record<string, unknown>>;
     corrections: Record<string, Record<string, unknown>>;
   };
   evidence: {
@@ -1120,6 +1138,12 @@ type CircleStateContextValue = {
     reason?: string,
   ) => void;
   updateState: (transform: (state: CircleState) => CircleState) => void;
+  toggleRoutineHabit: (id: string) => void;
+  changeTaskCompletion: (id: string, completed: boolean, origin?: TaskOrigin) => void;
+  sealProtocolForDay: (runId: string, day: string) => void;
+  updateChapterState: (run: ChapterRun, transform: (state: CircleState) => CircleState) => void;
+  trackLogImprint: boolean;
+  localImprint: { days: ImprintDay[]; takePulses: (sources: Set<string>) => WritingImprintPulse[] };
   updateDay: (
     key: string,
     transform: (day: CircleDay) => CircleDay,
@@ -1244,6 +1268,80 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
   const syncing = useRef(false);
   const syncPending = useRef(false);
   const lastServerSignature = useRef("");
+  const reviewImprint = canReviewWritingImprint(scope);
+  const [savedActivity, setSavedActivity] = useState<{
+    habits: CircleState["habits"]["completions"];
+    tasks: CircleState["tasks"];
+    seals: CircleState["protocol"]["seals"];
+    days: CircleState["days"];
+    chapters: CircleState["chapters"]["runs"];
+  } | null>(null);
+  const activityActions = useRef(new Map<string, { operation: string; group: ImprintDay["group"];
+    read: (state: CircleState) => { operation: string | undefined; completed: boolean } | undefined }>());
+  const activityPulses = useRef(new Map<string, { group: ImprintDay["group"]; expires: number; serial: number }>());
+  const activityPulseSerial = useRef(0);
+  const observedLogs = useRef<Map<string, boolean> | null>(null);
+  const [logClock, setLogClock] = useState(() => ({ now: Date.now() }));
+  const savedLogDays = savedActivity?.days;
+  const logs = useMemo(() => savedLogDays ? logImprintSources(savedLogDays) : [], [savedLogDays]);
+  const savedHabits = savedActivity?.habits;
+  const savedTasks = savedActivity?.tasks;
+  const savedSeals = savedActivity?.seals;
+  const savedChapters = savedActivity?.chapters;
+  const localDays = useMemo(() => savedHabits
+    ? projectLocalImprint(savedHabits, savedTasks, savedSeals, logs, logClock.now, savedChapters) : [],
+    [savedHabits, savedTasks, savedSeals, logs, logClock, savedChapters]);
+  const takeLocalPulses = useCallback((activeSources: Set<string>): WritingImprintPulse[] => {
+    if (!isAccountScopeCurrent(scope)) return [];
+    const events = new Map<string, WritingImprintPulse>();
+    const now = performance.now();
+    for (const [source, pulse] of activityPulses.current) {
+      activityPulses.current.delete(source);
+      if (pulse.expires < now || !activeSources.has(source)) continue;
+      const event = events.get(pulse.group);
+      events.set(pulse.group, { group: pulse.group, serial: Math.max(event?.serial ?? 0, pulse.serial),
+        sources: [...(event?.sources ?? []), source] });
+    }
+    return [...events.values()];
+  }, [scope]);
+
+  useEffect(() => {
+    if (!savedLogDays) return;
+    let timer: number | undefined;
+    const observe = (quiet: boolean) => {
+      window.clearTimeout(timer);
+      if (!isAccountScopeCurrent(scope)) return;
+      const previous = observedLogs.current;
+      const next = new Map<string, boolean>();
+      const now = Date.now();
+      let nearest = Infinity;
+      for (const log of logs) {
+        if (!log.active) continue;
+        const elapsed = log.eligibleAt <= now;
+        const alreadyObserved = previous?.get(log.source) === true;
+        next.set(log.source, elapsed || alreadyObserved);
+        if (!elapsed) nearest = Math.min(nearest, log.eligibleAt);
+        if (elapsed && !alreadyObserved && previous && !quiet && document.visibilityState === "visible") {
+          const remaining = previous.has(log.source) ? 10_000 - (now - log.eligibleAt) : 10_000;
+          if (remaining > 0) activityPulses.current.set(log.source, {
+            group: "log-week", expires: performance.now() + remaining, serial: ++activityPulseSerial.current,
+          });
+        }
+      }
+      observedLogs.current = next;
+      setLogClock({ now });
+      if (Number.isFinite(nearest)) {
+        timer = window.setTimeout(() => observe(false), Math.min(2_147_483_647, nearest - now));
+      }
+    };
+    const resume = () => observe(true);
+    observe(false);
+    document.addEventListener("visibilitychange", resume);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", resume);
+    };
+  }, [logs, savedLogDays, scope]);
 
   useEffect(() => {
     stateRef.current = state;
@@ -1280,6 +1378,8 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
       }
       if (!active || !isAccountScopeCurrent(scope)) return;
       stateRef.current = next;
+      if (reviewImprint) setSavedActivity({ habits: next.habits.completions, tasks: next.tasks,
+        seals: next.protocol.seals, days: next.days, chapters: next.chapters.runs });
       setState(next);
       setReady(true);
     }).catch(() => {
@@ -1289,15 +1389,39 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     return () => {
       active = false;
     };
-  }, [scope]);
+  }, [scope, reviewImprint]);
 
   useEffect(() => {
     if (!ready) return;
     if (!isAccountScopeCurrent(scope)) return;
-    void saveCircleState(scope, state).catch(() => {
+    const finishActivity = (saved: boolean) => {
+      if (!reviewImprint || !isAccountScopeCurrent(scope)) return;
+      for (const [source, action] of activityActions.current) {
+        const completion = action.read(state);
+        if (completion?.operation !== action.operation) continue;
+        activityActions.current.delete(source);
+        if (!saved) continue;
+        activityPulses.current.delete(source);
+        if (completion.completed && document.visibilityState === "visible") {
+          const now = performance.now();
+          for (const [id, pulse] of activityPulses.current) {
+            if (pulse.expires < now) activityPulses.current.delete(id);
+          }
+          activityPulses.current.set(source, { group: action.group, expires: now + 10_000, serial: ++activityPulseSerial.current });
+        }
+      }
+      if (saved) {
+        const { habits: { completions }, tasks, protocol: { seals }, days, chapters: { runs } } = state;
+        setSavedActivity(previous => previous?.habits === completions && previous.tasks === tasks &&
+          previous.seals === seals && previous.days === days && previous.chapters === runs
+          ? previous : { habits: completions, tasks, seals, days, chapters: runs });
+      }
+    };
+    void saveCircleState(scope, state, reviewImprint).then(() => finishActivity(true)).catch(() => {
+      finishActivity(false);
       if (isAccountScopeCurrent(scope)) console.error("Circle local state could not be saved.");
     });
-  }, [ready, state, scope]);
+  }, [ready, state, scope, reviewImprint]);
 
   useEffect(() => {
     if (!ready || scope.kind !== "legacy" || !state.ai.baseUrl) return;
@@ -1494,6 +1618,110 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     setState((current) => isAccountScopeCurrent(scope) ? transform(current) : current);
   }
 
+  function updateChapterState(run: ChapterRun, transform: (state: CircleState) => CircleState) {
+    if (!isAccountScopeCurrent(scope)) return;
+    const { runId, completedAt } = run;
+    if (!reviewImprint || run.status !== "completed" || !completedAt || !Number.isFinite(Date.parse(completedAt))) {
+      updateState(transform);
+      return;
+    }
+    const { day, timeZone } = writingAttribution(completedAt, Intl.DateTimeFormat().resolvedOptions().timeZone);
+    if (stateRef.current.chapters.runs[runId]?.status !== "completed") {
+      activityActions.current.set(chapterImprintSource(runId), {
+        operation: completedAt, group: "starting",
+        read: saved => {
+          const record = saved.chapters.runs[runId];
+          return record?.imprintFinish && { operation: record.completedAt ?? undefined, completed: record.status === "completed" };
+        },
+      });
+    }
+    updateState(current => {
+      const next = transform(current);
+      const saved = next.chapters.runs[runId];
+      const stamped = stampChapterFinish(current.chapters.runs[runId], saved, completedAt, { day, timeZone });
+      if (!stamped || stamped === saved) return next;
+      return { ...next, chapters: { ...next.chapters, runs: { ...next.chapters.runs, [runId]: stamped } } };
+    });
+  }
+
+  function toggleRoutineHabit(id: string) {
+    if (!isAccountScopeCurrent(scope)) return;
+    if (!reviewImprint) {
+      updateState(current => toggleHabitForDay(current, id, dateKey));
+      return;
+    }
+    const at = new Date();
+    const day = getDateKey(at);
+    const habit = stateRef.current.habits.definitions[id];
+    if (!habit || habit.status !== "active" || !routineHabitVisible(stateRef.current, habit, day)) return;
+    const action = { id: crypto.randomUUID(), at: at.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+    const key = habitCompletionId(id, day);
+    activityActions.current.set(routineImprintSource(key), {
+      operation: action.id, group: "routine",
+      read: saved => {
+        const completion = saved.habits.completions[key];
+        return completion && { operation: completion.imprintOperation, completed: completion.completed };
+      },
+    });
+    updateState(current => toggleHabitForDay(current, id, day, action));
+  }
+
+  function changeTaskCompletion(id: string, completed: boolean, origin?: TaskOrigin) {
+    if (!isAccountScopeCurrent(scope)) return;
+    const change = completed ? completeTask : reopenTask;
+    if (!reviewImprint) {
+      updateState(current => change(current, id, dateKey));
+      return;
+    }
+    const task = stateRef.current.tasks.items[id];
+    if (!task || task.status === "archived") return;
+    const at = new Date();
+    const day = getDateKey(at);
+    const repeating = Boolean(task.schedule && task.schedule.mode !== "once");
+    const key = repeating ? `${day}:${id}` : id;
+    const previous = repeating ? stateRef.current.tasks.completions?.[key]?.imprint : task.imprint;
+    const checkedView = origin ?? previous?.origin;
+    if (!checkedView) {
+      updateState(current => change(current, id, day));
+      return;
+    }
+    const action = { id: crypto.randomUUID(), at: at.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, origin };
+    activityActions.current.set(taskImprintSource(key, repeating), {
+      operation: action.id, group: taskImprintGroup(checkedView),
+      read: saved => {
+        const occurrence = repeating ? saved.tasks.completions?.[key] : null;
+        const current = saved.tasks.items[id];
+        return repeating
+          ? occurrence && { operation: occurrence.imprint?.operation, completed: occurrence.completed } || undefined
+          : current && { operation: current.imprint?.operation, completed: current.status === "completed" };
+      },
+    });
+    updateState(current => change(current, id, day, action));
+  }
+
+  function sealProtocolForDay(runId: string, day: string) {
+    if (!isAccountScopeCurrent(scope)) return;
+    if (!reviewImprint) {
+      updateState(current => sealProtocolDay(current, day));
+      return;
+    }
+    const key = protocolSealId(runId, day);
+    if (stateRef.current.protocol.seals[key]?.sealed) return;
+    const action = {
+      id: crypto.randomUUID(), runId, at: new Date().toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+    activityActions.current.set(protocolImprintSource(key), {
+      operation: action.id, group: "protocol",
+      read: saved => {
+        const seal = saved.protocol.seals[key];
+        return seal && { operation: seal.imprintOperation, completed: seal.sealed === true };
+      },
+    });
+    updateState(current => sealProtocolDay(current, day, action));
+  }
+
   async function connectAi(baseUrl: string, token: string) {
     const connected = connectLocalAi(stateRef.current, baseUrl, token);
     const result = await syncCircleState(connected, scope);
@@ -1539,6 +1767,12 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     recoverProfile,
     updateProfile,
     updateState,
+    toggleRoutineHabit,
+    changeTaskCompletion,
+    sealProtocolForDay,
+    updateChapterState,
+    trackLogImprint: reviewImprint,
+    localImprint: { days: localDays, takePulses: takeLocalPulses },
     updateDay,
     updateToday,
   };
@@ -1812,7 +2046,7 @@ function hourFromTime(value: string, fallback: number) {
 }
 
 export function TodayExperience() {
-  const { state, today, ready, dateKey, updateState, updateToday } =
+  const { state, today, ready, dateKey, updateState, updateToday, updateChapterState, toggleRoutineHabit, changeTaskCompletion, sealProtocolForDay, trackLogImprint } =
     useCircleState();
   const writing = useWriting();
   const accountIdentity = useAccountIdentity();
@@ -2323,7 +2557,7 @@ export function TodayExperience() {
       return;
     }
     if (pinnedChapter.id === 'habit-building') { saveHabitBuildingRun(nextRun); return; }
-    updateState((current) =>
+    updateChapterState(nextRun, (current) =>
       storeChapterRun(current, nextRun, pinnedChapter.session),
     );
   }
@@ -2331,7 +2565,7 @@ export function TodayExperience() {
   function saveDayOpenRun(nextRun: ChapterRun) {
     if (nextRun.status === "completed") releasePinnedDoor();
     if (!dayOpenChapter) return;
-    updateState((current) =>
+    updateChapterState(nextRun, (current) =>
       storeChapterRun(current, nextRun, dayOpenChapter.session),
     );
   }
@@ -3047,7 +3281,7 @@ export function TodayExperience() {
   }
 
   function toggleHabit(id: string) {
-    updateState((current) => toggleHabitForDay(current, id, dateKey));
+    toggleRoutineHabit(id);
   }
 
   function clearTaskExit(id: string) {
@@ -3064,7 +3298,7 @@ export function TodayExperience() {
     clearTaskExit(id);
     setLeavingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
     setFadingMissionIds((ids) => ids.filter((missionId) => missionId !== id));
-    updateState((current) => reopenTask(current, id, dateKey));
+    changeTaskCompletion(id, false);
   }
 
   // Goals and tasks save directly, fade immediately, then release their row.
@@ -3094,7 +3328,7 @@ export function TodayExperience() {
     goalExitTimers.current[id] = { remove };
   }
 
-  function finishTask(id: string) {
+  function finishTask(id: string, origin: TaskOrigin) {
     const task = state.tasks.items[id];
     if (!task || !task.text.trim()) return;
     if (task.status === "completed" || state.tasks.completions?.[`${dateKey}:${id}`]?.completed) {
@@ -3102,7 +3336,7 @@ export function TodayExperience() {
       return;
     }
     clearTaskExit(id);
-    updateState((current) => completeTask(current, id, dateKey));
+    changeTaskCompletion(id, true, origin);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     setLeavingMissionIds((ids) => [...new Set([...ids, id])]);
     // Match the Habit handoff: respond/fade for 300ms, then release the row
@@ -3166,7 +3400,7 @@ export function TodayExperience() {
           kind: item.kind,
         })),
     };
-    updateState((current) => sealProtocolDay(current, dateKey));
+    sealProtocolForDay(seal.runId, dateKey);
     setSealedProtocolDay(seal);
   }
 
@@ -3302,14 +3536,18 @@ export function TodayExperience() {
         ? crypto.randomUUID()
         : `block-${Date.now()}`);
     const updatedAt = new Date().toISOString();
+    const imprintLog = trackLogImprint && !editingId ? captureLogImprint(dateKey, start, end) : undefined;
     updateToday((day) => {
+      const existing = day.timeBlocks.find((block) => block.id === id);
       if (!cleanTitle && !cleanMoments.length) {
         return {
           ...day,
           timeBlocks: day.timeBlocks.filter((block) => block.id !== id),
+          ...(existing?.imprintLog ? { logCorrections: logClearingReceipt(day, existing, updatedAt) } : {}),
         };
       }
       return upsertTimeBlock(day, {
+        ...existing,
         id,
         start,
         end,
@@ -3317,10 +3555,9 @@ export function TodayExperience() {
         note: "",
         title: cleanTitle,
         moments: cleanMoments,
-        createdAt:
-          day.timeBlocks.find((block) => block.id === id)?.createdAt ??
-          updatedAt,
+        createdAt: existing?.createdAt ?? updatedAt,
         updatedAt,
+        ...(imprintLog ? { imprintLog } : {}),
       });
     }, "day-log");
     resetLogForm();
@@ -3335,7 +3572,9 @@ export function TodayExperience() {
       return;
     }
     const startTime = hourLabel(hour);
+    const endTime = hourLabel(hour + 1);
     const updatedAt = new Date().toISOString();
+    const imprintLog = trackLogImprint ? captureLogImprint(dateKey, startTime, endTime) : undefined;
     updateToday((day) => {
       const existing = day.timeBlocks.find(
         (block) => block.start === startTime,
@@ -3347,13 +3586,14 @@ export function TodayExperience() {
               ? crypto.randomUUID()
               : `block-${Date.now()}`,
           start: startTime,
-          end: hourLabel(hour + 1),
+          end: endTime,
           activity: "",
           note: "",
           title: "",
           moments: [moment],
           createdAt: updatedAt,
           updatedAt,
+          ...(imprintLog ? { imprintLog } : {}),
         });
       }
       return {
@@ -3397,6 +3637,7 @@ export function TodayExperience() {
     ).trim();
     const updatedAt = new Date().toISOString();
     updateToday((day) => {
+      const existing = day.timeBlocks.find(item => item.id === block.id);
       const nextBlocks = day.timeBlocks
         .map((item) => {
           if (item.id !== block.id) return item;
@@ -3413,7 +3654,10 @@ export function TodayExperience() {
             Boolean((item.title || item.activity || "").trim()) ||
             Boolean(item.moments?.length),
         );
-      return { ...day, timeBlocks: nextBlocks };
+      const cleared = existing?.imprintLog && !nextBlocks.some(item => item.id === existing.id);
+      return { ...day, timeBlocks: nextBlocks,
+        ...(cleared ? { logCorrections: logClearingReceipt(day, existing, updatedAt) } : {}),
+      };
     }, "day-log");
     setEditingMomentKey(null);
     setMomentDraft("");
@@ -3435,7 +3679,7 @@ export function TodayExperience() {
         checkInIdleTimer.current = null;
       }, 420);
     }
-    updateState((current) => {
+    updateChapterState(nextRun, (current) => {
       if (profileSparkChapter.id === "day-one") {
         return saveDayOneProgress(current, profileSparkChapter, nextRun, dateKey);
       }
@@ -3564,7 +3808,7 @@ export function TodayExperience() {
       setFinishedDayOneVersion(chapter.version);
       releasePinnedDoor();
     }
-    updateState((current) => saveDayOneProgress(current, chapter, nextRun, dateKey));
+    updateChapterState(nextRun, (current) => saveDayOneProgress(current, chapter, nextRun, dateKey));
   }
 
   /**
@@ -3579,7 +3823,7 @@ export function TodayExperience() {
   function saveWeekSetupRun(nextRun: ChapterRun) {
     if (nextRun.status === "completed") releasePinnedDoor();
     if (!weekSetupChapter) return;
-    updateState((current) => {
+    updateChapterState(nextRun, (current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(current, nextRun, weekSetupChapter.session);
       if (nextRun.status !== "completed" || previousRun?.status === "completed") {
@@ -3665,7 +3909,7 @@ export function TodayExperience() {
     if (nextRun.status === "completed") releasePinnedDoor();
     if (!weekReviewChapter) return;
     const reviewedWeek = weekBeingReviewed;
-    updateState((current) => {
+    updateChapterState(nextRun, (current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
       let next = storeChapterRun(current, nextRun, weekReviewChapter.session);
       if (nextRun.status !== "completed" || previousRun?.status === "completed") {
@@ -3737,7 +3981,7 @@ export function TodayExperience() {
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
     if (!habitBuildingChapter) return;
-    updateState((current) => {
+    updateChapterState(nextRun, (current) => {
       const previousRun = current.chapters.runs[nextRun.runId];
       const next = storeChapterRun(
         current,
@@ -3755,7 +3999,7 @@ export function TodayExperience() {
     submission?: ChapterSubmission,
   ) {
     if (!logSetupChapter) return;
-    updateState((current) => {
+    updateChapterState(nextRun, (current) => {
       let next = storeChapterRun(current, nextRun, logSetupChapter.session);
       const page = submission?.page;
       if (page?.answerKey && submission?.value !== undefined) {
@@ -4376,7 +4620,7 @@ export function TodayExperience() {
                     </article>)}
                     {todaySoFar.tasks.map((task: { id: string; text: string }) => <article className="os-extra-mission os-record-row is-task" key={task.id}>
                       <p className="os-record-text">{task.text}</p>
-                      <CreativeButton aria-label={`Undo task: ${task.text}`} aria-pressed className="os-row-tick os-row-tick-task" keepMountedOnSuccess onClick={() => finishTask(task.id)} release="latch" role="habit" styleId="soft-clay" type="button" />
+                      <CreativeButton aria-label={`Undo task: ${task.text}`} aria-pressed className="os-row-tick os-row-tick-task" keepMountedOnSuccess onClick={() => finishTask(task.id, "routine")} release="latch" role="habit" styleId="soft-clay" type="button" />
                     </article>)}
                   </div> : <p className="os-yesterday-empty">Nothing completed yet today.</p>}
                 </section>
@@ -4584,7 +4828,7 @@ export function TodayExperience() {
                             className={`os-row-tick os-row-tick-task${goalStepForTask(state, task.id) ? " os-row-tick-week" : ""}`}
                             disabled={!task.text.trim()}
                             keepMountedOnSuccess
-                            onClick={() => finishTask(task.id)}
+                            onClick={() => finishTask(task.id, "routine")}
                             release="latch"
                             role="habit"
                             styleId="soft-clay"
@@ -5118,7 +5362,7 @@ export function TodayExperience() {
               onStepText={(id, text) => updateState(current => updateTask(current, id, text))}
               onFinishStepEdit={finishStepEdit}
               onToggleGoal={finishWeekGoal}
-              onToggleStep={finishTask}
+              onToggleStep={(id) => finishTask(id, "week")}
               review={logChosenDay.name === "Sunday" &&
                 !weekWasReviewed(state, weekStartKey(logChosenDay.dateKey)) ? (
                   <CreativeButton className="os-week-review-open"

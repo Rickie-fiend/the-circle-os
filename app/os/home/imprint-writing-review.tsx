@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { WritingContextValue, WritingImprintPulse } from "../writing-provider";
+import type { WritingImprintPulse } from "../writing-provider";
 import { ActivityCanvas, type Sample } from "./imprint-activity-canvas";
 import { growthFromContributions } from "./imprint-activity-model.js";
-import { writingImprintContributions } from "./imprint-writing-activity";
+import { writingImprintContributions, type ImprintDay } from "./imprint-writing-activity";
 import type { Anchors } from "./imprint-growth-model.js";
 import colorStudy from "../../../docs/design/personal-imprint-color-v1.json";
 import growthStudy from "../../../docs/design/personal-imprint-growth-v1.json";
@@ -17,7 +17,7 @@ const sample: Sample = {
   coordinates: { ...sori.coordinates, path: "os/home/imprint-art/coordinates" },
 };
 
-type Props = Pick<NonNullable<WritingContextValue["imprint"]>, "days"> & { pulses: WritingImprintPulse[] };
+type Props = { days: ImprintDay[]; pulses: WritingImprintPulse[] };
 
 export default function WritingImprintReview({ days, pulses }: Props) {
   const [clock, setClock] = useState(() => Date.now());

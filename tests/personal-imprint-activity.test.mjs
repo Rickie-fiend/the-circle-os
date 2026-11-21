@@ -117,6 +117,16 @@ test('a deliberate completion after Undo pulses once without restarting the day 
  assert.equal(acceptActivity(undone,{...again,kind:'task-completed',origin:'week'}).pulse,false);
 });
 
+test('an undone task can contribute through its new checked view',()=>{
+ const action=sampleAction('task-completed','shared',undefined,undefined,{origin:'routine'});
+ let {state}=acceptActivity(emptyActivity(),action);
+ state=changeActivitySource(state,action.owner,action.source,'undo');
+ const result=acceptActivity(state,{...action,origin:'week',operation:'week-recheck'});
+ assert.equal(result.pulse,true);
+ assert.equal(result.state.sources.length,1);
+ assert.deepEqual(activityContributions(result.state,action.owner,new Date(action.at)).map(item=>item.group),['log-week']);
+});
+
 test('full-resolution study retains accepted baseline, valid assets and one-time fade',async()=>{
  const report=JSON.parse(await readFile('docs/design/personal-imprint-activity-v1.json','utf8'));
  const original=JSON.parse(await readFile('docs/design/personal-imprint-generator-v1-inspection.json','utf8')).samples.find(item=>item.id==='sori');

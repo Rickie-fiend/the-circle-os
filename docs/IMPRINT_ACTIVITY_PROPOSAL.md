@@ -1,10 +1,10 @@
 # Personal Imprint activity model proposal
 
 Saved: 2026-11-16, Asia/Bangkok. Developer approved implementation, including
-the event map and edit/Trash rules, on 2026-11-17. Implemented as an isolated
-synthetic study; production Home is not activated. Current implementation,
-source audit, verification and limits are in
-[the Home brief](PERSONAL_IMPRINT_HOME.md#activity-model-study--2026-11-17).
+the event map and edit/Trash rules, on 2026-11-17. That approval covered the
+isolated synthetic study. The Home brief records the
+[original source audit and checks](PERSONAL_IMPRINT_HOME.md#activity-model-study--2026-11-17)
+and the [later local Protocol slice](PERSONAL_IMPRINT_HOME.md#local-daily-protocol-seals--2026-11-22).
 
 ## Confirmed choices
 
@@ -32,6 +32,22 @@ source audit, verification and limits are in
 | Habits/Tasks | Complete a habit or task from Routine |
 | Log/Week | A saved Log block ends, or a task is completed from Week |
 | Protocol | Complete a daily seal |
+
+For Chapters, the developer approved tracking new finishes in the signed-in
+Home review. The saved run's finish time, attributed day, and original zone
+drive color. Older completed runs stay in Chapter History without new color.
+
+For a shared task, the accepted check records the view that supplied it.
+Undo from either view removes that check's contribution from its recorded area.
+A later check may use the other view and contributes there. One task occurrence
+supports one area at a time. Each area's first-use clock for that Circle day
+survives Undo. Older completions with unknown checked views stay in task history.
+
+The developer approved the local Log adapter on 2026-11-22. An ended block
+qualifies after local save acceptance. A late first save can pulse once, with
+color age measured from the recorded end if this is the day's first qualifying
+Log/Week source. The first qualifying source sets the shared day's clock.
+[Home behavior](PERSONAL_IMPRINT_HOME.md#local-log-blocks--2026-11-22).
 
 Later writing edits are corrections, not another contribution or pulse.
 Drafts, unchanged saves, retries, reopening and reload do not qualify. This means

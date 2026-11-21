@@ -2193,12 +2193,13 @@ export function discardEmptyHabit(state, id) {
   };
 }
 
-export function toggleHabitForDay(state, id, dateKey) {
+/** @param {{id: string, at: string, timeZone: string} | null} [imprintAction] */
+export function toggleHabitForDay(state, id, dateKey, imprintAction = null) {
   const habit = state.habits.definitions[id];
   if (!habit || habit.status !== "active" || !routineHabitVisible(state, habit, dateKey)) return state;
   const key = habitCompletionId(id, dateKey);
   const current = state.habits.completions[key];
-  const timestamp = new Date().toISOString();
+  const timestamp = imprintAction?.at ?? new Date().toISOString();
   return queueProfileUpdate(
     {
       ...state,
@@ -2214,6 +2215,12 @@ export function toggleHabitForDay(state, id, dateKey) {
             completed: !current?.completed,
             completedAt: current?.completed ? null : timestamp,
             updatedAt: timestamp,
+            ...(imprintAction ? {
+              imprintOperation: imprintAction.id,
+              ...(!current?.completed && !current?.imprintFirstUse ? {
+                imprintFirstUse: { at: timestamp, timeZone: imprintAction.timeZone },
+              } : {}),
+            } : {}),
             // Capture the accepted wording when this completion is recorded.
             // Undo retains it; later definition edits never rewrite it. A new
             // tick after Undo records the wording of that new completion.
@@ -2253,16 +2260,31 @@ export function setRoutineSchedule(state, kind, id, mode, days = 21, day = getDa
     : { ...state, tasks: { ...state.tasks, items: { ...records, [id]: updated } } }, kind);
 }
 
-function setScheduledTaskCompletion(state, id, day, completed) {
+/** @typedef {{id: string, at: string, timeZone: string, origin?: "routine" | "week"}} TaskImprintAction */
+function taskImprintForCheck(previous, day, action) {
+  const { origin, at, timeZone, id: operation } = action;
+  const firstUses = previous?.firstUses ?? [];
+  return {
+    operation, origin, day, at, timeZone,
+    firstUses: firstUses.some(use => use.origin === origin && use.day === day)
+      ? firstUses : [...firstUses, { origin, day, at, timeZone }],
+  };
+}
+
+function setScheduledTaskCompletion(state, id, day, completed, imprintAction) {
   const task = state.tasks.items[id];
   const key = `${day}:${id}`;
   const previous = state.tasks.completions?.[key];
   if (!task || (completed && (task.status !== 'open' || !scheduleActive(task.schedule, day))) || (!completed && !previous?.completed) || previous?.completed === completed) return state;
-  const timestamp = new Date().toISOString();
+  const timestamp = imprintAction?.at ?? new Date().toISOString();
+  const imprint = completed && imprintAction?.origin
+    ? taskImprintForCheck(previous?.imprint, day, imprintAction)
+    : imprintAction && previous?.imprint ? { ...previous.imprint, operation: imprintAction.id } : previous?.imprint;
   return queueProfileUpdate({ ...state, tasks: { ...state.tasks, completions: {
     ...state.tasks.completions,
     [key]: { ...previous, id: key, taskId: id, dateKey: day, completed, updatedAt: timestamp,
-      completedAt: completed ? timestamp : null, text: completed ? task.text : previous.text },
+      completedAt: completed ? timestamp : null, text: completed ? task.text : previous.text,
+      ...(imprint ? { imprint } : {}) },
   } } }, 'task');
 }
 
@@ -2350,11 +2372,12 @@ export function discardEmptyTask(state, id) {
 // A task that was finished by accident has to be recoverable. Completing one
 // starts it leaving the Page, and until it has gone the same control puts it
 // back. Nothing is deleted either way.
-export function reopenTask(state, id, dateKey = getDateKey()) {
+/** @param {TaskImprintAction} [imprintAction] */
+export function reopenTask(state, id, dateKey = getDateKey(), imprintAction) {
   const current = state.tasks.items[id];
-  if (current?.schedule?.mode && current.schedule.mode !== 'once') return setScheduledTaskCompletion(state, id, dateKey, false);
+  if (current?.schedule?.mode && current.schedule.mode !== 'once') return setScheduledTaskCompletion(state, id, dateKey, false, imprintAction);
   if (!current || current.status !== "completed") return state;
-  const timestamp = new Date().toISOString();
+  const timestamp = imprintAction?.at ?? new Date().toISOString();
   return queueProfileUpdate(
     {
       ...state,
@@ -2366,6 +2389,7 @@ export function reopenTask(state, id, dateKey = getDateKey()) {
             ...current,
             status: "open",
             completedAt: null,
+            ...(imprintAction && current.imprint ? { imprint: { ...current.imprint, operation: imprintAction.id } } : {}),
             updatedAt: timestamp,
           },
         },
@@ -2375,12 +2399,13 @@ export function reopenTask(state, id, dateKey = getDateKey()) {
   );
 }
 
-export function completeTask(state, id, dateKey = getDateKey()) {
+/** @param {TaskImprintAction} [imprintAction] */
+export function completeTask(state, id, dateKey = getDateKey(), imprintAction) {
   const current = state.tasks.items[id];
-  if (current?.schedule?.mode && current.schedule.mode !== 'once') return setScheduledTaskCompletion(state, id, dateKey, true);
+  if (current?.schedule?.mode && current.schedule.mode !== 'once') return setScheduledTaskCompletion(state, id, dateKey, true, imprintAction);
   if (current?.schedule && !scheduleActive(current.schedule, dateKey)) return state;
   if (!current || current.status === "completed") return state;
-  const timestamp = new Date().toISOString();
+  const timestamp = imprintAction?.at ?? new Date().toISOString();
   return queueProfileUpdate(
     {
       ...state,
@@ -2392,6 +2417,7 @@ export function completeTask(state, id, dateKey = getDateKey()) {
             ...current,
             status: "completed",
             completedAt: timestamp,
+            ...(imprintAction?.origin ? { imprint: taskImprintForCheck(current.imprint, dateKey, imprintAction) } : {}),
             updatedAt: timestamp,
           },
         },
@@ -4315,7 +4341,8 @@ export function toggleProtocolItem(state, itemId, dateKey) {
 // are copied into the record so the closing Page can tell the truth even if the
 // run is edited later. A later correction writes an unsealed version instead of
 // deleting it, which keeps the local-first merge honest.
-export function sealProtocolDay(state, dateKey) {
+/** @param {{id: string, runId: string, at: string, timeZone: string}} [imprintAction] */
+export function sealProtocolDay(state, dateKey, imprintAction) {
   const today = protocolToday(state, dateKey);
   if (
     !today ||
@@ -4323,12 +4350,17 @@ export function sealProtocolDay(state, dateKey) {
     today.day < 1 ||
     today.day > today.run.days ||
     !today.keptAll ||
-    today.sealed
+    today.sealed ||
+    (imprintAction && today.run.id !== imprintAction.runId)
   ) {
     return state;
   }
-  const timestamp = now();
   const id = protocolSealId(today.run.id, dateKey);
+  const previousSeal = state.protocol.seals?.[id];
+  if (imprintAction && previousSeal?.imprintOperation === imprintAction.id) return state;
+  const timestamp = imprintAction?.at ?? now();
+  const imprintFirstUse = previousSeal?.imprintFirstUse ??
+    (imprintAction && { at: timestamp, timeZone: imprintAction.timeZone });
   const terms = [...today.nonNegotiable, ...today.negotiable]
     .filter((item) => item.completed)
     .map((item) => ({ id: item.id, text: item.text, kind: item.kind }));
@@ -4364,6 +4396,8 @@ export function sealProtocolDay(state, dateKey) {
             sealedAt: timestamp,
             unsealedAt: null,
             updatedAt: timestamp,
+            ...(imprintFirstUse ? { imprintFirstUse } : {}),
+            ...(imprintAction ? { imprintOperation: imprintAction.id } : {}),
           },
         },
       },

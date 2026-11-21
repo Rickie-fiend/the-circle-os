@@ -1,4 +1,4 @@
-export type ActivitySource = {owner:string;group:string;day:string;source:string;at:string;operation:string;status:'active'|'trash'|'undone'|'cleared'|'deleted'};
+export type ActivitySource = {owner:string;group:string;day:string;source:string;at:string;operation:string;task?:boolean;status:'active'|'trash'|'undone'|'cleared'|'deleted'};
 export type ActivityState = {sources:ActivitySource[];receipts:Omit<ActivitySource,'status'>[]};
 export type ActivityAction = {kind:string;owner:string;day:string;source:string;at:string;operation:string;accepted:boolean;changed:boolean;origin?:string;firstSave?:boolean;nonempty?:boolean;correction?:boolean;draft?:boolean;endAt?:string;savedAt?:string};
 export type Contribution = {group:string;day:string;at:string;sources:string[];brightness:number};
