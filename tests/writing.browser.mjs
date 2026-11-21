@@ -60,7 +60,7 @@ function Root(){const [path,setPath]=useState(location.pathname==="/os/home"?"/o
  React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(OSFrame,null,path==="/os/home"?React.createElement(Home):path==="/os/explore"?React.createElement(Explore):path==="/os/type-chapter"?React.createElement(TypeChapterFixture):path==="/os/mirror"?React.createElement(Mirror):path==="/os/admin"?React.createElement(ChapterEditor):React.createElement(TodayExperience)))));}
 const root=createRoot(document.getElementById("root"));
 window.api={...scopes,...circle,...logHistory,...circleStore,...writingStore,...writingModel,...chapterPublications,createChapterRun,chapterRunId,publishedChapters,fixture,writePinnedChapter,readPinnedDoor,openDevelopmentTestSession,
- async init(account=true){if(account==="imprint")openDevelopmentTestSession();else if(account)scopes.activateAccountScope("synthetic-writer-a");await circleStore.saveCircleState(scopes.getAccountScope(),fixture());sessionStorage.setItem("writing-fixture-ready",account==="imprint"?"imprint":"yes");root.render(React.createElement(Root));},
+ async init(account=true){if(account==="imprint")openDevelopmentTestSession();else if(account)scopes.activateAccountScope("synthetic-writer-a");if(account!=="fresh-imprint")await circleStore.saveCircleState(scopes.getAccountScope(),fixture());sessionStorage.setItem("writing-fixture-ready",account==="imprint"?"imprint":"yes");root.render(React.createElement(Root));},
  mount(){root.render(React.createElement(Root));},
  load(){return writingStore.loadWritingState(scopes.getAccountScope());}
 };
@@ -2283,6 +2283,22 @@ for (const width of [360, 390]) test(`real writing feeds the Home Imprint at ${w
     await expect(canvas).toHaveAttribute("data-pulsing", "false");
     assert.equal(await pixels(), empty);
   }, { account: "imprint", reducedMotion: reduced ? "reduce" : "no-preference" });
+});
+
+test("a fresh signed-in account sees the sample Imprint before onboarding", { skip: !hostedImprintReview, timeout: 90_000 }, async () => {
+  await isolated(390, async page => {
+    await page.evaluate(() => window.navigate("/os/home"));
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    await expect(canvas).toBeVisible();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    const { runs, entries } = await page.evaluate(async () => ({
+      runs: window.circle.state.chapters.runs,
+      entries: (await window.api.load()).entries,
+    }));
+    assert.ok(!Object.values(runs).some(run => run.chapterId === "day-one" && run.status === "completed"));
+    assert.deepEqual(entries, {});
+  }, { account: "fresh-imprint" });
 });
 
 test("Home claims the Imprint pulse on arrival even when the artwork is delayed", { timeout: 90_000 }, async () => {
