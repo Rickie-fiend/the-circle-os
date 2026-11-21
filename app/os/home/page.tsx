@@ -2,18 +2,17 @@
 
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { useWriting, type WritingContextValue } from "../writing-provider";
-import type { Pulse } from "./imprint-activity-canvas";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useWriting, type WritingContextValue, type WritingImprintPulse } from "../writing-provider";
 
 const WritingImprintReview = dynamic(() => import("./imprint-writing-review"));
 
 function HomeImprint({ days, pulseRevision, takePulses }: NonNullable<WritingContextValue["imprint"]>) {
   const pathname = usePathname();
   const home = useRef<HTMLElement>(null);
-  const [pulses, setPulses] = useState<Pulse[]>([]);
+  const [pulses, setPulses] = useState<WritingImprintPulse[]>([]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (pathname !== "/os/home") return;
     const claimPulses = () => {
       if (document.visibilityState !== "visible" || !home.current?.isConnected ||

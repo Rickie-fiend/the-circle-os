@@ -2307,6 +2307,24 @@ test("Home claims the Imprint pulse on arrival even when the artwork is delayed"
     const home = nav.getByRole("link", { name: "Home", exact: true });
     const today = nav.getByRole("link", { name: "Today", exact: true });
     const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    await page.evaluate(() => {
+      window.imprintFrames = [];
+      const put = CanvasRenderingContext2D.prototype.putImageData;
+      CanvasRenderingContext2D.prototype.putImageData = function (frame, ...args) {
+        if (this.canvas.matches(".imprint-loop-reference")) {
+          let orange = 0;
+          for (let index = 0; index < frame.data.length; index += 4) {
+            orange += frame.data[index] - frame.data[index + 1];
+          }
+          window.imprintFrames.push(orange);
+        }
+        return put.call(this, frame, ...args);
+      };
+    });
+    const frames = () => page.evaluate(() => {
+      const values = window.imprintFrames;
+      return { first: values[0], peak: Math.max(...values), settled: values.at(-1) };
+    });
     let reviewRequested = false;
     const reviewLoad = Promise.withResolvers();
     await page.route(url => url.pathname === "/app/os/home/imprint-writing-review.tsx", async route => {
@@ -2337,12 +2355,41 @@ test("Home claims the Imprint pulse on arrival even when the artwork is delayed"
     await expect(canvas).toHaveAttribute("data-pulsing", "false");
     const settled = await canvas.evaluate(element => element.toDataURL());
     assert.notEqual(brightened, settled);
+    const firstNote = await frames();
+    assert.ok(firstNote.first < firstNote.settled, "the first frame still shows the previous color");
+    assert.ok(firstNote.peak > firstNote.settled, "the new color brightens before settling");
 
     await today.click();
     await home.click();
     await expect(canvas).toHaveAttribute("data-ready", "true");
     await expect(canvas).toHaveAttribute("data-pulsing", "false");
 
+    await today.click();
+    await expect(today).toHaveAttribute("aria-current", "page");
+    await page.evaluate(async () => {
+      const { owner } = window.writing;
+      const [first] = Object.values((await window.api.load()).entries);
+      const at = new Date().toISOString();
+      const draft = {
+        id: crypto.randomUUID(), entryId: crypto.randomUUID(), kind: "note", source: null,
+        startedAt: at, attribution: first.versions[0].attribution,
+        content: { title: "Repeat Note", body: "", tags: [] }, baseGeneration: 0, baseVersionId: null,
+      };
+      const commit = operation => window.writing.commit({
+        ...operation, owner, at, operationId: crypto.randomUUID(),
+      });
+      await commit({ type: "write-draft", draft, expectedDraftVersion: 0 });
+      await commit({ type: "save", draft: { ...draft, version: 1 } });
+      window.imprintFrames = [];
+    });
+    await home.click();
+    await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    await page.clock.runFor(1_700);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    const repeatNote = await frames();
+    assert.equal(repeatNote.first, firstNote.settled);
+    assert.equal(repeatNote.settled, firstNote.settled);
+    assert.ok(repeatNote.peak > repeatNote.settled, "a repeat Note lifts the same patch");
   }, { account: imprintAccount, reducedMotion: "no-preference", clock: true });
 });
 

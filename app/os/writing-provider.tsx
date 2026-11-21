@@ -17,6 +17,8 @@ import { WritingSyncProvider } from "./writing-sync-provider";
 import { canReviewWritingImprint, projectWritingImprint } from "./home/imprint-writing-activity";
 import type { Pulse } from "./home/imprint-activity-canvas";
 
+export type WritingImprintPulse = Pulse & { sources: string[] };
+
 type Props = {
   scope: AccountScope;
   enabled: boolean;
@@ -49,7 +51,7 @@ export type WritingContextValue = {
   imprint: {
     days: ReturnType<typeof projectWritingImprint>;
     pulseRevision: number;
-    takePulses: (activeSources: Set<string>) => Pulse[];
+    takePulses: (activeSources: Set<string>) => WritingImprintPulse[];
   } | null;
 };
 
@@ -84,22 +86,25 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
   const [write, setWrite] = useState<WriteStatus>(idleWrite);
   const [pulseRevision, setPulseRevision] = useState(0);
   const pulseSerial = useRef(0);
-  const pendingPulses = useRef(new Map<string, { scope: AccountScope; source: string; expires: number; pulse: Pulse }>());
+  const pendingPulses = useRef(new Map<string, { scope: AccountScope; expires: number; pulse: Pulse }>());
   const reviewImprint = canReviewWritingImprint(scope);
   const imprintDays = useMemo(() => reviewImprint && snapshot?.ledger.owner === owner
     ? projectWritingImprint(snapshot.ledger) : [], [reviewImprint, snapshot, owner]);
   const takePulses = useCallback((activeSources: Set<string>) => {
-    const events: Pulse[] = [];
+    const events = new Map<string, WritingImprintPulse>();
     const now = performance.now();
-    for (const [group, event] of pendingPulses.current) {
+    for (const [source, event] of pendingPulses.current) {
       if (event.scope !== scope || !isAccountScopeCurrent(scope) || event.expires < now) {
-        pendingPulses.current.delete(group);
-      } else if (activeSources.has(event.source)) {
-        pendingPulses.current.delete(group);
-        events.push(event.pulse);
+        pendingPulses.current.delete(source);
+      } else if (activeSources.has(source)) {
+        pendingPulses.current.delete(source);
+        const { group, serial } = event.pulse;
+        const sources = events.get(group)?.sources ?? [];
+        sources.push(source);
+        events.set(group, { group, serial, sources });
       }
     }
-    return events;
+    return [...events.values()];
   }, [scope]);
 
   const refresh = useCallback(async (fromStorage = false): Promise<boolean> => {
@@ -172,17 +177,19 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
       if (!mounted.current) throw new WritingError("view-closed", "This writing session has closed.");
       if (result.imprintPulse && document.visibilityState === "visible") {
         const group = result.imprintPulse;
-        pendingPulses.current.set(group, {
-          scope, source: result.receipt.entryId, expires: performance.now() + 10_000,
+        const now = performance.now();
+        for (const [source, event] of pendingPulses.current) {
+          if (event.scope !== scope || event.expires < now) pendingPulses.current.delete(source);
+        }
+        pendingPulses.current.set(result.receipt.entryId, {
+          scope, expires: now + 10_000,
           pulse: { group, serial: ++pulseSerial.current },
         });
       } else if (result.receipt.outcome === "trashed" || result.receipt.outcome === "deleted" || result.receipt.outcome === "saved") {
         const entry = result.state.entries[result.receipt.entryId];
         const content = entry?.versions.at(-1)?.content;
         if (entry?.status !== "active" || !(content?.title.trim() || content?.body.trim())) {
-          for (const [group, event] of pendingPulses.current) {
-            if (event.source === result.receipt.entryId) pendingPulses.current.delete(group);
-          }
+          pendingPulses.current.delete(result.receipt.entryId);
         }
       }
       // Do not render result.state: another tab may have changed it already.

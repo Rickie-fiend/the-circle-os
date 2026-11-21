@@ -79,8 +79,8 @@ export function growthFromContributions(contributions) {
  }));
 }
 
-export function activityPulse(elapsed, initial = 0) {
+export function activityPulse(elapsed, initial = 0, riseMs = 300) {
  if (elapsed < 0 || elapsed >= PULSE_MS) return 0;
- const q = elapsed/PULSE_MS, peak = .2, ease = x => x*x*(3-2*x);
+ const q = elapsed/PULSE_MS, peak = riseMs/PULSE_MS, ease = x => x*x*(3-2*x);
  return q < peak ? initial+(1-initial)*ease(q/peak) : 1-ease((q-peak)/(1-peak));
 }

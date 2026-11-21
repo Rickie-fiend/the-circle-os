@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { WritingContextValue } from "../writing-provider";
-import { ActivityCanvas, type Pulse, type Sample } from "./imprint-activity-canvas";
+import type { WritingContextValue, WritingImprintPulse } from "../writing-provider";
+import { ActivityCanvas, type Sample } from "./imprint-activity-canvas";
 import { growthFromContributions } from "./imprint-activity-model.js";
 import { writingImprintContributions } from "./imprint-writing-activity";
 import type { Anchors } from "./imprint-growth-model.js";
@@ -17,11 +17,17 @@ const sample: Sample = {
   coordinates: { ...sori.coordinates, path: "os/home/imprint-art/coordinates" },
 };
 
-type Props = Pick<NonNullable<WritingContextValue["imprint"]>, "days"> & { pulses: Pulse[] };
+type Props = Pick<NonNullable<WritingContextValue["imprint"]>, "days"> & { pulses: WritingImprintPulse[] };
 
 export default function WritingImprintReview({ days, pulses }: Props) {
   const [clock, setClock] = useState(() => Date.now());
-  const growth = useMemo(() => growthFromContributions(writingImprintContributions(days, clock)), [days, clock]);
+  const contributions = useMemo(() => writingImprintContributions(days, clock), [days, clock]);
+  const growth = useMemo(() => growthFromContributions(contributions), [contributions]);
+  const animations = useMemo(() => pulses.map(({ group, serial, sources }) => {
+    const newSources = new Set(sources);
+    const previous = contributions.filter(day => day.group === group && day.sources.some(source => !newSources.has(source)));
+    return { group, serial, previous: growthFromContributions(previous)[group] };
+  }), [contributions, pulses]);
 
   useEffect(() => {
     const refreshClock = () => setClock(Date.now());
@@ -41,5 +47,5 @@ export default function WritingImprintReview({ days, pulses }: Props) {
     return () => window.clearTimeout(timer);
   }, [days, clock]);
 
-  return <ActivityCanvas sample={sample} anchors={anchors} growth={growth} pulses={pulses} retainScene />;
+  return <ActivityCanvas sample={sample} anchors={anchors} growth={growth} pulses={animations} retainScene />;
 }

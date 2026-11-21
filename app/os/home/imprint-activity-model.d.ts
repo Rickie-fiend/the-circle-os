@@ -12,4 +12,4 @@ export function changeActivitySource(state:ActivityState,owner:string,source:str
 export function activityContributions(state:ActivityState,owner:string,now:string|Date):Contribution[];
 export function activityGrowthState(state:ActivityState,owner:string,now:string|Date):ActivityGrowth;
 export function growthFromContributions(contributions:Contribution[]):ActivityGrowth;
-export function activityPulse(elapsed:number,initial?:number):number;
+export function activityPulse(elapsed:number,initial?:number,riseMs?:number):number;
