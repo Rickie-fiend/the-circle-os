@@ -18,6 +18,9 @@
 .imprint-personal-grid a { color: inherit; }
 .imprint-loop-grid { grid-template-columns: repeat(3, minmax(0, 390px)); }
 .imprint-loop-reference, .imprint-loop-trace { display: block; width: 100%; max-width: 390px; height: auto; aspect-ratio: 2 / 3; margin: 16px auto; }
+.imprint-home-art { position: relative; width: 100%; max-width: 390px; aspect-ratio: 2 / 3; margin: 16px auto; }
+.imprint-home-art > img, .imprint-home-art > canvas { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; }
+.imprint-home-error { position: absolute; inset: auto 12px 12px; margin: 0; }
 .imprint-study > p > a { color: inherit; }
 .imprint-personal-checks { max-width: 680px; margin: 24px auto; }
 .imprint-personal-checks label { display: block; padding-bottom: 8px; }

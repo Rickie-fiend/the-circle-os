@@ -171,7 +171,9 @@ async function buildApp(target,reuseBuild){
     await mkdir(dir);
     for(const path of ['app','public','package.json','package-lock.json','next.config.ts','postcss.config.mjs','tsconfig.json','tsconfig.vercel.json'])await cp(resolve(repo,path),resolve(dir,path),{recursive:true});
     await mkdir(resolve(dir,'docs/design'),{recursive:true});
-    for(const file of ['personal-imprint-color-v1.json','personal-imprint-growth-v1.json','personal-imprint-color-v1-sori-bone.png','personal-imprint-color-v1-sori-coordinates.bin']){
+    const variants=JSON.parse(await readFile(resolve(repo,'app/os/home/imprint-art-variants.json'),'utf8'));
+    const densityFiles=variants.flatMap(({bone,coordinates})=>[bone.file,coordinates.file]);
+    for(const file of ['personal-imprint-color-v1.json','personal-imprint-growth-v1.json','personal-imprint-color-v1-sori-bone.png','personal-imprint-color-v1-sori-coordinates.bin',...densityFiles]){
       await cp(resolve(repo,'docs/design',file),resolve(dir,'docs/design',file));
     }
     const {symlink}=await import('node:fs/promises');await symlink(resolve(repo,'node_modules'),resolve(dir,'node_modules'),'junction');

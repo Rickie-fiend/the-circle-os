@@ -6,11 +6,13 @@ import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
 import { chromium, expect } from "@playwright/test";
 import sharp from "sharp";
+import imprintVariants from "../app/os/home/imprint-art-variants.json" with { type: "json" };
 
 // Exercise the exact minified styles served by Next as well as editable CSS.
 const useProductionCSS=process.env.CIRCLE_PRODUCTION_CSS==="1";
 const hostedImprintReview = process.env.CIRCLE_TEST_HOSTED_IMPRINT === "1";
 const imprintAccount = hostedImprintReview ? true : "imprint";
+const imprintAssets = new Map(imprintVariants.flatMap(({bone,coordinates}) => [bone,coordinates]).map(asset => [`/${asset.path}`,asset]));
 const productionStylePaths=useProductionCSS?[...new Set([...readFileSync(".next/server/app/os.html","utf8").matchAll(/href="(\/_next\/static\/[^"?]+\.css)(?:\?[^" ]*)?"/g)].map(m=>m[1]))]:[];
 if(useProductionCSS)assert.ok(productionStylePaths.length,"build Next before production-CSS checks");
 const productionStyles=productionStylePaths.map(path=>readFileSync(`.next${path.slice("/_next".length)}`,"utf8")).join("\n");
@@ -88,6 +90,11 @@ before(async()=>{
       configureServer(vite){vite.middlewares.use(async(request,response,next)=>{
         if(useProductionCSS&&request.url==="/fixture-production.css"){response.setHeader("Content-Type","text/css; charset=utf-8");response.end(productionStyles);return;}
         const pathname=request.url?.split("?")[0];
+        const artwork=imprintAssets.get(pathname);
+        if(artwork){
+          response.setHeader("Content-Type",artwork.type);
+          response.end(readFileSync(`docs/design/${artwork.file}`));return;
+        }
         if(pathname==="/os/home/imprint-art/bone"||pathname==="/os/home/imprint-art/coordinates"){
           const bone=pathname.endsWith("/bone");
           response.setHeader("Content-Type",bone?"image/png":"application/octet-stream");
@@ -2360,7 +2367,9 @@ test("Routine habit saves feed Home and Undo removes only the last daily contrib
     box = await routine();
     await box.getByRole("button", { name: "Mark done: Read a page", exact: true }).click();
     await waitForSources(1);
-    await box.getByRole("button", { name: "Undo: Read a page", exact: true }).click();
+    const undo = box.getByRole("button", { name: "Undo: Read a page", exact: true });
+    await expect(undo).toHaveAttribute("aria-busy", "false");
+    await undo.click();
     await waitForSources(0);
     await showHome();
     await expect(canvas).toHaveAttribute("data-pulsing", "false");
@@ -2718,6 +2727,37 @@ test("a saved Protocol seal colors Home and a failed re-seal leaves the patch em
   }, { account: imprintAccount, reducedMotion: "no-preference" });
 });
 
+test("Home draws the sharper Imprint on a high-density screen and falls back when its asset fails", { timeout: 90_000 }, async () => {
+  await isolated(390, async page => {
+    const nav = page.getByRole("navigation", { name: "Circle OS", exact: true });
+    const home = nav.getByRole("link", { name: "Home", exact: true });
+    const today = nav.getByRole("link", { name: "Today", exact: true });
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    const measure = () => canvas.evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      return [element.width, element.height, rect.width, rect.height];
+    });
+    let requests = 0;
+    const url = "**/os/home/imprint-art/bone-strands-1170?*";
+    await page.route(url, async route => { requests++; await route.continue(); });
+    await home.click();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    assert.deepEqual(await measure(), [1170, 1755, 390, 585]);
+    await today.click();
+    await expect(canvas).toHaveCount(0);
+    await home.click();
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    assert.deepEqual(await measure(), [1170, 1755, 390, 585]);
+    assert.equal(requests, 1, "the decoded artwork is reused on return");
+
+    await page.route(url, route => route.fulfill({ status: 404 }));
+    await page.reload();
+    await ready(page);
+    await expect(canvas).toHaveAttribute("data-ready", "true");
+    assert.deepEqual(await measure(), [390, 585, 390, 585]);
+  }, { account: imprintAccount, deviceScaleFactor: 3 });
+});
+
 test("Home claims the Imprint pulse on arrival even when the artwork is delayed", { timeout: 90_000 }, async () => {
   await isolated(390, async page => {
     const nav = page.getByRole("navigation", { name: "Circle OS", exact: true });
@@ -2742,11 +2782,11 @@ test("Home claims the Imprint pulse on arrival even when the artwork is delayed"
       const values = window.imprintFrames;
       return { first: values[0], peak: Math.max(...values), settled: values.at(-1) };
     });
-    let reviewRequested = false;
-    const reviewLoad = Promise.withResolvers();
-    await page.route(url => url.pathname === "/app/os/home/imprint-writing-review.tsx", async route => {
-      reviewRequested = true;
-      await reviewLoad.promise;
+    let colorRequested = false;
+    const colorLoad = Promise.withResolvers();
+    await page.route(url => url.pathname === "/os/home/imprint-art/coordinates-strands-1170", async route => {
+      colorRequested = true;
+      await colorLoad.promise;
       await route.continue();
     });
 
@@ -2761,14 +2801,23 @@ test("Home claims the Imprint pulse on arrival even when the artwork is delayed"
       await page.clock.fastForward(5_000);
       await home.click();
       await expect(page.getByRole("main", { name: "Home", exact: true })).toHaveCount(1);
-      await expect.poll(() => reviewRequested).toBe(true);
+      await expect.poll(() => colorRequested).toBe(true);
+      const plain = page.locator(".imprint-home-art > img");
+      await expect(plain).toBeVisible();
+      await expect.poll(() => plain.evaluate(element => element.naturalWidth)).toBe(390);
+      await expect(page.getByText("Loading artwork…", { exact: true })).toHaveCount(0);
+      await expect(canvas).not.toHaveAttribute("data-ready", "true");
+      await today.click();
       await expect(canvas).toHaveCount(0);
       await page.clock.fastForward(10_100);
+      await home.click();
+      await expect(canvas).not.toHaveAttribute("data-ready", "true");
     } finally {
-      reviewLoad.resolve();
+      colorLoad.resolve();
     }
 
     await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    assert.deepEqual(await canvas.evaluate(element => [element.width, element.height]), [1170, 1755]);
     await page.clock.runFor(450);
     await expect(canvas).toHaveAttribute("data-pulsing", "true");
     const brightened = await canvas.evaluate(element => element.toDataURL());
@@ -2811,7 +2860,7 @@ test("Home claims the Imprint pulse on arrival even when the artwork is delayed"
     assert.equal(repeatNote.first, firstNote.settled);
     assert.equal(repeatNote.settled, firstNote.settled);
     assert.ok(repeatNote.peak > repeatNote.settled, "a repeat Note lifts the same patch");
-  }, { account: imprintAccount, reducedMotion: "no-preference", clock: true });
+  }, { account: imprintAccount, reducedMotion: "no-preference", clock: true, deviceScaleFactor: 2 });
 });
 
 test("Home shows saved Imprint growth after reloading before the first visit", { timeout: 90_000 }, async () => {
@@ -2833,6 +2882,52 @@ test("Home shows saved Imprint growth after reloading before the first visit", {
       return data.some((value, index) => index % 4 === 0 && value - data[index + 1] > 50);
     }), "the saved Note leaves visible Orange");
   }, { account: imprintAccount, reducedMotion: "no-preference", clock: true });
+});
+
+test("3× Home pulses Notes and Routine together after a minute away", { timeout: 90_000 }, async () => {
+  await isolated(390, async page => {
+    const nav = page.getByRole("navigation", { name: "Circle OS", exact: true });
+    const home = nav.getByRole("link", { name: "Home", exact: true });
+    const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
+    await page.evaluate(() => window.circle.updateState(state => {
+      const added = window.api.addHabitDefinition(state);
+      return window.api.updateHabitDefinitionParts(added.state, added.id, { action: "Read a page", identity: "A learner" });
+    }));
+    await page.getByRole("button", { name: "Note", exact: true }).click();
+    await notePage(page).getByRole("textbox", { name: "Note title", exact: true }).fill("Two areas on Home");
+    await saved(page);
+    await expect.poll(() => page.evaluate(() => window.writing.write.status)).toBe("saved");
+    await notePage(page).getByRole("button", { name: "Back", exact: true }).click();
+    await openRoutineTool(page);
+    await page.getByRole("button", { name: "Mark done: Read a page", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.circle.localImprint.days.some(day => day.group === "routine"))).toBe(true);
+    await page.locator(".os-habit-session").getByRole("button", { name: "Back", exact: true }).click();
+    await page.clock.fastForward(60_000);
+
+    await page.evaluate(() => {
+      window.strandFrames = [];
+      const put = CanvasRenderingContext2D.prototype.putImageData;
+      CanvasRenderingContext2D.prototype.putImageData = function (...args) {
+        if (this.canvas.dataset.pulsing === "true") window.strandFrames.push(performance.now());
+        return put.apply(this, args);
+      };
+    });
+    await home.click();
+    await expect(canvas).toHaveAttribute("data-pulse-groups", "notes routine");
+    await expect(canvas).toHaveAttribute("data-pulsing", "true");
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    const timings = await page.evaluate(() => {
+      const frames = window.strandFrames;
+      const gaps = frames.slice(1).map((time, index) => time - frames[index]).sort((a, b) => a - b);
+      return { frames: frames.length, medianMs: gaps[Math.floor(gaps.length / 2)], p95Ms: gaps[Math.floor(gaps.length * .95)] };
+    });
+    assert.ok(timings.frames > 8, "the two areas draw intermediate frames");
+    console.log("3× Home frame intervals at 390px", timings);
+    await canvas.screenshot({ path: "outputs/imprint/strands/home-390-3x.png" });
+    await page.reload();
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    assert.deepEqual(await canvas.evaluate(element => [element.width, element.height]), [1170, 1755]);
+  }, { account: imprintAccount, reducedMotion: "no-preference", clock: true, deviceScaleFactor: 3 });
 });
 
 test("another tab's correction requires review before Note autosave",{timeout:90_000},async()=>isolated(390,async(page,context)=>{

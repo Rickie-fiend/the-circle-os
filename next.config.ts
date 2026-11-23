@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import imprintVariants from "./app/os/home/imprint-art-variants.json";
 
 const deployment = process.env.VERCEL_ENV;
 const branch = process.env.VERCEL_GIT_COMMIT_REF;
@@ -10,7 +11,11 @@ const nextConfig: NextConfig = {
     CIRCLE_IMPRINT_HOSTED_REVIEW: hostedImprintReview ? "enabled" : "disabled",
   },
   outputFileTracingIncludes: {
-    "/os/home/imprint-art/*": ["./docs/design/personal-imprint-color-v1-sori-{bone.png,coordinates.bin}"],
+    "/os/home/imprint-art/*": [
+      "./docs/design/personal-imprint-color-v1-sori-{bone.png,coordinates.bin}",
+      ...imprintVariants.flatMap(({ bone, coordinates }) => [bone.file, coordinates.file])
+        .map(file => `./docs/design/${file}`),
+    ],
   },
   typescript: {
     tsconfigPath: "tsconfig.vercel.json",

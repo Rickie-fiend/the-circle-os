@@ -1,8 +1,6 @@
 import { isDevelopmentTestAccount } from "../auth/development-test-session.js";
 import type { AccountScope } from "../account-scope";
 import type { WritingEntry, WritingResult, WritingState } from "../writing-model.js";
-import type { Contribution } from "./imprint-activity-model.js";
-import { FADED_ORANGE, FRESH_ORANGE } from "./imprint-growth-model.js";
 import { imprintFadeAt } from "./imprint-fade-time.js";
 export { imprintFadeAt as writingFadeAt } from "./imprint-fade-time.js";
 
@@ -61,11 +59,4 @@ export function projectWritingImprint(state: WritingState) {
     const day = imprint.days[key];
     return day ? [{ ...day, sources }] : [];
   }).sort((a, b) => a.at.localeCompare(b.at) || a.day.localeCompare(b.day));
-}
-
-export function writingImprintContributions(days: ImprintDay[], now: number): Contribution[] {
-  return days.filter(day => Date.parse(day.at) <= now).map(day => ({
-    group: day.group, day: day.day, at: day.at, sources: day.sources,
-    brightness: now < day.fadeAt ? FRESH_ORANGE : FADED_ORANGE,
-  }));
 }

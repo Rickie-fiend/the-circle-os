@@ -1,0 +1,34 @@
+[
+  {
+    "width": 1170,
+    "height": 1755,
+    "bone": {
+      "path": "os/home/imprint-art/bone-strands-1170",
+      "file": "personal-imprint-home-sori-bone-strands-1170.webp",
+      "hash": "5f7d0eb85c4de4677875686b1fac9a69eb02adaa6619f27051bb4c5dbdd6cea7",
+      "type": "image/webp"
+    },
+    "coordinates": {
+      "path": "os/home/imprint-art/coordinates-strands-1170",
+      "file": "personal-imprint-home-sori-coordinates-strands-1170.bin.gz",
+      "hash": "b5b0e977461832dc2779716130304486a07d0ef05390fe0aeaee1d854150a767",
+      "type": "application/gzip"
+    }
+  },
+  {
+    "width": 390,
+    "height": 585,
+    "bone": {
+      "path": "os/home/imprint-art/bone-strands-390",
+      "file": "personal-imprint-home-sori-bone-strands-390.webp",
+      "hash": "c8777af29ac7898f0a5ed8de12fe16ea9ac84fed4eb94c844fc8cb613f618c07",
+      "type": "image/webp"
+    },
+    "coordinates": {
+      "path": "os/home/imprint-art/coordinates-strands-390",
+      "file": "personal-imprint-home-sori-coordinates-strands-390.bin.gz",
+      "hash": "237c3d8e262e34c58ba9442cb180ea17e0c4e34e37659e7336aa46e458f2c998",
+      "type": "application/gzip"
+    }
+  }
+]

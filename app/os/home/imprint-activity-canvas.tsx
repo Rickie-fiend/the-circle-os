@@ -4,23 +4,16 @@ import {useEffect,useRef,useState} from 'react';
 import {COLOR_GROUPS} from './imprint-color-model.js';
 import {activityPulse,PULSE_MS,type ActivityGrowth} from './imprint-activity-model.js';
 import {contributionPaint,ORANGE_SHADE_EXPONENT,type Anchors} from './imprint-growth-model.js';
+import {checkedArtwork,decodeArtwork,type ArtworkAsset} from './imprint-artwork';
 import './imprint.css';
 
-type Asset={path:string;hash:string};
+type Asset=ArtworkAsset;
 export type Sample={id:string;label:string;outputs:Record<string,Asset>;coordinates:Asset};
 type Scene={pixels:Uint8ClampedArray;coordinates:Float32Array;width:number;height:number};
 export type Pulse={group:string;serial:number};
 type HomePulse=Pulse & {previous:ActivityGrowth[string]};
 const HOME_RISE_MS=500;
 let reviewScene: Promise<Scene> | undefined;
-
-async function checked(asset:Asset){
- const response=await fetch(`/${asset.path}?v=${asset.hash}`);
- if(!response.ok)throw Error('Artwork data is unavailable.');
- const bytes=await response.arrayBuffer(),digest=await crypto.subtle.digest('SHA-256',bytes);
- if([...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('')!==asset.hash)throw Error('Artwork data did not match its inspection.');
- return bytes;
-}
 
 export function ActivityCanvas({sample,anchors,growth,pulse,pulses,retainScene=false}:{sample:Sample;anchors:Anchors;growth:ActivityGrowth;pulse?:Pulse|null;pulses?:HomePulse[];retainScene?:boolean}){
  const canvas=useRef<HTMLCanvasElement>(null),timers=useRef<Record<string,{start:number|null;initial:number}>>({});
@@ -31,12 +24,10 @@ export function ActivityCanvas({sample,anchors,growth,pulse,pulses,retainScene=f
   update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update);
  },[]);
  useEffect(()=>{let active=true;
-  const loadScene = () => Promise.all([checked(sample.outputs.bone),checked(sample.coordinates)]).then(async([png,bytes])=>{
-   const bitmap=await createImageBitmap(new Blob([png],{type:'image/png'})),scratch=document.createElement('canvas');
-   scratch.width=bitmap.width;scratch.height=bitmap.height;const context=scratch.getContext('2d');
-   if(!context)throw Error('Canvas is unavailable.');context.drawImage(bitmap,0,0);bitmap.close();
-   const coordinates=new Float32Array(bytes);if(coordinates.length!==scratch.width*scratch.height*3)throw Error('Artwork coordinates are incomplete.');
-   return {pixels:context.getImageData(0,0,scratch.width,scratch.height).data,coordinates,width:scratch.width,height:scratch.height};
+  const loadScene = () => Promise.all([checkedArtwork(sample.outputs.bone),checkedArtwork(sample.coordinates)]).then(async([png,bytes])=>{
+   const {data:pixels,width,height}=await decodeArtwork(png,'image/png');
+   const coordinates=new Float32Array(bytes);if(coordinates.length!==width*height*3)throw Error('Artwork coordinates are incomplete.');
+   return {pixels,coordinates,width,height};
   });
   const loaded = retainScene ? (reviewScene ??= loadScene()) : loadScene();
   void loaded.then(value=>{if(active)setScene(value);}).catch(caught=>{

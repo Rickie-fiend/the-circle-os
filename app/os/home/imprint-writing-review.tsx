@@ -1,33 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { WritingImprintPulse } from "../writing-provider";
-import { ActivityCanvas, type Sample } from "./imprint-activity-canvas";
-import { growthFromContributions } from "./imprint-activity-model.js";
-import { writingImprintContributions, type ImprintDay } from "./imprint-writing-activity";
-import type { Anchors } from "./imprint-growth-model.js";
-import colorStudy from "../../../docs/design/personal-imprint-color-v1.json";
-import growthStudy from "../../../docs/design/personal-imprint-growth-v1.json";
+import { StrandCanvas } from "./imprint-strand-canvas";
+import type { ImprintDay } from "./imprint-writing-activity";
+import variants from "./imprint-art-variants.json";
+import groups from "./imprint-strand-layout.json";
 
-const sori = colorStudy.samples.find(sample => sample.id === "sori")!;
-const anchors: Anchors = growthStudy.samples.find(sample => sample.id === "sori")!.anchors;
-const sample: Sample = {
-  ...sori,
-  outputs: { bone: { ...sori.outputs.bone, path: "os/home/imprint-art/bone" } },
-  coordinates: { ...sori.coordinates, path: "os/home/imprint-art/coordinates" },
-};
+type Props = { days: ImprintDay[]; revision: number; claimPulses: () => WritingImprintPulse[] };
 
-type Props = { days: ImprintDay[]; pulses: WritingImprintPulse[] };
-
-export default function WritingImprintReview({ days, pulses }: Props) {
+export default function WritingImprintReview({ days, revision, claimPulses }: Props) {
   const [clock, setClock] = useState(() => Date.now());
-  const contributions = useMemo(() => writingImprintContributions(days, clock), [days, clock]);
-  const growth = useMemo(() => growthFromContributions(contributions), [contributions]);
-  const animations = useMemo(() => pulses.map(({ group, serial, sources }) => {
-    const newSources = new Set(sources);
-    const previous = contributions.filter(day => day.group === group && day.sources.some(source => !newSources.has(source)));
-    return { group, serial, previous: growthFromContributions(previous)[group] };
-  }), [contributions, pulses]);
 
   useEffect(() => {
     const refreshClock = () => setClock(Date.now());
@@ -47,5 +30,6 @@ export default function WritingImprintReview({ days, pulses }: Props) {
     return () => window.clearTimeout(timer);
   }, [days, clock]);
 
-  return <ActivityCanvas sample={sample} anchors={anchors} growth={growth} pulses={animations} retainScene />;
+  return <StrandCanvas variants={variants} groups={groups}
+    days={days} clock={clock} revision={revision} claimPulses={claimPulses} />;
 }
