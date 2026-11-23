@@ -76,7 +76,7 @@ export function ExploreCarousel({ title, items }: { title: string; items: Explor
           {item?.cover ? <ContentFigure image={item.cover} /> : null}
           {item?.title?.trim() ? <h3>{item.title}</h3> : null}
           {item?.description?.trim() ? <p>{item.description}</p> : null}
-          {item ? <a className="os-explore-open" aria-label={`Open ${item.title?.trim() || title}`} href={`/os/catalog/read?id=${encodeURIComponent(item.id)}&version=${item.version}`} onFocus={() => moveTo(index)} /> : null}
+          {item ? <a className="os-explore-open" aria-label={`Open ${item.title?.trim() || title}`} href={`/os/catalog/read?id=${encodeURIComponent(item.id)}&version=${item.version}${item.kind === 'chapter' ? '&resume=1' : ''}`} onFocus={() => moveTo(index)} /> : null}
         </article>)}
       </div>
     </div>

@@ -1,5 +1,14 @@
 # Circle OS bugs and verification gaps
 
+## Published Chapter restarts or stops on its result page — 2026-11-23
+
+Fixed and verified locally. Fresh catalog readers were using temporary preview
+state. A signed-in reader now saves after Begin and after each submitted step.
+The result-page left swipe saves the finish before returning to Explore.
+Device-save retry, exact-edition resume and Home reload passed in Chromium.
+The deployed fix and physical phones still need verification.
+[Journey evidence](docs/USER_JOURNEY_TESTING.md#published-chapter-first-start-and-finish--2026-11-23).
+
 ## Local synthetic backup and restore — 2026-11-15
 
 Approved rehearsal complete: two exact database/media restores and two complete

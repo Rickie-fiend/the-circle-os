@@ -141,7 +141,12 @@ Routine has its own pending operation. An active group blocks another copy of
 the same source across catalog versions. Native source disclosures do not commit
 an edit. General whole-state editing contention and cloud sync remain separate.
 
-Protocol Start follow-up (2026-11-14): a pure adoption model reuses Protocol domain actions; sourceTemplate metadata lives on the personal run and survives normalization/merge. The reader checks signed-in account scope, serializes Start under an account-scoped Web Lock, reads latest local state, merges it with current state, and saves through the existing scoped store before navigation. Session-scoped pending operation IDs enable retry without duplicate runs. Lock-unavailable browsers fail safely; cloud sync and hosted acceptance are not enabled.
+Protocol Start uses a pure adoption model and existing Protocol domain actions.
+Source template metadata survives normalization and merge. The reader checks
+account scope, serializes Start under the shared account-scoped Web Lock,
+merges current and latest local state, and saves before navigation. Session-scoped
+operation IDs allow retries without duplicate runs. Browsers without Web Locks
+stop adoption safely. The hosted acceptance below covers local adoption.
 
 Template definitions are separate typed envelopes in the existing shared Admin draft/recovery repository. The editor uses the existing private Media picker and Chapter player with optional numeric inputs, image placement and caller-supplied result content. Template settings are declarative fixed/answer/choice/linear-bound values; no executable expressions or provider calls. Published template identity follows draft identity. Exact-version previews retain temporary run state only and never write personal domain records.
 
@@ -154,7 +159,7 @@ reload and exact cleanup. Adoption now also saves the intended shared Page index
 before navigation. General contention and backup/restore remain unverified.
 
 
-Updated: 2026-11-11, Asia/Bangkok. This owns the current/target system map.
+Updated 2026-11-23, Asia/Bangkok. This owns the current/target system map.
 [Product](PRODUCT.md) owns direction; [record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md)
 owns evidence lifecycles; [writing sync](ACCOUNT_WRITING_SYNC.md) owns its protocol.
 Dated implementation history remains [archived](archive/2026-11-11-doc-cleanup/PRODUCTION_ARCHITECTURE.md).
@@ -165,7 +170,7 @@ Dated implementation history remains [archived](archive/2026-11-11-doc-cleanup/P
 | --- | --- |
 | Web runtime | Existing Vinext/Cloudflare-compatible and separate Next.js/Vercel build targets. Verify the intended target; passing one does not certify the other. |
 | App shell | CircleStateProvider and shared Page/swipe/App-back/button engines. Full-page daily-tool pairs coexist with existing Reflect/chapter contexts. |
-| Roots | /os/home, /os (Today), /os/mirror (Reflect), /os/explore; shared bottom navigation. Home is empty; Explore has three native glass carousels. |
+| Roots | `/os/home`, `/os` (Today), `/os/mirror` (Reflect) and `/os/explore` share bottom navigation. Home renders Personal Imprint for eligible signed-in accounts. Explore uses three native glass carousels. |
 | Account entry | Supabase verified email/password and auth alias, reset-link handling, account scope and retained offline-entry proof. Current setup is invitation-only; public signup belongs to the replacement onboarding target. |
 | Main local state | IndexedDB plus localStorage copy, migrations and legacy outbox. Account-separated keys in account mode; circle-os-state-v2 in legacy mode. |
 | Account writing | Separate owner-scoped IndexedDB ledger and local queue/cloud state; not copied into CircleState or the legacy server payload. |
@@ -272,15 +277,19 @@ globally migrate compact/chapter surfaces.
 Legacy filenames remain until a reviewed migration. Runtime external files are
 not replaced by changing product-document authority.
 
-## Planned Content Admin and shared catalog
+## Content Admin and shared catalog
 
-The approved local catalog follow-up adds mutable item/discovery state and
-immutable version/image references. Transactional RPCs snapshot saved drafts and
+The catalog stores mutable item/discovery state and immutable version/image
+references. Transactional RPCs snapshot saved drafts and
 record exact retry receipts. Signed-in reads separate discovery from exact old
 versions. Withdrawal preserves content/assets. Targeted image signing uses the
-caller token and Storage policies. Migration 003 remains unapplied; no hosted
-acceptance is claimed. Direct Chapter readers use local runs and Reflect resolves
-exact catalog definitions, never newer replacements.
+caller token and Storage policies. Catalog migrations 003 and 004 are applied
+and have bounded hosted evidence. Direct Chapter readers resume existing local
+runs of the exact edition. Opening a Chapter without an existing run starts a
+preview with temporary answers. Reflect's History projection resolves saved runs
+against their original editions. Those editions stay readable after a newer
+version is published.
+[Hosted Chapter verification](USER_JOURNEY_TESTING.md#hosted-catalog-chapter-resume-and-finish--2026-11-23).
 
 [The Admin-first plan](CONTENT_ADMIN_PLAN.md) extends existing authoring with
 server-verified developer-account privileges, a shared Supabase Postgres catalog
@@ -294,12 +303,10 @@ Two content grants exist, with the second invitation awaiting email verification
 Account Workshop saves shared drafts,
 uses account/tab recovery, and blocks the legacy publisher and run-reset paths.
 
-Review draft/published access, immutable versions/assets, schema/policies,
-media lifetime and account bootstrap before implementation. Current password
-Admin, browser drafts and legacy publishing are foundations, not this account-
-bound service. Hosted private Storage and shared draft access are verified for
-synthetic accounts and actual built HTTP routes. Live publication remains pending.
-Explore consumes the catalog after Admin is built.
+Hosted private Storage and shared draft access were verified using synthetic
+accounts and built HTTP routes. Explore consumes the published catalog, and
+explicit template adoption writes an account-scoped copy to device storage.
+Content authoring and operational/device verification remain separate work.
 
 ## Target system and constraints
 
@@ -327,10 +334,13 @@ deletion/sync contracts, uncertain answers, age eligibility and existing-user
 transition before implementation. Preserve immutable old runs, access and records;
 never rewrite a published id@version in place.
 
-[Personal Imprint](PERSONAL_IMPRINT_HOME.md) is a selected visual direction,
-not implemented evidence processing. Current roots and full-page tools already
-exist; source mapping/brightness/fading and direct-entry wiring from Home remain
-future work. Feeling is separate from activity state, not a worth score.
+The signed-in [Personal Imprint](PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23)
+combines saved activity from the owner-scoped writing ledger and Circle state.
+Its strand renderer uses attributed Circle days and timing to display growth
+and fading. The hosted review is configured for production `main` and the
+protected `paing-branch` preview. The latest deployed build still needs journey
+verification. Generating a personal form from onboarding and opening tools from
+Home remain planned. Feeling stays separate from activity state.
 
 ### Athena access boundary
 

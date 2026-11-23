@@ -4,6 +4,7 @@ import { createServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { chromium, expect } from '@playwright/test';
 import { createChapterDraft } from '../app/os/admin/chapter-authoring.js';
+import imprintVariants from '../app/os/home/imprint-art-variants.json' with { type: 'json' };
 import { readFileSync } from 'node:fs';
 const useProductionCSS=process.env.CIRCLE_PRODUCTION_CSS==='1';
 const productionStylePaths=useProductionCSS?[...new Set([...readFileSync('.next/server/app/os.html','utf8').matchAll(/href="(\/_next\/static\/[^"?]+\.css)(?:\?[^" ]*)?"/g)].map(match=>match[1]))]:[];
@@ -238,8 +239,100 @@ test('existing catalog run reloads with its original definition',{timeout:90000}
 test('new Chapter exact-version reading previews without creating personal evidence',{timeout:90000},async()=>{
  const context=await browser.newContext({viewport:{width:390,height:900}});const chapter=createChapterDraft().chapter;chapter.id='catalog-preview';chapter.title='Original chapter';chapter.pages[0].title='Original cover';
  try{await context.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==base)return route.abort();if(url.pathname==='/os/catalog')return route.fulfill({json:{version:1,content:{kind:'chapter',chapter}}});return route.continue();});
- const page=await context.newPage();await page.goto(base+'/fixture?reader=1&id=catalog-preview&version=1');await expect(page.getByRole('heading',{name:'Original cover',exact:true})).toBeVisible();assert.deepEqual(await page.evaluate(()=>window.readerState.chapters.runs),{});await page.reload();await expect(page.getByText('Original cover',{exact:true})).toBeVisible();assert.deepEqual(await page.evaluate(()=>window.readerState.chapters.runs),{});
+ const page=await context.newPage();await page.goto(base+'/fixture?reader=1&id=catalog-preview&version=1&preview=1');await expect(page.getByRole('heading',{name:'Original cover',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Swipe to begin'}).click();
+ assert.deepEqual(await page.evaluate(()=>window.readerState.chapters.runs),{});await page.reload();await expect(page.getByText('Original cover',{exact:true})).toBeVisible();assert.deepEqual(await page.evaluate(()=>window.readerState.chapters.runs),{});
  }finally{await context.close();}
+});
+
+test('published Chapter starts from empty, resumes its submitted answer and finishes on a left swipe', { timeout: 90000 }, async () => {
+ const context = await browser.newContext({ viewport: { width: 390, height: 900 } });
+ const chapter = createChapterDraft().chapter;
+ chapter.id = 'new-catalog-run';
+ chapter.pages[0].title = 'Original cover';
+ chapter.pages[1] = { type: 'short-text', id: 'question', question: 'What did you notice?', answerKey: 'noticed', required: true };
+ const requests = [];
+ try {
+  await context.route('**/*', async route => {
+   const url = new URL(route.request().url());
+   if (url.origin !== base) return route.abort();
+   if (url.pathname === '/os/explore') return route.fulfill({ contentType: 'text/html', body: '<main>Explore destination</main>' });
+   const art = imprintVariants.flatMap(({ bone, coordinates }) => [bone, coordinates]).find(asset => '/' + asset.path === url.pathname);
+   if (art) return route.fulfill({ path: 'docs/design/' + art.file, contentType: art.type });
+   if (url.pathname !== '/os/catalog') return route.continue();
+   const version = Number(url.searchParams.get('version'));
+   requests.push(version);
+   const edition = version === 2 ? { ...chapter, version, pages: [{ ...chapter.pages[0], title: 'Newer cover' }, ...chapter.pages.slice(1)] } : chapter;
+   return route.fulfill({ json: { version, content: { kind: 'chapter', chapter: edition } } });
+  });
+  const page = await context.newPage();
+  const readerUrl = base + '/fixture?reader=1&id=new-catalog-run';
+  await page.goto(readerUrl + '&version=1');
+  await expect(page.getByRole('heading', { name: 'Original cover' })).toBeVisible();
+  assert.deepEqual(await page.evaluate(() => window.readerState.chapters.runs), {});
+  await page.getByRole('button', { name: 'Swipe to begin' }).click();
+  const answer = page.getByRole('textbox', { name: 'What did you notice?' });
+  await answer.fill('An answer saved from the reader.');
+  await page.evaluate(() => {
+   const set = Storage.prototype.setItem;
+   const put = IDBObjectStore.prototype.put;
+   Storage.prototype.setItem = function (key, value) {
+    if (key.startsWith('circle-os-state')) throw new DOMException('Synthetic full device', 'QuotaExceededError');
+    return set.call(this, key, value);
+   };
+   IDBObjectStore.prototype.put = function (value, key) {
+    if (this.name === 'state') throw new DOMException('Synthetic full device', 'QuotaExceededError');
+    return put.call(this, value, key);
+   };
+   window.restoreChapterStorage = () => { Storage.prototype.setItem = set; IDBObjectStore.prototype.put = put; };
+  });
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Could not save Chapter progress');
+  await expect(answer).toHaveValue('An answer saved from the reader.');
+  await page.evaluate(() => window.restoreChapterStorage());
+  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  await expect(page.getByText('Swipe when ready')).toBeVisible();
+  await page.goto(readerUrl + '&version=2&resume=1');
+  await expect(page.getByText('Swipe when ready')).toBeVisible();
+  assert.equal(requests.at(-1), 1);
+  await page.reload();
+  await expect(page.getByText('Swipe when ready')).toBeVisible();
+  const box = await page.getByLabel('Published chapter reading').boundingBox();
+  assert.ok(box);
+  const y = box.y + Math.min(150, box.height / 2);
+  await page.mouse.move(box.x + box.width * 0.8, y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.2, y, { steps: 14 });
+  await page.mouse.up();
+  await expect(page.getByText('Explore destination')).toBeVisible();
+  await page.goto(readerUrl + '&version=1');
+  await expect(page.getByText('Chapter complete.')).toBeVisible();
+  const saved = await page.evaluate(() => Object.values(window.readerState.chapters.runs));
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].chapterVersion, 1);
+  assert.equal(saved[0].answers[0].value, 'An answer saved from the reader.');
+  assert.equal(saved[0].status, 'completed');
+  assert.ok(saved[0].imprintFinish);
+  await page.goto(base + '/fixture?home=1');
+  const canvas = page.getByRole('img', { name: 'Activity colors on the accepted shape' });
+  const visibleColor = async () => {
+   await expect(canvas).toHaveAttribute('data-ready', 'true');
+   return canvas.evaluate(el => {
+    const pixels = el.getContext('2d').getImageData(0, 0, el.width, el.height).data;
+    let count = 0;
+    for (let i = 0; i < pixels.length; i += 4) if (pixels[i] > pixels[i + 1] + 20) count++;
+    return count;
+   });
+  };
+  const color = await visibleColor();
+  assert.ok(color > 0);
+  await page.reload();
+  assert.equal(await visibleColor(), color);
+  await page.goto(readerUrl + '&version=2');
+  await expect(page.getByRole('heading', { name: 'Newer cover' })).toBeVisible();
+ } finally {
+  await context.close();
+ }
 });
 
 test('signed-in Article reader reloads exact content and retries its targeted image',{timeout:90000},async()=>{
@@ -299,18 +392,19 @@ before(async () => {
  import React from 'react';import{createRoot}from'react-dom/client';
  import{AccountAdmin}from'/app/os/admin/account-admin.tsx';
  import{SupabaseConnection}from'/app/os/auth/supabase-context.tsx';
- import{activateAccountScope}from'/app/os/account-scope.js';
+ import{activateAccountScope,getAccountScope}from'/app/os/account-scope.js';
  ${useProductionCSS?'':"import'/app/globals.css';import'/app/os/os-app.css';import'/app/os/content-glass.css';"}
  activateAccountScope('synthetic-admin');
  const value={client:{auth:{getSession:async()=>({data:{session:{access_token:'synthetic-token',user:{id:'synthetic-admin'}}}})}},config:{}};
  let surface=React.createElement(AccountAdmin);
  if(location.search.includes('menu=1')){const {AccountMenu}=await import('/app/os/auth/account-menu.tsx');const {AccountContext}=await import('/app/os/auth/account-context.tsx');surface=React.createElement(AccountContext.Provider,{value:{accountId:'synthetic-admin',alias:'Synthetic',busy:false,message:'',saveAlias:async()=>true,signOut:async()=>{}}},React.createElement(AccountMenu));}
  if(location.search.includes('reader=1')){const {default:Reader}=await import('/app/os/catalog/read/page.tsx');const {CircleStateProvider,useCircleState}=await import('/app/os/circle-os-shell.tsx');const {useCatalogDefinitions}=await import('/app/os/catalog/definitions.ts');function Probe(){const context=useCircleState();window.readerState=context.state;window.readerUpdate=context.updateState;window.readerDefinitions=useCatalogDefinitions(context.state.chapters.runs);return null;}surface=React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(Reader));}
+ if(location.search.includes('home=1')){const {default:Home}=await import('/app/os/home/page.tsx');const {CircleStateProvider}=await import('/app/os/circle-os-shell.tsx');const {WritingProvider}=await import('/app/os/writing-provider.tsx');surface=React.createElement(CircleStateProvider,null,React.createElement(WritingProvider,{scope:getAccountScope(),enabled:true,answers:[],memory:{}},React.createElement(Home)));}
  const admin=React.createElement(SupabaseConnection.Provider,{value},surface);
  const route=React.createElement('div',{className:'os-route-stage is-ready'},React.createElement('div',null,React.createElement('div',{className:'os-route-content'},admin)));
  createRoot(document.getElementById('root')).render(React.createElement('div',{className:'circle-os'},React.createElement('div',{className:'os-app-shell'},route)));
  `;
- server=await createServer({configFile:false,define:{'process.env':JSON.stringify({NODE_ENV:'development'})},plugins:[react(),{name:'admin-fixture',resolveId(id){if(id==='virtual:admin')return '\0admin.tsx';},load(id){if(id==='\0admin.tsx')return harness+'window.adminSwitch=activateAccountScope;';},configureServer(vite){vite.middlewares.use(async(req,res,next)=>{if(useProductionCSS&&req.url==='/fixture-production.css'){res.setHeader('Content-Type','text/css; charset=utf-8');res.end(productionStyles);return;}if(req.url?.split('?')[0]!=='/fixture')return next();res.setHeader('Content-Type','text/html; charset=utf-8');res.end(await vite.transformIndexHtml('/fixture','<meta name="viewport" content="width=device-width,initial-scale=1">'+(useProductionCSS?'<link rel="stylesheet" href="/fixture-production.css">':'')+'<div id="root"></div><script type="module" src="/@id/virtual:admin"></script>'));});}}],server:{host:'127.0.0.1',port:0,watch:{ignored:['**/.next/**','**/dist/**']}}});
+ server=await createServer({configFile:false,define:{'process.env':JSON.stringify({NODE_ENV:'development',CIRCLE_IMPRINT_HOSTED_REVIEW:'enabled'})},plugins:[react(),{name:'admin-fixture',resolveId(id){if(id==='virtual:admin')return '\0admin.tsx';},load(id){if(id==='\0admin.tsx')return harness+'window.adminSwitch=activateAccountScope;';},configureServer(vite){vite.middlewares.use(async(req,res,next)=>{if(useProductionCSS&&req.url==='/fixture-production.css'){res.setHeader('Content-Type','text/css; charset=utf-8');res.end(productionStyles);return;}if(req.url?.split('?')[0]!=='/fixture')return next();res.setHeader('Content-Type','text/html; charset=utf-8');res.end(await vite.transformIndexHtml('/fixture','<meta name="viewport" content="width=device-width,initial-scale=1">'+(useProductionCSS?'<link rel="stylesheet" href="/fixture-production.css">':'')+'<div id="root"></div><script type="module" src="/@id/virtual:admin"></script>'));});}}],server:{host:'127.0.0.1',port:0,watch:{ignored:['**/.next/**','**/dist/**']}}});
  await server.listen();base=`http://127.0.0.1:${server.httpServer.address().port}`;browser=await chromium.launch();
 });
 

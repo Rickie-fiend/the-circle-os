@@ -10,6 +10,7 @@ import {
   chapterDeckSignal,
   chapterFacts,
   chapterKind,
+  countChaptersStartedInHour,
   latestChapterVersions,
   scheduleChapters,
   selectScheduledChapter,
@@ -39,6 +40,19 @@ const published = JSON.parse(
 );
 
 const NOW = new Date("2026-08-12T12:00:00.000Z");
+
+test("catalog starts share the delivery budget without requiring cached editions", () => {
+  const legacy = chapter("legacy");
+  const catalog = chapter("catalog", { kind: "probe" });
+  const nextVersion = { ...catalog, version: 2 };
+  const startedAt = NOW.toISOString();
+  const runs = {
+    ...run(legacy, { startedAt }),
+    ...run(catalog, { startedAt, catalogKind: "probe" }),
+    ...run(nextVersion, { startedAt, catalogKind: "probe" }),
+  };
+  assert.deepEqual(countChaptersStartedInHour([legacy], runs, NOW), { hour: 2, probesToday: 1 });
+});
 
 function chapter(id, extra = {}) {
   return {

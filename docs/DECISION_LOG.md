@@ -1,5 +1,13 @@
 # Circle OS decision log
 
+## 2026-11-23 — Home Imprint review complete
+
+The developer reviewed the signed-in Home Imprint changes and confirmed they
+look good. The reviewed implementation uses the fixed Sori strand artwork and
+colors six areas from saved account activity. The [Home brief](PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23)
+records the mapping, fading and pulse behavior. Personal form generation and
+transition from replacement onboarding remain open.
+
 ## 2026-11-17 — Activity proposal approved for an isolated study
 
 Developer approved the saved activity proposal, including the qualifying event
@@ -507,12 +515,12 @@ outside that approval. See [prepared implementation and limits](CONTENT_ADMIN_SE
 | Onboarding | Planned required-answer flow replaces current onboarding: public signup/verification, chosen name, private birthday, background/experience/wanted change, times, one chosen daily habit, previews and feeling. Reason: recognize the person's starting point and create a usable beginning. | [Onboarding](ONBOARDING_SPEC.md) |
 | Onboarding preservation | Old published versions, unfinished runs, completed access and records remain intact until reviewed replacement. Never rewrite immutable content to simplify migration. | [Record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) |
 | Identity | Name/nickname is enough; no required public real name or second alias field in the target. Current auth alias remains distinct from personal evidence. | [Product](PRODUCT.md#privacy-and-identity) |
-| Home | Personal Imprint is selected direction. Exact silhouette/mapping/fading and Protocol placement are open; no worth/willpower percentage. | [Home brief](PERSONAL_IMPRINT_HOME.md) |
+| Home | Signed-in Personal Imprint uses strand artwork and six areas of saved activity. The artwork reflects use without scoring a person's worth. | [Home brief](PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23) |
 | Reflect | Today/Reflect previews serve different purposes. Replacement layout, discoveries and Keep in Reflect remain saved proposals; implementation deferred. | [Reflect proposal](REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md) |
 | Tool family | Six opened tools/supporting views use Routine's shared visual/motion engines, 24px anchors, full-page floor and natural growth. Reason: measurable consistency and reusable behavior. | [Design](../DESIGN.md#shared-tool-contract---2026-11-11), [Page standard](../app/os/APP_SESSION_STANDARD.md) |
 | Checkboxes | Shared Orange glass/liquid and immediate white Log ✓. Protocol toggles only through its checkbox; passive kept words fill Orange without strikethrough. Earlier whole-row action/no-tick rules are retired. | [Design](../DESIGN.md#frame-and-controls) |
 | Completion timing | Shared immediate 300ms response; retire Week's checkbox-first and three-second waits. Structural change is 600ms; typing immediate. | [Page standard](../app/os/APP_SESSION_STANDARD.md#shared-tool-interaction-contract---2026-11-11) |
-| Entry/navigation | Four-root nav exists; /os remains Today, Home/Explore empty. Completed Day One enters directly; no automatic setup/review/greeting. Opened tools stay selected. | [Page standard](../app/os/APP_SESSION_STANDARD.md#navigation-and-entry) |
+| Entry/navigation | Four-root navigation. `/os` remains Today. Eligible signed-in accounts see Imprint on Home, and Explore browses published catalog content. Completed Day One enters directly, without an automatic setup, review or greeting. Opened tools stay selected. | [Page standard](../app/os/APP_SESSION_STANDARD.md#navigation-and-entry) |
 | Content pause | Note Line entry hidden and automatic writing Sparks paused; retain content, versions and progress. Reason: developer's explicit temporary pause while designs are reviewed. | [Product](PRODUCT.md#current-daily-tools) |
 | Writing | Multiple titled Notes, silent autosave/recovery; Deep Thoughts Send/correction/Next question. No ordinary Thoughts composer, Versions/Undo or Discard draft UI on account writing. | [Product](PRODUCT.md#current-daily-tools), [record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) |
 | History/corrections | Preserve prior wording/dates. Week reviews remain read only; past Habit corrections/shared day view deferred. Trash has no expiry and stays out of Athena. | [Record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) |
@@ -543,7 +551,7 @@ outside that approval. See [prepared implementation and limits](CONTENT_ADMIN_SE
 | O-06 | Trial/release | 10–20 testers remain the recorded scope; devices/browsers, regional checks, duration/success criteria and public rollout are open |
 | O-07 | Native | Framework and distribution deferred until web learning |
 | O-08 | Replacement onboarding | Validation/uncertain answers, age eligibility, exact new record contracts, final completion and existing-user transition |
-| O-09 | Home | Silhouette/source mapping, unknown answers, brightness/fade window, Log time interpretation and Protocol placement |
+| O-09 | Home | Personal form inputs, uncertain answers, transition from the signed-in review, and tool shortcuts from Home |
 
 Do not treat an unresolved detail as permission to revive an older rejected
 direction. The [work plan](WORK_PLAN.md) schedules questions before dependent work.

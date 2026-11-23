@@ -179,8 +179,8 @@ The [Page standard](app/os/APP_SESSION_STANDARD.md) distinguishes those contexts
 
 The persistent bottom navigation covers Home, Today, Reflect and Explore,
 including opened tools; current /os entry remains Today. It may hide for the
-keyboard under the existing behavior. Home remains intentionally empty; Explore
-uses the three approved discovery rows above.
+keyboard under the existing behavior. Home shows the signed-in Personal Imprint
+where enabled. Explore uses the three approved discovery rows above.
 
 Reuse PageLayout, SwipeSession, useAppBack, RoutineHeaderButton, RoutineSwipeCue
 and the button engine. Their legacy names do not restrict reuse to one tool.
@@ -192,8 +192,9 @@ reduced-transparency/motion preferences. Do not repurpose it as Home evidence.
 
 ## Future design boundaries
 
-[Personal Imprint](docs/PERSONAL_IMPRINT_HOME.md) is the selected Home direction;
-its silhouette and source/brightness/fade formulas remain open.
+The [signed-in Personal Imprint](docs/PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23)
+uses the reviewed strand artwork and saved-activity color. A form generated from
+replacement-onboarding answers and tool shortcuts from Home remain future work.
 [Onboarding](docs/ONBOARDING_SPEC.md) is the replacement target, not implemented.
 The [Reflect proposal](docs/REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md) is saved
 for later; no new discovery-writing or declaration layout is adopted here.

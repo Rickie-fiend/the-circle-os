@@ -1,5 +1,21 @@
 # Circle OS work plan
 
+Updated 2026-11-23, Asia/Bangkok. This is the working queue under
+[Roadmap](ROADMAP.md). A queued item is not approval to edit, provision, migrate,
+activate sync or deploy.
+
+## Start here
+
+The developer reviewed the signed-in Home Imprint changes and confirmed they look
+good. Chapter resume, finish and persistent Home color passed in an isolated
+production build with hosted Auth and catalog data. The next queued check covers
+the same journey on the deployed app, with a physical phone if available.
+[Current Task](CURRENT_TASK.md) · [Chapter evidence](USER_JOURNEY_TESTING.md#hosted-catalog-chapter-resume-and-finish--2026-11-23)
+
+General lived review of Protocol interactions remains a separate check. The
+replacement [onboarding](ONBOARDING_SPEC.md) and [Reflect redesign](REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md)
+remain future work.
+
 ## Backup work deferred — 2026-11-23
 
 The developer approved a maximum loss window of 24 hours for synced edits in
@@ -8,10 +24,6 @@ the planned Supabase upgrade. Resume by checking the upgraded plan's database
 backup schedule and retention, then separately review media coverage, deletion
 and revocation safeguards, and an isolated hosted restore. Safe restore and the
 30-day deleted-backup limit remain beta requirements. [Backup runbook](BACKUP_RESTORE_RUNBOOK.md).
-
-Continue with current journey verification. The direct hosted Chapter resume
-and finish path is the next candidate for a reviewed slice. The Home visual
-review can wait. [Latest Chapter evidence](USER_JOURNEY_TESTING.md#chapter-finishes-on-home-imprint--2026-11-22).
 
 ## Local synthetic backup and restore — 2026-11-15
 
@@ -82,34 +94,13 @@ hosted restore, retention and remote stale-copy suppression remain open.
 Next review backup/restore separately. Earlier gap lists are qualified only by
 this bounded evidence. See [results and limits](USER_JOURNEY_TESTING.md#storage-loss-and-recovery--2026-11-14).
 
-Queue status — 2026-11-14: developer approved completing local templates, starting
-with the specified Explore layout. Explore and Habit/Protocol adoption are
-implemented. Approved migration 004 and isolated hosted/browser acceptance are
-complete, including exact cleanup. Never reapply 001–004. Next review the product
-and author real content deliberately; remaining device/operating gaps persist.
-
-Updated: 2026-11-11, Asia/Bangkok. This is the working queue under
-[Roadmap](ROADMAP.md). A queued item is not approval to edit, provision, migrate,
-activate sync or deploy. [Current Task](CURRENT_TASK.md) names the active job.
-
-## Start here
-
-The approved documentation cleanup aligns current rules and the replacement
-[onboarding target](ONBOARDING_SPEC.md). Existing full-page tool work remains
-uncommitted. The developer's lived review of the latest Protocol interaction
-remains outstanding unless separately completed.
-
-The active scope is local Explore/template completion and preparing the concrete
-hosted acceptance procedure. Remote migration/testing remains separately gated.
-Reflect implementation is explicitly deferred.
-
 ## Ordered work
 
 | Order | Work | Current limit and next review |
 | --- | --- | --- |
-| 0 | Content Admin/catalog/media | Local Habit/Protocol authoring, Explore and adoption are implemented under the reviewed contract. Review the prepared migration 004 and real synthetic hosted/browser procedure for separate approval. Second invitation/operational/device gaps remain open. |
-| 1 | Critical journey and current-tool acceptance | Preserve latest local tool/Protocol evidence. Reproduce open defects against current code; distinguish old fixture failures from current app defects. Phone keyboard/caret, other engines and ResizeObserver remain gaps. The stale Habit setup/identity source checks have verified behavioral replacements; see the 2026-11-14 cleanup journey entry. |
-| 2 | Production writing recovery and activation readiness | Both migrations and bounded hosted resolution/test-store checks exist. Review production writing-store reload/restart, offline load, eviction/recovery, session expiry/revocation and actual phones before any activation proposal. Do not reapply migrations. |
+| 0 | Content Admin/catalog/media | Habit/Protocol authoring, Explore and local adoption are implemented. Migration 004 is applied. Synthetic hosted/browser acceptance passed with exact cleanup. Second invitation, operational and device gaps remain open. [Template evidence](USER_JOURNEY_TESTING.md#approved-hosted-template-acceptance--2026-11-14) |
+| 1 | Critical journey and current-tool acceptance | Next is deployed Chapter resume and finish. Home Imprint visual review is complete and the hosted catalog round trip passed in an isolated build. Broader phone/browser and ResizeObserver gaps remain. Reproduce reported defects on current code and separate fixture failures from app defects. [Current gaps](../bugs.md#current-gaps) |
+| 2 | Production writing recovery and activation readiness | Both migrations and bounded hosted checks passed, including production-store recovery and session cases at mobile Chromium widths. Real-device restart, offline load and eviction, true lock contention and operational safeguards remain open. Automatic sync stays off. [Writing evidence and gates](ACCOUNT_WRITING_SYNC.md#verification-and-activation-gates) |
 | 3 | Remaining record sync and operating recovery | Review per-domain ownership, revisions, atomic local/outbox writes, exact receipts, conflicts, deletion, backup/restore and admin/log access. Personal import needs its own owner mapping, backup and rollback approval. |
 | 4 | Replacement onboarding and needed Home behavior | Use the planned required-answer/one-habit flow, replacing the old optional-action plan. Resolve records, existing-user transition, uncertain answers, final completion and Home mapping. Keep records/history and safe-sync prerequisites. |
 | 5 | Membership/admin | Server-enforced fixed-day grants, renewal/expiry/revocation, audit and usage reservations. Set actual amounts, reset math, spending/alert/pause controls and operations. |
@@ -128,7 +119,7 @@ needs a named measured problem and verification before/after.
 | --- | --- |
 | Sync/recovery | Production adapter/device evidence; live-role/session cases; real lock contention; operation/receipt retention; stale-device and restore suppression; deletion coverage/turnaround; log retention/read auditing |
 | Onboarding | Exact validation/uncertain answers; birthday eligibility; email-link recovery; final terminal placement; existing-user entry and preservation; owner/revision/history/deletion/sync contracts; feeling correction and multi-device prompting |
-| Home | Personal Imprint silhouette and source mapping, unanswered-question treatment, time-window/fading/brightness, Log end-time interpretation and Protocol placement |
+| Home | Replacement-onboarding inputs, unanswered-question treatment and how to carry the current signed-in Imprint forward. The review's current mapping and timing are in the [Home brief](PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23). |
 | Athena | Wrong/Has changed/Forget scope, undo and recurrence prevention; old-reading qualifications; source invalidation; provider facts, tone/quality and budget |
 | Membership | Allowance/counting, Myanmar reset hour, monthly-cycle/renewal math, retry/no-change accounting, price/payment operations |
 | Release | Public signup rollout versus limited tester release; supported phones/browsers; Myanmar/Thailand connections; duration/success criteria; lost-email proof, data-use wording, support/feedback/rollback |
@@ -142,8 +133,8 @@ are still open. A chosen name need not be a real name.
 
 - Reflect replacement layout, direct discovery writing and Keep in Reflect:
   [saved proposal](REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md).
-- Personal Imprint production rendering until its mapping is reviewed:
-  [Home brief](PERSONAL_IMPRINT_HOME.md).
+- Personal form generation from replacement-onboarding answers and Home tool
+  shortcuts. [Home brief](PERSONAL_IMPRINT_HOME.md).
 - Past Habit completion corrections, shared day view, advanced search,
   timers, leaderboards, broad optimization/refactors and further chapter
   simplification.
@@ -152,15 +143,15 @@ are still open. A chosen name need not be a real name.
 
 ## Verification to carry forward
 
-Latest bounded local tool evidence does not certify physical phones, other
-browser engines, hosted sync or the broad suite. The earlier Habit source-text
-failures have passing behavioral replacements; ResizeObserver notices remain
-open. Historical test/lint/TypeScript failures are dated scopes, not fresh
-results against today's tree.
+Local tool and hosted-catalog checks cover desktop Chromium at mobile widths.
+Physical phones, other engines, the deployed Chapter journey and the broad
+suite remain outside that evidence. The earlier Habit source checks have passing
+behavioral replacements. ResizeObserver notices remain open. Historical test
+results carry their original dates and scopes.
 
-Hosted writing reload proof uses a separate test store, not the production
-writing adapter. Activation remains off. Session expiry/revocation, lock
-contention, device eviction, backup/retention and wider sync remain open.
+The earlier writing test-store proof was followed by isolated hosted checks
+using the production store. Activation remains off. True lock contention, device
+eviction, hosted backup/retention and other-domain sync remain open.
 
 Use [bugs](../bugs.md), [journey evidence](USER_JOURNEY_TESTING.md) and
 [writing limits](ACCOUNT_WRITING_SYNC.md#verification-and-activation-gates).

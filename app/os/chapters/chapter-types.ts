@@ -140,6 +140,7 @@ export type ChapterAnswer = {
 
 export type ChapterRun = {
   runId: string;
+  catalogKind?: ChapterKind;
   chapterId: string;
   chapterVersion: number;
   status: "not-started" | "in-progress" | "completed";

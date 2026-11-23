@@ -42,7 +42,7 @@ passed on 2026-11-14. Real authored publication remains deliberate.
 Standalone Routine habits/tasks support Once, Daily for a chosen period, and Daily until stopped. New choices start on the current local Circle day. Once stays pending until completed or archived; finite daily periods count inclusive calendar Circle days, not successful ticks. Clear stops future occurrences and retains records. Existing habits retain ongoing repetition and existing tasks retain one-time behavior. Week-linked steps keep their existing date ownership. A repeat task has separate dated completion/undo records.
 
 
-Updated: 2026-11-11, Asia/Bangkok. This document owns product direction and
+Updated 2026-11-23, Asia/Bangkok. This document owns product direction and
 behavior. [Roadmap](ROADMAP.md) owns release dependencies; [decisions](DECISION_LOG.md)
 records reasons and open choices. A target is not a claim of implementation.
 
@@ -73,10 +73,10 @@ Provider quality and language readiness still require verification.
 
 | Area | Current state | Target or limit |
 | --- | --- | --- |
-| Navigation | Home, Today, Reflect and Explore bottom navigation; /os enters Today; Reflect remains /os/mirror | Home is intentionally empty; Explore uses three discovery rows. Onboarding's Home destination is planned. |
+| Navigation | Home, Today, Reflect and Explore share bottom navigation. `/os` enters Today and `/os/mirror` opens Reflect. Home shows the signed-in Imprint where enabled, and Explore has three discovery rows. | Onboarding's Home destination is planned. |
 | Daily tools | Full-page Note/Deep Thoughts, Routine/Protocol and Log/Week pairs, with supporting views | Preserve current functions while reviewing new root compositions. |
 | Accounts | Supabase email/password entry and account-separated local stores; legacy and development-test modes remain distinct | Public signup is the new onboarding target; current invitation-only configuration is not changed by documenting it. |
-| Writing sync | Both writing migrations applied; bounded hosted access, conflict and separate-test-store reload checks recorded | Automatic product activation remains off. Production-store/device recovery and operational gates remain open. |
+| Writing sync | Both writing migrations applied. Bounded hosted checks cover access, conflicts and production-store recovery in an isolated build. | Automatic product activation remains off. Physical-device recovery and operational gates remain open. |
 | Other lifestyle sync | Local records; legacy mode can use the file-based profile server | General Supabase domain sync and personal migration remain planned. |
 | Athena | Prepared readings, immutable editions/history and local calculations | Live requested generation, membership enforcement and new memory controls remain planned. |
 | Onboarding | Existing Day One versions/runs | Replace with the planned onboarding below. |
@@ -94,15 +94,17 @@ inside the app, with images in chapters/articles. Ordinary content updates need
 no code change. Users preview/personalize templates before adding personal copies;
 catalog edits never rewrite their habits/phases or immutable chapter answers.
 See the [approved direction and proposed contracts](CONTENT_ADMIN_PLAN.md).
-Explore browsing and local template adoption are implemented. Hosted template
-publication requires the reviewed migration and hosted acceptance; no deployment
-or real authored publication is implied.
+Explore browsing and local template adoption are implemented. Migration 004
+is applied, and synthetic hosted publication, adoption and reload checks
+passed with exact cleanup. Real authored publication remains deliberate.
+[Hosted template evidence](USER_JOURNEY_TESTING.md#approved-hosted-template-acceptance--2026-11-14).
 
 ## The experience
 
-- **Home:** planned recognition of the person's starting point and continuing
-  life. [Personal Imprint](PERSONAL_IMPRINT_HOME.md) is the selected direction;
-  its visual/data mapping remains open.
+- **Home** shows the developer-reviewed Personal Imprint in the signed-in
+  review. Saved activity colors the artwork as the person uses Circle OS.
+  The long-term design also recognizes the person's starting point using
+  their replacement-onboarding answers. [Personal Imprint](PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23).
 - **Today:** receives input through Note, Deep Thoughts, Routine, Protocol, Log
   and Week. Proposed recent-input previews need a reviewed selection contract.
 - **Reflect:** holds wanted-life records, received readings and reflection on
@@ -110,9 +112,10 @@ or real authored publication is implied.
   is deferred. New discovery records, Keep in Reflect and replacement layouts
   are proposals, not adopted behavior. Today and Reflect previews should serve
   different purposes.
-- **Explore:** planned audience-focused self-exploration library of chapters,
-  articles and adoptable habit/Protocol templates. Current chapters and Quests remain
-  reachable through existing paths; the empty root does not move them.
+- **Explore** browses published Chapters, Habit and Protocol templates, and
+  articles. Previewing a catalog Chapter keeps answers temporary when there is
+  no saved run. Existing Chapters and Quests remain reachable through their
+  established paths.
 
 Chapters teach or ask one thing at a time. Quests group chapters into paths.
 Saving, browsing or answering does not request an AI reply.

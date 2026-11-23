@@ -1,13 +1,41 @@
 # Personal Imprint: Circle OS Home
 
+## Signed-in Home Imprint — 2026-11-23
+
+The developer reviewed the Home Imprint changes and confirmed they look good.
+The current signed-in review uses the fixed Sori strand artwork. Bone can
+appear while the color layer loads. The renderer uses a 1,170 × 1,755 image at
+higher pixel densities, with a 390 × 585 version available as a fallback.
+Generating a personal form from replacement-onboarding answers remains planned.
+
+Saved account activity colors six areas:
+
+| Area | What counts |
+| --- | --- |
+| Starting/Chapters | A newly saved Chapter finish. |
+| Note | A new saved Note with a title or body. |
+| Deep Thoughts | A new submitted answer with text. |
+| Routine | A tracked habit or Routine task completion. |
+| Log/Week | A saved Log block with a known end that has passed, or a tracked Week task completion. |
+| Protocol | A newly saved daily seal. |
+
+Each area grows once per qualifying Circle day. Orange grows along nearby
+strands, starting them one at a time and slowing after the 14th qualifying day.
+Fresh Orange fades once at the first 06:00 in its recorded zone at least 24
+hours after the contribution began. Failed saves leave the last saved color
+intact. The relevant source rules below describe how Undo and clearing affect
+the projection. The artwork reflects activity from this device's account records.
+[Imprint test evidence](USER_JOURNEY_TESTING.md#home-imprint-strand-renderer--2026-11-23).
+
 ## When Home plays the pulse
 
 A qualifying action queues a pulse after its local save succeeds. Home plays
 one pulse per affected patch when it is visible and the artwork is ready, even
 if the person takes longer than ten seconds to open it. A saved Log block can
 queue its pulse once its end is observed while the app is open and visible.
-Home only pulses for sources that still count. Reloading or starting a new app
-session shows saved color at rest. The saved contribution time sets its age.
+Home only pulses for sources that still count. Reduced motion, reloading or
+starting a new app session shows saved color at rest. The saved contribution
+time sets its age.
 
 ## Local Chapter finishes — 2026-11-22
 
@@ -35,7 +63,7 @@ The adapter stores the original time zone and exact end alongside the block.
 After midnight the saved Circle day remains the day of the start slot, including
 05:00–06:00. Tracked clears reuse the dated receipt that suppresses stale
 restoration. This is the local signed-in review scope. See
-[Current Task](CURRENT_TASK.md) for the review path.
+[Log journey evidence](USER_JOURNEY_TESTING.md#log-blocks-on-home-imprint--2026-11-22).
 
 ## Local daily Protocol seals — 2026-11-22
 
@@ -46,18 +74,15 @@ the same app session to see the pulse. Checking terms alone
 adds no color. Undoing a required term in a running phase removes that seal's
 support. Changing an optional term or archiving a finished phase preserves it. A new
 seal after Undo can pulse, keeping the original contribution's time and zone.
-Reopening Home or loading the local records shows the saved color without a
-pulse. If neither local store saves the change, Home shows the last saved state.
+After the pulse has played, reopening Home shows the saved color at rest.
+If neither local store saves the change, Home shows the last saved state.
 
 This slice starts with new seals, following the local Routine and Week rollout.
 Older seals remain available in Protocol history. The saved day, reward screen,
 wording, and account boundary are the existing Protocol behavior. The source
 metadata lives on the seal record alongside its status and is read by the same
 Home projection and local save acknowledgement used for Routine and Week.
-[Verification and review](CURRENT_TASK.md) are recorded separately.
-
-The previous study, initial source audit, and hosted writing evidence describe
-earlier slices. The new Protocol source work is local pending review and release.
+[Protocol journey evidence](USER_JOURNEY_TESTING.md#protocol-seals-on-home-imprint--2026-11-22).
 
 ## Activity model study — 2026-11-17
 
@@ -1397,14 +1422,14 @@ Home should recognize the person's starting point before Circle and the life
 they continue recording. Preserve the finely engraved flowing-ribbon aesthetic.
 Keep simple labelled destinations for Habits, Tasks, Log and possibly Protocol.
 
-The four-root navigation and full-page daily tools now exist. Home itself is
-intentionally empty. This brief does not imply that a source mapping, generated
-imprint or tool-area navigation has been implemented.
+Start with the [signed-in Home review](#signed-in-home-imprint--2026-11-23)
+for the implemented artwork, source mapping and pulse rules. Tool shortcuts
+from Home and generation from a person's onboarding answers remain future work.
 
 Use the [replacement onboarding](ONBOARDING_SPEC.md), [Product](PRODUCT.md),
 [record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md), [Design](../DESIGN.md)
-and [Page standard](../app/os/APP_SESSION_STANDARD.md). Exact silhouette,
-fade/brightness formula and Protocol placement remain open.
+and [Page standard](../app/os/APP_SESSION_STANDARD.md) when reviewing the
+replacement onboarding and its Home destination.
 Earlier concept discussion is [archived](archive/2026-11-11-doc-cleanup/PERSONAL_IMPRINT_HOME.md).
 
 ## Portable visual references

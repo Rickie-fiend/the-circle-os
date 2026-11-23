@@ -269,6 +269,13 @@ export function countChaptersStartedInHour(chapters, runs = {}, now = new Date()
   const today = getDateKey(now);
   const inHour = new Set();
   const probesToday = new Set();
+  for (const run of Object.values(runs)) {
+    if (!run?.catalogKind || !run.startedAt) continue;
+    if (hourKey(run.startedAt) === bucket) inHour.add(run.chapterId);
+    if (dayKey(run.startedAt) === today && run.catalogKind === "probe") {
+      probesToday.add(run.chapterId);
+    }
+  }
   for (const chapter of chapters) {
     const run = runs[`${chapter.id}@${chapter.version}`];
     const moment = run?.startedAt || run?.updatedAt;

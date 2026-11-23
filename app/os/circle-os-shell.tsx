@@ -1142,6 +1142,7 @@ type CircleStateContextValue = {
   changeTaskCompletion: (id: string, completed: boolean, origin?: TaskOrigin) => void;
   sealProtocolForDay: (runId: string, day: string) => void;
   updateChapterState: (run: ChapterRun, transform: (state: CircleState) => CircleState) => void;
+  saveChapterState: (run: ChapterRun, transform: (state: CircleState) => CircleState) => Promise<void>;
   trackLogImprint: boolean;
   localImprint: { days: ImprintDay[]; takePulses: (sources: Set<string>) => WritingImprintPulse[] };
   updateDay: (
@@ -1265,6 +1266,7 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
   const [ready, setReady] = useState(false);
   const [syncTick, setSyncTick] = useState(0);
   const stateRef = useRef(state);
+  const chapterSaves = useRef(new Map<string, { run: ChapterRun; settle: (saved: boolean) => void }>());
   const syncing = useRef(false);
   const syncPending = useRef(false);
   const lastServerSignature = useRef("");
@@ -1395,6 +1397,11 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     if (!ready) return;
     if (!isAccountScopeCurrent(scope)) return;
     const finishActivity = (saved: boolean) => {
+      for (const [id, { run, settle }] of chapterSaves.current) {
+        if (state.chapters.runs[id] !== run) continue;
+        chapterSaves.current.delete(id);
+        settle(saved);
+      }
       if (!reviewImprint || !isAccountScopeCurrent(scope)) return;
       for (const [source, action] of activityActions.current) {
         const completion = action.read(state);
@@ -1614,15 +1621,21 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     setState((current) => isAccountScopeCurrent(scope) ? transform(current) : current);
   }
 
-  function updateChapterState(run: ChapterRun, transform: (state: CircleState) => CircleState) {
+  function updateChapterState(run: ChapterRun, transform: (state: CircleState) => CircleState, acknowledge?: (saved: boolean) => void) {
     if (!isAccountScopeCurrent(scope)) return;
     const { runId, completedAt } = run;
     if (!reviewImprint || run.status !== "completed" || !completedAt || !Number.isFinite(Date.parse(completedAt))) {
-      updateState(transform);
+      updateState(current => {
+        const next = transform(current);
+        const saved = next.chapters.runs[runId];
+        if (acknowledge && saved) chapterSaves.current.set(runId, { run: saved, settle: acknowledge });
+        return next;
+      });
       return;
     }
     const { day, timeZone } = writingAttribution(completedAt, Intl.DateTimeFormat().resolvedOptions().timeZone);
-    if (stateRef.current.chapters.runs[runId]?.status !== "completed") {
+    const lastRun = acknowledge ? savedActivity?.chapters[runId] : stateRef.current.chapters.runs[runId];
+    if (lastRun?.status !== "completed") {
       activityActions.current.set(chapterImprintSource(runId), {
         operation: completedAt, group: "starting",
         read: saved => {
@@ -1635,8 +1648,22 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
       const next = transform(current);
       const saved = next.chapters.runs[runId];
       const stamped = stampChapterFinish(current.chapters.runs[runId], saved, completedAt, { day, timeZone });
+      if (stamped && acknowledge) chapterSaves.current.set(runId, { run: stamped, settle: acknowledge });
       if (!stamped || stamped === saved) return next;
       return { ...next, chapters: { ...next.chapters, runs: { ...next.chapters.runs, [runId]: stamped } } };
+    });
+  }
+
+  function saveChapterState(run: ChapterRun, transform: (state: CircleState) => CircleState) {
+    return new Promise<void>((resolve, reject) => {
+      if (!isAccountScopeCurrent(scope)) { reject(scope.signal.reason); return; }
+      const abort = () => reject(scope.signal.reason);
+      scope.signal.addEventListener("abort", abort, { once: true });
+      updateChapterState(run, transform, saved => {
+        scope.signal.removeEventListener("abort", abort);
+        if (saved) resolve();
+        else reject(Error("Could not save Chapter progress. Try again."));
+      });
     });
   }
 
@@ -1767,6 +1794,7 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     changeTaskCompletion,
     sealProtocolForDay,
     updateChapterState,
+    saveChapterState,
     trackLogImprint: reviewImprint,
     localImprint: { days: localDays, takePulses: takeLocalPulses },
     updateDay,

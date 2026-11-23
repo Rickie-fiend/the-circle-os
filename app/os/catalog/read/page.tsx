@@ -1,6 +1,7 @@
 "use client";
-import { useEffect,useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import Link from 'next/link';
 import { startProtocolTemplate } from '../../protocol-template-adoption.js';
 import { activeRoutineTemplate,addRoutineTemplate } from '../../routine-template-adoption.js';
 import { activeProtocolRun,mergeServerState,setAppSessionIndex } from '../../circle-os-model.js';
@@ -11,21 +12,111 @@ import { ContentRequest,PublishedImages } from '../../admin/content-media';
 import { ArticlePreview, type ArticleDraft } from '../../admin/article-editor';
 import { ChapterPlayer } from '../../chapters/chapter-player';
 import { createChapterRun,chapterRunId,storeChapterRun } from '../../chapters/chapter-model.js';
+import { chapterBlockReason, chapterFacts, chapterKind, countChaptersStartedInHour, DAILY_PROBE_BUDGET, HOURLY_CHAPTER_BUDGET } from '../../chapters/chapter-scheduler.js';
+import { readChapterPublications } from '../../chapters/chapter-publication-store';
+import { mergeChapterSupply } from '../../chapters/chapter-supply';
 import { useCircleState,ROUTINE_APP_VERSION } from '../../circle-os-shell';
 import type { ChapterDefinition,ChapterRun } from '../../chapters/chapter-types';
 import { TemplatePreview } from '../../admin/template-preview';
 import { createChapterDraft } from '../../admin/chapter-authoring.js';
 import type { TemplateContent } from '../../admin/template-types';
 type Edition={version:number;content:{kind:string;template?:TemplateContent;chapter?:ChapterDefinition;article?:ArticleDraft['article']}};
+
+function PublishedChapter({ chapter, preview }: { chapter: ChapterDefinition; preview: boolean }) {
+ const { state, saveChapterState } = useCircleState();
+ const [initial] = useState(() => createChapterRun(chapter));
+ const [previewRun, setPreviewRun] = useState(initial);
+ const [pending, setPending] = useState<{ before: ChapterRun; next: ChapterRun; failed?: boolean }>();
+ const [message, setMessage] = useState('');
+ const busy = useRef(false);
+ const explore = useRef<HTMLAnchorElement>(null);
+ const stored = state.chapters.runs[initial.runId];
+ const current = pending?.before ?? stored ?? initial;
+
+ async function save(next: ChapterRun) {
+  if (busy.current || current.status === 'completed') return;
+  busy.current = true;
+  const scope = getAccountScope();
+  const candidate = { ...next, catalogKind: chapterKind(chapter) };
+  setPending({ before: current, next: candidate });
+  setMessage('');
+  try {
+   const commit = async () => {
+    assertAccountScope(scope);
+    const latest = await loadCircleState(scope);
+    const existing = latest.chapters.runs[candidate.runId];
+    if (existing && JSON.stringify(existing) !== JSON.stringify(current) &&
+        !(pending?.failed && existing.updatedAt === candidate.updatedAt && existing.currentPageId === candidate.currentPageId)) {
+     throw Error('This Chapter changed in another tab. Reopen it to continue.');
+    }
+    if (!existing?.startedAt) {
+     const now = new Date();
+     const publications = mergeChapterSupply(await readChapterPublications(scope).catch(() => []));
+     assertAccountScope(scope);
+     const spent = countChaptersStartedInHour(publications.map(publication => publication.chapter), latest.chapters.runs, now);
+     if (spent.hour >= HOURLY_CHAPTER_BUDGET || (candidate.catalogKind === 'probe' && spent.probesToday >= DAILY_PROBE_BUDGET)) {
+      throw Error('You’ve reached the Chapter limit. Try again later.');
+     }
+     if (chapterBlockReason(chapter, { now, facts: chapterFacts(latest, now) })) {
+      throw Error('This Chapter is unavailable right now.');
+     }
+    }
+    await saveChapterState(candidate, previous => storeChapterRun(mergeServerState(previous, latest), candidate, chapter.session));
+   };
+   if (navigator.locks) await navigator.locks.request(accountStorageKey(scope, 'circle-catalog-chapter'), { signal: scope.signal }, commit);
+   else await commit();
+   assertAccountScope(scope);
+   setPending(undefined);
+   if (candidate.status === 'completed') explore.current?.click();
+  } catch (error) {
+   if (!scope.signal.aborted) {
+    setPending({ before: current, next: candidate, failed: true });
+    setMessage(error instanceof Error ? error.message : 'Could not save Chapter progress. Try again.');
+   }
+  } finally {
+   busy.current = false;
+  }
+ }
+
+ return <>
+  <Link ref={explore} href="/os/explore">Back to Explore</Link>
+  {message && <p role="alert">{message}</p>}
+  {pending?.failed && <button type="button" onClick={() => void save(pending.next)}>Try again</button>}
+  <ChapterPlayer definition={chapter} run={preview ? previewRun : current} previewMode={preview}
+   onRunChange={preview ? setPreviewRun : next => void save(next)}
+   label={preview ? 'Published chapter preview' : 'Published chapter reading'} />
+  {!preview && current.status === 'completed' && <p role="status">Chapter complete.</p>}
+ </>;
+}
+
 export default function CatalogReader(){
- const {state,updateState,updateChapterState,ready}=useCircleState();
+ const {state,updateState,ready}=useCircleState();
  const openProtocol=()=>window.location.assign('/os#protocol');
  const openRoutine=()=>window.location.assign('/os#routine');
- const request=useCatalogRequest(),[loadedEdition,setEdition]=useState<{epoch:string;value:Edition}|null>(null),[run,setRun]=useState<ChapterRun|null>(null),[message,setMessage]=useState('Opening reading…');
+ const request=useCatalogRequest(),[loadedEdition,setEdition]=useState<{epoch:string;value:Edition;preview:boolean}|null>(null),[message,setMessage]=useState('Opening reading…');
  const edition=loadedEdition?.epoch===getAccountScope().epoch?loadedEdition.value:null;
- useEffect(()=>{let active=true;const epoch=getAccountScope().epoch;const query=new URLSearchParams(window.location.search);void request(`/os/catalog?id=${encodeURIComponent(query.get('id')||'')}&version=${encodeURIComponent(query.get('version')||'')}`).then(async response=>{if(!response.ok)throw Error('This version is unavailable. Sign in and try again.');const data=await response.json();if(active){setEdition({epoch,value:data});if(data.content.chapter)setRun(createChapterRun(data.content.chapter));}}).catch(e=>{if(active)setMessage(String(e));});return()=>{active=false;};},[request]);
+ const hydratedRuns = useRef(state.chapters.runs);
+ useEffect(() => { hydratedRuns.current = state.chapters.runs; }, [state.chapters.runs]);
+ useEffect(() => {
+  if (!ready) return;
+  let active = true;
+  const epoch = getAccountScope().epoch;
+  const query = new URLSearchParams(window.location.search);
+  const id = query.get('id') ?? '';
+  const preview = query.get('preview') === '1';
+  const unfinished = query.get('resume') === '1' && !preview
+   ? Object.values(hydratedRuns.current).filter(run => run.chapterId === id && run.status === 'in-progress')
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]
+   : undefined;
+  const version = unfinished?.chapterVersion ?? query.get('version') ?? '';
+  void request(`/os/catalog?${new URLSearchParams({ id, version: String(version) })}`).then(async response => {
+   if (!response.ok) throw Error('This version is unavailable. Sign in and try again.');
+   const data = await response.json();
+   if (active) setEdition({ epoch, value: data, preview });
+  }).catch(error => { if (active) setMessage(String(error)); });
+  return () => { active = false; };
+ }, [ready, request]);
  if(!ready)return <p role="status">Opening local records…</p>;
- const existing=edition?.content.chapter?state.chapters.runs[chapterRunId(edition.content.chapter)]:undefined;
  const active=activeProtocolRun(state);
  const scope=getAccountScope();
  const sourceId=new URLSearchParams(typeof window==='undefined'?'':window.location.search).get('id')||'';
@@ -51,5 +142,10 @@ export default function CatalogReader(){
  const adoption=templateKind==='protocol'?{blocked:Boolean(active&&active.sourceTemplate?.operationId!==savedOperation),open:openProtocol,start:(days:number,answers:Record<string,unknown>)=>adopt('protocol',days,answers)}:undefined;
  const routineGroup=templateKind==='routine'?activeRoutineTemplate(state,sourceId):undefined;
  const routineAdoption=templateKind==='routine'?{blocked:Boolean(routineGroup&&routineGroup.operationId!==savedOperation),open:openRoutine,add:(ongoing:boolean,answers:Record<string,unknown>)=>adopt('routine',ongoing,answers)}:undefined;
- return <ContentRequest.Provider value={request}><PublishedImages.Provider value={true}><main className="os-admin"><a href="/os">Back to Today</a>{!edition?<p role="status">{message}</p>:edition.content.template?<TemplatePreview key={scope.epoch} adoption={adoption} routineAdoption={routineAdoption} draft={{...createChapterDraft(),draftId:'template-reading',template:edition.content.template}}/>:edition.content.chapter&&run?<ChapterPlayer definition={edition.content.chapter} run={existing||run} previewMode={!existing} onRunChange={next=>{setRun(next);if(existing&&existing.status!=='completed')updateChapterState(next,current=>storeChapterRun(current,next,edition.content.chapter!.session));}} label={existing?'Published chapter reading':'Published chapter preview'}/>:edition.content.article?<ArticlePreview draft={{article:edition.content.article} as ArticleDraft}/>:<p>Content unavailable</p>}</main></PublishedImages.Provider></ContentRequest.Provider>;
+ return <ContentRequest.Provider value={request}><PublishedImages.Provider value={true}><main className="os-admin">
+  {edition?.content.chapter ? <PublishedChapter key={`${scope.epoch}:${chapterRunId(edition.content.chapter)}`} chapter={edition.content.chapter} preview={Boolean(loadedEdition?.preview)} /> : <>
+   <a href="/os">Back to Today</a>
+   {!edition?<p role="status">{message}</p>:edition.content.template?<TemplatePreview key={scope.epoch} adoption={adoption} routineAdoption={routineAdoption} draft={{...createChapterDraft(),draftId:'template-reading',template:edition.content.template}}/>:edition.content.article?<ArticlePreview draft={{article:edition.content.article} as ArticleDraft}/>:<p>Content unavailable</p>}
+  </>}
+ </main></PublishedImages.Provider></ContentRequest.Provider>;
 }

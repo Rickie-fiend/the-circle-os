@@ -52,7 +52,7 @@ export async function verifyHostedChapter({ a, b, appOrigin, origin, syntheticDr
   const browser = await chromium.launch();
   try {
     const blank = await reader(browser, { account: a, appOrigin, origin });
-    await blank.page.goto(appOrigin + readerPath);
+    await blank.page.goto(appOrigin + readerPath + '&preview=1');
     const preview = blank.page.locator('.os-swipe-session[aria-label="Published chapter preview"]');
     await expect(preview.getByRole('heading', { name: 'Original synthetic cover' })).toBeVisible();
     await preview.getByRole('button', { name: 'Swipe to begin', exact: true }).click();
@@ -75,7 +75,9 @@ export async function verifyHostedChapter({ a, b, appOrigin, origin, syntheticDr
     await signedIn.page.mouse.down();
     await signedIn.page.mouse.move(box.x + box.width * .2, y, { steps: 14 });
     await signedIn.page.mouse.up();
+    await signedIn.page.waitForURL('**/os/explore');
     await expect.poll(async () => (await signedIn.runs())[unfinished.runId]?.status).toBe('completed');
+    await signedIn.page.goto(appOrigin + readerPath);
     await signedIn.page.reload();
     await expect(reading).toBeVisible();
     const runs = await signedIn.runs();

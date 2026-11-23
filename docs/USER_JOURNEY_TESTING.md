@@ -1,5 +1,44 @@
 # Circle OS user-journey test record
 
+## Published Chapter first start and finish — 2026-11-23
+
+The developer reported that published Chapters restarted and did not end on a
+left swipe. The reader had been using temporary preview state unless an exact
+run already existed. The earlier hosted check seeded a run before opening the
+reader. The developer separately reported a pass for legacy Chapters on the
+deployed site.
+
+The production-CSS Chromium selection passed three cases at 390px. The new
+journey opened the reader with an empty account, began from the cover, entered
+an answer, and forced both device stores to reject the save. The same answer
+stayed available and retry succeeded. A version 2 Explore link resumed the
+unfinished version 1 run. Reload retained the position, the final left swipe
+returned to Explore, and the stored record showed one completion with the
+original answer. Home rendered the new color and retained it after reload.
+Opening the explicit version 2 link showed version 2. The other cases covered
+existing-run reload and an Admin preview that saved no personal run.
+
+`node node_modules/next/dist/bin/next build --webpack` passed. The browser
+selection used `CIRCLE_PRODUCTION_CSS=1` and `node --test --test-name-pattern
+'published Chapter starts|new Chapter exact-version|existing catalog run'
+tests/content-admin.browser.mjs`. The updated hosted runner, deployed app and
+physical phones were outside this verification.
+
+## Home Imprint strand renderer — 2026-11-23
+
+The developer reviewed the Home Imprint changes and confirmed they look good.
+The focused Node checks passed 22/22 on `602ef9d`. They cover strand growth and
+packed artwork coverage, distinct saved days, fading, pulse behavior, account
+separation, Chapter finish retry and the Routine, Protocol and Log adapters.
+
+```text
+node --test tests/personal-imprint-strands.test.mjs tests/personal-imprint-activity.test.mjs tests/chapter-imprint.test.mjs tests/routine-imprint.test.mjs tests/protocol-imprint.test.mjs tests/log-imprint.test.mjs
+```
+
+The browser evidence below records the earlier local and hosted-data runs. The
+documentation update added no browser run. The deployed Chapter journey and
+physical-phone coverage remain open.
+
 ## Hosted catalog Chapter resume and finish — 2026-11-23
 
 An isolated production Next.js build used real Supabase Auth and catalog reads
@@ -37,7 +76,8 @@ from their saved finish Pages. The actual final swipe saves each while
 offline, Home pulses twice with one day's growth, and reload shows the
 saved color without replay. Forced failures in both local stores leave the
 last saved patch intact. The delayed-artwork Home pulse case also passed.
-The direct hosted catalog route and physical devices remain unverified.
+See the [November 23 follow-up](#hosted-catalog-chapter-resume-and-finish--2026-11-23)
+for the hosted catalog route. Physical devices remain unverified.
 
 40 focused model tests passed, including the 06:00 boundary, old-run exclusion,
 retry age, and preservation of exact-version history. The Chapter compiler

@@ -1,12 +1,6 @@
 # Circle OS roadmap
 
-Local status update — 2026-11-14: Explore's discovery layout and explicit
-Habit/Protocol local adoption are implemented. Current Task holds bounded
-verification. Approved migration 004 is applied and the real synthetic hosted/
-browser acceptance passed with exact cleanup. Other-domain cloud sync remains
-off. No rollout/deployment or real authored publication occurred.
-
-Updated: 2026-11-11, Asia/Bangkok. This owns delivery dependencies and release
+Updated 2026-11-23, Asia/Bangkok. This owns delivery dependencies and release
 gates. [Product](PRODUCT.md) owns behavior; [Work plan](WORK_PLAN.md) owns the
 ordered queue. No plan grants implementation or deployment approval.
 
@@ -40,12 +34,12 @@ Implementation, remote setup and publication need reviewed scopes.
 
 | Workstream | State and practical limit |
 | --- | --- |
-| Accounts/local isolation | Implemented; hosted entry/reset/logout/offline return have recorded/developer-reported evidence. Mail, refresh/revocation, lost-device and wider-device coverage remain open. |
-| Content Admin foundation | Chapters/Articles/media/Catalog have bounded local and hosted evidence and developer flow review. Routine/Protocol editors, Explore and local adoption have bounded local verification; migration 004 and hosted template acceptance remain pending separate approval. Second invitation and operational/device gaps remain open. No deployment occurred. |
+| Accounts/local isolation | Implemented. Hosted entry/reset/logout and offline return have recorded or developer-reported evidence. Isolated Chromium checks covered session renewal, rejected refresh and natural expiry. Mail delivery, lost-device recovery and wider-device coverage remain open. |
+| Content Admin foundation | Chapters/Articles/media/Catalog, Routine/Protocol editors, Explore and local adoption have bounded evidence. Migration 004 is applied and synthetic hosted template acceptance passed with exact cleanup. The catalog Chapter resume and finish check passed in a local production build with hosted data. The deployed journey, second invitation and operational/device gaps remain open. |
 | Existing tools and histories | Writing, Habit Record, prospective Protocol terms, Log correction/history, read-only Week/chapter/reading history delivered for bounded scopes. Six-tool local visual/interaction evidence is recorded; lived/device acceptance is separate. |
-| Writing cloud foundation | Original and resolution migrations applied; bounded hosted two-account and separate-test-store reload checks recorded. Product activation remains off. |
-| General safe sync and operations | Other domains, production writing-store/device recovery, personal migration, backup/restore, deletion and protected admin operations remain incomplete. |
-| Onboarding/Home | Replacement onboarding planned. Personal Imprint selected as Home direction; exact visual/data model and compatibility remain open. |
+| Writing cloud foundation | Both writing migrations are applied. Bounded two-account, conflict, reload and production-store recovery checks passed against hosted services. Automatic product sync remains off. |
+| General safe sync and operations | Other-domain sync, wider device recovery, personal migration, deletion and protected admin operations remain incomplete. Local synthetic backup and reconciliation passed in a rehearsal. Hosted backup and restore work is deferred until the Supabase upgrade. |
+| Onboarding/Home | The developer reviewed the implemented signed-in Personal Imprint. Replacement onboarding, personal form generation from its answers and transition rules remain planned. |
 | Membership/live Athena | Planned; no provider, live generation or server-enforced paid service is certified. |
 | Beta readiness/release | Not certified or authorized. Historical Phase 1 is not certified either. |
 
