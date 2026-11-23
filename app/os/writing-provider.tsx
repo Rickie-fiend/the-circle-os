@@ -86,15 +86,14 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
   const [write, setWrite] = useState<WriteStatus>(idleWrite);
   const [pulseRevision, setPulseRevision] = useState(0);
   const pulseSerial = useRef(0);
-  const pendingPulses = useRef(new Map<string, { scope: AccountScope; expires: number; pulse: Pulse }>());
+  const pendingPulses = useRef(new Map<string, { scope: AccountScope; pulse: Pulse }>());
   const reviewImprint = canReviewWritingImprint(scope);
   const imprintDays = useMemo(() => reviewImprint && snapshot?.ledger.owner === owner
     ? projectWritingImprint(snapshot.ledger) : [], [reviewImprint, snapshot, owner]);
   const takePulses = useCallback((activeSources: Set<string>) => {
     const events = new Map<string, WritingImprintPulse>();
-    const now = performance.now();
     for (const [source, event] of pendingPulses.current) {
-      if (event.scope !== scope || !isAccountScopeCurrent(scope) || event.expires < now) {
+      if (event.scope !== scope || !isAccountScopeCurrent(scope)) {
         pendingPulses.current.delete(source);
       } else if (activeSources.has(source)) {
         pendingPulses.current.delete(source);
@@ -110,6 +109,7 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
   const refresh = useCallback(async (fromStorage = false): Promise<boolean> => {
     if (!mounted.current || activeInputs.current !== inputs || !enabled || !isAccountScopeCurrent(scope)) return false;
     const request = ++sequence.current;
+    const latestPulse = pulseSerial.current;
     const current = () => mounted.current && activeInputs.current === inputs
       && sequence.current === request && isAccountScopeCurrent(scope);
     setRead({ status: "refreshing", error: null });
@@ -126,6 +126,12 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
         existingWriting: { owner, answers: existingAnswers } });
       if (!current()) return false;
       const consumerMemory = writingConsumerMemory({ owner, memory: existingMemory }, view);
+      if (pendingPulses.current.size) {
+        const activeSources = new Set(projectWritingImprint(ledger).flatMap(day => day.sources));
+        for (const [source, event] of pendingPulses.current) {
+          if (event.pulse.serial <= latestPulse && !activeSources.has(source)) pendingPulses.current.delete(source);
+        }
+      }
       if (existing) externalSnapshot.current = { inputs, answers: existingAnswers, memory: existingMemory };
       externalDirty.current = false;
       setSnapshot({ inputs, request, ledger: freeze(ledger), view, memory: freeze(consumerMemory) });
@@ -177,12 +183,8 @@ function AccountWritingProvider({ scope, enabled, answers, memory, children }: P
       if (!mounted.current) throw new WritingError("view-closed", "This writing session has closed.");
       if (result.imprintPulse && document.visibilityState === "visible") {
         const group = result.imprintPulse;
-        const now = performance.now();
-        for (const [source, event] of pendingPulses.current) {
-          if (event.scope !== scope || event.expires < now) pendingPulses.current.delete(source);
-        }
         pendingPulses.current.set(result.receipt.entryId, {
-          scope, expires: now + 10_000,
+          scope,
           pulse: { group, serial: ++pulseSerial.current },
         });
       } else if (result.receipt.outcome === "trashed" || result.receipt.outcome === "deleted" || result.receipt.outcome === "saved") {

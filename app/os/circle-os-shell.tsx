@@ -1278,7 +1278,7 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
   } | null>(null);
   const activityActions = useRef(new Map<string, { operation: string; group: ImprintDay["group"];
     read: (state: CircleState) => { operation: string | undefined; completed: boolean } | undefined }>());
-  const activityPulses = useRef(new Map<string, { group: ImprintDay["group"]; expires: number; serial: number }>());
+  const activityPulses = useRef(new Map<string, { group: ImprintDay["group"]; serial: number }>());
   const activityPulseSerial = useRef(0);
   const observedLogs = useRef<Map<string, boolean> | null>(null);
   const [logClock, setLogClock] = useState(() => ({ now: Date.now() }));
@@ -1294,10 +1294,9 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
   const takeLocalPulses = useCallback((activeSources: Set<string>): WritingImprintPulse[] => {
     if (!isAccountScopeCurrent(scope)) return [];
     const events = new Map<string, WritingImprintPulse>();
-    const now = performance.now();
     for (const [source, pulse] of activityPulses.current) {
       activityPulses.current.delete(source);
-      if (pulse.expires < now || !activeSources.has(source)) continue;
+      if (!activeSources.has(source)) continue;
       const event = events.get(pulse.group);
       events.set(pulse.group, { group: pulse.group, serial: Math.max(event?.serial ?? 0, pulse.serial),
         sources: [...(event?.sources ?? []), source] });
@@ -1322,9 +1321,10 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
         next.set(log.source, elapsed || alreadyObserved);
         if (!elapsed) nearest = Math.min(nearest, log.eligibleAt);
         if (elapsed && !alreadyObserved && previous && !quiet && document.visibilityState === "visible") {
-          const remaining = previous.has(log.source) ? 10_000 - (now - log.eligibleAt) : 10_000;
-          if (remaining > 0) activityPulses.current.set(log.source, {
-            group: "log-week", expires: performance.now() + remaining, serial: ++activityPulseSerial.current,
+          // Catch up quietly if a suspended timer missed the end of a known block.
+          const observedAtEnd = !previous.has(log.source) || now - log.eligibleAt < 10_000;
+          if (observedAtEnd) activityPulses.current.set(log.source, {
+            group: "log-week", serial: ++activityPulseSerial.current,
           });
         }
       }
@@ -1403,11 +1403,7 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
         if (!saved) continue;
         activityPulses.current.delete(source);
         if (completion.completed && document.visibilityState === "visible") {
-          const now = performance.now();
-          for (const [id, pulse] of activityPulses.current) {
-            if (pulse.expires < now) activityPulses.current.delete(id);
-          }
-          activityPulses.current.set(source, { group: action.group, expires: now + 10_000, serial: ++activityPulseSerial.current });
+          activityPulses.current.set(source, { group: action.group, serial: ++activityPulseSerial.current });
         }
       }
       if (saved) {

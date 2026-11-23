@@ -1,11 +1,20 @@
 # Personal Imprint: Circle OS Home
 
+## When Home plays the pulse
+
+A qualifying action queues a pulse after its local save succeeds. Home plays
+one pulse per affected patch when it is visible and the artwork is ready, even
+if the person takes longer than ten seconds to open it. A saved Log block can
+queue its pulse once its end is observed while the app is open and visible.
+Home only pulses for sources that still count. Reloading or starting a new app
+session shows saved color at rest. The saved contribution time sets its age.
+
 ## Local Chapter finishes — 2026-11-22
 
 The Starting/Chapters patch reads new finishes from saved runs in the signed-in
 Home review. The existing finish action works on new and resumed runs. The
-finish time determines the local 06:00 Circle day. Finishes each make a pulse
-available for ten seconds after successful save. The first finish sets the
+finish time determines the local 06:00 Circle day. Each successful finish queues
+a pulse for Home. The first finish sets the
 day's age and later finishes support the same growth. Reload, retries, previews,
 History, and older completed runs create no pulse. Older run dates and
 definitions are preserved. Home uses run identity and timing only.
@@ -32,8 +41,8 @@ restoration. This is the local signed-in review scope. See
 
 The signed-in Imprint review now projects newly saved Protocol seals from
 the account's local Circle state. One dated seal supports the Protocol patch;
-multiple seals on the same Circle day support one day's growth. Open Home
-within ten seconds of the save to see the existing pulse. Checking terms alone
+multiple seals on the same Circle day support one day's growth. Open Home in
+the same app session to see the pulse. Checking terms alone
 adds no color. Undoing a required term in a running phase removes that seal's
 support. Changing an optional term or archiving a finished phase preserves it. A new
 seal after Undo can pulse, keeping the original contribution's time and zone.

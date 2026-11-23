@@ -2326,6 +2326,7 @@ test("Routine habit saves feed Home and Undo removes only the last daily contrib
     const complete = async (action, count) => {
       await (await routine()).getByRole("button", { name: `Mark done: ${action}`, exact: true }).click();
       await waitForSources(count);
+      await page.clock.fastForward(10_100);
       await showHome();
       await expect(canvas).toHaveAttribute("data-pulsing", "true");
       await expect(canvas).toHaveAttribute("data-pulsing", "false");
@@ -2356,6 +2357,13 @@ test("Routine habit saves feed Home and Undo removes only the last daily contrib
     await waitForSources(0);
     await showHome();
     assert.equal(await pixels(), empty);
+    box = await routine();
+    await box.getByRole("button", { name: "Mark done: Read a page", exact: true }).click();
+    await waitForSources(1);
+    await box.getByRole("button", { name: "Undo: Read a page", exact: true }).click();
+    await waitForSources(0);
+    await showHome();
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
     await complete("Read a page", 1);
     assert.equal(await pixels(), first);
 
@@ -2379,7 +2387,7 @@ test("Routine habit saves feed Home and Undo removes only the last daily contrib
     await showHome();
     assert.equal(await pixels(), first);
     await expect(canvas).toHaveAttribute("data-pulsing", "false");
-  }, { account: imprintAccount, reducedMotion: "no-preference" });
+  }, { account: imprintAccount, reducedMotion: "no-preference", clock: true });
 });
 
 test("Week task check colors Log/Week, Routine Undo removes it, and Routine re-check changes patches", { timeout: 90_000 }, async () => {
@@ -2562,6 +2570,8 @@ test("Log Imprint waits for the end, pulses for a late save, and survives reload
 
     await openLog();
     await save(13, "A late walk");
+    await expect.poll(async () => (await days())[0]?.sources.length).toBe(2);
+    await page.clock.fastForward(10_100);
     await home();
     await expect(canvas).toHaveAttribute("data-pulsing", "true");
     await expect(canvas).toHaveAttribute("data-pulsing", "false");
@@ -2745,6 +2755,10 @@ test("Home claims the Imprint pulse on arrival even when the artwork is delayed"
       await notePage(page).getByRole("textbox", { name: "Note title", exact: true }).fill("Note before a slow Home visit");
       await saved(page);
       await expect.poll(() => page.evaluate(() => window.writing.write.status)).toBe("saved");
+      await page.clock.fastForward(6_000);
+      await notePage(page).getByRole("textbox", { name: "Write a note", exact: true }).fill("I kept writing after the first autosave.");
+      await accepted(page, "I kept writing after the first autosave.");
+      await page.clock.fastForward(5_000);
       await home.click();
       await expect(page.getByRole("main", { name: "Home", exact: true })).toHaveCount(1);
       await expect.poll(() => reviewRequested).toBe(true);
@@ -2800,16 +2814,17 @@ test("Home claims the Imprint pulse on arrival even when the artwork is delayed"
   }, { account: imprintAccount, reducedMotion: "no-preference", clock: true });
 });
 
-test("Home shows saved Imprint growth without a pulse after the window expires", { timeout: 90_000 }, async () => {
+test("Home shows saved Imprint growth after reloading before the first visit", { timeout: 90_000 }, async () => {
   await isolated(390, async page => {
     const home = page.getByRole("navigation", { name: "Circle OS", exact: true })
       .getByRole("link", { name: "Home", exact: true });
     const canvas = page.getByRole("img", { name: "Activity colors on the accepted shape" });
     await page.getByRole("button", { name: "Note", exact: true }).click();
-    await notePage(page).getByRole("textbox", { name: "Note title", exact: true }).fill("Note before an expired Home visit");
+    await notePage(page).getByRole("textbox", { name: "Note title", exact: true }).fill("Note before reloading");
     await saved(page);
     await expect.poll(() => page.evaluate(() => window.writing.write.status)).toBe("saved");
-    await page.clock.fastForward(10_100);
+    await page.reload();
+    await ready(page);
     await home.click();
     await expect(canvas).toHaveAttribute("data-ready", "true");
     await expect(canvas).toHaveAttribute("data-pulsing", "false");

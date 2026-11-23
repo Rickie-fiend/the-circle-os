@@ -7,7 +7,7 @@ import {createChapterRun,chapterRunId} from '../app/os/chapters/chapter-model.js
 import {dayOpenRunId} from '../app/os/day-door.js';
 
 const expect=baseExpect.configure({timeout:45000});
-test('restored synthetic database renders exact writing at 360/390px',{skip:!process.env.CIRCLE_BACKUP_RESTORE_INPUT,timeout:180000},async()=>{
+test('reconciled synthetic restore renders surviving writing at 360/390px',{skip:!process.env.CIRCLE_BACKUP_RESTORE_INPUT,timeout:180000},async()=>{
   const {origin,host,account,other}=JSON.parse(await readFile(process.env.CIRCLE_BACKUP_RESTORE_INPUT,'utf8'));
   for(const url of [origin,host])assert.equal(new URL(url).hostname,'127.0.0.1','local endpoints only');
   const browser=await chromium.launch();
@@ -34,9 +34,10 @@ test('restored synthetic database renders exact writing at 360/390px',{skip:!pro
           const db=await new Promise((yes,no)=>{const r=indexedDB.open('circle-os-writing-v1:account:'+id);r.onsuccess=()=>yes(r.result);r.onerror=()=>no(Error('open'));});
           try{if(!db.objectStoreNames.contains('writing'))return {};return await new Promise((yes,no)=>{const r=db.transaction('writing').objectStore('writing').get('records');r.onsuccess=()=>yes(r.result?.entries||{});r.onerror=()=>no(Error('read'));});}finally{db.close();}
         },account.id);
-        await expect.poll(async()=>Object.keys(await entries()).length).toBe(6);
+        await expect.poll(async()=>Object.keys(await entries()).length).toBe(5);
         await page.locator('.os-note-page').getByRole('button',{name:'History',exact:true}).click();await expect(page.locator('.os-note-page')).not.toHaveClass(/os-app-flip/);
-        const rows=page.locator('.os-note-page .os-writing-entry');await expect(rows).toHaveCount(3);
+        const rows=page.locator('.os-note-page .os-writing-entry');await expect(rows).toHaveCount(2);
+        await expect(rows.filter({hasText:'Synthetic deleted-later'})).toHaveCount(0);
         await rows.filter({hasText:'Restored note'}).click();
         await expect(page.getByRole('textbox',{name:'Write a note',exact:true})).toHaveValue('Synthetic restored Note revision two');
         await expect(page.locator('.os-note-page')).not.toHaveClass(/os-app-flip/);
@@ -48,6 +49,8 @@ test('restored synthetic database renders exact writing at 360/390px',{skip:!pro
         await page.locator('.os-deep-thoughts-page .os-writing-entry').filter({hasText:'Synthetic backup question'}).click();
         await expect(page.getByRole('textbox',{name:'Answer the deep thought',exact:true})).toHaveValue('Synthetic restored answer');
         const records=await entries();assert.equal(records.note.versions.at(-1).content.body,'Synthetic restored Note revision two');assert.equal(records.cleared.versions.at(-1).content.body,'');assert.equal(records.thought.versions.at(-1).content.body,'Synthetic restored answer');
+        assert.equal(records['deleted-later'],undefined,'deleted text never enters the fresh device store');
+        assert.equal(records.trashed.status,'trashed','ordinary Trash stays recoverable');
         await page.reload();await expect.poll(async()=>(await entries()).note?.versions.at(-1).content.body).toBe('Synthetic restored Note revision two');
         await page.goto('about:blank');const cdp=await context.newCDPSession(page);await cdp.send('Storage.clearDataForOrigin',{origin,storageTypes:'all'});
         await login(other);

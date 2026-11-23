@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
+import {once} from 'node:events';
 import {cp,mkdir,mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {resolve,sep} from 'node:path';
 import {randomUUID,createHash} from 'node:crypto';
@@ -29,13 +30,23 @@ function run(exe,args,{cwd=root,input,timeout=120000,combined=false}={}){
       const stderr=Buffer.concat(err).toString();
       // COPY errors can include Auth row values. Report SQL error headings only.
       const diagnostic=args.includes('psql')?stderr.split('\n').filter(line=>/^(ERROR|FATAL):/.test(line)).map(line=>line.startsWith('ERROR:  invalid input')?'ERROR: invalid imported value (details withheld)':line).join('\n'):stderr.slice(-4000);
-      const error=Error('Command failed: '+exe.split(/[\\/]/).at(-1)+' '+args[0]+' (exit '+code+', timeout '+timed+')\n'+diagnostic);
+      const action=args[0]==='exec'?args.slice(0,4).join(' '):args[0];
+      const error=Error('Command failed: '+exe.split(/[\\/]/).at(-1)+' '+action+' (exit '+code+', timeout '+timed+')\n'+diagnostic);
       Object.defineProperty(error,'stdout',{value:stdout});no(error);
     });
     child.stdin.on('error',()=>{});child.stdin.end(input);
   });
 }
 const d=(args,options)=>run(docker,args,options);
+async function storageExec(stack,args,input){
+  for(let attempt=0;;attempt++){
+    try{return await d(['exec','-i',stack.storageName,...args],{input});}
+    catch(error){
+      if(attempt>=30||!/is restarting|is not running/.test(error.message))throw error;
+      await pause(500);
+    }
+  }
+}
 const sql=(stack,text,admin=false)=>d(['exec','-i',stack.db,'psql','-X','-v','ON_ERROR_STOP=1','-U',admin?'supabase_admin':'postgres','-d','postgres','-At'],{input:text});
 const scalar=async(stack,text)=>JSON.parse((await sql(stack,text)).toString().trim());
 function engine(path,body){return new Promise((yes,no)=>{
@@ -94,9 +105,12 @@ async function localStack(role,base){
   stack.tenant=stack.storage.Config.Env.find(v=>v.startsWith('TENANT_ID='))?.slice('TENANT_ID='.length);
   return stack;
 }
-async function api(stack,path,body,token=stack.secret,method='POST'){
+function requestLocal(stack,path,body,token,method='POST'){
   assert.equal(new URL(stack.host).hostname,'127.0.0.1');
-  const response=await fetch(stack.host+path,{method,headers:{apikey:stack.key,Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(20000)});
+  return fetch(stack.host+path,{method,headers:{apikey:stack.key,Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(20000)});
+}
+async function api(stack,path,body,token=stack.secret,method='POST'){
+  const response=await requestLocal(stack,path,body,token,method);
   if(!response.ok){
     const body=await response.json().catch(()=>({}));
     console.log('Local API failure',{path:path.split('?')[0],status:response.status,code:body.code||body.error_code,message:body.msg||body.message||body.error});
@@ -126,14 +140,44 @@ async function restore(target,dump,{interrupt=false}={}){
   return Math.round(performance.now()-started);
 }
 function verifiedArtifact(backup,manifest){assert.equal(hash(backup),manifest.sha256,'backup checksum');assert.ok(backup.length>0,'backup present');return backup.toString();}
+async function requireRecoverySessions(target){
+  // This guard belongs to the disposable recovery target. A signed token alone
+  // does not prove its session survived reconciliation.
+  await sql(target,`
+    create schema circle_rehearsal;
+    create function circle_rehearsal.require_active_session() returns void
+    language plpgsql security definer set search_path = pg_catalog as $$
+    declare claims jsonb := nullif(current_setting('request.jwt.claims', true), '')::jsonb;
+    begin
+      if claims->>'role' = 'authenticated' and not exists (
+        select from auth.sessions where id::text = claims->>'session_id' and user_id::text = claims->>'sub'
+      ) then
+        raise sqlstate 'PT401' using message = 'Recovery session is not active';
+      end if;
+    end;
+    $$;
+    revoke execute on function circle_rehearsal.require_active_session() from public;
+    grant usage on schema circle_rehearsal to anon,authenticated,service_role;
+    grant execute on function circle_rehearsal.require_active_session() to anon,authenticated,service_role;
+    alter role authenticator set pgrst.db_pre_request = 'circle_rehearsal.require_active_session';
+  `,true);
+  await d(['restart','supabase_rest_'+target.id]);
+}
 async function freePort(){return new Promise((yes,no)=>{const s=createServer();s.on('error',no);s.listen(0,'127.0.0.1',()=>{const p=s.address().port;s.close(()=>yes(p));});});}
-async function buildApp(target){
-  const dir=resolve(root,'build');await mkdir(dir);
-  for(const path of ['app','public','package.json','package-lock.json','next.config.ts','postcss.config.mjs','tsconfig.json','tsconfig.vercel.json'])await cp(resolve(repo,path),resolve(dir,path),{recursive:true});
-  const {symlink}=await import('node:fs/promises');await symlink(resolve(repo,'node_modules'),resolve(dir,'node_modules'),'junction');
+async function buildApp(target,reuseBuild){
   const appEnv={...env,NEXT_TELEMETRY_DISABLED:'1',NEXT_PUBLIC_CIRCLE_AUTH_MODE:'supabase',NEXT_PUBLIC_CIRCLE_WRITING_SYNC:'enabled',NEXT_PUBLIC_SUPABASE_URL:target.host,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:target.key};
-  const original={...env};Object.assign(env,appEnv);
-  try{await run(process.execPath,[resolve(repo,'node_modules/next/dist/bin/next'),'build','--webpack'],{cwd:dir,timeout:300000});}finally{for(const k of Object.keys(env))delete env[k];Object.assign(env,original);}
+  const dir=resolve(root,'build');
+  if(!reuseBuild){
+    await mkdir(dir);
+    for(const path of ['app','public','package.json','package-lock.json','next.config.ts','postcss.config.mjs','tsconfig.json','tsconfig.vercel.json'])await cp(resolve(repo,path),resolve(dir,path),{recursive:true});
+    await mkdir(resolve(dir,'docs/design'),{recursive:true});
+    for(const file of ['personal-imprint-color-v1.json','personal-imprint-growth-v1.json','personal-imprint-color-v1-sori-bone.png','personal-imprint-color-v1-sori-coordinates.bin']){
+      await cp(resolve(repo,'docs/design',file),resolve(dir,'docs/design',file));
+    }
+    const {symlink}=await import('node:fs/promises');await symlink(resolve(repo,'node_modules'),resolve(dir,'node_modules'),'junction');
+    const original={...env};Object.assign(env,appEnv);
+    try{await run(process.execPath,[resolve(repo,'node_modules/next/dist/bin/next'),'build','--webpack'],{cwd:dir,timeout:300000});}finally{for(const k of Object.keys(env))delete env[k];Object.assign(env,original);}
+  }
   const port=await freePort(),origin='http://127.0.0.1:'+port;
   const app=spawn(process.execPath,[resolve(repo,'node_modules/next/dist/bin/next'),'start','--hostname','127.0.0.1','--port',String(port)],{cwd:dir,env:appEnv,windowsHide:true,stdio:'ignore'});children.add(app);app.once('exit',()=>children.delete(app));
   for(let i=0;i<120;i++){try{if((await fetch(origin+'/os')).ok)return {origin,app};}catch{}await pause(500);}throw Error('isolated app startup');
@@ -152,6 +196,12 @@ try{
     a.id=(await api(source,'/auth/v1/admin/users',{...a,email_confirm:true})).id;accounts.push(a);
   }
   const token=(await api(source,'/auth/v1/token?grant_type=password',{email:accounts[0].email,password:accounts[0].password},source.key)).access_token;
+  const revoked=await api(source,'/auth/v1/token?grant_type=password',{email:accounts[1].email,password:accounts[1].password},source.key);
+  const sessionId=JSON.parse(Buffer.from(revoked.access_token.split('.')[1],'base64url')).session_id;
+  assert.match(sessionId,/^[0-9a-f-]{36}$/i);
+  const sessionCount=stack=>scalar(stack,`select count(*)::int from auth.sessions where id='${sessionId}';`);
+  const deletedAccountCount=stack=>scalar(stack,`select count(*)::int from auth.users where id='${accounts[2].id}';`);
+  assert.equal(await sessionCount(source),1);
   const acceptedRequests=[];
   async function upload(bundle){for(const request of await writingUploadRequests(bundle)){await api(source,'/rest/v1/rpc/circle_writing_apply',{request},token);acceptedRequests.push(request);}}
   let bundle=fixture(accounts[0].id);
@@ -179,7 +229,16 @@ try{
   // Test content rows are deliberately bounded; full authoring UI has separate acceptance.
   await sql(source,`insert into public.circle_quotes(text,author) values ('Synthetic recovery quotation','Synthetic');`);
   const asset=randomUUID(),image=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aS1cAAAAASUVORK5CYII=','base64');
-  const media=await fetch(source.host+'/storage/v1/object/circle-content/'+asset,{method:'POST',headers:{apikey:source.key,Authorization:'Bearer '+source.secret,'Content-Type':'image/png'},body:image});assert.ok(media.ok,'synthetic media upload');
+  let media;
+  for(let attempt=0;attempt<30;attempt++){
+    media=await fetch(source.host+'/storage/v1/object/circle-content/'+asset,{method:'POST',headers:{apikey:source.key,Authorization:'Bearer '+source.secret,'Content-Type':'image/png'},body:image,signal:AbortSignal.timeout(5000)});
+    if(media.ok||media.status<500)break;
+    await pause(500);
+  }
+  if(!media.ok){
+    const failure=await media.json().catch(()=>({}));
+    throw Error(`Synthetic media upload HTTP ${media.status}: ${failure.error||failure.code||'no Storage error code'}`);
+  }
   await sql(source,`insert into public.circle_content_assets(id,alt,mime,bytes) values ('${asset}','Synthetic pixel','image/png',${image.length});`);
   await sql(source,`insert into public.circle_content_admins values ('${accounts[0].id}');`);
   const draft={draftId:'synthetic-restore-article',article:{title:'Synthetic restored article',blocks:[{type:'paragraph',text:'Synthetic edition one'},{type:'image',image:{assetId:asset,alt:'Synthetic pixel'}}]}};
@@ -194,7 +253,7 @@ try{
   await sql(source,`create role "${tag.replaceAll('-','_')}_test" nologin;`);
   const schema=await d(['exec',source.db,'pg_dump','-U','postgres','-d','postgres','--schema-only','--schema','public','--schema','circle_private']);
   const data=await d(['exec',source.db,'pg_dump','-U','postgres','-d','postgres','--data-only','--schema','public','--schema','circle_private','--disable-triggers']);
-  const managed=await d(['exec',source.db,'pg_dump','-U','postgres','-d','postgres','--data-only','--table','auth.users','--table','auth.identities','--table','storage.buckets','--table','storage.objects','--disable-triggers']);
+  const managed=await d(['exec',source.db,'pg_dump','-U','postgres','-d','postgres','--data-only','--table','auth.users','--table','auth.identities','--table','auth.sessions','--table','auth.refresh_tokens','--table','storage.buckets','--table','storage.objects','--disable-triggers']);
   const roleName=tag.replaceAll('-','_')+'_test';
   const roleDump=(await d(['exec',source.db,'pg_dumpall','-U','postgres','--roles-only','--no-role-passwords'])).toString();
   const roleSQL=Buffer.from(roleDump.split('\n').filter(line=>line.startsWith('CREATE ROLE '+roleName+';')||line.startsWith('ALTER ROLE '+roleName+' ')).join('\n')+'\n');assert.ok(roleSQL.toString().includes('CREATE ROLE'),'dump synthetic role');
@@ -208,34 +267,97 @@ try{
   assert.throws(()=>verifiedArtifact(Buffer.concat([backup,Buffer.from('corrupt')]),manifest));
   await assert.rejects(readFile(resolve(root,'missing-backup.sql')));
   const deletionStore=memoryStore(fixture(accounts[0].id));await syncAccountWriting({store:deletionStore,remote});
+  const staleEdit=await save(await deletionStore.read(),{entryId:'deleted-later',body:'Synthetic stale device edit',title:'Synthetic deleted-later'});
+  const [staleUpload]=await writingUploadRequests(staleEdit);
+  assert.equal(staleUpload.entryId,'deleted-later');
   deletionStore.replace(await save(await deletionStore.read(),{entryId:'note',body:'Synthetic newer accepted edit after backup',title:'Restored note'}));
   await syncAccountWriting({store:deletionStore,remote});
   for(const type of ['trash','delete']){const current=await deletionStore.read();deletionStore.replace(await commit(current,{type,entryId:'deleted-later',expectedGeneration:current.state.entries['deleted-later'].generation,confirmed:true}));}
-  await syncAccountWriting({store:deletionStore,remote});
+  let deletionRequest;
+  await syncAccountWriting({store:deletionStore,remote:{...remote,apply:async request=>{
+    const result=await remote.apply(request);
+    if(result.status==='accepted'&&request.entryId==='deleted-later')deletionRequest=request;
+    return result;
+  }}});
+  assert.ok(deletionRequest?.snapshot.tombstone);
+  assert.equal(deletionRequest.snapshot.entry,null);
   assert.ok((await remote.inventory('')).find(h=>h.entryId==='deleted-later')?.snapshot.tombstone,'source deletion accepted before restore');
   await api(source,'/auth/v1/admin/users/'+accounts[2].id,undefined,source.secret,'DELETE');
+  await api(source,'/auth/v1/logout?scope=local',undefined,revoked.access_token);
+  assert.equal(await sessionCount(source),0,'source session revoked');
+  const journalPath=resolve(root,'synthetic-recovery-journal.json');
+  const journalBytes=JSON.stringify({backup:manifest.sha256,events:[
+    {kind:'entry-deleted',request:deletionRequest},
+    {kind:'account-deleted',id:accounts[2].id},
+    {kind:'session-revoked',id:sessionId},
+  ]});
+  const journalHash=hash(journalBytes);
+  await writeFile(journalPath,journalBytes,{flag:'wx'});
+  const restoreInterrupted=Error('Synthetic reconciliation interrupted after entry deletion');
+  const loginAs=(stack,account)=>api(stack,'/auth/v1/token?grant_type=password',{email:account.email,password:account.password},stack.key);
+  async function reconcile(stack,path,token,{interrupt=false}={}){
+    const bytes=await readFile(path);
+    assert.equal(hash(bytes),journalHash,'complete recovery journal');
+    const journal=JSON.parse(bytes);
+    assert.equal(journal.backup,manifest.sha256,'journal belongs to the restore point');
+    const [entry,account,session]=journal.events;
+    assert.deepEqual(journal.events.map(event=>event.kind),['entry-deleted','account-deleted','session-revoked']);
+    const receipt=await api(stack,'/rest/v1/rpc/circle_writing_apply',{request:entry.request},token);
+    assert.equal(receipt.status,'accepted','original deletion receipt accepted on replay');
+    if(interrupt)throw restoreInterrupted;
+    if(await deletedAccountCount(stack))await api(stack,'/auth/v1/admin/users/'+account.id,undefined,stack.secret,'DELETE');
+    await sql(stack,`begin; delete from auth.refresh_tokens where session_id='${session.id}'; delete from auth.sessions where id='${session.id}'; commit;`,true);
+    return receipt;
+  }
   assert.equal((await remote.inventory('')).find(h=>h.entryId==='note').snapshot.entry.versions.at(-1).content.body,'Synthetic newer accepted edit after backup');
   report.backupAt=backupAt;report.simulatedLossAt=new Date().toISOString();
   report.simulatedLossWindowMs=Date.parse(report.simulatedLossAt)-Date.parse(backupAt);
   const target=await localStack('target',55500);
+  await requireRecoverySessions(target);
   await sql(target,'drop schema public cascade;');
   await restore(target,verifiedArtifact(backup,manifest),{interrupt:true});report.interruptionRollback=true;
-  let appInfo;
   for(let iteration=0;iteration<2;iteration++){
     if(iteration){
-      await sql(target,`drop schema circle_private cascade; drop schema public cascade; truncate auth.identities,auth.users,storage.objects,storage.buckets cascade; drop role "${tag.replaceAll('-','_')}_test";`,true);
+      await sql(target,`drop schema circle_private cascade; drop schema public cascade; truncate auth.refresh_tokens,auth.sessions,auth.identities,auth.users,storage.objects,storage.buckets cascade; drop role "${tag.replaceAll('-','_')}_test";`,true);
     }
     const restoreMs=await restore(target,verifiedArtifact(await readFile(resolve(root,'synthetic-backup.sql')),manifest));
     assert.ok(target.storagePath.startsWith('/')&&target.storagePath!=='/','owned media mount path');
-    await d(['exec',target.storageName,'find',target.storagePath,'-mindepth','1','-delete']);
+    await d(['restart',target.storageName]);
+    await storageExec(target,['find',target.storagePath,'-mindepth','1','-delete']);
     assert.equal(hash(await readFile(resolve(root,'synthetic-media.tar'))),manifest.mediaHash,'media archive checksum');
-    await d(['exec','-i',target.storageName,'tar','-C',target.storagePath,'-xf','-'],{input:mediaArchive});
+    await storageExec(target,['tar','-C',target.storagePath,'-xf','-'],mediaArchive);
     if(source.tenant&&target.tenant&&source.tenant!==target.tenant){
       assert.match(source.tenant,/^[a-zA-Z0-9_-]+$/);assert.match(target.tenant,/^[a-zA-Z0-9_-]+$/);
-      await d(['exec',target.storageName,'mv',target.storagePath+'/'+source.tenant,target.storagePath+'/'+target.tenant]);
+      await storageExec(target,['mv',target.storagePath+'/'+source.tenant,target.storagePath+'/'+target.tenant]);
     }
     const actual=await inventory(target);
     assert.equal(hash(Buffer.from(JSON.stringify(actual))),hash(Buffer.from(JSON.stringify(expected))),'exact restored row digest, including Auth (values withheld)');
+    assert.equal(await deletedAccountCount(target),1,'older snapshot contains deleted account');
+    assert.equal(await sessionCount(target),1,'older snapshot contains revoked session');
+    const {access_token: recoveryToken}=await loginAs(target,accounts[0]);
+    await assert.rejects(reconcile(target,resolve(root,'missing-journal.json'),recoveryToken),{code:'ENOENT'});
+    const damagedJournal=resolve(root,'damaged-journal.json');await writeFile(damagedJournal,journalBytes.slice(0,-1));
+    await assert.rejects(reconcile(target,damagedJournal,recoveryToken),/complete recovery journal/);
+    const reconciliationStart=performance.now();
+    await assert.rejects(reconcile(target,journalPath,recoveryToken,{interrupt:true}),error=>error===restoreInterrupted);
+    assert.equal(await deletedAccountCount(target),1,'interruption happened before account deletion');
+    assert.equal(await sessionCount(target),1,'interruption happened before session revocation');
+    const receipt=await reconcile(target,journalPath,recoveryToken);
+    const safeInventory=await inventory(target);
+    assert.deepEqual(await reconcile(target,journalPath,recoveryToken),receipt,'repeating reconciliation returns the same deletion receipt');
+    assert.deepEqual(await inventory(target),safeInventory,'repeated journal leaves restored writing and account rows unchanged');
+    const reconciliationMs=Math.round(performance.now()-reconciliationStart);
+    assert.equal(await deletedAccountCount(target),0);
+    assert.equal(await sessionCount(target),0);
+    const deletedLogin=await requestLocal(target,'/auth/v1/token?grant_type=password',{email:accounts[2].email,password:accounts[2].password},target.key);
+    assert.equal(deletedLogin.status,400,'deleted account credentials denied');
+    const refresh=await requestLocal(target,'/auth/v1/token?grant_type=refresh_token',{refresh_token:revoked.refresh_token},target.key);
+    assert.ok([400,401].includes(refresh.status),'revoked refresh token denied');
+    for(const [rpc,body] of [['inventory',{after_id:''}],['apply',{request:staleUpload}]]){
+      const denied=await requestLocal(target,'/rest/v1/rpc/circle_writing_'+rpc,body,revoked.access_token);
+      assert.equal(denied.status,401,'old access token denied after its session is removed');
+      assert.equal((await denied.json()).message,'Recovery session is not active','the live-session guard denied the token');
+    }
     await d(['restart',target.storageName]);
     let downloaded;
     for(let attempt=0;attempt<90;attempt++){
@@ -255,19 +377,23 @@ try{
     assert.equal(heads.find(h=>h.entryId==='note').snapshot.entry.versions.at(-1).content.body,'Synthetic restored Note revision two','post-backup accepted edit is outside snapshot');
     const original=acceptedRequests.find(request=>request.entryId==='note');assert.ok(original);
     assert.equal((await api(target,'/rest/v1/rpc/circle_writing_apply',{request:original},login.access_token)).status,'accepted','original request retry returns its receipt');
+    const stale=await api(target,'/rest/v1/rpc/circle_writing_apply',{request:staleUpload},login.access_token);
+    assert.equal(stale.status,'deleted','stale device upload cannot recreate deleted entry');
     const afterRetry=(await inventory(target)).filter(row=>row.table.startsWith('circle_private.'));
-    assert.equal(hash(Buffer.from(JSON.stringify(afterRetry))),hash(Buffer.from(JSON.stringify(expected.filter(row=>row.table.startsWith('circle_private.'))))),'retry preserves exact writing rows and receipts');
-    assert.ok(heads.some(h=>h.entryId==='deleted-later'),'diagnostic: pre-deletion backup resurrects later-deleted entry');
-    assert.equal(await scalar(target,`select count(*)::int from auth.users where id='${accounts[2].id}';`),1,'diagnostic: deleted account returns in older backup');
-    report.runs.push({iteration:iteration+1,restoreMs,exactRows:true,media:true,isolation:true,safeRetry:true,newerAcceptedEditLost:true,deletionSuppression:'FAIL: older backup restores later-deleted entry and account'});
-    console.log('PASS normal restore '+(iteration+1)+'; EXPECTED GAP: post-backup deletions return. Target remains local and isolated.');
-    if(!appInfo)appInfo=await buildApp(target);
+    assert.deepEqual(afterRetry,safeInventory.filter(row=>row.table.startsWith('circle_private.')),'retry and stale upload preserve writing and receipts');
+    const deletedHead=heads.find(h=>h.entryId==='deleted-later');
+    assert.ok(deletedHead?.snapshot.tombstone);
+    assert.equal(deletedHead.snapshot.entry,null,'restored text scrubbed');
+    report.runs.push({iteration:iteration+1,restoreMs,reconciliationMs,exactRows:true,media:true,isolation:true,safeRetry:true,newerAcceptedEditLost:true,deletionSuppression:true,revokedSessionDenied:true});
+    console.log('PASS reconciliation '+(iteration+1)+'; newer accepted edit is outside the backup.');
+    const appInfo=await buildApp(target,iteration>0);
     await writeFile(resolve(root,'browser-input.json'),JSON.stringify({origin:appInfo.origin,host:target.host,key:target.key,account:accounts[0],other:accounts[1]}));
     env.CIRCLE_BACKUP_RESTORE_INPUT=resolve(root,'browser-input.json');
     console.log((await run(process.execPath,['--test','tests/backup-restore.browser.mjs'],{cwd:repo,timeout:240000})).toString());
+    const appExit=once(appInfo.app,'exit');appInfo.app.kill();await appExit;
     report.runs.at(-1).browser=true;
   }
-  appInfo.app.kill();report.browser=true;report.finishedAt=new Date().toISOString();
+  report.browser=true;report.finishedAt=new Date().toISOString();
 }finally{
   const cleanupStarted=performance.now();
   for(const child of children)child.kill();

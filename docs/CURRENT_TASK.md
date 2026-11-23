@@ -7,7 +7,9 @@ review colors the Starting/Chapters patch using the saved finish time and
 original Circle day. Older completed runs stay in History.
 [Home brief](PERSONAL_IMPRINT_HOME.md#local-chapter-finishes--2026-11-22).
 
-For local review, finish a Chapter using its existing final action and visit
-Home within ten seconds. Finish a second Chapter on the same Circle day to
-see another pulse with the same growth and fade time. Reload to see the color
-at rest. The prior Log and Protocol visual review also remains pending.
+The developer confirmed the Chapter path worked and reported that pulses could
+be missed when opening Home after other actions. For local pulse review, save
+a new Note or complete a qualifying tool action, wait more than ten seconds,
+then open Home in the same tab. The patch should pulse on arrival. Reload to
+see the color at rest. [Home pulse rules](PERSONAL_IMPRINT_HOME.md#when-home-plays-the-pulse).
+The earlier Log and Protocol visual reviews remain pending.
