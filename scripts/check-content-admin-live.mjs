@@ -8,6 +8,11 @@ import { createChapterDraft } from '../app/os/admin/chapter-authoring.js';
 // Explicit write mode creates only synthetic accounts/content, then removes
 // those exact fixtures. Never print tokens, passwords, user records or URLs.
 if (!process.argv.includes('--write')) throw new Error('Use --write only after hosted verification approval.');
+const chapterBrowser = process.argv.includes('--chapter-browser');
+const useBrowser = chapterBrowser || process.argv.includes('--templates');
+if (chapterBrowser && (!process.argv.includes('--app') || !process.argv.includes('--catalog') || process.argv.includes('--templates'))) {
+  throw new Error('Chapter browser acceptance requires --app --catalog and runs separately from template checks.');
+}
 if(process.argv.includes('--templates')&&(!process.argv.includes('--catalog')||!process.argv.includes('--app')))throw new Error('Template acceptance requires --app --catalog as well as the approved --write flag.');
 const origin = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -57,15 +62,28 @@ try {
   assert.equal(Number(bucket.file_size_limit),5242880);
   for(let index=0;index<2;index++) {
     const email = `${tag}-${index}@example.com`, password=randomBytes(32).toString('hex');
-    const user=await (await ok(await call('/auth/v1/admin/users',{method:'POST',admin:true,body:{email,password,email_confirm:true,...(process.argv.includes('--templates')?{user_metadata:{alias:'Synthetic template reader'}}:{})}}),'create isolated account')).json();
+    const user=await (await ok(await call('/auth/v1/admin/users',{method:'POST',admin:true,body:{email,password,email_confirm:true,...(useBrowser?{user_metadata:{alias:'Synthetic catalog reader'}}:{})}}),'create isolated account')).json();
     created.push(user.id);
     const login=await (await ok(await call('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}}),'synthetic sign in')).json();
-    created[index]={id:user.id,token:login.access_token,...(process.argv.includes('--templates')?{session:login}:{})};
+    created[index]={id:user.id,token:login.access_token,...(useBrowser?{session:login}:{})};
   }
   const [a,b]=created;
   await ok(await call('/rest/v1/circle_content_admins',{method:'POST',admin:true,body:{account_id:a.id}}),'grant synthetic admin'); granted=a.id;
   assert.equal(await (await ok(await call('/rest/v1/rpc/circle_content_admin',{method:'POST',token:a.token,body:{}}),'admin role check')).json(),true);
   assert.equal(await (await ok(await call('/rest/v1/rpc/circle_content_admin',{method:'POST',token:b.token,body:{}}),'ordinary role check')).json(),false);
+  if (chapterBrowser) {
+    const { verifyHostedChapter } = await import('../tests/catalog-chapter-live.browser.mjs');
+    const operation = () => { const id = randomUUID(); operationIds.push(id); return id; };
+    await verifyHostedChapter({ a, b, appOrigin, origin, syntheticDraft, call, ok, operation });
+  } else await verifyContentAdmin(a, b);
+  await ok(await call(`/rest/v1/circle_content_admins?account_id=eq.${a.id}`,{method:'DELETE',admin:true}),'revoke synthetic grant');granted=null;
+  assert.ok(!(await rpc(a.token,1,randomUUID())).ok);checks++;console.log('PASS revoked admin mutation denied');
+  console.log(`Hosted checks passed: ${checks}`);
+} finally {
+  await cleanupFixtures();
+}
+
+async function verifyContentAdmin(a, b) {
   const accepted=await (await ok(await rpc(a.token),'save shared draft')).json();assert.equal(accepted.revision,1);
   assert.deepEqual(await (await ok(await rpc(a.token),'exact lost-response replay')).json(),accepted);
   assert.ok(!(await rpc(a.token,0,randomUUID(),'Competing')).ok); checks++;console.log('PASS competing edit denied');
@@ -153,10 +171,9 @@ try {
       await verifyLiveTemplates({tag,a,b,assetId,fixtureIds,operation,call,ok,change,read,http,origin,appOrigin});
     }
   }
-  await ok(await call(`/rest/v1/circle_content_admins?account_id=eq.${a.id}`,{method:'DELETE',admin:true}),'revoke synthetic grant');granted=null;
-  assert.ok(!(await rpc(a.token,1,randomUUID())).ok);checks++;console.log('PASS revoked admin mutation denied');
-  console.log(`Hosted checks passed: ${checks}`);
-} finally {
+}
+
+async function cleanupFixtures() {
   const cleanupErrors=[];
   async function cleanup(work) {try {await work();} catch(error) {cleanupErrors.push(error.message);}}
   if(process.argv.includes('--catalog')) for(const table of ['circle_content_version_assets','circle_content_items','circle_content_versions']) for(const id of fixtureIds) await cleanup(async()=>ok(await call(`/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',admin:true}),'remove exact synthetic catalog fixture'));

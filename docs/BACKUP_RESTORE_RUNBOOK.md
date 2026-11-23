@@ -1,11 +1,34 @@
 # Backup and restore runbook
 
-Updated: 2026-11-15, Asia/Bangkok. Audit and approved synthetic local rehearsal
-complete. Two normal restores and both mobile widths pass; restoring an older
-snapshot demonstrably loses later edits and revives later-deleted data/accounts.
-Operating recovery remains gated. No hosted or live-sync change was made.
+Updated: 2026-11-23, Asia/Bangkok.
 
-## Executed local rehearsal
+## Deferred until the Supabase upgrade
+
+The developer approved a maximum loss window of 24 hours for synced edits in
+the friends-and-family beta and deferred hosted backup work and spending until
+after the planned Supabase upgrade. Keep the hosted drill on hold. Supabase Pro
+lists daily database backups retained for seven days. After upgrading, verify
+the project's actual backup schedule and retention against the 24-hour target.
+Supabase database backups contain Storage metadata, so plan separate coverage
+for the actual media files. [Supabase backup documentation](https://supabase.com/docs/guides/platform/backups).
+
+The beta still requires a verified hosted restore, protection against reviving
+deleted writing, deleted accounts or revoked access, and expiry of backups
+containing deleted data within 30 days. The approved loss window applies to
+synced edits. Device-only records have no server backup in this scope.
+
+## Local reconciliation follow-up
+
+Two synthetic restores passed after replaying a test journal. After an
+interruption and retry, the deleted Note and account stayed gone, revoked
+credentials were denied, and a stale upload could not recreate the Note.
+Surviving writing and recoverable Trash rendered at 360px and 390px on both
+runs. Cleanup passed. The newer accepted edit was still lost in the simulated
+1.35-second gap. The test journal and session check were local to the rehearsal.
+Hosted restore, durable independent deletion evidence and retention remain
+unverified.
+
+## Initial local rehearsal — 2026-11-15
 
 Run `node scripts/check-backup-restore.mjs --write` only for an approved disposable
 local rehearsal. Optional CIRCLE_SUPABASE_CLI/CIRCLE_DOCKER_CLI select installed
@@ -214,21 +237,22 @@ Execution order for the separately approved drill:
 
 Measure backup age at simulated loss, backup duration, restore duration,
 deletion-reconciliation duration and time until access can safely reopen.
-Agree acceptable loss/recovery targets before execution; none are selected here.
+Use the approved 24-hour loss limit for synced edits. Agree on the target time
+to safely reopen before the hosted drill.
 Production loss window and recovery time remain unknown because no production
 backup restoration has been demonstrated. Synthetic timing is not production downtime.
 
-## Review decisions and next action
+## Review after upgrading Supabase
 
-1. Assess the existing local backup's consistency and restoreability in a separately
-   approved isolated real-data scope if needed. Establish a current backup schedule,
-   protected off-site copy and media coverage, or review a paid provider route.
-   Obtain a current quote before committing costs; the historical local copy is
-   not evidence of ongoing protection.
+1. Confirm the upgraded project's backup schedule, usable backup age and
+   retention. Review separate media coverage and whether an off-site copy is
+   needed. Assess the historical local backup in a separately approved isolated
+   real-data scope if needed.
 2. Review independent deletion evidence and how clears/newer accepted revisions,
    account/session revocations and retained device copies behave after rollback.
-3. Use the completed local rehearsal's deletion failure to scope a durable
-   safeguard, then separately review hosted recovery and retention verification.
+   Use the local replay results to scope a durable safeguard.
+3. Separately review and approve the hosted restore target, cost, retention
+   verification and cleanup before running a drill.
 
 Do not enable live writing sync on the basis of this runbook. Existing hosted
 writing recovery passes twice at 360/390px, but the earlier intermittent Send

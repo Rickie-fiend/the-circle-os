@@ -1,5 +1,34 @@
 # Circle OS user-journey test record
 
+## Hosted catalog Chapter resume and finish — 2026-11-23
+
+An isolated production Next.js build used real Supabase Auth and catalog reads
+with writing sync off and the signed-in Imprint review enabled. At 390px in
+Chromium, a temporary account with a saved version 1 run resumed on its question
+after reload, with the original answer, while version 2 was published. The
+normal finish swipe saved one completed run. A reload preserved the completion
+and Home rendered its saved contribution. A second account previewed the same
+Chapter with an empty run store and unchanged Home artwork. The unsigned
+catalog request returned 403.
+
+The real History projection, given the persisted run and both hosted versions,
+returned the exact version 1 title, question and answer. The developer confirmed
+that standalone catalog Chapters need saved evidence for internal use and future
+Athena retrieval. A user-facing History entry is outside this acceptance scope.
+The test verified device storage. Server-side Chapter sync and Athena's authorized
+access to records for the same account remain future work under the
+[evidence contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#athena-evidence-and-user-controls).
+The browser used a local production build and hosted data. Physical devices
+and the deployed UI remain unverified.
+
+The production webpack build and nine focused catalog, Chapter History and
+Imprint tests passed. The hosted runner
+`node --env-file=.env.local scripts/check-content-admin-live.mjs --write --app --catalog --chapter-browser`
+passed 17 checks before cleanup. Two temporary accounts, the grant, draft,
+versions, and operation receipts were removed by exact identity. Absence checks
+passed. The first hosted run stopped on an incorrect preview selector and also
+confirmed cleanup. No product code, migration or deployment changed.
+
 ## Chapter finishes on Home Imprint — 2026-11-22
 
 Two compiled-CSS Chromium cases passed at 390px in the synthetic signed-in

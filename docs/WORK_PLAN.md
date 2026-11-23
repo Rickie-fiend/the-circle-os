@@ -1,5 +1,18 @@
 # Circle OS work plan
 
+## Backup work deferred — 2026-11-23
+
+The developer approved a maximum loss window of 24 hours for synced edits in
+the friends-and-family beta. Defer hosted backup work and spending until after
+the planned Supabase upgrade. Resume by checking the upgraded plan's database
+backup schedule and retention, then separately review media coverage, deletion
+and revocation safeguards, and an isolated hosted restore. Safe restore and the
+30-day deleted-backup limit remain beta requirements. [Backup runbook](BACKUP_RESTORE_RUNBOOK.md).
+
+Continue with current journey verification. The direct hosted Chapter resume
+and finish path is the next candidate for a reviewed slice. The Home visual
+review can wait. [Latest Chapter evidence](USER_JOURNEY_TESTING.md#chapter-finishes-on-home-imprint--2026-11-22).
+
 ## Local synthetic backup and restore — 2026-11-15
 
 Approved rehearsal complete: two exact database/media restores and two complete
@@ -7,15 +20,14 @@ Approved rehearsal complete: two exact database/media restores and two complete
 connection-termination rollback, owner isolation and stable retry pass. Final
 build/TypeScript, lint and existing focused suite 69/69 pass; cleanup confirmed.
 
-**Open safety failure:** an older snapshot restores a later-deleted entry/account
+**Initial safety finding:** an older snapshot restores a later-deleted entry/account
 and loses a newer accepted edit. Independent deletion suppression remains
-unimplemented. Local timings do not certify production recovery or 30-day expiry.
+unimplemented in production. The follow-up local replay is summarized in the
+[runbook](BACKUP_RESTORE_RUNBOOK.md#local-reconciliation-follow-up).
+Local timings do not certify production recovery or 30-day expiry.
 No product-code, migration-file, hosted-resource or live-sync change; original backup untouched.
 [Evidence](USER_JOURNEY_TESTING.md#local-synthetic-backup-and-restore--2026-11-15)
 and [procedure](BACKUP_RESTORE_RUNBOOK.md).
-
-Next: review independent deletion/account-revocation evidence and current/off-site
-backup coverage before proposing the operating implementation.
 
 ## Backup readiness audit — 2026-11-15
 
@@ -35,9 +47,9 @@ not implemented. Production loss window, restore time and 30-day deleted-backup
 expiry remain unverified. The runbook prepares a synthetic local rehearsal and
 separate hosted drill gates, acceptance matrix, cost/target checks and cleanup.
 
-Next: review current/off-site coverage and independent deletion evidence, then
-approve a concrete isolated rehearsal. No new dump, restore, provisioning, product code,
-migration, live-sync activation, commit or deployment occurred.
+The audit was followed by the local rehearsals above and in the runbook.
+No new dump, restore, provisioning, product code, migration, live-sync
+activation, commit or deployment occurred during the audit.
 
 Hosted recovery follow-up — 2026-11-15: final clearing-inclusive hosted
 journeys pass twice at 360/390px with fresh A/B accounts per width. Corrected a
