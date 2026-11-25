@@ -2,13 +2,19 @@
 
 import type { MouseEvent } from "react";
 import { PageLayout } from "./app-session";
-import type { chapterHistory } from "./chapter-history.js";
+import type { chapterHistory, savedChapterAnswers } from "./chapter-history.js";
 import type { QuestView } from "./quests";
 
 function CompletedDate({ value }: { value: string | null }) {
   return value && Number.isFinite(Date.parse(value)) ? <time dateTime={value}>{new Date(value).toLocaleString("en-US", {
     year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
   })}</time> : <>Completion date not recorded</>;
+}
+
+export function SavedChapterAnswers({ answers }: { answers: ReturnType<typeof savedChapterAnswers> }) {
+  return answers.length ? answers.map(answer => <section key={answer.id}>
+    <h3>{answer.question}</h3><p>{answer.text || "No answer recorded."}</p>
+  </section>) : <p>No answers saved.</p>;
 }
 
 export function ChapterHistoryPage({ records, selectedId, onBack, onSelect, quest }: {
@@ -28,7 +34,7 @@ export function ChapterHistoryPage({ records, selectedId, onBack, onSelect, ques
   >
     {selectedId ? record ? <article className="os-chapter-history-detail" aria-label="Saved chapter answers">
       <p className="os-chapter-history-date"><CompletedDate value={record.completedAt} /></p>
-      {record.answers.map(answer => <section key={answer.id}><h3>{answer.question}</h3><p>{answer.text || "No answer recorded."}</p></section>)}
+      <SavedChapterAnswers answers={record.answers} />
     </article> : <p>{step?.alreadySetUp ? "Already set up. No chapter answers were saved." : "No chapter answers were saved."}</p> : <div className="os-chapter-history-list" aria-label="Completed chapters">
       {quest ? quest.steps.filter(item => item.done).map(item => <button type="button" key={item.chapterId} onClick={event => onSelect(`step:${item.chapterId}`, event.currentTarget)}>
         <span>{item.title}</span><span className="os-chapter-history-date">{item.alreadySetUp ? "Already set up" : "Completed"}</span>

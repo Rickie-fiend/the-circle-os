@@ -6,7 +6,8 @@ Fixed and verified locally. Fresh catalog readers were using temporary preview
 state. A signed-in reader now saves after Begin and after each submitted step.
 The result-page left swipe saves the finish before returning to Explore.
 Device-save retry, exact-edition resume and Home reload passed in Chromium.
-The deployed fix and physical phones still need verification.
+The developer later reported checking published Chapters. The build, device,
+browser and steps were not recorded.
 [Journey evidence](docs/USER_JOURNEY_TESTING.md#published-chapter-first-start-and-finish--2026-11-23).
 
 ## Local synthetic backup and restore — 2026-11-15
@@ -124,12 +125,12 @@ Natural JWT expiry, phone acceptance and operating recovery remain open. See
 | Protocol source-test marker | Expanded 2026-11-14 selection passes 135/136. The unchanged Footer source assertion in tests/protocol-home.test.mjs searches for the absent exact comment `/** The block`, producing an empty slice. Reconstructed pre-task Protocol source also fails. This remains a stale fixture gap; adopted Protocol runtime checks pass. No runtime defect is inferred or test removed. |
 | Phone writing/caret | Developer reports fixed on 2026-11-14. Device/browser and detailed steps were not supplied; this closes the reported symptom without claiming a new measured phone test. |
 | Runtime notices | ResizeObserver notices remain in recent test records. Do not infer resolution from passing journeys. |
-| Tool lived acceptance | Latest Protocol/shared-control work passes bounded local checks; developer lived review remains outstanding unless separately completed. |
+| Tool lived acceptance | The developer reviewed Protocol and reported it working. Device and browser details remain unrecorded. [Journey evidence](docs/USER_JOURNEY_TESTING.md#protocol-seals-on-home-imprint--2026-11-22). |
 | Hosted writing | Migrations and synthetic hosted/test-store checks passed. Actual store restart passes three local cases (37/37 combined checks). Real production-route service-worker offline startup, two restarts, Note/Deep Thoughts editing, logout and account separation also pass at 360/390 (15/15 Auth/recovery selection, 2026-11-14). Activation off; real-device restart/eviction, hosted session expiry/revocation, real lock contention and backup/deletion remain open. |
 | Auth/device | Mail setup, session renewal/revocation, lost-device/manual lost-email recovery, regional/other-browser coverage remain incomplete. |
 | Reflect regression | Older fixture-reference/first-swipe failures remain dated unresolved evidence, alongside earlier passing fixtures and later developer reports. Diagnose current code/fixture before a blanket closure or new release claim. |
 | Chapter account chrome | Developer requested menu hiding during Chapters. Safe account/exit behavior needs review; saving the report did not approve a chrome change. |
-| Beta | Broader safety, other-domain sync, deletion/recovery, installation/update and real-phone acceptance remain open under Roadmap. |
+| Beta | Published Chapter and Log sync have bounded pilot evidence. Production activation, broader sync, operational deletion/recovery, installation/update and physical-phone acceptance remain open under Roadmap. |
 
 ## Latest locally verified fixes
 

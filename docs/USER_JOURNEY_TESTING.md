@@ -1,12 +1,112 @@
 # Circle OS user-journey test record
 
+## Hosted Log sync rehearsal — 2026-11-25
+
+Two isolated 390 × 844 Chromium profiles used a localhost production Next.js
+build and disposable Free Supabase in Singapore. The project received the
+account-writing prerequisite and Log migrations. Two synthetic accounts used
+hosted password sign-in. A separate account started with an empty inventory
+and received 403 when it attempted a write for the first account.
+
+The [browser journey](../tests/log-sync.browser.mjs) passed after including the
+first-sign-in alias step. It checked an empty Log, offline saves and reload,
+exact retry after a dropped server reply, both review choices, Saved copies,
+the original time range and pre-06:00 Circle day, a newer clear during review,
+a stale upload after clearing, and mismatched ranges. The independent offline
+entry appeared once on the other profile. The final hosted database held three
+records including one clear, seven receipts, and zero records for the second
+account.
+
+`next build --webpack`, focused ESLint, and all 14 tests from `node --test
+tests/log-sync-database.test.mjs tests/log-history.test.mjs
+tests/log-imprint.test.mjs` passed. The hosted route returned 404 with a missing
+or mismatched `CIRCLE_LOG_SYNC_TEST_ORIGIN`. The disposable build and project
+were removed, and the project was absent from the Supabase project list.
+Physical phones and beta activation remain pending.
+
+## Log sync and conflict choices — 2026-11-24
+
+Two isolated 390px Chromium profiles used a production Next.js build with real
+Auth and PostgREST on disposable local Supabase. Activities and moments saved
+offline survived reload. A dropped reply retried the exact write without
+duplication. Different hours synced independently. When two entries claimed
+one hour, the first accepted entry appeared in Log and the other stayed
+readable in History. An entry made before 06:00 kept its assigned Circle day
+after reopening the same browser storage in a different time zone.
+
+The follow-up checked both conflict choices. Using the device's words kept
+the synced ID and timing and wrote a correction. The offline choice survived
+reload and a lost reply, and both copies remained under Saved copies. When a
+newer clear arrived during a same-entry choice, the app asked for a fresh
+review. Keeping the synced copy kept the clear. Different ranges offered only
+the synced choice. Stale uploads and a separate account were denied.
+
+[Browser journey](../tests/log-sync.browser.mjs). The production webpack build,
+focused lint and 14 tests from `node --test tests/log-sync-database.test.mjs
+tests/log-history.test.mjs tests/log-imprint.test.mjs` passed. The 390px
+compiled-CSS six-tool matrix and Log correction journey passed on a rerun
+after Vite reloaded during the first selection. Shared focused floors measured
+648px and content anchors 24px. Existing ResizeObserver notices remained.
+Disposable stacks and builds were removed. Hosted Log and phone checks remain
+open.
+
+## Chapter sync and conflict choices — 2026-11-23
+
+Two isolated 390px Chromium profiles passed exact-edition resume, offline save
+and reader reopen, and exact finish retry after a lost reply. Home kept the
+original finish color on both profiles and pulsed on the originating device.
+A separate account could neither read nor change the run. The production
+Next.js route, Auth and PostgREST ran on disposable local Supabase.
+
+Basic sync also passed on disposable hosted Supabase. Simultaneous writes
+produced one accepted revision and one competing copy. The exact finish retry
+left one completed run at revision 3 with three receipts. A prerequisite
+migration hit a timestamp collision in the migration tracker. Its schema was
+verified before the remaining migrations continued. The Free project was
+deleted and checked absent. [Hosted browser runner](../tests/catalog-chapter-live.browser.mjs).
+
+The later review flow passed locally. Explore opened the original edition even
+when a newer one was listed. Both choices, reload, a lost reply, and a newer edit
+were covered. A synced finish stayed read-only and a finish present only on the
+device remained readable. Both reviewed copies stayed on that device. The
+production webpack build, focused lint, six focused tests and four Chapter
+browser checks passed. [Local browser checks](../tests/content-admin.browser.mjs).
+Hosted evidence covers basic sync. The later review and deletion have local
+evidence.
+
+## Chapter sync account deletion — 2026-11-23
+
+Two isolated 390px Chromium profiles signed into the same synthetic account
+through a production Next.js build, local Supabase Auth, and PostgREST. One
+profile kept a competing copy, chose the synced answers, then saved its next
+answer offline. Before deletion the server held one run and two receipts. The
+offline profile held both the reviewed copies and the pending answer.
+
+The local Auth admin deletion reduced that owner's run and receipt counts to
+zero. The Chapter sync route denied the old token's read and the captured
+pending upload. Reconnecting the offline profile returned it to sign-in.
+Explore and the exact-edition review URL stayed behind the sign-in screen.
+Recreating the same email produced a new account ID with empty Chapter
+inventory, no review link, and a fresh cover. A request from the recreated
+account claiming the old owner was denied. The control account's synced run
+was identical before and after the deletion.
+
+`node --test tests/chapter-sync-database.test.mjs` passed both tests. Focused
+ESLint passed for the database and browser tests. The full-stack rehearsal
+invoked [the browser journey](../tests/chapter-sync-deletion.browser.mjs) with
+the disposable stack and isolated build helpers from the local backup runner.
+The disposable containers, volumes and build were removed and cleanup passed.
+This evidence covers account isolation for retained local copies. Physical
+phones and hosted backup restoration and retention remain separate checks.
+
 ## Published Chapter first start and finish — 2026-11-23
 
 The developer reported that published Chapters restarted and did not end on a
 left swipe. The reader had been using temporary preview state unless an exact
 run already existed. The earlier hosted check seeded a run before opening the
-reader. The developer separately reported a pass for legacy Chapters on the
-deployed site.
+reader. The developer reported a pass for legacy Chapters on the deployed
+site and later reported checking published Chapters. The later report did not
+include the build, device, browser or steps.
 
 The production-CSS Chromium selection passed three cases at 390px. The new
 journey opened the reader with an empty account, began from the cover, entered
@@ -106,6 +206,9 @@ passed both selections. Hosted and physical-phone journeys
 remain outside this local evidence.
 
 ## Protocol seals on Home Imprint — 2026-11-22
+
+The developer later reported reviewing Protocol and said it worked. The device
+and browser were not recorded.
 
 The 390px Chromium case uses the actual Protocol controls, account-scoped local
 stores and Home canvas in the synthetic signed-in harness. A term tick alone

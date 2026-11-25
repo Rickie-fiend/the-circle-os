@@ -56,7 +56,7 @@
 
 .circle-os .os-explore-panel.is-selected {
   transform: scale(1);
-  box-shadow: var(--os-glass-panel-shadow), 0 6px 28px rgb(227 107 55 / 0.16);
+  box-shadow: var(--os-glass-panel-shadow), 0 6px 28px rgb(227 107 55 / 0.08);
   z-index: 1;
 }
 

@@ -62,7 +62,7 @@
 .circle-os .os-content-glass .os-survey-choices button { min-height: 52px; border-radius: var(--os-glass-action-radius); background: var(--os-glass-action-background); border: 1px solid var(--os-glass-action-border); box-shadow: var(--os-glass-action-shadow); color: var(--c-bone); }
 .circle-os .os-content-glass .os-survey-choices button.selected { border-color: var(--c-orange); }
 .circle-os .os-content-glass :is(textarea,input[type=text],input[type=time]) { border: 0; background: transparent; color: inherit; }
-.circle-os .os-article-preview { padding: 24px; min-height: var(--os-app-box-min-height); overflow-wrap: anywhere; }
+.circle-os .os-article-preview { position: relative; padding: 24px; min-height: var(--os-app-box-min-height); overflow-wrap: anywhere; }
 .circle-os .os-article-preview > * { margin: 0 0 24px; white-space: pre-wrap; }
 .circle-os .os-content-figure { margin: 24px 0; width: 100%; }
 .circle-os .os-content-figure img { display: block; width: 100%; height: auto; }
@@ -70,10 +70,12 @@
 .circle-os .os-content-image-picker { display: grid; gap: 12px; padding: 16px 0; }
 .circle-os .os-content-image-picker label { display: grid; gap: 8px; }
 @media (prefers-reduced-transparency: reduce) {
-  .circle-os .os-content-glass { background: var(--c-ink); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .circle-os :is(.os-content-glass, .os-chapter-session.os-content-glass) { background: var(--c-ink); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .circle-os .os-content-glass > .os-app-window { background: transparent; }
 }
 @media (forced-colors: active) {
-  .circle-os .os-content-glass { background: Canvas; color: CanvasText; border-color: CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .circle-os :is(.os-content-glass, .os-chapter-session.os-content-glass) { background: Canvas; color: CanvasText; border-color: CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .circle-os .os-content-glass > .os-app-window { background: transparent; }
 }
 .circle-os .os-template-result-row { display: grid; grid-template-columns: minmax(0, 1fr) 28px; gap: var(--space-3); margin-block: var(--space-4); }
 .circle-os .os-template-result-row p { margin: 0; }

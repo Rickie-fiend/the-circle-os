@@ -19,6 +19,11 @@ import { useCircleState,ROUTINE_APP_VERSION } from '../../circle-os-shell';
 import type { ChapterDefinition,ChapterRun } from '../../chapters/chapter-types';
 import { TemplatePreview } from '../../admin/template-preview';
 import { createChapterDraft } from '../../admin/chapter-authoring.js';
+import { isChapterSyncPilot } from '../../chapters/chapter-sync-pilot';
+import { ChapterSyncReview, chapterReviewHref } from '../../chapters/chapter-sync-review';
+import { readChapterSync,savePublishedChapterProgress,syncPublishedChapters,watchChapterSync } from '../../chapters/chapter-sync-store';
+import { writingAttribution } from '../../writing-model.js';
+import { stampChapterFinish } from '../../home/imprint-local-activity';
 import type { TemplateContent } from '../../admin/template-types';
 type Edition={version:number;content:{kind:string;template?:TemplateContent;chapter?:ChapterDefinition;article?:ArticleDraft['article']}};
 
@@ -28,13 +33,28 @@ function PublishedChapter({ chapter, preview }: { chapter: ChapterDefinition; pr
  const [previewRun, setPreviewRun] = useState(initial);
  const [pending, setPending] = useState<{ before: ChapterRun; next: ChapterRun; failed?: boolean }>();
  const [message, setMessage] = useState('');
+ const [conflict, setConflict] = useState(false);
  const busy = useRef(false);
  const explore = useRef<HTMLAnchorElement>(null);
  const stored = state.chapters.runs[initial.runId];
  const current = pending?.before ?? stored ?? initial;
 
+ useEffect(() => {
+  const scope = getAccountScope();
+  if (preview || scope.kind !== 'account' || !isChapterSyncPilot(window.location.hostname)) return;
+  let active = true;
+  const refresh = () => {
+   void readChapterSync(scope).then(ledger => {
+    if (active) setConflict(Boolean(ledger[initial.runId]?.competing));
+   }).catch(() => {});
+  };
+  refresh();
+  const unsubscribe = watchChapterSync(scope, refresh);
+  return () => { active = false; unsubscribe(); };
+ }, [initial.runId, preview]);
+
  async function save(next: ChapterRun) {
-  if (busy.current || current.status === 'completed') return;
+  if (busy.current || conflict || current.status === 'completed') return;
   busy.current = true;
   const scope = getAccountScope();
   const candidate = { ...next, catalogKind: chapterKind(chapter) };
@@ -61,6 +81,17 @@ function PublishedChapter({ chapter, preview }: { chapter: ChapterDefinition; pr
       throw Error('This Chapter is unavailable right now.');
      }
     }
+    if (scope.kind === 'account' && isChapterSyncPilot(window.location.hostname)) {
+     const ledger = await readChapterSync(scope);
+     if (ledger[candidate.runId] || !existing?.startedAt) {
+      const finished = candidate.completedAt;
+      const run = candidate.status === 'completed' && finished
+       ? stampChapterFinish(existing, candidate, finished, writingAttribution(finished, Intl.DateTimeFormat().resolvedOptions().timeZone)) ?? candidate
+       : candidate;
+      await savePublishedChapterProgress(scope, existing?.startedAt ? current : undefined, run);
+      return;
+     }
+    }
     await saveChapterState(candidate, previous => storeChapterRun(mergeServerState(previous, latest), candidate, chapter.session));
    };
    if (navigator.locks) await navigator.locks.request(accountStorageKey(scope, 'circle-catalog-chapter'), { signal: scope.signal }, commit);
@@ -80,6 +111,10 @@ function PublishedChapter({ chapter, preview }: { chapter: ChapterDefinition; pr
 
  return <>
   <Link ref={explore} href="/os/explore">Back to Explore</Link>
+  {conflict && <>
+   <p role="status">This Chapter changed on another device. Both copies are saved.</p>
+   <a className="os-chapter-review-link" href={chapterReviewHref(chapter.id, chapter.version)}>Review answers</a>
+  </>}
   {message && <p role="alert">{message}</p>}
   {pending?.failed && <button type="button" onClick={() => void save(pending.next)}>Try again</button>}
   <ChapterPlayer definition={chapter} run={preview ? previewRun : current} previewMode={preview}
@@ -94,31 +129,49 @@ export default function CatalogReader(){
  const openProtocol=()=>window.location.assign('/os#protocol');
  const openRoutine=()=>window.location.assign('/os#routine');
  const request=useCatalogRequest(),[loadedEdition,setEdition]=useState<{epoch:string;value:Edition;preview:boolean}|null>(null),[message,setMessage]=useState('Opening reading…');
+ const scope=getAccountScope();
+ const query = ready && typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+ const reviewId = query?.get('id');
+ const reviewVersion = Number(query?.get('version'));
+ const reviewing = Boolean(reviewId && Number.isSafeInteger(reviewVersion) && reviewVersion > 0 &&
+  query?.get('review') === '1' && query.get('preview') !== '1' && scope.kind === 'account' &&
+  isChapterSyncPilot(window.location.hostname));
  const edition=loadedEdition?.epoch===getAccountScope().epoch?loadedEdition.value:null;
  const hydratedRuns = useRef(state.chapters.runs);
  useEffect(() => { hydratedRuns.current = state.chapters.runs; }, [state.chapters.runs]);
  useEffect(() => {
-  if (!ready) return;
+  if (!ready || reviewing) return;
   let active = true;
-  const epoch = getAccountScope().epoch;
+  const scope = getAccountScope();
+  const epoch = scope.epoch;
   const query = new URLSearchParams(window.location.search);
   const id = query.get('id') ?? '';
   const preview = query.get('preview') === '1';
-  const unfinished = query.get('resume') === '1' && !preview
-   ? Object.values(hydratedRuns.current).filter(run => run.chapterId === id && run.status === 'in-progress')
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]
-   : undefined;
-  const version = unfinished?.chapterVersion ?? query.get('version') ?? '';
-  void request(`/os/catalog?${new URLSearchParams({ id, version: String(version) })}`).then(async response => {
+  async function open() {
+   let runs = hydratedRuns.current;
+   if (!preview && scope.kind === 'account' && isChapterSyncPilot(window.location.hostname)) {
+    if (navigator.onLine) await syncPublishedChapters(scope, request, runs).catch(() => {});
+    if (!active) return;
+    runs = (await loadCircleState(scope)).chapters.runs;
+   }
+   const matching = query.get('resume') === '1' && !preview
+    ? Object.values(runs).filter(run => run.chapterId === id && run.status === 'in-progress')
+       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]
+    : undefined;
+   const version = matching?.chapterVersion ?? query.get('version') ?? '';
+   const response = await request(`/os/catalog?${new URLSearchParams({ id, version: String(version) })}`);
    if (!response.ok) throw Error('This version is unavailable. Sign in and try again.');
    const data = await response.json();
    if (active) setEdition({ epoch, value: data, preview });
-  }).catch(error => { if (active) setMessage(String(error)); });
+  }
+  void open().catch(error => { if (active) setMessage(String(error)); });
   return () => { active = false; };
- }, [ready, request]);
+ }, [ready, request, reviewing]);
  if(!ready)return <p role="status">Opening local records…</p>;
  const active=activeProtocolRun(state);
- const scope=getAccountScope();
+ if (reviewing && reviewId) return <main className="os-admin">
+  <ChapterSyncReview key={`${scope.epoch}:${reviewId}@${reviewVersion}`} id={reviewId} version={reviewVersion} />
+ </main>;
  const sourceId=new URLSearchParams(typeof window==='undefined'?'':window.location.search).get('id')||'';
  const templateKind=edition?.content.template?.kind;
  const keyFor=(kind:string)=>accountStorageKey(scope,(kind==='protocol'?'circle-protocol-start:':'circle-routine-add:')+sourceId+'@'+edition?.version);

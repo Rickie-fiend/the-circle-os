@@ -111,8 +111,11 @@ Non-text controls keep visible keyboard focus.
 
 The App Box owns border, background, shadow, clipping, radius and height change.
 Pages move inside it without another outer card. Reference frame radius is 36px,
-with quiet pale reflection, Bone rim, faint Orange depth and 24px backdrop blur,
-saturation 1.2. Controls have brighter silver reflections, 8px blur, Ink lower
+with 12px backdrop blur at saturation 1.2, a 3% Charcoal base and a light
+diagonal wash. The 1px Bone rim uses 16% opacity, with faint 1px reflections along
+the top and left. Outer shadows use 16% Ink and 4% Orange. Use this finish for
+existing tool and content glass, Explore panels and the bottom navigation.
+Controls have brighter silver reflections, 8px blur, Ink lower
 edges and faint Orange shadows. Verify vendor prefixes in compiled production CSS.
 
 | Control | Current visual rule |

@@ -107,6 +107,9 @@ import {
   syncCircleState,
 } from "./circle-os-ai";
 import { loadCircleState, saveCircleState } from "./circle-os-store";
+import { useCatalogRequest } from "./catalog/request";
+import { isChapterSyncPilot } from "./chapters/chapter-sync-pilot";
+import { readChapterSync, syncPublishedChapters, watchChapterSync } from "./chapters/chapter-sync-store";
 import { WritingProvider, useWriting, type WritingImprintPulse } from "./writing-provider";
 import { canReviewWritingImprint, type ImprintDay } from "./home/imprint-writing-activity";
 import {
@@ -146,7 +149,9 @@ import { sizeTextAreaToContent } from "./text-area-size";
 import { useAppBack } from "./app-back";
 import { AccountMenu } from "./auth/account-menu";
 import { useAccountIdentity } from "./auth/account-context";
-import { correctLogEntry, logClearingReceipt, logHistoryDays, type LogCorrection } from "./log-history.js";
+import { correctLogEntry, logBlockSignature, logClearingReceipt, logHistoryDays, type LogCorrection } from "./log-history.js";
+import { isLogSyncPilot } from "./log-sync-pilot";
+import { chooseLogCopy, logSavedCopies, logSyncConflicts, projectLogSync, readLogSync, saveLogDay, syncLog, watchLogSync, type LogConflict, type LogCopyPair } from "./log-sync-store";
 import { LogHistoryPage } from "./log-history-page";
 import { weekHistory, weekActivityHistory } from "./week-history.js";
 import { WeekHistoryPage } from "./week-history-page";
@@ -1143,6 +1148,10 @@ type CircleStateContextValue = {
   sealProtocolForDay: (runId: string, day: string) => void;
   updateChapterState: (run: ChapterRun, transform: (state: CircleState) => CircleState) => void;
   saveChapterState: (run: ChapterRun, transform: (state: CircleState) => CircleState) => Promise<void>;
+  saveLogChange: (date: string, transform: (day: CircleDay) => CircleDay) => Promise<void>;
+  logConflicts: LogConflict[];
+  savedLogCopies: LogCopyPair[];
+  resolveLogCopy: (conflict: LogConflict, useDevice: boolean) => Promise<void>;
   trackLogImprint: boolean;
   localImprint: { days: ImprintDay[]; takePulses: (sources: Set<string>) => WritingImprintPulse[] };
   updateDay: (
@@ -1259,6 +1268,9 @@ export function CircleStateProvider({ children }: { children: ReactNode }) {
 }
 
 function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; scope: AccountScope }) {
+  const chapterSyncRequest = useCatalogRequest();
+  const [logConflicts, setLogConflicts] = useState<LogConflict[]>([]);
+  const [savedLogCopies, setSavedLogCopies] = useState<LogCopyPair[]>([]);
   const dateKey = getDateKey();
   const [state, setState] = useState<CircleState>(() =>
     ensureDay(createEmptyState(), dateKey),
@@ -1348,6 +1360,79 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    if (!ready || scope.kind !== "account" || !isChapterSyncPilot(window.location.hostname)) return;
+    let active = true;
+    const refresh = async () => {
+      const ledger = await readChapterSync(scope);
+      if (!active || !isAccountScopeCurrent(scope)) return;
+      setState(current => {
+        const updated = Object.fromEntries(Object.entries(ledger)
+          .filter(([id, entry]) => JSON.stringify(current.chapters.runs[id]) !== JSON.stringify(entry.run))
+          .map(([id, entry]) => [id, entry.run]));
+        if (!Object.keys(updated).length) return current;
+        return { ...current, chapters: { ...current.chapters, runs: { ...current.chapters.runs, ...updated } } };
+      });
+    };
+    const sync = () => {
+      if (!navigator.onLine || !isAccountScopeCurrent(scope)) return;
+      void syncPublishedChapters(scope, chapterSyncRequest, stateRef.current.chapters.runs).catch(() => {});
+    };
+    // Read the durable projection after commits. Network retries use their own timer.
+    const unsubscribe = watchChapterSync(scope, localFinish => {
+      if (reviewImprint && localFinish?.completedAt && localFinish.imprintFinish) {
+        const id = localFinish.runId;
+        activityActions.current.set(chapterImprintSource(id), {
+          operation: localFinish.completedAt, group: "starting",
+          read: saved => {
+            const run = saved.chapters.runs[id];
+            return run?.imprintFinish && { operation: run.completedAt ?? undefined, completed: run.status === "completed" };
+          },
+        });
+      }
+      void refresh().catch(() => {});
+    });
+    window.addEventListener("online", sync);
+    window.addEventListener("focus", sync);
+    const timer = window.setInterval(sync, 4000);
+    sync();
+    return () => {
+      active = false;
+      unsubscribe();
+      window.removeEventListener("online", sync);
+      window.removeEventListener("focus", sync);
+      window.clearInterval(timer);
+    };
+  }, [ready, scope, chapterSyncRequest, reviewImprint]);
+
+  useEffect(() => {
+    if (!ready || scope.kind !== "account" || !isLogSyncPilot(window.location.hostname)) return;
+    let active = true;
+    const refresh = async () => {
+      const ledger = await readLogSync(scope);
+      if (!active || !isAccountScopeCurrent(scope)) return;
+      setState(current => projectLogSync(current, ledger));
+      setLogConflicts(logSyncConflicts(ledger));
+      setSavedLogCopies(logSavedCopies(ledger));
+    };
+    const sync = () => {
+      if (navigator.onLine && isAccountScopeCurrent(scope)) void syncLog(scope, chapterSyncRequest).catch(() => {});
+    };
+    const unsubscribe = watchLogSync(scope, () => { void refresh().catch(() => {}); });
+    window.addEventListener("online", sync);
+    window.addEventListener("focus", sync);
+    const timer = window.setInterval(sync, 4000);
+    void refresh().catch(() => {});
+    sync();
+    return () => {
+      active = false;
+      unsubscribe();
+      window.removeEventListener("online", sync);
+      window.removeEventListener("focus", sync);
+      window.clearInterval(timer);
+    };
+  }, [ready, scope, chapterSyncRequest]);
 
   useEffect(() => {
     let active = true;
@@ -1601,6 +1686,17 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     });
   }
 
+  async function saveLogChange(key: string, transform: (day: CircleDay) => CircleDay) {
+    assertAccountScope(scope);
+    const pilot = scope.kind === "account" && isLogSyncPilot(window.location.hostname);
+    const ledger = pilot ? await readLogSync(scope) : undefined;
+    const current = ledger ? projectLogSync(stateRef.current, ledger) : stateRef.current;
+    const before = ensureDay(current, key).days[key];
+    const after = transform(before);
+    if (after === before || (pilot && await saveLogDay(scope, before, after))) return;
+    updateDay(key, day => ({ ...day, timeBlocks: after.timeBlocks, logCorrections: after.logCorrections }), "day-log");
+  }
+
   function updateProfile(
     transform: (profile: CircleState["profile"]) => CircleState["profile"],
     reason?: string,
@@ -1795,6 +1891,10 @@ function ScopedCircleStateProvider({ children, scope }: { children: ReactNode; s
     sealProtocolForDay,
     updateChapterState,
     saveChapterState,
+    saveLogChange,
+    logConflicts,
+    savedLogCopies,
+    resolveLogCopy: (conflict: LogConflict, useDevice: boolean) => chooseLogCopy(scope, conflict, useDevice),
     trackLogImprint: reviewImprint,
     localImprint: { days: localDays, takePulses: takeLocalPulses },
     updateDay,
@@ -2070,7 +2170,7 @@ function hourFromTime(value: string, fallback: number) {
 }
 
 export function TodayExperience() {
-  const { state, today, ready, dateKey, updateState, updateToday, updateChapterState, toggleRoutineHabit, changeTaskCompletion, sealProtocolForDay, trackLogImprint } =
+  const { state, today, ready, dateKey, updateState, updateToday, updateChapterState, toggleRoutineHabit, changeTaskCompletion, sealProtocolForDay, trackLogImprint, saveLogChange, logConflicts, savedLogCopies, resolveLogCopy } =
     useCircleState();
   const writing = useWriting();
   const accountIdentity = useAccountIdentity();
@@ -2288,6 +2388,11 @@ export function TodayExperience() {
   const [isLogOpen, setLogOpen] = useState(false);
   const logBack = useAppBack<"today" | "history" | "day">("today");
   const [logHistoryDay, setLogHistoryDay] = useState<string | null>(null);
+  const [logSaveError, setLogSaveError] = useState("");
+  const logSaving = useRef(false);
+  const logMainDraft = useRef({ day: "", expected: "" });
+  const logNewMomentDraft = useRef({ day: "", expected: "" });
+  const logEditMomentDraft = useRef({ day: "", expected: "" });
   const recordedLogDays = logHistoryDays(state, dateKey);
   const weekBack = useAppBack<"current" | "history" | "week">("current");
   const [historyWeek, setHistoryWeek] = useState<string | null>(null);
@@ -3510,6 +3615,7 @@ export function TodayExperience() {
   }
 
   function openEdit(block: TimeBlock) {
+    logMainDraft.current = { day: dateKey, expected: logBlockSignature(block) };
     setEditingId(block.id);
     setStart(block.start);
     setEnd(block.end);
@@ -3530,10 +3636,20 @@ export function TodayExperience() {
     }
 
     resetLogForm();
+    logMainDraft.current = { day: dateKey, expected: "" };
     setStart(hourStart);
     setEnd(hourLabel(hour + 1));
     setBlockTitle(defaultTitle);
     setLogOpen(true);
+  }
+
+  async function saveLogForm(day: string, transform: (day: CircleDay) => CircleDay, complete: () => void) {
+    if (logSaving.current) return;
+    logSaving.current = true;
+    setLogSaveError("");
+    try { await saveLogChange(day, transform); complete(); }
+    catch (error) { setLogSaveError(error instanceof Error ? error.message : "Could not save Log. Try again."); }
+    finally { logSaving.current = false; }
   }
 
   function saveTimeBlock(event: FormEvent<HTMLFormElement>) {
@@ -3560,9 +3676,14 @@ export function TodayExperience() {
         ? crypto.randomUUID()
         : `block-${Date.now()}`);
     const updatedAt = new Date().toISOString();
-    const imprintLog = trackLogImprint && !editingId ? captureLogImprint(dateKey, start, end) : undefined;
-    updateToday((day) => {
+    const { day: assignedDay, expected } = logMainDraft.current;
+    const dayKey = assignedDay || dateKey;
+    const imprintLog = trackLogImprint && !editingId ? captureLogImprint(dayKey, start, end) : undefined;
+    void saveLogForm(dayKey, (day) => {
       const existing = day.timeBlocks.find((block) => block.id === id);
+      if (editingId && logBlockSignature(existing) !== expected) {
+        throw new Error("This Log entry changed. Open it again to continue.");
+      }
       if (!cleanTitle && !cleanMoments.length) {
         return {
           ...day,
@@ -3583,9 +3704,7 @@ export function TodayExperience() {
         updatedAt,
         ...(imprintLog ? { imprintLog } : {}),
       });
-    }, "day-log");
-    resetLogForm();
-    setLogOpen(false);
+    }, () => { resetLogForm(); setLogOpen(false); });
   }
 
   function addMoment(event: FormEvent<HTMLFormElement>, hour: number) {
@@ -3598,11 +3717,14 @@ export function TodayExperience() {
     const startTime = hourLabel(hour);
     const endTime = hourLabel(hour + 1);
     const updatedAt = new Date().toISOString();
-    const imprintLog = trackLogImprint ? captureLogImprint(dateKey, startTime, endTime) : undefined;
-    updateToday((day) => {
+    const { day: assignedDay, expected } = logNewMomentDraft.current;
+    const dayKey = assignedDay || dateKey;
+    const imprintLog = trackLogImprint ? captureLogImprint(dayKey, startTime, endTime) : undefined;
+    void saveLogForm(dayKey, (day) => {
       const existing = day.timeBlocks.find(
         (block) => block.start === startTime,
       );
+      if (logBlockSignature(existing) !== expected) throw new Error("This hour changed. Open it again to continue.");
       if (!existing) {
         return upsertTimeBlock(day, {
           id:
@@ -3640,12 +3762,11 @@ export function TodayExperience() {
             : block,
         ),
       };
-    }, "day-log");
-    setNewMoment("");
-    setMomentHour(null);
+    }, () => { setNewMoment(""); setMomentHour(null); });
   }
 
   function editMoment(block: TimeBlock, index: number, moment: string) {
+    logEditMomentDraft.current = { day: dateKey, expected: logBlockSignature(block) };
     setEditingMomentKey(`${block.id}-${index}`);
     setMomentDraft(moment);
   }
@@ -3660,8 +3781,10 @@ export function TodayExperience() {
       new FormData(event.currentTarget).get("moment") || "",
     ).trim();
     const updatedAt = new Date().toISOString();
-    updateToday((day) => {
+    const { day: assignedDay, expected } = logEditMomentDraft.current;
+    void saveLogForm(assignedDay || dateKey, (day) => {
       const existing = day.timeBlocks.find(item => item.id === block.id);
+      if (logBlockSignature(existing) !== expected) throw new Error("This Log entry changed. Open it again to continue.");
       const nextBlocks = day.timeBlocks
         .map((item) => {
           if (item.id !== block.id) return item;
@@ -3682,9 +3805,7 @@ export function TodayExperience() {
       return { ...day, timeBlocks: nextBlocks,
         ...(cleared ? { logCorrections: logClearingReceipt(day, existing, updatedAt) } : {}),
       };
-    }, "day-log");
-    setEditingMomentKey(null);
-    setMomentDraft("");
+    }, () => { setEditingMomentKey(null); setMomentDraft(""); });
   }
 
   function saveProfileSparkRun(nextRun: ChapterRun) {
@@ -5138,9 +5259,16 @@ export function TodayExperience() {
             {logBack.side !== "today" ? (
               <LogHistoryPage
                 days={recordedLogDays}
+                conflicts={logConflicts}
+                savedCopies={savedLogCopies}
+                onChooseCopy={resolveLogCopy}
                 sourceDay={logHistoryDay ? state.days[logHistoryDay] : undefined}
                 todayKey={dateKey}
-                onSave={(request) => updateState((current) => correctLogEntry(current, request, dateKey).state)}
+                onSave={(request) => saveLogChange(request.dateKey, day => {
+                  const result = correctLogEntry({ ...state, days: { ...state.days, [request.dateKey]: day } }, request, dateKey);
+                  if (result.error) throw new Error(result.error);
+                  return result.state.days[request.dateKey];
+                })}
                 selectedDay={logBack.side === "day" ? logHistoryDay : null}
                 onBack={(event) => logBack.flip(logBack.side === "day" ? "history" : "today", undefined, event.currentTarget)}
                 onSelect={(key, source) => logBack.flip("day", () => setLogHistoryDay(key), source)}
@@ -5171,6 +5299,7 @@ export function TodayExperience() {
               placement="content-flow"
               theme="dark"
             >
+              {logSaveError && <p role="alert">{logSaveError}</p>}
               <div className="os-timeline">
             {logStartHour > CIRCLE_DAY_START_HOUR ? (
               <button
@@ -5307,6 +5436,7 @@ export function TodayExperience() {
                           openHour(hour, defaultTitle);
                           return;
                         }
+                        logNewMomentDraft.current = { day: dateKey, expected: logBlockSignature(block) };
                         setMomentHour(hour);
                         setNewMoment("");
                       }}

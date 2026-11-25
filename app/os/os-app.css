@@ -114,7 +114,7 @@
   .circle-os .os-bottom-nav { background: var(--c-ink); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (forced-colors: active) {
-  .circle-os .os-bottom-nav { background: Canvas; border-color: CanvasText; }
+  .circle-os .os-bottom-nav { background: Canvas; border-color: CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .circle-os .os-bottom-nav a { color: LinkText; }
   .circle-os .os-bottom-nav a[aria-current="page"] { color: LinkText; text-decoration: underline; }
 }
@@ -151,16 +151,16 @@
   --os-glass-action-height: 52px;
   --os-glass-action-radius: 12px;
   --os-glass-panel-radius: 36px;
-  --os-glass-panel-blur: 24px;
+  --os-glass-panel-blur: 12px;
   --os-bottom-nav-height: calc(var(--space-16) + var(--space-4) + 2px);
   --os-glass-control-blur: 8px;
   --os-completion-rim-background: radial-gradient(circle at 32% 10%, rgb(241 239 232 / 0.28), rgb(64 62 53 / 0.06) 60%);
   --os-completion-rim-border: rgb(241 239 232 / 0.9);
   --os-completion-rim-shadow: inset 0 1px 1px rgb(241 239 232 / 0.9), inset 0 -1px 2px rgb(25 24 19 / 0.45), 0 2px 4px rgb(25 24 19 / 0.18), 0 3px 9px rgb(227 107 55 / 0.1);
-  --os-glass-panel-background: rgb(64 62 53 / 0.1);
-  --os-glass-panel-border: rgb(241 239 232 / 0.48);
-  --os-glass-panel-shadow: inset 1px 1px 2px rgb(241 239 232 / 0.78), inset -1px -1px 3px rgb(241 239 232 / 0.3), 0 12px 32px rgb(25 24 19 / 0.35), 0 6px 18px rgb(227 107 55 / 0.09);
-  --os-glass-window-background: linear-gradient(125deg, rgb(241 239 232 / 0.12), rgb(64 62 53 / 0.14) 32%, rgb(25 24 19 / 0.24) 70%, rgb(64 62 53 / 0.2));
+  --os-glass-panel-background: rgb(64 62 53 / 0.03);
+  --os-glass-panel-border: rgb(241 239 232 / 0.16);
+  --os-glass-panel-shadow: inset 1px 1px 1px rgb(241 239 232 / 0.2), inset -1px -1px 1px rgb(241 239 232 / 0.09), 0 12px 32px rgb(25 24 19 / 0.16), 0 6px 18px rgb(227 107 55 / 0.04);
+  --os-glass-window-background: linear-gradient(125deg, rgb(241 239 232 / 0.03), rgb(64 62 53 / 0.05) 32%, rgb(25 24 19 / 0.08) 70%, rgb(64 62 53 / 0.06));
   --os-glass-action-background: linear-gradient(160deg, rgb(241 239 232 / 0.28), rgb(64 62 53 / 0.08) 48%, rgb(241 239 232 / 0.1));
   --os-glass-action-border: rgb(241 239 232 / 0.72);
   --os-glass-action-shadow: inset 0 1px 1px rgb(241 239 232 / 0.85), inset 0 -1px 2px rgb(25 24 19 / 0.4), 0 3px 8px rgb(25 24 19 / 0.18), 0 3px 9px rgb(227 107 55 / 0.1);
@@ -5415,6 +5415,29 @@
 .circle-os .os-chapter-history-detail { display: grid; gap: var(--space-6); width: 100%; }
 .circle-os .os-chapter-history-detail h3 { font: inherit; font-weight: var(--os-weight-bold); margin: 0 0 var(--space-3); }
 .circle-os .os-chapter-history-detail p { margin: 0; white-space: pre-wrap; }
+.circle-os .os-log-sync-review summary { min-height: 44px; align-content: center; }
+.circle-os .os-log-sync-review section { margin-block: var(--space-4); }
+.circle-os .os-log-sync-actions { display: grid; gap: var(--space-3); }
+.circle-os .os-log-history-list .os-log-sync-actions button { min-height: 44px; }
+.circle-os .os-chapter-review-link,
+.circle-os .os-chapter-copy-actions button,
+.circle-os .os-chapter-copy-review summary {
+  min-height: 44px;
+  align-content: center;
+}
+.circle-os .os-chapter-review-link { display: inline-grid; }
+.circle-os .os-chapter-copy-actions,
+.circle-os .os-chapter-copy-review section,
+.circle-os .os-chapter-copy-review article { display: grid; gap: var(--space-3); }
+.circle-os .os-chapter-copy-actions button {
+  background: transparent;
+  color: var(--c-bone);
+  border: 1px solid currentColor;
+  border-radius: var(--space-3);
+  padding-inline: var(--space-4);
+  font: inherit;
+  text-align: start;
+}
 .circle-os .os-chapter-history-date { color: rgb(241 239 232 / 0.58); font-size: var(--text-sm); }
 
 /* Athena's cover centred its heading in a 1fr row, so its forehead came out at
@@ -9995,6 +10018,20 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
   position: relative;
   z-index: 1;
 }
+.circle-os :is(.os-bottom-nav, .os-note-glass-session, .os-content-glass, .os-routine-open .os-habit-session)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, transparent 20%, rgb(241 239 232 / 0.28), transparent 80%) top center / calc(100% - 64px) 1px no-repeat,
+    linear-gradient(180deg, transparent, rgb(241 239 232 / 0.22) 7%, transparent 35%, transparent 77%, rgb(241 239 232 / 0.08) 96%, transparent) left center / 1px max(0px, calc(100% - 64px)) no-repeat;
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .circle-os :is(.os-bottom-nav, .os-note-glass-session, .os-content-glass, .os-routine-open .os-habit-session)::after { display: none; }
+}
 .os-routine-threads {
   background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20preserveAspectRatio%3D%22none%22%20viewBox%3D%220%200%20300%20180%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M18%20180C90%20179%20104%20112%20163%20128S242%20150%20230%2091S277%2059%20300%2018%22%20stroke%3D%22%23E36B37%22%20stroke-width%3D%22.7%22%20stroke-opacity%3D%220.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M19.65%20180C90.8%20178.7%20103.8%20112.65%20163.4%20127.5S241.75%20149.5%20230.2%2091.5S277.1%2058.6%20300%2019.6%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M21.3%20180C91.6%20178.4%20103.6%20113.3%20163.8%20127S241.5%20149%20230.4%2092S277.2%2058.2%20300%2021.2%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M22.95%20180C92.4%20178.1%20103.4%20113.95%20164.2%20126.5S241.25%20148.5%20230.6%2092.5S277.3%2057.8%20300%2022.8%22%20stroke%3D%22%23E36B37%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M24.6%20180C93.2%20177.8%20103.2%20114.6%20164.6%20126S241%20148%20230.8%2093S277.4%2057.4%20300%2024.4%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M26.25%20180C94%20177.5%20103%20115.25%20165%20125.5S240.75%20147.5%20231%2093.5S277.5%2057%20300%2026%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.7%22%20stroke-opacity%3D%220.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M27.9%20180C94.8%20177.2%20102.8%20115.9%20165.4%20125S240.5%20147%20231.2%2094S277.6%2056.6%20300%2027.6%22%20stroke%3D%22%23E36B37%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M29.55%20180C95.6%20176.9%20102.6%20116.55%20165.8%20124.5S240.25%20146.5%20231.4%2094.5S277.7%2056.2%20300%2029.2%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M31.2%20180C96.4%20176.6%20102.4%20117.2%20166.2%20124S240%20146%20231.6%2095S277.8%2055.8%20300%2030.8%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M32.85%20180C97.2%20176.3%20102.2%20117.85%20166.6%20123.5S239.75%20145.5%20231.8%2095.5S277.9%2055.4%20300%2032.4%22%20stroke%3D%22%23E36B37%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M34.5%20180C98%20176%20102%20118.5%20167%20123S239.5%20145%20232%2096S278%2055%20300%2034%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.7%22%20stroke-opacity%3D%220.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M36.15%20180C98.8%20175.7%20101.8%20119.15%20167.4%20122.5S239.25%20144.5%20232.2%2096.5S278.1%2054.6%20300%2035.6%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M37.8%20180C99.6%20175.4%20101.6%20119.8%20167.8%20122S239%20144%20232.4%2097S278.2%2054.2%20300%2037.2%22%20stroke%3D%22%23E36B37%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M39.45%20180C100.4%20175.1%20101.4%20120.45%20168.2%20121.5S238.75%20143.5%20232.6%2097.5S278.3%2053.8%20300%2038.8%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M41.1%20180C101.2%20174.8%20101.2%20121.1%20168.6%20121S238.5%20143%20232.8%2098S278.4%2053.4%20300%2040.4%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M42.75%20180C102%20174.5%20101%20121.75%20169%20120.5S238.25%20142.5%20233%2098.5S278.5%2053%20300%2042%22%20stroke%3D%22%23E36B37%22%20stroke-width%3D%22.7%22%20stroke-opacity%3D%220.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M44.4%20180C102.8%20174.2%20100.8%20122.4%20169.4%20120S238%20142%20233.2%2099S278.6%2052.6%20300%2043.6%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M46.05%20180C103.6%20173.9%20100.6%20123.05%20169.8%20119.5S237.75%20141.5%20233.4%2099.5S278.7%2052.2%20300%2045.2%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M47.7%20180C104.4%20173.6%20100.4%20123.7%20170.2%20119S237.5%20141%20233.6%20100S278.8%2051.8%20300%2046.8%22%20stroke%3D%22%23E36B37%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M49.35%20180C105.2%20173.3%20100.2%20124.35%20170.6%20118.5S237.25%20140.5%20233.8%20100.5S278.9%2051.4%20300%2048.4%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M51%20180C106%20173%20100%20125%20171%20118S237%20140%20234%20101S279%2051%20300%2050%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.7%22%20stroke-opacity%3D%220.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M52.65%20180C106.8%20172.7%2099.8%20125.65%20171.4%20117.5S236.75%20139.5%20234.2%20101.5S279.1%2050.6%20300%2051.6%22%20stroke%3D%22%23E36B37%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M54.3%20180C107.6%20172.4%2099.6%20126.3%20171.8%20117S236.5%20139%20234.4%20102S279.2%2050.2%20300%2053.2%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M55.95%20180C108.4%20172.1%2099.4%20126.95%20172.2%20116.5S236.25%20138.5%20234.6%20102.5S279.3%2049.8%20300%2054.8%22%20stroke%3D%22%23F1EFE8%22%20stroke-width%3D%22.45%22%20stroke-opacity%3D%220.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E") right bottom / 100% 72% no-repeat;
   inset: 0;
@@ -10368,6 +10405,8 @@ body:has(.os-splash) .os-header .os-account-control { visibility: hidden; }
 }
 @media (forced-colors: active) {
   .circle-os:has(.os-routine-open) > .os-routine-threads { display: none; }
+  .circle-os .os-routine-open .os-habit-session { background: Canvas; border-color: CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .circle-os .os-routine-open .os-app-window { background: transparent; }
   .circle-os .os-routine-open [aria-pressed="true"] { outline: 2px solid Highlight; }
 }
 

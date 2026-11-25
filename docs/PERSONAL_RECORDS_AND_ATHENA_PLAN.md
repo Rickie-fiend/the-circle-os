@@ -37,8 +37,9 @@ Earlier proposals and implementation-stage reports are
 The local writing engine, compatibility adapter, account-bound provider,
 Note/Deep Thoughts UI and bounded App histories are implemented.
 Writing cloud migrations/transport/resolution have bounded local/hosted evidence;
-automatic activation is off. Other-domain sync, personal import, operational
-recovery and requested live Athena remain incomplete.
+automatic activation is off. Published Chapter and Log sync have bounded pilots
+for new account records. Live activation, wider domain sync, personal import,
+operational recovery and requested live Athena remain incomplete.
 
 Each account has one profile. A task linked from Week and Routine is one source,
 not two actions. Different domains retain meaningful shapes rather than becoming
@@ -108,6 +109,16 @@ different rule and does not replace local Circle days.
 | Declarations | Deliberate Save declaration creates a dated version; distinct wanted-life meanings |
 | Chapter answers | Read-only saved question/answer snapshots or exact original version; no replayed outcomes |
 | Received reading | Read-only immutable authored edition; no borrowing today's prose for missing parts |
+
+In the Chapter pilot, the first accepted run stays active until the reader
+chooses a copy. The device copy can replace progress while both copies are
+unfinished. A synced finish stays read-only. In Log, the first accepted entry
+occupies its hour. The device's words can become a correction only when both
+entries are active and their day and time range match. The correction keeps
+the accepted entry's ID, day, range and first-recorded time. A synced clear
+remains cleared. Both pilots keep the reviewed copies on the device. A choice
+can wait offline, and a newer server revision requires another review.
+[Approved decisions](DECISION_LOG.md#2026-11-2324--chapter-and-log-sync-pilots).
 
 The shared combined day view and past Habit corrections remain deferred.
 Missing original dates, wording, chapter definitions and links stay visibly

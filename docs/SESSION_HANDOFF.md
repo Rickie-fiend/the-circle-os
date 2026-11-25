@@ -1,57 +1,55 @@
 # Session handoff
 
-## Published Chapter progress and finish — 2026-11-23, Asia/Bangkok
+## Chapter and Log sync pilots — 2026-11-25, Asia/Bangkok
 
-The developer approved fixing published Chapter restart and result-page exit.
-The reader now saves a new exact-edition run from the first action, and routes
-back to Explore after the protected finish swipe saves. Explore resumes an
-unfinished edition, while Admin previews stay temporary. Catalog starts count
-toward the existing Chapter limits. The developer's earlier live check covered
-legacy Chapters.
+**Approval and Git.** The developer approved the bounded pilots, the
+disposable hosted Chapter rehearsal, local conflict reviews and the Chapter
+account-deletion rehearsal. The working tree is on `main` at `3115ad0`.
+The pilot code, migrations and tests are uncommitted. The developer approved
+this documentation update separately. The existing `.codex-attachments/`
+and `supabase/.temp/` directories remain untracked.
 
-The production Next.js webpack build and three production-CSS Chromium cases
-at 390px passed. The new case verified an empty-account start, save failure and
-retry, edition resume, finish, and Home color after reload. No new build was
-deployed. [Journey evidence](USER_JOURNEY_TESTING.md#published-chapter-first-start-and-finish--2026-11-23).
-[Current task](CURRENT_TASK.md) gives the next deployed check.
+**Completed and verified.** Published Chapters keep the exact edition, answers
+and page position across test devices. A finish stays closed and carries its
+original Home color. Basic sync passed on disposable local and hosted Supabase
+through production Next.js routes. The hosted trial exercised simultaneous
+writes, one finish after retry and cross-account denial. The Free project was
+removed and checked absent. Later local browser checks verified the Chapter
+conflict choices and saved copies. The local Auth deletion rehearsal verified
+server cleanup, denied stale uploads, and kept the old copies out of a new
+account using the same email.
+[Chapter evidence](USER_JOURNEY_TESTING.md#chapter-sync-and-conflict-choices--2026-11-23) ·
+[Deletion evidence](USER_JOURNEY_TESTING.md#chapter-sync-account-deletion--2026-11-23).
 
-## Home Imprint review complete — 2026-11-23, Asia/Bangkok
+Log sync and its conflict choices passed with two 390px Chromium profiles
+and disposable local Supabase. The checks covered offline reload, exact
+retry, same-hour conflicts, original timing, a newer clear during review
+and mismatched ranges. The production build, focused lint and 14 focused
+tests passed. The compiled-CSS Log correction and six-tool matrix passed on
+an isolated rerun. Focused floors measured 648px, anchors 24px, and the new
+choice controls measured at least 44px. Existing ResizeObserver notices
+remained. The disposable stacks and builds were removed.
+[Log evidence](USER_JOURNEY_TESTING.md#log-sync-and-conflict-choices--2026-11-24).
 
-**Approval and Git.** The developer reviewed the Home Imprint changes and
-confirmed they look good, then approved this documentation update. The product
-baseline is `main` at `602ef9d`, which matches the local `fork/main` reference.
-`.codex-attachments/` and `supabase/.temp/` were already untracked. No new
-commit, deployment or hosted change was part of this update.
+**Hosted Log rehearsal.** The developer approved a disposable Free project in
+CircleOS. The localhost production route returned 404 when the exact project
+URL was missing or mismatched. Two 390px Chromium profiles passed the existing
+Log journey with hosted Auth and PostgREST, including both choices, offline
+reload, dropped replies, timing, clears, and second-account isolation. Final
+inventory was three records including one clear, seven receipts, and zero
+records for the second account. The production webpack build, focused lint and
+14 focused tests passed. The project and isolated build were removed. The
+Supabase project list confirmed removal. No commit or deployment.
+[Hosted Log evidence](USER_JOURNEY_TESTING.md#hosted-log-sync-rehearsal--2026-11-25).
 
-**Completed.** Signed-in Home uses the 3× strand artwork and colors six
-areas from saved Note, Deep Thoughts, Routine, Log/Week, Protocol and Chapter
-activity. A qualifying save can wait for Home to open before it pulses.
-Reload shows the settled color. The review uses the current artwork and local
-account records. Generating a personal form from replacement onboarding answers
-is future work. The [Home brief](PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23) describes the current behavior.
-
-**Verified.** The six-file Node selection passed all 22 Imprint tests on
-`602ef9d`. Earlier Chromium runs covered the local save, pulse and reload paths.
-An isolated production Next.js build with hosted Auth and catalog data also
-passed the 390px Chapter resume and finish check, including the original
-answer and a persistent Home contribution. The hosted runner passed 17 checks
-and confirmed exact synthetic cleanup. Catalog migration 004 and hosted template
-acceptance were already completed on November 14.
-[Journey evidence](USER_JOURNEY_TESTING.md#home-imprint-strand-renderer--2026-11-23).
-
-**Limits and invariants.** The latest Home visual result is developer-reported.
-The test record still lacks the deployed Chapter check and physical-phone
-coverage. The archived Day One test failures that expect Week to stay locked
-were outside this update. This was a documentation pass with no new runtime
-measurements. The Chapter evidence covers device saves and exact published
-versions. Chapter cloud sync and server-side Athena retrieval are still planned.
-Automatic writing sync remains off. Hosted backups stay deferred until the
-Supabase upgrade, with a 24-hour maximum loss window for synced beta edits
-and the existing 30-day limit for backups containing deleted data.
+**Open checks.** Hosted Chapter evidence covers basic sync. The later Chapter
+review and deletion have local evidence. The developer
+reported checking published Chapters and reported Protocol working. Exact
+device and build details were not supplied. The physical-phone and beta
+checks remain pending. Automatic writing sync remains off. Hosted backup
+and restore work remains deferred until the Supabase upgrade.
+[Release gates](ROADMAP.md#release-gates) ·
 [Backup runbook](BACKUP_RESTORE_RUNBOOK.md#deferred-until-the-supabase-upgrade).
 
-**Durable records and next action.** The work plan and roadmap now reflect
-the completed checks, and the earlier Chapter review has been
-[archived](archive/2026-11-22-chapter-imprint/SESSION_HANDOFF.md). The next
-proposed slice is the Chapter resume and finish check on the deployed app.
-[Current task](CURRENT_TASK.md) gives the proposed steps and open checks.
+**Next review.** Agree which physical phones and browser journeys to check.
+[Current task](CURRENT_TASK.md) · [Approved decisions](DECISION_LOG.md#2026-11-2324--chapter-and-log-sync-pilots).

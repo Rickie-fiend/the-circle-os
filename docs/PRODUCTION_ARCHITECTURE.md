@@ -175,6 +175,7 @@ Dated implementation history remains [archived](archive/2026-11-11-doc-cleanup/P
 | Main local state | IndexedDB plus localStorage copy, migrations and legacy outbox. Account-separated keys in account mode; circle-os-state-v2 in legacy mode. |
 | Account writing | Separate owner-scoped IndexedDB ledger and local queue/cloud state; not copied into CircleState or the legacy server payload. |
 | Writing cloud | Private SQL tables and authenticated RPC transport, conflict resolver/status UI; both migrations applied with bounded hosted checks. Automatic product sync flag remains off. |
+| Chapter and Log sync pilots | Separate owner-scoped IndexedDB ledgers keep each save with its pending upload. Private Supabase tables use server revisions and exact retry receipts. Accepted records feed the existing CircleState views. Both pilots require explicit test configuration. |
 | Legacy server | local-ai/server.mjs and circle-os-ai.ts use external profile/day files, recovery/device attachment and prepared content. Account mode rejects that transport. |
 | Prepared Athena | Existing authored editions, memory/source models, chapters and deterministic local observations. No live provider integration is certified. |
 | Public quote catalog | Supabase catalog with Admin-managed add/remove and local offline cache; separate from private personal evidence. |
@@ -236,6 +237,18 @@ See [offline recovery](USER_JOURNEY_TESTING.md#real-app-offline-writing-recovery
 
 ### Tool and domain behavior
 
+Published Chapter sync uses `app/os/catalog/chapter-sync/route.ts` and
+`app/os/chapters/chapter-sync-store.ts`. Log uses
+`app/os/log-sync/route.ts` and `app/os/log-sync-store.ts`.
+The Chapter and Log migrations were rehearsed in disposable stacks. Chapter
+basic sync also passed in a disposable hosted project that was removed.
+Chapter and Log conflict choices have local evidence. Pilot flags are
+`NEXT_PUBLIC_CIRCLE_CHAPTER_SYNC` and `NEXT_PUBLIC_CIRCLE_LOG_SYNC`.
+The app must run on localhost. Chapter's hosted test mode also requires one
+explicit test origin on the server. Live sync activation remains pending.
+[Chapter evidence](USER_JOURNEY_TESTING.md#chapter-sync-and-conflict-choices--2026-11-23) ·
+[Log evidence](USER_JOURNEY_TESTING.md#log-sync-and-conflict-choices--2026-11-24).
+
 - Goal steps are the same tasks Routine shows. Week groups open goals and filters
   steps by selected day; it does not duplicate task ownership. Goal/task archive
   and completion feed saved History. Day's Record derives from existing Log.
@@ -285,8 +298,8 @@ record exact retry receipts. Signed-in reads separate discovery from exact old
 versions. Withdrawal preserves content/assets. Targeted image signing uses the
 caller token and Storage policies. Catalog migrations 003 and 004 are applied
 and have bounded hosted evidence. Direct Chapter readers resume existing local
-runs of the exact edition. Opening a Chapter without an existing run starts a
-preview with temporary answers. Reflect's History projection resolves saved runs
+runs of the exact edition. For a signed-in reader, Begin saves a new run.
+Admin previews keep temporary answers. Reflect's History projection resolves saved runs
 against their original editions. Those editions stay readable after a newer
 version is published.
 [Hosted Chapter verification](USER_JOURNEY_TESTING.md#hosted-catalog-chapter-resume-and-finish--2026-11-23).

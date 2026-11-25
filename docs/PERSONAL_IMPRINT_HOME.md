@@ -37,6 +37,33 @@ Home only pulses for sources that still count. Reduced motion, reloading or
 starting a new app session shows saved color at rest. The saved contribution
 time sets its age.
 
+## Deferred proposal: swipe-through Imprint tutorial — 2026-11-25
+
+Review and finish the shared glass panel changes first. Then plan the Home
+implementation using the shared App Box and Page components. The Imprint and
+tutorial use the same glass frame, which stays in place as the content moves.
+[Shared Page standard](../app/os/APP_SESSION_STANDARD.md#interaction).
+
+- Home opens on the person's Imprint. Orange shows their saved activity.
+- Swiping left on the Imprint opens the tutorial. Each Page starts with one
+  illustration of the person's Imprint, with the relevant strands highlighted
+  in Bone and the area name beneath it.
+- Swiping up advances one Page. Proposed order: Chapters, Note, Deep Thoughts,
+  Habits & Tasks, Log & Week, and Protocol.
+- Swiping up from Protocol or swiping right from any tutorial Page returns to
+  the Imprint.
+
+The tutorial is read-only. The proposed starting Page on each visit is
+Chapters. The illustrations also work on day one, before the Imprint has any
+Orange. Use equivalent keyboard and assistive controls for opening, advancing,
+and returning. Review whether the first left swipe needs a small visual cue
+after the glass panel changes.
+
+Verify at 360px and 390px that a swipe advances one Page, a diagonal drag picks
+one direction, and both return paths work. Check that the frame stays steady,
+the keyboard and assistive paths work, and returning to the Imprint does not
+replay a pulse that already ran. This is a saved proposal for later review.
+
 ## Local Chapter finishes — 2026-11-22
 
 The Starting/Chapters patch reads new finishes from saved runs in the signed-in
@@ -1562,7 +1589,10 @@ part of the Home design.
 
 ## Navigation and feeling
 
-Confirmed target: tapping **Habits, Tasks, or Log opens that tool's main page**.
+The [deferred swipe-through tutorial](#deferred-proposal-swipe-through-imprint-tutorial--2026-11-25)
+supersedes the earlier direct-tool navigation idea for the Imprint.
+
+Earlier direction: tapping **Habits, Tasks, or Log opens that tool's main page**.
 It does not open a personal-thread detail panel below the imprint. A separate
 Protocol area would follow the same direct-entry principle if chosen.
 

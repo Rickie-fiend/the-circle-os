@@ -324,6 +324,14 @@ for(const [width,height] of [[360,740],[390,844],[416,844]]) test(`full-page Log
 },{height}));
 
 for(const width of [360,390]) test(`Log quiet hour controls at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
+  const visibleHour = await page.evaluate(() => {
+    const date = new Date();
+    date.setHours(14, 0, 0, 0);
+    return date.toISOString();
+  });
+  await page.clock.setFixedTime(new Date(visibleHour));
+  await page.reload();
+  await ready(page);
   await page.getByRole("button",{name:"Log",exact:true}).click();
   const box=page.locator(".os-log-session");await expect(box.locator('.os-empty-hour').filter({hasText:"Add activity"})).toHaveCount(1);await box.locator(".is-current-hour .os-empty-hour").click();
   await expect(box.locator('[aria-current="time"]')).toHaveCSS("font-weight","700");
@@ -530,6 +538,11 @@ for (const width of [360,390,416]) test(`bottom navigation routes and stays visi
       return ['borderTopColor','borderTopLeftRadius','boxShadow','backdropFilter'].map(key=>[key,frame[key],bar[key]]);
     });
     for(const [key,a,b] of appearance)assert.equal(a,b,`shared glass ${key}`);
+    await expect(frame).toHaveCSS("border-top-color", "rgba(241, 239, 232, 0.16)");
+    const [frameRim, navRim] = await Promise.all([frame, nav].map(surface =>
+      surface.evaluate(el => getComputedStyle(el, "::after").backgroundImage)));
+    assert.match(frameRim, /rgba\(241, 239, 232, 0\.28\)/);
+    assert.equal(navRim, frameRim);
     console.log('Paired glass',width,selector,JSON.stringify({frame:await frame.boundingBox(),nav:await nav.boundingBox()}));
   }
   await paired('.os-routine-open .os-habit-session');
@@ -667,6 +680,7 @@ for(const width of [360,390,416])test(`tool consistency across six apps and supp
     });
     assert.equal(metrics.gap,24,name+' content anchor');assert.equal(metrics.growth,'600');assert.equal(metrics.overflow,false);
     assert.ok(metrics.height>=647.5,name+' shared minimum');
+    assert.equal(await box.evaluate(el => getComputedStyle(el.closest('.os-swipe-session')).backdropFilter), 'blur(12px) saturate(1.2)', name+' glass blur');
     for(const header of metrics.headers){assert.equal(header.size,'16px');assert.equal(header.weight,'700');assert.equal(header.line,'22.4px');assert.ok(header.width>=44&&header.height>=44);assert.equal(header.shared,true,name+' shared header engine');assert.ok(Math.abs(header.left-24)<1||Math.abs(header.right-24)<1,name+' visible edge '+JSON.stringify(header));}
     if(width===390){
       const buttons=box.locator('.os-page-header button:has(.os-routine-nav-text)');
@@ -803,7 +817,7 @@ for(const width of [360,390,1280])test(`Routine fixed threads stay sharp outside
   assert.ok(edgeRatio<0.95,"glass suppresses fine thread edges inside its frame");
   assert.ok((await imageEdges(outsideBefore)).data.equals((await imageEdges(outsideAfter)).data),"outside thread pixels stay unchanged when glass filtering changes");
   await box.evaluate(el=>{el.style.removeProperty("backdrop-filter");el.style.removeProperty("-webkit-backdrop-filter");});
-  await expect(box).toHaveCSS("backdrop-filter","blur(24px) saturate(1.2)");
+  await expect(box).toHaveCSS("backdrop-filter","blur(12px) saturate(1.2)");
   await page.waitForTimeout(150);
   const shown=await sharp(await page.screenshot()).raw().toBuffer({resolveWithObject:true});
   await threads.evaluate(el=>el.style.visibility="hidden");
@@ -863,7 +877,7 @@ for (const width of [360,390]) test(`Record matches Habits and clear glyph spaci
   assert.equal(geometry.length,2,"measure both Habit and Task row/button alignment");
   for(const g of geometry){assert.ok(Math.abs(g.cross-g.head)<0.5);assert.ok(Math.abs(g.copy-g.head-20)<0.5);assert.ok(Math.abs(g.left-24)<0.5&&Math.abs(g.right-24)<0.5,'creation buttons have equal 24px inside-border gutters');assert.equal(g.height,52);assert.equal(g.width,width-98);}
   const glass=await box.evaluate(el=>{const thread=getComputedStyle(document.querySelector(".os-routine-threads")),window=el.querySelector(".os-app-window"),surface=getComputedStyle(el);return {thread:thread.backgroundImage,z:thread.zIndex,surfaceZ:surface.zIndex,filter:surface.backdropFilter,diffusion:thread.filter,pointer:thread.pointerEvents,old:getComputedStyle(window,"::after").content};});
-  assert.ok(glass.thread.includes("data:image/svg+xml"));assert.equal(glass.z,"0");assert.equal(glass.surfaceZ,"1");assert.equal(glass.pointer,"none");assert.equal(glass.old,"none");assert.match(glass.filter,/blur\(24px\).*saturate\(1.2\)/);
+  assert.ok(glass.thread.includes("data:image/svg+xml"));assert.equal(glass.z,"0");assert.equal(glass.surfaceZ,"1");assert.equal(glass.pointer,"none");assert.equal(glass.old,"none");assert.match(glass.filter,/blur\(12px\).*saturate\(1.2\)/);
   assert.equal(glass.diffusion,"none");
   await box.screenshot({path:`outputs/routine-cross-glass-${width}.png`});
   await auditAppType(page);
@@ -1169,7 +1183,7 @@ for (const reducedMotion of ["no-preference", "reduce"]) {
     });
     assert.equal(material.border, "rgb(227, 107, 55)");
     assert.equal(material.filter, "blur(8px) saturate(1.2)");
-    assert.equal(material.frame, "blur(24px) saturate(1.2)");
+    assert.equal(material.frame, "blur(12px) saturate(1.2)");
     assert.match(await tick.locator('.os-checkbox-face').evaluate(el=>getComputedStyle(el).boxShadow), /rgba\(227, 107, 55, 0\.12\) 0px 3px 9px/);
     const rect = await create.boundingBox();
     await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
@@ -3552,21 +3566,23 @@ for(const width of [360,390])test(`Note header alignment, borderless focus and m
 }));
 
 for(const [width,height] of [[360,740],[390,844],[416,844]])test(`Note adopts Routine glass without changing its writing frame at ${width}x${height}`,{timeout:90_000},async()=>isolated(width,async page=>{
+  await page.getByRole("button",{name:"Note",exact:true}).click();
   const box=notePage(page),frame=page.locator(".os-checkin-session"),action=box.getByRole("button",{name:"New Note",exact:true});
   await expect(frame).toHaveCSS("border-radius","36px");
-  await expect(frame).toHaveCSS("backdrop-filter","blur(24px) saturate(1.2)");
+  await expect(frame).toHaveCSS("backdrop-filter","blur(12px) saturate(1.2)");
   await expect(box).toHaveCSS("background-color","rgba(0, 0, 0, 0)");
   await expect(box.getByRole("textbox",{name:"Write a note",exact:true})).toHaveCSS("color","rgb(241, 239, 232)");
   await expect(action).toHaveCSS("border-radius","12px");await expect(action).toHaveCSS("font-size","18px");
   const metrics=await box.evaluate(el=>{
     const frame=el.closest(".os-swipe-session"),r=frame.getBoundingClientRect(),button=el.querySelector(".os-creative-button"),b=button.getBoundingClientRect();
-    const headers=[...el.querySelectorAll("[data-os-note-header-text]")].map(header=>{
+    const headers=[...el.querySelectorAll(".os-page-header button")].map(header=>{
       const text=header.querySelector(".os-routine-nav-text"),range=document.createRange();range.selectNodeContents(text);
       const t=range.getBoundingClientRect(),s=getComputedStyle(header);return{left:t.left-r.left-1,right:r.right-1-t.right,size:s.fontSize,weight:s.fontWeight};
     });
     return{height:r.height,buttonHeight:b.height,left:b.left-r.left-1,right:r.right-1-b.right,headers,overflow:el.scrollWidth>el.clientWidth+1};
   });
-  assert.equal(metrics.height,346);assert.equal(metrics.buttonHeight,52);assert.equal(metrics.overflow,false);
+  assert.equal(metrics.height,height-196);assert.equal(metrics.buttonHeight,52);assert.equal(metrics.overflow,false);
+  assert.equal(metrics.headers.length,2);
   for(const value of [metrics.left,metrics.right,metrics.headers[0].left,metrics.headers[1].right])assert.ok(Math.abs(value-24)<0.5,JSON.stringify(metrics));
   assert.ok(metrics.headers.every(h=>h.size==="16px"&&h.weight==="700"));
   const finish=await frame.evaluate(el=>{const s=getComputedStyle(el);return{s:s.boxShadow,b:s.borderColor,bg:s.backgroundColor};});
@@ -3580,6 +3596,7 @@ for(const [width,height] of [[360,740],[390,844],[416,844]])test(`Note adopts Ro
   await expect(box.locator("time")).toHaveCSS("font-size","12px");
   await expect(box.getByRole("button",{name:"Note",exact:true})).toHaveCSS("font-size","16px");
   await frame.screenshot({path:`outputs/note-glass-history-${width}.png`});
+  await page.getByRole("navigation",{name:"Circle OS",exact:true}).getByRole("link",{name:"Today",exact:true}).click();
   await openRoutineTool(page);
   const routine=page.locator(".os-habit-session");
   assert.deepEqual(await routine.evaluate(el=>{const s=getComputedStyle(el);return{s:s.boxShadow,b:s.borderColor,bg:s.backgroundColor};}),finish,"Note and Routine consume the same panel finish");
@@ -3601,6 +3618,7 @@ test("Note shares immediate header light and accessible glass fallbacks",{timeou
   await cdp.send("Emulation.setEmulatedMedia",{features:[{name:"prefers-reduced-transparency",value:"reduce"},{name:"prefers-reduced-motion",value:"reduce"}]});
   assert.equal(await page.evaluate(()=>matchMedia("(prefers-reduced-transparency: reduce)").matches),true);
   await expect(frame).toHaveCSS("backdrop-filter","none");await expect(page.locator(".os-routine-threads")).toBeHidden();
+  assert.equal(await frame.evaluate(el => getComputedStyle(el, "::after").display), "none");
   await back.click();await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toBeVisible();
   const fresh=box.getByRole("button",{name:"New Note",exact:true});await expect(fresh).toHaveCSS("backdrop-filter","none");
   await fresh.dispatchEvent("pointerdown");await expect(fresh).toHaveCSS("transform","none");

@@ -1,5 +1,22 @@
 # Circle OS decision log
 
+## 2026-11-23–24 — Chapter and Log sync pilots
+
+The developer approved sync pilots for new published Chapter runs and Log
+entries in signed-in test accounts. The first accepted copy stays active.
+Chapter review offers the device copy while both runs are unfinished and reads
+both copies if the synced run is finished. Log reserves one active entry per
+hour. The reader can use the device's words as a correction when both entries
+are active and their day and time range match. This keeps the accepted entry's
+identity and timing. A synced clear stays cleared. Both reviews preserve the
+reviewed copies on that device. A newer revision asks for another review.
+Using both copies in review protects words saved independently offline.
+[Record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md#histories-and-correction-boundaries).
+
+The approved hosted Chapter rehearsal used a disposable Free test project,
+which was removed after verification. Log verification used disposable local
+Supabase. Existing-history upload and live activation require separate review.
+
 ## 2026-11-23 — Home Imprint review complete
 
 The developer reviewed the signed-in Home Imprint changes and confirmed they

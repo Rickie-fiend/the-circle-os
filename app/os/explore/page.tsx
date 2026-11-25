@@ -4,6 +4,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { ContentRequest, PublishedImages } from "../admin/content-media";
 import { getAccountScope, getServerAccountScope, subscribeAccountScope } from "../account-scope.js";
 import { useCatalogRequest } from "../catalog/request";
+import { isChapterSyncPilot } from "../chapters/chapter-sync-pilot";
+import { chapterReviewHref } from "../chapters/chapter-sync-review";
+import { readChapterSync, watchChapterSync } from "../chapters/chapter-sync-store";
+import type { ChapterRun } from "../chapters/chapter-types";
 import { ExploreCarousel, type ExploreItem } from "./carousel";
 import "./explore.css";
 
@@ -18,6 +22,19 @@ function ExploreCatalog() {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Opening Explore…");
+  const [chapterCopies, setChapterCopies] = useState<ChapterRun[]>([]);
+
+  useEffect(() => {
+    const scope = getAccountScope();
+    if (scope.kind !== "account" || !isChapterSyncPilot(window.location.hostname)) return;
+    let active = true;
+    const refresh = () => void readChapterSync(scope).then(ledger => {
+      if (active) setChapterCopies(Object.values(ledger).filter(entry => entry.competing || entry.reviewed?.length).map(entry => entry.run));
+    }).catch(() => {});
+    refresh();
+    const unsubscribe = watchChapterSync(scope, refresh);
+    return () => { active = false; unsubscribe(); };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -37,6 +54,14 @@ function ExploreCatalog() {
     <main className="os-explore" aria-label="Explore" aria-busy={status === "loading"}>
       {message ? <div className="os-explore-status" role={status === "error" ? "alert" : "status"}>{message}{status === "error" ? <button type="button" onClick={() => { setStatus("loading"); setMessage("Opening Explore…"); setAttempt(value => value + 1); }}>Try again</button> : null}</div> : null}
       <ExploreCarousel title="Chapters" items={items.filter(item => item.kind === "chapter")} />
+      {chapterCopies.length > 0 && <ul className="os-explore-status" aria-label="Saved Chapter copies">
+        {chapterCopies.map(run => {
+          const item = items.find(item => item.id === run.chapterId && item.version === run.chapterVersion);
+          return <li key={run.runId}><a className="os-chapter-review-link" href={chapterReviewHref(run.chapterId, run.chapterVersion)}>
+            Review answers{item?.title ? ` · ${item.title}` : ""}
+          </a></li>;
+        })}
+      </ul>}
       <ExploreCarousel title="Habit/Protocol" items={items.filter(item => item.kind === "routine-template" || item.kind === "protocol-template")} />
       <ExploreCarousel title="Articles" items={items.filter(item => item.kind === "article")} />
     </main>

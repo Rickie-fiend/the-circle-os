@@ -5,6 +5,10 @@ import {
   normalizeState,
 } from "./circle-os-model.js";
 import { accountStorageKey, assertAccountScope, scopedTransaction, type AccountScope } from "./account-scope";
+import { isChapterSyncPilot } from "./chapters/chapter-sync-pilot";
+import { readChapterSync } from "./chapters/chapter-sync-store";
+import { isLogSyncPilot } from "./log-sync-pilot";
+import { projectLogSync, readLogSync } from "./log-sync-store";
 
 const DATABASE_NAME = "circle-os";
 const STORE_NAME = "state";
@@ -65,7 +69,18 @@ export async function loadCircleState(scope: AccountScope) {
       String(local.savedAt).localeCompare(String(indexed.savedAt)) > 0)
       ? local
       : indexed;
-  return normalizeState(newest?.state ?? createEmptyState());
+  const state = normalizeState(newest?.state ?? createEmptyState());
+  if (scope.kind === "account" && isChapterSyncPilot(window.location.hostname)) {
+    const ledger = await readChapterSync(scope);
+    assertAccountScope(scope);
+    for (const [id, entry] of Object.entries(ledger)) state.chapters.runs[id] = entry.run;
+  }
+  if (scope.kind === "account" && isLogSyncPilot(window.location.hostname)) {
+    const ledger = await readLogSync(scope);
+    assertAccountScope(scope);
+    return projectLogSync(state, ledger);
+  }
+  return state;
 }
 
 export function saveCircleState(scope: AccountScope, state: unknown, acceptLocalFallback = false) {

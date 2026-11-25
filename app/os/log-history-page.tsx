@@ -7,19 +7,61 @@ import { CreativeButton } from "./button-engine";
 import { RoutineHeaderButton } from "./routine-controls";
 import { sizeTextAreaToContent } from "./text-area-size";
 import type { TimeBlock } from "./circle-os-shell";
+import { canUseLogDeviceWords, type LogConflict, type LogCopyPair } from "./log-sync-store";
 import { logBlockSignature, logEntryWords, logHistoryWeekday, type logHistoryDays, type LogCorrection, type LogCorrectionRequest } from "./log-history.js";
 
 type Draft = { id: string; blockId: string; expected: string; title: string; moments: string; start: string; end: string };
 
-export function LogHistoryPage({ days, selectedDay, sourceDay, todayKey, onBack, onSelect, onSave, backLabel }: {
+function LogCopies({ pair }: { pair: LogCopyPair }) {
+  return ([
+    ["Synced entry", pair.saved], ["On this device", pair.device],
+  ] as const).map(([label, copy]) => {
+    const { title, moments } = logEntryWords(copy.block);
+    return <section aria-label={label} key={label}>
+      <h3>{label}</h3>
+      <p className="os-log-history-date">{copy.dateKey} · {copy.block.start}–{copy.block.end}</p>
+      {copy.cleared ? <p>Entry cleared.</p> : <>{title && <p>{title}</p>}
+        {moments.map((moment, index) => <p key={index}>{moment}</p>)}</>}
+    </section>;
+  });
+}
+
+function LogCopyReview({ pair, onChoose }: { pair: LogConflict; onChoose: (pair: LogConflict, useDevice: boolean) => Promise<void> }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  async function choose(useDevice: boolean) {
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try { await onChoose(pair, useDevice); }
+    catch (problem) { setError(problem instanceof Error ? problem.message : "Could not save your choice. Try again."); }
+    finally { setSaving(false); }
+  }
+  return <details className="os-log-sync-review">
+    <summary>Review Log copies · {pair.device.dateKey} · {pair.device.block.start}</summary>
+    {pair.waiting ? <p role="status">Choice saved on this device. Waiting to sync.</p>
+      : pair.reviewAgain && <p role="status">The synced entry changed. Review both copies again.</p>}
+    <LogCopies pair={pair} />
+    {!pair.waiting && <div className="os-log-sync-actions">
+      <button type="button" disabled={saving} onClick={() => void choose(false)}>Use synced entry</button>
+      {canUseLogDeviceWords(pair) && <button type="button" disabled={saving} onClick={() => void choose(true)}>Use this device’s words</button>}
+    </div>}
+    {error && <p role="alert">{error}</p>}
+  </details>;
+}
+
+export function LogHistoryPage({ days, selectedDay, sourceDay, todayKey, onBack, onSelect, onSave, backLabel, conflicts = [], savedCopies = [], onChooseCopy }: {
   days: ReturnType<typeof logHistoryDays>;
   selectedDay: string | null;
   sourceDay?: { title?: string; timeBlocks: TimeBlock[]; logCorrections?: Record<string, LogCorrection> };
   todayKey: string;
   onBack: (event: MouseEvent<HTMLButtonElement>) => void;
   onSelect: (dateKey: string, source: HTMLButtonElement) => void;
-  onSave: (request: LogCorrectionRequest) => void;
+  onSave: (request: LogCorrectionRequest) => Promise<void>;
   backLabel?: string;
+  conflicts?: LogConflict[];
+  savedCopies?: LogCopyPair[];
+  onChooseCopy?: (pair: LogConflict, useDevice: boolean) => Promise<void>;
 }) {
   const editor = useAppBack<"reading" | "editing">("reading");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -71,7 +113,10 @@ export function LogHistoryPage({ days, selectedDay, sourceDay, todayKey, onBack,
       setError("This entry has a newer change. Cancel and open it again."); return;
     }
     setPending(true);
-    onSave({ id: draft.id, blockId: draft.blockId, expected: draft.expected, dateKey: selectedDay, title, moments, at });
+    void onSave({ id: draft.id, blockId: draft.blockId, expected: draft.expected, dateKey: selectedDay, title, moments, at }).catch(problem => {
+      setPending(false);
+      setError(problem instanceof Error ? problem.message : "Could not save your correction. Try again.");
+    });
   }
 
   return (
@@ -108,12 +153,17 @@ export function LogHistoryPage({ days, selectedDay, sourceDay, todayKey, onBack,
         </div>
       ) : <p>This day has no saved Log.</p> : (
         <div className="os-log-history-list" aria-label="Recorded Log days">
+          {onChooseCopy && conflicts.map(pair => <LogCopyReview key={pair.id} pair={pair} onChoose={onChooseCopy} />)}
+          {savedCopies.length > 0 && <details className="os-log-sync-review">
+            <summary>Saved copies</summary>
+            {savedCopies.map(pair => <article key={pair.id}><LogCopies pair={pair} /></article>)}
+          </details>}
           {days.length ? days.map((record) => (
             <button key={record.dateKey} onClick={(event) => onSelect(record.dateKey, event.currentTarget)} type="button">
               <span>{record.title || logHistoryWeekday(record.dateKey)}</span>
               <span className="os-log-history-date">{record.dateKey}</span>
             </button>
-          )) : <p>No past days recorded yet.</p>}
+          )) : !conflicts.length && !savedCopies.length && <p>No past days recorded yet.</p>}
         </div>
       )}
     </PageLayout>

@@ -1,6 +1,6 @@
 # Circle OS roadmap
 
-Updated 2026-11-23, Asia/Bangkok. This owns delivery dependencies and release
+Updated 2026-11-25, Asia/Bangkok. This owns delivery dependencies and release
 gates. [Product](PRODUCT.md) owns behavior; [Work plan](WORK_PLAN.md) owns the
 ordered queue. No plan grants implementation or deployment approval.
 
@@ -35,10 +35,10 @@ Implementation, remote setup and publication need reviewed scopes.
 | Workstream | State and practical limit |
 | --- | --- |
 | Accounts/local isolation | Implemented. Hosted entry/reset/logout and offline return have recorded or developer-reported evidence. Isolated Chromium checks covered session renewal, rejected refresh and natural expiry. Mail delivery, lost-device recovery and wider-device coverage remain open. |
-| Content Admin foundation | Chapters/Articles/media/Catalog, Routine/Protocol editors, Explore and local adoption have bounded evidence. Migration 004 is applied and synthetic hosted template acceptance passed with exact cleanup. The catalog Chapter resume and finish check passed in a local production build with hosted data. The deployed journey, second invitation and operational/device gaps remain open. |
+| Content Admin foundation | Chapters/Articles/media/Catalog, Routine/Protocol editors, Explore and local adoption have bounded evidence. Migration 004 is applied and synthetic hosted template acceptance passed with exact cleanup. Chapter resume and finish passed in a local production build with hosted data. The developer reported checking published Chapters. Exact deployed build/device evidence, the second invitation and operational checks remain open. |
 | Existing tools and histories | Writing, Habit Record, prospective Protocol terms, Log correction/history, read-only Week/chapter/reading history delivered for bounded scopes. Six-tool local visual/interaction evidence is recorded; lived/device acceptance is separate. |
 | Writing cloud foundation | Both writing migrations are applied. Bounded two-account, conflict, reload and production-store recovery checks passed against hosted services. Automatic product sync remains off. |
-| General safe sync and operations | Other-domain sync, wider device recovery, personal migration, deletion and protected admin operations remain incomplete. Local synthetic backup and reconciliation passed in a rehearsal. Hosted backup and restore work is deferred until the Supabase upgrade. |
+| General safe sync and operations | Basic Chapter sync passed on disposable hosted Supabase. Chapter conflict choices and account deletion have local evidence. Log sync and conflict choices passed locally. Local synthetic backup and reconciliation also passed. Production activation, wider domains, personal import, device and operational checks remain open. Hosted backup and restore work is deferred until the Supabase upgrade. |
 | Onboarding/Home | The developer reviewed the implemented signed-in Personal Imprint. Replacement onboarding, personal form generation from its answers and transition rules remain planned. |
 | Membership/live Athena | Planned; no provider, live generation or server-enforced paid service is certified. |
 | Beta readiness/release | Not certified or authorized. Historical Phase 1 is not certified either. |

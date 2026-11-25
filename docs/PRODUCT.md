@@ -77,7 +77,7 @@ Provider quality and language readiness still require verification.
 | Daily tools | Full-page Note/Deep Thoughts, Routine/Protocol and Log/Week pairs, with supporting views | Preserve current functions while reviewing new root compositions. |
 | Accounts | Supabase email/password entry and account-separated local stores; legacy and development-test modes remain distinct | Public signup is the new onboarding target; current invitation-only configuration is not changed by documenting it. |
 | Writing sync | Both writing migrations applied. Bounded hosted checks cover access, conflicts and production-store recovery in an isolated build. | Automatic product activation remains off. Physical-device recovery and operational gates remain open. |
-| Other lifestyle sync | Local records; legacy mode can use the file-based profile server | General Supabase domain sync and personal migration remain planned. |
+| Other lifestyle sync | Published Chapters and Log have opt-in test pilots for new account records. Legacy mode can use the file-based profile server. | Live activation, wider domain sync and personal migration remain pending. |
 | Athena | Prepared readings, immutable editions/history and local calculations | Live requested generation, membership enforcement and new memory controls remain planned. |
 | Onboarding | Existing Day One versions/runs | Replace with the planned onboarding below. |
 | Hidden tools | Dreamline and The Four retained behind disabled flags | No activation or data removal is implied. |

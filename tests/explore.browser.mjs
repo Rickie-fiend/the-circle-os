@@ -81,7 +81,9 @@ for(const width of [360,390,416,1100])test(`Explore uses shared glass and native
   await expect(page.locator('.os-future-room-background')).toHaveCSS('background-color','rgb(25, 24, 19)');
   const articles=page.locator('.os-explore-row').last();await expect(articles.locator('.os-explore-panel')).toHaveCount(2);await expect(articles.locator('.os-explore-panel').last().locator('a,h3,p,figure')).toHaveCount(0);
   const row=page.getByRole('region',{name:'Chapters',exact:true}),panels=row.locator('.os-explore-panel');
-  await expect(page.getByAltText('Synthetic landscape')).toBeVisible();await expect(panels.first()).toHaveCSS('backdrop-filter','blur(24px) saturate(1.2)');
+  await expect(page.getByAltText('Synthetic landscape')).toBeVisible();await expect(panels.first()).toHaveCSS('backdrop-filter','blur(12px) saturate(1.2)');
+  await expect(panels.first()).toHaveCSS('border-top-color', 'rgba(241, 239, 232, 0.16)');
+  assert.match(await panels.first().evaluate(el => getComputedStyle(el, '::after').backgroundImage), /rgba\(241, 239, 232, 0\.28\)/);
   const initial=await row.evaluate(el=>{const r=el.getBoundingClientRect(),p=[...el.querySelectorAll('.os-explore-panel')].map(p=>p.getBoundingClientRect().toJSON());return {row:r.toJSON(),panels:p,scroll:el.scrollLeft};});
   assert.equal(initial.scroll,0);assert.ok(Math.abs(initial.panels[0].left-initial.row.left-24)<=1,JSON.stringify(initial));assert.ok(initial.panels[1].left<initial.row.right&&initial.panels[1].right>initial.row.right,'right neighbour peeks in');
   await expect(panels.first().locator('h3')).toHaveCSS('font-size','28px');await expect(panels.first().locator('p')).toHaveCSS('font-size','18px');

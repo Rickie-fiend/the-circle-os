@@ -1,19 +1,21 @@
 # Circle OS work plan
 
-Updated 2026-11-23, Asia/Bangkok. This is the working queue under
+Updated 2026-11-25, Asia/Bangkok. This is the working queue under
 [Roadmap](ROADMAP.md). A queued item is not approval to edit, provision, migrate,
 activate sync or deploy.
 
 ## Start here
 
-The developer reviewed the signed-in Home Imprint changes and confirmed they look
-good. Chapter resume, finish and persistent Home color passed in an isolated
-production build with hosted Auth and catalog data. The next queued check covers
-the same journey on the deployed app, with a physical phone if available.
-[Current Task](CURRENT_TASK.md) · [Chapter evidence](USER_JOURNEY_TESTING.md#hosted-catalog-chapter-resume-and-finish--2026-11-23)
+Basic Chapter sync passed on disposable hosted Supabase. Later Chapter review
+and deletion checks passed locally. Log sync and both conflict choices passed
+locally. The next proposed review is an isolated hosted Log rehearsal.
+[Current task](CURRENT_TASK.md) · [Chapter evidence](USER_JOURNEY_TESTING.md#chapter-sync-and-conflict-choices--2026-11-23) ·
+[Log evidence](USER_JOURNEY_TESTING.md#log-sync-and-conflict-choices--2026-11-24).
 
-General lived review of Protocol interactions remains a separate check. The
-replacement [onboarding](ONBOARDING_SPEC.md) and [Reflect redesign](REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md)
+The developer reviewed Home Imprint, reported checking published Chapters,
+and reported Protocol working. Device and build details for the latest
+Chapter and Protocol reports remain unrecorded. Replacement
+[onboarding](ONBOARDING_SPEC.md) and [Reflect redesign](REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md)
 remain future work.
 
 ## Backup work deferred — 2026-11-23
@@ -99,9 +101,9 @@ this bounded evidence. See [results and limits](USER_JOURNEY_TESTING.md#storage-
 | Order | Work | Current limit and next review |
 | --- | --- | --- |
 | 0 | Content Admin/catalog/media | Habit/Protocol authoring, Explore and local adoption are implemented. Migration 004 is applied. Synthetic hosted/browser acceptance passed with exact cleanup. Second invitation, operational and device gaps remain open. [Template evidence](USER_JOURNEY_TESTING.md#approved-hosted-template-acceptance--2026-11-14) |
-| 1 | Critical journey and current-tool acceptance | Next is deployed Chapter resume and finish. Home Imprint visual review is complete and the hosted catalog round trip passed in an isolated build. Broader phone/browser and ResizeObserver gaps remain. Reproduce reported defects on current code and separate fixture failures from app defects. [Current gaps](../bugs.md#current-gaps) |
+| 1 | Critical journey and current-tool acceptance | Home Imprint review is complete. The developer reported checking published Chapters and reported Protocol working. Build and device details remain open, alongside broader phone/browser coverage and ResizeObserver notices. [Current gaps](../bugs.md#current-gaps) |
 | 2 | Production writing recovery and activation readiness | Both migrations and bounded hosted checks passed, including production-store recovery and session cases at mobile Chromium widths. Real-device restart, offline load and eviction, true lock contention and operational safeguards remain open. Automatic sync stays off. [Writing evidence and gates](ACCOUNT_WRITING_SYNC.md#verification-and-activation-gates) |
-| 3 | Remaining record sync and operating recovery | Review per-domain ownership, revisions, atomic local/outbox writes, exact receipts, conflicts, deletion, backup/restore and admin/log access. Personal import needs its own owner mapping, backup and rollback approval. |
+| 3 | Remaining record sync and operating recovery | Chapter and Log pilots have bounded evidence. Hosted Log, hosted checks of the later Chapter changes, wider domains, device recovery and operating checks remain pending. Personal import needs its own owner mapping, backup and rollback approval. |
 | 4 | Replacement onboarding and needed Home behavior | Use the planned required-answer/one-habit flow, replacing the old optional-action plan. Resolve records, existing-user transition, uncertain answers, final completion and Home mapping. Keep records/history and safe-sync prerequisites. |
 | 5 | Membership/admin | Server-enforced fixed-day grants, renewal/expiry/revocation, audit and usage reservations. Set actual amounts, reset math, spending/alert/pause controls and operations. |
 | 6 | Requested Athena | Provider/model, relevant same-owner evidence, English response/Burmese-input quality, short Reflect readings, optional question, separate replies and sourced correction controls. |

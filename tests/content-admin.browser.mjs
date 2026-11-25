@@ -6,6 +6,9 @@ import { chromium, expect } from '@playwright/test';
 import { createChapterDraft } from '../app/os/admin/chapter-authoring.js';
 import imprintVariants from '../app/os/home/imprint-art-variants.json' with { type: 'json' };
 import { readFileSync } from 'node:fs';
+import { A, B } from './helpers/writing-cloud.mjs';
+import { chapterExchange, chapterSyncDatabase } from './helpers/chapter-sync.mjs';
+const chapterPilot = process.env.CIRCLE_TEST_CHAPTER_SYNC === '1';
 const useProductionCSS=process.env.CIRCLE_PRODUCTION_CSS==='1';
 const productionStylePaths=useProductionCSS?[...new Set([...readFileSync('.next/server/app/os.html','utf8').matchAll(/href="(\/_next\/static\/[^"?]+\.css)(?:\?[^" ]*)?"/g)].map(match=>match[1]))]:[];
 if(useProductionCSS)assert.ok(productionStylePaths.length,'build Next before production-CSS checks');
@@ -335,6 +338,262 @@ test('published Chapter starts from empty, resumes its submitted answer and fini
  }
 });
 
+test('Chapter sync pilot resumes across profiles and retains an offline conflict after a lost finish reply', { timeout: 120000, skip: !chapterPilot }, async () => {
+ const chapter = createChapterDraft().chapter;
+ chapter.id = 'sync-chapter';
+ chapter.pages[0].title = 'Original cover';
+ chapter.pages[1] = { type: 'short-text', id: 'question', question: 'What did you notice?', answerKey: 'noticed', required: true };
+ const newer = { ...chapter, version: 2, pages: [{ ...chapter.pages[0], title: 'Newer cover' }, ...chapter.pages.slice(1)] };
+ const db = await chapterSyncDatabase([chapter, newer]);
+ const contexts = [];
+ let finishAttempt;
+ let finishRetries = 0;
+ const reader = version => base + '/fixture?reader=1&id=sync-chapter&version=' + version + '&resume=1';
+ async function profile(account) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 900 } });
+  contexts.push(context);
+  await context.addInitScript(id => { window.fixtureAccount = id; }, account);
+  await context.route('**/*', async route => {
+   const request = route.request();
+   const url = new URL(request.url());
+   if (url.origin !== base) return route.abort();
+   if (url.pathname === '/os/explore') return route.fulfill({ contentType: 'text/html', body: '<main>Explore destination</main>' });
+   const art = imprintVariants.flatMap(({ bone, coordinates }) => [bone, coordinates]).find(asset => '/' + asset.path === url.pathname);
+   if (art) return route.fulfill({ path: 'docs/design/' + art.file, contentType: art.type });
+   if (url.pathname === '/os/catalog') {
+    const edition = url.searchParams.get('version') === '2' ? newer : chapter;
+    return route.fulfill({ json: { version: edition.version, content: { kind: 'chapter', chapter: edition } } });
+   }
+   if (url.pathname !== '/os/catalog/chapter-sync') return route.continue();
+   assert.equal(request.headers().authorization, 'Bearer ' + account);
+   const { owner, operation } = request.postDataJSON();
+   const result = await chapterExchange(db, account, owner, operation);
+   if (operation?.run.status === 'completed' && account === A) {
+    finishRetries++;
+    if (!finishAttempt) {
+     finishAttempt = operation;
+     return route.abort();
+    }
+    assert.deepEqual(operation, finishAttempt);
+   }
+   return route.fulfill({ json: result });
+  });
+  return context;
+ }
+ try {
+  const one = await profile(A);
+  let first = await one.newPage();
+  await first.goto(reader(1));
+  await first.getByRole('button', { name: 'Swipe to begin' }).click();
+  await expect.poll(async () => (await chapterExchange(db, A))[0]?.revision).toBe(1);
+
+  const two = await profile(A);
+  const second = await two.newPage();
+  await second.goto(reader(2));
+  const answer = page => page.getByRole('textbox', { name: 'What did you notice?' });
+  await expect(answer(second)).toHaveValue('');
+  await two.setOffline(true);
+  await answer(second).fill('Competing answer');
+  await second.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(second.getByText('Swipe when ready')).toBeVisible();
+
+  await one.setOffline(true);
+  await answer(first).fill('Original answer');
+  await first.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(first.getByText('Swipe when ready')).toBeVisible();
+  await first.close();
+  await one.setOffline(false);
+  first = await one.newPage();
+  await first.goto(reader(2));
+  await expect(first.getByText('Swipe when ready')).toBeVisible();
+  await expect.poll(async () => (await chapterExchange(db, A))[0]?.run.answers[0]?.value).toBe('Original answer');
+  await first.evaluate(() => {
+   document.addEventListener('click', event => {
+    if (event.target.closest('a[href="/os/explore"]')) {
+     event.preventDefault();
+     window.finishedToExplore = true;
+    }
+   }, { capture: true });
+  });
+  const box = await first.getByLabel('Published chapter reading').boundingBox();
+  assert.ok(box);
+  const y = box.y + Math.min(150, box.height / 2);
+  await first.mouse.move(box.x + box.width * .8, y);
+  await first.mouse.down();
+  await first.mouse.move(box.x + box.width * .2, y, { steps: 14 });
+  await first.mouse.up();
+  await first.waitForFunction(() => window.finishedToExplore);
+  const pulses = page => page.evaluate(() => window.readerPulses(new Set(['chapter:sync-chapter@1'])));
+  await expect.poll(() => pulses(first)).toEqual([expect.objectContaining({ group: 'starting', sources: ['chapter:sync-chapter@1'] })]);
+  assert.deepEqual(await pulses(first), []);
+  await first.goto(reader(1));
+  await expect(first.getByText('Chapter complete.')).toBeVisible();
+  await expect.poll(() => finishRetries, { timeout: 12000 }).toBe(2);
+  const [settled] = await chapterExchange(db, A);
+  assert.equal(settled.revision, 3);
+  assert.equal(settled.run.status, 'completed');
+
+  await two.setOffline(false);
+  await expect(second.getByText('This Chapter changed on another device. Both copies are saved.')).toBeVisible();
+  await expect(second.getByText('Chapter complete.')).toBeVisible();
+  assert.deepEqual(await pulses(second), []);
+  // Reopen the exact finished edition. Explore's version 2 entry is available
+  // as a new run once version 1 is no longer in progress.
+  await second.goto(reader(1));
+  await second.reload();
+  await expect(second.getByText('Chapter complete.')).toBeVisible();
+  const copies = await second.evaluate(async account => {
+   const { getAccountScope } = await import('/app/os/account-scope.js');
+   const { readChapterSync } = await import('/app/os/chapters/chapter-sync-store.ts');
+   const scope = getAccountScope();
+   if (scope.accountId !== account) throw Error('Unexpected account');
+   return (await readChapterSync(scope))['sync-chapter@1'];
+  }, A);
+  assert.equal(copies.competing.answers[0].value, 'Competing answer');
+  assert.deepEqual(copies.run, settled.run);
+
+  await second.getByRole('link', { name: 'Review answers', exact: true }).click();
+  await expect(second.getByRole('region', { name: 'Synced answers' })).toContainText('Original answer');
+  await expect(second.getByRole('region', { name: 'On this device' })).toContainText('Competing answer');
+  await expect(second.getByRole('button', { name: /Use .*answers/ })).toHaveCount(0);
+  assert.deepEqual(await chapterExchange(db, A), [settled]);
+
+  await second.goto(base + '/fixture?home=1');
+  const canvas = second.getByRole('img', { name: 'Activity colors on the accepted shape' });
+  await expect(canvas).toHaveAttribute('data-ready', 'true');
+  await expect.poll(() => canvas.evaluate(el => {
+   const pixels = el.getContext('2d').getImageData(0, 0, el.width, el.height).data;
+   return pixels.some((value, index) => index % 4 === 0 && value > pixels[index + 1] + 20);
+  })).toBe(true);
+
+  const other = await (await profile(B)).newPage();
+  await other.goto(reader(1));
+  await expect(other.getByRole('heading', { name: 'Original cover' })).toBeVisible();
+  assert.deepEqual(await chapterExchange(db, B), []);
+ } finally {
+  await Promise.all(contexts.map(context => context.close()));
+  await db.close();
+ }
+});
+
+for (const useDevice of [false, true]) {
+ test(`Chapter conflict review can keep ${useDevice ? 'the device answers after a lost reply' : 'synced answers after a stale review'}`, { timeout: 120000, skip: !chapterPilot }, async () => {
+  const chapter = createChapterDraft().chapter;
+  chapter.id = 'review-chapter';
+  chapter.title = 'Original Chapter';
+  chapter.pages[1] = { type: 'short-text', id: 'question', question: 'Original question?', answerKey: 'answer', required: true };
+  const newer = { ...chapter, version: 2, title: 'New Chapter' };
+  const db = await chapterSyncDatabase([chapter, newer]);
+  const contexts = [];
+  let pauseSync = false, firstChoice, attempts = 0;
+  const reader = base + '/fixture?reader=1&id=review-chapter&version=1';
+  async function profile(isSecond = false) {
+   const context = await browser.newContext({ viewport: { width: 390, height: 900 } });
+   contexts.push(context);
+   await context.addInitScript(id => { window.fixtureAccount = id; }, A);
+   await context.route('**/*', async route => {
+    const request = route.request(), url = new URL(request.url());
+    if (url.origin !== base) return route.abort();
+    if (url.pathname === '/os/catalog') {
+     if (url.searchParams.has('view')) return route.fulfill({ json: [{ id: chapter.id, title: newer.title, kind: 'chapter', version: 2 }] });
+     const edition = url.searchParams.get('version') === '2' ? newer : chapter;
+     return route.fulfill({ json: { version: edition.version, content: { kind: 'chapter', chapter: edition } } });
+    }
+    if (url.pathname !== '/os/catalog/chapter-sync') return route.continue();
+    if (isSecond && pauseSync) return route.abort();
+    const { owner, operation } = request.postDataJSON();
+    const result = await chapterExchange(db, A, owner, operation);
+    if (isSecond && useDevice && operation?.baseRevision === 2) {
+     attempts++;
+     if (!firstChoice) { firstChoice = operation; return route.abort(); }
+     assert.deepEqual(operation, firstChoice);
+    }
+    return route.fulfill({ json: result });
+   });
+   return { context, page: await context.newPage() };
+  }
+  try {
+   const first = await profile();
+   await first.page.goto(reader);
+   await first.page.getByRole('button', { name: 'Swipe to begin' }).click();
+   await expect.poll(async () => (await chapterExchange(db, A))[0]?.revision).toBe(1);
+   const second = await profile(true);
+   await second.page.goto(base + '/os/explore');
+   await expect(second.page.getByRole('link', { name: 'Open New Chapter' })).toBeVisible();
+   await expect(second.page.getByRole('link', { name: 'Review answers' })).toHaveCount(0);
+   await second.page.getByRole('link', { name: 'Open New Chapter' }).click();
+   const answer = page => page.getByRole('textbox', { name: 'Original question?' });
+   await expect(answer(second.page)).toBeVisible();
+   await second.context.setOffline(true);
+   await answer(second.page).fill('Offline answer');
+   await second.page.getByRole('button', { name: 'Continue', exact: true }).click();
+   await expect(second.page.getByText('Swipe when ready')).toBeVisible();
+   if (!useDevice) {
+    await second.page.evaluate(() => {
+     document.addEventListener('click', event => {
+      if (event.target.closest('a[href="/os/explore"]')) event.preventDefault();
+     }, { capture: true });
+    });
+    const box = await second.page.getByLabel('Published chapter reading').boundingBox();
+    assert.ok(box);
+    const y = box.y + Math.min(150, box.height / 2);
+    await second.page.mouse.move(box.x + box.width * .8, y);
+    await second.page.mouse.down();
+    await second.page.mouse.move(box.x + box.width * .2, y, { steps: 14 });
+    await second.page.mouse.up();
+    await expect(second.page.getByText('Chapter complete.')).toBeVisible();
+   }
+   await answer(first.page).fill('Synced answer');
+   await first.page.getByRole('button', { name: 'Continue', exact: true }).click();
+   await expect.poll(async () => (await chapterExchange(db, A))[0]?.revision).toBe(2);
+   await second.context.setOffline(false);
+   await expect(second.page.getByRole('link', { name: 'Review answers' })).toBeVisible({ timeout: 12000 });
+   await second.page.goto(base + '/os/explore');
+   const reviewLink = second.page.getByRole('link', { name: 'Review answers' });
+   await expect(reviewLink).toHaveAttribute('href', /version=1&review=1$/);
+   await reviewLink.click();
+   await expect(second.page.getByRole('heading', { name: 'Original Chapter' })).toBeVisible();
+   await expect(second.page.getByRole('region', { name: 'Synced answers' })).toContainText('Synced answer');
+   await expect(second.page.getByRole('region', { name: 'On this device' })).toContainText('Offline answer');
+   const synced = second.page.getByRole('button', { name: 'Use synced answers' });
+   const device = second.page.getByRole('button', { name: 'Use this device’s answers' });
+   if (!useDevice) await expect(device).toHaveCount(0);
+   await expect.poll(() => synced.evaluate(button => button.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+   pauseSync = true;
+   if (!useDevice) {
+    const [head] = await chapterExchange(db, A);
+    const revised = { ...head.run, answers: head.run.answers.map(answer => ({ ...answer, value: 'New synced answer', displaySnapshot: 'New synced answer' })) };
+    assert.equal((await chapterExchange(db, A, A, { id: crypto.randomUUID(), baseRevision: 2, run: revised })).revision, 3);
+   } else await second.context.setOffline(true);
+   await (useDevice ? device : synced).click();
+   await expect(second.page.getByText('Choice saved on this device. Waiting to sync.')).toBeVisible();
+   if (useDevice) await second.context.setOffline(false);
+   await second.page.reload();
+   await expect(second.page.getByText('Choice saved on this device. Waiting to sync.')).toBeVisible();
+   pauseSync = false;
+   if (!useDevice) {
+    await expect(second.page.getByText('The synced answers changed. Review both copies again.')).toBeVisible({ timeout: 12000 });
+    await expect(second.page.getByRole('region', { name: 'Synced answers' })).toContainText('New synced answer');
+    await synced.click();
+   }
+   await expect(second.page.getByText('Choice synced.')).toBeVisible({ timeout: 15000 });
+   if (useDevice) assert.equal(attempts, 2);
+   const [settled] = await chapterExchange(db, A);
+   assert.equal(settled.revision, 3);
+   assert.equal(settled.run.answers[0].value, useDevice ? 'Offline answer' : 'New synced answer');
+   await second.page.reload();
+   await second.page.getByText('Saved copies', { exact: true }).click();
+   await expect(second.page.getByRole('region', { name: 'On this device' })).toContainText('Offline answer');
+   await expect(second.page.getByRole('region', { name: 'Synced answers' })).toContainText(useDevice ? 'Synced answer' : 'New synced answer');
+   await second.page.getByRole('link', { name: 'Continue Chapter' }).click();
+   await expect(second.page.getByText('Swipe when ready')).toBeVisible();
+  } finally {
+   await Promise.all(contexts.map(context => context.close()));
+   await db.close();
+  }
+ });
+}
+
 test('signed-in Article reader reloads exact content and retries its targeted image',{timeout:90000},async()=>{
  const context=await browser.newContext({viewport:{width:390,height:900}});let failImage=true;const reads=[];
  try{
@@ -379,11 +638,13 @@ test('new chapter glass and article image drafting survive save and reload', {ti
   await context.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==base)return route.abort();if(url.pathname==='/content-tree.svg')return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"><rect width="200" height="100" fill="orange"/></svg>'});if(url.pathname==='/os/admin/status')return route.fulfill({json:{admin:true}});if(url.pathname==='/os/admin/media')return route.fulfill({json:[{id:'11111111-2222-4333-8444-555555555555',alt:'A tree',preview:`${base}/content-tree.svg`}]});if(url.pathname==='/os/admin/catalog'){if(route.request().method()==='POST'){const body=route.request().postDataJSON();const index=rows.findIndex(row=>row.id===body.draft.draftId);if(index>=0)rows.splice(index,1);rows.unshift({id:body.draft.draftId,draft:body.draft,revision:1});return route.fulfill({json:{revision:1}});}return route.fulfill({json:rows});}return route.continue();});
   const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));await page.goto(`${base}/fixture`);
   await page.getByRole('button',{name:'Blank chapter',exact:true}).click();await expect(page.locator('.os-chapter-session')).toHaveClass(/os-content-glass/);
+  await expect(page.locator('.os-chapter-session')).toHaveCSS('backdrop-filter', 'blur(12px) saturate(1.2)');
   await page.getByRole('button',{name:'Choose image',exact:true}).click();await page.getByLabel('Image',{exact:true}).selectOption('11111111-2222-4333-8444-555555555555');await page.getByRole('button',{name:'Save draft',exact:true}).click();await expect.poll(()=>rows.length).toBe(1);assert.equal(rows[0].draft.chapter.pages[0].image.alt,'A tree');await page.locator('.os-chapter-session').screenshot({path:'outputs/new-chapter-glass.png'});const anchor=await page.locator('.os-chapter-session').evaluate(frame=>{const box=frame.getBoundingClientRect();const text=frame.querySelector('[aria-label="Edit cover title"]').getBoundingClientRect();return {top:text.top-box.top,left:text.left-box.left,height:box.height};});console.log('New glass chapter geometry',anchor);assert.ok(Math.abs(anchor.top-25)<2,JSON.stringify(anchor));assert.ok(Math.abs(anchor.left-25)<2,JSON.stringify(anchor));
   await page.getByRole('button',{name:'Articles',exact:true}).click();await page.getByLabel('Title',{exact:true}).fill('Synthetic article');await page.getByLabel('Summary',{exact:true}).fill('A synthetic summary.');
   await page.getByRole('button',{name:'Add paragraph',exact:true}).click();await page.getByLabel('Block text',{exact:true}).fill('Some words.');
   await page.getByRole('button',{name:'Choose image',exact:true}).click();await page.getByLabel('Image',{exact:true}).selectOption('11111111-2222-4333-8444-555555555555');
   await page.getByLabel('Caption',{exact:true}).fill('Morning tree');await page.getByRole('button',{name:'Save article',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Saved online'})).toBeVisible();
+  await expect(page.locator('.os-article-preview')).toHaveCSS('backdrop-filter', 'blur(12px) saturate(1.2)');
   assert.equal(rows[0].draft.article.cover.alt,'A tree');await page.reload();await page.getByRole('button',{name:'Articles',exact:true}).click();await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Synthetic article');await expect(page.getByLabel('Block text',{exact:true})).toHaveValue('Some words.');await expect(page.locator('.os-article-preview')).toHaveClass(/os-content-glass/);await expect.poll(()=>page.locator('.os-article-preview img').evaluate(img=>img.naturalWidth)).toBe(200);await page.screenshot({path:'outputs/new-article-glass.png',fullPage:true});await expect(page.getByLabel('Summary',{exact:true})).toHaveValue('A synthetic summary.');const positions=await page.locator('.os-article-preview').evaluate(article=>{const children=[...article.children];return children.slice(0,3).map(node=>node.getBoundingClientRect().top);});assert.ok(positions[0]<positions[1]&&positions[1]<positions[2]);const order=await page.locator('.os-article-preview').evaluate(article=>[...article.children].slice(0,3).map(node=>node.tagName));assert.deepEqual(order,['FIGURE','H1','P']);const fields=await page.locator('fieldset').evaluate(form=>[...form.children].slice(0,4).map(node=>node.tagName));assert.deepEqual(fields,['H2','SECTION','LABEL','LABEL']);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -394,17 +655,22 @@ before(async () => {
  import{SupabaseConnection}from'/app/os/auth/supabase-context.tsx';
  import{activateAccountScope,getAccountScope}from'/app/os/account-scope.js';
  ${useProductionCSS?'':"import'/app/globals.css';import'/app/os/os-app.css';import'/app/os/content-glass.css';"}
- activateAccountScope('synthetic-admin');
- const value={client:{auth:{getSession:async()=>({data:{session:{access_token:'synthetic-token',user:{id:'synthetic-admin'}}}})}},config:{}};
+ const account=window.fixtureAccount||'synthetic-admin';
+ activateAccountScope(account);
+ const value={client:{auth:{getSession:async()=>({data:{session:{access_token:window.fixtureAccount||'synthetic-token',user:{id:account}}}})}},config:{}};
  let surface=React.createElement(AccountAdmin);
  if(location.search.includes('menu=1')){const {AccountMenu}=await import('/app/os/auth/account-menu.tsx');const {AccountContext}=await import('/app/os/auth/account-context.tsx');surface=React.createElement(AccountContext.Provider,{value:{accountId:'synthetic-admin',alias:'Synthetic',busy:false,message:'',saveAlias:async()=>true,signOut:async()=>{}}},React.createElement(AccountMenu));}
- if(location.search.includes('reader=1')){const {default:Reader}=await import('/app/os/catalog/read/page.tsx');const {CircleStateProvider,useCircleState}=await import('/app/os/circle-os-shell.tsx');const {useCatalogDefinitions}=await import('/app/os/catalog/definitions.ts');function Probe(){const context=useCircleState();window.readerState=context.state;window.readerUpdate=context.updateState;window.readerDefinitions=useCatalogDefinitions(context.state.chapters.runs);return null;}surface=React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(Reader));}
+ if(location.search.includes('reader=1')||location.pathname==='/os/catalog/read'){const {default:Reader}=await import('/app/os/catalog/read/page.tsx');const {CircleStateProvider,useCircleState}=await import('/app/os/circle-os-shell.tsx');const {useCatalogDefinitions}=await import('/app/os/catalog/definitions.ts');function Probe(){const context=useCircleState();window.readerState=context.state;window.readerUpdate=context.updateState;window.readerPulses=context.localImprint.takePulses;window.readerDefinitions=useCatalogDefinitions(context.state.chapters.runs);return null;}surface=React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(Reader));}
+ if(location.pathname==='/os/explore'){const {default:Explore}=await import('/app/os/explore/page.tsx');const {CircleStateProvider}=await import('/app/os/circle-os-shell.tsx');surface=React.createElement(CircleStateProvider,null,React.createElement(Explore));}
  if(location.search.includes('home=1')){const {default:Home}=await import('/app/os/home/page.tsx');const {CircleStateProvider}=await import('/app/os/circle-os-shell.tsx');const {WritingProvider}=await import('/app/os/writing-provider.tsx');surface=React.createElement(CircleStateProvider,null,React.createElement(WritingProvider,{scope:getAccountScope(),enabled:true,answers:[],memory:{}},React.createElement(Home)));}
  const admin=React.createElement(SupabaseConnection.Provider,{value},surface);
  const route=React.createElement('div',{className:'os-route-stage is-ready'},React.createElement('div',null,React.createElement('div',{className:'os-route-content'},admin)));
  createRoot(document.getElementById('root')).render(React.createElement('div',{className:'circle-os'},React.createElement('div',{className:'os-app-shell'},route)));
  `;
- server=await createServer({configFile:false,define:{'process.env':JSON.stringify({NODE_ENV:'development',CIRCLE_IMPRINT_HOSTED_REVIEW:'enabled'})},plugins:[react(),{name:'admin-fixture',resolveId(id){if(id==='virtual:admin')return '\0admin.tsx';},load(id){if(id==='\0admin.tsx')return harness+'window.adminSwitch=activateAccountScope;';},configureServer(vite){vite.middlewares.use(async(req,res,next)=>{if(useProductionCSS&&req.url==='/fixture-production.css'){res.setHeader('Content-Type','text/css; charset=utf-8');res.end(productionStyles);return;}if(req.url?.split('?')[0]!=='/fixture')return next();res.setHeader('Content-Type','text/html; charset=utf-8');res.end(await vite.transformIndexHtml('/fixture','<meta name="viewport" content="width=device-width,initial-scale=1">'+(useProductionCSS?'<link rel="stylesheet" href="/fixture-production.css">':'')+'<div id="root"></div><script type="module" src="/@id/virtual:admin"></script>'));});}}],server:{host:'127.0.0.1',port:0,watch:{ignored:['**/.next/**','**/dist/**']}}});
+ const env = { NODE_ENV:'development', CIRCLE_IMPRINT_HOSTED_REVIEW:'enabled',
+  ...(chapterPilot ? { NEXT_PUBLIC_CIRCLE_CHAPTER_SYNC: 'pilot', NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321' } : {}) };
+ const fixturePaths = chapterPilot ? ['/fixture', '/os/catalog/read', '/os/explore'] : ['/fixture'];
+ server=await createServer({configFile:false,define:{'process.env':JSON.stringify(env)},plugins:[react(),{name:'admin-fixture',resolveId(id){if(id==='virtual:admin')return '\0admin.tsx';},load(id){if(id==='\0admin.tsx')return harness+'window.adminSwitch=activateAccountScope;';},configureServer(vite){vite.middlewares.use(async(req,res,next)=>{if(useProductionCSS&&req.url==='/fixture-production.css'){res.setHeader('Content-Type','text/css; charset=utf-8');res.end(productionStyles);return;}if(!fixturePaths.includes(req.url?.split('?')[0]))return next();res.setHeader('Content-Type','text/html; charset=utf-8');res.end(await vite.transformIndexHtml('/fixture','<meta name="viewport" content="width=device-width,initial-scale=1">'+(useProductionCSS?'<link rel="stylesheet" href="/fixture-production.css">':'')+'<div id="root"></div><script type="module" src="/@id/virtual:admin"></script>'));});}}],server:{host:'127.0.0.1',port:0,watch:{ignored:['**/.next/**','**/dist/**']}}});
  await server.listen();base=`http://127.0.0.1:${server.httpServer.address().port}`;browser=await chromium.launch();
 });
 
