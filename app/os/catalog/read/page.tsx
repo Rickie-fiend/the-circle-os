@@ -126,8 +126,8 @@ function PublishedChapter({ chapter, preview }: { chapter: ChapterDefinition; pr
 
 export default function CatalogReader(){
  const {state,updateState,ready}=useCircleState();
- const openProtocol=()=>window.location.assign('/os#protocol');
- const openRoutine=()=>window.location.assign('/os#routine');
+ const openProtocol=()=>window.location.assign('/os/today#protocol');
+ const openRoutine=()=>window.location.assign('/os/today#routine');
  const request=useCatalogRequest(),[loadedEdition,setEdition]=useState<{epoch:string;value:Edition;preview:boolean}|null>(null),[message,setMessage]=useState('Opening reading…');
  const scope=getAccountScope();
  const query = ready && typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -197,7 +197,7 @@ export default function CatalogReader(){
  const routineAdoption=templateKind==='routine'?{blocked:Boolean(routineGroup&&routineGroup.operationId!==savedOperation),open:openRoutine,add:(ongoing:boolean,answers:Record<string,unknown>)=>adopt('routine',ongoing,answers)}:undefined;
  return <ContentRequest.Provider value={request}><PublishedImages.Provider value={true}><main className="os-admin">
   {edition?.content.chapter ? <PublishedChapter key={`${scope.epoch}:${chapterRunId(edition.content.chapter)}`} chapter={edition.content.chapter} preview={Boolean(loadedEdition?.preview)} /> : <>
-   <a href="/os">Back to Today</a>
+   <a href="/os/today">Back to Today</a>
    {!edition?<p role="status">{message}</p>:edition.content.template?<TemplatePreview key={scope.epoch} adoption={adoption} routineAdoption={routineAdoption} draft={{...createChapterDraft(),draftId:'template-reading',template:edition.content.template}}/>:edition.content.article?<ArticlePreview draft={{article:edition.content.article} as ArticleDraft}/>:<p>Content unavailable</p>}
   </>}
  </main></PublishedImages.Provider></ContentRequest.Provider>;

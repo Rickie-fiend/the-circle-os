@@ -1,5 +1,5 @@
 import { TodayExperience } from "./circle-os-shell";
 
-export default function CircleOSToday() {
-  return <TodayExperience />;
+export default function CircleOSEntry() {
+  return <TodayExperience launch />;
 }

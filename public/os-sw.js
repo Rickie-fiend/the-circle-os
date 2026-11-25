@@ -1,8 +1,10 @@
 // v6 keeps v5's network-first code updates and primes static files that loaded
 // before the first worker was installed, so the next open can work offline.
-const CACHE = "circle-os-v6";
+const CACHE = "circle-os-v7";
 const SHELL = [
   "/os",
+  "/os/home",
+  "/os/today",
   "/os/mirror",
   "/os/connect",
   "/circle-os.webmanifest?v=4",
@@ -10,9 +12,21 @@ const SHELL = [
   "/brand/circle-os-icon-192.png?v=4",
   "/brand/circle-os-icon-512.png?v=4",
 ];
+const IMPRINT_ART = /^\/os\/home\/imprint-art\/(?:bone|coordinates)-strands-(?:390|1170)$/;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil(caches.open(CACHE).then(async (cache) => {
+    await cache.addAll(SHELL);
+    // Client navigation can load a route without requesting its document or
+    // standalone entry script. Cache those scripts for offline hard navigation.
+    const documents = await Promise.all(["/os/home", "/os/today"].map(async (path) =>
+      (await cache.match(path)).text(),
+    ));
+    const assets = new Set(documents.flatMap((html) =>
+      Array.from(html.matchAll(/(?:src|href)="(\/_next\/static\/[^"<>]+\.(?:js|css))"/g), match => match[1]),
+    ));
+    await cache.addAll([...assets]);
+  }));
   self.skipWaiting();
 });
 
@@ -34,7 +48,7 @@ self.addEventListener("message", (event) => {
     try {
       const url = new URL(value);
       return url.origin === self.location.origin &&
-        ["/_next/static/", "/assets/", "/fonts/", "/brand/"].some((prefix) => url.pathname.startsWith(prefix));
+        (IMPRINT_ART.test(url.pathname) || ["/_next/static/", "/assets/", "/fonts/", "/brand/"].some((prefix) => url.pathname.startsWith(prefix)));
     } catch { return false; }
   });
   event.waitUntil(self.clients.claim().then(() => caches.open(CACHE)).then((cache) => Promise.allSettled(urls.map(async (url) => {
@@ -75,7 +89,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (!["script", "style", "font", "image"].includes(event.request.destination)) {
+  const isImprintArt = IMPRINT_ART.test(url.pathname);
+  if (!isImprintArt && !["script", "style", "font", "image"].includes(event.request.destination)) {
     return;
   }
 
@@ -106,10 +121,10 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then(
       (cached) =>
         cached ||
-        fetch(event.request).then((response) => {
+        fetch(event.request).then(async (response) => {
           if (response.ok) {
             const copy = response.clone();
-            void caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+            await caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
           }
           return response;
         }),

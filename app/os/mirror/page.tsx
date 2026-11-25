@@ -667,7 +667,7 @@ export default function CircleOSMirror() {
   function startQuestStep(chapterId: string) {
     if (questStepStatus(chapterId, state.chapters.runs, { state, publications }).done) return;
     writePinnedChapter(chapterId);
-    router.push("/os");
+    router.push("/os/today");
   }
 
   const dimensions = dimensionRecord(state, getDateKey(), new Date().getHours());
@@ -782,7 +782,7 @@ export default function CircleOSMirror() {
       setError("");
       try {
         await recoverProfile(recoveryCode);
-        router.push("/os");
+        router.push("/os/today");
       } catch (recoveryError) {
         setError(
           recoveryError instanceof Error
@@ -817,7 +817,7 @@ export default function CircleOSMirror() {
       },
     }), "profile-created");
     setError("");
-    router.push("/os");
+    router.push("/os/today");
   }
 
   function beginEdit(key: string) {

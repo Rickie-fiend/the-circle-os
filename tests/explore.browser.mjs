@@ -72,6 +72,14 @@ async function isolated(width,work,{rows=catalog,reducedMotion='reduce'}={}) {
   } finally {await context.close();}
 }
 
+async function expectSharedPanelShadows(page) {
+  const shadow = await page.locator('.os-bottom-nav-pill').evaluate(el => getComputedStyle(el).boxShadow);
+  assert.notEqual(shadow, 'none');
+  const panelShadows = await page.locator('.os-explore-panel').evaluateAll(panels =>
+    panels.map(panel => getComputedStyle(panel).boxShadow));
+  assert.deepEqual([...new Set(panelShadows)], [shadow]);
+}
+
 for(const width of [360,390,416,1100])test(`Explore uses shared glass and native carousel geometry at ${width}px`,{timeout:90000},()=>isolated(width,async(page,{calls})=>{
   await expect(page.locator('.os-explore-row-title')).toHaveText(['Chapters','Habit/Protocol','Articles']);
   await expect(page.getByRole('navigation',{name:'Circle OS'})).toBeVisible();await expect(page.getByRole('button',{name:'Open account',exact:true})).toBeVisible();
@@ -90,8 +98,9 @@ for(const width of [360,390,416,1100])test(`Explore uses shared glass and native
   assert.equal(await panels.first().evaluate(el=>getComputedStyle(el).minHeight),width<430?'344px':'420px');
   const anchors=await panels.first().evaluate(el=>{const r=el.getBoundingClientRect(),t=el.querySelector('figure').getBoundingClientRect();return {left:t.left-r.left,top:t.top-r.top};});assert.ok(Math.abs(anchors.left-25)<=1);assert.ok(Math.abs(anchors.top-25)<=1);
   await row.focus();await row.press('ArrowRight');await expect(panels.nth(1)).toHaveClass(/is-selected/);
-  const middle=await row.evaluate(el=>{const r=el.getBoundingClientRect(),p=[...el.querySelectorAll('.os-explore-panel')].map(p=>({rect:p.getBoundingClientRect().toJSON(),transform:getComputedStyle(p).transform,shadow:getComputedStyle(p).boxShadow}));return {row:r.toJSON(),panels:p};});
-  assert.ok(middle.panels[0].rect.right>middle.row.left&&middle.panels[0].rect.right<middle.panels[1].rect.left,'left neighbour remains visible');assert.ok(middle.panels[2].rect.left<middle.row.right,'right neighbour remains visible');assert.ok(middle.panels[1].rect.width>middle.panels[0].rect.width,'selected panel is closer');assert.match(middle.panels[1].shadow,/227, 107, 55/);
+  const middle=await row.evaluate(el=>{const r=el.getBoundingClientRect(),p=[...el.querySelectorAll('.os-explore-panel')].map(p=>p.getBoundingClientRect().toJSON());return {row:r.toJSON(),panels:p};});
+  assert.ok(middle.panels[0].right>middle.row.left&&middle.panels[0].right<middle.panels[1].left,'left neighbour remains visible');assert.ok(middle.panels[2].left<middle.row.right,'right neighbour remains visible');assert.ok(middle.panels[1].width>middle.panels[0].width,'selected panel is closer');
+  await expectSharedPanelShadows(page);
   await row.evaluate(el=>el.blur());await page.screenshot({path:`outputs/explore-middle-${width}.png`});await row.focus();
   await expect(panels.nth(1).locator('figure,p')).toHaveCount(0);
   await row.press('End');await expect(panels.last()).toHaveClass(/is-selected/);const end=await row.evaluate(el=>el.scrollLeft);await row.press('ArrowRight');assert.equal(await row.evaluate(el=>el.scrollLeft),end);
@@ -103,6 +112,7 @@ for(const width of [360,390,416,1100])test(`Explore uses shared glass and native
 
 test('Explore keeps two blank panels per empty category and retries a failed load',{timeout:90000},()=>isolated(390,async(page,{respond})=>{
   await expect(page.locator('.os-explore-panel')).toHaveCount(6);await expect(page.locator('.os-explore-panel :is(h3,p,figure,a)')).toHaveCount(0);
+  await expectSharedPanelShadows(page);
   await page.screenshot({path:'outputs/explore-empty-390.png',fullPage:true});
   respond({status:503,rows:{error:'Synthetic connection failure'}});await page.reload();await expect(page.getByRole('alert')).toContainText('Could not open Explore');await expect(page.locator('.os-explore-panel')).toHaveCount(6);
   respond({status:200,rows:catalog});await page.getByRole('button',{name:'Try again',exact:true}).click();await expect(page.getByRole('link',{name:'Open Synthetic habit',exact:true})).toBeVisible();

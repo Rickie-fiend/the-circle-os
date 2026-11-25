@@ -4,14 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type MouseEvent } from "react";
 
-const destinations = [
+const primaryDestinations = [
+  { id: "today", label: "Today", href: "/os/today" },
   { id: "home", label: "Home", href: "/os/home" },
-  { id: "today", label: "Today", href: "/os" },
   { id: "reflect", label: "Reflect", href: "/os/mirror" },
-  { id: "explore", label: "Explore", href: "/os/explore" },
 ] as const;
+const explore = { id: "explore", label: "Explore", href: "/os/explore" } as const;
+type Destination = typeof primaryDestinations[number] | typeof explore;
 
-function NavigationIcon({ name }: { name: typeof destinations[number]["id"] }) {
+function NavigationIcon({ name }: { name: Destination["id"] }) {
   return <svg aria-hidden="true" focusable="false" viewBox={name === "explore" ? "0 0 32 32" : "0 0 24 24"} fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     {name === "home" ? <path d="M4 10 12 3 20 10v10H4Z" /> : null}
     {name === "today" ? <circle cx="12" cy="12" r="8" /> : null}
@@ -39,12 +40,15 @@ export function BottomNavigation({ onNavigate }: { onNavigate: (event: MouseEven
       document.removeEventListener("focusout", update);
     };
   }, []);
+  function renderDestination(destination: Destination, className?: string) {
+    const active = pathname === destination.href || (destination.id === "today" && pathname === "/os");
+    return <Link key={destination.id} className={className} href={destination.href}
+      aria-current={active ? "page" : undefined} onClick={event => onNavigate(event, destination.href)}>
+      <NavigationIcon name={destination.id} /><span>{destination.label}</span>
+    </Link>;
+  }
   return <nav className="os-bottom-nav" aria-label="Circle OS" hidden={keyboardOpen}>
-    {destinations.map(destination => {
-      const active = pathname === destination.href;
-      return <Link key={destination.id} href={destination.href} aria-current={active ? "page" : undefined} onClick={event => onNavigate(event, destination.href)}>
-        <NavigationIcon name={destination.id} /><span>{destination.label}</span>
-      </Link>;
-    })}
+    <div className="os-bottom-nav-pill">{primaryDestinations.map(destination => renderDestination(destination))}</div>
+    {renderDestination(explore, "os-bottom-nav-explore")}
   </nav>;
 }

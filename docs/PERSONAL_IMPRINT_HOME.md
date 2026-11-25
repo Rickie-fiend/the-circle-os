@@ -27,6 +27,17 @@ intact. The relevant source rules below describe how Undo and clearing affect
 the projection. The artwork reflects activity from this device's account records.
 [Imprint test evidence](USER_JOURNEY_TESTING.md#home-imprint-strand-renderer--2026-11-23).
 
+## Shared Imprint background — 2026-11-25
+
+Home shows the whole artwork at its existing size. Today shows the left half
+from its right edge. Reflect shows the right half from its left edge. Their
+shared renderer uses the same saved colors against Ink. Today and Reflect
+show the colors at rest. Home plays the queued pulse when it is visible.
+The previous decorative tool threads were removed. If the color layer is
+unavailable, the Bone artwork can still display. Where the artwork is
+unavailable, the background is Ink.
+[Browser evidence](USER_JOURNEY_TESTING.md#home-imprint-and-compact-navigation--2026-11-25).
+
 ## When Home plays the pulse
 
 A qualifying action queues a pulse after its local save succeeds. Home plays

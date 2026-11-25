@@ -1,20 +1,17 @@
 # Current task
 
-## Log sync conflict choices — recorded 2026-11-25
+## Today previews — local review, 2026-11-26
 
-**Verified locally and on disposable hosted Supabase.** Log History lets a reader keep the synced entry or use
-the device's words when both copies are active and have the same day and
-time range. Both copies stay in Saved copies on that device. The choice
-survives offline reload and an interrupted reply. A newer revision requires
-another review. Cleared entries stay cleared.
+The developer approved the six previews and chose Explore's glass carousel
+layout. Today now has three swipeable pairs with one lead panel and a peek at
+its neighbour. Tapping opens the corresponding full tool. Saved and empty
+states follow the [preview decision](DECISION_LOG.md#2026-11-26--today-preview-panels).
+[Local browser evidence](USER_JOURNEY_TESTING.md#today-preview-carousels--2026-11-26).
+The developer approved publishing the batch to `Rickie-fiend/the-circle-os`
+on `main`. Phone review remains open.
 
-Two Chromium profiles passed against real Auth and PostgREST on separate
-disposable local and hosted setups. The localhost route rejected missing and
-mismatched hosted test URLs. The hosted project was deleted and checked absent.
-The local 390px Log correction and six-tool browser checks also passed.
-[Hosted evidence](USER_JOURNEY_TESTING.md#hosted-log-sync-rehearsal--2026-11-25) ·
-[Local evidence](USER_JOURNEY_TESTING.md#log-sync-and-conflict-choices--2026-11-24).
-
-**Next review.** Agree which physical phones and browser journeys to check.
-Beta activation remains pending. [Release gates](ROADMAP.md#release-gates) ·
-[Work plan](WORK_PLAN.md#ordered-work).
+**Next action.** Review the Today carousels on a phone, including the peek,
+swipe and return from each opened tool. Deep Thoughts refinements are the
+next separate item in the work plan.
+[Work plan](WORK_PLAN.md#home-today-and-daily-tool-review-order) ·
+[Session handoff](SESSION_HANDOFF.md).

@@ -44,6 +44,7 @@ import {dayOpenRunId,writePinnedChapter,readPinnedDoor} from "/app/os/day-door.j
 import {publishedChapters} from "/app/os/chapters/registry.ts";
 import "/app/globals.css";
 import "/app/os/os-app.css";
+import "/app/os/content-glass.css";
 window.backendCalls=[];const nativeFetch=window.fetch.bind(window);window.fetch=(input,...args)=>{const url=new URL(typeof input==="string"?input:input.url,location.origin);if(url.pathname.startsWith("/profiles")){window.backendCalls.push(url.pathname);return Promise.resolve(new Response("Synthetic legacy transport disabled",{status:503}));}return nativeFetch(input,...args);};
 function fixture(){let s=circle.ensureDay(circle.createEmptyState(),circle.getDateKey());s.ai.baseUrl=location.origin;s.profile.name="Synthetic writer";s.profile.age=30;
  s.athenaMemory.reading={cover:"Synthetic reading.",days:[],alive:[],shape:[{heading:"A question",paragraphs:["What would you like to notice today?"]}]};s.athenaMemory.updatedAt=new Date().toISOString();
@@ -57,9 +58,10 @@ function TypeChapterFixture(){const config=window.typeChapter;const original=pub
  const [definition,setDefinition]=useState(()=>({...original,pages:original.pages.map(p=>p.type===config.type?{...p,body:"Synthetic supporting text."}:p)}));const target=definition.pages.find(p=>p.type===config.type);
  const [run,setRun]=useState(()=>({...createChapterRun(definition),currentPageId:target.id,furthestPageId:target.id}));
  return React.createElement(ChapterPlayer,{definition,run,label:"Typography fixture",onRunChange:setRun,previewMode:config.edit,onEditPage:config.edit?(id,field,value)=>setDefinition(d=>({...d,pages:d.pages.map(p=>p.id===id?{...p,[field]:value}:p)})):undefined});}
-function Root(){const [path,setPath]=useState(location.pathname==="/os/home"?"/os/home":"/os");const move=next=>{history.replaceState(history.state,"",next);setPath(next);};window.goto=setPath;window.navigate=move;const router={push:move,replace:move,prefetch:()=>Promise.resolve(),refresh(){},back(){setPath("/os");},forward(){}};
+function Root(){const [path,setPath]=useState(location.pathname);const move=next=>{history.replaceState(history.state,"",next);setPath(location.pathname);};window.goto=setPath;window.navigate=move;const router={push:move,replace:move,prefetch:()=>Promise.resolve(),refresh(){},back(){setPath("/os");},forward(){}};
+ const launch=path==="/os" && new URLSearchParams(location.search).has("launch-fixture");
  return React.createElement(AppRouterContext.Provider,{value:router},React.createElement(PathnameContext.Provider,{value:path},
- React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(OSFrame,null,path==="/os/home"?React.createElement(Home):path==="/os/explore"?React.createElement(Explore):path==="/os/type-chapter"?React.createElement(TypeChapterFixture):path==="/os/mirror"?React.createElement(Mirror):path==="/os/admin"?React.createElement(ChapterEditor):React.createElement(TodayExperience)))));}
+ React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(OSFrame,null,path==="/os/home"?React.createElement(Home):path==="/os/explore"?React.createElement(Explore):path==="/os/type-chapter"?React.createElement(TypeChapterFixture):path==="/os/mirror"?React.createElement(Mirror):path==="/os/admin"?React.createElement(ChapterEditor):React.createElement(TodayExperience,{key:launch?"launch":"today",launch})))));}
 const root=createRoot(document.getElementById("root"));
 window.api={...scopes,...circle,...logHistory,...circleStore,...writingStore,...writingModel,...chapterPublications,createChapterRun,chapterRunId,publishedChapters,fixture,writePinnedChapter,readPinnedDoor,openDevelopmentTestSession,
  async init(account=true){if(account==="imprint")openDevelopmentTestSession();else if(account)scopes.activateAccountScope("synthetic-writer-a");if(account!=="fresh-imprint")await circleStore.saveCircleState(scopes.getAccountScope(),fixture());sessionStorage.setItem("writing-fixture-ready",account==="imprint"?"imprint":"yes");root.render(React.createElement(Root));},
@@ -86,7 +88,7 @@ before(async()=>{
   server=await createServer({configFile:false,define:{"process.env":JSON.stringify({
     NODE_ENV:"development", CIRCLE_IMPRINT_HOSTED_REVIEW: hostedImprintReview ? "enabled" : "disabled",
   })},
-    plugins:[react(),{name:"writing-ui-fixture",resolveId(id){if(id==="virtual:writing-ui")return "\0writing-ui.tsx";},load(id){if(id==="\0writing-ui.tsx")return useProductionCSS?harness.replace('import "/app/globals.css";','').replace('import "/app/os/os-app.css";',''):harness;},
+    plugins:[react(),{name:"writing-ui-fixture",resolveId(id){if(id==="virtual:writing-ui")return "\0writing-ui.tsx";},load(id){if(id==="\0writing-ui.tsx")return useProductionCSS?harness.replace('import "/app/globals.css";','').replace('import "/app/os/os-app.css";','').replace('import "/app/os/content-glass.css";',''):harness;if(useProductionCSS&&id.endsWith("/app/os/explore/explore.css"))return "";},
       configureServer(vite){vite.middlewares.use(async(request,response,next)=>{
         if(useProductionCSS&&request.url==="/fixture-production.css"){response.setHeader("Content-Type","text/css; charset=utf-8");response.end(productionStyles);return;}
         const pathname=request.url?.split("?")[0];
@@ -100,14 +102,14 @@ before(async()=>{
           response.setHeader("Content-Type",bone?"image/png":"application/octet-stream");
           response.end(readFileSync(`docs/design/personal-imprint-color-v1-sori-${bone?"bone.png":"coordinates.bin"}`));return;
         }
-        if(!["/os","/os/home","/os/mirror","/os/connect"].includes(pathname))return next();
+        if(!["/os","/os/home","/os/today","/os/mirror","/os/connect"].includes(pathname))return next();
         try{response.setHeader("Content-Type","text/html; charset=utf-8");response.end(await vite.transformIndexHtml("/os",'<meta name="viewport" content="width=device-width, initial-scale=1">'+(useProductionCSS?'<link rel="stylesheet" href="/fixture-production.css">':'')+'<div id="root"></div><script type="module" src="/@id/virtual:writing-ui"></script>'));}catch(cause){next(cause);}
       });}}],server:{host:"127.0.0.1",port:0,watch:{ignored:["**/.next/**","**/dist/**"]}},
     optimizeDeps:{include:["react","react-dom/client","next/link","next/navigation","next/dist/shared/lib/app-router-context.shared-runtime.js","next/dist/shared/lib/hooks-client-context.shared-runtime.js"]}});
   await server.listen();baseURL=`http://127.0.0.1:${server.httpServer.address().port}`;browser=await chromium.launch();
 });
 after(async()=>{await browser?.close();await server?.close();});
-async function open(page){await page.goto(`${baseURL}/os`,{waitUntil:"domcontentloaded",timeout:60_000});await page.waitForFunction(()=>Boolean(window.api),{},{timeout:60_000});}
+async function open(page){await page.goto(`${baseURL}/os/today`,{waitUntil:"domcontentloaded",timeout:60_000});await page.waitForFunction(()=>Boolean(window.api),{},{timeout:60_000});}
 test('adopted Protocol template renders on the real Protocol page and keeps fixed terms',{timeout:90000},async()=>isolated(390,async page=>{
  await page.evaluate(async()=>{const{startProtocolTemplate}=await import('/app/os/protocol-template-adoption.js');const{createTemplateDraft}=await import('/app/os/admin/template-model.js');const template=createTemplateDraft('protocol').template;template.title='Adopted reading';template.items[0].action='Read one page';window.circle.updateState(s=>startProtocolTemplate({...s,protocol:{...s.protocol,runs:{}}},{template,sourceId:'synthetic',version:1,operationId:'real-page-fixture',days:3,answers:{}}).state);});
  await openRoutineTool(page,'Protocol');await expect(page.getByText('Adopted reading',{exact:true})).toBeVisible();await expect(page.getByText('Day 1 of 3',{exact:true})).toBeVisible();
@@ -295,6 +297,25 @@ for(const [width,height] of [[360,740],[390,844],[416,844]]) test(`full-page Log
   await expect(box.getByRole("button",{name:"History",exact:true})).toBeVisible();
   await expect(box.getByRole("button",{name:"History",exact:true})).toHaveCSS("text-transform","none");
   await expect(box.getByRole("button",{name:"Now",exact:true})).toHaveCount(0);
+  const timeline=box.locator(".os-timeline"),rows=timeline.locator("article");
+  await expect(timeline.locator(":scope > :first-child")).toHaveAttribute("data-log-hour","6");
+  const addHour=timeline.getByRole("button",{name:/^Add \d{2}:00 to the log$/});
+  await expect(addHour).toHaveText("+");
+  const plusGeometry=()=>addHour.evaluate(button=>{
+    const bounds=button.getBoundingClientRect(),timeline=button.parentElement.getBoundingClientRect();
+    return {width:bounds.width,height:bounds.height,offset:bounds.left+bounds.width/2-timeline.left-timeline.width/2};
+  });
+  await expect.poll(async()=>{
+    const {width,height}=await plusGeometry();
+    return Math.min(width,height);
+  },{message:"add-hour touch target at rest"}).toBeGreaterThanOrEqual(44);
+  assert.ok(Math.abs((await plusGeometry()).offset)<=1,"add-hour control is centered");
+  await expect(addHour).toHaveCSS("color","rgb(227, 107, 55)");
+  const rowCount=await rows.count();
+  const nextHour=Number(await rows.last().getAttribute("data-log-hour"))+1;
+  await addHour.click();
+  await expect(rows).toHaveCount(rowCount+1);
+  await expect(rows.last()).toHaveAttribute("data-log-hour",String(nextHour));
   const title=box.getByRole("textbox",{name:"What this day is called",exact:true});
   await title.fill("Synthetic glass Log");await title.blur();
   await box.locator(".os-timeline article .os-add-moment").first().click();
@@ -312,6 +333,7 @@ for(const [width,height] of [[360,740],[390,844],[416,844]]) test(`full-page Log
   await activity.getByRole("button",{name:"Save small moment",exact:true}).click();
   await expect(activity.locator('.os-log-copy ul')).toHaveCSS('font-size','18px');
   await page.reload();await ready(page);await expect(title).toHaveValue("Synthetic glass Log");
+  await expect(rows.last()).toHaveAttribute("data-log-hour",String(nextHour));
   await expect(box.getByRole("button",{name:"A synthetic walk",exact:true})).toBeVisible();
   await expect(box.getByRole("button",{name:"A synthetic small moment",exact:true})).toBeVisible();
   const metrics=await box.evaluate(el=>{const p=el.querySelector(".os-log-page"),header=p.querySelector(".os-page-header-left"),heading=p.querySelector(".os-page-heading");return {height:el.getBoundingClientRect().height,gap:heading.getBoundingClientRect().top-header.getBoundingClientRect().bottom,scrollers:[...el.querySelectorAll("*")].filter(n=>["auto","scroll"].includes(getComputedStyle(n).overflowY)&&n.scrollHeight>n.clientHeight+1).length,color:getComputedStyle(p).color};});
@@ -322,6 +344,211 @@ for(const [width,height] of [[360,740],[390,844],[416,844]]) test(`full-page Log
   await page.getByRole("navigation",{name:"Circle OS",exact:true}).getByRole("link",{name:"Today",exact:true}).click();await expect(entry).toBeVisible();await expect(box).toBeHidden();
   console.log("Log adoption",width,height,JSON.stringify(metrics));
 },{height}));
+
+for (const width of [360, 390, 416]) test(`Today previews share Explore glass and open all six tools at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async (page, context) => {
+  const overview = page.locator(".os-today-previews");
+  const rows = overview.getByRole("region");
+  const preview = name => overview.getByRole("group", { name, exact: true });
+  const nav = page.getByRole("navigation", { name: "Circle OS", exact: true });
+  await expect(rows).toHaveCount(3);
+  await expect(overview.getByRole("heading")).toHaveText(["Notes", "Deep Thoughts", "Routine", "Protocol", "Log", "Week"]);
+  for (const name of ["Notes", "Routine", "Protocol", "Week"]) {
+    await expect(preview(name).locator(".os-today-preview-copy")).toHaveCount(0);
+  }
+  await expect(preview("Deep Thoughts").locator(".os-today-preview-copy")).not.toBeEmpty();
+  await expect(preview("Log").locator("time")).toHaveCount(3);
+  await expect(preview("Log").locator("time[aria-current='time']")).toHaveCount(1);
+
+  const geometry = await rows.evaluateAll(elements => elements.map(row => {
+    const viewport = row.getBoundingClientRect();
+    const [first, next] = row.querySelectorAll(".os-explore-panel");
+    const lead = first.getBoundingClientRect(), peek = next.getBoundingClientRect();
+    const style = getComputedStyle(first);
+    return { width: lead.width, floor: lead.height, inset: lead.left - viewport.left, peek: viewport.right - peek.left, radius: style.borderRadius, motion: style.transitionDuration, snap: getComputedStyle(row).scrollSnapType };
+  }));
+  for (const entry of geometry) {
+    assert.equal(entry.width, width - 72);
+    assert.equal(entry.floor, 344);
+    assert.equal(entry.inset, 24);
+    assert.ok(entry.peek > 16 && entry.peek < 32, JSON.stringify(entry));
+    assert.equal(entry.radius, "36px");
+    if (width === 390) assert.equal(entry.motion, "0.26s");
+    else assert.ok(Number.parseFloat(entry.motion) <= 0.001);
+    assert.equal(entry.snap, "x mandatory");
+  }
+  const firstRow = rows.first();
+  await firstRow.focus();
+  await firstRow.press("End");
+  await expect(preview("Deep Thoughts")).toHaveClass(/is-selected/);
+  await firstRow.press("Home");
+  await expect(preview("Notes")).toHaveClass(/is-selected/);
+  if (width === 390) {
+    const touch = await context.newCDPSession(page);
+    const bounds = await firstRow.boundingBox();
+    const x = bounds.x + bounds.width - 36, y = bounds.y + bounds.height / 2;
+    await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let i = 1; i <= 7; i++) await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x - i * 35, y }], timestamp: Date.now() / 1000 + i * .03 });
+    await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await touch.detach();
+    await expect(preview("Deep Thoughts")).toHaveClass(/is-selected/);
+    await expect.poll(() => preview("Deep Thoughts").evaluate(el => getComputedStyle(el).transform)).toBe("matrix(1, 0, 0, 1, 0, 0)");
+    await firstRow.press("Home");
+    await expect.poll(() => firstRow.evaluate(el => el.scrollLeft)).toBe(0);
+    await expect.poll(() => preview("Notes").evaluate(el => getComputedStyle(el).transform)).toBe("matrix(1, 0, 0, 1, 0, 0)");
+    await firstRow.evaluate(el => el.blur());
+    await page.screenshot({ path: "outputs/today-previews-empty-390.png", fullPage: true });
+  }
+  const destinations = [
+    ["Deep Thoughts", ".os-note-open .os-deep-thought-question"],
+    ["Notes", ".os-note-open .os-notes-add"],
+    ["Routine", ".os-routine-open #task-session-title"],
+    ["Protocol", ".os-routine-open .os-protocol-home"],
+    ["Log", ".os-log-open .os-timeline"],
+    ["Week", ".os-log-open .os-week-overview"],
+  ];
+  const question = await preview("Deep Thoughts").locator("p").textContent();
+  for (const [name, selector] of destinations) {
+    const entry = overview.getByRole("button", { name, exact: true });
+    if (width === 390 && name === "Deep Thoughts") {
+      const bounds = await firstRow.boundingBox();
+      await page.touchscreen.tap(bounds.x + bounds.width - 6, bounds.y + 100);
+    } else {
+      await entry.focus();
+      await entry.press("Enter");
+    }
+    await expect(page.locator(selector)).toBeVisible();
+    if (name === "Deep Thoughts") await expect(page.locator(selector)).toHaveText(question);
+    await expect(overview).toBeHidden();
+    await nav.getByRole("link", { name: "Today", exact: true }).click();
+    await expect(overview).toBeVisible();
+    await expect(entry).toBeFocused();
+  }
+}, { reducedMotion: width === 390 ? "no-preference" : "reduce" }));
+
+test("Today previews use saved text, due items and the current stage", { timeout: 90_000 }, async () => isolated(390, async page => {
+  const overview = page.locator(".os-today-previews");
+  const preview = name => overview.getByRole("group", { name, exact: true });
+  await overview.getByRole("button", { name: "Notes", exact: true }).click();
+  const notes = notePage(page);
+  await notes.getByRole("button", { name: "Add note", exact: true }).click();
+  await notes.getByRole("textbox", { name: "Note title", exact: true }).fill("After the rain");
+  const body = "A quiet morning on the way to the market. ".repeat(14).trim();
+  await notes.getByRole("textbox", { name: "Write a note", exact: true }).fill(body);
+  await notes.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(notes.locator(".os-notes-panel")).toContainText("After the rain");
+  await notes.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(preview("Notes")).toContainText("After the rain");
+  const excerpt = preview("Notes").locator(".os-today-note-excerpt");
+  await expect(excerpt).toHaveCSS("-webkit-line-clamp", "3");
+  assert.ok(await excerpt.evaluate(el => el.scrollHeight > el.clientHeight));
+  await page.evaluate(async () => {
+    const api = window.api;
+    const goals = await import("/app/os/goal-model.js");
+    const { planningWeekStartKey } = await import("/app/os/week-app-model.js");
+    const now = new Date(), day = api.getDateKey(now), at = now.toISOString();
+    const hour = now.getHours() < 6 ? now.getHours() + 24 : now.getHours();
+    const label = h => String(h % 24).padStart(2, "0") + ":00";
+    window.circle.updateState(state => {
+      for (const [id, text] of [["stretch", "Stretch five minutes"], ["read", "Read a page"], ["water", "Water the plants"]]) {
+        state = api.updateHabitDefinition(api.addHabitDefinition(state, id).state, id, text);
+      }
+      state = api.toggleHabitForDay(state, "water", day);
+      state = api.updateTask(api.addTask(state, "call").state, "call", "Call Mum");
+      state = api.startProtocolDraft(state, "sleep").state;
+      state = api.renameProtocolRun(state, "sleep", "Steady sleep");
+      state = api.addProtocolItem(state, "sleep", "non-negotiable", "ten").state;
+      state = api.updateProtocolItem(state, "sleep", "ten", "In bed by 10", day);
+      state = api.addProtocolItem(state, "sleep", "negotiable", "a-page").state;
+      state = api.updateProtocolItem(state, "sleep", "a-page", "Read one page", day);
+      state = api.beginProtocolRun(state, "sleep", day);
+      const goal = goals.addWeekGoal(state, planningWeekStartKey(day, hour), "outside");
+      state = goals.updateGoal(goal.state, goal.id, "Spend more time outside");
+      const step = goals.addGoalStep(state, goal.id, api.addTask, "walking-route", at, day);
+      state = api.updateTask(step.state, step.taskId, "Pick a walking route");
+      state = api.ensureDay(state, day);
+      const saved = api.upsertTimeBlock(state.days[day], {
+        id: "today-preview-log", start: label(hour), end: label(hour + 1),
+        activity: "Writing", note: "A private smaller moment", createdAt: at, updatedAt: at,
+      });
+      return { ...state, days: { ...state.days, [day]: saved } };
+    });
+  });
+  await expect(preview("Routine")).toContainText("Stretch five minutes");
+  await expect(preview("Routine")).toContainText("Call Mum");
+  await expect(preview("Routine")).toContainText("+2 more");
+  await expect(preview("Routine")).toContainText("1 checked off");
+  await expect(preview("Protocol")).toContainText("Steady sleep");
+  await expect(preview("Protocol")).toContainText("In bed by 10");
+  await expect(preview("Protocol")).toContainText("Read one page");
+  await expect(preview("Protocol")).toContainText("Day 1 of 7");
+  await expect(preview("Log")).toContainText("Writing");
+  await expect(preview("Log")).not.toContainText("A private smaller moment");
+  await expect(preview("Week")).toContainText("Spend more time outside");
+  await expect(preview("Week")).toContainText("Pick a walking route");
+  await page.screenshot({ path: "outputs/today-previews-saved-390.png", fullPage: true });
+}));
+
+test("Today Log preview crosses 06:00 live and reads the closing day's entry", { timeout: 90_000 }, async () => isolated(390, async page => {
+  await page.clock.setSystemTime(new Date("2026-11-26T05:59:00+07:00"));
+  await page.reload();
+  await ready(page);
+  await page.evaluate(() => window.circle.updateState(state => {
+    const { ensureDay, upsertTimeBlock } = window.api;
+    const closingDay = "2026-11-25", newDay = "2026-11-26";
+    const withDays = ensureDay(ensureDay(state, closingDay), newDay);
+    const entry = (day, id, start, end, activity) => upsertTimeBlock(withDays.days[day], { id, start, end, activity, note: "", createdAt: new Date().toISOString() });
+    return { ...withDays, days: { ...withDays.days,
+      [closingDay]: entry(closingDay, "closing-entry", "05:00", "06:00", "Before sunrise"),
+      [newDay]: entry(newDay, "opening-entry", "06:00", "07:00", "Tea at sunrise"),
+    } };
+  }));
+  const log = page.locator(".os-today-previews").getByRole("group", { name: "Log", exact: true });
+  const times = log.locator("time");
+  const values = () => times.evaluateAll(items => items.map(item => item.dateTime));
+  await expect.poll(values).toEqual(["04:00", "05:00", "06:00"]);
+  await expect(log.locator("time[aria-current='time']")).toHaveAttribute("datetime", "05:00");
+  await expect(log.locator("li").nth(1)).toContainText("Before sunrise");
+  await expect(log.locator("li").nth(2)).toContainText("Tea at sunrise");
+  await page.clock.fastForward(60_000);
+  await expect.poll(values).toEqual(["05:00", "06:00", "07:00"]);
+  await expect(log.locator("li").first()).toContainText("Before sunrise");
+  await expect(log.locator("time[aria-current='time']")).toHaveAttribute("datetime", "06:00");
+  await expect(log.locator("li").nth(1)).toContainText("Tea at sunrise");
+}, { clock: true }));
+
+test("Log keeps its last hour on the closing Circle day at 06:00",{timeout:90_000},async()=>isolated(390,async page=>{
+  const beforeBoundary=new Date("2026-11-26T05:59:00+07:00");
+  await page.clock.setSystemTime(beforeBoundary);
+  await page.reload();
+  await ready(page);
+  await page.evaluate(()=>{
+    const {getDateKey,setDayLogRange,ensureDay}=window.api;
+    const key=getDateKey();
+    window.circle.updateState(state=>{
+      const next=ensureDay(state,key);
+      return {...next,days:{...next.days,[key]:setDayLogRange(next.days[key],9,28)}};
+    });
+  });
+  await page.getByRole("button",{name:"Log",exact:true}).click();
+  const timeline=page.locator(".os-log-session .os-timeline"),rows=timeline.locator("article");
+  const addLastHour=timeline.getByRole("button",{name:"Add 05:00 to the log",exact:true});
+  await expect(rows.first()).toHaveAttribute("data-log-hour","6");
+  await addLastHour.click();
+  await expect(rows.last()).toHaveAttribute("data-log-hour","29");
+  await expect(rows.last().locator("[aria-current='time']")).toContainText("05:00");
+  await expect(addLastHour).toHaveCount(0);
+  await rows.last().getByRole("button",{name:"Add a small moment at 05:00",exact:true}).click();
+  await rows.last().getByRole("textbox",{name:"Main activity at 05:00",exact:true}).fill("Before sunrise");
+  await rows.last().getByRole("button",{name:"Save main activity",exact:true}).click();
+  await expect(rows.last().getByRole("button",{name:"Before sunrise",exact:true})).toBeVisible();
+
+  await page.clock.setSystemTime(new Date("2026-11-26T06:00:00+07:00"));
+  await page.reload();
+  await ready(page);
+  await expect(rows.first().locator("[aria-current='time']")).toContainText("06:00");
+  await expect(timeline.getByRole("button",{name:"Before sunrise",exact:true})).toHaveCount(0);
+  assert.equal(await page.evaluate(()=>window.circle.state.days["2026-11-25"].timeBlocks[0].title),"Before sunrise");
+},{clock:true}));
 
 for(const width of [360,390]) test(`Log quiet hour controls at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
   const visibleHour = await page.evaluate(() => {
@@ -354,8 +581,12 @@ for(const width of [360,390]) test(`Log quiet hour controls at ${width}px`,{time
   await expect(row.getByRole("button",{name:"Save small moment",exact:true})).toHaveCSS("font-size",style.size);
   await checkRightAnchor(row.getByRole("button",{name:"Save small moment",exact:true}));
   await row.getByRole("textbox",{name:/^Edit small moment at/}).fill("Corrected quiet moment");await row.getByRole("button",{name:"Save small moment",exact:true}).click();
-  const count=await box.locator(".os-timeline article").count(),add=box.locator(".os-expand-hour").last();
-  await expect(add).toHaveText("Add hour");await expect(add).toHaveCSS("height","52px");await expect(add).toHaveCSS("border-radius","12px");await expect(add).toHaveCSS("border-style","solid");
+  const count=await box.locator(".os-timeline article").count(),add=box.getByRole("button",{name:/^Add \d{2}:00 to the log$/});
+  const rowPlus=row.getByRole("button",{name:/^Add a small moment/});
+  await expect(add).toHaveText("+");
+  for(const property of ["color","font-size","background-color","border-style"]){
+    await expect(add).toHaveCSS(property,await rowPlus.evaluate((button,name)=>getComputedStyle(button).getPropertyValue(name),property));
+  }
   await add.click();await expect(box.locator(".os-timeline article")).toHaveCount(count+1);
   await page.reload();await ready(page);await expect(box.getByRole("button",{name:"Corrected quiet moment",exact:true})).toBeVisible();
   await box.screenshot({path:`outputs/log-quiet-controls-${width}.png`,animations:"disabled"});
@@ -466,7 +697,7 @@ test("normal-motion writing cues and gestures keep the shared frame stable",{tim
       return samples;
     },action);
     assert.ok(samples.some(s=>Math.abs(s.x)>1),`${action} has visible intermediate travel`);
-    for(const sample of samples){assert.ok(Math.abs(sample.height-648)<1);assert.equal(sample.top,74);assert.ok(["clip","hidden"].includes(sample.overflow));}
+    for(const sample of samples){assert.ok(Math.abs(sample.height-670)<1);assert.equal(sample.top,74);assert.ok(["clip","hidden"].includes(sample.overflow));}
     assert.ok(Math.abs(samples.at(-1).x)<1,`${action} settles at the shared anchor`);
     console.log("Writing normal motion",action,JSON.stringify({maxTravel:Math.max(...samples.map(s=>Math.abs(s.x))),height:samples.at(-1).height}));
   }
@@ -509,9 +740,20 @@ for (const width of [360,390,416]) test(`bottom navigation routes and stays visi
   await expect(nav).toBeVisible();
   await expect(nav.getByRole("link",{name:"Today",exact:true})).toHaveAttribute("aria-current","page");
   assert.equal(await nav.getByRole("link").count(),4);
-  const metrics=await nav.evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),links:[...el.querySelectorAll("a")].map(a=>({rect:a.getBoundingClientRect().toJSON(),icon:a.querySelector("svg").getBoundingClientRect().toJSON()}))}));
-  assert.ok(metrics.rect.left>=0 && metrics.rect.right<=width);
-  for(const link of metrics.links){assert.ok(link.rect.width>=44 && link.rect.height>=44);assert.equal(link.icon.width,28);}
+  const pill=nav.locator(".os-bottom-nav-pill"),explore=nav.getByRole("link",{name:"Explore",exact:true});
+  await expect(pill.getByRole("link")).toHaveText(["Today","Home","Reflect"]);
+  const bounds=await nav.boundingBox(),pillBounds=await pill.boundingBox(),exploreBounds=await explore.boundingBox();
+  const mainBounds=await page.locator(".os-today-overview").boundingBox();
+  assert.deepEqual([bounds.x,bounds.width,bounds.height],[mainBounds.x+24,mainBounds.width-48,60]);
+  assert.deepEqual([pillBounds.height,exploreBounds.width,exploreBounds.height],[60,60,60]);
+  assert.equal(exploreBounds.x-pillBounds.x-pillBounds.width,8);
+  for(const link of await nav.getByRole("link").all()){
+    const {width,height}=await link.boundingBox();
+    assert.ok(width>=44&&height>=44);
+    await expect(link).toHaveCSS("gap","4px");
+    await expect(link.locator("svg")).toHaveCSS("width","22px");
+    await expect(link.locator("span")).toHaveCSS("font-size","12px");
+  }
   for(const name of ["Home","Explore"]){
     await nav.getByRole("link",{name,exact:true}).click();
     await expect(page.getByRole("main",{name,exact:true})).toHaveCount(1);
@@ -534,12 +776,14 @@ for (const width of [360,390,416]) test(`bottom navigation routes and stays visi
       return Math.max(Math.abs(a.x-b.x),Math.abs(a.width-b.width),Math.abs(b.y-a.y-a.height-16));
     }).toBeLessThan(1);
     const appearance=await frame.evaluate(el=>{
-      const frame=getComputedStyle(el),bar=getComputedStyle(document.querySelector('.os-bottom-nav'));
-      return ['borderTopColor','borderTopLeftRadius','boxShadow','backdropFilter'].map(key=>[key,frame[key],bar[key]]);
+      const frame=getComputedStyle(el),bar=getComputedStyle(document.querySelector('.os-bottom-nav-pill')),circle=getComputedStyle(document.querySelector('.os-bottom-nav-explore'));
+      return ['borderTopColor','boxShadow','backdropFilter'].map(key=>[key,frame[key],bar[key],circle[key]]);
     });
-    for(const [key,a,b] of appearance)assert.equal(a,b,`shared glass ${key}`);
+    for(const [key,a,b,c] of appearance){assert.equal(a,b,`pill glass ${key}`);assert.equal(a,c,`circle glass ${key}`);}
+    await expect(pill).toHaveCSS("border-radius","30px");
+    await expect(explore).toHaveCSS("border-radius","30px");
     await expect(frame).toHaveCSS("border-top-color", "rgba(241, 239, 232, 0.16)");
-    const [frameRim, navRim] = await Promise.all([frame, nav].map(surface =>
+    const [frameRim, navRim] = await Promise.all([frame, pill].map(surface =>
       surface.evaluate(el => getComputedStyle(el, "::after").backgroundImage)));
     assert.match(frameRim, /rgba\(241, 239, 232, 0\.28\)/);
     assert.equal(navRim, frameRim);
@@ -548,7 +792,7 @@ for (const width of [360,390,416]) test(`bottom navigation routes and stays visi
   await paired('.os-routine-open .os-habit-session');
   await nav.getByRole("link",{name:"Today",exact:true}).click();
   await expect(page.locator(".os-routine-open")).toHaveCount(0);
-  await page.getByRole("button",{name:"Note",exact:true}).click();
+  await page.getByRole("button",{name:"Notes",exact:true}).click();
   await expect(nav).toBeVisible();
   await paired('.os-note-open .os-checkin-session');
   await page.screenshot({path:`outputs/navigation-paired-rest-${width}.png`});
@@ -559,7 +803,10 @@ for (const width of [360,390,416]) test(`bottom navigation routes and stays visi
     await page.setViewportSize({width,height:844});
     await paired('.os-note-open .os-checkin-session');
   }
-  const body=notePage(page).getByRole("textbox",{name:"Write a note",exact:true});
+  const notes=notePage(page);
+  const footer=notes.getByRole("button",{name:"Add note",exact:true});
+  await footer.click();
+  const body=notes.getByRole("textbox",{name:"Write a note",exact:true});
   await body.fill("Navigation keeps these words.");await accepted(page,"Navigation keeps these words.");
   await page.evaluate(()=>{Object.defineProperty(window.visualViewport,"height",{configurable:true,value:window.innerHeight-240});window.visualViewport.dispatchEvent(new Event("resize"));});
   await expect(nav).toBeHidden();
@@ -567,10 +814,11 @@ for (const width of [360,390,416]) test(`bottom navigation routes and stays visi
   await expect(nav).toBeVisible();await body.blur();
   await nav.getByRole("link",{name:"Home",exact:true}).click();
   await nav.getByRole("link",{name:"Today",exact:true}).click();
-  await page.getByRole("button",{name:"Note",exact:true}).click();
+  await page.getByRole("button",{name:"Notes",exact:true}).click();
+  await notes.locator(".os-notes-panel").filter({hasText:"Navigation keeps these words."}).click();
   await expect(body).toHaveValue("Navigation keeps these words.");
+  await notes.getByRole("button",{name:"Back",exact:true}).click();
   await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
-  const footer=notePage(page).getByRole("button",{name:"New Note",exact:true});
   assert.ok((await footer.boundingBox()).y+(await footer.boundingBox()).height<=(await nav.boundingBox()).y,"last action can clear the navigation");
   await page.screenshot({path:`outputs/bottom-navigation-${width}.png`});
   await nav.getByRole("link",{name:"Today",exact:true}).click();
@@ -589,7 +837,7 @@ async function entryFixture(page, { version = 3, fresh = false, week = false } =
 
 async function openRoutineTool(page, name = "Routine") {
   if (!(await page.locator(".os-routine-open").isVisible())) {
-    await page.locator(".os-routine-entry").getByRole("button", { name, exact: true }).click();
+    await page.getByRole("button", { name, exact: true }).click();
   }
   await expect(page.locator(".os-routine-open")).toBeVisible();
 }
@@ -668,7 +916,7 @@ for(const width of [360,390,416])test(`tool consistency across six apps and supp
   async function audit(selector,name){
     const box=page.locator(selector);await expect(box).toBeVisible();
     await expect.poll(()=>box.evaluate(el=>Math.abs(el.getBoundingClientRect().left-el.closest('.os-swipe-session').getBoundingClientRect().left-1))).toBeLessThan(1);
-    await expect.poll(()=>box.evaluate(el=>el.closest('.os-swipe-session').getBoundingClientRect().height)).toBeGreaterThan(647.5);
+    await expect.poll(()=>box.evaluate(el=>el.closest('.os-swipe-session').getBoundingClientRect().height)).toBeGreaterThan(669.5);
     const metrics=await box.evaluate(el=>{
       const frame=el.closest('.os-swipe-session'),r=frame.getBoundingClientRect(),left=el.querySelector('.os-page-header-left'),heading=el.querySelector('.os-page-heading'),body=el.querySelector('.os-page-body');
       const start=heading?.getBoundingClientRect().height?heading:body;
@@ -679,7 +927,7 @@ for(const width of [360,390,416])test(`tool consistency across six apps and supp
       return {height:r.height,gap:start.getBoundingClientRect().top-left.getBoundingClientRect().bottom,growth:getComputedStyle(frame).getPropertyValue('--os-growth-ms').trim(),headers,overflow:el.scrollWidth>el.clientWidth+1};
     });
     assert.equal(metrics.gap,24,name+' content anchor');assert.equal(metrics.growth,'600');assert.equal(metrics.overflow,false);
-    assert.ok(metrics.height>=647.5,name+' shared minimum');
+    assert.ok(metrics.height>=669.5,name+' shared minimum');
     assert.equal(await box.evaluate(el => getComputedStyle(el.closest('.os-swipe-session')).backdropFilter), 'blur(12px) saturate(1.2)', name+' glass blur');
     for(const header of metrics.headers){assert.equal(header.size,'16px');assert.equal(header.weight,'700');assert.equal(header.line,'22.4px');assert.ok(header.width>=44&&header.height>=44);assert.equal(header.shared,true,name+' shared header engine');assert.ok(Math.abs(header.left-24)<1||Math.abs(header.right-24)<1,name+' visible edge '+JSON.stringify(header));}
     if(width===390){
@@ -699,13 +947,15 @@ for(const width of [360,390,416])test(`tool consistency across six apps and supp
     await auditAppType(page);results.push({name,...metrics,actions});
   }
   const nav=page.getByRole('navigation',{name:'Circle OS',exact:true});
-  await page.getByRole('button',{name:'Note',exact:true}).click();
-  const note=notePage(page);await audit('.os-note-page','Note');
+  await page.getByRole('button',{name:'Notes',exact:true}).click();
+  const note=notePage(page);await audit('.os-note-page','Notes collection');
+  await note.getByRole('button',{name:'Add note',exact:true}).click();
   await note.getByRole('textbox',{name:'Note title',exact:true}).fill('Consistency fixture');
   await note.getByRole('textbox',{name:'Write a note',exact:true}).fill('Synthetic writing kept safe.');
   await accepted(page,'Synthetic writing kept safe.');
-  await note.getByRole('button',{name:'History',exact:true}).click();await audit('.os-note-page','Note History');
-  await note.getByRole('button',{name:'Move Consistency fixture to Trash',exact:true}).click();
+  await note.getByRole('button',{name:'Back',exact:true}).click();await audit('.os-note-page','Notes with a saved panel');
+  await note.locator('.os-notes-panel').filter({hasText:'Consistency fixture'}).click();
+  await note.getByRole('button',{name:'Move note to Trash',exact:true}).click();
   await note.getByRole('button',{name:'Trash',exact:true}).click();await audit('.os-note-page','Note Trash');
   await note.locator('.os-writing-entry').click();await audit('.os-note-page','Note Trash detail');
   await note.getByRole('button',{name:'Delete forever',exact:true}).click();await audit('.os-note-page','Deletion confirmation');
@@ -751,24 +1001,6 @@ async function auditAppType(page) {
   assert.deepEqual(violations,[],"rendered app text follows the four-size/two-weight system");
 }
 
-async function imageEdges(png) {
-  const {data,info}=await sharp(png).raw().toBuffer({resolveWithObject:true});
-  let energy=0;
-  for(let y=1;y<info.height;y++)for(let x=1;x<info.width;x++)for(let c=0;c<3;c++){
-    const i=(y*info.width+x)*info.channels+c;
-    energy+=Math.abs(data[i]-data[i-info.channels])+Math.abs(data[i]-data[i-info.width*info.channels]);
-  }
-  return {data,energy};
-}
-
-async function shellThreadBounds(page) {
-  const gap=await page.locator(".os-routine-threads").evaluate(el=>{
-    const shell=el.parentElement.querySelector(".os-app-shell"),r=shell.getBoundingClientRect(),s=getComputedStyle(el);
-    return Math.max(...["top","right","bottom","left"].map(edge=>Math.abs(parseFloat(s.getPropertyValue(`--os-thread-shell-${edge}`))-r[edge])));
-  });
-  return gap;
-}
-
 for(const width of [360,390])test(`Small cross stays balanced beside mixed habit and task names at ${width}px`,{timeout:60_000},async()=>isolated(width,async page=>{
   await page.evaluate(()=>window.circle.updateState(s=>{
     const a=window.api;
@@ -789,65 +1021,36 @@ for(const width of [360,390])test(`Small cross stays balanced beside mixed habit
   await box.screenshot({path:`outputs/routine-small-cross-${width}.png`});
 }));
 
-for(const width of [360,390,1280])test(`Routine fixed threads stay sharp outside glass at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
-  await page.evaluate(()=>window.circle.updateState(s=>{
-    const a=window.api;
-    for(let i=0;i<12;i++)s=a.updateHabitDefinition(a.addHabitDefinition(s,`thread-${i}`).state,`thread-${i}`,`Read a page ${i+1}`);
-    return a.toggleHabitForDay(s,"thread-0",a.getDateKey());
+for (const width of [360, 390, 1280]) test(`Routine glass and navigation stay aligned without the old threads at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
+  await page.evaluate(() => window.circle.updateState(state => {
+    const api = window.api;
+    for (let i = 0; i < 12; i++) {
+      const id = `alignment-${i}`;
+      state = api.updateHabitDefinition(api.addHabitDefinition(state, id).state, id, `Read a page ${i + 1}`);
+    }
+    return state;
   }));
-  const threads=page.locator(".os-routine-threads");await expect(threads).toBeVisible();
-  await openRoutineTool(page);await page.waitForTimeout(300);
-  const box=page.locator(".os-habit-session");
-  await expect(threads).toHaveCSS("position","fixed");await expect(threads).toHaveCSS("filter","none");await expect(threads).toHaveCSS("pointer-events","none");
-  await expect(threads).toHaveCSS("background-size","100% 72%");await expect(threads).not.toHaveCSS("mask-image","none");
-  await expect.poll(()=>shellThreadBounds(page)).toBeLessThan(0.5);
-  await expect(page.locator(".os-app-shell")).toHaveCSS("background-color","rgba(0, 0, 0, 0)");
-  const canvas=await threads.boundingBox();assert.deepEqual(canvas,{x:0,y:0,width,height:844});
-  const shell=await page.locator(".os-app-shell").boundingBox(),frame=await box.boundingBox(),inside={x:frame.x+24,y:422,width:frame.width-48,height:300},outside={x:shell.x+shell.width-20,y:244,width:2,height:300};
-  await expect(page.locator(".os-route-stage")).toHaveCSS("view-transition-name","none");
-  await expect(page.locator(".os-route-content")).toHaveCSS("animation-fill-mode","none");
-  await page.waitForTimeout(150);
-  await page.screenshot({path:`outputs/routine-fixed-threads-frosted-${width}.png`});
-  const frosted=await page.screenshot({clip:inside,path:`outputs/routine-thread-glass-on-${width}.png`}),outsideBefore=await page.screenshot({clip:outside});
-  await box.evaluate(el=>{el.style.backdropFilter="none";el.style.webkitBackdropFilter="none";});
-  const clear=await page.screenshot({clip:inside,path:`outputs/routine-thread-glass-off-${width}.png`}),outsideAfter=await page.screenshot({clip:outside});
-  const frostedPixels=await imageEdges(frosted),clearPixels=await imageEdges(clear);
-  const edgeRatio=frostedPixels.energy/clearPixels.energy;
-  console.log("Rendered thread glass",width,JSON.stringify({edgeRatio}));
-  assert.ok(edgeRatio<0.95,"glass suppresses fine thread edges inside its frame");
-  assert.ok((await imageEdges(outsideBefore)).data.equals((await imageEdges(outsideAfter)).data),"outside thread pixels stay unchanged when glass filtering changes");
-  await box.evaluate(el=>{el.style.removeProperty("backdrop-filter");el.style.removeProperty("-webkit-backdrop-filter");});
-  await expect(box).toHaveCSS("backdrop-filter","blur(12px) saturate(1.2)");
-  await page.waitForTimeout(150);
-  const shown=await sharp(await page.screenshot()).raw().toBuffer({resolveWithObject:true});
-  await threads.evaluate(el=>el.style.visibility="hidden");
-  await page.waitForTimeout(100);
-  const hidden=await sharp(await page.screenshot()).raw().toBuffer({resolveWithObject:true});
-  await threads.evaluate(el=>el.style.removeProperty("visibility"));
-  await page.waitForTimeout(100);
-  const columnDifference=x=>{let difference=0;for(let y=244;y<544;y++)for(let c=0;c<3;c++){const i=(y*shown.info.width+x)*shown.info.channels+c;difference+=Math.abs(shown.data[i]-hidden.data[i]);}return difference;};
-  const innerDifference=columnDifference(Math.floor(shell.x+shell.width-20)),edgeDifference=columnDifference(Math.floor(shell.x+shell.width-1));
-  assert.ok(innerDifference>0,"threads reach the shell's inner edge");
-  assert.ok(edgeDifference<innerDifference*0.25,"threads fade into the last 16px of the shell");
-  if(width>=900){let escaped=0;for(let y=0;y<shown.info.height;y++)for(let x=0;x<shown.info.width;x++)if(x<shell.x||x>=shell.x+shell.width||y<shell.y||y>=shell.y+shell.height)for(let c=0;c<3;c++){const i=(y*shown.info.width+x)*shown.info.channels+c;escaped+=Math.abs(shown.data[i]-hidden.data[i]);}assert.equal(escaped,0,"no thread pixels escape the outer shell");}
-  await page.screenshot({path:`outputs/routine-fixed-threads-final-${width}.png`});
-  await page.evaluate(()=>window.scrollTo(0,200));await expect.poll(()=>page.evaluate(()=>window.scrollY)).toBeGreaterThan(100);
-  assert.deepEqual(await threads.boundingBox(),canvas,"thread canvas stays attached to the viewport during scroll");
-  await expect.poll(()=>shellThreadBounds(page)).toBeLessThan(0.5);
-  assert.ok((await box.boundingBox()).y<frame.y-100,"App Box moves across the fixed background");
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,"background creates no horizontal overflow");
-  await box.getByRole("button",{name:"Record",exact:true}).click();await expect(box).toHaveClass(/is-history/);await expect(threads).toBeVisible();assert.deepEqual(await threads.boundingBox(),canvas);
-  await expect.poll(()=>shellThreadBounds(page)).toBeLessThan(0.5);
-  await box.getByRole("button",{name:"Back",exact:true}).click();
-  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));
-  await expect(box.locator(".os-protocol-home")).toBeVisible();await expect(threads).toBeVisible();assert.deepEqual(await threads.boundingBox(),canvas);
-  await box.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:-500,deltaY:0,bubbles:true,cancelable:true})));
-  await expect(box.locator(".os-routine-body")).toBeVisible();await box.getByRole("button",{name:"Back",exact:true}).click();
-  await expect(threads).toBeVisible();await expect(page.locator(".os-app-shell")).toHaveCSS("background-color","rgba(0, 0, 0, 0)");
-  await page.evaluate(()=>window.goto("/os/mirror"));await expect(notePage(page)).toHaveCount(0);
-  await expect(threads).toBeHidden();await expect(page.locator(".os-app-shell")).toHaveCSS("background-color","rgb(25, 24, 19)");
-  await expect(page.locator(".os-route-stage")).toHaveCSS("view-transition-name","circle-os-route");
-  await expect(page.locator(".os-route-content")).toHaveCSS("animation-fill-mode","both");
+  await openRoutineTool(page);
+  const box = page.locator(".os-habit-session");
+  const nav = page.getByRole("navigation", { name: "Circle OS" });
+  const oldThreads = page.locator(".os-routine-threads");
+  await expect(oldThreads).toHaveCount(0);
+  await expect(box).toHaveCSS("backdrop-filter", "blur(12px) saturate(1.2)");
+  await expect(page.locator(".os-route-stage")).toHaveCSS("view-transition-name", "none");
+  const expectAligned = () => expect.poll(async () => {
+    const frame = await box.boundingBox();
+    const bar = await nav.boundingBox();
+    return Math.max(Math.abs(frame.x - bar.x), Math.abs(frame.width - bar.width));
+  }).toBeLessThan(1);
+  await expectAligned();
+  await page.evaluate(() => window.scrollTo(0, 200));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+  await expectAligned();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await box.getByRole("button", { name: "Record", exact: true }).click();
+  await expect(box).toHaveClass(/is-history/);
+  await expect(oldThreads).toHaveCount(0);
+  await expectAligned();
 }));
 
 for (const width of [360,390]) test(`Record matches Habits and clear glyph spacing at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
@@ -876,9 +1079,8 @@ for (const width of [360,390]) test(`Record matches Habits and clear glyph spaci
   }).filter(Boolean));
   assert.equal(geometry.length,2,"measure both Habit and Task row/button alignment");
   for(const g of geometry){assert.ok(Math.abs(g.cross-g.head)<0.5);assert.ok(Math.abs(g.copy-g.head-20)<0.5);assert.ok(Math.abs(g.left-24)<0.5&&Math.abs(g.right-24)<0.5,'creation buttons have equal 24px inside-border gutters');assert.equal(g.height,52);assert.equal(g.width,width-98);}
-  const glass=await box.evaluate(el=>{const thread=getComputedStyle(document.querySelector(".os-routine-threads")),window=el.querySelector(".os-app-window"),surface=getComputedStyle(el);return {thread:thread.backgroundImage,z:thread.zIndex,surfaceZ:surface.zIndex,filter:surface.backdropFilter,diffusion:thread.filter,pointer:thread.pointerEvents,old:getComputedStyle(window,"::after").content};});
-  assert.ok(glass.thread.includes("data:image/svg+xml"));assert.equal(glass.z,"0");assert.equal(glass.surfaceZ,"1");assert.equal(glass.pointer,"none");assert.equal(glass.old,"none");assert.match(glass.filter,/blur\(12px\).*saturate\(1.2\)/);
-  assert.equal(glass.diffusion,"none");
+  const glass=await box.evaluate(el=>{const window=el.querySelector(".os-app-window"),surface=getComputedStyle(el);return {surfaceZ:surface.zIndex,filter:surface.backdropFilter,old:getComputedStyle(window,"::after").content};});
+  assert.equal(glass.surfaceZ,"1");assert.equal(glass.old,"none");assert.match(glass.filter,/blur\(12px\).*saturate\(1.2\)/);
   await box.screenshot({path:`outputs/routine-cross-glass-${width}.png`});
   await auditAppType(page);
   await page.evaluate(()=>window.circle.updateState(s=>window.api.updateHabitDefinitionParts(s,"record-style",{action:"Changed later",cue:"Not the saved cue",identity:"Not the saved result"})));
@@ -930,7 +1132,7 @@ test("Record keeps text-only legacy words and first-line Undo without borrowing 
   assert.equal(await page.evaluate(day=>JSON.stringify(window.circle.state.habits.completions[day+":legacy-copy"]),dates.past),pastBefore);
 }));
 
-test("Routine reduced transparency hides background threads and keeps cross targets usable",{timeout:60_000},async()=>isolated(390,async(page,context)=>{
+test("Routine reduced transparency uses solid glass and keeps cross targets usable",{timeout:60_000},async()=>isolated(390,async(page,context)=>{
   await page.evaluate(()=>window.circle.updateState(s=>window.api.updateHabitDefinition(window.api.addHabitDefinition(s,"clear-hit").state,"clear-hit","Read a line")));
   await openRoutineTool(page);const box=page.locator(".os-habit-session");
   const hits=await box.locator(".os-routine-clear").evaluate(el=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height,hits:[r.left+2,r.right-2].map(x=>document.elementFromPoint(x,r.top+r.height/2)?.closest("button")===el)};});
@@ -941,7 +1143,6 @@ test("Routine reduced transparency hides background threads and keeps cross targ
   await expect(box.getByRole("button",{name:"New habit",exact:true})).toHaveCSS("backdrop-filter","none");
   const fallback=await box.locator('.os-row-tick .os-checkbox-face').first().evaluate(el=>({filter:getComputedStyle(el).backdropFilter,background:getComputedStyle(el).backgroundColor,sheen:getComputedStyle(el.querySelector('.os-checkbox-liquid')).backgroundImage}));
   assert.deepEqual(fallback,{filter:"none",background:"rgb(25, 24, 19)",sheen:"none"});
-  await expect(page.locator(".os-routine-threads")).toHaveCSS("display","none");
   await box.getByRole("button",{name:"Clear habit: Read a line",exact:true}).click();await expect(box.locator(".os-repeated-habit")).toHaveCount(0);
 }));
 
@@ -1571,10 +1772,10 @@ for (const [width, height] of [[360, 667], [390, 844]]) {
     await expect(box.locator(".os-protocol-title-row")).toBeVisible();
     await expect(box.locator(".os-protocol")).not.toHaveClass(/os-app-flip/);
     await box.getByRole("button", { name: "Back", exact: true }).click();
-    await expect(page.locator(".os-routine-entry")).toBeVisible();
+    await expect(page.locator(".os-today-previews")).toBeVisible();
     await openRoutineTool(page);
     await page.goBack();
-    await expect(page.locator(".os-routine-entry")).toBeVisible();
+    await expect(page.locator(".os-today-previews")).toBeVisible();
   }, { height, reducedMotion: width === 390 ? "no-preference" : "reduce" }));
 }
 
@@ -1975,33 +2176,74 @@ test("baseline legacy placeholder report is reproducible without touching owner 
 },{account:false}));
 
 const notePage=page=>page.locator(".os-writing-page.os-note-page");
-for(const [width,height] of [[360,740],[390,844],[416,844]])test(`full-page Note is button-only on Today and keeps writing at ${width}x${height}`,{timeout:90_000},async()=>isolated(width,async(page)=>{
-  const entry=page.locator(".os-routine-entry").getByRole("button",{name:"Note",exact:true});
+for(const [width,height] of [[360,740],[390,844],[416,844]])test(`Notes collection and full-page writing at ${width}x${height}`,{timeout:90_000},async()=>isolated(width,async(page,context)=>{
+  if (width === 390) {
+    await page.evaluate(()=>window.circle.updateState(state=>{
+      const {profileCase}=state.profile;
+      const answers=[...profileCase.survey.answers,{questionId:"checkin-note",kind:"note",answer:"Synthetic older check-in note"}];
+      return {...state,profile:{...state.profile,profileCase:{...profileCase,survey:{...profileCase.survey,answers}}}};
+    }));
+    await expect.poll(()=>page.evaluate(()=>window.writing.view?.sources.some(source=>source.sourceSystem==="existing"&&source.id==="checkin-note"))).toBe(true);
+  }
+  const entry=page.locator(".os-today-previews").getByRole("button",{name:"Notes",exact:true});
   await expect(notePage(page)).toBeHidden();await expect(entry).toBeVisible();
   await entry.click();await expect(page.locator(".os-note-open")).toBeVisible();assert.equal(await page.evaluate(()=>location.hash),"#note");
-  await expect(page.locator(".os-routine-entry")).toBeHidden();await expect(page.locator(".os-nav")).toBeHidden();
+  await expect(page.locator(".os-today-previews")).toBeHidden();await expect(page.locator(".os-nav")).toBeHidden();
   const box=notePage(page),frame=page.locator(".os-note-open .os-checkin-session"),body=box.getByRole("textbox",{name:"Write a note",exact:true});
-  await expect.poll(()=>frame.evaluate(el=>el.getBoundingClientRect().height)).toBe(height-196);
-  const floor=await frame.evaluate(el=>el.getBoundingClientRect().height);assert.ok(Math.abs(floor-(height-196))<1);
+  await expect.poll(()=>frame.evaluate(el=>el.getBoundingClientRect().height)).toBe(height-174);
+  const floor=await frame.evaluate(el=>el.getBoundingClientRect().height);
   const thought=await thoughts(page);const thoughtMetrics=await thought.evaluate(el=>({height:el.closest(".os-swipe-session").getBoundingClientRect().height,gap:el.querySelector(".os-deep-thought-question").getBoundingClientRect().top-el.querySelector(".os-page-header-left").getBoundingClientRect().bottom}));
   assert.equal(thoughtMetrics.height,floor);assert.equal(thoughtMetrics.gap,24);
-  await frame.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:-500,deltaY:0,bubbles:true,cancelable:true})));await expect(body).toBeVisible();
+  await frame.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:-500,deltaY:0,bubbles:true,cancelable:true})));await expect(box.getByRole("heading",{name:"Notes",exact:true})).toBeVisible();
+  const add=box.getByRole("button",{name:"Add note",exact:true});
+  const goBack=box.getByRole("button",{name:"Back",exact:true});
+  const panel=title=>box.locator(".os-notes-panel").filter({hasText:title});
+  await expect(box.locator(".os-notes-collection")).toBeEmpty();
+  await expect(add).toHaveText("+");await add.click();await expect(body).toBeVisible();
+  await goBack.click();await expect(box.locator(".os-notes-collection")).toBeEmpty();
+  await add.click();await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toBeFocused();
   await frame.screenshot({path:`outputs/note-full-page-empty-${width}.png`});
   await box.getByRole("textbox",{name:"Note title",exact:true}).fill("A full page for writing");await body.fill("My words stay here when I return.");await accepted(page,"My words stay here when I return.");await body.blur();
   await frame.screenshot({path:`outputs/note-full-page-written-${width}.png`});
   const long=Array(40).fill("Long writing grows the page downward.").join("\n");await body.fill(long);await accepted(page,long);
   const metrics=await box.evaluate(el=>({height:el.closest(".os-swipe-session").getBoundingClientRect().height,scrollers:[...el.querySelectorAll("*")].filter(n=>["auto","scroll"].includes(getComputedStyle(n).overflowY)&&n.scrollHeight>n.clientHeight+1).length,gap:el.querySelector("textarea").getBoundingClientRect().top-el.querySelector(".os-page-header-left").getBoundingClientRect().bottom}));
   assert.ok(metrics.height>floor+400);assert.equal(metrics.scrollers,0);assert.equal(metrics.gap,24);
-  await box.getByRole("button",{name:"New Note",exact:true}).scrollIntoViewIfNeeded();await box.getByRole("button",{name:"New Note",exact:true}).click();await expect(body).toHaveValue("");
-  await options(box,"History");await row(box,"A full page for writing").waitFor();await trashRow(box,"A full page for writing").click();
+  await goBack.click();await expect(panel("A full page for writing")).toBeFocused();
+  await expect(box.getByRole("button",{name:/Move.*to Trash/})).toHaveCount(0);
+  await context.setOffline(true);
+  await add.click();await expect(body).toHaveValue("");
+  await box.getByRole("textbox",{name:"Note title",exact:true}).fill("Second note");await body.fill("A short note still gives enough words to fill two preview lines.");await goBack.click();
+  await expect(panel("Second note")).toBeVisible();
+  await context.setOffline(false);
+  await add.click();await box.getByRole("textbox",{name:"Note title",exact:true}).fill("Newest note");await body.fill("A longer note preview, spread across enough lines to check the column height. ".repeat(3));await goBack.click();
+  await expect(panel("Newest note")).toBeVisible();
+  const layout=await box.locator(".os-notes-columns").evaluate(grid=>{
+    const [left,right]=grid.children;
+    const [first,third]=left.querySelectorAll(".os-notes-panel");const second=right.querySelector(".os-notes-panel");
+    const a=first.getBoundingClientRect(),b=second.getBoundingClientRect(),c=third.getBoundingClientRect();
+    const previews=[first,second,third].map(panel=>{
+      const body=panel.querySelector("[data-note-preview-lines]");
+      const style=getComputedStyle(body);
+      return {limit:Number(style.webkitLineClamp),lines:Math.round(body.getBoundingClientRect().height/parseFloat(style.lineHeight)),type:[getComputedStyle(panel.querySelector("strong")).fontSize,style.fontSize,getComputedStyle(panel.querySelector("time")).fontSize]};
+    });
+    return {first:first.querySelector("strong").textContent,second:second.querySelector("strong").textContent,gaps:[b.left-a.right,b.top-a.top,c.top-a.bottom],previews};
+  });
+  assert.deepEqual([layout.first,layout.second,layout.gaps],["Newest note","Second note",[4,0,4]]);
+  assert.deepEqual(layout.previews,[4,2,6].map(limit=>({limit,lines:limit,type:["18px","16px","12px"]})));
+  await expect(box.getByText("Synthetic older check-in note",{exact:true})).toHaveCount(0);
+  await expect(panel("Newest note").locator("time")).toHaveText(/\d:\d\d (AM|PM)/);
+  await panel("A full page for writing").click();
+  await expect(box.getByRole("button",{name:"New Note",exact:true})).toHaveCount(0);
+  await box.getByRole("button",{name:"Move note to Trash",exact:true}).click();
+  await expect(panel("A full page for writing")).toHaveCount(0);
   await box.getByRole("button",{name:"Trash",exact:true}).click();await row(box,"A full page for writing").click();await box.getByRole("button",{name:"Restore",exact:true}).click();
-  await row(box,"A full page for writing").click();await expect(body).toHaveValue(long);
+  await panel("A full page for writing").click();await expect(body).toHaveValue(long);
   await expect(box.getByRole("button",{name:"Line",exact:true})).toHaveCount(0);
   await expect(box.getByRole("button",{name:"Show a Line",exact:true})).toHaveCount(0);
   await expect(page.locator(".os-line-page")).toHaveCount(0);
-  await box.getByRole("button",{name:"Back",exact:true}).click();await expect(entry).toBeVisible();await expect(box).toBeHidden();
-  await entry.click();await page.reload();await ready(page);await expect(body).toHaveValue(long);await expect(page.locator(".os-note-open")).toBeVisible();
-  await box.getByRole("button",{name:"Back",exact:true}).click();await openRoutineTool(page);const routine=page.locator(".os-habit-session");await expect.poll(async()=>(await routine.boundingBox()).height).toBe(floor);assert.ok(Math.abs((await routine.boundingBox()).height-floor)<1);
+  await goBack.click();await goBack.click();await expect(entry).toBeVisible();await expect(box).toBeHidden();
+  await entry.click();await page.reload();await ready(page);await expect(panel("A full page for writing")).toBeVisible();await expect(panel("Second note")).toBeVisible();
+  await goBack.click();await openRoutineTool(page);const routine=page.locator(".os-habit-session");await expect.poll(async()=>(await routine.boundingBox()).height).toBe(floor);assert.ok(Math.abs((await routine.boundingBox()).height-floor)<1);
   await routine.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true})));await expect(routine.locator(".os-protocol-home")).toBeVisible();
   const protocolMetrics=await routine.locator(".os-protocol-home").evaluate(el=>({height:el.closest(".os-swipe-session").getBoundingClientRect().height,gap:el.querySelector(".os-protocol-past").getBoundingClientRect().top-el.querySelector(".os-page-header-left").getBoundingClientRect().bottom}));assert.equal(protocolMetrics.height,floor);assert.equal(protocolMetrics.gap,24);
   await routine.getByRole("button",{name:"Back",exact:true}).click();await entry.click();
@@ -2201,12 +2443,57 @@ test("Deep Thoughts quietly recovers drafts and clearing an answer survives relo
 
 test("failed local commit keeps open text and retry saves once",{timeout:90_000},async()=>isolated(390,async page=>{
   const box=notePage(page);
+  await page.getByRole("button",{name:"Notes",exact:true}).click();
+  await box.getByRole("button",{name:"Add note",exact:true}).click();
   await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,...args){if(this.name==="writing"&&value.entries&&Object.keys(value.entries).length){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic full device","QuotaExceededError");}return put.call(this,value,...args);};});
-  await box.getByRole("textbox",{name:"Note title",exact:true}).fill("Synthetic retry");await expect(box.getByRole("alert")).toContainText("Your open text is still here");await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toHaveValue("Synthetic retry");
+  await box.getByRole("textbox",{name:"Note title",exact:true}).fill("Synthetic retry");await box.getByRole("button",{name:"Back",exact:true}).click();await expect(box.getByRole("alert")).toContainText("Your open text is still here");await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toHaveValue("Synthetic retry");
   assert.equal(Object.keys((await page.evaluate(()=>window.api.load())).entries).length,0);
   await box.getByRole("button",{name:"Try again",exact:true}).click();await saved(page);
+  await box.getByRole("button",{name:"Back",exact:true}).click();await expect(box.locator(".os-notes-panel")).toContainText("Synthetic retry");
   assert.equal(Object.values((await page.evaluate(()=>window.api.load())).entries)[0].versions.length,1);
 }));
+
+for (const width of [360, 390, 416]) test(`Home Imprint launches whole and clips at the correct edges at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
+  await page.goto(`${baseURL}/os?launch-fixture=1`);
+  await expect(page).toHaveURL(/\/os\/home$/);
+  const nav = page.getByRole("navigation", { name: "Circle OS" });
+  assert.deepEqual(await nav.getByRole("link").allTextContents(), ["Today", "Home", "Reflect", "Explore"]);
+  const background = page.locator(".os-imprint-background");
+  const canvas = background.locator("canvas");
+  await expect(canvas).toHaveAttribute("data-ready", "true");
+  const geometry = () => background.evaluate(el => {
+    const shell = el.getBoundingClientRect();
+    const art = el.querySelector(".imprint-home-art");
+    const rect = art.getBoundingClientRect();
+    return { width: rect.width, height: rect.height, middle: (rect.left + rect.right) / 2,
+      left: shell.left, right: shell.right, clip: getComputedStyle(art).clipPath.replace(/(?<!\d)0%/g, "0px") };
+  });
+  const home = await geometry();
+  assert.ok(Math.abs(home.middle - (home.left + home.right) / 2) < 1);
+  for (const [name, view, edge, clip] of [
+    ["Today", "today", "right", "inset(0px 50% 0px 0px)"],
+    ["Reflect", "reflect", "left", "inset(0px 0px 0px 50%)"],
+  ]) {
+    await nav.getByRole("link", { name, exact: true }).click();
+    await expect(background).toHaveAttribute("data-imprint-view", view);
+    await expect(background).toHaveAttribute("aria-hidden", "true");
+    const crop = await geometry();
+    assert.equal(crop.width, home.width);
+    assert.equal(crop.height, home.height);
+    await expect.poll(async () => {
+      const settled = await geometry();
+      return Math.abs(settled.middle - settled[edge]);
+    }, { message: `${name} crop at ${width}px: ${JSON.stringify(crop)}` }).toBeLessThan(1);
+    await expect.poll(async () => (await geometry()).clip).toBe(clip);
+    await expect(canvas).toHaveAttribute("data-pulsing", "false");
+    if (width === 390 && name === "Today") {
+      await page.screenshot({ path: "outputs/compact-navigation-imprint-390.png" });
+    }
+  }
+  await page.goto(`${baseURL}/os?launch-fixture=1#note`);
+  await expect(page).toHaveURL(/\/os\/today.*#note$/);
+  await expect(page.getByRole("textbox", { name: "Write a note" })).toBeVisible();
+}, { account: imprintAccount }));
 
 for (const width of [360, 390]) test(`real writing feeds the Home Imprint at ${width}px`, { timeout: 120_000 }, async () => {
   const reduced = width === 360;
@@ -3428,12 +3715,12 @@ test('Routine header reflection stays inside text and respects reduced motion',{
 },{reducedMotion:'no-preference'}));
 
 for(const width of [360,390])test(`shared App Box geometry at ${width}px`,{timeout:90_000},async()=>isolated(width,async page=>{
-  async function measure(selector){await expect.poll(()=>page.locator(selector).evaluate(el=>el.closest(".os-swipe-session").getBoundingClientRect().height)).toBe(648);return page.locator(selector).evaluate(el=>{
+  async function measure(selector){await expect.poll(()=>page.locator(selector).evaluate(el=>el.closest(".os-swipe-session").getBoundingClientRect().height)).toBe(670);return page.locator(selector).evaluate(el=>{
     const frame=el.closest(".os-swipe-session"),header=el.querySelector(".os-page-header-left");
     const main=el.querySelector(".os-routine-body, .os-protocol-past, textarea, input, h1, h2, [data-os-main-text]");
     return {height:frame.getBoundingClientRect().height,gap:main.getBoundingClientRect().top-header.getBoundingClientRect().bottom,scroll:el.scrollHeight>el.clientHeight+1};
   });}
-  await page.getByRole("button",{name:"Note",exact:true}).click();
+  await page.getByRole("button",{name:"Notes",exact:true}).click();
   const result={note:await measure(".os-writing-page.os-note-page")};
   await thoughts(page);result.thoughts=await measure(".os-writing-page.os-thoughts-page");
   await page.getByRole("navigation",{name:"Circle OS",exact:true}).getByRole("link",{name:"Today",exact:true}).click();
@@ -3443,7 +3730,7 @@ for(const width of [360,390])test(`shared App Box geometry at ${width}px`,{timeo
   await expect(routine.locator(".os-protocol-home")).toBeVisible();await page.waitForTimeout(450);
   result.protocol=await measure(".os-habit-session .os-page-layout");
   console.log("Measured App Boxes",width,JSON.stringify(result));
-  assert.equal(result.note.height,648);assert.equal(result.thoughts.height,648);
+  assert.equal(result.note.height,670);assert.equal(result.thoughts.height,670);
   assert.ok(Math.abs(result.habit.height-result.protocol.height)<=1,"full-page tools share one minimum");
   assert.equal(result.habit.height,result.note.height,"opened writing and tools share the approved full-page floor");
   for(const item of Object.values(result)){assert.equal(item.scroll,false);assert.ok(Math.abs(item.gap-24)<=1,"approved content anchor");}
@@ -3617,7 +3904,7 @@ test("Note shares immediate header light and accessible glass fallbacks",{timeou
   const cdp=await context.newCDPSession(page);
   await cdp.send("Emulation.setEmulatedMedia",{features:[{name:"prefers-reduced-transparency",value:"reduce"},{name:"prefers-reduced-motion",value:"reduce"}]});
   assert.equal(await page.evaluate(()=>matchMedia("(prefers-reduced-transparency: reduce)").matches),true);
-  await expect(frame).toHaveCSS("backdrop-filter","none");await expect(page.locator(".os-routine-threads")).toBeHidden();
+  await expect(frame).toHaveCSS("backdrop-filter","none");
   assert.equal(await frame.evaluate(el => getComputedStyle(el, "::after").display), "none");
   await back.click();await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toBeVisible();
   const fresh=box.getByRole("button",{name:"New Note",exact:true});await expect(fresh).toHaveCSS("backdrop-filter","none");
@@ -3639,15 +3926,19 @@ test("leaving Note and hiding the page flush autosave before the pause; composit
   await page.evaluate(()=>window.goto("/os"));await expect(body).toHaveValue("Saved when leaving Today.");
 }));
 
-test("older Note recovery copies remain reachable in History without draft controls",{timeout:90_000},async()=>isolated(390,async page=>{
+test("older Note recovery copies are reachable from the collection with a short date",{timeout:90_000},async()=>isolated(390,async page=>{
+  await page.clock.setFixedTime(new Date("2026-11-26T12:00:00+07:00"));
   await page.evaluate(async()=>{
     const scope=window.api.getAccountScope(),owner="account:"+scope.accountId;
-    for(const title of ["Recovered one","Recovered two"]){const at=new Date().toISOString(),draft={id:crypto.randomUUID(),entryId:crypto.randomUUID(),kind:"note",baseVersionId:null,baseGeneration:0,startedAt:at,attribution:window.api.writingAttribution(at,"Asia/Bangkok"),content:{title,body:title+" body",tags:[]},source:null};
+    for(const title of ["Recovered one","Recovered two"]){const at="2026-11-25T05:00:00.000Z",draft={id:crypto.randomUUID(),entryId:crypto.randomUUID(),kind:"note",baseVersionId:null,baseGeneration:0,startedAt:at,attribution:window.api.writingAttribution(at,"Asia/Bangkok"),content:{title,body:title+" body",tags:[]},source:null};
       await window.api.commitWritingOperation(scope,{owner,operationId:crypto.randomUUID(),at,type:"write-draft",draft,expectedDraftVersion:0});}
   });
-  const box=notePage(page);await options(box,"History");await expect(box).not.toContainText(/draft|discard/i);
-  for(const title of ["Recovered one","Recovered two"]){await row(box,title).click();await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toHaveValue(title);await accepted(page,title+" body");await options(box,"History");}
-  await saved(page,2);await page.reload();await ready(page);await options(box,"History");await expect(row(box,"Recovered one")).toHaveCount(1);await expect(row(box,"Recovered two")).toHaveCount(1);
+  await page.goto(`${baseURL}/os#note`);await ready(page);
+  const box=notePage(page),panel=title=>box.locator(".os-notes-panel").filter({hasText:title});
+  await expect(box.getByRole("heading",{name:"Notes",exact:true})).toBeVisible();
+  await expect(box).not.toContainText(/draft|discard/i);await saved(page,0);
+  for(const title of ["Recovered one","Recovered two"]){await expect(panel(title).locator("time")).toHaveText("Nov 25");await panel(title).click();await expect(box.getByRole("textbox",{name:"Note title",exact:true})).toHaveValue(title);await accepted(page,title+" body");await box.getByRole("button",{name:"Back",exact:true}).click();}
+  await saved(page,2);await page.reload();await ready(page);await expect(panel("Recovered one")).toHaveCount(1);await expect(panel("Recovered two")).toHaveCount(1);
 }));
 
 test("erasing a new Note before autosave creates no empty History entry",{timeout:90_000},async()=>isolated(360,async page=>{

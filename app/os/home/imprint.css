@@ -20,6 +20,15 @@
 .imprint-loop-reference, .imprint-loop-trace { display: block; width: 100%; max-width: 390px; height: auto; aspect-ratio: 2 / 3; margin: 16px auto; }
 .imprint-home-art { position: relative; width: 100%; max-width: 390px; aspect-ratio: 2 / 3; margin: 16px auto; }
 .imprint-home-art > img, .imprint-home-art > canvas { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; }
+.circle-os .os-imprint-background { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.circle-os .os-imprint-background .imprint-home-art { position: absolute; top: 84px; margin: 0; }
+.circle-os [data-imprint-view="home"] .imprint-home-art { left: 50%; transform: translateX(-50%); }
+.circle-os [data-imprint-view="today"] .imprint-home-art { left: 100%; transform: translateX(-50%); clip-path: inset(0 50% 0 0); }
+.circle-os [data-imprint-view="reflect"] .imprint-home-art { right: 100%; transform: translateX(50%); clip-path: inset(0 0 0 50%); }
+.circle-os .os-imprint-background:not([data-imprint-view="home"]) .imprint-home-error { display: none; }
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .circle-os .os-imprint-background:not([data-imprint-view="home"]) { display: none; }
+}
 .imprint-home-error { position: absolute; inset: auto 12px 12px; margin: 0; }
 .imprint-study > p > a { color: inherit; }
 .imprint-personal-checks { max-width: 680px; margin: 24px auto; }

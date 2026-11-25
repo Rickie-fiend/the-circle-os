@@ -12,7 +12,7 @@ import { RoutineHeaderButton } from "./routine-controls";
 import { useWritingSync } from "./writing-sync-provider";
 import { QuotePage, type QuoteNavigation } from "./quotes/quote-page";
 import type { Quote } from "./quotes/quote-model.js";
-import { writingAttribution, type WritingCommand, type WritingContent, type WritingDraft, type WritingDraftInput, type WritingHistoryEntry, type WritingKind, type WritingSource, type WritingVersion } from "./writing-model.js";
+import { writingAttribution, type WritingCommand, type WritingContent, type WritingDraftInput, type WritingHistoryEntry, type WritingKind, type WritingSource, type WritingVersion } from "./writing-model.js";
 
 type Session = { draft: WritingDraftInput; version: number; revision: number; savedRevision: number; conflict: boolean };
 type Page = "editor" | "history" | "sync" | "copies" | "detail" | "versions" | "version" | "trash" | "trash-detail" | "delete" | "drafts" | "conflict" | "quote";
@@ -48,10 +48,19 @@ function TrashIcon() {
   return <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M5 6l1 14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1l1-14M10 10v7M14 10v7" /></svg>;
 }
 
+function NoteExcerpt({ body }: { body: string }) {
+  const text = body.trim();
+  if (!text) return null;
+  const length = Array.from(text).length;
+  const lines = length <= 120 ? 2 : length <= 400 ? 4 : 6;
+  return <span data-note-preview-lines={lines}>{text}</span>;
+}
+
 /** The live buffer is independent of provider refreshes. Commands are queued per
  * editor; only this editor's accepted Save may advance its optimistic base. */
 function WritingPage({ writing, kind, source = null, placeholder = "Write what comes up...", onLabel, onExit, navigation, onBusyChange, onSent, onAdmin, onClear, embedded = false, onNextQuestion, nextQuote, onQuoteNavigation, onQuoteReaction }: Props & { writing: WritingContextValue }) {
-  const back = useAppBack<Page>("editor");
+  const collection = isNote(kind);
+  const back = useAppBack<Page>(collection ? "history" : "editor");
   const sync = useWritingSync();
   const noteNavigation = isNote(kind) || (kind === "deep-thought" && !embedded);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -78,11 +87,10 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   const animationDone = useRef(false);
   const acceptedSend = useRef<Session | null>(null);
   const saving = useRef<Promise<boolean> | null>(null);
-  const startingNote = useRef(false);
+  const [trashingNote, setTrashingNote] = useState(false);
   const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveLatest = useRef<() => Promise<boolean>>(() => Promise.resolve(true));
   const composing = useRef(false);
-  const initializedNote = useRef(false);
   const [focused, setFocused] = useState(false);
   const activeMs = useRef(0);
   const focusAt = useRef<number | null>(null);
@@ -102,7 +110,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     && (!isNote(kind) || draft.baseVersionId || draft.content.title.trim() || draft.content.body.trim()));
   const recovered = !fresh && (isNote(kind) || matchingDrafts.length === 1) ? matchingDrafts[0] : null;
   const selectedEntry = [...entries, ...trashed].find(entry => entry.id === selected);
-  const defaultEntry = !fresh && isNote(kind) ? entries[0] : !fresh && (embedded || kind === "deep-thought") && source?.questionId ? entries.find(entry => entry.source?.questionId === source.questionId) : undefined;
+  const defaultEntry = !fresh && (embedded || kind === "deep-thought") && source?.questionId ? entries.find(entry => entry.source?.questionId === source.questionId) : undefined;
   const shown = session?.draft.content || recovered?.content || defaultEntry?.content || blank();
   const sourceShown = session ? session.draft.source : recovered ? recovered.source : defaultEntry ? defaultEntry.source : source;
   const composingKind = session?.draft.kind || recovered?.kind || defaultEntry?.kind || kind;
@@ -112,7 +120,24 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   const dirty = Boolean(session ? session.revision !== session.savedRevision : recovered);
   const textareas = useRef<HTMLFormElement | null>(null);
   const noteContent = useRef<HTMLDivElement | null>(null);
+  const collectionReturn = useRef<{ scroll: number; entry: string | null } | null>(null);
+  const focusNewNote = useRef(false);
   useLayoutEffect(() => { if (noteContent.current?.parentElement) noteContent.current.parentElement.scrollTop = 0; }, [back.side]);
+  useLayoutEffect(() => {
+    if (!collection) return;
+    if (back.side === "editor" && !back.flipping) {
+      window.scrollTo(0, 0);
+      if (focusNewNote.current) textareas.current?.querySelector("textarea")?.focus({ preventScroll: true });
+      focusNewNote.current = false;
+    } else if (back.side === "history" && !back.flipping && collectionReturn.current) {
+      const { scroll, entry } = collectionReturn.current;
+      collectionReturn.current = null;
+      const panel = entry ? noteContent.current?.querySelector<HTMLButtonElement>(`[data-note-entry="${CSS.escape(entry)}"]`) : null;
+      const add = noteContent.current?.closest(".os-writing-page")?.querySelector<HTMLButtonElement>(".os-notes-add");
+      (panel || add)?.focus({ preventScroll: true });
+      window.scrollTo(0, scroll);
+    }
+  }, [collection, back.side, back.flipping]);
   useLayoutEffect(() => {
     textareas.current?.querySelectorAll("textarea").forEach(editor => {
       sizeTextAreaToContent(editor);
@@ -141,19 +166,6 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       flush();
     };
   }, [kind]);
-  useEffect(() => {
-    if (!isNote(kind) || !ready || initializedNote.current) return;
-    initializedNote.current = true;
-    // Capture recovery only at entry. An idle second tab must not adopt and
-    // autosave a different tab's newly arriving recovery buffer.
-    queueMicrotask(() => {
-      if (!mounted.current || live.current) return;
-      if (recovered || defaultEntry) publish(ensureSession());
-      else setFresh(true);
-      if (recovered) scheduleNoteSave();
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind, ready, recovered?.id]);
 
   function publish(next: Session | null) {
     live.current = next;
@@ -194,6 +206,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     }
   }
   function change(field: "title" | "body", value: string) {
+    if (trashingNote) return;
     const target = ensureSession();
     target.draft.content = { ...target.draft.content, [field]: value };
     ++target.revision;
@@ -283,38 +296,41 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       if (accepted && isNote(kind) && mounted.current && live.current === target && target.revision !== target.savedRevision) scheduleNoteSave();
     });
     // A departing Note must include typing that arrived while its save was in
-    // flight, before New Note is allowed to replace the open buffer.
+    // flight, before leaving the editor.
     return operation.then(accepted => accepted && isNote(kind) && live.current === target && target.revision !== target.savedRevision ? save() : accepted);
   }
   function go(page: Page, element?: HTMLElement) {
     setMenu(false);
     if (noteNavigation && page !== "editor") setNotice("");
     if (isNote(kind) && back.side === "editor" && page !== "editor") {
-      void save().then(accepted => { if (accepted && mounted.current) back.flip(page, undefined, element); });
+      void save().then(accepted => {
+        if (!accepted || !mounted.current) return;
+        if (collectionReturn.current && page === "history") {
+          collectionReturn.current.entry = live.current?.draft.baseVersionId ? live.current.draft.entryId : null;
+        }
+        back.flip(page, undefined, element);
+      });
     } else back.flip(page, undefined, element);
   }
-  function newNote() {
-    if (startingNote.current) return;
-    startingNote.current = true;
-    void save().then(accepted => {
-      if (!accepted || !mounted.current) return;
-      publish(null); setFresh(true); setNotice(""); setError(""); go("editor");
-      requestAnimationFrame(() => { if (noteContent.current?.parentElement) noteContent.current.parentElement.scrollTop = 0; textareas.current?.querySelector("textarea")?.focus(); });
-    }).finally(() => { startingNote.current = false; });
+  function newNote(element: HTMLElement) {
+    if (back.flipping) return;
+    collectionReturn.current = { scroll: window.scrollY, entry: null };
+    focusNewNote.current = true;
+    publish(null); setFresh(true); setNotice(""); setError(""); go("editor", element);
   }
   function openEntry(entry: WritingHistoryEntry, element: HTMLElement) {
-    if (noteNavigation && entry.status === "active") { setSelected(entry.id); editEntry(entry); return; }
+    if (noteNavigation && entry.status === "active") { setSelected(entry.id); editEntry(entry, element); return; }
     if (noteNavigation) setNotice("");
     setSelected(entry.id); go(entry.status === "trashed" ? "trash-detail" : "detail", element);
   }
-  function editEntry(entry: WritingHistoryEntry) {
+  function editEntry(entry: WritingHistoryEntry, element?: HTMLElement) {
     // Existing open drafts stay in the ledger and can be recovered separately.
     const draft = read.drafts.find(item => item.entryId === entry.id);
     publish({ draft: draft ? { ...draft, content: { ...draft.content } } : {
       id: id(), entryId: entry.id, kind: entry.kind, startedAt: entry.startedAt, attribution: entry.attribution,
       content: { ...entry.content }, source: entry.source, baseVersionId: entry.versionId, baseGeneration: entry.generation,
     }, version: draft?.version || 0, revision: draft ? 1 : 0, savedRevision: 0, conflict: false });
-    setFresh(true); setNotice(""); setSent(false); setRewarded(false); go("editor");
+    setFresh(true); setNotice(""); setSent(false); setRewarded(false); go("editor", element);
     if (isNote(kind) && draft) scheduleNoteSave();
   }
   function discard() {
@@ -343,15 +359,18 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   function lifecycle(type: "trash" | "restore" | "delete", entry: WritingHistoryEntry) {
     void enqueue(() => applyLifecycle(type, entry)).catch(() => undefined);
   }
-  function trashRecovery(draft: WritingDraft & { content: WritingContent }) {
-    // A recovered row can be trashed without opening the editor. Save its exact
-    // snapshot first; conflicts/failures retain all text and leave the row here.
-    void enqueue(async () => {
-      const receipt = await current.current.commit({ ...header(), type: "save", draft });
-      if (receipt.outcome === "conflict") { setError("This note changed. Open it to review both copies before moving it to Trash."); return; }
-      if (receipt.outcome !== "saved" && receipt.outcome !== "unchanged") throw new Error("Save was not accepted");
-      await applyLifecycle("trash", { id: draft.entryId, generation: receipt.generation });
-    }).catch(() => undefined);
+  async function trashOpenNote() {
+    if (trashingNote || back.flipping) return;
+    setTrashingNote(true);
+    try {
+      if (!await save() || !mounted.current) return;
+      const draft = live.current?.draft;
+      if (draft?.baseVersionId) await enqueue(() => applyLifecycle("trash", { id: draft.entryId, generation: draft.baseGeneration }));
+    } catch {
+      // The shared write queue presents the retry message and keeps the editor.
+    } finally {
+      if (mounted.current) setTrashingNote(false);
+    }
   }
   function reviewDraft() {
     const target = ensureSession();
@@ -413,7 +432,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       {isNote(kind) ? <><div className="os-info-page-main"><textarea aria-label="Note title" disabled={read.status !== "ready"} className="os-inline-checkin-title" rows={1} placeholder={placeholder} value={shown.title} onChange={event => change("title", event.currentTarget.value)} /></div><div className="os-info-page-sub">{input}</div></> : sourceShown?.question ? <><div className="os-info-page-main os-deep-thought-question-wrap"><h2 className="os-deep-thought-question">{sourceShown.question}</h2></div><div className="os-info-page-sub os-deep-thought-response">{input}</div></> : <div className="os-info-page-main">{input}</div>}
     </form></>;
     footer = <div className="os-writing-footer">{status}{!isNote(kind) ? <>{recovered && !session && kind !== "deep-thought" ? <span>Recovered draft. {<Action text={"Discard draft"} click={discard} disabled={disabled} />}</span> : null}{matchingDrafts.length > 1 && !session ? <Action text={"Review drafts"} click={() => go("drafts")} disabled={disabled} /> : null}
-      {kind === "deep-thought" && (editingSaved || spentQuestion) && !dirty && onNextQuestion ? <CreativeButton type="button" disabled={disabled} styleId="default" keepMountedOnSuccess onClick={onNextQuestion}>Next question</CreativeButton> : <CreativeButton disabled={disabled || (!dirty && editingSaved) || (!shown.title.trim() && !shown.body.trim()) || (composingKind === "deep-thought" && !sourceShown?.question)} form={formId} type="submit" release="latch" styleId="default" keepMountedOnSuccess onSuccessComplete={() => { animationDone.current = true; if (kind === "deep-thought") setRewarded(false); else maybeDepart(); }}>{sent && kind !== "deep-thought" ? "Sent" : editingSaved ? "Save changes" : "Send"}</CreativeButton>}</> : <CreativeButton type="button" disabled={read.status !== "ready" || Boolean(session?.conflict)} onClick={newNote} styleId="default" keepMountedOnSuccess>New Note</CreativeButton>}
+      {kind === "deep-thought" && (editingSaved || spentQuestion) && !dirty && onNextQuestion ? <CreativeButton type="button" disabled={disabled} styleId="default" keepMountedOnSuccess onClick={onNextQuestion}>Next question</CreativeButton> : <CreativeButton disabled={disabled || (!dirty && editingSaved) || (!shown.title.trim() && !shown.body.trim()) || (composingKind === "deep-thought" && !sourceShown?.question)} form={formId} type="submit" release="latch" styleId="default" keepMountedOnSuccess onSuccessComplete={() => { animationDone.current = true; if (kind === "deep-thought") setRewarded(false); else maybeDepart(); }}>{sent && kind !== "deep-thought" ? "Sent" : editingSaved ? "Save changes" : "Send"}</CreativeButton>}</> : null}
     </div>;
   } else if (back.side === "history" || back.side === "trash") {
     const list = back.side === "trash" ? trashed : entries;
@@ -424,8 +443,8 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
         open: (element: HTMLElement) => openEntry(entry, element), trash: noteNavigation && back.side === "history" ? () => lifecycle("trash", entry) : null })),
       ...(noteNavigation && back.side === "history" ? (isNote(kind) ? matchingDrafts : read.drafts.filter(item => belongs(item) && !entries.some(entry => entry.id === item.entryId) && (item.content.title.trim() || item.content.body.trim()))).map(item => ({
         key: item.id, content: item.content, day: item.attribution.day, at: item.updatedAt, kind: item.kind,
-        open: () => { publish({ draft: { ...item, content: { ...item.content } }, version: item.version, revision: 1, savedRevision: 0, conflict: false }); setFresh(true); setNotice(""); setSent(false); go("editor"); if (isNote(kind)) scheduleNoteSave(); },
-        trash: isNote(kind) ? () => trashRecovery(item) : null,
+        open: (element: HTMLElement) => { publish({ draft: { ...item, content: { ...item.content } }, version: item.version, revision: 1, savedRevision: 0, conflict: false }); setFresh(true); setNotice(""); setSent(false); go("editor", element); if (isNote(kind)) scheduleNoteSave(); },
+        trash: null,
       })) : []),
     ].sort((a, b) => b.day.localeCompare(a.day) || b.at.localeCompare(a.at) || a.key.localeCompare(b.key));
     heading = back.side === "trash" ? "Trash" : "History";
@@ -433,6 +452,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     const today = writingAttribution(now(), Intl.DateTimeFormat().resolvedOptions().timeZone).day;
     const previousDay = new Date(`${today}T12:00:00Z`); previousDay.setUTCDate(previousDay.getUTCDate() - 1);
     const dayLabel = (value: string) => value === today ? "Today" : value === previousDay.toISOString().slice(0, 10) ? "Yesterday" : new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
+    if (!collection || back.side === "trash") {
     body = <div className="os-writing-list os-info-page-main">{back.side === "history" && sync?.hasWork ? <Action text="Sync" click={() => go("sync")} disabled={disabled} /> : null}{rows.length ? rows.map(row => {
       const showDay = day !== row.day; day = row.day;
       const entry = [...entries, ...trashed].find(item => item.id === row.key);
@@ -444,6 +464,29 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       {back.side === "history" ? read.view?.sources.filter(item => item.sourceSystem === "existing" && belongs(item)).map(item => <details key={item.id}><summary>{item.content.title || item.content.body.slice(0, 80) || "Untitled"}</summary><p>{item.content.body}</p><small>{item.attribution.day || "Date unknown"} · Older writing · Read only</small></details>) : null}
     </div>;
     footer = noteNavigation ? error || writing.error || notice ? <div className="os-writing-footer">{status}</div> : undefined : <div className="os-writing-footer">{status}{undo && trashed.find(entry => entry.id === undo) ? <Action text={"Undo"} click={() => lifecycle("restore", trashed.find(entry => entry.id === undo)!)} disabled={disabled} /> : null}{back.side === "history" ? <Action text={"Trash"} click={() => go("trash")} disabled={disabled} /> : null}</div>;
+    } else {
+      heading = "Notes";
+      const time = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" });
+      const shortDate = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" });
+      const copyIds = new Set(Object.values(sync?.bundle?.cloud.resolved || {}).map(item => item.request.entryId));
+      body = <div className="os-info-page-main os-notes-collection">
+        {sync?.hasWork ? <Action text="Sync" click={() => go("sync")} disabled={disabled} /> : null}
+        {rows.length ? <div className="os-notes-columns">{[0, 1].map(column => <div className="os-notes-column" key={column}>
+          {rows.filter((_, index) => index % 2 === column).map(row => <div className="os-notes-item" key={row.key}>
+            <button type="button" className="os-notes-panel" data-note-entry={row.key} disabled={back.flipping} onClick={event => {
+              collectionReturn.current = { scroll: window.scrollY, entry: row.key };
+              row.open(event.currentTarget);
+            }}>
+              <strong>{row.content.title.trim() || "Untitled"}</strong>
+              <NoteExcerpt body={row.content.body} />
+              <time dateTime={row.at}>{row.day === today ? time.format(new Date(row.at)) : shortDate.format(new Date(`${row.day}T12:00:00Z`))}</time>
+            </button>
+            {copyIds.has(row.key) ? <Action text="Saved copies" click={() => { setSelected(row.key); go("copies"); }} disabled={disabled} /> : null}
+          </div>)}
+        </div>)}</div> : null}
+      </div>;
+      footer = <div className="os-notes-footer">{error || writing.error || notice ? status : null}<button className="os-notes-add" type="button" aria-label="Add note" disabled={disabled || back.flipping} onClick={event => newNote(event.currentTarget)}>+</button></div>;
+    }
   } else if (back.side === "drafts") {
     heading = "Drafts";
     body = <div className="os-info-page-main os-writing-list">{read.drafts.filter(belongs).map(draft => <button key={draft.id} type="button" onClick={() => { publish({ draft: { ...draft, content: { ...draft.content } }, version: draft.version, revision: 1, savedRevision: 0, conflict: false }); setFresh(true); go("editor"); }}><strong>{draft.content.title || draft.content.body || "Empty draft"}</strong><span>{draft.source?.question || labelFor(draft.kind)}</span></button>)}</div>;
@@ -478,8 +521,18 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   if (kind === "deep-thought" && back.side === "quote" && quote) return <QuotePage className={back.className} quote={quote} feedback={quoteFeedback} onReact={reaction => { onQuoteReaction?.(quote, reaction); closeQuote(); }} />;
   if (noteNavigation) {
     const HeaderButton = RoutineHeaderButton;
+    if (collection && (back.side === "history" || back.side === "editor")) {
+      const list = back.side === "history";
+      return <InfoPage className={`os-writing-page os-writing-bounded os-note-page${list ? " os-notes-list-page" : ""} ${back.className}`}
+        header={<HeaderButton className="os-card-label" reflectionDirection="back" disabled={trashingNote || back.flipping} onClick={event => list ? onExit?.() : go("history", event.currentTarget)}>Back</HeaderButton>}
+        headerAction={list ? <HeaderButton className="os-card-label" disabled={disabled || back.flipping} onClick={event => go("trash", event.currentTarget)}>Trash</HeaderButton> : <button type="button" className="os-card-label os-notes-bin" aria-label="Move note to Trash" disabled={!ready || trashingNote || back.flipping || (!editingSaved && !shown.title.trim() && !shown.body.trim())} onClick={() => void trashOpenNote()}><TrashIcon /></button>}
+        heading={list ? <h2 className="os-writing-heading">Notes</h2> : undefined}
+        footer={list && navigation ? <div className="os-writing-footer-navigation">{footer}{navigation}</div> : footer}>
+        <div className="os-note-content" ref={noteContent}>{body}</div>
+      </InfoPage>;
+    }
     const returnPage: Page = back.side === "delete" ? "trash-detail" : back.side === "trash-detail" ? "trash" : back.side === "trash" ? "history" : "editor";
-    const returnLabel = returnPage === "trash" || returnPage === "trash-detail" ? "Trash" : returnPage === "history" ? "History" : labelFor(kind);
+    const returnLabel = returnPage === "trash" || returnPage === "trash-detail" ? "Trash" : returnPage === "history" ? collection ? "Notes" : "History" : labelFor(kind);
     const left = back.side === "editor" ? <HeaderButton className="os-card-label" type="button" data-os-note-header-text aria-label={isNote(kind) ? "Show a Line" : "Show a Quote"} disabled={!ready || openingQuote || (isNote(kind) ? !onLabel : !nextQuote)} onClick={event => { const element = event.currentTarget; if (!isNote(kind)) { void openQuote(element); return; } void save().then(accepted => { if (accepted && mounted.current) onLabel?.(element); }); }}>{isNote(kind) ? labelFor(kind) : "Quote"}</HeaderButton> : <HeaderButton reflectionDirection="back" className="os-card-label os-writing-back" type="button" onClick={event => go(returnPage, event.currentTarget)}><span aria-hidden="true">‹</span> {returnLabel}</HeaderButton>;
     const right = back.side === "history" ? <HeaderButton className="os-card-label" type="button" onClick={event => go("trash", event.currentTarget)} disabled={disabled}>Trash</HeaderButton> : back.side === "editor" ? <HeaderButton className="os-card-label" type="button" data-os-note-header-text onClick={event => go("history", event.currentTarget)} disabled={!ready || openingQuote}>History</HeaderButton> : undefined;
     return <InfoPage className={`os-writing-page os-writing-bounded ${isNote(kind) ? "os-note-page" : "os-thoughts-page os-deep-thoughts-page"} ${back.className}`} header={back.side === "editor" && isNote(kind) && onExit ? <RoutineHeaderButton className="os-card-label" onClick={onExit}>Back</RoutineHeaderButton> : left} headerAction={right} heading={heading ? <h2 className="os-writing-heading">{heading}</h2> : undefined} footer={back.side === "editor" && navigation ? <div className="os-writing-footer-navigation">{footer}{navigation}</div> : footer}><div className="os-note-content" ref={noteContent}>{body}</div></InfoPage>;

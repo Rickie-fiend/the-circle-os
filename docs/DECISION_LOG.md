@@ -1,5 +1,66 @@
 # Circle OS decision log
 
+## 2026-11-26 — Today preview panels
+
+The developer approved the six preview contents and chose Explore's glass
+carousel layout. Each pair leads with one panel and peeks the next from the
+right. Rows swipe independently with the existing Explore motion. Every panel
+opens the corresponding tool.
+
+- Notes shows the latest nonblank saved note in collection order, with up to
+  three lines of body text. A draft, Trash item or older compatibility record
+  does not appear. Legacy Note keeps its existing entry.
+- Deep Thoughts shows the current question when available.
+- Routine shows the first remaining named habit and task due that day, the
+  number of other remaining items and the day's checked-off count.
+- Protocol shows the running phase, one term of each kind when available and
+  Day X of Y.
+- Log shows the adjacent hours and marks the current one. Each hour uses the
+  saved main activity from its own Circle day. At 06:00 the 05:00 entry remains
+  on the closing day.
+- Week shows the first open named goal and its first unfinished step due on
+  the current Circle day, when there is one.
+
+Panels with no available preview content show their tool names. A new account
+can still show a Deep Thoughts question and Log's clock. [Design](../DESIGN.md#navigation-and-materials).
+
+## 2026-11-26 — Log timeline and Notes collection
+
+The developer approved a visible Log timeline that starts at 06:00 and a
+centered Orange plus below the last hour. Each tap extends the same day by one
+hour through 05:00. The top Add hour action is retired. This puts the visible
+start at the same boundary that assigns records to a Circle day.
+
+The developer approved Notes opening as two columns of glass panels within
+the glass App Box. The newest two notes align at the top, newest on the left.
+Panels below them stack independently, with 4px horizontal and vertical gaps.
+Each panel shows a title, an excerpt and either today's time or a short date.
+Excerpts use 16px Geist and the approved 2-, 4- and 6-line limits so longer
+notes can show more within a preview. Individual panels retain their dark
+shadow and inner highlights. The surrounding App Box uses the full glass shadow.
+
+The collection footer plus opens a blank note. The collection header opens
+Trash, and the open note has the bin action. Back from the editor finishes the
+local save before returning to Notes. The developer approved hiding legacy
+check-in writing from the collection while preserving the stored record. The
+empty collection has no explanatory copy.
+[Design](../DESIGN.md#shared-page-anatomy) ·
+[Notes evidence](USER_JOURNEY_TESTING.md#notes-collection--2026-11-26).
+
+## 2026-11-25 — Home Imprint and compact navigation
+
+The developer approved Home as the normal app entry, with the whole Imprint
+at its existing size. Today shows the left half from its right edge. Reflect
+shows the right half from its left edge. The approved removal of the older
+decorative thread layer leaves the Imprint and Ink behind the tools.
+
+The developer approved a 60px pill for Today, Home and Reflect with a separate
+matching 60px Explore circle, an 8px split and 4px between icons and labels.
+The group uses the existing width for each screen. The remaining tool
+proposals follow the saved review order.
+[Design](../DESIGN.md#navigation-and-materials) ·
+[Work plan](WORK_PLAN.md#home-today-and-daily-tool-review-order).
+
 ## 2026-11-23–24 — Chapter and Log sync pilots
 
 The developer approved sync pilots for new published Chapter runs and Log
@@ -537,7 +598,7 @@ outside that approval. See [prepared implementation and limits](CONTENT_ADMIN_SE
 | Tool family | Six opened tools/supporting views use Routine's shared visual/motion engines, 24px anchors, full-page floor and natural growth. Reason: measurable consistency and reusable behavior. | [Design](../DESIGN.md#shared-tool-contract---2026-11-11), [Page standard](../app/os/APP_SESSION_STANDARD.md) |
 | Checkboxes | Shared Orange glass/liquid and immediate white Log ✓. Protocol toggles only through its checkbox; passive kept words fill Orange without strikethrough. Earlier whole-row action/no-tick rules are retired. | [Design](../DESIGN.md#frame-and-controls) |
 | Completion timing | Shared immediate 300ms response; retire Week's checkbox-first and three-second waits. Structural change is 600ms; typing immediate. | [Page standard](../app/os/APP_SESSION_STANDARD.md#shared-tool-interaction-contract---2026-11-11) |
-| Entry/navigation | Four-root navigation. `/os` remains Today. Eligible signed-in accounts see Imprint on Home, and Explore browses published catalog content. Completed Day One enters directly, without an automatic setup, review or greeting. Opened tools stay selected. | [Page standard](../app/os/APP_SESSION_STANDARD.md#navigation-and-entry) |
+| Entry/navigation | Four-root navigation. Normal entry through `/os` opens Home. Eligible signed-in accounts see the Imprint. Today has its own route and older tool links remain usable. Unfinished Day One can still resume. Opened tools stay selected. | [Page standard](../app/os/APP_SESSION_STANDARD.md#navigation-and-entry) |
 | Content pause | Note Line entry hidden and automatic writing Sparks paused; retain content, versions and progress. Reason: developer's explicit temporary pause while designs are reviewed. | [Product](PRODUCT.md#current-daily-tools) |
 | Writing | Multiple titled Notes, silent autosave/recovery; Deep Thoughts Send/correction/Next question. No ordinary Thoughts composer, Versions/Undo or Discard draft UI on account writing. | [Product](PRODUCT.md#current-daily-tools), [record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) |
 | History/corrections | Preserve prior wording/dates. Week reviews remain read only; past Habit corrections/shared day view deferred. Trash has no expiry and stays out of Athena. | [Record contract](PERSONAL_RECORDS_AND_ATHENA_PLAN.md) |

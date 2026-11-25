@@ -1,5 +1,116 @@
 # Circle OS user-journey test record
 
+## Today preview carousels — 2026-11-26
+
+The local Next webpack build passed, including TypeScript. The isolated
+Chromium fixture used the compiled CSS at 360, 390 and 416px. Each Today row
+had one 344px-tall lead panel, a 24px leading inset and a visible neighbour.
+The shared 36px radius, horizontal snap, 260ms scale transition and reduced
+motion were measured. A touch swipe settled on Deep Thoughts at 390px, and
+tapping the peeking edge opened Deep Thoughts directly. Each tool opened
+directly at all three widths, including Week, and Today restored focus to
+the panel after returning.
+
+Empty panels showed their tool names, with the question and clock present.
+The populated fixture checked the saved note and clipped excerpt, today's
+Routine items and completion count, the running Protocol terms and day, the
+current Log activity, and the first Week goal with a step due that day. The
+Log preview changed from 04:00/05:00/06:00 to 05:00/06:00/07:00 while Today
+stayed open. The 05:00 entry remained on the closing Circle day.
+
+The compiled-CSS six-tool matrix passed at all three widths. Note, Deep
+Thoughts, Routine and Protocol kept the 670px opened floor and 24px content
+anchors at 360 × 844 and 390 × 844, with no inner scrolling in the resting
+geometry checks. The three Notes journeys and the full Log rollover journey
+passed. Three bottom-navigation fixtures initially targeted the retired Note
+flow. All three passed after updating the fixtures for the Notes collection.
+Across those runs, the 17 distinct writing-browser cases and all seven Explore
+cases passed with `CIRCLE_PRODUCTION_CSS=1`. Focused ESLint also passed.
+The local production preview served Today and Explore with HTTP 200
+on port 3001 and returned the updated carousel CSS. Known ResizeObserver
+notices and physical-phone acceptance remain open.
+
+## Notes collection — 2026-11-26
+
+Local Chromium with synthetic sign-in and compiled production CSS verified
+the empty collection, panel order, both 4px gaps, 16px excerpts and the 2-, 4-
+and 6-line limits at 360, 390 and 416px. The newest and second newest notes
+aligned at the top. Today's notes showed a time. A separate case verified
+the short date `Nov 25` on older recovered notes. A synthetic legacy
+check-in record stayed in the compatibility view and was absent from the
+collection. An empty collection had no status message.
+
+The focused selection covered the footer plus, returning focus to a saved
+panel, offline creation, reload, storage failure with text retained and
+retry, individual-note Trash and Restore, and `/os#note` entry. The selection
+passed 10/10 after the preview limits and legacy display changes. After the
+16px excerpt change, the three Notes journeys, three six-tool consistency
+cases and two App Box geometry cases passed 8/8. The latter measured a
+670px floor and 24px content anchors at 360 × 844px and 390 × 844px. Long
+notes grew with the document and had no inner scroller. The final webpack
+build and focused lint passed for this selection.
+
+The later shadow-only build passed `next build --webpack`. A Chromium
+fixture using the styles served by the restarted local preview measured the
+exact shadows at all three widths. The Notes panels kept the two inner
+highlights and outer Ink shadow. The Notes App Box, navigation pill, Explore
+navigation circle and Explore panel matched the prior full glass shadow.
+The Today and Explore routes returned HTTP 200.
+
+The compatibility model selection passed 31/31. Earlier writing and Imprint
+model checks passed 29/29. Physical phones and hosted use remain outside
+this evidence. Existing ResizeObserver notices still appeared. Some older
+browser fixtures still use the retired Notes History or New Note controls,
+and the full browser suite was not run.
+
+## Log timeline layout — 2026-11-26
+
+Local Chromium using the production CSS verified the 06:00 first row, a
+centered 44px Orange plus that adds one hour, and retention of the added row
+after reload. The layout passed at 360, 390 and 416px. At 05:59 the fixture
+added 05:00 as the last row, and the plus disappeared. An activity logged in that
+row stayed on the closing Circle day when Log reopened at 06:00.
+
+The focused browser selection included History, past corrections, the
+six-tool matrix and shared App Box geometry. Thirteen cases passed on the
+first run. Four assertions needed the new control label or a settled frame
+before reading the target size. A rerun of the six affected cases passed,
+giving 17 distinct passing cases across the two runs. The production build,
+focused lint, and 13 Log History and Imprint model tests passed. Phone review
+remains open. The [hosted Log rehearsal](#hosted-log-sync-rehearsal--2026-11-25)
+covers the separate sync pilot.
+
+## Home Imprint and compact navigation — 2026-11-25
+
+The Home launch, Imprint crops and compact navigation passed the local Chromium
+checks at 360, 390 and 416px. The Imprint used the same dimensions in all three
+positions. The old decorative threads were absent. The removal run passed all
+12 selected browser checks, including Routine alignment at 1280px.
+
+In a local webpack production build with synthetic sign-in, three checks
+passed for offline Home and its cached Imprint, an old `/os#note` link, and
+unfinished Day One at 360 and 390px. An initial offline test found Today’s
+entry script missing from the cache. The worker now primes the route assets
+and explicitly caches the Imprint files. The final production rerun passed.
+The writing-to-Imprint pulse cases passed at 360 and 390px. Three template
+adoption cases passed with the updated Today links.
+
+The final webpack build and focused lint passed. With
+`CIRCLE_PRODUCTION_CSS=1`, all 11 selected writing-browser cases passed for
+navigation, Imprint placement and the six-tool layout. Five Explore cases
+passed in an isolated run. The combined run timed out waiting for Explore
+fixtures to mount. The isolated run completed all five cases.
+
+The bar measured 60px high, the Explore circle 60 × 60px, the split 8px and
+the icon-to-label gap 4px. Navigation and focused frames shared horizontal
+edges and kept a 16px vertical gap. At 360 and 390px on an 844px viewport,
+Note, Deep Thoughts, Routine and Protocol had a 670px floor, 24px content
+anchors and no inner scrolling. A separate first-entry Routine check still
+found extra document scroll. At 390 × 844px, toggling between the old and
+compact bar in the same fixture measured a 930px document in both cases.
+Physical phones and the hosted version of these interface changes remain
+outside this evidence.
+
 ## Hosted Log sync rehearsal — 2026-11-25
 
 Two isolated 390 × 844 Chromium profiles used a localhost production Next.js

@@ -155,17 +155,22 @@ Current Day One is to be replaced through the planned onboarding, not edited in 
 
 ## Navigation and entry
 
-- Four roots: /os/home, /os (Today), /os/mirror (Reflect), /os/explore.
-  Bottom navigation persists in tools under its current keyboard behavior.
-  Home intentionally contains no placeholder content. Explore has the approved
-  Chapters, Habit/Protocol and Articles discovery carousels.
+- Four roots are `/os/home`, `/os/today`, `/os/mirror` and `/os/explore`.
+  Normal entry through `/os` opens Home. Older tool links such as
+  `/os#note` still open their tool. The bottom pill and Explore circle
+  persist in tools and hide together for the keyboard. Explore has Chapters,
+  Habit/Protocol and Articles discovery carousels.
 - Opened pairs are Note/Deep Thoughts, Routine/Protocol and Log/Week.
   Manual swipes and tappable cues use the shared session engine.
-- After any completed Day One, enter directly. Week/Log setup, weekly review
+- Today previews use Explore's three independent horizontal rows. An entire
+  panel opens its tool directly, including Week. Returning to Today restores
+  the panel focus and vertical scroll. The carousel also supports Arrow keys,
+  Home and End and follows reduced motion.
+- After any completed Day One, enter Home directly. Week/Log setup, weekly review
   and daily greeting do not interrupt entry. A genuinely unfinished Day One
   may appear. A newer version alone does not interrupt an older completion.
 - Planned onboarding ends at Home. Existing-user transition and replacement
-  delivery need review; this documentation does not change entry behavior.
+  delivery still need review.
 
 ## Idle rotation
 
@@ -189,6 +194,14 @@ Send/Save changes and deliberate Next question. History/Trash/Restore/Delete
 and conflict-copy review keep the same frame and shared navigation.
 [Product](../../docs/PRODUCT.md#current-daily-tools) owns their action semantics;
 the [record contract](../../docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md) owns data.
+
+The signed-in Notes tool starts on the collection. A panel opens the full-page
+editor inside the same App Box. Back saves locally before returning to the
+collection and restores focus to the panel when it is available. The footer
+plus opens a blank editor. The collection header opens Trash, and the open
+note's bin saves current text before moving the entry to Trash. Local recovery
+copies can open from the collection. Older check-in writing is kept in storage.
+[Notes geometry and typography](../../DESIGN.md#shared-page-anatomy).
 
 Line access from Note is currently hidden; content and immutable publications
 remain preserved. Deep Thoughts' Quote opens the managed public catalog through
@@ -234,6 +247,10 @@ History and opened day/correction remain inside the daily slot, with outer Week
 travel locked while reading a supporting view. History includes saved titles,
 activities or moments, not automatically empty days/future plans. Past views use
 their original blocks, never today's suggestions.
+
+The current Log timeline begins at 06:00. The centered Orange plus below it
+adds one hour and disappears when 05:00 is shown. The row plus still
+opens the activity or moment editor for that hour.
 
 Past activity/moment text correction preserves ID, attributed day, time range
 and first-recorded time. Save changes creates immutable before/after evidence with

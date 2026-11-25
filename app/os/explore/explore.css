@@ -2,13 +2,13 @@
 .circle-os:has(.os-explore) > .os-app-shell { background: transparent; border-color: transparent; box-shadow: none; }
 
 .circle-os .os-explore {
-  --os-explore-neighbour-scale: 0.94;
-  --os-explore-panel-min-height: var(--os-app-box-min-height);
   padding: var(--space-3) 0 var(--space-6);
   color: var(--c-bone);
 }
 
 .circle-os .os-explore-row {
+  --os-explore-neighbour-scale: 0.94;
+  --os-explore-panel-min-height: var(--os-app-box-min-height);
   container-type: inline-size;
   margin-block: 0 var(--os-app-box-gap);
 }
@@ -51,12 +51,11 @@
   scroll-snap-align: center;
   scroll-snap-stop: always;
   transform: scale(var(--os-explore-neighbour-scale));
-  transition: transform 260ms var(--ease-out), box-shadow 260ms var(--ease-out);
+  transition: transform 260ms var(--ease-out);
 }
 
 .circle-os .os-explore-panel.is-selected {
   transform: scale(1);
-  box-shadow: var(--os-glass-panel-shadow), 0 6px 28px rgb(227 107 55 / 0.08);
   z-index: 1;
 }
 
@@ -72,7 +71,7 @@
 .circle-os .os-explore-status button { display: block; min-height: 44px; padding: 0; border: 0; color: var(--c-bone); background: transparent; font: inherit; font-weight: var(--os-weight-bold); }
 
 @media (min-width: 900px) {
-  .circle-os .os-explore { --os-explore-neighbour-scale: 0.98; }
+  .circle-os .os-explore-row { --os-explore-neighbour-scale: 0.98; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -85,5 +84,4 @@
 
 @media (forced-colors: active) {
   .circle-os .os-explore-panel { background: Canvas; color: CanvasText; border-color: CanvasText; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .circle-os .os-explore-panel.is-selected { box-shadow: none; }
 }

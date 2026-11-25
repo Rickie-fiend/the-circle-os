@@ -1,6 +1,6 @@
 # Circle OS work plan
 
-Updated 2026-11-25, Asia/Bangkok. This is the working queue under
+Updated 2026-11-26, Asia/Bangkok. This is the working queue under
 [Roadmap](ROADMAP.md). A queued item is not approval to edit, provision, migrate,
 activate sync or deploy.
 
@@ -8,9 +8,12 @@ activate sync or deploy.
 
 Basic Chapter sync passed on disposable hosted Supabase. Later Chapter review
 and deletion checks passed locally. Log sync and both conflict choices passed
-locally. The next proposed review is an isolated hosted Log rehearsal.
+locally and in a disposable hosted rehearsal. The Log layout and Notes
+collection passed local checks. The Today preview carousels are implemented
+locally and ready for developer review in the
+[Home, Today and daily tool review order](#home-today-and-daily-tool-review-order).
 [Current task](CURRENT_TASK.md) · [Chapter evidence](USER_JOURNEY_TESTING.md#chapter-sync-and-conflict-choices--2026-11-23) ·
-[Log evidence](USER_JOURNEY_TESTING.md#log-sync-and-conflict-choices--2026-11-24).
+[Hosted Log evidence](USER_JOURNEY_TESTING.md#hosted-log-sync-rehearsal--2026-11-25).
 
 The developer reviewed Home Imprint, reported checking published Chapters,
 and reported Protocol working. Device and build details for the latest
@@ -103,7 +106,7 @@ this bounded evidence. See [results and limits](USER_JOURNEY_TESTING.md#storage-
 | 0 | Content Admin/catalog/media | Habit/Protocol authoring, Explore and local adoption are implemented. Migration 004 is applied. Synthetic hosted/browser acceptance passed with exact cleanup. Second invitation, operational and device gaps remain open. [Template evidence](USER_JOURNEY_TESTING.md#approved-hosted-template-acceptance--2026-11-14) |
 | 1 | Critical journey and current-tool acceptance | Home Imprint review is complete. The developer reported checking published Chapters and reported Protocol working. Build and device details remain open, alongside broader phone/browser coverage and ResizeObserver notices. [Current gaps](../bugs.md#current-gaps) |
 | 2 | Production writing recovery and activation readiness | Both migrations and bounded hosted checks passed, including production-store recovery and session cases at mobile Chromium widths. Real-device restart, offline load and eviction, true lock contention and operational safeguards remain open. Automatic sync stays off. [Writing evidence and gates](ACCOUNT_WRITING_SYNC.md#verification-and-activation-gates) |
-| 3 | Remaining record sync and operating recovery | Chapter and Log pilots have bounded evidence. Hosted Log, hosted checks of the later Chapter changes, wider domains, device recovery and operating checks remain pending. Personal import needs its own owner mapping, backup and rollback approval. |
+| 3 | Remaining record sync and operating recovery | Chapter and Log pilots have bounded local and hosted evidence. Hosted checks of the later Chapter changes, wider domains, device recovery and operating checks remain pending. Personal import needs its own owner mapping, backup and rollback approval. |
 | 4 | Replacement onboarding and needed Home behavior | Use the planned required-answer/one-habit flow, replacing the old optional-action plan. Resolve records, existing-user transition, uncertain answers, final completion and Home mapping. Keep records/history and safe-sync prerequisites. |
 | 5 | Membership/admin | Server-enforced fixed-day grants, renewal/expiry/revocation, audit and usage reservations. Set actual amounts, reset math, spending/alert/pause controls and operations. |
 | 6 | Requested Athena | Provider/model, relevant same-owner evidence, English response/Burmese-input quality, short Reflect readings, optional question, separate replies and sourced correction controls. |
@@ -114,6 +117,59 @@ Membership/Athena and onboarding scheduling can be refined within
 [Roadmap's dependencies](ROADMAP.md#dependency-sequence). No broad optimization
 or cosmetic checklist must finish before all other work. Each optimization
 needs a named measured problem and verification before/after.
+
+## Home, Today and daily tool review order
+
+Saved 2026-11-25, Asia/Bangkok. Review one item at a time under the
+[development workflow](DEVELOPMENT_WORKFLOW.md). The order below is for this
+set of interface proposals. The release dependencies remain in the
+[roadmap](ROADMAP.md#dependency-sequence).
+
+1. **Home and the Imprint.** Open Circle OS on Home with the whole Imprint,
+   Today to the left and Reflect to the right. The left half peeks in from
+   Today's right edge, and the right half peeks in from Reflect's left edge.
+   Keep the current artwork size, with Ink filling the rest of the background.
+   Implemented locally. Chromium verified the crops at 360, 390 and 416px.
+   A local production build with synthetic sign-in verified offline Home,
+   cached artwork, unfinished Day One and the legacy Note link.
+   The old decorative thread background was removed from the opened tools.
+   [Current Imprint](PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23).
+2. **Bottom navigation.** Implemented and verified locally. The 60px pill holds
+   Today, Home and Reflect. A 60px Explore circle sits 8px to its right. The
+   group keeps the existing width on each screen. Icon-to-label gaps are 4px.
+   [Browser evidence](USER_JOURNEY_TESTING.md#home-imprint-and-compact-navigation--2026-11-25).
+3. **Log.** Implemented and verified locally. The timeline starts at 06:00.
+   The centered Orange plus below the timeline adds one hour at a time up to
+   05:00. Browser checks covered the 06:00 boundary on reopen at the new day.
+   [Log evidence](USER_JOURNEY_TESTING.md#log-timeline-layout--2026-11-26).
+4. **Notes.** Implemented and verified locally. The two-column glass collection
+   opens individual full-page notes. The body previews use 16px text and
+   limits of two, four or six lines. The collection plus creates a note, and
+   an open note has its own bin. Older check-in writing stays out of the collection.
+   [Notes evidence](USER_JOURNEY_TESTING.md#notes-collection--2026-11-26).
+5. **Today previews.** Implemented locally for review. Three rows share
+   Explore's glass, horizontal snap and scale. One panel leads and the next
+   peeks from the right. A tap opens the corresponding full tool.
+   - **Notes / Deep Thoughts:** latest saved note title and body, with an
+     ellipsis when clipped / current question only.
+   - **Routine / Protocol:** one habit, one task, a hint of more and a
+     checked-off count / active protocol name, one non-negotiable, one
+     negotiable and Day X of Y.
+   - **Log / Week:** previous, current and next hour / one goal and one step
+     when available.
+   [Preview decision](DECISION_LOG.md#2026-11-26--today-preview-panels) ·
+   [Browser evidence](USER_JOURNEY_TESTING.md#today-preview-carousels--2026-11-26).
+6. **Deep Thoughts.** Put the History date beside the time. Show Loved it and
+   Not for me when the quote opens. Check that reacting or returning preserves
+   the current question and draft.
+7. **Week typography.** Both This week and Day's record use 28px/700. The
+   compiled CSS measures 33.6px line height with tighter letter spacing for
+   This week and 48.16px line height with normal letter spacing for Day's
+   record. Try matching line height and letter spacing before changing size.
+8. **App-wide icons.** Start with clear actions like Back and Add on the
+   screens being changed, then review the rest. Use small Orange icons with
+   accessible names and targets of at least 44px. The bottom navigation has
+   its own color treatment. Review less obvious actions individually.
 
 ## Decisions needed by slice
 

@@ -73,7 +73,7 @@ Provider quality and language readiness still require verification.
 
 | Area | Current state | Target or limit |
 | --- | --- | --- |
-| Navigation | Home, Today, Reflect and Explore share bottom navigation. `/os` enters Today and `/os/mirror` opens Reflect. Home shows the signed-in Imprint where enabled, and Explore has three discovery rows. | Onboarding's Home destination is planned. |
+| Navigation | In the local implementation, `/os` opens Home on normal entry, `/os/today` opens Today and `/os/mirror` opens Reflect. Today, Home and Reflect share the bottom pill. Explore has its own adjacent circle and three discovery rows. | Existing Day One and old tool links still have an entry path. Planned replacement onboarding also ends at Home. |
 | Daily tools | Full-page Note/Deep Thoughts, Routine/Protocol and Log/Week pairs, with supporting views | Preserve current functions while reviewing new root compositions. |
 | Accounts | Supabase email/password entry and account-separated local stores; legacy and development-test modes remain distinct | Public signup is the new onboarding target; current invitation-only configuration is not changed by documenting it. |
 | Writing sync | Both writing migrations applied. Bounded hosted checks cover access, conflicts and production-store recovery in an isolated build. | Automatic product activation remains off. Physical-device recovery and operational gates remain open. |
@@ -106,9 +106,13 @@ passed with exact cleanup. Real authored publication remains deliberate.
   The long-term design also recognizes the person's starting point using
   their replacement-onboarding answers. [Personal Imprint](PERSONAL_IMPRINT_HOME.md#signed-in-home-imprint--2026-11-23).
 - **Today:** receives input through Note, Deep Thoughts, Routine, Protocol, Log
-  and Week. Proposed recent-input previews need a reviewed selection contract.
+  and Week. The left half of the Imprint peeks in from the right edge.
+  Three swipeable glass rows preview the paired tools and open them directly.
+  See the [Today preview decision](DECISION_LOG.md#2026-11-26--today-preview-panels)
+  for the displayed records and empty states.
 - **Reflect:** holds wanted-life records, received readings and reflection on
-  actual life. The [saved Reflect proposal](REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md)
+  actual life. The right half of the Imprint peeks in from the left edge.
+  The [saved Reflect proposal](REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md)
   is deferred. New discovery records, Keep in Reflect and replacement layouts
   are proposals, not adopted behavior. Today and Reflect previews should serve
   different purposes.
@@ -149,18 +153,22 @@ replacement is implemented. The current direct-entry rule remains in force.
 
 ### Current daily tools
 
-- **Note:** titled entries with silent pause/departure autosave and local
-  recovery. New Note saves current text before opening a blank composer.
-  Clearing an existing Note saves an empty revision; an untouched empty
-  composer creates nothing. History opens entries and offers row trash controls.
-  No Save, Versions, Undo, Discard or routine save-status UI.
+- **Notes:** the signed-in tool opens a two-column collection. Tap a preview
+  to open the full-page note or use the footer plus to write a new one. The
+  editor saves silently after a pause and on Back. If a save fails, the
+  editor keeps the open text and offers retry. Clearing an existing note
+  saves an empty revision. Leaving a blank new note creates no entry. The
+  open note's bin moves it to Trash. Open Trash from the collection to
+  restore a note or confirm permanent deletion. The collection shows current
+  notes and local recovery copies. Older check-in writing stays in storage.
 - **Deep Thoughts:** a question with Send, correction through Save changes,
   and a saved answer that remains until Next question. Quote returns to the
   same question/answer without sending it. Recovery is silent; clearing the
   answer clears its buffer. Historical ordinary Thoughts keep their record kind.
-- **Writing pair:** manual swipes and tappable footer cues; Note has Back/History,
-  Deep Thoughts Quote/History. Line access is temporarily hidden. Automatic
-  writing Sparks are paused; published content and unfinished runs remain.
+- **Writing pair:** the Notes collection and Deep Thoughts share manual swipes
+  and tappable footer cues. The collection has Back and Trash. Deep Thoughts
+  has Quote and History. Line access is temporarily hidden. Automatic writing
+  Sparks are paused, with published content and unfinished runs preserved.
 - **Routine:** habits and tasks share existing completion/undo and archive
   actions. An Orange clear cross archives a row without erasing prior evidence.
   Record combines today with Undo and read-only earlier days. Saved name,
@@ -169,9 +177,10 @@ replacement is implemented. The current direct-entry rule remains in force.
   Only the checkbox toggles a term; words are passive, remain visible and fill
   Orange without strikethrough. Editing is separate; changed agreements begin
   next Circle day. Past phases are read only. Durations are 1, 3, 7, 14 or 21 days.
-- **Log:** main activities and smaller moments retain original dates/times and
-  deliberate past-day text corrections. Plus opens a main activity in an empty
-  hour and a smaller moment once one exists. History remains; Now is removed.
+- **Log:** the visible timeline starts at 06:00. The bottom plus adds one
+  trailing hour at a time through 05:00. A row's plus opens a main activity
+  in an empty hour and a smaller moment once one exists. History preserves
+  original dates and times and supports deliberate past-day text corrections.
 - **Week:** every open goal appears on every day tab; folded goals show only
   the selected day's tasks. Add tasks only to today/future days. Steps are the
   same Routine tasks. Completion/clear actions update both views and preserve

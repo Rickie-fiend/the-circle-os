@@ -109,7 +109,7 @@ export function StrandCanvas({ variants, groups, days, clock, revision, claimPul
     function begin() {
       request = 0;
       if (signal.aborted || document.visibilityState !== "visible") return;
-      if (canvas.closest('[aria-hidden="true"]') || document.documentElement.dataset.osRouteTransition === "native" ||
+      if (layer?.closest('[aria-hidden="true"]') || document.documentElement.dataset.osRouteTransition === "native" ||
           layer?.getAnimations().some(animation => animation.playState === "running")) {
         queue(begin);
         return;

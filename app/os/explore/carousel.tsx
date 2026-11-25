@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { ContentFigure, type ContentImage } from "../admin/content-media";
+import "./explore.css";
 
 export type ExploreItem = {
   id: string;
@@ -12,11 +13,22 @@ export type ExploreItem = {
   cover?: ContentImage | null;
 };
 
-export function ExploreCarousel({ title, items }: { title: string; items: ExploreItem[] }) {
+type GlassSlide = {
+  key: string;
+  label: string;
+  content?: ReactNode;
+  action?: { label: string; href: string } | { label: string; open: (button: HTMLButtonElement) => void };
+};
+
+export function GlassCarousel({ label, heading, slides }: {
+  label: string;
+  heading?: string;
+  slides: GlassSlide[];
+}) {
   const headingId = useId();
   const viewport = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState(0);
-  const panels = items.length > 1 ? items : items.length ? [items[0], null] : [null, null];
+  const count = slides.length;
 
   useEffect(() => {
     const element = viewport.current;
@@ -45,7 +57,7 @@ export function ExploreCarousel({ title, items }: { title: string; items: Explor
       observer.disconnect();
       element.removeEventListener("scroll", schedule);
     };
-  }, [items]);
+  }, [count]);
 
   function moveTo(index: number) {
     const element = viewport.current;
@@ -60,25 +72,45 @@ export function ExploreCarousel({ title, items }: { title: string; items: Explor
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const next = event.key === "ArrowRight" ? Math.min(panels.length - 1, selected + 1)
+    const next = event.key === "ArrowRight" ? Math.min(count - 1, selected + 1)
       : event.key === "ArrowLeft" ? Math.max(0, selected - 1)
-        : event.key === "Home" ? 0 : event.key === "End" ? panels.length - 1 : null;
+        : event.key === "Home" ? 0 : event.key === "End" ? count - 1 : null;
     if (next === null) return;
     event.preventDefault();
     moveTo(next);
   }
 
   return <section className="os-explore-row">
-    <h2 id={headingId} className="os-explore-row-title">{title}</h2>
-    <div ref={viewport} className="os-explore-carousel" role="region" aria-roledescription="carousel" aria-labelledby={headingId} tabIndex={0} onKeyDown={onKeyDown}>
+    {heading ? <h2 id={headingId} className="os-explore-row-title">{heading}</h2> : null}
+    <div ref={viewport} className="os-explore-carousel" role="region" aria-roledescription="carousel" aria-label={heading ? undefined : label} aria-labelledby={heading ? headingId : undefined} tabIndex={0} onKeyDown={onKeyDown}>
       <div className="os-explore-track">
-        {panels.map((item, index) => <article key={item ? `${item.id}@${item.version}` : `empty-${index}`} className={`os-content-glass os-explore-panel${index === selected ? " is-selected" : ""}`} role="group" aria-roledescription="slide" aria-label={item ? `${index + 1} of ${panels.length}` : "Empty panel"}>
-          {item?.cover ? <ContentFigure image={item.cover} /> : null}
-          {item?.title?.trim() ? <h3>{item.title}</h3> : null}
-          {item?.description?.trim() ? <p>{item.description}</p> : null}
-          {item ? <a className="os-explore-open" aria-label={`Open ${item.title?.trim() || title}`} href={`/os/catalog/read?id=${encodeURIComponent(item.id)}&version=${item.version}${item.kind === 'chapter' ? '&resume=1' : ''}`} onFocus={() => moveTo(index)} /> : null}
-        </article>)}
+        {slides.map((slide, index) => {
+          const action = slide.action;
+          return <article key={slide.key} className={`os-content-glass os-explore-panel${index === selected ? " is-selected" : ""}`} role="group" aria-roledescription="slide" aria-label={slide.label}>
+            {slide.content}
+            {action && ("href" in action
+              ? <a className="os-explore-open" aria-label={action.label} href={action.href} onFocus={() => moveTo(index)} />
+              : <button className="os-explore-open" aria-label={action.label} type="button" onFocus={() => moveTo(index)} onClick={event => action.open(event.currentTarget)} />)}
+          </article>;
+        })}
       </div>
     </div>
   </section>;
+}
+
+export function ExploreCarousel({ title, items }: { title: string; items: ExploreItem[] }) {
+  const panels = items.length > 1 ? items : items.length ? [items[0], null] : [null, null];
+  return <GlassCarousel label={title} heading={title} slides={panels.map((item, index) => item ? {
+    key: `${item.id}@${item.version}`,
+    label: `${index + 1} of ${panels.length}`,
+    content: <>
+      {item.cover ? <ContentFigure image={item.cover} /> : null}
+      {item.title?.trim() ? <h3>{item.title}</h3> : null}
+      {item.description?.trim() ? <p>{item.description}</p> : null}
+    </>,
+    action: {
+      label: `Open ${item.title?.trim() || title}`,
+      href: `/os/catalog/read?id=${encodeURIComponent(item.id)}&version=${item.version}${item.kind === "chapter" ? "&resume=1" : ""}`,
+    },
+  } : { key: `empty-${index}`, label: "Empty panel" })} />;
 }

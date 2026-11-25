@@ -124,7 +124,7 @@ export function AccountAdmin() {
     } catch(error) { setMessage(error instanceof Error ? error.message : 'Could not open images.'); }
   }
   const chapterRepository = useMemo(() => ({ ...repository, read: async () => (await repository.read()).filter(row => !('article' in row) && !('template' in row)) }), [repository]);
-  if (!allowed) return <main className="os-admin"><p role="status">{message}</p><button type="button" onClick={()=>void request('/os/admin/status').then(response=>{if(response.ok){setAllowed(true);setMessage('');}else setMessage(response.status===503?'Connection unavailable. Try again.':'Sign in again or check your account access.');}).catch(()=>setMessage('Connection unavailable. Try again.'))}>Retry</button><a href="/os">Back to Today</a></main>;
+  if (!allowed) return <main className="os-admin"><p role="status">{message}</p><button type="button" onClick={()=>void request('/os/admin/status').then(response=>{if(response.ok){setAllowed(true);setMessage('');}else setMessage(response.status===503?'Connection unavailable. Try again.':'Sign in again or check your account access.');}).catch(()=>setMessage('Connection unavailable. Try again.'))}>Retry</button><a href="/os/today">Back to Today</a></main>;
   return <ContentRequest.Provider value={request}>
     <button className="os-admin" onClick={()=>setCatalog(value=>!value)}>Catalog publishing</button>
     {catalog ? <CatalogManager request={request}/> : <>

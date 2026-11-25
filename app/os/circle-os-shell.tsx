@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { BottomNavigation } from "./bottom-navigation";
+import { ImprintBackground } from "./home/imprint-background";
+import { TodayPreviews, type TodayTool } from "./today/today-previews";
 import { RoutineHeaderButton, RoutineSwipeCue } from "./routine-controls";
 import { RoutineBody, RoutineItemCopy, routineFrame } from './routine-presentation';
 import { TemplateSource, type TemplateSourceSnapshot } from './template-source';
@@ -200,7 +202,6 @@ import {
   taskIsUnderDoneGoal,
   toggleGoal,
   updateGoal,
-  weekGoal,
   weekGoals,
 } from "./goal-model.js";
 
@@ -2019,19 +2020,14 @@ function RouteCrossfade({
   );
 }
 
-function RoutineThreadBackground() {
+function useShellGeometry() {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
-    const layer = ref.current;
-    const shell = layer?.parentElement?.querySelector<HTMLElement>(".os-app-shell");
-    if (!layer || !shell) return;
+    const shell = ref.current;
+    if (!shell) return;
     let frame = 0;
     const measure = () => {
       const rect = shell.getBoundingClientRect();
-      for (const edge of ["top", "right", "bottom", "left"] as const) {
-        layer.style.setProperty(`--os-thread-shell-${edge}`, `${rect[edge]}px`);
-      }
-      layer.style.setProperty("--os-thread-shell-radius", getComputedStyle(shell).borderTopLeftRadius);
       // Keep the fixed navigation on the same visible edges as the active frame.
       const box = shell.querySelector<HTMLElement>(".os-routine-open .os-habit-session, .os-note-open .os-checkin-session, .os-log-open .os-log-session");
       const main = shell.querySelector<HTMLElement>("main");
@@ -2072,7 +2068,7 @@ function RoutineThreadBackground() {
       window.removeEventListener("resize", schedule);
     };
   }, []);
-  return <div ref={ref} className="os-routine-threads" aria-hidden="true" />;
+  return ref;
 }
 
 export function OSFrame({
@@ -2080,9 +2076,14 @@ export function OSFrame({
 }: {
   children: ReactNode;
 }) {
-  const { ready } = useCircleState();
+  const { ready, localImprint } = useCircleState();
+  const shellRef = useShellGeometry();
+  const writing = useWriting();
   const pathname = usePathname();
   const router = useRouter();
+  const imprintView = pathname === "/os/home" ? "home"
+    : pathname === "/os/mirror" ? "reflect"
+    : pathname === "/os/today" || pathname === "/os" ? "today" : null;
 
   function moveToRoute(
     event: ReactMouseEvent<HTMLAnchorElement>,
@@ -2129,8 +2130,9 @@ export function OSFrame({
   return (
     <div className="circle-os">
       <div className="os-future-room-background" aria-hidden="true" />
-      <RoutineThreadBackground />
-      <div className="os-app-shell">
+      <div ref={shellRef} className="os-app-shell">
+        {ready && imprintView && writing?.imprint ? <ImprintBackground
+          key={writing.owner} view={imprintView} local={localImprint} {...writing.imprint} /> : null}
         <header className="os-header">
           <Link className="os-wordmark" href="/" aria-label="The Circle website">
             <span className="os-brand-mark" aria-hidden="true" />
@@ -2169,7 +2171,7 @@ function hourFromTime(value: string, fallback: number) {
   return Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : fallback;
 }
 
-export function TodayExperience() {
+export function TodayExperience({ launch = false }: { launch?: boolean }) {
   const { state, today, ready, dateKey, updateState, updateToday, updateChapterState, toggleRoutineHabit, changeTaskCompletion, sealProtocolForDay, trackLogImprint, saveLogChange, logConflicts, savedLogCopies, resolveLogCopy } =
     useCircleState();
   const writing = useWriting();
@@ -2343,17 +2345,29 @@ export function TodayExperience() {
   const [routineOpen, setRoutineOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [logToolOpen, setLogToolOpen] = useState(false);
-  const noteEntryRef = useRef<HTMLButtonElement>(null);
   const noteReturnScroll = useRef(0);
   const routineEntryRef = useRef<HTMLButtonElement>(null);
   const routineReturnScroll = useRef(0);
+  const previewReturn = useRef<{ button: HTMLButtonElement; scroll: number } | null>(null);
+  const restoreTodayPreview = useCallback(() => {
+    const source = previewReturn.current;
+    if (!source) return false;
+    previewReturn.current = null;
+    window.requestAnimationFrame(() => {
+      source.button.focus({ preventScroll: true });
+      window.scrollTo(0, source.scroll);
+    });
+    return true;
+  }, []);
   useEffect(() => {
     const readTool = () => {
-      setRoutineOpen(["#routine", "#protocol"].includes(window.location.hash));
-      setNoteOpen(["#note", "#thoughts"].includes(window.location.hash));
-      setLogToolOpen(window.location.hash === "#log");
-      if (window.location.hash === "#note") setCheckInApp(0);
-      if (window.location.hash === "#thoughts") setCheckInApp(1);
+      const { hash } = window.location;
+      setRoutineOpen(["#routine", "#protocol"].includes(hash));
+      setNoteOpen(["#note", "#thoughts"].includes(hash));
+      setLogToolOpen(hash === "#log");
+      if (hash === "#note") setCheckInApp(0);
+      if (hash === "#thoughts") setCheckInApp(1);
+      if (!hash) restoreTodayPreview();
     };
     queueMicrotask(readTool);
     window.addEventListener("hashchange", readTool);
@@ -2362,7 +2376,7 @@ export function TodayExperience() {
       window.removeEventListener("hashchange", readTool);
       window.removeEventListener("popstate", readTool);
     };
-  }, []);
+  }, [restoreTodayPreview]);
   const [newProtocolItemId, setNewProtocolItemId] = useState<string | null>(null);
   const [sealedProtocolDay, setSealedProtocolDay] =
     useState<ProtocolSealView | null>(null);
@@ -2483,8 +2497,22 @@ export function TodayExperience() {
   }, [dateKey, greetingName]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setLiveNow(new Date()), 30_000);
-    return () => window.clearInterval(timer);
+    let timer = 0;
+    const refresh = () => {
+      window.clearTimeout(timer);
+      const now = new Date();
+      setLiveNow(now);
+      timer = window.setTimeout(refresh, 30_000 - now.getTime() % 30_000);
+    };
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    timer = window.setTimeout(refresh, 30_000 - Date.now() % 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   const checkInIdleApp = 0;
@@ -2600,22 +2628,17 @@ export function TodayExperience() {
         )[0] || null,
     [publications, state.chapters.runs],
   );
-  const defaultLogStartHour = Math.max(CIRCLE_DAY_START_HOUR, wakeHour);
   const defaultLogEndHour = Math.min(
     CIRCLE_DAY_START_HOUR + 23,
-    Math.min(wakeHour + 23, Math.max(wakeHour, sleepHour)),
-  );
-  const logStartHour = Math.max(
-    CIRCLE_DAY_START_HOUR,
-    Math.min(defaultLogStartHour, today.logRange?.startHour ?? defaultLogStartHour),
+    Math.max(CIRCLE_DAY_START_HOUR, Math.min(wakeHour + 23, sleepHour)),
   );
   const logEndHour = Math.min(
     CIRCLE_DAY_START_HOUR + 23,
     Math.max(defaultLogEndHour, today.logRange?.endHour ?? defaultLogEndHour),
   );
   const visibleHours = Array.from(
-    { length: Math.max(1, logEndHour - logStartHour + 1) },
-    (_, index) => logStartHour + index,
+    { length: logEndHour - CIRCLE_DAY_START_HOUR + 1 },
+    (_, index) => CIRCLE_DAY_START_HOUR + index,
   );
   const liveClockHour =
     liveNow.getHours() < CIRCLE_DAY_START_HOUR
@@ -3066,7 +3089,8 @@ export function TodayExperience() {
     logWeekDays.find((day) => day.isToday)?.name || "Today";
   // The week being planned, which is the week he is in until Sunday evening.
   const logWeekKey = planningWeekStartKey(dateKey, liveClockHour);
-  const logWeekGoal = weekGoal(state, logWeekKey);
+  const logWeekGoals = weekGoals(state, logWeekKey);
+  const logWeekGoal = logWeekGoals[0] || null;
   // A future day can be chosen here, unlike on the reading surface: this Page
   // is for planning the week, so Thursday has to be reachable before Thursday.
   const [logChosenDayKey, setLogChosenDayKey] = useState(dateKey);
@@ -3127,6 +3151,16 @@ export function TodayExperience() {
   const doorKind =
     (pinnedChapter ? pinnedSetupDoor || "chapter" : pinnedStepDone ? null : pinned) ||
     (reviewingWeekOf ? "week-review" : dayDoor(doorOffers, dateKey));
+
+  useEffect(() => {
+    if (!launch || !ready || !onTheClient || window.location.pathname !== "/os") return;
+    const { hash, search } = window.location;
+    if (["#routine", "#protocol", "#note", "#thoughts", "#log"].includes(hash)) {
+      router.replace(`/os/today${search}${hash}`);
+    } else if (!doorKind) {
+      router.replace("/os/home");
+    }
+  }, [doorKind, launch, onTheClient, ready, router]);
 
   /** A pinned door is let go the moment its sheet is answered or put down. */
   function releasePinnedDoor() {
@@ -3566,6 +3600,28 @@ export function TodayExperience() {
     window.scrollTo(0, 0);
   }
 
+  function openLogTool(index: number) {
+    saveLogAppIndex(index);
+    logBack.reset("today");
+    weekBack.reset("current");
+    if (index === 1) setLogChosenDayKey(dateKey);
+    window.location.hash = "log";
+    setLogToolOpen(true);
+    window.scrollTo(0, 0);
+  }
+
+  function openTodayPreview(tool: TodayTool, button: HTMLButtonElement) {
+    previewReturn.current = { button, scroll: window.scrollY };
+    switch (tool) {
+      case "note": openNoteTool(); break;
+      case "thoughts": openWritingTool(checkInThoughtsApp); break;
+      case "routine": openRoutineTool(0); break;
+      case "protocol": openRoutineTool(1); break;
+      case "log": openLogTool(0); break;
+      case "week": openLogTool(1); break;
+    }
+  }
+
   function changeWritingAppPage(nextIndex: number) {
     if (noteLineActive) {
       setRevealedLinePage(nextIndex);
@@ -3583,13 +3639,13 @@ export function TodayExperience() {
   function closeNoteTool() {
     window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
     setNoteOpen(false);
-    window.requestAnimationFrame(() => window.scrollTo(0, noteReturnScroll.current));
+    if (!restoreTodayPreview()) window.requestAnimationFrame(() => window.scrollTo(0, noteReturnScroll.current));
   }
 
   function closeRoutineTool() {
     window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
     setRoutineOpen(false);
-    window.requestAnimationFrame(() => {
+    if (!restoreTodayPreview()) window.requestAnimationFrame(() => {
       routineEntryRef.current?.focus({ preventScroll: true });
       window.scrollTo(0, routineReturnScroll.current);
     });
@@ -4376,7 +4432,7 @@ export function TodayExperience() {
   }
 
   function checkInIdleCard() {
-    if (writing) return <AccountWritingPage kind="note" placeholder={notePlaceholder} onLabel={openNoteLineFrom} onBusyChange={setAccountNoteBusy} onExit={noteOpen ? closeNoteTool : undefined} navigation={noteOpen ? <RoutineSwipeCue label="Deep Thoughts" onClick={() => changeWritingAppPage(checkInThoughtsApp)} /> : undefined} />;
+    if (writing) return noteOpen ? <AccountWritingPage kind="note" placeholder={notePlaceholder} onLabel={openNoteLineFrom} onBusyChange={setAccountNoteBusy} onExit={closeNoteTool} navigation={<RoutineSwipeCue label="Deep Thoughts" onClick={() => changeWritingAppPage(checkInThoughtsApp)} />} /> : null;
     return (
       <InfoPage
         className="os-note-page os-survey-card os-survey-complete"
@@ -4507,7 +4563,7 @@ export function TodayExperience() {
       onQuoteReaction={(quote, reaction) => updateState(current => reactToLineSeen(current, `quote-${quote.id}`, reaction))}
       onNextQuestion={nextDeepThought}
       onBusyChange={setAccountThoughtBusy}
-      navigation={noteOpen ? <RoutineSwipeCue back label="Note" onClick={() => changeWritingAppPage(checkInIdleApp)} /> : undefined}
+      navigation={noteOpen ? <RoutineSwipeCue back label="Notes" onClick={() => changeWritingAppPage(checkInIdleApp)} /> : undefined}
       onAdmin={() => { if (getAccountScope().kind === 'account') { router.push('/os/admin'); return; } setAdminUnlockMode(true); setAdminCodeDraft(""); revealThoughtButton(); }}
       onSent={() => { setHoldThoughtsAfterSend(true); }}
     />;
@@ -4638,8 +4694,41 @@ export function TodayExperience() {
       ? [checkInThoughtsApp]
       : [checkInIdleApp, checkInThoughtsApp];
 
+  if (launch && !doorKind) return null;
+
+  const showTodayPreviews = !launch && !habitPublication && !logPublication;
+  const toolOpen = noteOpen || routineOpen || logToolOpen;
+  const noteLabel = writing ? "Notes" : "Note";
+  const latestNote = writing?.history.find(entry => entry.kind === "note" &&
+    (entry.content.title.trim() || entry.content.body.trim()));
+  const previewHabits = ready ? habits.filter(habit => habit.status === "active" &&
+    habit.text.trim() && !habitCompletion(habit.id)?.completed && !clearingRoutineRows.includes(`habit:${habit.id}`)) : [];
+  const previewTasks = ready ? oneTimeTasks.filter(task => task.status === "open" &&
+    task.text.trim() && !clearingRoutineRows.includes(`task:${task.id}`)) : [];
+  const previewProtocol = ready && protocol && !protocol.isDraft && !protocol.isOver && protocol.day >= 1 ? {
+    name: protocol.run.name,
+    day: protocol.day,
+    days: protocol.run.days,
+    nonNegotiable: protocol.nonNegotiable.find((term: { text: string }) => term.text.trim())?.text,
+    negotiable: protocol.negotiable.find((term: { text: string }) => term.text.trim())?.text,
+  } : undefined;
+  const previewHours = ready ? [-1, 0, 1].map(offset => {
+    const hour = liveClockHour + offset;
+    const slotDay = new Date(liveNow);
+    // Each stored Circle day contains wall-clock slots from 06:00 to 05:00.
+    slotDay.setDate(slotDay.getDate() + Math.floor((hour - CIRCLE_DAY_START_HOUR) / 24));
+    const time = hourLabel(hour);
+    const block = state.days[getDateKey(slotDay)]?.timeBlocks.find(item => item.start === time);
+    return { time, activity: (block?.title || block?.activity)?.trim(), current: offset === 0 };
+  }) : [];
+  const previewGoal = ready ? logWeekGoals.find(goal => !goal.done && goal.text.trim()) : undefined;
+  const previewWeek = previewGoal ? {
+    goal: previewGoal.text,
+    step: previewGoal.steps.find(step => step.dateKey === dateKey && !step.done && step.text.trim())?.text,
+  } : undefined;
+
   return (
-      <main className="os-today">
+      <main className={`os-today${showTodayPreviews && !toolOpen ? " os-today-overview" : ""}`}>
         <section className={`os-checkin${noteOpen ? " os-note-open" : ""}`} aria-label="Check-in questions">
           {noteOpen ? <div className="os-note-tool-back"><RoutineHeaderButton onClick={closeNoteTool}>Back</RoutineHeaderButton></div> : null}
           <div className="os-context-row">
@@ -4706,6 +4795,23 @@ export function TodayExperience() {
           )}
         </section>
 
+        {showTodayPreviews ? <TodayPreviews
+          noteLabel={noteLabel}
+          note={latestNote?.content}
+          question={ready ? deepThoughtPrompt?.text : undefined}
+          routine={{
+            habit: previewHabits[0]?.action || previewHabits[0]?.text,
+            task: previewTasks[0]?.text,
+            more: Math.max(0, previewHabits.length - 1) + Math.max(0, previewTasks.length - 1),
+            completed: ready ? todaySoFar.total : 0,
+          }}
+          protocol={previewProtocol}
+          hours={previewHours}
+          week={previewWeek}
+          hidden={toolOpen}
+          onOpen={openTodayPreview}
+        /> : null}
+
         {habitPublication ? (
           <section className="os-habit" aria-label="Routine session">
             <PublishedChapterDelivery
@@ -4727,9 +4833,9 @@ export function TodayExperience() {
           </section>
         ) : (
           <section className={`os-habit${routineOpen ? " os-routine-open" : ""}`} aria-label="Routine session">
-            {!routineOpen ? (
+            {!routineOpen && !showTodayPreviews ? (
               <div className="os-routine-entry" aria-label="Daily commitments">
-                <button ref={noteEntryRef} className="os-note-entry" type="button" onClick={openNoteTool}>Note</button>
+                <button className="os-note-entry" type="button" onClick={openNoteTool}>{noteLabel}</button>
                 <button type="button" onClick={() => openWritingTool(checkInThoughtsApp)}>Deep Thoughts</button>
                 <button ref={routineEntryRef} type="button" onClick={() => openRoutineTool(0)}>Routine</button>
                 <button type="button" onClick={() => openRoutineTool(1)}>Protocol</button>
@@ -5242,7 +5348,7 @@ export function TodayExperience() {
           </section>
         ) : (
         <section className={`os-log-section${logToolOpen ? " os-log-open" : ""}`} aria-label="Daily Log">
-          {!logToolOpen ? <button className="os-log-entry os-routine-create" type="button" onClick={() => { saveLogAppIndex(0); logBack.reset("today"); weekBack.reset("current"); window.location.hash = "log"; setLogToolOpen(true); window.scrollTo(0, 0); }}>Log</button> : null}
+          {!logToolOpen && !showTodayPreviews ? <button className="os-log-entry os-routine-create" type="button" onClick={() => openLogTool(0)}>Log</button> : null}
           <div className="os-log-tool-content" inert={!logToolOpen} aria-hidden={!logToolOpen}>
           <SwipeSession
             attentionKey={`today-log:${logAppVersion}`}
@@ -5301,20 +5407,6 @@ export function TodayExperience() {
             >
               {logSaveError && <p role="alert">{logSaveError}</p>}
               <div className="os-timeline">
-            {logStartHour > CIRCLE_DAY_START_HOUR ? (
-              <button
-                className="os-expand-hour"
-                type="button"
-                aria-label={`Add ${hourLabel(logStartHour - 1)} to the log`}
-                onClick={() =>
-                  updateToday((day) =>
-                    setDayLogRange(day, logStartHour - 1, logEndHour),
-                  )
-                }
-              >
-                Add hour
-              </button>
-            ) : null}
             {visibleHours.map((hour) => {
               const slotStart = hourLabel(hour);
               const block = today.timeBlocks.find(
@@ -5474,11 +5566,11 @@ export function TodayExperience() {
                 aria-label={`Add ${hourLabel(logEndHour + 1)} to the log`}
                 onClick={() =>
                   updateToday((day) =>
-                    setDayLogRange(day, logStartHour, logEndHour + 1),
+                    setDayLogRange(day, CIRCLE_DAY_START_HOUR, logEndHour + 1),
                   )
                 }
               >
-                Add hour
+                +
               </button>
             ) : null}
               </div>
@@ -5495,7 +5587,7 @@ export function TodayExperience() {
             /> :
             <WeekPage
               weekKey={logWeekKey}
-              goals={weekGoals(state, logWeekKey)}
+              goals={logWeekGoals}
               days={logWeekDays}
               selectedDay={logChosenDay}
               todayKey={dateKey}

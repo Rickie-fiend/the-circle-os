@@ -197,7 +197,7 @@ for(const width of [360,390]) for(const loss of ["auth","all"]) test(`production
   }
   await page.goto(productionOrigin+"/brand");
   await page.evaluate(({id,state})=>localStorage.setItem("circle-os-state-v2:account:"+id,JSON.stringify({savedAt:new Date().toISOString(),state})),{id:accountA,state:seed});
-  await page.goto(productionOrigin+"/os");await expect(page.locator(".os-splash")).toHaveCount(0,{timeout:20000});await page.getByRole("button",{name:"Note",exact:true}).click();
+  await page.goto(productionOrigin+"/os/today");await expect(page.locator(".os-splash")).toHaveCount(0,{timeout:20000});await page.getByRole("button",{name:"Note",exact:true}).click();
   const ledger=()=>page.evaluate(async id=>{
     const db=await new Promise((yes,no)=>{const r=indexedDB.open("circle-os-writing-v1:account:"+id);r.onsuccess=()=>yes(r.result);r.onerror=()=>no(r.error);});
     try{if(!db.objectStoreNames.contains("writing"))return null;return await new Promise(yes=>{const r=db.transaction("writing").objectStore("writing").get("records");r.onsuccess=()=>yes(r.result||null);});}finally{db.close();}
@@ -498,13 +498,7 @@ for (const width of [390, 360]) {
 }
 
 
-for (const mode of ["restart","crash","storage-loss"]) for (const width of [360,390]) test(`production offline writing ${mode} at ${width}px`, {timeout:180000,skip:!productionOrigin}, async()=>isolated(width,async device=>{
-  const crash = mode === "crash";
-  let {page}=device;
-  await page.goto(productionOrigin+"/os"); await login(page);
-  await expect(page.getByRole("heading",{name:"Start with what matters."})).toBeVisible();
-  // Seed unrelated setup/delivery gates in this isolated account's main store.
-  // This does not verify those journeys. Writing uses the real UI throughout.
+async function seedCompletedChapters(page) {
   const seed=ensureDay(createEmptyState(),getDateKey());
   for(const name of ["index","sparks"])for(const c of JSON.parse(await readFile(new URL(`../app/os/chapters/published/${name}.json`,import.meta.url),"utf8")).chapters){
     const run={...createChapterRun(c),status:"completed",completedAt:new Date().toISOString(),updatedAt:new Date().toISOString(),currentPageId:c.pages.at(-1).id,furthestPageId:c.pages.at(-1).id};
@@ -514,7 +508,49 @@ for (const mode of ["restart","crash","storage-loss"]) for (const width of [360,
   await page.evaluate(({id,state})=>{
     localStorage.setItem("circle-os-state-v2:account:"+id,JSON.stringify({savedAt:new Date().toISOString(),state}));
   },{id:accountA,state:seed});
+}
+
+test("production app opens Home and preserves legacy tool links offline", { timeout: 120_000, skip: !productionOrigin }, async () => isolated(390, async ({ page, context }) => {
+  await page.goto(productionOrigin + "/os");
+  await login(page);
+  await expect(page.getByRole("heading", { name: "Start with what matters." })).toBeVisible();
+  await seedCompletedChapters(page);
   await page.reload();
+  await expect(page).toHaveURL(/\/os\/home$/);
+  await expect(page.getByRole("link", { name: "Home", exact: true })).toHaveAttribute("aria-current", "page");
+  const imprint = page.locator('[data-imprint-view="home"] canvas');
+  if (process.env.CIRCLE_TEST_HOSTED_IMPRINT === "1") {
+    await expect(imprint).toHaveAttribute("data-ready", "true");
+    await page.waitForFunction(async () => {
+      const urls = performance.getEntriesByType("resource").map(entry => entry.name);
+      const art = [...new Set(urls.filter(url => url.includes("/os/home/imprint-art/")))];
+      return art.length >= 2 && (await Promise.all(art.map(url => caches.match(url)))).every(Boolean);
+    });
+  }
+  await page.getByRole("link", { name: "Today", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Note", exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("link", { name: "Home", exact: true })).toHaveAttribute("aria-current", "page");
+  await assetsCached(page);
+  await context.setOffline(true);
+  assert.equal((await page.goto(productionOrigin + "/os")).fromServiceWorker(), true);
+  await expect(page.getByRole("link", { name: "Home", exact: true })).toHaveAttribute("aria-current", "page");
+  if (process.env.CIRCLE_TEST_HOSTED_IMPRINT === "1") {
+    await expect(imprint).toHaveAttribute("data-ready", "true");
+  }
+  assert.equal((await page.goto(productionOrigin + "/os#note")).fromServiceWorker(), true);
+  await expect(page.getByRole("textbox", { name: "Write a note", exact: true })).toBeVisible();
+}));
+
+for (const mode of ["restart","crash","storage-loss"]) for (const width of [360,390]) test(`production offline writing ${mode} at ${width}px`, {timeout:180000,skip:!productionOrigin}, async()=>isolated(width,async device=>{
+  const crash = mode === "crash";
+  let {page}=device;
+  await page.goto(productionOrigin+"/os"); await login(page);
+  await expect(page.getByRole("heading",{name:"Start with what matters."})).toBeVisible();
+  // Seed unrelated setup/delivery gates in this isolated account's main store.
+  await seedCompletedChapters(page);
+  await page.reload();
+  await page.getByRole("link",{name:"Today",exact:true}).click();
   await page.getByRole("button",{name:"Note",exact:true}).click();
   const note=()=>page.getByRole("textbox",{name:"Write a note",exact:true});
   const ledger=(id=accountA)=>page.evaluate(async id=>{
@@ -575,7 +611,7 @@ for (const mode of ["restart","crash","storage-loss"]) for (const width of [360,
   const beforeReconnect=await ledger();
   assert.equal(Object.values(beforeReconnect.entries).filter(e=>e.kind==="deep-thought").length,0);
   await logout(page);
-  if(crash) { ({page}=await device.restart(true,true)); await page.goto(productionOrigin+"/os"); }
+  if(crash) { ({page}=await device.restart(true,true)); await page.goto(productionOrigin+"/os/today"); }
   else await page.reload();
   await expect(page.getByRole("heading",{name:"Welcome back."})).toBeVisible();
   ({page}=await device.restart(false));

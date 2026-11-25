@@ -19,11 +19,12 @@ left anchor. Keep the logo/account header and bottom navigation, remove the
 visible outer frame, and use Today's Ink background. Cards use the shared glass,
 28px/700 headings, 18px/400 prose, 24px inner padding and compact-context minimum,
 growing naturally. The page scrolls vertically. First/last cards show the inward
-neighbour; interior selections show both neighbours. The selected card is subtly
-larger with Orange shadow. Native scrolling snaps and stops at both ends; keyboard
-arrows/Home/End provide the equivalent path. Missing cover/title/description
-fields stay absent. An empty row has two blank panels; a single item has a blank
-neighbour. Tapping authored content opens its exact version.
+neighbour. Interior selections show both neighbours. The selected card is subtly
+larger. Every card uses the shared panel shadow. Native scrolling snaps and stops
+at both ends. Keyboard arrows/Home/End provide the equivalent path. Missing
+cover, title and description fields stay absent. An empty row has two blank
+panels, and a single item has a blank neighbour. Tapping authored content opens
+its exact version.
 
 Explicit Add to Routine uses the shared glass action rules, including disabled,
 press and accessibility states. Circle source marks open flat saved-detail
@@ -115,6 +116,8 @@ with 12px backdrop blur at saturation 1.2, a 3% Charcoal base and a light
 diagonal wash. The 1px Bone rim uses 16% opacity, with faint 1px reflections along
 the top and left. Outer shadows use 16% Ink and 4% Orange. Use this finish for
 existing tool and content glass, Explore panels and the bottom navigation.
+Individual Notes collection panels use the shared Ink shadow and Bone inner
+reflections. The enclosing Notes App Box uses the full glass shadow.
 Controls have brighter silver reflections, 8px blur, Ink lower
 edges and faint Orange shadows. Verify vendor prefixes in compiled production CSS.
 
@@ -172,7 +175,17 @@ The [Page standard](app/os/APP_SESSION_STANDARD.md) distinguishes those contexts
   Continue/Confirm action. Short inputs do not manufacture extra height.
   Existing editable short/long question and declaration contexts retain their
   approved 29px main / 18px body scale until separately changed.
-- **Note:** full-page free writing, Back/History and New Note. Line is hidden.
+- **Notes:** use two columns of compact glass panels within one App Box. The
+  newest two align at the top, newest on the left. Each column stacks with
+  a 4px gap between panels, and the columns are 4px apart. Panels use 12px
+  padding and the shared 12px action radius. Show the title at 18px/700, the
+  body excerpt at 16px/400 with 1.5 leading, and the time or date at 12px/400.
+  Preview up to two lines for bodies of 120 characters or fewer, four for
+  121–400, and six above 400. Clip longer previews with an ellipsis. Today's
+  items show the time. Earlier items show a short date such as `Nov 25`.
+  Trash sits at the collection's top right, and the centered Orange plus
+  sits in its footer. The full-page note has an Orange bin at the top right.
+  An empty collection uses the same frame and action layout.
 - **Deep Thoughts:** Quote/History, question/answer and Send or Save changes;
   Next question is deliberate.
 - **Reading:** distinct authored prose and source evidence; no invented missing
@@ -180,18 +193,28 @@ The [Page standard](app/os/APP_SESSION_STANDARD.md) distinguishes those contexts
 
 ## Navigation and materials
 
-The persistent bottom navigation covers Home, Today, Reflect and Explore,
-including opened tools; current /os entry remains Today. It may hide for the
-keyboard under the existing behavior. Home shows the signed-in Personal Imprint
-where enabled. Explore uses the three approved discovery rows above.
+Today uses the same glass panels, sizing, horizontal snap and selected-panel
+scale as Explore. The three independent rows pair Notes with Deep Thoughts,
+Routine with Protocol, and Log with Week. The first panel leads and the next
+peeks in from the right. At the end of a row the first panel peeks from the
+left. The tool names sit inside the panels. One tap anywhere on a panel opens
+that tool. Preview copy stays brief, and there is no empty-state filler.
+
+The bottom navigation spans the tool frame's width and is 60px tall. Today,
+Home and Reflect share one glass pill. A matching 60px Explore circle sits
+8px to its right. All links have 22px icons, 12px labels and a 4px gap between
+them, with at least 44px tap targets. The group stays available in opened
+tools and hides together for the keyboard. Home shows the signed-in Personal
+Imprint where enabled. Explore uses the three approved discovery rows above.
 
 Reuse PageLayout, SwipeSession, useAppBack, RoutineHeaderButton, RoutineSwipeCue
 and the button engine. Their legacy names do not restrict reuse to one tool.
 Manual pairs remain Note/Deep Thoughts, Routine/Protocol and Log/Week. Deep
 Thoughts' Note cue and Week's Log cue begin at the left anchor.
 
-The full-page thread background is decorative, shell-bounded and sharp. Honor
-reduced-transparency/motion preferences. Do not repurpose it as Home evidence.
+Opened tools sit over the same shell background as Today. The Personal Imprint
+is the artwork on Home, Today and Reflect, with Ink behind it. Honor
+reduced-transparency and motion preferences.
 
 ## Future design boundaries
 

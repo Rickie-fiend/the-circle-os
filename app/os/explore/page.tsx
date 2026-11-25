@@ -9,7 +9,6 @@ import { chapterReviewHref } from "../chapters/chapter-sync-review";
 import { readChapterSync, watchChapterSync } from "../chapters/chapter-sync-store";
 import type { ChapterRun } from "../chapters/chapter-types";
 import { ExploreCarousel, type ExploreItem } from "./carousel";
-import "./explore.css";
 
 export default function CircleOSExplore() {
   const scope = useSyncExternalStore(subscribeAccountScope, getAccountScope, getServerAccountScope);
