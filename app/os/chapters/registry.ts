@@ -56,3 +56,9 @@ export function getPublishedChapter(id: string, version?: number) {
     .filter((chapter) => chapter.id === id && (!version || chapter.version === version))
     .sort((left, right) => right.version - left.version)[0];
 }
+
+const bundledVersions = new Set(publishedChapters.map(chapter => `${chapter.id}@${chapter.version}`));
+
+export function isBundledChapterVersion(id: string, version: number) {
+  return bundledVersions.has(`${id}@${version}`);
+}

@@ -91,7 +91,7 @@ export function dayWasOpened(run) {
  * the pin away, which is the right thing for sync to do and the wrong place
  * for this to live.
  */
-const PINNED_DOOR_KEY = "circle-os-pinned-door";
+const PINNED_DOOR_KEY = "circle-os-workshop-door";
 
 /**
  * A pin is either one of the doors, or a chapter by name.
@@ -108,7 +108,6 @@ export function readPinnedDoor(scope = getAccountScope()) {
   if (typeof window === "undefined") return null;
   try {
     const pin = window.localStorage.getItem(accountStorageKey(scope, PINNED_DOOR_KEY));
-    if (pin === 'week-setup') return null;
     if (DAY_DOOR_ORDER.includes(pin)) return pin;
     return typeof pin === "string" && pin.startsWith(CHAPTER_PIN) ? pin : null;
   } catch {

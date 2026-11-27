@@ -182,6 +182,7 @@ import { nextNotePlaceholder } from "./note-placeholders/note-placeholder-pool.j
 import { ButtonRewardBackdrop, CreativeButton } from "./button-engine";
 import {
   isDeepThoughtRewardEligible,
+  LOCAL_DEEP_THOUGHTS,
   selectDeepThoughtPrompt,
   type DeepThoughtPrompt,
 } from "./deep-thought-model.js";
@@ -192,7 +193,6 @@ import {
   recordWeekReview,
   weekBarDays,
   weekStartKey,
-  weekWasReviewed,
 } from "./week-app-model.js";
 import {
   addGoalStep,
@@ -229,18 +229,15 @@ import {
   ProtocolKeptPage,
   ProtocolPage,
   type ProtocolSealView,
+  type ProtocolView,
 } from "./protocol-page";
-import { LockedAppPage } from "./locked-app-page";
-import { appIsOpen, lockedUntil } from "./phases.js";
 import {
-  dayDoor,
   dayOpenRunId,
   clearPinnedDoor,
   pinnedChapterId,
   readPinnedDoor,
 } from "./day-door.js";
 import {
-  chapterEverCompleted,
   deferChapterRun,
   chapterRunId,
   chapterAnswerText,
@@ -2286,8 +2283,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   const thoughtMode = "deep";
   const [quoteNavigation, setQuoteNavigation] = useState<QuoteNavigation | null>(null);
   const [legacyQuote, setLegacyQuote] = useState<Quote | null>(null);
-  const [legacyQuoteFeedback, setLegacyQuoteFeedback] = useState(false);
-  const legacyQuoteFeedbackRef = useRef(false);
   const [legacyQuoteError, setLegacyQuoteError] = useState("");
   const [deepThoughtDraft, setDeepThoughtDraft] = useState("");
   const [adminUnlockMode, setAdminUnlockMode] = useState(false);
@@ -2296,22 +2291,42 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   const [adminUnlocking, setAdminUnlocking] = useState(false);
   const adminCodeInputRef = useRef<HTMLInputElement>(null);
   const [deepThoughtPrompt, setDeepThoughtPrompt] = useState<DeepThoughtPrompt | null>(null);
+  const [thoughtChoices, setThoughtChoices] = useState<DeepThoughtPrompt[]>([]);
+  const legacyThoughtDrafts = useRef(new Map<string, string>());
   // Only Next question advances this counter. Reading a quote keeps the question.
   const deepThoughtVisits = useRef(0);
   const [thoughtRewarded, setThoughtRewarded] = useState(false);
   const thoughtDraft = deepThoughtDraft;
   useEffect(() => {
     if (deepThoughtPrompt || (writing && writing.status !== "ready")) return;
-    const draft = writing?.drafts.find(item => item.kind === "deep-thought" && item.source?.question);
+    const drafts = writing?.drafts.filter(item => item.kind === "deep-thought" && item.content.body.trim()) ?? [];
     const saved = writing?.history.find(item => item.kind === "deep-thought" && item.attribution.day === dateKey && item.source?.question);
-    const restored = draft || saved;
-    const prompt: DeepThoughtPrompt | null = restored?.source?.question && restored.source.questionId ? {
-      id: restored.source.questionId, text: restored.source.question, target: "whatMatters", dateKey: restored.attribution.day,
-      source: (["athena", "curiosity", "local-personalized"].includes(restored.source.source || "") ? restored.source.source : "local") as DeepThoughtPrompt["source"],
-      preparedAt: restored.startedAt,
-    } : selectDeepThoughtPrompt(state, dateKey, 0, writing ? { view: writing.view, curiosity: writing.memory.curiosity || [] } : undefined);
+    const choices: DeepThoughtPrompt[] = [];
+    function add(prompt: DeepThoughtPrompt | null) {
+      if (prompt && !choices.some(choice => choice.id === prompt.id || choice.text.trim().toLowerCase() === prompt.text.trim().toLowerCase())) choices.push(prompt);
+    }
+    for (const entry of saved ? [...drafts, saved] : drafts) {
+      const source = entry.source;
+      if (source?.questionId && source.question) add({
+        id: source.questionId, text: source.question, target: "whatMatters", dateKey: entry.attribution.day,
+        source: (["athena", "curiosity", "local-personalized"].includes(source.source || "") ? source.source : "local") as DeepThoughtPrompt["source"],
+        preparedAt: entry.startedAt,
+      });
+      if (choices.length === 2) break;
+    }
+    const context = writing ? { view: writing.view, curiosity: writing.memory.curiosity || [] } : undefined;
+    for (let visit = 0; choices.length < 2 && visit < LOCAL_DEEP_THOUGHTS.length + 2; visit++) {
+      const prompt = selectDeepThoughtPrompt(state, dateKey, visit, context);
+      if (!prompt) break;
+      add(prompt);
+    }
     let active = true;
-    queueMicrotask(() => { if (active && prompt) setDeepThoughtPrompt(prompt); });
+    queueMicrotask(() => {
+      if (active && choices.length) {
+        setDeepThoughtPrompt(choices[0]);
+        setThoughtChoices(choices);
+      }
+    });
     return () => { active = false; };
   }, [deepThoughtPrompt, writing, state, dateKey]);
   useEffect(() => {
@@ -2348,13 +2363,14 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   const noteReturnScroll = useRef(0);
   const routineEntryRef = useRef<HTMLButtonElement>(null);
   const routineReturnScroll = useRef(0);
-  const previewReturn = useRef<{ button: HTMLButtonElement; scroll: number } | null>(null);
+  const previewReturn = useRef<{ button: HTMLButtonElement; scroll: number; fallback?: HTMLButtonElement } | null>(null);
   const restoreTodayPreview = useCallback(() => {
     const source = previewReturn.current;
     if (!source) return false;
     previewReturn.current = null;
     window.requestAnimationFrame(() => {
-      source.button.focus({ preventScroll: true });
+      const target = source.button.isConnected ? source.button : source.fallback;
+      target?.focus({ preventScroll: true });
       window.scrollTo(0, source.scroll);
     });
     return true;
@@ -2400,6 +2416,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     Record<string, { remove: number }>
   >({});
   const [isLogOpen, setLogOpen] = useState(false);
+  const [logPreviewHour, setLogPreviewHour] = useState<number | null>(null);
   const logBack = useAppBack<"today" | "history" | "day">("today");
   const [logHistoryDay, setLogHistoryDay] = useState<string | null>(null);
   const [logSaveError, setLogSaveError] = useState("");
@@ -2637,7 +2654,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     Math.max(defaultLogEndHour, today.logRange?.endHour ?? defaultLogEndHour),
   );
   const visibleHours = Array.from(
-    { length: logEndHour - CIRCLE_DAY_START_HOUR + 1 },
+    { length: Math.max(logEndHour, logToolOpen ? logPreviewHour ?? logEndHour : logEndHour) - CIRCLE_DAY_START_HOUR + 1 },
     (_, index) => CIRCLE_DAY_START_HOUR + index,
   );
   const liveClockHour =
@@ -2665,19 +2682,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
    */
 
   /**
-   * A sheet he put down today.
-   *
-   * The deferral is dated so it lapses: the chapter is offered again tomorrow,
-   * from wherever he left it. Read against the Circle day, so a sheet dismissed
-   * at one in the morning is still down when he wakes up.
-   */
-  /** The Circle day a sheet was last put down on, if it was. */
-  function dismissedDay(run: ChapterRun | null | undefined) {
-    if (!run?.dismissedAt) return null;
-    return getDateKey(new Date(run.dismissedAt));
-  }
-
-  /**
    * Put the review down.
    *
    * It can arrive two ways — standing in Sunday's door, or opened by hand from
@@ -2688,7 +2692,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
    */
   function dismissWeekReview() {
     releasePinnedDoor();
-    setReviewingWeekOf(null);
     if (weekReviewRun && weekReviewChapter) {
       deferSplash(weekReviewRun, weekReviewChapter.session);
     }
@@ -2752,8 +2755,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   const dayOneChapter = finishedDayOneVersion
     ? getPublishedChapter("day-one", finishedDayOneVersion)
     : selectDayOneChapter(publishedChapters, state.chapters.runs);
-  const dayOneDone =
-    !dayOneChapter || chapterEverCompleted(state.chapters.runs, "day-one");
   const dayOneRun = useMemo(() => {
     if (!dayOneChapter) return null;
     return (
@@ -2763,13 +2764,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   }, [dayOneChapter, state.chapters.runs]);
   // Week setup remains available through explicit chapter entry.
   const weekSetupChapter = getPublishedChapter("week-setup");
-  /**
-   * Which Apps have opened.
-   *
-   * By the chapter that sets each one up rather than by a date — see
-   * `phases.js` for why the date was the wrong key.
-   */
-  const protocolIsOpen = appIsOpen("protocol", state.chapters.runs);
 
   const weekSetupRun = useMemo(() => {
     if (!weekSetupChapter) return null;
@@ -2807,7 +2801,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
    * review to pivot the week."
    */
   const weekReviewChapter = getPublishedChapter("week-review");
-  const [reviewingWeekOf, setReviewingWeekOf] = useState<string | null>(null);
   /* A door the Workshop asked to see.
    *
    * A thing on this device rather than a thing about him, so it is read from
@@ -2843,7 +2836,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   /* Pinned from the Workshop counts as a third way in, or the sheet would have
      nothing to read on any day that is not a Sunday evening. */
   const weekBeingReviewed =
-    reviewingWeekOf ||
     (pinned === "week-review" || pinnedChapterId(pinned) === "week-review" ? weekJustEnded : "");
   const weekReviewRunId = weekReviewChapter && weekBeingReviewed
     ? `${chapterRunId(weekReviewChapter)}:${weekBeingReviewed}`
@@ -3008,7 +3000,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     "today-habit",
     habitAppVersion,
   );
-  const protocol = protocolToday(state, dateKey);
+  const protocol: ProtocolView = protocolToday(state, dateKey);
   const protocolRun = activeProtocolRun(state);
   const phaseRecords = protocolPhaseRecords(state);
 
@@ -3100,24 +3092,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     logWeekDays[0];
 
   /**
-   * What stands in the door, if anything.
-   *
-   * One question, one answer, one sheet. Which door wins lives in
-   * `day-door.js` rather than in the negations of four conditionals spread
-   * through the render — see that file for the order and why it is that order.
-   * The App's job here is only to say which doors are ready.
-   */
-  const dayOneDelivered = [thoughtsPublication, habitPublication, logPublication,
-    logSetupPublication].some(publication => publication?.chapter.id === "day-one");
-  // Day One is the only automatic entry sheet. All later chapters are chosen.
-  const doorOffers = finishedDayOneVersion ? {} : {
-    "day-one": {
-      offered: Boolean(!dayOneDone && !dayOneDelivered && dayOneChapter && dayOneRun),
-      dismissedKey: dismissedDay(dayOneRun),
-    },
-  };
-  // Explicit Week/Quest/Workshop entry still uses the same saved chapter player.
-  /**
    * A chapter opened by name, from a Quest step.
    *
    * Sai: "all those chapters will be process on splash screen." A Quest step
@@ -3134,7 +3108,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   // Chosen setup/review chapters use their existing seeded runs and domain
   // handlers, just as explicit Workshop doors do.
   const pinnedSetupDoor = pinnedChapter &&
-    ["week-setup", "log-setup", "week-review", "day-open"].includes(pinnedChapter.id)
+    ["day-one", "week-setup", "log-setup", "week-review", "day-open"].includes(pinnedChapter.id)
       ? pinnedChapter.id : null;
   useEffect(() => {
     if (!ready || !pinnedStepDone) return;
@@ -3148,9 +3122,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     );
   }, [pinnedChapter, state.chapters.runs]);
 
-  const doorKind =
-    (pinnedChapter ? pinnedSetupDoor || "chapter" : pinnedStepDone ? null : pinned) ||
-    (reviewingWeekOf ? "week-review" : dayDoor(doorOffers, dateKey));
+  const doorKind = pinnedChapter ? pinnedSetupDoor || "chapter" : pinnedChapterId(pinned) ? null : pinned;
 
   useEffect(() => {
     if (!launch || !ready || !onTheClient || window.location.pathname !== "/os") return;
@@ -3601,6 +3573,11 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   }
 
   function openLogTool(index: number) {
+    setLogPreviewHour(null);
+    if (isLogOpen) {
+      resetLogForm();
+      setLogOpen(false);
+    }
     saveLogAppIndex(index);
     logBack.reset("today");
     weekBack.reset("current");
@@ -3614,12 +3591,30 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     previewReturn.current = { button, scroll: window.scrollY };
     switch (tool) {
       case "note": openNoteTool(); break;
-      case "thoughts": openWritingTool(checkInThoughtsApp); break;
+      case "thoughts":
+        if (thoughtChoices[0]) selectTodayThought(thoughtChoices[0]);
+        openWritingTool(checkInThoughtsApp);
+        break;
       case "routine": openRoutineTool(0); break;
       case "protocol": openRoutineTool(1); break;
       case "log": openLogTool(0); break;
       case "week": openLogTool(1); break;
     }
+  }
+
+  function openTodayQuestion(id: string, button: HTMLButtonElement) {
+    const prompt = thoughtChoices.find(choice => choice.id === id);
+    if (!prompt) return;
+    previewReturn.current = { button, scroll: window.scrollY };
+    selectTodayThought(prompt);
+    openWritingTool(checkInThoughtsApp);
+  }
+
+  function openTodayLogHour(hour: number, button: HTMLButtonElement) {
+    previewReturn.current = { button, scroll: window.scrollY, fallback: button.closest("article")?.querySelector<HTMLButtonElement>(".os-explore-open") ?? undefined };
+    openLogTool(0);
+    setLogPreviewHour(hour);
+    openHour(hour);
   }
 
   function changeWritingAppPage(nextIndex: number) {
@@ -3724,6 +3719,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     if (!cleanTitle && !cleanMoments.length && !editingId) {
       resetLogForm();
       setLogOpen(false);
+      setLogPreviewHour(null);
       return;
     }
     const id =
@@ -3740,6 +3736,9 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
       if (editingId && logBlockSignature(existing) !== expected) {
         throw new Error("This Log entry changed. Open it again to continue.");
       }
+      if (logPreviewHour !== null && !editingId && day.timeBlocks.some(block => block.start === start)) {
+        throw new Error("This hour changed. Open it again to continue.");
+      }
       if (!cleanTitle && !cleanMoments.length) {
         return {
           ...day,
@@ -3747,7 +3746,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
           ...(existing?.imprintLog ? { logCorrections: logClearingReceipt(day, existing, updatedAt) } : {}),
         };
       }
-      return upsertTimeBlock(day, {
+      const updatedDay = upsertTimeBlock(day, {
         ...existing,
         id,
         start,
@@ -3760,7 +3759,10 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
         updatedAt,
         ...(imprintLog ? { imprintLog } : {}),
       });
-    }, () => { resetLogForm(); setLogOpen(false); });
+      return logPreviewHour !== null && logPreviewHour > Math.max(defaultLogEndHour, day.logRange?.endHour ?? defaultLogEndHour)
+        ? setDayLogRange(updatedDay, CIRCLE_DAY_START_HOUR, logPreviewHour)
+        : updatedDay;
+    }, () => { resetLogForm(); setLogOpen(false); setLogPreviewHour(null); });
   }
 
   function addMoment(event: FormEvent<HTMLFormElement>, hour: number) {
@@ -4177,7 +4179,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
       }
       return next;
     });
-    if (nextRun.status === "completed") setReviewingWeekOf(null);
   }
 
   function saveHabitBuildingRun(nextRun: ChapterRun) {
@@ -4301,13 +4302,10 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     if (thoughtBack.flipping) return;
     void pickQuote(getAccountScope()).then(quote => {
       if (!quote) { setLegacyQuoteError("No quotes are available yet."); return; }
-      setLegacyQuoteError(""); legacyQuoteFeedbackRef.current = false; setLegacyQuoteFeedback(false);
+      setLegacyQuoteError("");
       thoughtBack.flip("quote", () => {
         setLegacyQuote(quote);
-        setQuoteNavigation({ back: closeLegacyQuote, forward: () => {
-          if (legacyQuoteFeedbackRef.current) closeLegacyQuote();
-          else { legacyQuoteFeedbackRef.current = true; setLegacyQuoteFeedback(true); }
-        } });
+        setQuoteNavigation({ back: closeLegacyQuote, forward: closeLegacyQuote });
       }, source);
     }).catch(() => setLegacyQuoteError("Could not open quotes. Try again."));
   }
@@ -4316,16 +4314,32 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
     thoughtBack.flip("deep", () => { setLegacyQuote(null); setQuoteNavigation(null); });
   }
 
-  function nextDeepThought() {
-    deepThoughtVisits.current += 1;
-    const prompt = selectDeepThoughtPrompt(state, dateKey, deepThoughtVisits.current, writing ? { view: writing.view, curiosity: writing.memory.curiosity || [] } : undefined);
-    if (!prompt) return;
-    // An exhausted pool may revisit a question, but it must create a new entry.
-    if (writing?.history.some(item => item.source?.questionId === prompt.id)) prompt.id = `${prompt.id}-${deepThoughtVisits.current}`;
+  function selectTodayThought(prompt: DeepThoughtPrompt) {
+    if (deepThoughtPrompt?.id === prompt.id) return;
+    if (!writing && deepThoughtPrompt) legacyThoughtDrafts.current.set(deepThoughtPrompt.id, thoughtDraft);
+    const legacyAnswered = !writing && Boolean(state.profile.profileCase?.survey?.answers.some(answer => answer.questionId === prompt.id));
     setDeepThoughtPrompt(prompt);
-    setDeepThoughtDraft(""); setThoughtSent(false); setThoughtRewarded(false);
-    setThoughtTransition("idle"); thoughtSubmissionLocked.current = false;
+    setDeepThoughtDraft(writing ? "" : legacyThoughtDrafts.current.get(prompt.id) ?? "");
+    setThoughtSent(legacyAnswered); setThoughtRewarded(false);
+    setThoughtTransition("idle"); thoughtSubmissionLocked.current = legacyAnswered;
     resetDeepWritingClock();
+  }
+
+  function nextDeepThought() {
+    const context = writing ? { view: writing.view, curiosity: writing.memory.curiosity || [] } : undefined;
+    for (let attempt = 0; attempt < LOCAL_DEEP_THOUGHTS.length + 2; attempt++) {
+      const visit = ++deepThoughtVisits.current;
+      const next = selectDeepThoughtPrompt(state, dateKey, visit, context);
+      if (!next) return;
+      if (thoughtChoices.some(choice => choice.text.trim().toLowerCase() === next.text.trim().toLowerCase())) continue;
+      const usedId = thoughtChoices.some(choice => choice.id === next.id)
+        || writing?.history.some(item => item.source?.questionId === next.id)
+        || writing?.drafts.some(item => item.source?.questionId === next.id);
+      const prompt = usedId ? { ...next, id: `${next.id}-${visit}` } : next;
+      setThoughtChoices(choices => choices.map(choice => choice.id === deepThoughtPrompt?.id ? prompt : choice));
+      selectTodayThought(prompt);
+      return;
+    }
   }
 
   async function sendThought(event: FormEvent<HTMLFormElement>) {
@@ -4555,6 +4569,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
 
   function checkInThoughtsCard() {
     if (writing && !adminUnlockMode) return <AccountWritingPage
+      key={deepThoughtPrompt?.id}
       kind="deep-thought"
       source={thoughtMode === "deep" && deepThoughtPrompt ? { questionId: deepThoughtPrompt.id, question: deepThoughtPrompt.text, source: deepThoughtPrompt.source } : null}
       placeholder={thoughtMode === "deep" ? "Write what comes up..." : thoughtPlaceholder}
@@ -4567,7 +4582,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
       onAdmin={() => { if (getAccountScope().kind === 'account') { router.push('/os/admin'); return; } setAdminUnlockMode(true); setAdminCodeDraft(""); revealThoughtButton(); }}
       onSent={() => { setHoldThoughtsAfterSend(true); }}
     />;
-    if (thoughtBack.side === "quote" && legacyQuote) return <QuotePage quote={legacyQuote} feedback={legacyQuoteFeedback} onReact={reaction => { updateState(current => reactToLineSeen(current, `quote-${legacyQuote.id}`, reaction)); closeLegacyQuote(); }} />;
+    if (thoughtBack.side === "quote" && legacyQuote) return <QuotePage quote={legacyQuote} onReact={reaction => { updateState(current => reactToLineSeen(current, `quote-${legacyQuote.id}`, reaction)); closeLegacyQuote(); }} />;
     const deepThoughtsActive = thoughtMode === "deep" && Boolean(deepThoughtPrompt);
     const thoughtInput = adminUnlockMode ? (
       <div className="os-admin-unlock-field">
@@ -4699,33 +4714,71 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
   const showTodayPreviews = !launch && !habitPublication && !logPublication;
   const toolOpen = noteOpen || routineOpen || logToolOpen;
   const noteLabel = writing ? "Notes" : "Note";
-  const latestNote = writing?.history.find(entry => entry.kind === "note" &&
-    (entry.content.title.trim() || entry.content.body.trim()));
+  const noteTime = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" });
+  const shortDate = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" });
+  const previewNotes = (writing?.history ?? []).filter(entry => entry.kind === "note" &&
+    (entry.content.title.trim() || entry.content.body.trim())).slice(0, 2).map(entry => ({
+      ...entry.content,
+      dateTime: entry.createdAt,
+      dateLabel: entry.attribution.day === dateKey
+        ? noteTime.format(new Date(entry.createdAt))
+        : shortDate.format(new Date(`${entry.attribution.day}T12:00:00Z`)),
+    }));
   const previewHabits = ready ? habits.filter(habit => habit.status === "active" &&
     habit.text.trim() && !habitCompletion(habit.id)?.completed && !clearingRoutineRows.includes(`habit:${habit.id}`)) : [];
   const previewTasks = ready ? oneTimeTasks.filter(task => task.status === "open" &&
     task.text.trim() && !clearingRoutineRows.includes(`task:${task.id}`)) : [];
-  const previewProtocol = ready && protocol && !protocol.isDraft && !protocol.isOver && protocol.day >= 1 ? {
-    name: protocol.run.name,
-    day: protocol.day,
-    days: protocol.run.days,
-    nonNegotiable: protocol.nonNegotiable.find((term: { text: string }) => term.text.trim())?.text,
-    negotiable: protocol.negotiable.find((term: { text: string }) => term.text.trim())?.text,
-  } : undefined;
-  const previewHours = ready ? [-1, 0, 1].map(offset => {
+  const previewRoutineRemaining = previewHabits.length + previewTasks.length;
+  const previewRoutineItems = previewRoutineRemaining ? [
+    ...previewHabits.slice(0, previewTasks.length ? 2 : 3).map(habit => ({
+      id: `habit:${habit.id}`, kind: "habit" as const, text: habit.action || habit.text, cue: habit.cue?.trim(),
+    })),
+    ...previewTasks.map(task => ({ id: `task:${task.id}`, kind: "task" as const, text: task.text })),
+  ].slice(0, 3) : ready ? [
+    ...todaySoFar.habits.map(habit => ({ id: `habit:${habit.id}`, kind: "habit" as const, text: todayHabitWording.get(habit.id)?.text || habit.text })),
+    ...todaySoFar.tasks.map(task => ({ id: `task:${task.id}`, kind: "task" as const, text: task.text })),
+  ].filter(item => item.text.trim()).slice(0, 2) : [];
+  const previewProtocol = ready && protocol && !protocol.isDraft && !protocol.isOver && protocol.day >= 1 ? (() => {
+    const required = protocol.nonNegotiable.filter(term => term.text.trim());
+    const optional = protocol.negotiable.filter(term => term.text.trim());
+    const terms = [...required, ...optional];
+    return {
+      name: protocol.run.name,
+      day: protocol.day,
+      days: protocol.run.days,
+      terms: [...required.slice(0, 1), ...optional.slice(0, 1)],
+      status: protocol.sealed ? "Day kept" : protocol.keptAll ? "Ready to seal" :
+        `${terms.filter(term => term.completed).length} of ${terms.length} kept`,
+    };
+  })() : undefined;
+  const previewHours = ready ? [-2, -1, 0, 1, 2].map(offset => {
     const hour = liveClockHour + offset;
     const slotDay = new Date(liveNow);
     // Each stored Circle day contains wall-clock slots from 06:00 to 05:00.
     slotDay.setDate(slotDay.getDate() + Math.floor((hour - CIRCLE_DAY_START_HOUR) / 24));
     const time = hourLabel(hour);
     const block = state.days[getDateKey(slotDay)]?.timeBlocks.find(item => item.start === time);
-    return { time, activity: (block?.title || block?.activity)?.trim(), current: offset === 0 };
+    return { time, hour, activity: (block?.title || block?.activity)?.trim(), current: offset === 0 };
   }) : [];
-  const previewGoal = ready ? logWeekGoals.find(goal => !goal.done && goal.text.trim()) : undefined;
-  const previewWeek = previewGoal ? {
-    goal: previewGoal.text,
-    step: previewGoal.steps.find(step => step.dateKey === dateKey && !step.done && step.text.trim())?.text,
-  } : undefined;
+  const previewWeek = ready ? (() => {
+    const openGoals = logWeekGoals.filter(goal => !goal.done && goal.text.trim());
+    const lastDay = logWeekDays.at(-1)!.dateKey;
+    const eligibleDay = dateKey > logWeekKey ? dateKey : logWeekKey;
+    const next = openGoals.flatMap(goal => goal.steps
+      .filter(step => !step.done && step.text.trim() && step.dateKey >= eligibleDay && step.dateKey <= lastDay)
+      .map(step => ({ goal, step })))
+      .sort((left, right) => left.step.dateKey.localeCompare(right.step.dateKey))[0];
+    const start = new Date(`${logWeekKey}T12:00:00Z`);
+    const end = new Date(`${lastDay}T12:00:00Z`);
+    return {
+      range: `${shortDate.format(start)} - ${start.getUTCMonth() === end.getUTCMonth() ? end.getUTCDate() : shortDate.format(end)}`,
+      goal: (next?.goal ?? openGoals[0])?.text,
+      step: next?.step.text,
+      weekday: next && next.step.dateKey !== dateKey
+        ? new Intl.DateTimeFormat("en", { weekday: "short", timeZone: "UTC" }).format(new Date(`${next.step.dateKey}T12:00:00Z`))
+        : undefined,
+    };
+  })() : undefined;
 
   return (
       <main className={`os-today${showTodayPreviews && !toolOpen ? " os-today-overview" : ""}`}>
@@ -4797,12 +4850,11 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
 
         {showTodayPreviews ? <TodayPreviews
           noteLabel={noteLabel}
-          note={latestNote?.content}
-          question={ready ? deepThoughtPrompt?.text : undefined}
+          notes={previewNotes}
+          questions={ready ? thoughtChoices : []}
           routine={{
-            habit: previewHabits[0]?.action || previewHabits[0]?.text,
-            task: previewTasks[0]?.text,
-            more: Math.max(0, previewHabits.length - 1) + Math.max(0, previewTasks.length - 1),
+            items: previewRoutineItems,
+            remaining: previewRoutineRemaining,
             completed: ready ? todaySoFar.total : 0,
           }}
           protocol={previewProtocol}
@@ -4810,6 +4862,8 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
           week={previewWeek}
           hidden={toolOpen}
           onOpen={openTodayPreview}
+          onQuestion={openTodayQuestion}
+          onLogHour={openTodayLogHour}
         /> : null}
 
         {habitPublication ? (
@@ -5103,24 +5157,9 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
               )}
               hideIdleHeading
               idleApps={[
-                ...(sealedProtocolDay && protocolIsOpen ? [
+                ...(sealedProtocolDay ? [
                   <ProtocolKeptPage key="protocol-kept" seal={sealedProtocolDay} onClose={() => changeHabitAppPage(2)} />,
                 ] : []),
-                /* Day one hands over the Apps that only need a person to be
-                   present. A Protocol is a commitment to seven days, and on
-                   day one there is no evidence that one day can be kept — so
-                   it shows its cover with the key dark until there is. */
-                ...(protocolIsOpen ? [] : [
-                  <LockedAppPage
-                    className="os-protocol-page os-locked-app"
-                    key="protocol-locked"
-                    label="Protocol"
-                    opensAfter={getPublishedChapter(lockedUntil("protocol"))?.title || ""}
-                    title="One line you will not cross."
-                    why="Day one names the first one, and writes the phase it runs in. A week you commit to is worth more than a week you hope for."
-                  />,
-                ]),
-                ...(protocolIsOpen ? [
                 <ProtocolPage
                   key={`protocol-${protocolRun?.id || "home"}`}
                   navigation={routineOpen ? <RoutineSwipeCue back onClick={() => changeHabitAppPage(0)} /> : undefined}
@@ -5172,7 +5211,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
                     )
                   }
                 />,
-                ] : []),
                 ...(!SHOW_DREAMLINE || dreamlineEditing
                   ? []
                   : [
@@ -5559,7 +5597,7 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
                 </article>
               );
             })}
-            {logEndHour < CIRCLE_DAY_START_HOUR + 23 ? (
+            {logEndHour < CIRCLE_DAY_START_HOUR + 23 && !(logPreviewHour !== null && logPreviewHour > logEndHour) ? (
               <button
                 className="os-expand-hour"
                 type="button"
@@ -5609,15 +5647,6 @@ export function TodayExperience({ launch = false }: { launch?: boolean }) {
               onFinishStepEdit={finishStepEdit}
               onToggleGoal={finishWeekGoal}
               onToggleStep={(id) => finishTask(id, "week")}
-              review={logChosenDay.name === "Sunday" &&
-                !weekWasReviewed(state, weekStartKey(logChosenDay.dateKey)) ? (
-                  <CreativeButton className="os-week-review-open"
-                    disabled={logChosenDay.isFuture || !weekReviewChapter}
-                    onClick={() => setReviewingWeekOf(weekStartKey(logChosenDay.dateKey))}
-                    sizing="content" styleId="default" type="button">
-                    {logChosenDay.isFuture ? "Review on Sunday" : "Review this week now"}
-                  </CreativeButton>
-                ) : null}
             />
             }
           </SwipeSession>

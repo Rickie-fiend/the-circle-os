@@ -286,7 +286,7 @@ for(const [width,height] of [[360,740],[390,844],[416,844]]) test(`writing pair 
   await deep.getByRole("button",{name:"Next question",exact:true}).click();await expect(deep.locator(".os-deep-thought-question")).not.toHaveText(question);
   await frame.screenshot({path:`outputs/writing-pair-deep-${width}.png`});
   await deep.getByRole("button",{name:"Open Note",exact:true}).click();await note.getByRole("button",{name:"Back",exact:true}).click();
-  await page.getByRole("button",{name:"Deep Thoughts",exact:true}).click();await expect(answer).toBeVisible();
+  await page.getByRole("button",{name:"Deep Thoughts",exact:true}).click({position:{x:40,y:40}});await expect(answer).toBeVisible();
   await nav.getByRole("link",{name:"Today",exact:true}).click();await expect(page.locator(".os-note-open")).toHaveCount(0);
   console.log("Writing pair",width,height,JSON.stringify({reference,noteMetrics,deepMetrics,growth}));
 },{height}));
@@ -351,13 +351,20 @@ for (const width of [360, 390, 416]) test(`Today previews share Explore glass an
   const preview = name => overview.getByRole("group", { name, exact: true });
   const nav = page.getByRole("navigation", { name: "Circle OS", exact: true });
   await expect(rows).toHaveCount(3);
-  await expect(overview.getByRole("heading")).toHaveText(["Notes", "Deep Thoughts", "Routine", "Protocol", "Log", "Week"]);
-  for (const name of ["Notes", "Routine", "Protocol", "Week"]) {
+  await expect(overview.getByRole("heading", { level: 3 })).toHaveText(["Notes", "Deep Thoughts", "Routine", "Protocol", "Log", "Week"]);
+  for (const name of ["Notes", "Routine", "Protocol"]) {
     await expect(preview(name).locator(".os-today-preview-copy")).toHaveCount(0);
   }
+  await expect(preview("Week").locator(".os-today-preview-copy")).toHaveText(/^[A-Z][a-z]{2} \d+ - (?:[A-Z][a-z]{2} )?\d+$/);
   await expect(preview("Deep Thoughts").locator(".os-today-preview-copy")).not.toBeEmpty();
-  await expect(preview("Log").locator("time")).toHaveCount(3);
+  await expect(preview("Log").locator("time")).toHaveCount(5);
   await expect(preview("Log").locator("time[aria-current='time']")).toHaveCount(1);
+  const questionStart = await preview("Deep Thoughts").evaluate(card => {
+    const panel = card.getBoundingClientRect();
+    const second = card.querySelector(".os-today-questions button span").getBoundingClientRect();
+    return (second.top - panel.top) / panel.height;
+  });
+  assert.ok(questionStart >= 0.50 && questionStart <= 0.62, `Second question starts at ${questionStart} of the card`);
 
   const geometry = await rows.evaluateAll(elements => elements.map(row => {
     const viewport = row.getBoundingClientRect();
@@ -377,12 +384,26 @@ for (const width of [360, 390, 416]) test(`Today previews share Explore glass an
     assert.equal(entry.snap, "x mandatory");
   }
   const firstRow = rows.first();
+  async function expectEndGutter(row, start) {
+    await expect.poll(() => row.evaluate(element => {
+      const viewport = element.getBoundingClientRect();
+      const [previous, last] = [...element.querySelectorAll(".os-explore-panel")].map(panel => panel.getBoundingClientRect());
+      return { inset: Math.round(viewport.right - last.right), peek: Math.round(previous.right - viewport.left) };
+    })).toEqual({ inset: start.inset, peek: Math.round(start.peek) });
+  }
+  for (const [index, row] of (await rows.all()).entries()) {
+    const panels = row.locator(".os-explore-panel");
+    await row.focus();
+    await row.press("End");
+    await expect(panels.last()).toHaveClass(/is-selected/);
+    await expectEndGutter(row, geometry[index]);
+    await row.press("Home");
+    await expect(panels.first()).toHaveClass(/is-selected/);
+    await expect.poll(() => row.evaluate(el => el.scrollLeft)).toBe(0);
+  }
   await firstRow.focus();
-  await firstRow.press("End");
-  await expect(preview("Deep Thoughts")).toHaveClass(/is-selected/);
-  await firstRow.press("Home");
-  await expect(preview("Notes")).toHaveClass(/is-selected/);
   if (width === 390) {
+    await firstRow.scrollIntoViewIfNeeded();
     const touch = await context.newCDPSession(page);
     const bounds = await firstRow.boundingBox();
     const x = bounds.x + bounds.width - 36, y = bounds.y + bounds.height / 2;
@@ -392,6 +413,7 @@ for (const width of [360, 390, 416]) test(`Today previews share Explore glass an
     await touch.detach();
     await expect(preview("Deep Thoughts")).toHaveClass(/is-selected/);
     await expect.poll(() => preview("Deep Thoughts").evaluate(el => getComputedStyle(el).transform)).toBe("matrix(1, 0, 0, 1, 0, 0)");
+    await expectEndGutter(firstRow, geometry[0]);
     await firstRow.press("Home");
     await expect.poll(() => firstRow.evaluate(el => el.scrollLeft)).toBe(0);
     await expect.poll(() => preview("Notes").evaluate(el => getComputedStyle(el).transform)).toBe("matrix(1, 0, 0, 1, 0, 0)");
@@ -425,19 +447,27 @@ for (const width of [360, 390, 416]) test(`Today previews share Explore glass an
   }
 }, { reducedMotion: width === 390 ? "no-preference" : "reduce" }));
 
-test("Today previews use saved text, due items and the current stage", { timeout: 90_000 }, async () => isolated(390, async page => {
+for (const width of [360, 390, 416]) test(`Today previews use saved text, due items and the current stage at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
+  await page.clock.setSystemTime(new Date("2026-11-26T14:00:00+07:00"));
+  await page.reload();
+  await ready(page);
   const overview = page.locator(".os-today-previews");
   const preview = name => overview.getByRole("group", { name, exact: true });
   await overview.getByRole("button", { name: "Notes", exact: true }).click();
   const notes = notePage(page);
   await notes.getByRole("button", { name: "Add note", exact: true }).click();
-  await notes.getByRole("textbox", { name: "Note title", exact: true }).fill("After the rain");
+  await notes.getByRole("textbox", { name: "Note title", exact: true }).fill("Before the rain");
+  await notes.getByRole("button", { name: "Back", exact: true }).click();
+  await notes.getByRole("button", { name: "Add note", exact: true }).click();
+  await notes.getByRole("textbox", { name: "Note title", exact: true }).fill("After the rain on the long way home from the market and a walk through the neighbourhood");
   const body = "A quiet morning on the way to the market. ".repeat(14).trim();
   await notes.getByRole("textbox", { name: "Write a note", exact: true }).fill(body);
   await notes.getByRole("button", { name: "Back", exact: true }).click();
-  await expect(notes.locator(".os-notes-panel")).toContainText("After the rain");
+  await expect(notes.locator(".os-notes-panel").first()).toContainText("After the rain");
   await notes.getByRole("button", { name: "Back", exact: true }).click();
   await expect(preview("Notes")).toContainText("After the rain");
+  await expect(preview("Notes").locator(".os-today-older-note")).toHaveText("Before the rain");
+  await expect(preview("Notes").locator("time")).not.toBeEmpty();
   const excerpt = preview("Notes").locator(".os-today-note-excerpt");
   await expect(excerpt).toHaveCSS("-webkit-line-clamp", "3");
   assert.ok(await excerpt.evaluate(el => el.scrollHeight > el.clientHeight));
@@ -461,32 +491,122 @@ test("Today previews use saved text, due items and the current stage", { timeout
       state = api.addProtocolItem(state, "sleep", "negotiable", "a-page").state;
       state = api.updateProtocolItem(state, "sleep", "a-page", "Read one page", day);
       state = api.beginProtocolRun(state, "sleep", day);
-      const goal = goals.addWeekGoal(state, planningWeekStartKey(day, hour), "outside");
+      const week = planningWeekStartKey(day, hour);
+      const first = goals.addWeekGoal(state, week, "first");
+      state = goals.updateGoal(first.state, first.id, "An earlier goal without a step");
+      const goal = goals.addWeekGoal(state, week, "outside");
       state = goals.updateGoal(goal.state, goal.id, "Spend more time outside");
       const step = goals.addGoalStep(state, goal.id, api.addTask, "walking-route", at, day);
       state = api.updateTask(step.state, step.taskId, "Pick a walking route");
       state = api.ensureDay(state, day);
-      const saved = api.upsertTimeBlock(state.days[day], {
-        id: "today-preview-log", start: label(hour), end: label(hour + 1),
-        activity: "Writing", note: "A private smaller moment", createdAt: at, updatedAt: at,
-      });
+      const saved = [-2, -1, 0, 1, 2].reduce((record, offset) => api.upsertTimeBlock(record, {
+        id: `today-preview-log-${offset}`, start: label(hour + offset), end: label(hour + offset + 1),
+        activity: offset === 0 ? "Writing" : "A saved activity", note: "A private smaller moment", createdAt: at, updatedAt: at,
+      }), state.days[day]);
       return { ...state, days: { ...state.days, [day]: saved } };
     });
   });
   await expect(preview("Routine")).toContainText("Stretch five minutes");
   await expect(preview("Routine")).toContainText("Call Mum");
-  await expect(preview("Routine")).toContainText("+2 more");
+  await expect(preview("Routine")).toContainText("Read a page");
+  await expect(preview("Routine")).toContainText("4 left");
   await expect(preview("Routine")).toContainText("1 checked off");
   await expect(preview("Protocol")).toContainText("Steady sleep");
   await expect(preview("Protocol")).toContainText("In bed by 10");
   await expect(preview("Protocol")).toContainText("Read one page");
   await expect(preview("Protocol")).toContainText("Day 1 of 7");
+  await expect(preview("Protocol")).toContainText("0 of 2 kept");
   await expect(preview("Log")).toContainText("Writing");
   await expect(preview("Log")).not.toContainText("A private smaller moment");
   await expect(preview("Week")).toContainText("Spend more time outside");
   await expect(preview("Week")).toContainText("Pick a walking route");
-  await page.screenshot({ path: "outputs/today-previews-saved-390.png", fullPage: true });
+  for (const [name, labels] of [["Routine", ["Habits", "Tasks"]], ["Protocol", ["Non-negotiable", "Negotiable"]], ["Week", ["Goal", "Step"]]]) {
+    const card = preview(name);
+    await expect(card.getByRole("heading", { level: 4 })).toHaveText(labels);
+    for (const group of await card.locator(".os-today-preview-group").all()) {
+      const heading = group.locator("h4");
+      const value = group.locator("p").first();
+      await expect(heading).toHaveCSS("font-size", "18px");
+      await expect(value).toHaveCSS("font-size", "18px");
+      await expect(heading).toHaveCSS("font-weight", "700");
+      await expect(value).toHaveCSS("font-weight", "400");
+    }
+    if (name !== "Week") await expect(card.locator(".os-today-preview-dot")).toHaveCSS("color", "rgb(227, 107, 55)");
+  }
+  const activityLefts = await preview("Log").locator("li > .os-today-preview-line").evaluateAll(items =>
+    items.map(item => item.getBoundingClientRect().left));
+  assert.equal(activityLefts.length, 5);
+  assert.equal(new Set(activityLefts).size, 1, "All five activity rows share the same left edge");
+  for (const row of await overview.getByRole("region").all()) {
+    const card = row.locator(".is-selected");
+    assert.equal(await card.evaluate(element => element.getBoundingClientRect().height), 344, await card.getAttribute("aria-label"));
+  }
+  if (width === 390) await page.screenshot({ path: "outputs/today-previews-saved-390.png", fullPage: true });
+}, { clock: true }));
+
+test("Today Deep Thoughts opens either question and recovers both drafts after reload", { timeout: 90_000 }, async () => isolated(390, async page => {
+  const card = page.getByRole("group", { name: "Deep Thoughts", exact: true }).filter({ has: page.locator(".os-today-questions") });
+  const first = card.locator(".os-today-questions p");
+  const second = card.locator(".os-today-questions button");
+  const questions = [await first.textContent(), await second.textContent()];
+  assert.notEqual(questions[0], questions[1]);
+  const answer = page.getByRole("textbox", { name: "Answer the deep thought" });
+  const today = page.getByRole("navigation", { name: "Circle OS" }).getByRole("link", { name: "Today" });
+  for (const [index, button] of [card.getByRole("button", { name: "Deep Thoughts", exact: true }), second].entries()) {
+    await button.focus();
+    if (index === 0) await button.press("Enter");
+    else await button.click();
+    await expect(page.locator(".os-note-open .os-deep-thought-question")).toHaveText(questions[index]);
+    await answer.fill(`Separate draft ${index}`);
+    await today.click();
+    await expect(button).toBeFocused();
+  }
+  await page.reload();
+  await ready(page);
+  for (const prompt of [first, second]) {
+    const question = await prompt.textContent();
+    const index = questions.indexOf(question);
+    assert.ok(index >= 0);
+    const button = prompt === first ? card.getByRole("button", { name: "Deep Thoughts", exact: true }) : second;
+    await button.focus();
+    await button.press("Enter");
+    await expect(answer).toHaveValue(`Separate draft ${index}`);
+    await today.click();
+  }
 }));
+
+test("Today Log plus follows 06:00 and Week shows the planned date range", { timeout: 90_000 }, async () => isolated(390, async page => {
+  const overview = page.locator(".os-today-previews");
+  const log = overview.getByRole("group", { name: "Log", exact: true });
+  const week = overview.getByRole("group", { name: "Week", exact: true });
+  const today = page.getByRole("navigation", { name: "Circle OS" }).getByRole("link", { name: "Today" });
+  await page.clock.setSystemTime(new Date("2026-11-29T19:59:30+07:00"));
+  await page.reload();
+  await ready(page);
+  await expect(week).toContainText("Nov 23 - 29");
+  await page.clock.fastForward(60_000);
+  await expect(week).toContainText("Nov 30 - Dec 6");
+
+  await page.clock.setSystemTime(new Date("2026-11-30T05:59:00+07:00"));
+  await page.reload();
+  await ready(page);
+  const plus = log.getByRole("button", { name: "Add activity at 05:00" });
+  await expect(plus).toHaveCSS("font-size", "16px");
+  await expect(plus).toHaveCSS("font-weight", "700");
+  const box = await plus.boundingBox();
+  assert.ok(box && box.width >= 44 && box.height >= 44);
+  await plus.click();
+  const closing = page.getByRole("textbox", { name: "Main activity at 05:00" });
+  await closing.fill("Before sunrise");
+  await closing.press("Enter");
+  await expect(closing).toBeHidden();
+  await today.click();
+  await expect(log.getByRole("button", { name: "Log", exact: true })).toBeFocused();
+  await page.clock.fastForward(60_000);
+  await expect(log.locator('li:has(time[datetime="05:00"])')).toContainText("Before sunrise");
+  await log.getByRole("button", { name: "Add activity at 06:00" }).click();
+  await expect(page.getByRole("textbox", { name: "Main activity at 06:00" })).toBeVisible();
+}, { clock: true }));
 
 test("Today Log preview crosses 06:00 live and reads the closing day's entry", { timeout: 90_000 }, async () => isolated(390, async page => {
   await page.clock.setSystemTime(new Date("2026-11-26T05:59:00+07:00"));
@@ -505,15 +625,15 @@ test("Today Log preview crosses 06:00 live and reads the closing day's entry", {
   const log = page.locator(".os-today-previews").getByRole("group", { name: "Log", exact: true });
   const times = log.locator("time");
   const values = () => times.evaluateAll(items => items.map(item => item.dateTime));
-  await expect.poll(values).toEqual(["04:00", "05:00", "06:00"]);
+  await expect.poll(values).toEqual(["03:00", "04:00", "05:00", "06:00", "07:00"]);
   await expect(log.locator("time[aria-current='time']")).toHaveAttribute("datetime", "05:00");
-  await expect(log.locator("li").nth(1)).toContainText("Before sunrise");
-  await expect(log.locator("li").nth(2)).toContainText("Tea at sunrise");
+  await expect(log.locator("li").nth(2)).toContainText("Before sunrise");
+  await expect(log.locator("li").nth(3)).toContainText("Tea at sunrise");
   await page.clock.fastForward(60_000);
-  await expect.poll(values).toEqual(["05:00", "06:00", "07:00"]);
-  await expect(log.locator("li").first()).toContainText("Before sunrise");
+  await expect.poll(values).toEqual(["04:00", "05:00", "06:00", "07:00", "08:00"]);
+  await expect(log.locator("li").nth(1)).toContainText("Before sunrise");
   await expect(log.locator("time[aria-current='time']")).toHaveAttribute("datetime", "06:00");
-  await expect(log.locator("li").nth(1)).toContainText("Tea at sunrise");
+  await expect(log.locator("li").nth(2)).toContainText("Tea at sunrise");
 }, { clock: true }));
 
 test("Log keeps its last hour on the closing Circle day at 06:00",{timeout:90_000},async()=>isolated(390,async page=>{
@@ -574,6 +694,7 @@ for(const width of [360,390]) test(`Log quiet hour controls at ${width}px`,{time
   await box.getByRole("textbox",{name:/^Main activity at/}).fill("Quiet synthetic activity");await save.click();
   const row=box.locator(".os-timeline article").filter({hasText:"Quiet synthetic activity"});
   await checkRightAnchor(row.locator('.os-add-moment'));
+  await expect(row.locator('.os-add-moment')).toHaveCSS('font-weight','700');
   await row.getByRole("button",{name:/Add a small moment/}).click();await row.getByRole("textbox",{name:/^Small moment at/}).fill("Quiet synthetic moment");
   await expect(row.getByRole("button",{name:"Save small moment",exact:true})).toHaveCSS("background-color","rgba(0, 0, 0, 0)");
   await checkRightAnchor(row.getByRole("button",{name:"Save small moment",exact:true}));
@@ -638,8 +759,28 @@ for(const width of [360,390,416]) test(`Week compact rows and folded records at 
   const headerInk=async()=>frame.locator('.os-page-header-right button').evaluate(el=>{const range=document.createRange();range.selectNodeContents(el);const r=range.getBoundingClientRect(),f=el.closest('.os-log-session').getBoundingClientRect();return {top:r.top-f.top-1,right:f.right-1-r.right};});
   const logHeader=await headerInk();await page.getByRole('button',{name:'Open Week',exact:true}).click();await logSettled(frame);const week=page.locator('.os-week-overview');const weekHeader=await headerInk();
   assert.ok(Math.abs(logHeader.top-weekHeader.top)<=1,JSON.stringify({logHeader,weekHeader}));assert.ok(Math.abs(logHeader.right-24)<=1,JSON.stringify(logHeader));assert.ok(Math.abs(weekHeader.right-24)<=1,JSON.stringify(weekHeader));
+  const record = week.locator('.os-week-record');
+  const summary = record.locator('summary');
+  for (const heading of [week.getByRole('heading', { name: 'This week', exact: true }), summary]) {
+    await expect(heading).toHaveCSS('font-size', '28px');
+    await expect(heading).toHaveCSS('font-weight', '700');
+    await expect(heading).toHaveCSS('line-height', '33.6px');
+    await expect(heading).toHaveCSS('letter-spacing', '-0.42px');
+  }
+  assert.ok((await summary.boundingBox()).height >= 44);
+  const recordChevron = summary.locator('.os-week-inline-arrow');
+  await expect(recordChevron).toHaveCSS('color', 'rgb(227, 107, 55)');
+  await expect(recordChevron).toHaveText('›');
+  await expect(recordChevron).toHaveCSS('rotate', '90deg');
+  await expect(record).not.toHaveAttribute('open');
+  await summary.focus();
+  await page.keyboard.press('Enter');
+  await expect(record.getByText('Nothing recorded in Log yet.', { exact: true })).toBeVisible();
+  await page.keyboard.press('Space');
+  await expect(record).not.toHaveAttribute('open');
   await week.getByRole('button',{name:'+ Add goal',exact:true}).click();const goal=week.getByRole('textbox',{name:'Goal for this week',exact:true});await goal.fill('Walk');await goal.blur();
   await week.getByRole('button',{name:'Show steps for Walk',exact:true}).click();
+  await expect(week.getByRole('button',{name:'Hide steps for Walk',exact:true}).locator('span')).toHaveCSS('rotate','90deg');
   for(const words of ['First step','Second step']){await week.getByRole('button',{name:'+ Add step',exact:true}).click();await week.getByRole('textbox',{name:'One step toward this goal',exact:true}).last().fill(words);await week.getByRole('textbox',{name:'One step toward this goal',exact:true}).last().blur();}
   const metrics=await week.evaluate(el=>{const frame=el.closest('.os-log-session').getBoundingClientRect(),head=el.querySelector('.os-week-goal-head'),input=head.querySelector('textarea'),arrow=head.querySelector('.os-week-goal-disclosure span'),canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),font=getComputedStyle(input);ctx.font=font.font;const textRight=input.getBoundingClientRect().left+ctx.measureText(input.value).width;const rows=[head,...el.querySelectorAll('.os-week-step')];return {arrowGap:arrow.getBoundingClientRect().left-textRight,arrowColor:getComputedStyle(arrow).color,rims:rows.map(row=>{const r=row.querySelector('.os-checkbox-face').getBoundingClientRect();return {right:frame.right-1-r.right,center:r.top+r.height/2,size:r.width};}),crosses:rows.map(row=>row.querySelector('.os-routine-clear-cross').getBoundingClientRect().left-frame.left-1),goalGap:rows[1].getBoundingClientRect().top-head.getBoundingClientRect().bottom,taskGap:rows[2].getBoundingClientRect().top-rows[1].getBoundingClientRect().bottom};});
   console.log('Week compact metrics',width,JSON.stringify({logHeader,weekHeader,...metrics}));assert.ok(metrics.arrowGap>=0&&metrics.arrowGap<=8,JSON.stringify(metrics));assert.equal(metrics.arrowColor,'rgb(227, 107, 55)');assert.ok(metrics.rims.every(r=>Math.abs(r.right-24)<=1&&r.size===28));assert.ok(Math.abs(metrics.crosses[0]-24)<=1);assert.ok(metrics.crosses.slice(1).every(x=>Math.abs(x-44)<=1));assert.equal(metrics.goalGap,12);assert.equal(metrics.taskGap,8);
@@ -650,12 +791,16 @@ for(const width of [360,390,416]) test(`Week compact rows and folded records at 
   await expect(week.locator('.os-week-step-text').first()).toHaveCSS('font-size','18px');await expect(week.getByRole('button',{name:'+ Add step',exact:true})).toHaveCSS('font-size','16px');await expect(week.getByRole('button',{name:'+ Add step',exact:true})).toHaveCSS('font-weight','400');
   await week.getByRole('button',{name:'+ Add goal',exact:true}).click();await expect(week.locator('.os-week-goal-group')).toHaveCount(2);const groupGap=await week.evaluate(el=>{const groups=[...el.querySelectorAll('.os-week-goal-group')];return groups[1].getBoundingClientRect().top-groups[0].getBoundingClientRect().bottom;});assert.equal(groupGap,24);await week.getByRole('textbox',{name:'Goal for this week',exact:true}).last().blur();await expect(week.locator('.os-week-goal-group')).toHaveCount(1);
   await page.evaluate(()=>window.circle.updateState(s=>{const key=window.api.getDateKey();return {...s,days:{...s.days,[key]:{...s.days[key],timeBlocks:[{id:'walk',start:'08:00',end:'09:00',title:'Morning walk',moments:['Birdsong','Met a friend']},{id:'read',start:'20:00',end:'21:00',title:'Reading',moments:['A good line']}]}}};}));
-  const record=week.locator('.os-week-record');await expect(record).not.toHaveAttribute('open');await expect(record.getByText('Morning walk',{exact:true})).toBeHidden();await record.locator('summary').click();await expect(record.locator('article')).toHaveCount(2);await expect(record.locator('article').first().locator('strong')).toHaveText('Morning walk');await expect(record.locator('article').first().locator('time')).toHaveText('08:00');await expect(record.locator('article').first().locator('li')).toHaveText(['Birdsong','Met a friend']);await expect(record.locator('li').first()).toHaveCSS('font-size','16px');
+  await expect(record).not.toHaveAttribute('open');await expect(record.getByText('Morning walk',{exact:true})).toBeHidden();await summary.click();await expect(record.locator('article')).toHaveCount(2);await expect(record.locator('article').first().locator('strong')).toHaveText('Morning walk');await expect(record.locator('article').first().locator('time')).toHaveText('08:00');await expect(record.locator('article').first().locator('li')).toHaveText(['Birdsong','Met a friend']);await expect(record.locator('li').first()).toHaveCSS('font-size','16px');
   await expect(record.getByRole('button',{name:/Open Log/})).toHaveCount(0);
   await week.screenshot({path:`outputs/week-compact-${width}.png`,animations:'disabled'});
   await week.getByRole('button',{name:'Clear task: Second step',exact:true}).click();await expect(week.getByRole('textbox',{name:'One step toward this goal',exact:true})).toHaveCount(1);
   await week.getByRole('button',{name:'Clear goal: Walk',exact:true}).click();await expect(goal).toHaveCount(0);assert.ok(await page.evaluate(()=>Object.values(window.circle.state.tasks.items).every(task=>task.status==='archived')));
   const before=await page.evaluate(()=>JSON.stringify(window.api.normalizeState(window.circle.state).goals));await week.getByRole('button',{name:'History',exact:true}).click();const history=page.locator('.os-week-history-page'),day=history.locator('.os-week-history-day').first();await expect(day).not.toHaveAttribute('open');await expect(day.locator('.os-week-history-goal > summary')).toBeHidden();await day.locator(':scope > summary').click();const savedGoal=day.locator('.os-week-history-goal');await expect(savedGoal).not.toHaveAttribute('open');await savedGoal.locator('summary').click();await expect(savedGoal.locator('li')).toHaveText(['First step','Second step']);assert.equal(await page.evaluate(()=>JSON.stringify(window.api.normalizeState(window.circle.state).goals)),before);await history.screenshot({path:`outputs/week-grouped-history-${width}.png`,animations:'disabled'});
+  for (const chevron of await history.locator('.os-week-inline-arrow:visible').all()) {
+    await expect(chevron).toHaveText('›');
+    await expect(chevron).toHaveCSS('rotate', '90deg');
+  }
 }));
 
 test('Week tasks fade immediately with the shared checkbox response',{timeout:90_000},async()=>isolated(390,async page=>{
@@ -825,15 +970,6 @@ for (const width of [360,390,416]) test(`bottom navigation routes and stays visi
   await expect(page.locator(".os-note-open")).toHaveCount(0);
 }));
 
-async function entryFixture(page, { version = 3, fresh = false, week = false } = {}) {
-  await page.evaluate(options => window.circle.updateState(s => {
-    const keep = Object.entries(s.chapters.runs).filter(([id]) =>
-      (!options.fresh && id === `day-one@${options.version}`) ||
-      (options.week && (id.startsWith("week-setup@") || id.startsWith("log-setup@"))));
-    return { ...s, chapters: { ...s.chapters, runs: Object.fromEntries(keep) } };
-  }), { version, fresh, week });
-  await expect.poll(() => page.evaluate(() => Object.keys(window.circle.state.chapters.runs).length)).toBe(fresh ? 0 : week ? 5 : 1);
-}
 
 async function openRoutineTool(page, name = "Routine") {
   if (!(await page.locator(".os-routine-open").isVisible())) {
@@ -1779,89 +1915,31 @@ for (const [width, height] of [[360, 667], [390, 844]]) {
   }, { height, reducedMotion: width === 390 ? "no-preference" : "reduce" }));
 }
 
-for (const width of [360, 390]) {
-  test(`Entry after Day One stays quiet midweek, on Sunday and after reload at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
-    await entryFixture(page);
-    const before = await page.evaluate(() => JSON.stringify(window.circle.state.chapters.runs));
-    for (const time of ["2026-11-06T05:00:00Z", "2026-11-08T14:00:00Z", "2026-11-09T05:00:00Z"]) {
-      await page.clock.setFixedTime(new Date(time));
-      await page.reload(); await ready(page);
-      await expect(page.locator(".os-splash")).toHaveCount(0);
-      assert.equal(await page.evaluate(() => JSON.stringify(window.circle.state.chapters.runs)), before);
-    }
-    await page.evaluate(() => window.api.activateAccountScope(null));
-    assert.equal(await page.evaluate(() => window.api.getAccountScope().kind), "signed-out");
-    await page.evaluate(() => window.api.activateAccountScope("synthetic-writer-a"));
-    await ready(page); await expect(page.locator(".os-splash")).toHaveCount(0);
-    assert.equal(await page.evaluate(() => JSON.stringify(window.circle.state.chapters.runs)), before);
-    await page.screenshot({ path: `outputs/quiet-entry-${width}.png`, fullPage: true });
-  }));
-
-  test(`Entry keeps older Day One complete and chosen Week setup accessible at ${width}px`, { timeout: 180_000 }, async () => isolated(width, async page => {
-    await entryFixture(page, { version: 2 });
-    await page.reload(); await ready(page);
-    await expect(page.locator(".os-splash")).toHaveCount(0);
-    await page.evaluate(() => window.goto("/os/mirror")); await ready(page);
-    const box = page.locator(".quest-catalogue-apps"); await box.scrollIntoViewIfNeeded(); await logSettled(box);
-    await box.getByRole("button", { name: "View steps", exact: true }).click(); await logSettled(box);
-    await box.locator(".quest-step").filter({ hasText: "Now set the week." }).click();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.locator(".os-week-setup-session")).toContainText("Now set the week.");
-    assert.equal(await page.evaluate(() => window.circle.state.chapters.runs["day-one@2"].status), "completed");
-    assert.equal(await page.evaluate(() => window.circle.state.chapters.runs["day-one@3"]), undefined);
-    if (width === 360) {
-      const session = page.locator(".os-week-setup-session");
-      const chapter = await page.evaluate(() => window.api.publishedChapters.find(c => c.id === "week-setup"));
-      await session.getByRole("button", { name: /^Begin / }).click();
-      const swipe = async () => {
-        await logSettled(session); const box = await session.boundingBox();
-        const y = box.y + Math.min(150, box.height / 2);
-        await page.mouse.move(box.x + box.width * .8, y); await page.mouse.down();
-        await page.mouse.move(box.x + box.width * .2, y, { steps: 14 }); await page.mouse.up();
-      };
-      for (const item of chapter.pages.slice(1, -1)) {
-        await logSettled(session);
-        if (item.type === "info") {
-          await expect(session.getByRole("heading", { name: item.title, exact: true })).toBeVisible();
-          await swipe();
-        } else {
-          await session.getByRole("textbox", { name: item.question, exact: true }).fill(`Synthetic ${item.answerKey}`);
-          await session.getByRole("button", { name: "Continue", exact: true }).click();
-        }
-      }
-      await expect(session.getByText("Swipe when ready", { exact: true })).toBeVisible(); await swipe();
-      await expect(page.locator(".os-splash")).toHaveCount(0);
-      await expect.poll(() => page.evaluate(() => window.circle.state.chapters.runs["week-setup@1"]?.status)).toBe("completed");
-      const records = await page.evaluate(() => ({ goals: window.circle.state.goals, tasks: window.circle.state.tasks, protocol: window.circle.state.protocol }));
-      assert.equal(Object.keys(records.goals.items).length, 1);
-      assert.equal(Object.keys(records.tasks.items).length, 1);
-      assert.equal(Object.keys(records.protocol.runs).length, 1);
-      await page.reload(); await ready(page); await expect(page.locator(".os-splash")).toHaveCount(0);
-      assert.deepEqual(await page.evaluate(() => ({ goals: window.circle.state.goals, tasks: window.circle.state.tasks, protocol: window.circle.state.protocol })), records);
-    }
-  }));
-
-  test(`Entry still offers unfinished Day One at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
-    await entryFixture(page, { fresh: true });
-    await expect(page.getByRole("dialog", { name: "Day one", exact: true })).toBeVisible();
-    await page.reload(); await ready(page);
-    await expect(page.getByRole("dialog", { name: "Day one", exact: true })).toBeVisible();
-  }));
-
-  test(`Entry leaves Sunday review available only when chosen at ${width}px`, { timeout: 90_000 }, async () => isolated(width, async page => {
-    await entryFixture(page, { week: true });
-    await page.clock.setFixedTime(new Date("2026-11-08T14:00:00Z"));
-    await page.reload(); await ready(page);
-    await expect(page.locator(".os-splash")).toHaveCount(0);
-    await page.getByRole("button", { name: "Log", exact: true }).click();
-    const box = page.locator(".os-log-session"); await box.getByRole("button", { name: "Open Week", exact: true }).click();
-    await logSettled(box);
-    await box.locator('.os-week-date-button[data-date-key="2026-11-08"]').click();
-    await box.getByRole("button", { name: "Review this week now", exact: true }).click();
-    await expect(page.getByRole("dialog", { name: "Week review", exact: true })).toBeVisible();
-    assert.equal(await page.evaluate(() => Object.keys(window.circle.state.weeks).length), 0);
-  }));
-}
+for (const width of [360, 390]) test(`Bundled Chapters stay retired after reload at ${width}px`, { timeout: 90_000 }, () => isolated(width, async page => {
+  await page.evaluate(async () => {
+    const api = window.api;
+    const scope = api.getAccountScope();
+    const state = api.createEmptyState();
+    const definition = api.publishedChapters.find(chapter => chapter.id === "day-one" && chapter.version === 3);
+    const run = { ...api.createChapterRun(definition), status: "in-progress" };
+    state.chapters.runs[run.runId] = run;
+    localStorage.setItem(api.accountStorageKey(scope, "circle-os-pinned-door"), "week-review");
+    await api.saveCircleState(scope, state);
+  });
+  await page.reload();
+  await ready(page);
+  await expect(page.locator(".os-splash, .os-checkin-session[aria-label='Check-in chapter']")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => Object.keys(window.circle.state.chapters.runs))).toEqual([]);
+  await openRoutineTool(page, "Protocol");
+  await expect(page.getByRole("button", { name: "Start a phase" })).toBeVisible();
+  await page.evaluate(() => window.navigate("/os?launch-fixture=1"));
+  await expect(page).toHaveURL(/\/os\/home$/);
+  await page.evaluate(() => window.navigate("/os/mirror"));
+  await ready(page);
+  await expect(page.getByRole("region", { name: "Quests", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Set up", exact: true }).first().click();
+  await expect(page.getByRole("textbox", { name: /^Edit / }).first()).toBeVisible();
+}));
 
 async function installSyncFixture(page) {
   await page.evaluate(()=>{
@@ -2197,6 +2275,15 @@ for(const [width,height] of [[360,740],[390,844],[416,844]])test(`Notes collecti
   await frame.evaluate(el=>el.dispatchEvent(new WheelEvent("wheel",{deltaX:-500,deltaY:0,bubbles:true,cancelable:true})));await expect(box.getByRole("heading",{name:"Notes",exact:true})).toBeVisible();
   const add=box.getByRole("button",{name:"Add note",exact:true});
   const goBack=box.getByRole("button",{name:"Back",exact:true});
+  await expect(goBack).toHaveText("←");
+  const arrow = goBack.locator(".os-routine-back-icon");
+  await expect(arrow).toHaveCSS("background-image", /^linear-gradient\(90deg, rgb\(227, 107, 55\)/);
+  await expect(add).toHaveCSS("font-size", "16px");
+  await expect(add).toHaveCSS("font-weight", "700");
+  for (const button of [goBack, add]) {
+    const target = await button.boundingBox();
+    assert.ok(target.width >= 44 && target.height >= 44);
+  }
   const panel=title=>box.locator(".os-notes-panel").filter({hasText:title});
   await expect(box.locator(".os-notes-collection")).toBeEmpty();
   await expect(add).toHaveText("+");await add.click();await expect(body).toBeVisible();
@@ -2288,14 +2375,28 @@ test("Quote visits rotate, preserve the question/draft, survive reload/offline, 
   const input=box.getByRole("textbox",{name:"Answer the deep thought",exact:true});await input.fill("An unfinished synthetic answer.");
   for(const n of [1,2,3,1]){
     await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(page.locator(".os-quote-page")).toContainText(`Synthetic quote ${n}`);
-    await swipeBoundary(page,-500);await expect(input).toHaveValue("An unfinished synthetic answer.");await expect(box.locator(".os-deep-thought-question")).toHaveText(question);
+    const loved = page.getByRole("button", { name: "Loved it", exact: true });
+    const notForMe = page.getByRole("button", { name: "Not for me", exact: true });
+    await expect(loved).toBeVisible();
+    await expect(notForMe).toBeVisible();
+    if (n === 2) await loved.click();
+    else if (n === 3) await notForMe.click();
+    else await swipeBoundary(page, -500);
+    await expect(input).toHaveValue("An unfinished synthetic answer.");
+    await expect(box.locator(".os-deep-thought-question")).toHaveText(question);
   }
   assert.equal(Object.keys((await page.evaluate(()=>window.api.load())).entries).length,0,"viewing quotes never submits a draft");
-  await options(box,"History");await expect(row(box,"An unfinished synthetic answer.")).toContainText("Unsent");await box.getByRole("button",{name:"Deep Thoughts",exact:true}).click();
+  await options(box,"History");
+  const unsent = row(box, "An unfinished synthetic answer.");
+  await expect(unsent).toContainText("Unsent");
+  await expect(unsent.locator("time").first()).toHaveAttribute("datetime", /^\d{4}-\d{2}-\d{2}$/);
+  await expect(unsent.locator("time").nth(1)).toHaveText(/\d+:\d{2} [AP]M/);
+  await box.getByRole("button",{name:"Deep Thoughts",exact:true}).click();
   await page.reload();await ready(page);await thoughts(page);backend.fail=true;
   await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(page.locator(".os-quote-page")).toContainText("Synthetic quote 2");
-  await swipeBoundary(page,500);await expect(page.getByRole("button",{name:"Loved this",exact:true})).toBeVisible();await page.getByRole("button",{name:"Loved this",exact:true}).click();
+  await swipeBoundary(page,500);
   await expect(input).toHaveValue("An unfinished synthetic answer.");
+  await expect(box.locator(".os-deep-thought-question")).toHaveText(question);
   backend.fail=false;backend.pool=[];await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(box.getByRole("alert")).toContainText("No quotes are available yet");
   backend.fail=true;await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(page.locator(".os-quote-page")).toHaveCount(0);await expect(input).toHaveValue("An unfinished synthetic answer.");
   await page.locator(".os-checkin-session").screenshot({path:"outputs/deep-thoughts-quote-return-390.png"});
@@ -2305,6 +2406,14 @@ for(const [width,height]of[[360,667],[390,844]])test(`Deep Thoughts History/Tras
   const box=await thoughts(page),question=await box.locator(".os-deep-thought-question").textContent();
   await box.getByRole("textbox",{name:"Answer the deep thought",exact:true}).fill("A saved synthetic answer for Trash.");await box.getByRole("button",{name:"Send",exact:true}).click();await saved(page);
   await options(box,"History");await expect(box.getByText("Today",{exact:true})).toBeVisible();await expect(box.getByRole("button",{name:/Undo|Versions|Writing options/})).toHaveCount(0);
+  const entry = await page.evaluate(async () => Object.values((await window.api.load()).entries)[0]);
+  const { day } = entry.versions.find(version => version.id === entry.currentVersionId).attribution;
+  const times = row(box, question).locator("time");
+  await expect(times.first()).toHaveAttribute("datetime", day);
+  await expect(times.first()).toHaveText(new Intl.DateTimeFormat("en", {
+    month: "short", day: "numeric", year: "numeric", timeZone: "UTC"
+  }).format(new Date(`${day}T12:00:00Z`)));
+  await expect(times.nth(1)).toHaveAttribute("datetime", entry.createdAt);
   const bounds=await trashRow(box,question).boundingBox();assert.ok(bounds.width>=44&&bounds.height>=44);
   await trashRow(box,question).click();await expect(row(box,question)).toHaveCount(0);await expect(box).not.toContainText("Moved to Trash");
   await box.getByRole("button",{name:"Trash",exact:true}).click();await row(box,question).click();await expect(box.getByRole("heading",{name:question,exact:true})).toBeVisible();await expect(box).toContainText("A saved synthetic answer for Trash.");
@@ -2340,9 +2449,18 @@ test("Note Line keeps its existing first-swipe reactions and second-swipe exit",
 }));
 
 test("legacy Deep Thoughts keeps the answer and uses the quote back without migrating writing",{timeout:90_000},async()=>isolated(390,async(page,context)=>{
-  await quoteBackend(context);await swipeBoundary(page,500);const box=page.locator(".os-thoughts-page"),question=await box.locator(".os-deep-thought-question").textContent();
+  await quoteBackend(context);
+  await page.getByRole("button", { name: "Deep Thoughts", exact: true }).click({ position: { x: 40, y: 40 } });
+  const box=page.locator(".os-thoughts-page"),question=await box.locator(".os-deep-thought-question").textContent();
   const input=box.getByRole("textbox",{name:"Answer the deep thought",exact:true});await input.fill("A synthetic legacy answer.");await box.getByRole("button",{name:"Send",exact:true}).click();await expect(box.getByRole("button",{name:"Next question",exact:true})).toBeVisible();await expect(input).toHaveValue("A synthetic legacy answer.");
-  await box.getByRole("button",{name:"Show a Quote",exact:true}).click();await expect(page.locator(".os-quote-page")).toContainText("Synthetic quote 1");await swipeBoundary(page,-500);await expect(input).toHaveValue("A synthetic legacy answer.");await expect(box.locator(".os-deep-thought-question")).toHaveText(question);
+  await box.getByRole("button",{name:"Show a Quote",exact:true}).click();
+  const quote = page.locator(".os-quote-page");
+  await expect(quote).toContainText("Synthetic quote 1");
+  await expect(quote.getByRole("button", { name: "Loved it", exact: true })).toBeVisible();
+  await expect(quote.getByRole("button", { name: "Not for me", exact: true })).toBeVisible();
+  await swipeBoundary(page,500);
+  await expect(input).toHaveValue("A synthetic legacy answer.");
+  await expect(box.locator(".os-deep-thought-question")).toHaveText(question);
   await box.getByRole("button",{name:"Next question",exact:true}).click();await expect(input).toHaveValue("");await expect(box.locator(".os-deep-thought-question")).not.toHaveText(question);
 },{account:false}));
 
@@ -2403,7 +2521,7 @@ test("Note autosaves silently offline and restores only through the Trash page",
 
 async function thoughts(page){
   const box=page.locator(".os-writing-page.os-thoughts-page");
-  if(!await page.locator(".os-note-open").isVisible()) await page.getByRole("button",{name:"Deep Thoughts",exact:true}).click();
+  if(!await page.locator(".os-note-open").isVisible()) await page.getByRole("button",{name:"Deep Thoughts",exact:true}).click({position:{x:40,y:40}});
   const session=page.locator(".os-checkin-session");
   await session.scrollIntoViewIfNeeded();
   if(!await box.locator(".os-deep-thought-question").isVisible()) await session.evaluate(element=>{element.dispatchEvent(new WheelEvent("wheel",{deltaX:500,deltaY:0,bubbles:true,cancelable:true}));});

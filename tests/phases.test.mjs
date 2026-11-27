@@ -77,22 +77,10 @@ test("the historical day helper counts date boundaries from Day One completion",
   assert.equal(journeyDay("2026-09-08", "2026-09-01"), 0);
 });
 
-test("Protocol retains its disabled cover while waiting for Day One", () => {
-  const page = readFileSync("app/os/locked-app-page.tsx", "utf8");
-  // Hiding it would be simpler and worse: the shape of the whole thing is the
-  // argument for staying. Sai: "Protocol, and Week app will have a cover
-  // screen, with the disabled button."
-  assert.match(page, /<CreativeButton\s+className="os-locked-app-key"\s+disabled/);
-  // And it names the chapter that opens it rather than saying "locked", so he
-  // knows what to go and do — and can start it from its Quest whenever.
-  assert.match(page, /Opens after/);
-
+test("Today renders Protocol directly", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(shell, /const protocolIsOpen = appIsOpen\("protocol", state\.chapters\.runs\)/);
-  // The real Apps are behind the same gate, so a locked cover is never shown
-  // beside the thing it stands in for.
-  assert.match(shell, /\.\.\.\(protocolIsOpen \? \[\] : \[/);
-
+  assert.match(shell, /<ProtocolPage/);
+  assert.doesNotMatch(shell, /<LockedAppPage|appIsOpen\("protocol"/);
 });
 
 test("Week setup never gates access and unfinished Day One still gates Protocol", () => {

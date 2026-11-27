@@ -1,6 +1,5 @@
 import {activeProtocolRun,startProtocolDraft,renameProtocolRun,setProtocolDays,addProtocolItem,updateProtocolItem,beginProtocolRun,getDateKey,PROTOCOL_DURATIONS} from './circle-os-model.js';
 import {confirmedTemplate,templateSourceSnapshot} from './template-adoption-record.js';
-import {appIsOpen} from './phases.js';
 
 /** Deliberate local adoption. Preview alone never calls this function. */
 export function startProtocolTemplate(state,{template,sourceId,version,operationId,days,answers={},dateKey=getDateKey()}) {
@@ -8,7 +7,6 @@ export function startProtocolTemplate(state,{template,sourceId,version,operation
   const prior=Object.values(state.protocol.runs).find(run=>run.sourceTemplate?.operationId===operationId);
   if(prior){if(prior.sourceTemplate.id!==sourceId||prior.sourceTemplate.version!==version)throw Error('This start request belongs to another template.');return {state,id:prior.id};}
   if(activeProtocolRun(state))throw Error('You already have an active phase or unfinished draft. Open Protocol to review it.');
-  if(!appIsOpen('protocol',state.chapters.runs))throw Error('Finish Day One before starting a Protocol.');
   if(template.kind!=='protocol'||!PROTOCOL_DURATIONS.includes(days))throw Error('Choose a valid Protocol duration.');
   const result=confirmedTemplate(template,answers);
   if(template.title.length>60||result.items.some(item=>!item.action.trim()||item.action.length>120))throw Error('The phase name or a term is too long for Protocol. Ask the author to shorten it.');

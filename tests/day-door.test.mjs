@@ -117,19 +117,12 @@ test("a day's greeting is that day's, and either answer opens it", () => {
   assert.equal(dayWasOpened(null), false);
 });
 
-test("the App asks the door once and draws one sheet", () => {
+test("the App only draws bundled sheets requested from Workshop", () => {
   const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
 
-  // The order lives in day-door.js, not in four conditionals negating each
-  // other across the render.
-  // A pin from the Workshop stands in front; otherwise it is the button or
-  // the door itself.
-  // A pinned chapter stands in front, then a pinned door, then the button,
-  // then the door deciding for itself.
-  assert.match(
-    shell,
-    /\(pinnedChapter \? pinnedSetupDoor \|\| "chapter" : pinnedStepDone \? null : pinned\) \|\|\s+\(reviewingWeekOf \? "week-review" : dayDoor\(doorOffers, dateKey\)\)/,
-  );
+  assert.match(shell, /const pinned = .*readPinnedDoor\(\)/);
+  assert.match(shell, /const doorKind = pinnedChapter \? pinnedSetupDoor/);
+  assert.doesNotMatch(shell, /dayDoor\(doorOffers/);
   for (const kind of DAY_DOOR_ORDER) {
     assert.ok(
       shell.includes(`doorKind === "${kind}"`),
@@ -137,9 +130,6 @@ test("the App asks the door once and draws one sheet", () => {
     );
   }
 
-  // The old shape is gone: no sheet decides its own precedence any more.
-  assert.doesNotMatch(shell, /\{!dayOneDone &&\s+dayOneChapter/);
-  assert.doesNotMatch(shell, /\) : dayOneDone &&\s+weekSetupDone &&\s+!logSetupDone/);
 });
 
 // Sai: "let me have a way to manually test the splash screen chapters."

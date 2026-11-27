@@ -6,7 +6,7 @@ import { ButtonRewardBackdrop, CreativeButton } from "../button-engine";
 import { BUTTON_STYLE_DEFINITIONS, BUTTON_STYLE_IDS, type ButtonStyleId } from "../button-engine-model.js";
 import { ChapterPlayer } from "../chapters/chapter-player";
 import { chapterRunId, createChapterRun, resetChapterRuns } from "../chapters/chapter-model.js";
-import { DAY_DOOR_ORDER, writePinnedDoor, type DayDoorKind } from "../day-door.js";
+import { DAY_DOOR_ORDER, writePinnedChapter, writePinnedDoor, type DayDoorKind } from "../day-door.js";
 import { publishedChapters } from "../chapters/registry";
 import {
   announceChapterPublication,
@@ -422,6 +422,7 @@ export function ChapterEditor({ repository, adminRequest = fetch, accountCatalog
     await saveCircleState(accountScope,
       resetChapterRuns(state, id, source.chapter.pages[0]?.id),
     );
+    if (publishedChapters.some(chapter => chapter.id === id)) writePinnedChapter(id, accountScope);
     setPublishState(`“${source.chapter.title}” will be offered again. Open the OS to see it.`);
   }
 

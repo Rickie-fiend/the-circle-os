@@ -64,8 +64,6 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   const sync = useWritingSync();
   const noteNavigation = isNote(kind) || (kind === "deep-thought" && !embedded);
   const [quote, setQuote] = useState<Quote | null>(null);
-  const [quoteFeedback, setQuoteFeedback] = useState(false);
-  const quoteFeedbackRef = useRef(false);
   const [openingQuote, setOpeningQuote] = useState(false);
   const [quoteError, setQuoteError] = useState(false);
   const formId = useId();
@@ -384,10 +382,6 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   function closeQuote() {
     back.flip("editor", () => { setQuote(null); onQuoteNavigation?.(null); });
   }
-  function passQuote() {
-    if (quoteFeedbackRef.current) closeQuote();
-    else { quoteFeedbackRef.current = true; setQuoteFeedback(true); }
-  }
   async function openQuote(element: HTMLElement) {
     if (!nextQuote || openingQuote || composing.current || back.flipping) return;
     setOpeningQuote(true); setError("");
@@ -398,10 +392,9 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
       const selectedQuote = await nextQuote();
       if (!mounted.current) return;
       if (!selectedQuote) { setQuoteError(true); setError("No quotes are available yet."); return; }
-      quoteFeedbackRef.current = false; setQuoteFeedback(false);
       back.flip("quote", () => {
         setQuote(selectedQuote);
-        onQuoteNavigation?.({ back: closeQuote, forward: passQuote });
+        onQuoteNavigation?.({ back: closeQuote, forward: closeQuote });
       }, element);
     } catch (cause) { if (mounted.current) { setQuoteError(true); setError(cause instanceof Error ? cause.message : "Could not open quotes. Try again."); } }
     finally { if (mounted.current) setOpeningQuote(false); }
@@ -451,13 +444,22 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
     let day = "";
     const today = writingAttribution(now(), Intl.DateTimeFormat().resolvedOptions().timeZone).day;
     const previousDay = new Date(`${today}T12:00:00Z`); previousDay.setUTCDate(previousDay.getUTCDate() - 1);
-    const dayLabel = (value: string) => value === today ? "Today" : value === previousDay.toISOString().slice(0, 10) ? "Yesterday" : new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
+    const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    const timeFormat = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" });
+    const historyDate = (value: string) => dateFormat.format(new Date(`${value}T12:00:00Z`));
+    const dayLabel = (value: string) => value === today ? "Today" : value === previousDay.toISOString().slice(0, 10) ? "Yesterday" : historyDate(value);
+    const showEntryDate = kind === "deep-thought" && noteNavigation && back.side === "history";
     if (!collection || back.side === "trash") {
     body = <div className="os-writing-list os-info-page-main">{back.side === "history" && sync?.hasWork ? <Action text="Sync" click={() => go("sync")} disabled={disabled} /> : null}{rows.length ? rows.map(row => {
       const showDay = day !== row.day; day = row.day;
       const entry = [...entries, ...trashed].find(item => item.id === row.key);
       const title = row.kind === "note" ? row.content.title || "Untitled" : entry?.source?.question || row.content.body.slice(0, 100) || "Untitled";
-      const open = <button className="os-writing-entry" type="button" onClick={event => row.open(event.currentTarget)}><strong>{title}</strong><span>{noteNavigation ? <><time dateTime={row.at}>{new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(row.at))}</time>{!isNote(kind) && !entry ? " · Unsent" : null}</> : labelFor(row.kind)}</span></button>;
+      const metadata = noteNavigation ? <>
+        {showEntryDate ? <><time dateTime={row.day}>{historyDate(row.day)}</time>{" · "}</> : null}
+        <time dateTime={row.at}>{timeFormat.format(new Date(row.at))}</time>
+        {!isNote(kind) && !entry ? " · Unsent" : null}
+      </> : labelFor(row.kind);
+      const open = <button className="os-writing-entry" type="button" onClick={event => row.open(event.currentTarget)}><strong>{title}</strong><span>{metadata}</span></button>;
       const copies = Object.values(sync?.bundle?.cloud.resolved || {}).some(item => item.request.entryId === row.key);
       return <div key={row.key}>{showDay ? <p className="os-writing-day">{noteNavigation ? dayLabel(day) : day}</p> : null}{row.trash ? <div className="os-writing-history-row">{open}<button className="os-writing-trash-button" type="button" aria-label={`Move ${title} to Trash`} disabled={disabled} onClick={row.trash}><TrashIcon /></button></div> : open}{copies ? <Action text="Saved copies" click={() => { setSelected(row.key); go("copies"); }} disabled={disabled} /> : null}</div>;
     }) : <p>{back.side === "trash" ? "Trash is empty." : "No saved writing yet."}</p>}
@@ -518,7 +520,7 @@ function WritingPage({ writing, kind, source = null, placeholder = "Write what c
   }
   const headerLeft = back.side === "editor" ? <button className="os-card-label" type="button" aria-label={isNote(kind) ? "Show a Line" : kind === "deep-thought" ? "Show Thoughts" : "Show Deep Thoughts"} disabled={disabled || !onLabel} onClick={event => onLabel?.(event.currentTarget)}>{labelFor(kind)}</button> : <button className="os-card-label" type="button" onClick={event => go(back.side === "version" ? "versions" : back.side === "versions" ? "detail" : back.side === "trash-detail" || back.side === "delete" ? "trash" : "editor", event.currentTarget)}>Back</button>;
   const menuButton = <div className="os-writing-menu"><button className="os-card-label" type="button" aria-label="Writing options" aria-expanded={menu} onClick={() => setMenu(!menu)}>More</button>{menu ? <div className="os-writing-menu-items">{<Action text={"History"} click={() => go("history")} disabled={disabled} />}{<Action text={"Drafts"} click={() => go("drafts")} disabled={disabled} />}{<Action text={"Trash"} click={() => go("trash")} disabled={disabled} />}{dirty ? <>{<Action text={"Clear"} click={() => { change("title", ""); change("body", ""); onClear?.(); setMenu(false); }} disabled={disabled} />}{<Action text={"Discard draft"} click={discard} disabled={disabled} />}</> : null}</div> : null}</div>;
-  if (kind === "deep-thought" && back.side === "quote" && quote) return <QuotePage className={back.className} quote={quote} feedback={quoteFeedback} onReact={reaction => { onQuoteReaction?.(quote, reaction); closeQuote(); }} />;
+  if (kind === "deep-thought" && back.side === "quote" && quote) return <QuotePage className={back.className} quote={quote} onReact={reaction => { onQuoteReaction?.(quote, reaction); closeQuote(); }} />;
   if (noteNavigation) {
     const HeaderButton = RoutineHeaderButton;
     if (collection && (back.side === "history" || back.side === "editor")) {

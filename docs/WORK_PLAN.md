@@ -1,6 +1,6 @@
 # Circle OS work plan
 
-Updated 2026-11-26, Asia/Bangkok. This is the working queue under
+Updated 2026-11-27, Asia/Bangkok. This is the working queue under
 [Roadmap](ROADMAP.md). A queued item is not approval to edit, provision, migrate,
 activate sync or deploy.
 
@@ -147,29 +147,26 @@ set of interface proposals. The release dependencies remain in the
    limits of two, four or six lines. The collection plus creates a note, and
    an open note has its own bin. Older check-in writing stays out of the collection.
    [Notes evidence](USER_JOURNEY_TESTING.md#notes-collection--2026-11-26).
-5. **Today previews.** Implemented locally for review. Three rows share
-   Explore's glass, horizontal snap and scale. One panel leads and the next
-   peeks from the right. A tap opens the corresponding full tool.
-   - **Notes / Deep Thoughts:** latest saved note title and body, with an
-     ellipsis when clipped / current question only.
-   - **Routine / Protocol:** one habit, one task, a hint of more and a
-     checked-off count / active protocol name, one non-negotiable, one
-     negotiable and Day X of Y.
-   - **Log / Week:** previous, current and next hour / one goal and one step
-     when available.
-   [Preview decision](DECISION_LOG.md#2026-11-26--today-preview-panels) ·
-   [Browser evidence](USER_JOURNEY_TESTING.md#today-preview-carousels--2026-11-26).
-6. **Deep Thoughts.** Put the History date beside the time. Show Loved it and
-   Not for me when the quote opens. Check that reacting or returning preserves
-   the current question and draft.
-7. **Week typography.** Both This week and Day's record use 28px/700. The
-   compiled CSS measures 33.6px line height with tighter letter spacing for
-   This week and 48.16px line height with normal letter spacing for Day's
-   record. Try matching line height and letter spacing before changing size.
-8. **App-wide icons.** Start with clear actions like Back and Add on the
-   screens being changed, then review the rest. Use small Orange icons with
-   accessible names and targets of at least 44px. The bottom navigation has
-   its own color treatment. Review less obvious actions individually.
+5. **Today previews.** The locally verified panels show two recent note
+   titles, two directly tappable Deep Thoughts questions, labeled Routine and
+   Protocol preview items, five aligned Log hours with a current-hour plus,
+   and a Week date range with one labeled goal and step. The three rows use
+   Explore's glass, snap and peek. Physical-phone review remains open.
+   [Preview decision](DECISION_LOG.md#2026-11-27--today-panel-refinements) ·
+   [Browser evidence](USER_JOURNEY_TESTING.md#today-panel-refinements--2026-11-27).
+6. **Deep Thoughts.** Implemented and verified locally. History shows the
+   saved Circle-day date beside the time. Loved it and Not for me appear
+   when Quote opens. Reacting or swiping returns to the same question and
+   draft. [Browser evidence](USER_JOURNEY_TESTING.md#deep-thoughts-history-and-quote--2026-11-27).
+7. **Week typography.** Implemented and verified locally. This week and
+   Day’s record share 28px/700 type, 33.6px line height and −0.42px letter
+   spacing. Day’s record keeps its keyboard and pointer disclosure.
+   [Browser evidence](USER_JOURNEY_TESTING.md#week-typography--2026-11-27).
+8. **App-wide icons.** First daily-tool pass implemented locally. Plain
+   Back uses a small Orange left arrow. Standalone Notes and Log plus
+   marks match, and Week disclosures use the side chevron turned downward.
+   Review further changes individually. The bottom navigation has its own
+   color treatment. [Browser evidence](USER_JOURNEY_TESTING.md#daily-tool-icons--2026-11-27).
 
 ## Decisions needed by slice
 

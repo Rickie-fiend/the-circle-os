@@ -3,10 +3,8 @@
 import { useRouter } from "next/navigation";
 import {
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
   type FormEvent,
   type KeyboardEvent,
   type MouseEvent,
@@ -45,16 +43,10 @@ import { WritingReadingAnswer } from "../writing-pages";
 import { useStableRouteAnchor } from "../stable-route-anchor";
 import {
   normalizeChapterPublication,
-  publicationIsNewerThanRun,
   selectPendingAppPublication,
 } from "../chapters/chapter-publication-store";
-import { chapterAnswerText, chapterRunId } from "../chapters/chapter-model.js";
-import { getPublishedChapter } from "../chapters/registry";
+import { chapterAnswerText } from "../chapters/chapter-model.js";
 import { useCatalogDefinitions } from '../catalog/definitions';
-import { CreativeButton } from "../button-engine";
-import { writePinnedChapter } from "../day-door.js";
-import { QUESTS } from "../chapters/quest-registry";
-import { questCatalogue, questStepStatus } from "../quests.js";
 import type { ChapterRun } from "../chapters/chapter-types";
 import { useChapterPublications } from "../chapters/use-chapter-publications";
 import {
@@ -260,18 +252,6 @@ const DECLARATION_CHAPTERS: Record<DeclarationKind, string> = {
   dreamline: "declare-dreamline",
 };
 
-function subscribeToMirrorLocation() {
-  return () => undefined;
-}
-
-function mirrorLocationSearch() {
-  return window.location.search;
-}
-
-function serverMirrorLocationSearch() {
-  return "";
-}
-
 function declarationFromRun(kind: DeclarationKind, run: ChapterRun) {
   if (kind === "vision") {
     return {
@@ -343,7 +323,6 @@ function DeclarationPage({
   current,
   historyAvailable,
   onCommit,
-  onSetup,
   onToggleHistory,
 }: {
   kind: DeclarationKind;
@@ -353,7 +332,6 @@ function DeclarationPage({
   current: boolean;
   historyAvailable: boolean;
   onCommit: (content: Record<string, string>) => void;
-  onSetup: () => void;
   onToggleHistory: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   const pageRef = useRef<HTMLDivElement | null>(null);
@@ -372,14 +350,14 @@ function DeclarationPage({
   );
   const complete = fields.every((field) => clean[field.key]);
   const changed = Boolean(
-    record && fields.some(
+    !record || fields.some(
       (field) => clean[field.key] !== String(record.content[field.key] || "").trim(),
     ),
   );
 
   function beginEditing() {
-    if (!record || !current) return;
-    setDraft({ ...record.content });
+    if (!current) return;
+    setDraft({ ...record?.content });
     setEditing(true);
   }
 
@@ -390,18 +368,18 @@ function DeclarationPage({
   }
 
   function saveDeclaration() {
-    if (!record || !current || !complete || !changed) return;
+    if (!current || !complete || !changed) return;
     onCommit(clean);
     setDraft(clean);
     setEditing(false);
   }
 
-  if (!record) {
+  if (!record && !editing) {
     return (
       <PageLayout
         className="vision-declaration-page is-empty"
         footer={
-          <button className="vision-declaration-setup" onClick={onSetup} type="button">
+          <button className="vision-declaration-setup" onClick={beginEditing} type="button">
             Set up
           </button>
         }
@@ -418,7 +396,7 @@ function DeclarationPage({
   const fieldViews = fields.map((field, index) => {
     const value = editing
       ? draft[field.key] || ""
-      : record.content[field.key] || "";
+      : record?.content[field.key] || "";
     if (!current || !editing) {
       return (
         <div className="vision-declaration-field" key={field.key}>
@@ -462,7 +440,7 @@ function DeclarationPage({
           </button>
         ) : (
           <span className="vision-declaration-date">
-            {current ? "Declared" : "Earlier"} {declarationDate(record.declaredAt)}
+            {current ? "Declared" : "Earlier"} {declarationDate(record?.declaredAt || "")}
           </span>
         )
       }
@@ -542,62 +520,7 @@ export default function CircleOSMirror() {
   // from the day to the week instead of asking for a second box to do it.
   const profileCase = state.profile.profileCase;
   const publicationProfileId = state.ai.profileId || "local";
-  const locationSearch = useSyncExternalStore(
-    subscribeToMirrorLocation,
-    mirrorLocationSearch,
-    serverMirrorLocationSearch,
-  );
-  const declarationSearch = new URLSearchParams(locationSearch);
-  const requested = declarationSearch.get("declare");
-  const requestedAttempt = declarationSearch.get("attempt");
-  const requestedDeclaration = DECLARATION_PAGES.some(
-    (page) => page.kind === requested,
-  )
-    ? (requested as DeclarationKind)
-    : null;
-  const firstMissingDeclaration = DECLARATION_PAGES.find(
-    (page) => !declarationVersions(state, page.kind).length,
-  )?.kind;
-  const desiredDeclaration =
-    requestedDeclaration && !declarationVersions(state, requestedDeclaration).length
-      ? requestedDeclaration
-      : firstMissingDeclaration;
-  const requestedSetupAttempt =
-    requestedDeclaration &&
-    desiredDeclaration === requestedDeclaration &&
-    requestedAttempt &&
-    /^\d+$/.test(requestedAttempt)
-      ? requestedAttempt
-      : null;
-  const desiredDeclarationPublication = desiredDeclaration
-    ? publications
-        .map(normalizeChapterPublication)
-        .find((publication) => {
-          if (publication.chapter.id !== DECLARATION_CHAPTERS[desiredDeclaration]) {
-            return false;
-          }
-          if (
-            publication.visibility !== "public" &&
-            publication.audienceProfileId !== publicationProfileId &&
-            publication.audienceProfileId !== "local"
-          ) {
-            return false;
-          }
-          if (requestedSetupAttempt) {
-            return true;
-          }
-          const run = state.chapters.runs[chapterRunId(publication.chapter)];
-          return (
-            publicationIsNewerThanRun(publication, run) ||
-            (run?.status !== "completed" && !run?.deferredAt)
-          );
-        }) || null
-    : null;
-  const declarationSetupRunId =
-    desiredDeclarationPublication && requestedSetupAttempt
-      ? `${chapterRunId(desiredDeclarationPublication.chapter)}:setup:${requestedSetupAttempt}`
-      : undefined;
-  const visionPublication = desiredDeclarationPublication || selectPendingAppPublication(
+  const visionPublication = selectPendingAppPublication(
     publications,
     "vision",
     publicationProfileId,
@@ -627,48 +550,11 @@ export default function CircleOSMirror() {
    * The hour matters because the week rolls on a Sunday evening: after that the
    * window ends on the week he is planning rather than the one just lived.
    */
-  /**
-   * The Quest catalogue, read against the chapters actually answered.
-   *
-   * A chapter answered before its Quest existed is already counted: progress
-   * comes from the runs rather than from a second record of what has been
-   * done.
-   */
-  const quests = useMemo(
-    () => questCatalogue(QUESTS, state.chapters.runs, getPublishedChapter, { state, publications }),
-    [state, publications],
-  );
-  const questCatalogueVersion = `quests-v1:${quests.length}`;
-  const visibleQuest = appSessionIndex(
-    state,
-    "quest-catalogue",
-    questCatalogueVersion,
-    0,
-  );
-  const [openQuest, setOpenQuest] = useState<string | null>(null);
-  const chapterBack = useAppBack<"quests" | "history" | "chapter">("quests");
   const [historyChapterId, setHistoryChapterId] = useState<string | null>(null);
-  const [historyQuestId, setHistoryQuestId] = useState<string | null>(null);
   const savedChapterHistory = chapterHistory(state.chapters.runs, [...catalogDefinitions,...publications.map(normalizeChapterPublication)
     .filter(item => item.visibility === "public" || item.audienceProfileId === publicationProfileId || item.audienceProfileId === "local")
     .map(item => item.chapter)]);
 
-  /**
-   * Start a step, which means: put its chapter in the door and go there.
-   *
-   * Sai: "on click, the steps be shown and clickable to start, just like
-   * purpose quest session. all those chapters will be process on splash
-   * screen." A Quest step is not a different kind of thing to read — it is the
-   * same chapter, in the same full-screen sheet every other chapter arrives
-   * in, so there is one way to read a chapter in this App and not two.
-   *
-   * Finished steps read their saved answers; they never replay setup.
-   */
-  function startQuestStep(chapterId: string) {
-    if (questStepStatus(chapterId, state.chapters.runs, { state, publications }).done) return;
-    writePinnedChapter(chapterId);
-    router.push("/os/today");
-  }
 
   const dimensions = dimensionRecord(state, getDateKey(), new Date().getHours());
   const starved = starvedDimension(dimensions);
@@ -1069,7 +955,6 @@ export default function CircleOSMirror() {
               label="Vision chapter"
               onCompleted={completeDeclaration}
               publication={visionPublication}
-              runId={declarationSetupRunId}
             />
           ) : (
           <SwipeSession
@@ -1106,11 +991,6 @@ export default function CircleOSMirror() {
                 kind={page.kind}
                 label={page.label}
                 onCommit={(content) => commitDeclaration(page.kind, content)}
-                onSetup={() =>
-                  router.push(
-                    `/os/mirror?declare=${page.kind}&attempt=${Date.now()}`,
-                  )
-                }
                 onToggleHistory={(event) =>
                   toggleDeclarationHistory(page.kind, event)
                 }
@@ -1218,137 +1098,14 @@ export default function CircleOSMirror() {
           )}
         </section>
 
-        {/* The Quest catalogue.
-          *
-          * Under Athena's Reading, because a Quest is the thing you go and do
-          * about what she just told you. Sai: "Add the quest catalog session
-          * under athena reading."
-          *
-          * An App Box like any other: one Quest to a Page, browsed by swiping,
-          * with the position in the header the way a chapter shows its own.
-          * Sai: "it look as a app box, but with indicator, we may browse them
-          * by swiping, and click on view button to extend the box and show the
-          * steps." The View key opens the steps inside the same box, which the
-          * box grows to hold — nothing navigates away. */}
-        <section className="quest-catalogue-session" aria-label="Quests">
-          <SwipeSession
-            attentionKey={`quests:${questCatalogueVersion}`}
-            availableIndices={chapterBack.side === "quests" ? quests.map((_, index) => index) : [visibleQuest]}
-            className={`quest-catalogue-apps ${chapterBack.className}`}
-            index={visibleQuest}
-            label="Quests"
-            maxIndex={Math.max(0, quests.length - 1)}
-            onIndexChange={(nextIndex) =>
-              updateState((current) =>
-                setAppSessionIndex(
-                  current,
-                  "quest-catalogue",
-                  questCatalogueVersion,
-                  nextIndex,
-                ),
-              )
-            }
-          >
-            {quests.map((quest, index) => {
-              const open = openQuest === quest.id;
-              if (chapterBack.side !== "quests") return <ChapterHistoryPage key={quest.id}
-                records={savedChapterHistory}
-                quest={quests.find(item => item.id === historyQuestId)}
-                selectedId={chapterBack.side === "chapter" ? historyChapterId : null}
-                onBack={event => chapterBack.flip(chapterBack.side === "chapter" ? "history" : "quests", undefined, event.currentTarget)}
-                onSelect={(id, source) => chapterBack.flip("chapter", () => setHistoryChapterId(id), source)}
-              />;
-              return (
-                <PageLayout
-                  className="quest-page"
-                  footer={
-                    <CreativeButton
-                      aria-expanded={open}
-                      className="quest-view"
-                      keepMountedOnSuccess
-                      onClick={event => quest.complete
-                        ? chapterBack.flip("history", () => { setHistoryQuestId(quest.id); setHistoryChapterId(null); }, event.currentTarget)
-                        : setOpenQuest(open ? null : quest.id)}
-                      release="latch"
-                      sizing="content"
-                      styleId="default"
-                      type="button"
-                    >
-                      {quest.complete ? "View history" : open ? "Hide steps" : "View steps"}
-                    </CreativeButton>
-                  }
-                  headerLeft={<p className="os-card-label">{quest.topic}</p>}
-                  headerRight={
-                    <p className="quest-place">
-                      {index + 1}/{quests.length}
-                    </p>
-                  }
-                  key={quest.id}
-                  theme="dark"
-                >
-                  <div className="os-page-main">
-                    <h2>{quest.title}</h2>
-                  </div>
-                  <div className="os-page-sub quest-body">
-                    <p className="quest-blurb">{quest.blurb}</p>
-                    {/* What it costs and how far in he is, in one line. A bar
-                        rather than a number, because the useful question is
-                        "how much is left" and a bar answers it without being
-                        read. */}
-                    <p className="quest-count">
-                      {quest.complete
-                        ? `All ${quest.total} steps done`
-                        : `${quest.done} of ${quest.total} steps · ${quest.minutes} min`}
-                    </p>
-                    <span
-                      aria-hidden="true"
-                      className="quest-bar"
-                      data-done={quest.done}
-                    >
-                      {quest.steps.map((step) => (
-                        <i
-                          className={step.done ? "is-done" : undefined}
-                          key={step.chapterId}
-                        />
-                      ))}
-                    </span>
-                    {open ? (
-                      <ol className="quest-steps">
-                        {quest.steps.map((step, stepIndex) => (
-                          <li
-                            className={step.done ? "is-done" : undefined}
-                            key={step.chapterId}
-                          >
-                            {/* A block, not a line. A step is a thing you go
-                                and do, and a row of text does not look like
-                                one. Sai: "Steps in quests should be in boxes
-                                of blocks rather then lines." */}
-                            <button
-                              className="quest-step"
-                              onClick={event => step.done
-                                ? chapterBack.flip("chapter", () => { setHistoryQuestId(quest.id); setHistoryChapterId(`step:${step.chapterId}`); }, event.currentTarget)
-                                : startQuestStep(step.chapterId)}
-                              type="button"
-                            >
-                              <span className="quest-step-meta">
-                                Step {stepIndex + 1}
-                                <i aria-hidden="true">·</i>
-                                {step.alreadySetUp ? "Already set up" : step.done ? "Done" : `${step.minutes} min`}
-                              </span>
-                              <span className="quest-step-title">
-                                {step.title}
-                              </span>
-                            </button>
-                          </li>
-                        ))}
-                      </ol>
-                    ) : null}
-                  </div>
-                </PageLayout>
-              );
-            })}
-          </SwipeSession>
-        </section>
+        {savedChapterHistory.length > 0 && <section aria-label="Chapter History">
+          <ChapterHistoryPage
+            records={savedChapterHistory}
+            selectedId={historyChapterId}
+            onBack={() => setHistoryChapterId(null)}
+            onSelect={setHistoryChapterId}
+          />
+        </section>}
 
         {/* Reflect's deepest layer.
           *

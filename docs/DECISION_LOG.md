@@ -1,6 +1,42 @@
 # Circle OS decision log
 
+## 2026-11-27 — Today panel refinements
+
+The developer approved adding useful details inside the three existing glass
+carousels. The preview remains bounded so long text leaves room for the other
+details and the neighboring panel stays visible.
+
+- **Notes** shows the latest saved note with an excerpt and time or short date.
+  When there is a second note, its one-line title sits below an Orange divider.
+- **Deep Thoughts** offers two distinct questions when available. Each opens
+  its own editor context and keeps its draft or saved answer. Returning to
+  Today keeps both choices in place. Next question replaces the selected
+  choice while the other stays. The second question starts just below the
+  middle of the panel, under an Orange divider.
+- **Routine** groups up to three due items under Habits and Tasks, shows at most
+  one saved cue, and reports what is left and checked off. When everything is
+  done, it can show up to two checked-off items.
+- **Protocol** shows the active phase and one term under each available label,
+  Non-negotiable and Negotiable. Read-only checks mark kept terms. The day
+  line shows a kept count, Ready to seal, or Day kept from the current state.
+- **Log** shows two hours on either side of the current hour, with activities
+  aligned to the same left edge. A plus opens the empty current hour. Every
+  row reads the saved activity for its own Circle day, including across 06:00.
+- **Week** shows a short date range such as `Nov 30 - Dec 6`, one Goal and one
+  Step. It prefers an unfinished step due today across open goals, then the
+  next scheduled step with its weekday. With no upcoming step, it shows the
+  first open goal on its own.
+
+Routine, Protocol and Week use same-size bold labels and regular values. The
+status dots in Routine and Protocol are Orange. The carousel layout and
+tool links established on November 26 carry forward.
+[Design](../DESIGN.md#navigation-and-materials) ·
+[Local checks](USER_JOURNEY_TESTING.md#today-panel-refinements--2026-11-27).
+
 ## 2026-11-26 — Today preview panels
+
+The [November 27 refinements](#2026-11-27--today-panel-refinements) update the
+content and entry actions below.
 
 The developer approved the six preview contents and chose Explore's glass
 carousel layout. Each pair leads with one panel and peeks the next from the

@@ -181,7 +181,7 @@ test("the splash is the screen, with one scroll and its own rhythm", () => {
 
 // Sai: "allow the splash screen to be dismiss for now, it show up a number of
 // times now. so that i have to fill everytime."
-test("a setup sheet can be put down, and comes back tomorrow", () => {
+test("a Workshop setup sheet can be put down", () => {
   // The way out is the gesture, not a key. A Later button in the corner sat on
   // top of the progress the chapter draws there. Sai: "to dismiss, swiping
   // right on the cover page make it up. we dont need complicated later button
@@ -201,13 +201,6 @@ test("a setup sheet can be put down, and comes back tomorrow", () => {
   // The published Log setup stands itself down, through the same gesture.
   assert.match(shell, /dismissOnBackSwipe/);
   assert.match(shell, /onDismiss=\{dismissOnBackSwipe \? dismiss : undefined\}/);
-
-  // Dated, not permanent: the deferral lapses so the chapter is offered again.
-  // The door skips anything put down on today's Circle day.
-  assert.match(shell, /function dismissedDay\(run: ChapterRun \| null \| undefined\)/);
-  assert.match(shell, /return getDateKey\(new Date\(run\.dismissedAt\)\)/);
-  const door = readFileSync("app/os/day-door.js", "utf8");
-  assert.match(door, /offer\.dismissedKey === today/);
 
   const model = readFileSync("app/os/chapters/chapter-model.js", "utf8");
   assert.match(model, /export function deferChapterRun\(/);

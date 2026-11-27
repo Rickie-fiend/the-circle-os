@@ -108,8 +108,9 @@ passed with exact cleanup. Real authored publication remains deliberate.
 - **Today:** receives input through Note, Deep Thoughts, Routine, Protocol, Log
   and Week. The left half of the Imprint peeks in from the right edge.
   Three swipeable glass rows preview the paired tools and open them directly.
-  See the [Today preview decision](DECISION_LOG.md#2026-11-26--today-preview-panels)
-  for the displayed records and empty states.
+  Readers can choose either Deep Thoughts question or jump to the empty
+  current Log hour. The [Today preview decision](DECISION_LOG.md#2026-11-27--today-panel-refinements)
+  describes the content of all six panels.
 - **Reflect:** holds wanted-life records, received readings and reflection on
   actual life. The right half of the Imprint peeks in from the left edge.
   The [saved Reflect proposal](REFLECT_PAGE_POTENTIAL_IMPLEMENTATION.md)

@@ -14,7 +14,7 @@ import { ChapterPlayer } from '../../chapters/chapter-player';
 import { createChapterRun,chapterRunId,storeChapterRun } from '../../chapters/chapter-model.js';
 import { chapterBlockReason, chapterFacts, chapterKind, countChaptersStartedInHour, DAILY_PROBE_BUDGET, HOURLY_CHAPTER_BUDGET } from '../../chapters/chapter-scheduler.js';
 import { readChapterPublications } from '../../chapters/chapter-publication-store';
-import { mergeChapterSupply } from '../../chapters/chapter-supply';
+import { isBundledChapterVersion } from '../../chapters/registry';
 import { useCircleState,ROUTINE_APP_VERSION } from '../../circle-os-shell';
 import type { ChapterDefinition,ChapterRun } from '../../chapters/chapter-types';
 import { TemplatePreview } from '../../admin/template-preview';
@@ -71,7 +71,8 @@ function PublishedChapter({ chapter, preview }: { chapter: ChapterDefinition; pr
     }
     if (!existing?.startedAt) {
      const now = new Date();
-     const publications = mergeChapterSupply(await readChapterPublications(scope).catch(() => []));
+     const publications = (await readChapterPublications(scope).catch(() => []))
+       .filter(({ chapter }) => !isBundledChapterVersion(chapter.id, chapter.version));
      assertAccountScope(scope);
      const spent = countChaptersStartedInHour(publications.map(publication => publication.chapter), latest.chapters.runs, now);
      if (spent.hour >= HOURLY_CHAPTER_BUDGET || (candidate.catalogKind === 'probe' && spent.probesToday >= DAILY_PROBE_BUDGET)) {

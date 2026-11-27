@@ -662,7 +662,13 @@ before(async () => {
  if(location.search.includes('menu=1')){const {AccountMenu}=await import('/app/os/auth/account-menu.tsx');const {AccountContext}=await import('/app/os/auth/account-context.tsx');surface=React.createElement(AccountContext.Provider,{value:{accountId:'synthetic-admin',alias:'Synthetic',busy:false,message:'',saveAlias:async()=>true,signOut:async()=>{}}},React.createElement(AccountMenu));}
  if(location.search.includes('reader=1')||location.pathname==='/os/catalog/read'){const {default:Reader}=await import('/app/os/catalog/read/page.tsx');const {CircleStateProvider,useCircleState}=await import('/app/os/circle-os-shell.tsx');const {useCatalogDefinitions}=await import('/app/os/catalog/definitions.ts');function Probe(){const context=useCircleState();window.readerState=context.state;window.readerUpdate=context.updateState;window.readerPulses=context.localImprint.takePulses;window.readerDefinitions=useCatalogDefinitions(context.state.chapters.runs);return null;}surface=React.createElement(CircleStateProvider,null,React.createElement(Probe),React.createElement(Reader));}
  if(location.pathname==='/os/explore'){const {default:Explore}=await import('/app/os/explore/page.tsx');const {CircleStateProvider}=await import('/app/os/circle-os-shell.tsx');surface=React.createElement(CircleStateProvider,null,React.createElement(Explore));}
- if(location.search.includes('home=1')){const {default:Home}=await import('/app/os/home/page.tsx');const {CircleStateProvider}=await import('/app/os/circle-os-shell.tsx');const {WritingProvider}=await import('/app/os/writing-provider.tsx');surface=React.createElement(CircleStateProvider,null,React.createElement(WritingProvider,{scope:getAccountScope(),enabled:true,answers:[],memory:{}},React.createElement(Home)));}
+ if(location.search.includes('home=1')){
+  const {ImprintBackground}=await import('/app/os/home/imprint-background.tsx');
+  const {CircleStateProvider,useCircleState}=await import('/app/os/circle-os-shell.tsx');
+  const {WritingProvider,useWriting}=await import('/app/os/writing-provider.tsx');
+  function HomeArtwork(){const {ready,localImprint}=useCircleState(),writing=useWriting();return ready&&writing?.imprint?React.createElement(ImprintBackground,{view:'home',local:localImprint,...writing.imprint}):null;}
+  surface=React.createElement(CircleStateProvider,null,React.createElement(WritingProvider,{scope:getAccountScope(),enabled:true,answers:[],memory:{}},React.createElement(HomeArtwork)));
+ }
  const admin=React.createElement(SupabaseConnection.Provider,{value},surface);
  const route=React.createElement('div',{className:'os-route-stage is-ready'},React.createElement('div',null,React.createElement('div',{className:'os-route-content'},admin)));
  createRoot(document.getElementById('root')).render(React.createElement('div',{className:'circle-os'},React.createElement('div',{className:'os-app-shell'},route)));

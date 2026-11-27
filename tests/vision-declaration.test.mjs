@@ -47,14 +47,9 @@ test("a declaration versions only through its explicit Save action", () => {
   assert.doesNotMatch(mirror, /\[field\.key\]: event\.currentTarget\.value/);
 });
 
-test("an empty declaration can retry an immutable completed setup chapter", () => {
-  assert.match(mirror, /attempt=\$\{Date\.now\(\)\}/);
-  assert.match(mirror, /if \(requestedSetupAttempt\) \{\s*return true;/);
-  assert.match(
-    mirror,
-    /`\$\{chapterRunId\(desiredDeclarationPublication\.chapter\)\}:setup:\$\{requestedSetupAttempt\}`/,
-  );
-  assert.match(mirror, /runId=\{declarationSetupRunId\}/);
+test("an empty declaration can use the existing editor directly", () => {
+  assert.match(mirror, /className="vision-declaration-setup" onClick=\{beginEditing\}/);
+  assert.match(mirror, /onCommit\(clean\)/);
 });
 
 // Week Review became the Week App, and the Week App moved into the Log. Sai:

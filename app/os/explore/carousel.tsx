@@ -17,7 +17,7 @@ type GlassSlide = {
   key: string;
   label: string;
   content?: ReactNode;
-  action?: { label: string; href: string } | { label: string; open: (button: HTMLButtonElement) => void };
+  action?: { label: string; href: string } | { label: string; descriptionId?: string; open: (button: HTMLButtonElement) => void };
 };
 
 export function GlassCarousel({ label, heading, slides }: {
@@ -86,11 +86,11 @@ export function GlassCarousel({ label, heading, slides }: {
       <div className="os-explore-track">
         {slides.map((slide, index) => {
           const action = slide.action;
-          return <article key={slide.key} className={`os-content-glass os-explore-panel${index === selected ? " is-selected" : ""}`} role="group" aria-roledescription="slide" aria-label={slide.label}>
-            {slide.content}
+          return <article key={slide.key} className={`os-content-glass os-explore-panel${index === selected ? " is-selected" : ""}`} role="group" aria-roledescription="slide" aria-label={slide.label} onFocus={() => moveTo(index)}>
             {action && ("href" in action
-              ? <a className="os-explore-open" aria-label={action.label} href={action.href} onFocus={() => moveTo(index)} />
-              : <button className="os-explore-open" aria-label={action.label} type="button" onFocus={() => moveTo(index)} onClick={event => action.open(event.currentTarget)} />)}
+              ? <a className="os-explore-open" aria-label={action.label} href={action.href} />
+              : <button className="os-explore-open" aria-label={action.label} aria-describedby={action.descriptionId} type="button" onClick={event => action.open(event.currentTarget)} />)}
+            {slide.content}
           </article>;
         })}
       </div>

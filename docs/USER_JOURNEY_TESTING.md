@@ -1,5 +1,101 @@
 # Circle OS user-journey test record
 
+## Daily-tool icons — 2026-11-27
+
+Next webpack production build and TypeScript passed. Focused ESLint passed
+for the shared controls, Week pages and browser test. With Node 24.22.1
+and the installed Playwright cache, all 18 compiled-CSS Chromium cases
+passed over local loopback. The pattern was
+`Week compact rows|tool consistency across six|shared App Box geometry|Log quiet hour controls|Today Log plus follows|Notes collection and full-page writing|Routine approved edges|Routine header reflection`
+in `tests/writing.browser.mjs` with `CIRCLE_PRODUCTION_CSS=1`.
+
+At 360, 390 and 416px the Notes Back arrow retained the Back name and
+at least a 44px target. The Notes and Log plus marks used 16px/700.
+Week’s goal, Day’s record and History marks rendered the existing
+right chevron turned 90 degrees. Keyboard and pointer interaction
+passed, and both Week headings retained the verified typography.
+The 390px Week, Week History and opened Note screenshots were inspected.
+
+The six-tool matrix checked visible anchors and the 670px floor at
+360, 390 and 416px. Note, Deep Thoughts, Habit and Protocol measured
+670px with 24px anchors and no nested scroll at 360 and 390px in the
+844px-tall geometry selection. The 360×740 Notes case retained its
+566px floor and natural growth. Existing ResizeObserver notices
+recurred. Physical phones and other engines were outside this selection.
+
+## Week typography — 2026-11-27
+
+Next webpack production build and TypeScript passed. Focused ESLint passed
+for `tests/writing.browser.mjs`. With Node 24.22.1 and the installed
+Playwright cache, `CIRCLE_PRODUCTION_CSS=1` and test-name pattern
+`Week compact rows|tool consistency across six|shared App Box geometry`
+passed all eight selected Chromium cases over local loopback.
+
+At 360, 390 and 416px, This week and Day’s record both measured 28px/700,
+33.6px line height and −0.42px letter spacing. The disclosure measured at
+least 44px high and its arrow stayed Orange. Enter opened the empty
+record, Space closed it, and a pointer click on the populated disclosure
+showed the two seeded activities. Week’s header and content anchors
+measured 24px.
+
+The six-tool matrix passed at all three widths. At 360 and 390px, Note,
+Deep Thoughts, Habit and Protocol measured 670px tall with a 24px content
+anchor and no nested scroller. Physical phones and other engines were
+outside the verification.
+
+## Deep Thoughts History and Quote — 2026-11-27
+
+`node node_modules/next/dist/bin/next build --webpack` passed, including
+TypeScript. Focused ESLint passed. With Node 24.22.1 and the installed
+Playwright browser cache, all eight selected Chromium cases passed using
+`CIRCLE_PRODUCTION_CSS=1` and the test-name pattern
+`Deep Thoughts History/Trash|Quote visits rotate|normal-motion Quote flips|legacy Deep Thoughts keeps|tool consistency across six`
+in `tests/writing.browser.mjs`. The sandbox blocked browser loopback, so the
+successful checks ran with loopback access outside it.
+
+The signed-in journey checked immediate reaction controls, both reactions
+and both swipe exits, unchanged question and unsent draft, reload, cached
+offline quotes and an empty catalog. The legacy journey checked immediate
+controls, forward-swipe return to the same answer and deliberate Next
+question. The normal-motion quote flip kept the frame filled.
+
+History showed the saved Circle-day date alongside the original timestamp.
+The unsent row retained its Unsent marker. Trash, restore and permanent
+deletion passed at 360 and 390px, and a long History grew without a nested
+scroller. The six-tool matrix measured the 670px floor and 24px anchor
+at 360, 390 and 416px. Earlier browser attempts exposed an asynchronous
+History fixture read and an older legacy entry path. Both passed after
+fixture corrections. Physical phones and other engines were outside
+this selection.
+
+## Today panel refinements — 2026-11-27
+
+The Next webpack build and focused ESLint passed. The first refinement pass
+passed 14 writing-browser cases and seven Explore cases with the compiled
+CSS. It covered the new preview content, independent Deep Thoughts draft
+recovery, Log's current-hour plus, Week's Sunday evening change and cross-month
+date range, and the opened-tool layout.
+
+After adding the preview labels, question spacing, and five-hour Log, all 12
+selected cases passed with `CIRCLE_PRODUCTION_CSS=1` in
+`tests/writing.browser.mjs`. The selection covered Today previews,
+Deep Thoughts draft recovery, both Log boundary cases, and the six-tool
+consistency matrix. At 360, 390 and 416px the populated and empty panels
+stayed 344px tall. The second question started just below mid-panel, and
+both questions opened the expected editor. Routine, Protocol and Week
+labels measured 18px/700 with 18px/400 values. The Routine and Protocol
+status dots used Orange. All five Log activities shared the same left edge.
+At 06:00 Log changed from 03:00–07:00 to 04:00–08:00 and retained the
+closing day's 05:00 activity. The plus opened the correct hour and return
+focus fell back to the Log panel after a save removed it.
+
+After the divider-color change, the webpack build passed again and the
+restarted [local Today preview](http://127.0.0.1:3001/os/today) returned HTTP 200.
+Its served CSS used the Orange token for the shared Notes and Deep Thoughts
+divider. That last change was checked against the served CSS. The Chromium
+results above are from before the color change. Physical-phone review and
+the existing ResizeObserver notices remain open.
+
 ## Today preview carousels — 2026-11-26
 
 The local Next webpack build passed, including TypeScript. The isolated

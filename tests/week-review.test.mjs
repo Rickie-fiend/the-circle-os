@@ -139,41 +139,10 @@ test("the review ends the phase that ran and points the next week", () => {
 // Sai: "we would add the review now button at the footer of the Sunday. which
 // is disabled until the day has arrived. if than i forgot to review on that
 // day, next week that sunday would be available."
-test("the review waits behind a button on a Sunday", () => {
-  // And gone once that week has actually been read, since a week is only
-  // lived once. Sai: "after i completed review this week now, the button
-  // should disabled or disappear."
-  assert.match(shell, /logChosenDay\.name === "Sunday" &&/);
-  assert.match(shell, /!weekWasReviewed\(state, weekStartKey\(logChosenDay\.dateKey\)\)/);
-  assert.match(shell, /disabled=\{logChosenDay\.isFuture \|\| !weekReviewChapter\}/);
-  assert.match(shell, /setReviewingWeekOf\(weekStartKey\(logChosenDay\.dateKey\)\)/);
-  assert.match(
-    shell,
-    /logChosenDay\.isFuture\s+\? "Review on Sunday"\s+: "Review this week now"/,
-  );
-  // On the Footer line, under the day's log, which is also the space the box
-  // was padding out to nothing. Sai: "the footer is huge."
-  assert.match(shell, /footer=\{\s+logChosenDay\.name === "Sunday" &&/);
-  // An orange key with a dark label, standing on its leg like every other key.
-  const css = readFileSync("app/os/os-app.css", "utf8");
-  assert.match(
-    css,
-    /os-week-review-open\.os-creative-button \{\s+background: var\(--c-orange\);[\s\S]*?color: var\(--c-ink\);/,
-  );
-  // Opened by hand, not sprung: a review nobody asked for at the end of a long
-  // Sunday is a review that gets skipped.
-  assert.match(shell, /<ChapterSplash\s+label="Week review"/);
-  assert.doesNotMatch(shell, /weekReviewDone/);
-
-  // The strip carries the Sunday just gone, so a week missed is still reachable
-  // the following one.
-  const model = readFileSync("app/os/week-app-model.js", "utf8");
-  assert.match(model, /export function weekBarDays/);
+test("the bundled review is available as an explicit Workshop preview", () => {
+  assert.match(shell, /doorKind === "week-review"/);
+  assert.doesNotMatch(shell, /Review this week now/);
 });
-
-// A chapter run is keyed by chapter and version, so there is one week-review run
-// and next Sunday's answers would land on top of last Sunday's. The run is an
-// answer sheet; the record is state.
 test("a week read is written down, one row per week, and never rewritten", () => {
   let state = createEmptyState();
   assert.deepEqual(state.weeks, {}, "the slice exists on an empty state");
@@ -267,11 +236,4 @@ test("the review key is gone once the week has been read", async () => {
   assert.equal(weekWasReviewed(state, "2026-09-07"), false);
   assert.equal(weekWasReviewed(state, ""), false);
 
-  // And the Page asks before offering it. A week is only lived once, so
-  // offering the review again offers something that cannot happen.
-  const shell = readFileSync("app/os/circle-os-shell.tsx", "utf8");
-  assert.match(
-    shell,
-    /logChosenDay\.name === "Sunday" &&\s+!weekWasReviewed\(state, weekStartKey\(logChosenDay\.dateKey\)\)/,
-  );
 });

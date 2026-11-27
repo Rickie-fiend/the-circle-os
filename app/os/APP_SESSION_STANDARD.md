@@ -162,9 +162,13 @@ Current Day One is to be replaced through the planned onboarding, not edited in 
   Habit/Protocol and Articles discovery carousels.
 - Opened pairs are Note/Deep Thoughts, Routine/Protocol and Log/Week.
   Manual swipes and tappable cues use the shared session engine.
-- Today previews use Explore's three independent horizontal rows. An entire
-  panel opens its tool directly, including Week. Returning to Today restores
-  the panel focus and vertical scroll. The carousel also supports Arrow keys,
+- Today previews use Explore's three independent horizontal rows. A panel opens
+  its tool directly, including Week. In Deep Thoughts, the first question is
+  the default entry and the second has its own button. Each opens the same
+  editor with that question's draft or saved answer. In Log, the plus opens
+  the editor for the empty current hour. Opening it creates no record.
+  Returning to Today restores focus and vertical scroll. If the plus disappears
+  after saving, focus returns to the Log panel. The carousel supports Arrow keys,
   Home and End and follows reduced motion.
 - After any completed Day One, enter Home directly. Week/Log setup, weekly review
   and daily greeting do not interrupt entry. A genuinely unfinished Day One
@@ -191,7 +195,8 @@ reveal. A Line never dismisses itself on a timer.
 
 Note autosaves silently with recoverable buffers; Deep Thoughts uses
 Send/Save changes and deliberate Next question. History/Trash/Restore/Delete
-and conflict-copy review keep the same frame and shared navigation.
+and conflict-copy review keep the same frame and shared navigation. Deep
+Thoughts History shows the saved Circle-day date beside each entry's time.
 [Product](../../docs/PRODUCT.md#current-daily-tools) owns their action semantics;
 the [record contract](../../docs/PERSONAL_RECORDS_AND_ATHENA_PLAN.md) owns data.
 
@@ -204,14 +209,16 @@ copies can open from the collection. Older check-in writing is kept in storage.
 [Notes geometry and typography](../../DESIGN.md#shared-page-anatomy).
 
 Line access from Note is currently hidden; content and immutable publications
-remain preserved. Deep Thoughts' Quote opens the managed public catalog through
-existing Line exits, keeping the same question/draft. Cached valid data supports
+remain preserved. Deep Thoughts' Quote opens the managed public catalog with
+Loved it and Not for me visible on arrival. Either reaction or a swipe in either
+direction returns to the same question and draft. Cached valid data supports
 offline reading; an authoritative empty catalog has no bundled fallback.
 
 A Line is one-beat content, unrationed, with no run, version, cooldown or
 completion. A quote uses one Page; facts/jokes use setup and reveal.
-Backward beyond the first Page returns; forward beyond the last first reveals
-optional reactions, then returns on reaction or another forward swipe.
+In retained Note/Line contexts, backward beyond the first Page returns.
+Forward beyond the last first reveals optional reactions, then returns on
+reaction or another forward swipe.
 Reactions are feedback, never Chapter answers/completion. Preserve the legacy
 Note/Line behavior for retained contexts; do not restore its hidden entry.
 

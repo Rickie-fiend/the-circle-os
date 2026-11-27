@@ -129,6 +129,12 @@ edges and faint Orange shadows. Verify vendor prefixes in compiled production CS
 | Clear | 8px cross, 1.5px strokes, at least 44px target |
 | Every interactive control | At least 44px effective target and meaningful accessible name |
 
+Plain Back uses an Orange left arrow in daily-tool headers. Swipe cues keep
+their chevrons and destination labels. Week disclosures use the side chevron
+turned downward. Standalone Notes and Log plus marks use 16px/700, including
+the Today Log shortcut. Keep words on actions such as Add goal and Add step
+where the thing being added needs a name.
+
 Liquid rises over the shared 300ms completion response. Protocol word taps do
 nothing: only its checkbox toggles. Kept words remain visible and fill Orange
 with the same upward liquid clip, curve and 300ms duration, without strikethrough.
@@ -197,8 +203,20 @@ Today uses the same glass panels, sizing, horizontal snap and selected-panel
 scale as Explore. The three independent rows pair Notes with Deep Thoughts,
 Routine with Protocol, and Log with Week. The first panel leads and the next
 peeks in from the right. At the end of a row the first panel peeks from the
-left. The tool names sit inside the panels. One tap anywhere on a panel opens
-that tool. Preview copy stays brief, and there is no empty-state filler.
+left. The tool names sit inside the panels. The panel opens its tool, and the
+Deep Thoughts question and Log plus targets follow the [Page standard](app/os/APP_SESSION_STANDARD.md#navigation-and-entry).
+Preview copy stays brief, and empty sections take up no room.
+
+- Notes shows the newest saved title, up to three lines of its 16px excerpt,
+  and a time or short date. A one-line second title sits below an Orange divider.
+- Deep Thoughts gives each question its own space. The first sits beneath the
+  heading and the second starts just below the middle of the panel, with an
+  Orange divider above it. A single question sits beneath the heading on its own.
+- Routine, Protocol and Week use 18px bold labels over 18px regular values.
+  The status dots in Routine and Protocol are Orange.
+- Log shows five hours centered on the current hour. All activity text starts
+  at the same left edge. The current time and the empty current-hour plus are
+  Orange, and the plus has a 44px tap target.
 
 The bottom navigation spans the tool frame's width and is 60px tall. Today,
 Home and Reflect share one glass pill. A matching 60px Explore circle sits

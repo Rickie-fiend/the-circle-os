@@ -32,6 +32,8 @@
 
 .circle-os .os-explore-track {
   display: flex;
+  inline-size: max-content;
+  min-inline-size: 100%;
   align-items: stretch;
   gap: var(--os-app-box-gap);
   padding: var(--space-3) var(--space-6) var(--space-6);

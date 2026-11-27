@@ -7,6 +7,8 @@ import {
 import { accountStorageKey, assertAccountScope, scopedTransaction, type AccountScope } from "./account-scope";
 import { isChapterSyncPilot } from "./chapters/chapter-sync-pilot";
 import { readChapterSync } from "./chapters/chapter-sync-store";
+import { isBundledChapterVersion } from "./chapters/registry";
+import { retireBundledRuns } from "./chapters/retire-bundled-runs.js";
 import { isLogSyncPilot } from "./log-sync-pilot";
 import { projectLogSync, readLogSync } from "./log-sync-store";
 
@@ -69,7 +71,8 @@ export async function loadCircleState(scope: AccountScope) {
       String(local.savedAt).localeCompare(String(indexed.savedAt)) > 0)
       ? local
       : indexed;
-  const state = normalizeState(newest?.state ?? createEmptyState());
+  const normalized = normalizeState(newest?.state ?? createEmptyState());
+  const state = scope.kind === "account" ? retireBundledRuns(normalized, isBundledChapterVersion) : normalized;
   if (scope.kind === "account" && isChapterSyncPilot(window.location.hostname)) {
     const ledger = await readChapterSync(scope);
     assertAccountScope(scope);

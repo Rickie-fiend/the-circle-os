@@ -106,7 +106,7 @@ export function WeekPage({
       <button className="os-week-goal-disclosure" type="button" aria-expanded={isExpanded} aria-controls={panelId}
         aria-label={`${isExpanded ? "Hide" : "Show"} steps for ${goal.text || "this goal"}`}
         onClick={() => setExpanded(current => isExpanded ? current.filter(value => value !== goal.id) : [...current, goal.id])}>
-        <span aria-hidden="true">▾</span>
+        <span aria-hidden="true">›</span>
       </button>
         </div>
         <CreativeButton aria-label={`${goal.done ? "Undo" : "Complete"} goal: ${goal.text || "this week"}`}
@@ -158,7 +158,7 @@ export function WeekPage({
         <button className="os-week-text-action os-week-add-action" aria-label="+ Add goal" type="button" onClick={onAddGoal}><span>+</span><span>Add goal</span></button>
       </div>
       <details key={selectedDay.dateKey} className="os-week-record" aria-label={`Record for ${selectedDay.dateKey}`}>
-        <summary><span>Day’s record<span className="os-week-inline-arrow" aria-hidden="true">▾</span></span></summary>
+        <summary><span>Day’s record<span className="os-week-inline-arrow" aria-hidden="true">›</span></span></summary>
         {selectedDay.activities.length ? <div className="os-week-activities">{selectedDay.activities.map(activity => <article key={activity.id}>
           <div className="os-week-activity-main"><strong>{activity.title}</strong><time>{activity.at}</time></div>
           {activity.moments.length ? <ul>{activity.moments.map((text, index) => <li key={index}>{text}</li>)}</ul> : null}

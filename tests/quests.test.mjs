@@ -158,46 +158,8 @@ test("the catalogue reads every Quest at once", () => {
 // Sai: "Add the quest catalog session under athena reading ... it look as a app
 // box, but with indicator, we may browse them by swiping, and click on view
 // button to extend the box and show the steps."
-test("the catalogue is an App Box under Athena's Reading", () => {
+test("Reflect offers Chapter history without playable Quests", () => {
   const page = readFileSync("app/os/mirror/page.tsx", "utf8");
-
-  // A real session with a window, not a list of cards.
-  assert.match(page, /className=\{`quest-catalogue-apps /);
-  assert.match(page, /<SwipeSession[\s\S]*?attentionKey=\{`quests:\$\{questCatalogueVersion\}`\}/);
-  // The position is in the header, the way a chapter shows its own.
-  assert.match(page, /className="quest-place"/);
-  // And the place he was left in is kept, like every other App's.
-  assert.match(page, /appSessionIndex\(\s*state,\s*"quest-catalogue"/);
-
-  // The View key opens the steps inside the same box; nothing navigates away.
-  // And it is a key, not a pill: boxy, standing on a leg like every other one.
-  // Sai: "view steps button should be the boxy button with leg which
-  // compliment the theme."
-  assert.match(page, /<CreativeButton\s+aria-expanded=\{open\}\s+className="quest-view"/);
-  assert.match(page, /quest\.complete \? "View history" : open \? "Hide steps" : "View steps"/);
-  assert.match(page, /className="quest-steps"/);
-  const css2 = readFileSync("app/os/os-app.css", "utf8");
-  assert.match(css2, /\.circle-os \.quest-view \{\s+--os-key-leg: var\(--os-key-leg-ink\);/);
-
-  // A step is a thing you start, and starting it is the splash — the same
-  // sheet every other chapter arrives in. Sai: "on click, the steps be shown
-  // and clickable to start ... all those chapters will be process on splash
-  // screen."
-  assert.match(page, /className="quest-step"/);
-  // A block, not a line: a row of text does not look like a thing you go and
-  // do. Sai: "Steps in quests should be in boxes of blocks rather then lines."
-  assert.match(page, /className="quest-step-meta"/);
-  assert.match(css2, /\.circle-os \.quest-step \{[\s\S]*?border: 1px solid[\s\S]*?border-radius: var\(--r-lg\)/);
-  assert.match(page, /: startQuestStep\(step\.chapterId\)/);
-  assert.match(page, /function startQuestStep\(chapterId: string\)/);
-  assert.match(page, /writePinnedChapter\(chapterId\)/);
-
-  // Under Athena's Reading, because a Quest is what you go and do about what
-  // she just told you.
-  const readingAt = page.indexOf('aria-label="Athena\'s Reading"');
-  const questsAt = page.indexOf('className="quest-catalogue-session"');
-  assert.ok(readingAt > 0 && questsAt > readingAt, "the catalogue is above the reading");
-
-  const css = readFileSync("app/os/os-app.css", "utf8");
-  assert.match(css, /\.circle-os \.quest-catalogue-apps \.os-app-window/);
+  assert.match(page, /<ChapterHistoryPage/);
+  assert.doesNotMatch(page, /startQuestStep|quest-catalogue-apps/);
 });

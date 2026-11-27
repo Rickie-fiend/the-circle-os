@@ -80,6 +80,14 @@ async function expectSharedPanelShadows(page) {
   assert.deepEqual([...new Set(panelShadows)], [shadow]);
 }
 
+async function expectEndGutter(row, inset, peek) {
+  await expect.poll(() => row.evaluate(element => {
+    const bounds = element.getBoundingClientRect();
+    const [previous, last] = [...element.querySelectorAll('.os-explore-panel')].slice(-2).map(panel => panel.getBoundingClientRect());
+    return { inset: Math.round(bounds.right - last.right), peek: Math.round(previous.right - bounds.left) };
+  })).toEqual({ inset: Math.round(inset), peek: Math.round(peek) });
+}
+
 for(const width of [360,390,416,1100])test(`Explore uses shared glass and native carousel geometry at ${width}px`,{timeout:90000},()=>isolated(width,async(page,{calls})=>{
   await expect(page.locator('.os-explore-row-title')).toHaveText(['Chapters','Habit/Protocol','Articles']);
   await expect(page.getByRole('navigation',{name:'Circle OS'})).toBeVisible();await expect(page.getByRole('button',{name:'Open account',exact:true})).toBeVisible();
@@ -103,15 +111,24 @@ for(const width of [360,390,416,1100])test(`Explore uses shared glass and native
   await expectSharedPanelShadows(page);
   await row.evaluate(el=>el.blur());await page.screenshot({path:`outputs/explore-middle-${width}.png`});await row.focus();
   await expect(panels.nth(1).locator('figure,p')).toHaveCount(0);
-  await row.press('End');await expect(panels.last()).toHaveClass(/is-selected/);const end=await row.evaluate(el=>el.scrollLeft);await row.press('ArrowRight');assert.equal(await row.evaluate(el=>el.scrollLeft),end);
+  await row.press('End');await expect(panels.last()).toHaveClass(/is-selected/);
+  await expectEndGutter(row, initial.panels[0].left - initial.row.left, initial.row.right - initial.panels[1].left);
+  const end=await row.evaluate(el=>el.scrollLeft);await row.press('ArrowRight');assert.equal(await row.evaluate(el=>el.scrollLeft),end);
   await row.press('Home');await expect(panels.first()).toHaveClass(/is-selected/);await row.press('ArrowLeft');assert.equal(await row.evaluate(el=>el.scrollLeft),0);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(await page.evaluate(()=>window.exploreState.habits.definitions),{});
   await row.evaluate(el=>el.blur());await page.screenshot({path:`outputs/explore-${width}.png`,fullPage:true});
-  await page.getByRole('link',{name:'Today',exact:true}).click();await expect(page.locator('.os-today')).toBeVisible();await expect(page.locator('.os-app-shell')).toHaveCSS('background-color','rgb(25, 24, 19)');
+  await page.getByRole('link',{name:'Today',exact:true}).click();
+  await expect(page.locator('.os-today-previews')).toBeVisible();
+  await expect(page.locator('.os-future-room-background')).toHaveCSS('background-color','rgb(25, 24, 19)');
 }));
 
 test('Explore keeps two blank panels per empty category and retries a failed load',{timeout:90000},()=>isolated(390,async(page,{respond})=>{
   await expect(page.locator('.os-explore-panel')).toHaveCount(6);await expect(page.locator('.os-explore-panel :is(h3,p,figure,a)')).toHaveCount(0);
+  const row=page.getByRole('region',{name:'Chapters',exact:true});
+  const firstPeek=await row.evaluate(element => element.getBoundingClientRect().right - element.querySelector('.os-explore-panel:last-child').getBoundingClientRect().left);
+  await row.press('End');
+  await expectEndGutter(row, 24, firstPeek);
+  await row.press('Home');
   await expectSharedPanelShadows(page);
   await page.screenshot({path:'outputs/explore-empty-390.png',fullPage:true});
   respond({status:503,rows:{error:'Synthetic connection failure'}});await page.reload();await expect(page.getByRole('alert')).toContainText('Could not open Explore');await expect(page.locator('.os-explore-panel')).toHaveCount(6);
